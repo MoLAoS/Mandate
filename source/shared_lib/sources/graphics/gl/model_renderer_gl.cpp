@@ -68,6 +68,29 @@ void ModelRendererGl::loadShaders(const vector<string> &setNames) {
 	}
 }
 
+void ModelRendererGl::loadShader(const string &name) {
+	if (!m_shaders.empty()) { // delete last (check if changed??)
+		foreach (UnitShaderSets, it, m_shaders) {
+			delete *it;
+		}
+		m_shaders.clear();
+	}
+	if (isGlVersionSupported(2, 0, 0)) {
+		string path = "gae/shaders/" + name + ".xml";
+		UnitShaderSet *shaderSet = 0;
+		try {
+			shaderSet = new UnitShaderSet(path);
+			m_shaders.push_back(shaderSet);
+		} catch (runtime_error &e) {
+			mediaErrorLog.add(e.what(), path);
+			delete shaderSet;
+		}
+	}
+	if (!m_shaders.empty()) {
+		m_shaderIndex = 0; // use if loaded ok
+	}
+}
+
 void ModelRendererGl::cycleShaderSet() {
 	++m_shaderIndex;
 	if (m_shaderIndex >= m_shaders.size()) {

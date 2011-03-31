@@ -40,10 +40,9 @@ Config::Config(const char* fileName) {
 	getScreenMode(width, height);
 #endif
 
-	cameraFov = p->getFloat("CameraFov", 45.f, 0.f, 360.f);
 	cameraInvertXAxis = p->getBool("CameraInvertXAxis", true);
 	cameraInvertYAxis = p->getBool("CameraInvertYAxis", true);
-	cameraMaxDistance = p->getFloat("CameraMaxDistance", 35.f, 20.f, 1024.f);
+	cameraMaxDistance = p->getFloat("CameraMaxDistance", 64.f, 32.f, 2048.f);
 	cameraMaxYaw = p->getFloat("CameraMaxYaw", 77.50f, 0.f, 360.f);
 	cameraMinDistance = p->getFloat("CameraMinDistance", 8.f, 0.f, 20.f);
 	cameraMinYaw = p->getFloat("CameraMinYaw", 20.f, 0.f, 360.f);
@@ -77,15 +76,17 @@ Config::Config(const char* fileName) {
 	renderFontScaler = p->getFloat("RenderFontScaler", 1.f);
 	renderFov = p->getFloat("RenderFov", 60.f, 0.01f, 360.f);
 	renderFpsMax = p->getInt("RenderFpsMax", 60, 0, 1000000);
+	renderGraphicsFactory = p->getString("RenderGraphicsFactory", "OpenGL");
 	renderInterpolationMethod = p->getString("RenderInterpolationMethod", "SIMD");
 	renderLightsMax = p->getInt("RenderLightsMax", 1, 0, 8);
+	renderModelShader = p->getString("RenderModelShader", "basic");
+	renderModelTestShaders = p->getString("RenderModelTestShaders", "basic,bump_map");
 	renderShadowAlpha = p->getFloat("RenderShadowAlpha", 0.2f, 0.f, 1.f);
 	renderShadowFrameSkip = p->getInt("RenderShadowFrameSkip", 2);
 	renderShadowTextureSize = p->getInt("RenderShadowTextureSize", 512);
 	renderShadows = p->getString("RenderShadows", "Projected");
-	renderStencilBits = p->getInt("RenderStencilBits", 0);
+	renderTestingShaders = p->getBool("RenderTestingShaders", false);
 	renderTextures3D = p->getBool("RenderTextures3D", true);
-	renderUnitShaders = p->getString("RenderUnitShaders", "basic,, bump_map");
 	renderUseShaders = p->getBool("RenderUseShaders", true);
 	soundFactory = p->getString("SoundFactory", isWindows()?"DirectSound8":"OpenAL");
 	soundStaticBuffers = p->getInt("SoundStaticBuffers", 16);
@@ -112,7 +113,6 @@ Config::Config(const char* fileName) {
 void Config::save(const char *path) {
 	Properties *p = new Properties();
 
-	p->setFloat("CameraFov", cameraFov);
 	p->setBool("CameraInvertXAxis", cameraInvertXAxis);
 	p->setBool("CameraInvertYAxis", cameraInvertYAxis);
 	p->setFloat("CameraMaxDistance", cameraMaxDistance);
@@ -149,15 +149,17 @@ void Config::save(const char *path) {
 	p->setFloat("RenderFontScaler", renderFontScaler);
 	p->setFloat("RenderFov", renderFov);
 	p->setInt("RenderFpsMax", renderFpsMax);
+	p->setString("RenderGraphicsFactory", renderGraphicsFactory);
 	p->setString("RenderInterpolationMethod", renderInterpolationMethod);
 	p->setInt("RenderLightsMax", renderLightsMax);
+	p->setString("RenderModelShader", renderModelShader);
+	p->setString("RenderModelTestShaders", renderModelTestShaders);
 	p->setFloat("RenderShadowAlpha", renderShadowAlpha);
 	p->setInt("RenderShadowFrameSkip", renderShadowFrameSkip);
 	p->setInt("RenderShadowTextureSize", renderShadowTextureSize);
 	p->setString("RenderShadows", renderShadows);
-	p->setInt("RenderStencilBits", renderStencilBits);
+	p->setBool("RenderTestingShaders", renderTestingShaders);
 	p->setBool("RenderTextures3D", renderTextures3D);
-	p->setString("RenderUnitShaders", renderUnitShaders);
 	p->setBool("RenderUseShaders", renderUseShaders);
 	p->setString("SoundFactory", soundFactory);
 	p->setInt("SoundStaticBuffers", soundStaticBuffers);

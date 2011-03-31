@@ -29,20 +29,16 @@ extern const string gaeVersionString;
 
 string getNetworkVersionString();
 
-string getAboutString1(int i);
-string getAboutString2(int i);
+int getAboutStringCount();
+string getAboutString(int i);
+
+WRAPPED_ENUM( TeamMemberField, NAME, ROLE );
 
 int getGlestTeamMemberCount();
-string getGlestTeamMemberName(int i);
-string getGlestTeamMemberNameNoDiacritics(int i);
-string getGlestTeamMemberRole(int i);
+string getGlestTeamMemberField(int i, TeamMemberField field);
 
 int getGAETeamMemberCount();
-string getGAETeamMemberName(int i);
-string getGAETeamMemberRole(int i);
-
-int getGAEContributorCount();
-string getGAEContributorName(int i);
+string getGAETeamMemberField(int i, TeamMemberField field);
 
 string getCrashDumpFileName();
 

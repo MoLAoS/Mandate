@@ -25,11 +25,14 @@ using namespace Shared::PhysFS;
 
 namespace Glest { namespace Global {
 
+using Util::Logger;
+
 // =====================================================
 //  class Lang
 // =====================================================
 
 void Lang::setLocale(const string &locale) {
+	g_logger.logProgramEvent("Setting locale to '" + locale + "'");
 	m_locale = locale;
 	setlocale(LC_CTYPE, m_locale.c_str());
 	

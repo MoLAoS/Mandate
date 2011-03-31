@@ -15,9 +15,46 @@
 
 #include "main_menu.h"
 #include "compound_widgets.h"
+#include "slider.h"
 
 namespace Glest { namespace Menu {
 using namespace Widgets;
+
+class SpinnerValueBox : public StaticText {
+public:
+	SpinnerValueBox(Container *parent) : StaticText(parent) {
+		setWidgetStyle(WidgetType::TOOL_TIP);
+	}
+	virtual void setStyle() override { setWidgetStyle(WidgetType::TOOL_TIP); }
+};
+
+class Spinner : public CellStrip,  public sigslot::has_slots {
+private:
+	SpinnerValueBox  *m_valueBox;
+	ScrollBarButton  *m_upButton;
+	ScrollBarButton  *m_downButton;
+	int               m_minValue;
+	int               m_maxValue;
+	int               m_increment;
+	int               m_value;
+
+	void onButtonFired(Widget *btn);
+
+public:
+	Spinner(Container *parent);
+
+	void setRanges(int min, int max) { m_minValue = min; m_maxValue = max; }
+	void setIncrement(int inc) { m_increment = inc; }
+	void setValue(int val) { 
+		m_value = clamp(val, m_minValue, m_maxValue);
+		m_valueBox->setText(intToStr(m_value));
+	}
+
+	int getValue() const { return m_value; }
+
+	sigslot::signal<Widget*> ValueChanged;
+};
+
 
 // ===============================
 // 	class MenuStateOptions  
@@ -39,11 +76,19 @@ private:
 				*m_filterList,
 				*m_lightsList;
 							
-	CheckBox	*m_3dTexCheckBox;
+	CheckBox	*m_3dTexCheckBox,
+		        *m_debugModeCheckBox,
+				*m_debugKeysCheckBox;
 	
-	Slider		*m_volFxSlider,
+	Slider2		*m_volFxSlider,
 				*m_volAmbientSlider,
 				*m_volMusicSlider;
+
+	Spinner     *m_minCamAltitudeSpinner,
+		        *m_maxCamAltitudeSpinner;
+
+	Spinner     *m_minRenderDistSpinner,
+		        *m_maxRenderDistSpinner;
 
 	map<string,string> langMap;
 
@@ -64,11 +109,16 @@ private:
 	void initLabels();
 	void initListBoxes();
 	void setTexts();
+	void buildOptionsPanel(CellStrip *container, int cell);
 
-	void onButtonClick(Button* btn);
-	void on3dTexturesToggle(Button* cb);
-	void onSliderValueChanged(Slider* slider);
-	void onDropListSelectionChanged(ListBase* list);
+	void onButtonClick(Widget *source);
+	void on3dTexturesToggle(Widget *source);
+	void onSliderValueChanged(Widget *source);
+	void onSpinnerValueChanged(Widget *source);
+	void onDropListSelectionChanged(Widget *source);
+	void onToggleDebugMode(Widget*);
+	void onToggleDebugKeys(Widget*);
+
 };
 
 }}//end namespace

@@ -28,6 +28,23 @@ namespace Shared { namespace Platform {
 //	class PlatformContextGl
 // =====================================================
 
+string getLastErrorMsg() {
+	DWORD errCode = GetLastError();
+	LPVOID errMsg;
+	DWORD msgRes = FormatMessage(
+		FORMAT_MESSAGE_ALLOCATE_BUFFER  | FORMAT_MESSAGE_FROM_SYSTEM,
+		NULL, errCode, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&errMsg, 0, NULL
+	);
+	std::stringstream msg;
+	if (msgRes) {
+		msg << (LPTSTR)errMsg;
+		LocalFree((HLOCAL)errMsg);
+	} else {
+		msg << "FormatMessage() call failed. :~( [Error code: " << errCode << "]";
+	}
+	return msg.str();
+}
+
 void PlatformContextGl::init(int colorBits, int depthBits, int stencilBits){
 
 	int iFormat;
@@ -48,15 +65,24 @@ void PlatformContextGl::init(int colorBits, int depthBits, int stencilBits){
 	pfd.iLayerType= PFD_MAIN_PLANE;
 	pfd.cStencilBits= stencilBits;
 
-	iFormat= ChoosePixelFormat(dch, &pfd);
-	assert(iFormat!=0);
-
-	err= SetPixelFormat(dch, iFormat, &pfd);
-	assert(err);
+	iFormat = ChoosePixelFormat(dch, &pfd);
+	if (!iFormat) {
+		std::stringstream msg;
+		msg << "ChoosePixelFormat() failed.\n" << getLastErrorMsg();
+		throw runtime_error(msg.str());
+	}
+	err = SetPixelFormat(dch, iFormat, &pfd);
+	if (!err) {
+		std::stringstream msg;
+		msg << "SetPixelFormat() failed.\n" << getLastErrorMsg();
+		throw runtime_error(msg.str());
+	}
 
 	glch= wglCreateContext(dch);
 	if(glch==NULL){
-		throw runtime_error("Error initing OpenGL device context");
+		std::stringstream msg;
+		msg << "wglCreateContext() failed.\n" << getLastErrorMsg();
+		throw runtime_error(msg.str());
 	}
 	makeCurrent();
 

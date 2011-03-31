@@ -31,12 +31,12 @@ const float TimeFlow::midday = 12.f;
 const float TimeFlow::dawn= 6.f;
 
 void TimeFlow::init(Tileset *tileset){
-	firstTime= true;
-	this->tileset= tileset;
-	time= dawn+1.5f;
-	lastTime= time;
-	Config &config= Config::getInstance();
-	timeInc= 24.f*(1.f/config.getGsDayTime())/Config::getInstance().getGsWorldUpdateFps();
+	firstTime = true;
+	this->tileset = tileset;
+	time = dawn + 1.5f;
+	lastTime = time;
+	Config &config = Config::getInstance();
+	timeInc = 24.f * (1.f / config.getGsDayTime()) / WORLD_FPS;
 }
 
 void TimeFlow::update(){
@@ -90,7 +90,7 @@ void TimeFlow::update(){
 
 string TimeFlow::describeTime() const {
 	int hours = int(time);
-	float frac = time - float(hours);//modf(time, &whole);
+	float frac = time - float(hours);
 	int min = int(frac * 60.f);
 	string res = intToStr(hours) + ":";
 	if (min < 10) {

@@ -120,56 +120,89 @@ MenuStateJoinGame::MenuStateJoinGame(Program &program, MainMenu *mainMenu, bool 
 }
 
 void MenuStateJoinGame::buildConnectPanel() {
+	const int defWidgetHeight = g_widgetConfig.getDefaultItemHeight();
+	const int defCellHeight = defWidgetHeight * 3 / 2;
+
 	Vec2i pos, size(500, 300);
 	pos = g_metrics.getScreenDims() / 2 - size / 2;
 
-	m_connectPanel = new Panel(&program, pos, size);
-	m_connectPanel->setAutoLayout(false);
+	m_connectPanel = new CellStrip(static_cast<Container*>(&program), Orientation::VERTICAL, Origin::CENTRE, 4);
+	m_connectPanel->setSizeHint(0, SizeHint(-1, defCellHeight)); // def px for recent hosts lbl & list
+	m_connectPanel->setSizeHint(1, SizeHint(-1, defCellHeight)); // def px for server lbl & txtBox
+	m_connectPanel->setSizeHint(2, SizeHint(-1, defCellHeight)); // def px for connected label
+	m_connectPanel->setSizeHint(3, SizeHint(25));     // 25 % of the rest for button panel
 
-	Font *font = g_coreData.getFTMenuFontNormal();
-
-	int yGap = (size.y - 30 * 4) / 5;
-
-	int xGap = (size.x - 120 * 3) / 4;
-	int x = xGap, w = 120, y = yGap, h = 30;
-	Button* returnButton = new Button(m_connectPanel, Vec2i(x, y), Vec2i(w, h));
-	returnButton->setTextParams(g_lang.get("Return"), Vec4f(1.f), font);
-	returnButton->Clicked.connect(this, &MenuStateJoinGame::onReturn);
-
-	x += w + xGap;
-	Button* connectButton = new Button(m_connectPanel, Vec2i(x, y), Vec2i(w, h));
-	connectButton->setTextParams(g_lang.get("Connect"), Vec4f(1.f), font);
-	connectButton->Clicked.connect(this, &MenuStateJoinGame::onConnect);
-
-	x += w + xGap;
-	Button* searchButton = new Button(m_connectPanel, Vec2i(x, y), Vec2i(w, h));
-	searchButton->setTextParams(g_lang.get("Search"), Vec4f(1.f), font);
-	searchButton->Clicked.connect(this, &MenuStateJoinGame::onSearchForGame);
-
-	y += 30 + yGap;
-	w = (size.x - 20) / 2;
-	x = size.x / 2 - w / 2;
-	m_connectLabel = new StaticText(m_connectPanel, Vec2i(x, y), Vec2i(w, h));
-	m_connectLabel->setTextParams(g_lang.get("NotConnected"), Vec4f(1.f), font);
-
-	w = 150;
-	x = size.x / 2 - w - 5;
-	y += 30 + yGap;
-	StaticText* serverLabel = new StaticText(m_connectPanel, Vec2i(x, y), Vec2i(w, h));
-	serverLabel->setTextParams(g_lang.get("Server") + " Ip: ", Vec4f(1.f), font);
+	int font = g_widgetConfig.getDefaultFontIndex(FontUsage::MENU);
+	int white = g_widgetConfig.getColourIndex(Colour(255u));
+//	Font *font = g_widgetConfig.getMenuFont()[FontSize::NORMAL];
 	
-	x = size.x / 2 + 5;
-	m_serverTextBox = new TextBox(m_connectPanel, Vec2i(x, y), Vec2i(w, h));
-	m_serverTextBox->setTextParams("", Vec4f(1.f), font, true);
-	m_serverTextBox->TextChanged.connect(this, &MenuStateJoinGame::onTextModified);
+	Anchors a(Anchor(AnchorType::RIGID, 0)); // fill
+	m_connectPanel->setAnchors(a);
+	Vec2i pad(45, 45);
+	m_connectPanel->setPos(pad);
+	m_connectPanel->setSize(Vec2i(g_config.getDisplayWidth() - pad.w * 2, g_config.getDisplayHeight() - pad.h * 2));
 
-	w = 200;
-	x = size.x / 2 - w - 5;
-	y += 30 + yGap;
-	StaticText* historyLabel = new StaticText(m_connectPanel, Vec2i(x, y), Vec2i(w, h));
-	historyLabel->setTextParams(g_lang.get("RecentHosts"), Vec4f(1.f), font);
-	x = size.x / 2 + 5;
-	m_historyList = new DropList(m_connectPanel, Vec2i(x, y), Vec2i(w, h));
+	CellStrip *pnl = new CellStrip(m_connectPanel, Orientation::HORIZONTAL, Origin::CENTRE, 2);
+	pnl->setCell(0);
+	// fill vertical, set 25 % in from left / right edges
+	a = Anchors(Anchor(AnchorType::SPRINGY, 25), Anchor(AnchorType::RIGID, 0));
+	pnl->setAnchors(a);
+
+	Anchors a2;
+	a2.setCentre(true);
+
+	StaticText* historyLabel = new StaticText(pnl, Vec2i(0), Vec2i(200, 34));
+	historyLabel->setCell(0);
+	historyLabel->setText(g_lang.get("RecentHosts"));
+	historyLabel->setAnchors(a2);
+	m_historyList = new DropList(pnl, Vec2i(0), Vec2i(300, 34));
+	m_historyList->setCell(1);
+	m_historyList->setAnchors(a2);
+
+	pnl = new CellStrip(m_connectPanel, Orientation::HORIZONTAL, Origin::CENTRE, 2);
+	pnl->setCell(1);
+	pnl->setAnchors(a);
+
+	StaticText* serverLabel = new StaticText(pnl, Vec2i(0), Vec2i(6 * defWidgetHeight, defWidgetHeight));
+	serverLabel->setCell(0);
+	serverLabel->setText(g_lang.get("Server") + " Ip: ");
+	serverLabel->setAnchors(a2);
+	
+	m_serverTextBox = new TextBox(pnl, Vec2i(0), Vec2i(10 * defWidgetHeight, defWidgetHeight));
+	m_serverTextBox->setCell(1);
+	m_serverTextBox->setText("");
+	m_serverTextBox->TextChanged.connect(this, &MenuStateJoinGame::onTextModified);
+	m_serverTextBox->setAnchors(a2);
+
+	m_connectLabel = new StaticText(m_connectPanel, Vec2i(0), Vec2i(16 * defWidgetHeight, defWidgetHeight));
+	m_connectLabel->setCell(2);
+	m_connectLabel->setText(g_lang.get("NotConnected"));
+	m_connectLabel->setAnchors(a2);
+
+	a.set(Edge::LEFT, 0, false);
+	a.set(Edge::RIGHT, 0, false);
+	pnl = new CellStrip(m_connectPanel, Orientation::HORIZONTAL, Origin::CENTRE, 3);
+	pnl->setCell(3);
+	pnl->setAnchors(a);
+
+	// buttons
+	Button* returnButton = new Button(pnl, Vec2i(0), Vec2i(7 * defWidgetHeight, defWidgetHeight));
+	returnButton->setCell(0);
+	returnButton->setText(g_lang.get("Return"));
+	returnButton->Clicked.connect(this, &MenuStateJoinGame::onReturn);
+	returnButton->setAnchors(a2);
+
+	Button* connectButton = new Button(pnl, Vec2i(0), Vec2i(7 * defWidgetHeight, defWidgetHeight));
+	connectButton->setCell(1);
+	connectButton->setText(g_lang.get("Connect"));
+	connectButton->Clicked.connect(this, &MenuStateJoinGame::onConnect);
+	connectButton->setAnchors(a2);
+
+	Button* searchButton = new Button(pnl, Vec2i(0), Vec2i(7 * defWidgetHeight, defWidgetHeight));
+	searchButton->setCell(2);
+	searchButton->setText(g_lang.get("Search"));
+	searchButton->Clicked.connect(this, &MenuStateJoinGame::onSearchForGame);
+	searchButton->setAnchors(a2);
 
 	const Properties::PropertyMap &pm = servers.getPropertyMap();
 	if (pm.empty()) {
@@ -182,12 +215,12 @@ void MenuStateJoinGame::buildConnectPanel() {
 	m_historyList->SelectionChanged.connect(this, &MenuStateJoinGame::onServerSelected);
 }
 
-void MenuStateJoinGame::onReturn(Button*) {
+void MenuStateJoinGame::onReturn(Widget*) {
 	m_targetTansition = Transition::RETURN;
 	doFadeOut();
 }
 
-void MenuStateJoinGame::onConnect(Button*) {
+void MenuStateJoinGame::onConnect(Widget*) {
 	g_config.setNetServerIp(m_serverTextBox->getText());
 	g_config.save();
 
@@ -207,7 +240,7 @@ void MenuStateJoinGame::onConnect(Button*) {
 	}
 }
 
-void MenuStateJoinGame::onCancelConnect(BasicDialog*) {
+void MenuStateJoinGame::onCancelConnect(Widget*) {
 	MutexLock lock(m_connectMutex);
 	if (m_connectThread) {
 		m_connectThread->cancel();
@@ -243,7 +276,7 @@ void MenuStateJoinGame::connectThreadDone(ConnectResult result) {
 	m_connectThread = 0;
 }
 
-void MenuStateJoinGame::onDisconnect(BasicDialog*) {
+void MenuStateJoinGame::onDisconnect(Widget*) {
 	program.removeFloatingWidget(m_messageBox);
 	m_messageBox = 0;
 	g_simInterface.asClientInterface()->reset();
@@ -251,11 +284,11 @@ void MenuStateJoinGame::onDisconnect(BasicDialog*) {
 	m_connectLabel->setText("Not connected. Last connection terminated.");///@todo localise
 }
 
-void MenuStateJoinGame::onTextModified(TextBox*) {
+void MenuStateJoinGame::onTextModified(Widget*) {
 	m_historyList->setSelected(-1);
 }
 
-void MenuStateJoinGame::onSearchForGame(Button*) {
+void MenuStateJoinGame::onSearchForGame(Widget*) {
 	m_historyList->setSelected(-1);
 	m_serverTextBox->setText("");
 	m_connectPanel->setVisible(false);
@@ -272,7 +305,7 @@ void MenuStateJoinGame::onSearchForGame(Button*) {
 	}
 }
 
-void MenuStateJoinGame::onCancelSearch(BasicDialog*) {
+void MenuStateJoinGame::onCancelSearch(Widget*) {
 	MutexLock lock(m_findServerMutex);
 	if (m_findServerThread) {
 		m_findServerThread->stop();
@@ -296,8 +329,8 @@ void MenuStateJoinGame::foundServer(Ip ip) {
 	onConnect(0);
 }
 
-void MenuStateJoinGame::onServerSelected(ListBase* list) {
-	DropList* historyList = static_cast<DropList*>(list);
+void MenuStateJoinGame::onServerSelected(Widget* source) {
+	DropList* historyList = static_cast<DropList*>(source);
 	if (historyList->getSelectedIndex() != -1) {
 		string selected = historyList->getSelectedItem()->getText();
 		string ipString = servers.getString(selected);

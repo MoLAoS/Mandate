@@ -25,6 +25,7 @@
 
 #include "menu_state_root.h"
 #include "widget_style.h"
+#include "widget_config.h"
 #include "particle.h"
 #include "debug_stats.h"
 #include "logger.h"

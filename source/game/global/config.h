@@ -31,7 +31,6 @@ using Shared::Util::Properties;
 class Config {
 private:
 
-	float cameraFov;
 	bool cameraInvertXAxis;
 	bool cameraInvertYAxis;
 	float cameraMaxDistance;
@@ -68,15 +67,17 @@ private:
 	float renderFontScaler;
 	float renderFov;
 	int renderFpsMax;
+	string renderGraphicsFactory;
 	string renderInterpolationMethod;
 	int renderLightsMax;
+	string renderModelShader;
+	string renderModelTestShaders;
 	float renderShadowAlpha;
 	int renderShadowFrameSkip;
 	int renderShadowTextureSize;
 	string renderShadows;
-	int renderStencilBits;
+	bool renderTestingShaders;
 	bool renderTextures3D;
-	string renderUnitShaders;
 	bool renderUseShaders;
 	string soundFactory;
 	int soundStaticBuffers;
@@ -111,7 +112,6 @@ public:
 
 	void save(const char *path = "glestadv.ini");
 
-	float getCameraFov() const					{return cameraFov;}
 	bool getCameraInvertXAxis() const			{return cameraInvertXAxis;}
 	bool getCameraInvertYAxis() const			{return cameraInvertYAxis;}
 	float getCameraMaxDistance() const			{return cameraMaxDistance;}
@@ -148,15 +148,17 @@ public:
 	float getRenderFontScaler() const			{return renderFontScaler;}
 	float getRenderFov() const					{return renderFov;}
 	int getRenderFpsMax() const					{return renderFpsMax;}
+	string getRenderGraphicsFactory() const		{return renderGraphicsFactory;}
 	string getRenderInterpolationMethod() const	{return renderInterpolationMethod;}
 	int getRenderLightsMax() const				{return renderLightsMax;}
+	string getRenderModelShader() const			{return renderModelShader;}
+	string getRenderModelTestShaders() const	{return renderModelTestShaders;}
 	float getRenderShadowAlpha() const			{return renderShadowAlpha;}
 	int getRenderShadowFrameSkip() const		{return renderShadowFrameSkip;}
 	int getRenderShadowTextureSize() const		{return renderShadowTextureSize;}
 	string getRenderShadows() const				{return renderShadows;}
-	int getRenderStencilBits() const			{return renderStencilBits;}
+	bool getRenderTestingShaders() const		{return renderTestingShaders;}
 	bool getRenderTextures3D() const			{return renderTextures3D;}
-	string getRenderUnitShaders() const			{return renderUnitShaders;}
 	bool getRenderUseShaders() const			{return renderUseShaders;}
 	string getSoundFactory() const				{return soundFactory;}
 	int getSoundStaticBuffers() const			{return soundStaticBuffers;}
@@ -173,7 +175,6 @@ public:
 	bool getUiPhotoMode() const					{return uiPhotoMode;}
 	float getUiScrollSpeed() const				{return uiScrollSpeed;}
 
-	void setCameraFov(float val)				{cameraFov = val;}
 	void setCameraInvertXAxis(bool val)			{cameraInvertXAxis = val;}
 	void setCameraInvertYAxis(bool val)			{cameraInvertYAxis = val;}
 	void setCameraMaxDistance(float val)		{cameraMaxDistance = val;}
@@ -210,15 +211,17 @@ public:
 	void setRenderFontScaler(float val)			{renderFontScaler = val;}
 	void setRenderFov(float val)				{renderFov = val;}
 	void setRenderFpsMax(int val)				{renderFpsMax = val;}
+	void setRenderGraphicsFactory(string val)	{renderGraphicsFactory = val;}
 	void setRenderInterpolationMethod(string val){renderInterpolationMethod = val;}
 	void setRenderLightsMax(int val)			{renderLightsMax = val;}
+	void setRenderModelShader(string val)		{renderModelShader = val;}
+	void setRenderModelTestShaders(string val)	{renderModelTestShaders = val;}
 	void setRenderShadowAlpha(float val)		{renderShadowAlpha = val;}
 	void setRenderShadowFrameSkip(int val)		{renderShadowFrameSkip = val;}
 	void setRenderShadowTextureSize(int val)	{renderShadowTextureSize = val;}
 	void setRenderShadows(string val)			{renderShadows = val;}
-	void setRenderStencilBits(int val)			{renderStencilBits = val;}
+	void setRenderTestingShaders(bool val)		{renderTestingShaders = val;}
 	void setRenderTextures3D(bool val)			{renderTextures3D = val;}
-	void setRenderUnitShaders(string val)		{renderUnitShaders = val;}
 	void setRenderUseShaders(bool val)			{renderUseShaders = val;}
 	void setSoundFactory(string val)			{soundFactory = val;}
 	void setSoundStaticBuffers(int val)			{soundStaticBuffers = val;}

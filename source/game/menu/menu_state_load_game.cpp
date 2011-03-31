@@ -66,7 +66,6 @@ void SavedGamePreviewLoader::loadPreview(string *fileName) {
 	}
 }
 
-
 // =====================================================
 // 	class MenuStateLoadGame
 // =====================================================
@@ -77,35 +76,62 @@ MenuStateLoadGame::MenuStateLoadGame(Program &program, MainMenu *mainMenu)
 	savedGame = NULL;
 	gs = NULL;
 
-	Font *font = g_coreData.getFTMenuFontNormal();
-	int gap = (g_metrics.getScreenW() - 450) / 4;
-	int x = gap, w = 150, y = 150, h = 30;
-	m_returnButton = new Button(&program, Vec2i(x, y), Vec2i(w, h));
-	m_returnButton->setTextParams(g_lang.get("Return"), Vec4f(1.f), font);
+	int font = g_widgetConfig.getDefaultFontIndex(FontUsage::MENU);
+	int white = g_widgetConfig.getColourIndex(Colour(255u));
+//	Font *font = g_widgetConfig.getMenuFont()[FontSize::NORMAL];
+
+	Anchors fillAnchors(Anchor(AnchorType::RIGID, 0));
+	Anchors centreAnchors;
+	centreAnchors.setCentre(true);
+	
+	CellStrip *strip = new CellStrip(static_cast<Container*>(&program), Orientation::VERTICAL, Origin::CENTRE, 3);
+	strip->setSizeHint(0, SizeHint(-1, 50));  // 50 px cell for game drop-list
+	strip->setSizeHint(1, SizeHint(-1, 250)); // 250 px for info box
+	strip->setSizeHint(2, SizeHint(25)); // 25 % of the rest for the button panel
+	strip->setAnchors(fillAnchors);
+	Vec2i pad(45, 45);
+	strip->setPos(pad);
+	strip->setSize(Vec2i(g_config.getDisplayWidth() - pad.w * 2, g_config.getDisplayHeight() - pad.h * 2));
+
+	// savegames list
+	m_savedGameList = new DropList(strip, Vec2i(0), Vec2i(300, 34));
+	m_savedGameList->setCell(0);
+	m_savedGameList->SelectionChanged.connect(this, &MenuStateLoadGame::onSaveSelected);
+	m_savedGameList->setAnchors(centreAnchors);
+
+	// savegame info box
+	m_infoLabel = new ScrollText(strip, Vec2i(0), Vec2i(600, 200));
+	m_infoLabel->setCell(1);
+	m_infoLabel->setAnchors(centreAnchors);
+
+	CellStrip *btnPnl = new CellStrip(strip, Orientation::HORIZONTAL, Origin::CENTRE, 3);
+	btnPnl->setCell(2);
+	btnPnl->setAnchors(fillAnchors);
+
+	int h = g_widgetConfig.getDefaultItemHeight();
+	Vec2i sz(7 * h, h);
+	// buttons
+	m_returnButton = new Button(btnPnl, Vec2i(0), sz);
+	m_returnButton->setCell(0);
+	m_returnButton->setText(g_lang.get("Return"));
 	m_returnButton->Clicked.connect(this, &MenuStateLoadGame::onButtonClick);
+	m_returnButton->setAnchors(centreAnchors);
 
-	x += w + gap;
-	m_deleteButton = new Button(&program, Vec2i(x, y), Vec2i(w, h));
-	m_deleteButton->setTextParams(g_lang.get("Delete"), Vec4f(1.f), font);
+	m_deleteButton = new Button(btnPnl, Vec2i(0), sz);
+	m_deleteButton->setCell(1);
+	m_deleteButton->setText(g_lang.get("Delete"));
 	m_deleteButton->Clicked.connect(this, &MenuStateLoadGame::onButtonClick);
+	m_deleteButton->setAnchors(centreAnchors);
 
-	x += w + gap;
-	m_playNowButton = new Button(&program, Vec2i(x, y), Vec2i(w, h));
-	m_playNowButton->setTextParams(g_lang.get("PlayNow"), Vec4f(1.f), font);
+	m_playNowButton = new Button(btnPnl, Vec2i(0), sz);
+	m_playNowButton->setCell(2);
+	m_playNowButton->setText(g_lang.get("PlayNow"));
 	m_playNowButton->Clicked.connect(this, &MenuStateLoadGame::onButtonClick);
+	m_playNowButton->setAnchors(centreAnchors);
 
 	Vec2i dim = g_metrics.getScreenDims();
 
-	m_infoLabel = new ScrollText(&program, Vec2i(dim.x / 2 - 300, dim.y / 2 ), Vec2i(600, 200));
-	m_infoLabel->init();
-	//m_infoLabel->setTextParams("", Vec4f(1.f), font);
-//	m_infoLabel->setBorderParams(BorderStyle::SOLID, 2, Vec3f(1.f, 0.f, 0.f), 0.6f);
-
-	m_savedGameList = new DropList(&program, Vec2i(dim.x / 2 - 150, dim.y / 2 - 100), Vec2i(300, 30));
-	m_savedGameList->SelectionChanged.connect(this, &MenuStateLoadGame::onSaveSelected);
-
-	// savegames listBoxGames
-	if(!loadGameList()) {
+	if (!loadGameList()) {
 		Vec2i sz(330, 256);
 		program.clear();
 		m_messageDialog = MessageDialog::showDialog(g_metrics.getScreenDims() / 2 - sz / 2, sz,
@@ -119,7 +145,8 @@ MenuStateLoadGame::~MenuStateLoadGame() {
 	loaderThread.join();
 }
 
-void MenuStateLoadGame::onButtonClick(Button* btn) {
+void MenuStateLoadGame::onButtonClick(Widget *source) {
+	Button* btn = static_cast<Button*>(source);
 	if (btn == m_returnButton) {
 		m_targetTransition = Transition::RETURN;
 		g_soundRenderer.playFx(g_coreData.getClickSoundA());
@@ -143,12 +170,12 @@ void MenuStateLoadGame::onButtonClick(Button* btn) {
 	}
 }
 
-void MenuStateLoadGame::onCancelDelete(BasicDialog*) {
+void MenuStateLoadGame::onCancelDelete(Widget*) {
 	program.setFade(1.0f);
 	program.removeFloatingWidget(m_messageDialog);
 }
 
-void MenuStateLoadGame::onConfirmDelete(BasicDialog*) {
+void MenuStateLoadGame::onConfirmDelete(Widget*) {
 	program.setFade(1.0f);
 	program.removeFloatingWidget(m_messageDialog);
 
@@ -159,14 +186,14 @@ void MenuStateLoadGame::onConfirmDelete(BasicDialog*) {
 	}
 }
 
-void MenuStateLoadGame::onConfirmReturn(BasicDialog*) {
+void MenuStateLoadGame::onConfirmReturn(Widget*) {
 	g_soundRenderer.playFx(g_coreData.getClickSoundA());
 	m_targetTransition = Transition::RETURN;
 	mainMenu->setCameraTarget(MenuStates::ROOT);
 	doFadeOut();
 }
 
-void MenuStateLoadGame::onSaveSelected(ListBase* list) {
+void MenuStateLoadGame::onSaveSelected(Widget*) {
 	selectionChanged();
 }
 
@@ -327,8 +354,6 @@ void MenuStateLoadGame::initGameInfo() {
 				<< " : " << facName << " Team: " << gs->getTeam(i);
 		}
 		m_infoLabel->setText(ss.str());
-		m_infoLabel->init();
-
 	} catch (exception &e) {
 		m_infoLabel->setText(string("Bad game file.\n") + e.what());
 		if(gs) {

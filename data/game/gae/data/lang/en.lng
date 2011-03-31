@@ -5,6 +5,7 @@ Air=Air
 Land=Surface
 
 ; Team member roles
+GlestTeam=The Glest Team
 2dArtAndWeb=2D art and web
 3dAnd2dArt=3D and 2D art
 3dArt=3D art
@@ -12,6 +13,7 @@ Animation=Animation
 LinuxPort=Linux port
 SoundAndMusic=Sound and music
 Programming=Programming
+GaeTeam=The GAE Team
 
 ; 'Advanced Engine' Strings, placed under the Glest logo in the intro & on the new game menu
 AdvEng1=Advanced
@@ -176,7 +178,20 @@ Projected=Projected
 ShadowMapping=Shadow Mapping
 Disabled=Disabled
 MaxLights=Max lights
-Filter=Filter
+TextureFilter=Texture Filter
+DebugMode=Debug Mode
+DebugKeys=Debug Keys
+PlayerName=Player Name
+CameraAltitude=Camera Altitude
+Min=Min
+Max=Max
+RenderDistance=Render Distance
+RenderFoV=Field of view
+MaxRenderFPS=Maximum FPS
+UseShaders=Use Shaders
+TerrainShader=Terrain Shader
+WaterShader=Water Shader
+ModelShader=Model Shader
 
 ; Misc
 Name=Name

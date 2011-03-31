@@ -88,6 +88,12 @@ string PlatformExceptionHandler::codeToStr(DWORD code) {
 	}
 }
 
+void fail(const char *msg, HRESULT hr) {
+	stringstream ss;
+	ss << msg << "\n\tHRESULT == " << hr;
+	throw runtime_error(ss.str());
+}
+
 // =====================================================
 // class Misc
 // =====================================================
@@ -145,6 +151,11 @@ bool changeVideoMode(int resW, int resH, int colorBits, int refreshFrequency) {
 void restoreVideoMode() {
 	int dispChangeErr = ChangeDisplaySettings(NULL, 0);
 	assert(dispChangeErr == DISP_CHANGE_SUCCESSFUL);
+}
+
+void getScreenMode(int &width, int &height) {
+	width = GetSystemMetrics(SM_CXSCREEN);
+	height = GetSystemMetrics(SM_CYSCREEN);
 }
 
 void message(string message) {

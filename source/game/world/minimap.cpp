@@ -130,14 +130,14 @@ Minimap::Minimap(bool FoW, bool SoD, Container* parent, Vec2i pos, Vec2i size)
 		, m_leftClickOrder(false)
 		, m_rightClickOrder(false)
 		, m_moveOffset(0) {
-	
-	m_borderStyle.setSizes(4);
-	m_borderStyle.m_sizes[Border::TOP] = 12;
-	m_borderStyle.m_type = BorderType::CUSTOM_CORNERS;
-	m_borderStyle.m_colourIndices[Corner::TOP_LEFT]		= g_widgetConfig.getColourIndex(Colour(255, 255, 255, 127));
-	m_borderStyle.m_colourIndices[Corner::TOP_RIGHT]	= g_widgetConfig.getColourIndex(Colour(191, 191, 191, 127));
-	m_borderStyle.m_colourIndices[Corner::BOTTOM_RIGHT] = g_widgetConfig.getColourIndex(Colour(63, 63, 63, 127));
-	m_borderStyle.m_colourIndices[Corner::BOTTOM_LEFT]	= g_widgetConfig.getColourIndex(Colour(191, 191, 191, 127));
+	setWidgetStyle(WidgetType::MINIMAP);
+	//m_borderStyle.setSizes(4);
+	//m_borderStyle.m_sizes[Border::TOP] = 12;
+	//m_borderStyle.m_type = BorderType::CUSTOM_CORNERS;
+	//m_borderStyle.m_colourIndices[Corner::TOP_LEFT]		= g_widgetConfig.getColourIndex(Colour(255, 255, 255, 127));
+	//m_borderStyle.m_colourIndices[Corner::TOP_RIGHT]	= g_widgetConfig.getColourIndex(Colour(191, 191, 191, 127));
+	//m_borderStyle.m_colourIndices[Corner::BOTTOM_RIGHT] = g_widgetConfig.getColourIndex(Colour(63, 63, 63, 127));
+	//m_borderStyle.m_colourIndices[Corner::BOTTOM_LEFT]	= g_widgetConfig.getColourIndex(Colour(191, 191, 191, 127));
 }
 
 void Minimap::init(int w, int h, const World *world, bool resumingGame) {
@@ -187,6 +187,7 @@ void Minimap::init(int w, int h, const World *world, bool resumingGame) {
 	m_terrainTex->getPixmap()->init(scaledW, scaledH, 3);
 	m_terrainTex->setMipmap(false);
 
+	// units overlay texture
 	m_unitsTex = g_renderer.newTexture2D(ResourceScope::GAME);
 	m_unitsTex->setMipmap(false);
 	int tw = m_ratio < 1 ? (m_ratio * 128).intp() : 128;
@@ -204,7 +205,6 @@ void Minimap::init(int w, int h, const World *world, bool resumingGame) {
 	m_attackNoticeTex = g_renderer.newTexture2D(ResourceScope::GAME);
 	m_attackNoticeTex->getPixmap()->load("data/core/misc_textures/attack_notice.png");
 }
-
 
 Minimap::~Minimap(){
 	delete m_fowPixmap0;
@@ -500,20 +500,18 @@ void Minimap::render() {
 		return;
 	}
 
-	Widget::renderBgAndBorders(false);
+	Widget::render();
 	const GameCamera *gameCamera = g_gameState.getGameCamera();
 	const Pixmap2D *pixmap = m_terrainTex->getPixmap();
 
-	// what are the extra bits for? - hailstone 28Feb2011
-	Vec2i pos = getScreenPos() + Vec2i(4, 4);
-	Vec2i size = getSize() - Vec2i(8, 16);
+	// what are the extra bits for? - hailstone 28Feb2011 -- they were hard coded borders.
+	Vec2i pos = getScreenPos() + Vec2i(getBorderLeft(), getBorderTop());
+	Vec2i size = getSize() - getBordersAll();
 
 	Vec2f zoom = Vec2f(float(size.x)/ pixmap->getW(), float(size.y)/ pixmap->getH());
 
 	assertGl();
-//	glPushAttrib(GL_CURRENT_BIT | GL_ENABLE_BIT);
 
-	glEnable(GL_BLEND);
 	glActiveTexture(Renderer::baseTexUnit);
 	glEnable(GL_TEXTURE_2D);
 
@@ -541,17 +539,17 @@ void Minimap::render() {
 
 	glColor4f(0.5f, 0.5f, 0.5f, 0.1f);
 	glBegin(GL_TRIANGLE_STRIP);
-		glTexCoord2f(0.0f, 1.0f);
-		glMultiTexCoord2f(Renderer::fowTexUnit, 0.0f, 1.0f);
-		glVertex2i(pos.x, pos.y);
 		glTexCoord2f(0.0f, 0.0f);
 		glMultiTexCoord2f(Renderer::fowTexUnit, 0.0f, 0.0f);
+		glVertex2i(pos.x, pos.y);
+		glTexCoord2f(0.0f, 1.0f);
+		glMultiTexCoord2f(Renderer::fowTexUnit, 0.0f, 1.0f);
 		glVertex2i(pos.x, pos.y + size.y);
-		glTexCoord2f(1.0f, 1.0f);
-		glMultiTexCoord2f(Renderer::fowTexUnit, 1.0f, 1.0f);
-		glVertex2i(pos.x + size.x, pos.y);
 		glTexCoord2f(1.0f, 0.0f);
 		glMultiTexCoord2f(Renderer::fowTexUnit, 1.0f, 0.0f);
+		glVertex2i(pos.x + size.x, pos.y);
+		glTexCoord2f(1.0f, 1.0f);
+		glMultiTexCoord2f(Renderer::fowTexUnit, 1.0f, 1.0f);
 		glVertex2i(pos.x + size.x, pos.y + size.y);
 	glEnd();
 
@@ -561,13 +559,13 @@ void Minimap::render() {
 	glBindTexture(GL_TEXTURE_2D, static_cast<const Texture2DGl*>(m_unitsTex)->getHandle());
 	glColor4f(1.f, 1.f, 1.f, 1.f);
 	glBegin(GL_TRIANGLE_STRIP);
-		glTexCoord2f(0.0f, 1.0f);
-		glVertex2i(pos.x, pos.y);
 		glTexCoord2f(0.0f, 0.0f);
+		glVertex2i(pos.x, pos.y);
+		glTexCoord2f(0.0f, 1.0f);
 		glVertex2i(pos.x, pos.y + size.y);
-		glTexCoord2f(1.0f, 1.0f);
-		glVertex2i(pos.x + size.x, pos.y);
 		glTexCoord2f(1.0f, 0.0f);
+		glVertex2i(pos.x + size.x, pos.y);
+		glTexCoord2f(1.0f, 1.0f);
 		glVertex2i(pos.x + size.x, pos.y + size.y);
 	glEnd();
 
@@ -576,15 +574,16 @@ void Minimap::render() {
 		it->render(pos, size.h, m_ratio);
 	}
 
+	glBindTexture(GL_TEXTURE_2D, 0);
 	glDisable(GL_TEXTURE_2D);
 
 	//draw camera
 	float ang = degToRad(gameCamera->getHAng());
 	float amp = 15.f;
 	const Vec2i camPos = Vec2i(int(gameCamera->getPos().x), int(gameCamera->getPos().z));
-	Vec2i cPos((camPos.x * m_currZoom).intp() + pos.x, -(camPos.y * m_currZoom).intp() + pos.y + size.y);
-	Vec2i cPos1(cPos.x + int(amp * sinf(ang - pi / 5)), cPos.y + int(amp * cosf(ang - pi / 5)));
-	Vec2i cPos2(cPos.x + int(amp * sinf(ang + pi / 5)), cPos.y + int(amp * cosf(ang + pi / 5)));
+	Vec2i cPos((camPos.x * m_currZoom).intp() + pos.x, (camPos.y * m_currZoom).intp() + pos.y);
+	Vec2i cPos1(cPos.x + int(amp * sinf(ang - pi / 5)), cPos.y - int(amp * cosf(ang - pi / 5)));
+	Vec2i cPos2(cPos.x + int(amp * sinf(ang + pi / 5)), cPos.y - int(amp * cosf(ang + pi / 5)));
 
 	glBegin(GL_TRIANGLES);
 		glColor4f(1.f, 1.f, 1.f, 0.7f);
@@ -599,38 +598,38 @@ void Minimap::render() {
 	assertGl();
 }
 
+Vec2i Minimap::toCellPos(Vec2i pos) const {
+	pos -= (getScreenPos() + Vec2i(getBorderLeft(), getBorderTop()));
+	Vec2i size = getSize() - getBordersAll();
+	float xratio = float(pos.x) / size.w;
+	float yratio = float(pos.y) / size.y;
+	return Vec2i(int(xratio * m_w), int(yratio * m_h));
+}
+
 bool Minimap::mouseDown(MouseButton btn, Vec2i pos) {
 	Vec2i myPos = getScreenPos();
 	Vec2i mySize = getSize();
 
-	if (pos.y > myPos.y + mySize.y - getBorderTop()) {
+	if (pos.y < myPos.y + getBorderTop()) {
 		if (btn == MouseButton::LEFT) {
 			m_draggingWidget = true;
 			m_moveOffset = myPos - pos;
 			return true;
 		}
 	}
-
 	// on map?
-	if (pos.x >= myPos.x + getBorderLeft() && pos.y >= myPos.y + getBorderBottom()
-	&& pos.x < myPos.x + mySize.x - getBorderRight() && pos.y < myPos.y + mySize.y - getBorderTop()) {
-		int x = pos.x - myPos.x - getBorderLeft();
-		int y = (m_ratio > 1 ? 128 / m_ratio.intp() : 128) - (pos.y - myPos.y - getBorderBottom());
-
-		float xratio = float(x) / (m_ratio < 1 ? m_ratio.toFloat() * 128.f : 128.f);
-		float yratio = float(y) / (m_ratio > 1 ? 128.f / m_ratio.toFloat() : 128.f);
-		Vec2f cellPos(xratio * m_w, yratio * m_h);
-
+	if (isInsideBorders(pos)) {
+		Vec2i cellPos = toCellPos(pos);
 		if (btn == MouseButton::LEFT) {
 			if (m_leftClickOrder) {
-				LeftClickOrder(Vec2i(cellPos));
+				LeftClickOrder(cellPos);
 			} else {
-				g_gameState.getGameCamera()->setPos(cellPos);
+				g_gameState.getGameCamera()->setPos(Vec2f(cellPos));
 				m_draggingCamera = true;
 			}
 		} else if (btn == MouseButton::RIGHT) {
 			if (m_rightClickOrder) {
-				RightClickOrder(Vec2i(cellPos));
+				RightClickOrder(cellPos);
 			}
 		}
 	}
@@ -650,15 +649,9 @@ bool Minimap::mouseMove(Vec2i pos) {
 
 	if (m_draggingCamera) {
 		// on map?
-		if (pos.x >= myPos.x + getBorderLeft() && pos.y >= myPos.y + getBorderBottom()
-		&& pos.x < myPos.x + mySize.x - getBorderRight() && pos.y < myPos.y + mySize.y - getBorderTop()) {
-			int x = pos.x - myPos.x - getBorderLeft();
-			int y = (m_ratio > 1 ? 128 / m_ratio.intp() : 128) - (pos.y - myPos.y - getBorderBottom());
-
-			float xratio = float(x) / (m_ratio < 1 ? m_ratio.toFloat() * 128.f : 128.f);
-			float yratio = float(y) / (m_ratio > 1 ? 128.f / m_ratio.toFloat() : 128.f);
-			Vec2f cellPos(xratio * m_w, yratio * m_h);
-			g_gameState.getGameCamera()->setPos(cellPos);
+		if (isInsideBorders(pos)) {
+			Vec2i cellPos = toCellPos(pos);
+			g_gameState.getGameCamera()->setPos(Vec2f(cellPos));
 		}
 	} else if (m_draggingWidget) {
 		setPos(pos + m_moveOffset);

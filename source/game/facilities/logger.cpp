@@ -97,8 +97,6 @@ void LogFile::addNetworkMsg(const string &msg) {
 //	class ProgramLog
 // =====================================================
 
-const int ProgramLog::logLineCount= 15;
-
 ProgramLog::ProgramLog()
 		: LogFile("glestadv.log", "Program", TimeStampType::SECONDS)
 		, loadingGame(true)
@@ -187,39 +185,45 @@ bool ProgramLog::setupLoadingScreen(const string &dir) {
 	return false;
 }
 
+void ProgramLog::setLoading(bool v) { 
+	loadingGame = v;
+}
+
 void ProgramLog::renderLoadingScreen(){
-	g_renderer.reset2d(true);
+	g_renderer.reset2d();
 	g_renderer.clearBuffers();
 
-	Font *normFont = g_coreData.getFTMenuFontSmall();
-	Font *bigFont = g_coreData.getFTMenuFontNormal();
+	const Font *normFont = g_widgetConfig.getMenuFont();
+	const Font *bigFont = g_widgetConfig.getTitleFont();
 
 	if (m_backgroundTexture) {
 		g_renderer.renderBackground(m_backgroundTexture);
 	}
 	
-	Vec2i headerPos(g_metrics.getScreenW() / 4, 75 * g_metrics.getScreenH() / 100);
-	g_renderer.renderText(state, bigFont, Vec3f(1.f), headerPos.x, headerPos.y, false);
+	Vec2i headerPos(g_metrics.getScreenW() / 4, 25 * g_metrics.getScreenH() / 100);
+	Vec4f colour(1.f);
+	g_renderer.renderText(state, bigFont, colour, headerPos.x, headerPos.y);
+	int yStart = headerPos.y + int(bigFont->getMetrics()->getHeight()) + 6;
 
 	if (loadingGame) {
 		int offset = 0;
 		int step = int(normFont->getMetrics()->getHeight()) + 4;
 		for (Strings::reverse_iterator it = logLines.rbegin(); it != logLines.rend(); ++it) {
-			float alpha = offset == 0 ? 1.0f : 0.8f - 0.8f * static_cast<float>(offset) / logLines.size();
-			g_renderer.renderText(*it, normFont, alpha, g_metrics.getScreenW() / 4,
-				70 * g_metrics.getScreenH() / 100 - offset * step, false);
+			colour.a = 1.f - float(offset) / float(logLineCount + 1);
+			g_renderer.renderText(*it, normFont, colour, g_metrics.getScreenW() / 4,
+				30 * g_metrics.getScreenH() / 100 + offset * step);
 			++offset;
 		}
 		if (m_progressBar) {
 			Vec2i progBarPos = headerPos;
-			progBarPos.x += int(bigFont->getMetrics()->getTextDiminsions(state).x) + 20;
+			progBarPos.x += int(bigFont->getMetrics()->getTextDiminsions(state).w) + 20;
 			int w = g_metrics.getScreenW() / 4 * 3 - progBarPos.x;
 			int h = int(normFont->getMetrics()->getHeight() + 2.f);
 			g_renderer.renderProgressBar(m_progress, progBarPos.x, progBarPos.y, w, h, normFont);
 		}
 	} else {
-		g_renderer.renderText(current, normFont, 1.0f, g_metrics.getScreenW() / 4,
-			62 * g_metrics.getScreenH() / 100, false);
+		g_renderer.renderText(current, normFont, colour, g_metrics.getScreenW() / 4,
+			38 * g_metrics.getScreenH() / 100);
 	}
 	g_renderer.swapBuffers();
 }

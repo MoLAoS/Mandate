@@ -105,7 +105,7 @@ Vec2f FontMetrics::getTextDiminsions(const string &str) const {
 }
 
 float FontMetrics::getHeight() const {
-	return freeType ? maxAscent + 2/*maxDescent*/ : height;
+	return freeType ? maxAscent + maxDescent : height;
 }
 
 // ===============================================

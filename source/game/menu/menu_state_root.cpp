@@ -43,126 +43,156 @@ namespace Glest { namespace Menu {
 MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 		: MenuState(program, mainMenu)
 		, m_selectedItem(RootMenuItem::INVALID) {
-	int sh = g_metrics.getScreenH();
-	int sixtyPercent = int(0.6f * sh);
+	const Font *fontPtr = g_widgetConfig.getMenuFont();
 
-	int logoHeight = sh - sixtyPercent;
-	int logoYPos = sixtyPercent;
-
-	int fiftyPercent = int(0.5f * sh);
-	int tenPercent = int(0.1f * sh);
-
-	int btnPnlHeight = fiftyPercent;
-	int btnPnlYPos = tenPercent + sh / 25;
-
-	int gplHeight = tenPercent;
-	int gplYPos = sh / 50;
-
-	int widgetPad = btnPnlHeight / 25;
-
-	// Buttons Panel
-	Vec2i pos(g_metrics.getScreenW() / 2 - 125, btnPnlYPos);
-	Widgets::Panel *pnl = new Widgets::Panel(&program, pos, Vec2i(250, btnPnlHeight));
-	pnl->setPaddingParams(10, widgetPad);
-
-	// Buttons
-	Font *font = g_coreData.getFTMenuFontNormal();
-	foreach_enum (RootMenuItem, i) {
-		Vec2f dims = font->getMetrics()->getTextDiminsions(RootMenuItemNames[i]);
-		m_buttons[i] = new Widgets::Button(pnl, Vec2i(0,0), Vec2i(200, int(dims.y + 5.f)));
-		m_buttons[i]->setTextParams(g_lang.get(RootMenuItemNames[i]), Vec4f(1.f), font, true);
-		m_buttons[i]->Clicked.connect(this, &MenuStateRoot::onButtonClick);
-	}
-	pnl->setLayoutParams(true, Panel::LayoutDirection::VERTICAL);
-	pnl->layoutChildren();
+	CellStrip *strip = new CellStrip(static_cast<Container*>(&program), Orientation::VERTICAL, Origin::CENTRE, 4);
+	strip->setPos(Vec2i(0,0));
+	strip->setSize(Vec2i(g_config.getDisplayWidth(), g_config.getDisplayHeight()));
+	int hints[] = {
+		35, 45, 10, 10 // main logo 30 %, button panel 50 %, gpl logo 10 %, engine label 10%
+	};
+	strip->setPercentageHints(hints);
 
 	// Glest Logo PicturePanel
+	int logoHeight = std::min(int(0.3f * g_metrics.getScreenH()), 256);
 	int logoWidth = logoHeight * 2;
-	pos = Vec2i(g_metrics.getScreenW() / 2 - logoHeight, logoYPos);
-	Widgets::PicturePanel *pp = new Widgets::PicturePanel(&program, pos, Vec2i(logoWidth, logoHeight));
-	pp->setPadding(0);
+	PicturePanel *pp = new PicturePanel(strip, Vec2i(0), Vec2i(logoWidth, logoHeight));
+	pp->setCell(0);
 	pp->setImage(g_coreData.getLogoTexture());
-	pp->setAutoLayout(false);
 
-	Widgets::StaticText *label;
+	Anchors anchors;
+	anchors.setCentre(true); // centre in cell
+	pp->setAnchors(anchors);
+
 	if (!mainMenu->isTotalConversion()) {
 		// Advanced Engine labels
-		font = g_coreData.getGAEFontBig();
-		label = new Widgets::StaticText(pp);
-		label->setTextParams(g_lang.get("AdvEng1"), Vec4f(1.f), font);
+		Widgets::StaticText *label = new Widgets::StaticText(pp);
+		label->textStyle().m_fontIndex = g_widgetConfig.getTitleFontNdx();
+		label->setText(g_lang.get("AdvEng1"));
 		Vec2i sz = label->getTextDimensions() + Vec2i(10,5);
 		int tx = int(255.f / 512.f * logoWidth);
 		int ty = int(60.f / 256.f * logoHeight);
-		label->setPos(Vec2i(tx - sz.x, ty));
+		label->setPos(Vec2i(tx - sz.w, logoHeight - ty - sz.h));
 		label->setSize(sz);
-		label->centreText();
+		label->alignText();
 		label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 
 		label = new Widgets::StaticText(pp);
-		label->setTextParams(g_lang.get("AdvEng2"), Vec4f(1.f), font);
+		label->textStyle().m_fontIndex = g_widgetConfig.getTitleFontNdx();
+		label->setText(g_lang.get("AdvEng2"));
 		tx = int(285.f / 512.f * logoWidth);
-		label->setPos(Vec2i(tx, ty));
+		label->setPos(Vec2i(tx, logoHeight - ty - sz.h));
 		label->setSize(label->getTextDimensions() + Vec2i(10,5));
-		label->centreText();
+		label->alignText();
 		label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 
-		pos = Vec2i(tx + label->getSize().x, ty + 3);
+		int advEng2Len = label->getTextDimensions().w;
+		int y_step = int(g_widgetConfig.getTitleFont()->getMetrics()->getHeight() + 1.f);
+
 		// Version label
-		font = g_coreData.getGAEFontSmall();
 		label = new Widgets::StaticText(pp);
-		label->setTextParams(gaeVersionString, Vec4f(1.f), font);
-		label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
-
+		label->textStyle().m_fontIndex = g_widgetConfig.getTitleFontNdx();
+		label->setText(gaeVersionString);
 		sz = label->getTextDimensions() + Vec2i(10,5);
-		label->setPos(pos/*Vec2i(256 - sz.x / 2, 10)*/);
-		label->setSize(sz);
-		label->centreText();
-	} else {
-		label = new Widgets::StaticText(&program);
-		Vec2i pos, size;
-		label->setTextParams("Glest Advanced Engine " + gaeVersionString,
-			Vec4f(1.f), g_coreData.getGAEFontSmall());
-		size = label->getTextDimensions() + Vec2i(5,5);
-		pos = Vec2i(g_metrics.getScreenW() - size.x - 15, 10);
+		Vec2i pos = Vec2i(tx + advEng2Len + 5, logoHeight - ty - sz.h);
+		label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 		label->setPos(pos);
-		label->setSize(size);
+		label->setSize(sz);
+		label->alignText();
 	}
 
+	// Buttons Panel
+	anchors.set(Edge::COUNT, 0, false); // anchor all (fill cell)
+	CellStrip *pnl = new CellStrip(strip, Orientation::VERTICAL, Origin::CENTRE, RootMenuItem::COUNT);
+	pnl->setCell(1);
+	pnl->setAnchors(anchors);
+
+	// Buttons
+	anchors.setCentre(true); // anchor centre
+	foreach_enum (RootMenuItem, i) {
+		int height = g_widgetConfig.getDefaultItemHeight();
+		m_buttons[i] = new Widgets::Button(pnl);
+		m_buttons[i]->setCell(i);
+		m_buttons[i]->setSize(Vec2i(7 * height, height));
+		m_buttons[i]->setText(g_lang.get(RootMenuItemNames[i]));
+		m_buttons[i]->setAnchors(anchors);
+		m_buttons[i]->Clicked.connect(this, &MenuStateRoot::onButtonClick);
+	}
+
+	int gplHeight = int(0.1f * g_metrics.getScreenH());
+	CellStrip *logoPnl = 0;
+	if (mainMenu->gplLogoOnRoot() || mainMenu->gaeLogoOnRoot()) {
+		int n = 1;
+		if (mainMenu->gplLogoOnRoot() && mainMenu->gaeLogoOnRoot()) {
+			n = 2;
+		}
+		anchors.set(Edge::COUNT, 0, false); // fill cell
+		logoPnl = new CellStrip(strip, Orientation::HORIZONTAL, Origin::CENTRE, n);
+		logoPnl->setCell(2);
+		logoPnl->setAnchors(anchors);
+	}
+	// anchor centre
+	anchors.setCentre(true);
+	int gplWidth = gplHeight * 2;
 	if (!mainMenu->gaeLogoOnRoot()) {
 		if (mainMenu->gplLogoOnRoot()) {
 			// gpl logo
-			int gplWidth = gplHeight * 2;
-			pos = Vec2i(g_metrics.getScreenW() / 2 - gplHeight, gplYPos);
-			new Widgets::StaticImage(&program, pos, Vec2i(gplWidth, gplHeight), g_coreData.getGplTexture());
+			StaticImage *si = new StaticImage(logoPnl);
+			si->setImage(g_coreData.getGplTexture());
+			si->setSize(Vec2i(gplWidth, gplHeight));
+			si->setCell(0);
+			si->setAnchors(anchors);
 		}
 	} else {
 		if (mainMenu->gplLogoOnRoot()) {
-			int gplWidth = gplHeight * 2;
-			int xpos = g_metrics.getScreenW() / 2 - gplWidth - gplWidth / 2 - 10;
-			pos = Vec2i(xpos, gplYPos);
-			new Widgets::StaticImage(&program, pos, Vec2i(gplWidth + gplWidth / 2, gplHeight + gplHeight / 2),
-				g_coreData.getGaeSplashTexture());
+			StaticImage *si = new StaticImage(logoPnl);
+			si->setImage(g_coreData.getGaeSplashTexture());
+			si->setSize(Vec2i(gplWidth, gplHeight));
+			si->setCell(0);
+			si->setAnchors(anchors);
 
-			xpos = g_metrics.getScreenW() / 2 + 10;
-			pos = Vec2i(xpos, gplYPos + gplHeight / 4);
-			new Widgets::StaticImage(&program, pos, Vec2i(gplWidth, gplHeight), g_coreData.getGplTexture());
+			si = new StaticImage(logoPnl);
+			si->setImage(g_coreData.getGplTexture());
+			si->setSize(Vec2i(gplWidth, gplHeight));
+			si->setCell(1);
+			si->setAnchors(anchors);
 		} else {
-			int gplWidth = gplHeight * 2;
-			int xpos = g_metrics.getScreenW() / 2 - (gplWidth + gplWidth / 2) / 2;
-			pos = Vec2i(xpos, gplYPos);
-			new Widgets::StaticImage(&program, pos, Vec2i(gplWidth + gplWidth / 2, gplHeight + gplHeight / 2),
-				g_coreData.getGaeSplashTexture());
+			StaticImage *si = new StaticImage(logoPnl);
+			si->setImage(g_coreData.getGaeSplashTexture());
+			si->setSize(Vec2i(gplWidth, gplHeight));
+			si->setCell(0);
+			si->setAnchors(anchors);
 		}
 	}
+
+	// adv eng label if total conversion
+	if (mainMenu->isTotalConversion()) {
+		CellStrip *pnl = new CellStrip(strip, Orientation::HORIZONTAL, Origin::CENTRE, 1);
+		pnl->setCell(3);
+		anchors.set(Edge::COUNT, 0, false); // fill
+		pnl->setAnchors(anchors);
+		StaticText *label = new Widgets::StaticText(pnl);
+		label->setCell(0);
+
+		// anchor bottom-right
+		anchors = Anchors(Anchor(AnchorType::NONE, 0), Anchor(AnchorType::NONE, 0),
+			Anchor(AnchorType::RIGID, 15), Anchor(AnchorType::RIGID, 15));
+		label->setAnchors(anchors);
+		label->textStyle().m_fontIndex = g_widgetConfig.getTitleFontNdx();
+		label->setText("Glest : " + g_lang.get("AdvEng1") + " " + g_lang.get("AdvEng2") + gaeVersionString);
+		Vec2i size = label->getTextDimensions() + Vec2i(5,5);
+		label->setSize(size);
+	}
+
 	// end network interface
 	program.getSimulationInterface()->changeRole(GameRole::LOCAL);
 }
 
-void MenuStateRoot::onButtonClick(Widgets::Button *btn) {
+void MenuStateRoot::onButtonClick(Widget *source) {
 	// which button ?
 	foreach_enum (RootMenuItem, i) {
 		m_buttons[i]->setEnabled(false);
-		if (btn == m_buttons[i]) {
+		if (source == m_buttons[i]) {
 			m_selectedItem = i;
 		}
 	}

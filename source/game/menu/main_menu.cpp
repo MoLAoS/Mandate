@@ -140,13 +140,6 @@ void MainMenu::renderFg() {
 	//2d
 	g_renderer.reset2d();
 	state->render();
-	//renderer.renderMouse2d(mouseX, mouseY, mouse2dAnim);
-
-	if (g_config.getMiscDebugMode()) {
-		Font *font = g_coreData.getFTMenuFontNormal();
-		string s = "FPS: " + intToStr(lastFps);
-		g_renderer.renderText(s, font, Vec3f(1.f), 10, 60, false);
-	}
 	g_renderer.swapBuffers();
 }
 
@@ -161,6 +154,8 @@ void MainMenu::update() {
 void MainMenu::tick() {
 	lastFps = fps;
 	fps = 0;
+	string s = "FPS: " + intToStr(lastFps);
+	state->setDebugString(s);
 }
 
 void MainMenu::mouseMove(int x, int y, const MouseState &ms) {
@@ -195,7 +190,7 @@ void MainMenu::setState(MenuState *state) {
 	} else {
 		setCameraOnSetState = true;
 	}
-	g_program.initMouse();
+//	g_program.initMouse();
 }
 
 void MainMenu::setCameraTarget(MenuStates state) {
@@ -254,6 +249,36 @@ void MenuState::update() {
 		}
 		program.setFade(m_fade);
 	}
+}
+
+// =====================================================
+//  class MenuState
+// =====================================================
+
+MenuState::MenuState(Program &program, MainMenu *mainMenu)
+		: program(program), mainMenu(mainMenu)
+ 		, m_fade(0.f)
+		, m_fadeIn(true)
+		, m_fadeOut(false)
+		, m_transition(false) {
+	program.setFade(m_fade);
+	int font = g_widgetConfig.getDefaultFontIndex(FontUsage::MENU);
+	int white = g_widgetConfig.getColourIndex(Colour(255u));
+	const Font *fontPtr = g_widgetConfig.getMenuFont();
+
+	Vec2i pos(10, 50);
+	pos.y -= int(fontPtr->getMetrics()->getHeight());
+	m_debugText = new StaticText(&program, pos, Vec2i(0));
+	m_debugText->setText("FPS: ");
+	m_debugText->setAlignment(Alignment::FLUSH_LEFT);
+	if (!g_config.getMiscDebugMode()) {
+		m_debugText->setVisible(false);
+	}
+}
+
+void MenuState::setDebugString(const string &s) {
+	m_debugText->setText(s);
+	m_debugText->setSize(m_debugText->getPrefSize());
 }
 
 }}//end namespace

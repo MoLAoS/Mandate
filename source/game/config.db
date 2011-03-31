@@ -4,10 +4,9 @@
 # character in this file unless you want to modify the script.
 #
 # variable					type	default			min		max
-cameraFov					float	45.f			0.f		360.f
 cameraInvertXAxis			bool	true
 cameraInvertYAxis			bool	true
-cameraMaxDistance			float	35.f			20.f	1024.f
+cameraMaxDistance			float	64.f			32.f	2048.f
 cameraMaxYaw				float	77.50f			0.f		360.f
 cameraMinDistance			float	8.f				0.f		20.f
 cameraMinYaw				float	20.f			0.f		360.f
@@ -32,8 +31,6 @@ renderColorBits				int		32
 renderDepthBits				int		isWindows()?32:16
 renderDistanceMax			float	64.f			1.f		65536.f
 renderDistanceMin			float	1.f				0.0f	65536.f
-renderEnableBumpMapping		bool	true
-renderEnableSpecMapping		bool	true
 renderFontScaler			float	1.f
 renderFilter				string	"Bilinear"
 renderFilterMaxAnisotropy	int		1
@@ -41,16 +38,22 @@ renderFogOfWarSmoothing		bool	true
 renderFogOfWarSmoothingFrameSkip int 3
 renderFov					float	60.f			0.01f	360.f
 renderFpsMax				int		60				0		1000000
+renderGraphicsFactory		string	"OpenGL"
 renderInterpolationMethod	string	"SIMD"
+#renderInterpolateWithSIMD	bool	true
 renderLightsMax				int		1				0		8
 renderShadowAlpha			float	0.2f			0.f		1.f
 renderShadowFrameSkip		int		2
 renderShadowTextureSize		int		512
 renderShadows				string	"Projected"
-renderStencilBits			int		0
+#renderStencilBits			int		0
 renderTextures3D			bool	true
-renderUnitShaders			string	"basic, bump_map"
 renderUseShaders			bool	true
+renderTestingShaders		bool	false
+renderModelTestShaders		string	"basic,bump_map"
+renderModelShader			string	"basic"
+renderEnableBumpMapping		bool	true
+renderEnableSpecMapping		bool	true
 soundFactory				string	isWindows()?"DirectSound8":"OpenAL"
 soundStaticBuffers			int		16
 soundStreamingBuffers		int		5

@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of The Glest Advanced Engine
 //
-//	Copyright (C) 2010	James McCulloch <silnarm at gmail>
+//	Copyright (C) 2010-2011 James McCulloch <silnarm at gmail>
 //
 //  GPL V3, see source/licence.txt
 // ==============================================================
@@ -48,6 +48,13 @@ void BorderStyle::setEmbed(int lightColourIndex, int darkColourIndex) {
 void BorderStyle::setSolid(int colourIndex) {
 	m_type = BorderType::SOLID;
 	m_colourIndices[0] = colourIndex;
+}
+
+void BorderStyle::setImage(int imageNdx, int borderSize, int cornerSize) {
+	m_type = BorderType::TEXTURE;
+	m_imageNdx = imageNdx;
+	setSizes(borderSize);
+	m_cornerSize = cornerSize;
 }
 
 PaddingStyle::PaddingStyle() {

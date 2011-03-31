@@ -61,13 +61,6 @@ Texture2D* loadAlphaTexture(const string &path, bool mipmap = false) {
 	return tex;
 }
 
-Font* loadFreeTypeFont(string path, int size) {
-	Font *font = g_renderer.newFreeTypeFont(ResourceScope::GLOBAL);
-	font->setType(path);
-	font->setSize(size);
-	return font;
-}
-
 bool CoreData::load() {
 	g_logger.logProgramEvent("Loading core data");
 
@@ -83,44 +76,36 @@ bool CoreData::load() {
 		logoTexture = loadTexture(dir + "/menu/textures/logo.tga");
 		gplTexture = loadTexture(dir + "/menu/textures/gplv3.tga");
 		gaeSplashTexture = loadTexture(dir + "/menu/textures/gaesplash.tga");
-		checkBoxCrossTexture = loadTexture(dir + "/menu/textures/button_small_unchecked.tga");
-		checkBoxTickTexture = loadTexture(dir + "/menu/textures/button_small_checked.tga");
-		vertScrollUpTexture = loadTexture(dir + "/menu/textures/button_small_up.tga");
-		vertScrollDownTexture = loadTexture(dir + "/menu/textures/button_small_down.tga");
-		vertScrollUpHoverTex = loadTexture(dir + "/menu/textures/button_small_up_hover.tga");
-		vertScrollDownHoverTex = loadTexture(dir + "/menu/textures/button_small_down_hover.tga");
 		waterSplashTexture = loadAlphaTexture(dir + "/misc_textures/water_splash.tga", true);
-		buttonSmallTexture = loadTexture(dir + "/menu/textures/button_small.tga", true);
-		buttonBigTexture = loadTexture(dir + "/menu/textures/button_big.tga", true);
-		textEntryTexture = loadTexture(dir + "/menu/textures/textentry.tga", true);
-		greenTickOverlay = loadTexture(dir + "/menu/textures/green_tick.png");
-		orangeQuestionOverlay = loadTexture(dir + "/menu/textures/orange_question.png");
-		redCrossOverlay = loadTexture(dir + "/menu/textures/red_cross.png");
-		mouseTexture = loadTexture(dir + "/misc_textures/mouse.png");
+		//checkBoxCrossTexture = loadTexture(dir + "/menu/textures/button_small_unchecked.tga");
+		//checkBoxTickTexture = loadTexture(dir + "/menu/textures/button_small_checked.tga");
+		//vertScrollUpTexture = loadTexture(dir + "/menu/textures/button_small_up.tga");
+		//vertScrollDownTexture = loadTexture(dir + "/menu/textures/button_small_down.tga");
+		//vertScrollUpHoverTex = loadTexture(dir + "/menu/textures/button_small_up_hover.tga");
+		//vertScrollDownHoverTex = loadTexture(dir + "/menu/textures/button_small_down_hover.tga");
+		//buttonSmallTexture = loadTexture(dir + "/menu/textures/button_small.tga", true);
+		//buttonBigTexture = loadTexture(dir + "/menu/textures/button_big.tga", true);
+		//textEntryTexture = loadTexture(dir + "/menu/textures/textentry.tga", true);
+		//greenTickOverlay = loadTexture(dir + "/menu/textures/green_tick.png");
+		//orangeQuestionOverlay = loadTexture(dir + "/menu/textures/orange_question.png");
+		//redCrossOverlay = loadTexture(dir + "/menu/textures/red_cross.png");
 	} catch (runtime_error &e) {
 		g_logger.logError(string("Error loading core data.\n") + e.what());
 		return false;
 	}
+	//try {
+	//	mouseTexture = loadTexture(dir + "/misc_textures/mouse.png");
+	//} catch (runtime_error &e) {
+	//	g_logger.logError("mouse.png images not found.\n");
+	//	mouseTexture = 0;
+	//}
+	// fonts
+	//m_menuFont.load(dir + "/menu/fonts/TinDog.ttf", computeFontSize(18));
+	//m_gameFont.load(dir + "/menu/fonts/TinDog.ttf", computeFontSize(10));
+	//m_fancyFont.load(dir + "/menu/fonts/dum1wide.ttf", computeFontSize(28));
 
-	g_logger.logProgramEvent("\tFonts");
-
-	// Display/Console font
-	m_FTDisplay = loadFreeTypeFont(dir + "/menu/fonts/TinDog.ttf", computeFontSize(10));
-	m_FTDisplayBig = loadFreeTypeFont(dir + "/menu/fonts/TinDog.ttf", computeFontSize(12));
-
-	// Misc fonts
-	advancedEngineFontSmall = loadFreeTypeFont(dir + "/menu/fonts/dum1.ttf", computeFontSize(24));
-	advancedEngineFontBig = loadFreeTypeFont(dir + "/menu/fonts/dum1wide.ttf", computeFontSize(36));
-	
-	// Menu fonts...
-	m_FTMenuFontNormal = loadFreeTypeFont(dir + "/menu/fonts/TinDog.ttf", computeFontSize(18));
-	m_FTMenuFontSmall = loadFreeTypeFont(dir + "/menu/fonts/TinDog.ttf", computeFontSize(14));
-	m_FTMenuFontBig = loadFreeTypeFont(dir + "/menu/fonts/TinDog.ttf", computeFontSize(22));
-	m_FTMenuFontVeryBig = loadFreeTypeFont(dir + "/menu/fonts/TinDog.ttf", computeFontSize(26));
-
+	// sounds
 	g_logger.logProgramEvent("\tSounds");
-
-	//sounds
 	try {
 		clickSoundA.load(dir + "/menu/sound/click_a.wav");
 		clickSoundB.load(dir + "/menu/sound/click_b.wav");
@@ -147,15 +132,4 @@ void CoreData::closeSounds(){
     menuMusic.close();
 }
 
-int CoreData::computeFontSize(int size) {
-	int screenH = g_config.getDisplayHeight();
-	int rs= int(g_config.getRenderFontScaler() * size * float(screenH) / 768.f);
-	if (rs < 12) {
-		rs = 12;
-	}
-	return rs;
-}
-
-// ================== PRIVATE ========================
-
-}}//end namespace
+}} // end namespace

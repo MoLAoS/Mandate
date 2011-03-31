@@ -135,6 +135,7 @@ public:
 	const char* operator[](int i) const {return get(i, E::COUNT);} 
 	const char* operator[](E e) const {return get(e, E::COUNT);} // passing E::COUNT here will inline the value in EnumNamesBase::get()
 	E match(const char *value) const {return enum_cast<E>(_match(value));} // this will inline a function call to the fairly large _match() function
+	E match(const string &val) const { return match(val.c_str()); }
 };
 
 //
@@ -143,11 +144,23 @@ public:
 //
 #define RUNTIME_CHECK(x)													\
 	if (!(x)) {																\
-		std::stringstream ss;												\
-		ss << __FUNCTION__ << " (" << __FILE__ << " : " << __LINE__ << ")";	\
-		g_logger.logProgramEvent("In " + ss.str() + "\nRuntime check fail: "#x);		\
-		throw runtime_error("In " + ss.str() + "\nRuntime check fail: "#x);	\
+		std::stringstream ss;                                               \
+		ss << "In " << __FUNCTION__ << " () [" << __FILE__ << " : "         \
+			<< __LINE__ << "]\nRuntime check fail: "#x;                     \
+		g_logger.logError(ss.str());                                        \
+		throw runtime_error(ss.str());	                                    \
 	}	
+
+// and another one, with a custom error message
+#define RUNTIME_CHECK_MSG(x, msg)                                               \
+	if (!(x)) {                                                             \
+		std::stringstream ss;                                               \
+		ss << "In " << __FUNCTION__ << " () [" << __FILE__ << " : "         \
+			<< __LINE__ << "]\nRuntime check fail: "#x << "\n" << msg;      \
+		g_logger.logError(ss.str());                                        \
+		throw runtime_error(ss.str());	                                    \
+	}	
+
 
 //
 // Memory checking stuff
@@ -185,8 +198,8 @@ public:
 		void  Class::operator delete(void *ptr) {					\
 			if (!ptr) return;										\
 			AllocationMap::iterator it = s_allocMap.find(ptr);		\
-			ASSERT(it != s_allocMap.end(), "Bad delete!");			\
-			ASSERT(it->second != 0, "Bad alloc, size == 0.");		\
+			INVARIANT(it != s_allocMap.end(), "Bad delete!");			\
+			INVARIANT(it->second != 0, "Bad alloc, size == 0.");		\
 			s_allocTotal -= it->second;								\
 			s_allocMap.erase(it);									\
 			++s_deAllocCount;										\
@@ -203,8 +216,8 @@ public:
 		void Class::operator delete[](void *ptr) {					\
 			if (!ptr) return;										\
 			AllocationMap::iterator it = s_allocMap.find(ptr);		\
-			ASSERT(it != s_allocMap.end(), "Bad delete!");			\
-			ASSERT(it->second != 0, "Bad alloc, size == 0.");		\
+			INVARIANT(it != s_allocMap.end(), "Bad delete!");			\
+			INVARIANT(it->second != 0, "Bad alloc, size == 0.");		\
 			s_allocTotal -= it->second;								\
 			s_allocMap.erase(it);									\
 			::operator delete[](ptr);								\

@@ -261,7 +261,7 @@ private:
 	void selectInterestingUnit(InterestingUnitType iut);
 	void clickCommonCommand(CommandClass commandClass);
 
-	void onCloseLuaConsole(BasicDialog*);
+	void onCloseLuaConsole(Widget*);
 
 	//misc
 	//int computePosDisplay(int x, int y);

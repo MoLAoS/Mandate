@@ -48,22 +48,18 @@ string getNetworkVersionString(){
 	return gaeVersionString;
 }
 
-string getAboutString1(int i){
+int getAboutStringCount() { return 7; }
+
+string getAboutString(int i){
 	switch(i){
 		case 0: return "Glest Advanced Engine " + gaeVersionString;
 		case 1: return "Built: " + string(__DATE__);
 		case 2: return "Copyright 2001-2008 The Glest Team";
-		case 3: return "Copyright 2008-2010 The GAE Team";
+		case 3: return "Copyright 2008-2011 The GAE Team";
+		case 4: return "Web: http://glestae.sf.net/";
+		case 5: return "Mail: " + gaeMailString;
+		case 6: return "Irc: irc://irc.freenode.net/glest";
 		default: throw runtime_error("AboutString1 #" + intToStr(i) + " does not exist!");
-	}
-}
-
-string getAboutString2(int i){
-	switch(i){
-		case 0: return "Web: http://sf.net/apps/trac/glestae, http://glest.org";
-		case 1: return "Mail: " + gaeMailString;
-		case 2: return "Irc: irc://irc.freenode.net/glest";
-		default: throw runtime_error("AboutString2 #" + intToStr(i) + " does not exist!");
 	}
 }
 
@@ -71,76 +67,35 @@ int getGlestTeamMemberCount() {
 	return 7;
 }
 
-string getGlestTeamMemberName(int i) {
-	switch(i){
-		case 0: return "Martiño Figueroa";
-		case 1: return "José Luis González";
-		case 2: return "Tucho Fernández";
-		case 3: return "José Zanni";
-		case 4: return "Félix Menéndez";
-		case 5: return "Marcos Caruncho";
-		case 6: return "Matthias Braun";
-		default: throw runtime_error("Glest Team Member " + intToStr(i) + " does not exist!");
-	}
-}
-
-// Font metrics are broken for characters with diacratic... so we get measurements with these.
-string getGlestTeamMemberNameNoDiacritics(int i) {
-	switch(i){
-		case 0: return "Martino Figueroa";
-		case 1: return "Jose Luis Gonzalez";
-		case 2: return "Tucho Fernandez";
-		case 3: return "Jose Zanni";
-		case 4: return "Felix Menendez";
-		case 5: return "Marcos Caruncho";
-		case 6: return "Matthias Braun";
-		default: throw runtime_error("Glest Team Member " + intToStr(i) + " does not exist!");
-	}
-}
-
-string getGlestTeamMemberRole(int i){
+string getGlestTeamMemberField(int i, TeamMemberField field) {
 	Lang &l= Lang::getInstance();
-
-	switch(i){
-		case 0: return l.get("Programming");
-		case 1: return l.get("SoundAndMusic");
-		case 2: return l.get("3dAnd2dArt");
-		case 3: return l.get("2dArtAndWeb");
-		case 4: return l.get("Animation");
-		case 5: return l.get("3dArt");
-		case 6: return l.get("LinuxPort");
+	switch(i) {
+		case 0: return field == TeamMemberField::NAME ? "Martiño Figueroa"   : l.get("Programming");
+		case 1: return field == TeamMemberField::NAME ? "José Luis González" : l.get("SoundAndMusic");
+		case 2: return field == TeamMemberField::NAME ? "Tucho Fernández"    : l.get("3dAnd2dArt");
+		case 3: return field == TeamMemberField::NAME ? "José Zanni"         : l.get("2dArtAndWeb");
+		case 4: return field == TeamMemberField::NAME ? "Félix Menéndez"     : l.get("Animation");
+		case 5: return field == TeamMemberField::NAME ? "Marcos Caruncho"    : l.get("3dArt");
+		case 6: return field == TeamMemberField::NAME ? "Matthias Braun"     : l.get("LinuxPort");
 		default: throw runtime_error("Glest Team Member " + intToStr(i) + " does not exist!");
 	}
 }
 
 int getGAETeamMemberCount() {
-	return 5;
+	return 7;
 }
 
-string getGAETeamMemberName(int i) {
+string getGAETeamMemberField(int i, TeamMemberField field) {
+	Lang &l= Lang::getInstance();
 	switch (i) {
-		case 0: return "Daniel Santos";
-		case 1: return "James McCulloch";
-		case 2: return "Nathan Turner";
-		case 3: return "Frank Tetzel";
-		case 4: return "Eric Wilson";
+		case 0: return field == TeamMemberField::NAME ? "Daniel Santos"    : l.get("Programming");
+		case 1: return field == TeamMemberField::NAME ? "Nathan Turner"    : l.get("Programming");
+		case 2: return field == TeamMemberField::NAME ? "James McCulloch"  : l.get("Programming");
+		case 3: return field == TeamMemberField::NAME ? "Frank Tetzel"     : l.get("Programming");
+		case 4: return field == TeamMemberField::NAME ? "Jaagup Repän"     : l.get("Programming");
+		case 5: return field == TeamMemberField::NAME ? "Titus Tscharntke" : l.get("Programming");
+		case 6: return field == TeamMemberField::NAME ? "Eric Wilson"      : l.get("Programming");
 		default: throw runtime_error("GAE Team Memeber " + intToStr(i) + " does not exist!");
-	}
-}
-
-string getGAETeamMemberRole(int i) {
-	return g_lang.get("Programming");
-}
-
-int getGAEContributorCount() {
-	return 2;
-}
-
-string getGAEContributorName(int i) {
-	switch (i) {
-		case 0: return "Jaagup Repän";
-		case 1: return "Titus Tscharntke";
-		default: throw runtime_error("GAE Contributor " + intToStr(i) + " does not exist!");
 	}
 }
 

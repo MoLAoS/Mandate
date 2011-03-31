@@ -126,7 +126,6 @@ private:
 	// display list handles
 	GLuint list3d;
 	GLuint list2d;
-	GLuint list2dNonVirt;
 	GLuint list3dMenu;
 	GLuint list3dGLSL;
 
@@ -160,7 +159,7 @@ public:
 	void initGame(GameState *game);
 	void initMenu(MainMenu *mm);
 	void reset3d();
-	void reset2d(bool nonVirt = false);
+	void reset2d();
 	void reset3dMenu();
 
 	//end
@@ -214,15 +213,15 @@ public:
 	void computeVisibleArea();
 
     //basic rendering
-	void renderMouse2d(int mouseX, int mouseY, int anim, float fade= 0.f);
     void renderMouse3d();
     void renderBackground(const Texture2D *texture);
 	void renderTextureQuad(int x, int y, int w, int h, const Texture2D *texture, float alpha=1.f);
 	void renderSelectionQuad();
-	void renderText(const string &text, const Font *font, float alpha, int x, int y, bool centered= false);
-	void renderText(const string &text, const Font *font, const Vec3f &color, int x, int y, bool centered= false);
+	//void renderText(const string &text, const Font *font, float alpha, int x, int y, bool centered= false);
+	//void renderText(const string &text, const Font *font, const Vec3f &color, int x, int y, bool centered= false);
 	//void renderTextShadow(const string &text, const Font *font, int x, int y, bool centered = false, Vec3f colour = Vec3f(1.f));
 
+	void renderText(const string &text, const Font *font, const Vec4f &color, int x, int y);
 	void renderProgressBar(int size, int x, int y, int w, int h, const Font *font);
 
     //complex rendering
@@ -284,7 +283,6 @@ private:
 	void init3dList();
 	void init3dListGLSL();
     void init2dList();
-	void init2dNonVirtList();
 	void init3dListMenu(MainMenu *mm);
 
 	//private aux drawing

@@ -29,6 +29,7 @@
 #include "menu_state_join_game.h"
 #include "sim_interface.h"
 #include "network_interface.h"
+#include "test_pane.h"
 
 #include "leak_dumper.h"
 
@@ -42,6 +43,15 @@ using namespace Shared::Graphics::Gl;
 
 namespace Glest { namespace Main {
 
+// Program widget event logging...
+#define ENABLE_WIDGET_LOGGING 0
+// widget logging still needs to be turned on (in widgets_base.h), this just disables 
+// the logging macros in this file.
+#if !ENABLE_WIDGET_LOGGING
+#	undef WIDGET_LOG
+#	define WIDGET_LOG(x)
+#endif
+
 // =====================================================
 // 	class Program::CrashProgramState
 // =====================================================
@@ -50,7 +60,7 @@ Program::CrashProgramState::CrashProgramState(Program &program, const exception 
 		: ProgramState(program)
 		, done(false) {
 	program.setFade(1.f);
-	program.initMouse();
+//	program.initMouse();
 	string msg;
 	if(e) {
 		msg = string("Exception: ") + e->what();
@@ -67,7 +77,7 @@ Program::CrashProgramState::CrashProgramState(Program &program, const exception 
 	this->e = e;
 }
 
-void Program::CrashProgramState::onExit(BasicDialog*) {
+void Program::CrashProgramState::onExit(Widget*) {
 	done = true;
 }
 
@@ -96,54 +106,18 @@ Program *Program::singleton = NULL;
 Program::Program(CmdArgs &args)
 		: cmdArgs(args)
 		, tickTimer(1, maxTimes, -1)
-		, updateTimer(40/*GameConstants::updateFps*/, maxUpdateTimes, maxUpdateBackLog)
+		, updateTimer(GameConstants::updateFps, maxUpdateTimes, maxUpdateBackLog)
 		, renderTimer(g_config.getRenderFpsMax(), 1, 0)
 		, updateCameraTimer(GameConstants::cameraFps, maxTimes, 10)
+		, guiUpdateTimer(GameConstants::guiUpdatesPerSec, maxTimes, 10)
 		, simulationInterface(0)
-		, programState(0)
+		, m_programState(0)
 		, crashed(false)
 		, terminating(false)
 		, visible(true)
 		, keymap(getInput(), "keymap.ini") {
-	// set video mode
-	setDisplaySettings();
-
-	// Window
-	Window::setText("Glest Advanced Engine");
-	Window::setStyle(g_config.getDisplayWindowed() ? wsWindowedFixed: wsFullscreen);
-	Window::setPos(0, 0);
-	Window::setSize(g_config.getDisplayWidth(), g_config.getDisplayHeight());
-	Window::create();
-
 	// lang
 	g_lang.setLocale(g_config.getUiLocale());
-
-	// some flags for model interpolation/rendering
-	string lerpMethodName = g_config.getRenderInterpolationMethod();
-	if (lerpMethodName == "x87") {
-		Shared::Graphics::meshLerpMethod = LerpMethod::x87;
-	} else if (lerpMethodName == "SIMD") {
-		Shared::Graphics::meshLerpMethod = LerpMethod::SIMD;
-	//} else if (lerpMethodName == "GLSL") {
-	//	Shared::Graphics::meshLerpMethod = LerpMethod::GLSL;
-	} else {
-		// error ?
-		Shared::Graphics::meshLerpMethod = LerpMethod::SIMD;
-	}
-	Shared::Graphics::use_vbos = true;
-	
-	// render
-	g_logger.logProgramEvent("Initialising OpenGL");
-	initGl(g_config.getRenderColorBits(), g_config.getRenderDepthBits(), g_config.getRenderStencilBits());
-	makeCurrentGl();
-
-	g_logger.logProgramEvent("Loading default texture.");
-	Texture2D::defaultTexture = g_renderer.getTexture2D(ResourceScope::GLOBAL, "data/core/misc_textures/default.tga");
-
-	// load coreData, (needs renderer, but must load before renderer init) and init renderer
-	if (!g_coreData.load() || !g_renderer.init()) {
-		throw runtime_error("An error occurred loading core data.\nPlease see glestadv-error.log");
-	}
 
 	// sound
 	g_soundRenderer.init(this);
@@ -166,14 +140,8 @@ Program::Program(CmdArgs &args)
 
 Program::~Program() {
 	Renderer::getInstance().end();
-
-	if (programState) {
-		delete programState;
-	}
+	delete m_programState;
 	delete simulationInterface;
-
-	//restore video mode
-	restoreDisplaySettings();
 	singleton = 0;
 }
 
@@ -210,29 +178,48 @@ bool Program::init() {
 		gs.setShroudOfDarkness(false);
 		gs.setFactionCount(0);
 
-		try{
+		try {
 			setState(new ShowMap(*this));
-		}catch(runtime_error &e){
+		} catch (runtime_error &e) {
 			// e.g. map path wrong
-			cout << "caught exception:" << endl << e.what() << endl;
+			std::stringstream ss;
+			ss << "Error trying to load map '" << map << "' with tileset '" <<
+				cmdArgs.getLoadTileset() << "'\nException: " << e.what();
+			cout << ss.str();
+			g_logger.logError(ss.str());
 			return false;
 		}
 	} else if(!cmdArgs.getScenario().empty()) {
 		ScenarioInfo scenarioInfo;
-		try{
+		try {
 			Scenario::loadScenarioInfo(cmdArgs.getScenario(), cmdArgs.getCategory(), &scenarioInfo);
 			Scenario::loadGameSettings(cmdArgs.getScenario(), cmdArgs.getCategory(), &scenarioInfo);
 			setState(new QuickScenario(*this));
-		}catch(runtime_error &e){
-			cout << "exception caught:" << endl << e.what() << endl;
+		} catch (runtime_error &e) {
+			std::stringstream ss;
+			ss << "Error trying to load scenario '" << cmdArgs.getScenario() << "' from category '" <<
+				cmdArgs.getCategory() << "'\nException: " << e.what();
+			cout << ss.str();
+			g_logger.logError(ss.str());
 			return false;
 		}
 	} else if (cmdArgs.isLoadLastGame()) {
-		Shared::Xml::XmlTree doc("game-settings");
-		doc.load("last_gamesettings.gs");
-		GameSettings &gs = simulationInterface->getGameSettings();
-		gs = GameSettings(doc.getRootNode());
+		try {
+			Shared::Xml::XmlTree doc("game-settings");
+			doc.load("last_gamesettings.gs");
+			GameSettings &gs = simulationInterface->getGameSettings();
+			gs = GameSettings(doc.getRootNode());
+		} catch (runtime_error &e) {
+			std::stringstream ss;
+			ss << "Error trying to load last game-settings\nException: " << e.what();
+			cout << ss.str();
+			g_logger.logError(ss.str());
+			return false;
+		}
 		setState(new GameState(*this));
+	
+	} else if (cmdArgs.isTest("gui")) {
+		setState(new TestPane(*this));
 
 	// normal startup
 	} else {
@@ -254,6 +241,7 @@ void Program::loop() {
 			int64 updateTime = updateTimer.timeToWait();
 			int64 renderTime = renderTimer.timeToWait();
 			int64 tickTime   = tickTimer.timeToWait();
+			int64 guiTime    = guiUpdateTimer.timeToWait();
 			sleepTime = std::min(std::min(cameraTime, updateTime), std::min(renderTime, tickTime));
 		}
 
@@ -268,27 +256,31 @@ void Program::loop() {
 			{
 				_PROFILE_SCOPE("Program::loop() : Update Sound & Gui");
 				SoundRenderer::getInstance().update();
-				WidgetWindow::update();
 			}
 			if (visible) {
 				_PROFILE_SCOPE("Program::loop() : Render");
-				programState->renderBg();
-				g_renderer.reset2d(true);
+				m_programState->renderBg();
+				g_renderer.reset2d();
 				WidgetWindow::render();
-				programState->renderFg();
+				m_programState->renderFg();
 			}
 		}
 
 		// update camera
 		while (updateCameraTimer.isTime()) {
 			_PROFILE_SCOPE("Program::loop() : update camera");
-			programState->updateCamera();
+			m_programState->updateCamera();
+		}
+
+		// update gui
+		while (guiUpdateTimer.isTime()) {
+			WidgetWindow::update();
 		}
 
 		// update world
 		while (updateTimer.isTime() && !terminating) {
 			_PROFILE_SCOPE("Program::loop() : Update World/Menu");
-			programState->update();
+			m_programState->update();
 			if (simulationInterface->isNetworkInterface()) {
 				simulationInterface->asNetworkInterface()->update();
 			}
@@ -297,7 +289,7 @@ void Program::loop() {
 		// tick timer
 		while (tickTimer.isTime() && !terminating) {
 			_PROFILE_SCOPE("Program::loop() : tick");
-			programState->tick();
+			m_programState->tick();
 		}
 	}
 	terminating = true;
@@ -322,13 +314,13 @@ bool Program::mouseDown(MouseButton btn, Vec2i pos) {
 	WIDGET_LOG( __FUNCTION__ << "( " << MouseButtonNames[btn] << ", " << pos << " )");
 	switch (btn) {
 		case MouseButton::LEFT:
-			programState->mouseDownLeft(pos.x, pos.y);
+			m_programState->mouseDownLeft(pos.x, pos.y);
 			break;
 		case MouseButton::RIGHT:
-			programState->mouseDownRight(pos.x, pos.y);
+			m_programState->mouseDownRight(pos.x, pos.y);
 			break;
 		case MouseButton::MIDDLE:
-			programState->mouseDownCenter(pos.x, pos.y);
+			m_programState->mouseDownCenter(pos.x, pos.y);
 			break;
 		default:
 			break;
@@ -340,13 +332,13 @@ bool Program::mouseUp(MouseButton btn, Vec2i pos) {
 	WIDGET_LOG( __FUNCTION__ << "( " << MouseButtonNames[btn] << ", " << pos << " )");
 	switch (btn) {
 		case MouseButton::LEFT:
-			programState->mouseUpLeft(pos.x, pos.y);
+			m_programState->mouseUpLeft(pos.x, pos.y);
 			break;
 		case MouseButton::RIGHT:
-			programState->mouseUpRight(pos.x, pos.y);
+			m_programState->mouseUpRight(pos.x, pos.y);
 			break;
 		case MouseButton::MIDDLE:
-			programState->mouseUpCenter(pos.x, pos.y);
+			m_programState->mouseUpCenter(pos.x, pos.y);
 			break;
 		default:
 			break;
@@ -356,7 +348,7 @@ bool Program::mouseUp(MouseButton btn, Vec2i pos) {
 
 bool Program::mouseMove(Vec2i pos) {
 	WIDGET_LOG( __FUNCTION__ << "( " << pos << " )");
-	programState->mouseMove(pos.x, pos.y, input.getMouseState());
+	m_programState->mouseMove(pos.x, pos.y, input.getMouseState());
 	return true;
 }
 
@@ -364,13 +356,13 @@ bool Program::mouseDoubleClick(MouseButton btn, Vec2i pos) {
 	WIDGET_LOG( __FUNCTION__ << "( " << MouseButtonNames[btn] << ", " << pos << " )");
 	switch (btn){
 		case MouseButton::LEFT:
-			programState->mouseDoubleClickLeft(pos.x, pos.y);
+			m_programState->mouseDoubleClickLeft(pos.x, pos.y);
 			break;
 		case MouseButton::RIGHT:
-			programState->mouseDoubleClickRight(pos.x, pos.y);
+			m_programState->mouseDoubleClickRight(pos.x, pos.y);
 			break;
 		case MouseButton::MIDDLE:
-			programState->mouseDoubleClickCenter(pos.x, pos.y);
+			m_programState->mouseDoubleClickCenter(pos.x, pos.y);
 			break;
 		default:
 			break;
@@ -380,25 +372,25 @@ bool Program::mouseDoubleClick(MouseButton btn, Vec2i pos) {
 
 bool Program::mouseWheel(Vec2i pos, int zDelta) {
 	WIDGET_LOG( __FUNCTION__ << "( " << pos << ", " << zDelta << " )");
-	programState->eventMouseWheel(pos.x, pos.y, zDelta);
+	m_programState->eventMouseWheel(pos.x, pos.y, zDelta);
 	return true;
 }
 
 bool Program::keyDown(Key key) {
 	WIDGET_LOG( __FUNCTION__ << "( " << Key::getName(KeyCode(key)) << " )");
-	programState->keyDown(key);
+	m_programState->keyDown(key);
 	return true;
 }
 
 bool Program::keyUp(Key key) {
 	WIDGET_LOG( __FUNCTION__ << "( " << Key::getName(KeyCode(key)) << " )");
-	programState->keyUp(key);
+	m_programState->keyUp(key);
 	return true;
 }
 
 bool Program::keyPress(char c) {
 	WIDGET_LOG( __FUNCTION__ << "( '" << c << "' )");
-	programState->keyPress(c);
+	m_programState->keyPress(c);
 	return true;
 }
 
@@ -411,14 +403,13 @@ void Program::setSimInterface(SimulationInterface *si) {
 }
 
 void Program::setState(ProgramState *programState) {
-	if (programState) {
-		delete this->programState;
-	}
-	this->programState = programState;
-	programState->load();
-	programState->init();
-	initMouse();
-	resetTimers(programState->getUpdateFps());
+	//cout << "setting state to ProgramState object @ 0x" << intToHex(int(programState)) << endl;
+	assert(programState != m_programState);
+	delete m_programState;
+	m_programState = programState;
+	m_programState->load();
+	m_programState->init();
+	resetTimers();
 }
 
 void Program::exit() {
@@ -426,11 +417,12 @@ void Program::exit() {
 	terminating = true;
 }
 
-void Program::resetTimers(int updateFps) {
+void Program::resetTimers() {
 	tickTimer.reset();
-	updateTimer.setFps(updateFps);
+	updateTimer.setFps(WORLD_FPS);
 	updateTimer.reset();
 	updateCameraTimer.reset();
+	guiUpdateTimer.reset();
 }
 
 void Program::setUpdateFps(int updateFps) {
@@ -438,37 +430,6 @@ void Program::setUpdateFps(int updateFps) {
 }
 
 // ==================== PRIVATE ====================
-
-void Program::setDisplaySettings() {
-	if (!g_config.getDisplayWindowed()) {
-		int freq= g_config.getDisplayRefreshFrequency();
-		int colorBits= g_config.getRenderColorBits();
-		int screenWidth= g_config.getDisplayWidth();
-		int screenHeight= g_config.getDisplayHeight();
-
-		string modeString = intToStr(screenWidth) + "x" + intToStr(screenHeight) 
-			+ " : " + intToStr(colorBits) + "bpp";
-
-		g_logger.logProgramEvent("Setting video mode: " + modeString + " @" + intToStr(freq) + " Hz");
-		if (!changeVideoMode(screenWidth, screenHeight, colorBits, freq)) {
-			g_logger.logProgramEvent("Error setting video mode: " + modeString + " @" + intToStr(freq) + " Hz");
-			g_logger.logProgramEvent("Attempting to set video mode " + modeString + " @ default freq.");
-			if (!changeVideoMode(screenWidth, screenHeight, colorBits, 0)) {
-				string msg = "Error setting video mode: " + modeString;
-				g_logger.logProgramEvent(msg);
-				g_logger.logError(msg);
-				cout << msg << endl;
-				throw runtime_error(msg);
-			}
-		}
-	}
-}
-
-void Program::restoreDisplaySettings(){
-	if(!g_config.getDisplayWindowed()){
-		restoreVideoMode();
-	}
-}
 
 void Program::crash(const exception *e) {
 	// if we've already crashed then we just try to exit
@@ -479,11 +440,9 @@ void Program::crash(const exception *e) {
 			printf("Exception: %s\n", e.what());
 		}
 		crashed = true;
-		if (programState) {
-			delete programState;
-		}
+		delete m_programState;
 		clear();
-		programState = new CrashProgramState(*this, e);
+		m_programState = new CrashProgramState(*this, e);
 		loop();
 	} else {
 		exit();

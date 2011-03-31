@@ -43,10 +43,10 @@ SkillCycleTable::~SkillCycleTable(){
 }
 
 void SkillCycleTable::create(const TechTree *techTree) {
-	numEntries = g_simInterface.getSkillTypeCount();
+	numEntries = g_prototypeFactory.getSkillTypeCount();
 	header.messageSize = numEntries * sizeof(CycleInfo);
 	if (!numEntries) {
-		cycleTable = NULL; // -loadmap
+		cycleTable = 0; // -loadmap
 		return;
 	}
 	NETWORK_LOG( "SkillCycleTable built, numEntries = " << numEntries 
@@ -54,7 +54,7 @@ void SkillCycleTable::create(const TechTree *techTree) {
 
 	cycleTable = new CycleInfo[numEntries];
 	for (int i=0; i < numEntries; ++i) {
-		cycleTable[i] = g_simInterface.getSkillType(i)->calculateCycleTime();
+		cycleTable[i] = g_prototypeFactory.getSkillType(i)->calculateCycleTime();
 	}
 }
 
@@ -85,8 +85,10 @@ SimulationInterface::SimulationInterface(Program &program)
 		, m_gaia(0)
 		, commander(0)
 		, speed(GameSpeed::NORMAL)
-		, skillCycleTable(0)
+		, m_prototypeFactory(0)
+		, m_skillCycleTable(0)
 		, m_processingCommand(CommandClass::NULL_COMMAND) {
+	m_prototypeFactory = new PrototypeFactory();
 }
 
 SimulationInterface::~SimulationInterface() {
@@ -94,8 +96,9 @@ SimulationInterface::~SimulationInterface() {
 	stats = 0;
 	delete m_gaia;
 	m_gaia = 0;
-	delete skillCycleTable;
-	skillCycleTable = 0;
+	delete m_skillCycleTable;
+	m_skillCycleTable = 0;
+	delete m_prototypeFactory;
 }
 
 void SimulationInterface::constructGameWorld(GameState *g) {
@@ -416,7 +419,7 @@ void SimulationInterface::doUpdateUnitCommand(Unit *unit) {
 }
 
 void SimulationInterface::updateSkillCycle(Unit *unit) {
-	unit->updateSkillCycle(skillCycleTable);
+	unit->updateSkillCycle(m_skillCycleTable);
 }
 
 void SimulationInterface::startFrame(int frame) {
@@ -427,18 +430,18 @@ void SimulationInterface::startFrame(int frame) {
 }
 
 void SimulationInterface::doUpdateAnimOnDeath(Unit *unit) {
-	unit->doUpdateAnimOnDeath(skillCycleTable);
+	unit->doUpdateAnimOnDeath(m_skillCycleTable);
 }
 
 void SimulationInterface::doUpdateAnim(Unit *unit) {
-	unit->doUpdateAnim(skillCycleTable);
+	unit->doUpdateAnim(m_skillCycleTable);
 	IF_MAD_SYNC_CHECKS(
 		postAnimUpdate(unit);
 	)
 }
 
 void SimulationInterface::doUnitBorn(Unit *unit) {
-	unit->doUnitBorn(skillCycleTable);
+	unit->doUnitBorn(m_skillCycleTable);
 	IF_MAD_SYNC_CHECKS(
 		postUnitBorn(unit);
 	)

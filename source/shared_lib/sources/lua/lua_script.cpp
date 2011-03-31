@@ -11,6 +11,7 @@
 
 #include "pch.h"
 
+#include <stack>
 //#include <stdexcept>
 #include <iostream>
 #include "lua_script.h"
@@ -105,11 +106,17 @@ bool LuaScript::isDefined(const string &name) {
 	return defined;
 }
 
+std::stack<string> tableStack;
+
 bool LuaScript::getGlobal(const char *name) {
+	assert(tableStack.empty());
 	lua_getglobal(luaState, name);
 	if (lua_istable(luaState, -1)) {
+		//cout << "getGlobal: " << name << endl;
+		tableStack.push(name);
 		return true;
 	} else {
+		//cout << "getGlobal: '" << name << "' not found." << endl;
 		lua_pop(luaState, -1);
 		return false;
 	}	
@@ -118,43 +125,165 @@ bool LuaScript::getGlobal(const char *name) {
 bool LuaScript::getTable(const char *name) {
 	lua_getfield(luaState, -1, name);
 	if (lua_istable(luaState, -1)) {
+		//cout << "getTable: " << name << endl;
+		tableStack.push(name);
 		return true;
 	} else {
+		//cout << "getTable: '" << name << "' not found." << endl;
 		lua_pop(luaState, 1);
 		return false;
 	}	
 }
 
 void LuaScript::popTable() {
+	if (tableStack.empty()) {
+		assert(false);
+	}
+	//string s = tableStack.top();
+	tableStack.pop();
+	//cout << "Popping '" << s << "'" << endl;
+	assert(lua_istable(luaState, -1));
 	lua_pop(luaState, 1);
 }
 
 void LuaScript::popAll() {
-	lua_pop(luaState, -1);
+	while (!tableStack.empty()) {
+		popTable();
+	}
+}
+
+bool LuaScript::getBoolField(const char *key, bool &out_res) {
+	lua_getfield(luaState, -1, key);
+	LuaArguments args(luaState);
+	try {
+		out_res = args.getBoolean(-1);
+		lua_pop(luaState, 1);
+		return true;
+	} catch (LuaError &e) {
+		lua_pop(luaState, 1);
+		return false;
+	}
+}
+
+bool LuaScript::getVec2iField(const char *key, Vec2i &out_res) {
+	lua_getfield(luaState, -1, key);
+	LuaArguments args(luaState);
+	try {
+		out_res = args.getVec2i(-1);
+		lua_pop(luaState, 1);
+		return true;
+	} catch (LuaError &e) {
+		lua_pop(luaState, 1);
+		return false;
+	}
+}
+
+bool LuaScript::getVec4iField(const char *key, Vec4i &out_res) {
+	lua_getfield(luaState, -1, key);
+	LuaArguments args(luaState);
+	try {
+		out_res = args.getVec4i(-1);
+		lua_pop(luaState, 1);
+		return true;
+	} catch (LuaError &e) {
+		lua_pop(luaState, 1);
+		return false;
+	}
+}
+
+bool LuaScript::getStringField(const char *key, string &out_res) {
+	lua_getfield(luaState, -1, key);
+	LuaArguments args(luaState);
+	try {
+		out_res = args.getString(-1);
+		lua_pop(luaState, 1);
+		return true;
+	} catch (LuaError &e) {
+		lua_pop(luaState, 1);
+		return false;
+	}
+}
+
+bool LuaScript::getStringSet(const char *key, StringSet &out_res) {
+	lua_getfield(luaState, -1, key);
+	LuaArguments args(luaState);
+	try {
+		out_res = args.getStringSet(-1);
+		lua_pop(luaState, 1);
+		return true;
+	} catch (LuaError &e) {
+		lua_pop(luaState, 1);
+		return false;
+	}
+}
+
+bool LuaScript::getBoolField(const char *key) {
+	lua_getfield(luaState, -1, key);
+	LuaArguments args(luaState);
+	bool res;
+	try {
+		res = args.getBoolean(-1);
+		lua_pop(luaState, 1);
+		return res;
+	} catch (LuaError &e) {
+		lua_pop(luaState, 1);
+		throw e;
+	}
+}
+
+Vec2i LuaScript::getVec2iField(const char *key) {
+	lua_getfield(luaState, -1, key);
+	LuaArguments args(luaState);
+	Vec2i res;
+	try {
+		res = args.getVec2i(-1);
+		lua_pop(luaState, 1);
+		return res;
+	} catch (LuaError &e) {
+		lua_pop(luaState, 1);
+		throw e;
+	}
 }
 
 Vec4i LuaScript::getVec4iField(const char *key) {
 	lua_getfield(luaState, -1, key);
 	LuaArguments args(luaState);
-	Vec4i res = args.getVec4i(-1);
-	lua_pop(luaState, 1);
-	return res;
+	Vec4i res;
+	try {
+		res = args.getVec4i(-1);
+		lua_pop(luaState, 1);
+		return res;
+	} catch (LuaError &e) {
+		lua_pop(luaState, 1);
+		throw e;
+	}
 }
 
 string LuaScript::getStringField(const char *key) {
 	lua_getfield(luaState, -1, key);
 	LuaArguments args(luaState);
-	string res = args.getString(-1);
-	lua_pop(luaState, 1);
-	return res;
+	try {
+		string res = args.getString(-1);
+		lua_pop(luaState, 1);
+		return res;
+	} catch (LuaError &e) {
+		lua_pop(luaState, 1);
+		throw e;
+	}
 }
 
 StringSet LuaScript::getStringSet(const char *key) {
 	lua_getfield(luaState, -1, key);
 	LuaArguments args(luaState);
-	StringSet res = args.getStringSet(-1);
-	lua_pop(luaState, 1);
-	return res;
+	StringSet res;
+	try {
+		res = args.getStringSet(-1);
+		lua_pop(luaState, 1);
+		return res;
+	} catch (LuaError &e) {
+		lua_pop(luaState, 1);
+		throw e;
+	}
 }
 
 bool LuaScript::luaCallback(const string& functionName, int id, int userData) {
@@ -214,11 +343,17 @@ string LuaScript::errorToString(int errorCode) {
 	return error;
 }
 
+bool LuaScript::checkType(LuaType type, int ndx) const {
+	LuaArguments args(luaState);
+	return args.checkType(type, ndx);
+}
+
+
 // =====================================================
 //	class LuaArguments
 // =====================================================
 
-LuaArguments::LuaArguments(lua_State *luaState){
+LuaArguments::LuaArguments(lua_State *luaState) {
 	this->luaState= luaState;
 	args = lua_gettop(luaState);
 	returnCount= 0;
@@ -236,7 +371,7 @@ bool LuaArguments::getBoolean(int ndx) const {
 	return lua_toboolean(luaState, ndx);
 }
 
-int LuaArguments::getInt(int ndx) const{
+int LuaArguments::getInt(int ndx) const {
 	if (!checkType(LuaType::NUMBER, ndx)) {
 		string emsg = "Argument " + descArgPos(ndx) + " expected Number, got " + getType(ndx) + ".\n";
 		throw LuaError(emsg);
@@ -244,7 +379,7 @@ int LuaArguments::getInt(int ndx) const{
 	return luaL_checkint(luaState, ndx);
 }
 
-string LuaArguments::getString(int ndx) const{
+string LuaArguments::getString(int ndx) const {
 	if (!checkType(LuaType::STRING, ndx)) {
 		string emsg = "Argument " + descArgPos(ndx) + " expected String, got " + getType(ndx) + ".\n";
 		throw LuaError(emsg);
@@ -252,7 +387,7 @@ string LuaArguments::getString(int ndx) const{
 	return luaL_checkstring(luaState, ndx);
 }
 
-Vec2i LuaArguments::getVec2i(int ndx) const{
+Vec2i LuaArguments::getVec2i(int ndx) const {
 	checkTable(ndx, 2u);
 	Vec2i v;
 	try {
@@ -395,7 +530,7 @@ bool LuaArguments::checkType(LuaType type, int ndx) const {
 		case LuaType::FUNCTION:
 			return lua_isfunction(luaState, ndx);
 		default:
-			ASSERT(false, "LuaArguments::checkType() passed bad arg.");
+			INVARIANT(false, "LuaArguments::checkType() passed bad arg.");
 			return false;
 	}
 }
@@ -429,7 +564,7 @@ size_t LuaArguments::checkTable(int ndx, size_t minSize, size_t maxSize) const {
 }
 
 string LuaArguments::descArgPos(int ndx) const {
-	ASSERT(ndx, "LuaArguments::descArgPos() passed 0. Invalid stack index.");
+	INVARIANT(ndx, "LuaArguments::descArgPos() passed 0. Invalid stack index.");
 	if (ndx > 0) {
 		return intToStr(ndx);
 	}

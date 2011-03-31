@@ -24,11 +24,13 @@
 #include "font.h"
 #include "math_util.h"
 #include "renderer.h"
+#include "widget_config.h"
 
 #include "leak_dumper.h"
 
 using std::max;
 using namespace Shared::Graphics;
+using namespace Glest::Widgets;
 
 namespace Glest { 
 using namespace Global;
@@ -54,7 +56,7 @@ void GraphicComponent::init(int x, int y, int w, int h) {
 	this->y = y;
 	this->w = w;
 	this->h = h;
-	font = g_coreData.getFTMenuFontNormal();
+//	font = g_widgetConfig.getMenuFont()[FontSize::NORMAL];
 	enabled = true;
 	visible = true;
 }
@@ -92,14 +94,14 @@ void GraphicProgressBar::init(int x, int y, int w, int h) {
 	GraphicComponent::init(x, y, w, h);
 
 	// choose appropriate font size
-	CoreData &coreData = CoreData::getInstance();
-	if (h <= 20) {
-		setFont(coreData.getFTMenuFontSmall());
-	} else if (h < 35) {
-		setFont(coreData.getFTMenuFontNormal());
-	} else {
-		setFont(coreData.getFTMenuFontBig());
-	}
+	setFont(g_widgetConfig.getMenuFont());
+	//if (h <= 20) {
+	//	setFont(g_widgetConfig.getMenuFont()[FontSize::SMALL]);
+	//} else if (h < 35) {
+	//	setFont(g_widgetConfig.getMenuFont()[FontSize::NORMAL]);
+	//} else {
+	//	setFont(g_widgetConfig.getMenuFont()[FontSize::BIG]);
+	//}
 }
 
 void GraphicProgressBar::render() {

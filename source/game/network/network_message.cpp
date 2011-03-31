@@ -292,10 +292,10 @@ DataSyncMessage::DataSyncMessage(World &world) : m_data(0), fromRaw(false) {
 	tt->doChecksumResources(checksums[3]);
 	NETWORK_LOG( "TechTree: " << tt->getName() << ", Resource Types checksum: " << intToHex(checksums[3].getSum()));
 
-	m_cmdTypeCount	 = g_simInterface.getCommandTypeCount();
-	m_skillTypeCount = g_simInterface.getSkillTypeCount();
-	m_prodTypeCount = g_simInterface.getProdTypeCount();
-	m_cloakTypeCount = g_simInterface.getCloakTypeCount();
+	m_cmdTypeCount	 = g_prototypeFactory.getCommandTypeCount();
+	m_skillTypeCount = g_prototypeFactory.getSkillTypeCount();
+	m_prodTypeCount = g_prototypeFactory.getProdTypeCount();
+	m_cloakTypeCount = g_prototypeFactory.getCloakTypeCount();
 
 	NETWORK_LOG( "DataSync" );
 	NETWORK_LOG( "========" );
@@ -312,29 +312,29 @@ DataSyncMessage::DataSyncMessage(World &world) : m_data(0), fromRaw(false) {
 
 	if (getChecksumCount() - 4 > 0) {
 		for (int i=0; i < m_cmdTypeCount	; ++i) {
-			const CommandType *ct = g_simInterface.getCommandType(i);
-			m_data[++n] = g_simInterface.getChecksum(ct);
+			const CommandType *ct = g_prototypeFactory.getCommandType(i);
+			m_data[++n] = g_prototypeFactory.getChecksum(ct);
 			NETWORK_LOG( "CommandType " << i << ": " << ct->getName() << " of UnitType: " 
 				<< ct->getUnitType()->getName() << ", checksum: " << m_data[n - 1]);
 		}
 		for (int i=0; i < m_skillTypeCount; ++i) {
-			const SkillType *st = g_simInterface.getSkillType(i);
-			m_data[++n] = g_simInterface.getChecksum(st);
+			const SkillType *st = g_prototypeFactory.getSkillType(i);
+			m_data[++n] = g_prototypeFactory.getChecksum(st);
 			NETWORK_LOG( "SkillType " << i << ": " << st->getName() << " of UnitType: " 
 				<< st->getUnitType()->getName() << ", checksum: " << m_data[n - 1] );
 		}
 		for (int i=0; i < m_prodTypeCount; ++i) {
-			const ProducibleType *pt = g_simInterface.getProdType(i);
-			m_data[++n] = g_simInterface.getChecksum(pt);
-			if (g_simInterface.isUnitType(pt)) {
+			const ProducibleType *pt = g_prototypeFactory.getProdType(i);
+			m_data[++n] = g_prototypeFactory.getChecksum(pt);
+			if (g_prototypeFactory.isUnitType(pt)) {
 				const UnitType *ut = static_cast<const UnitType*>(pt);
 				NETWORK_LOG( "UnitType " << i << ": " << ut->getName() << " of FactionType: " 
 					<< ut->getFactionType()->getName() << ", checksum: " << m_data[n - 1] );
-			} else if (g_simInterface.isUpgradeType(pt)) {
+			} else if (g_prototypeFactory.isUpgradeType(pt)) {
 				const UpgradeType *ut = static_cast<const UpgradeType*>(pt);
 				NETWORK_LOG( "UpgradeType " << i << ": " << ut->getName() << " of FactionType: " 
 					<< ut->getFactionType()->getName() << ", checksum: " << m_data[n - 1] );
-			} else if (g_simInterface.isGeneratedType(pt)) {
+			} else if (g_prototypeFactory.isGeneratedType(pt)) {
 				const GeneratedType *gt = static_cast<const GeneratedType*>(pt);
 				NETWORK_LOG( "GeneratedType " << i << ": " << gt->getName() << " of CommandType: " 
 					<< gt->getCommandType()->getName() << " of UnitType: " 
@@ -344,8 +344,8 @@ DataSyncMessage::DataSyncMessage(World &world) : m_data(0), fromRaw(false) {
 			}
 		}
 		for (int i=0; i < m_cloakTypeCount; ++i) {
-			const CloakType *ct = g_simInterface.getCloakType(i);
-			m_data[n++] = g_simInterface.getChecksum(ct);
+			const CloakType *ct = g_prototypeFactory.getCloakType(i);
+			m_data[n++] = g_prototypeFactory.getChecksum(ct);
 			NETWORK_LOG( "CloakType " << i << ": " << ct->getName() << " of UnitType: "
 				<< ct->getUnitType()->getName() << ", checksum: " << m_data[n - 1] );
 		}

@@ -118,7 +118,7 @@ Command *NetworkCommand::toCommand() const {
 
 	// else CommandArchetype == GIVE_COMMAND
 	// validate command type
-	const CommandType* ct = g_simInterface.getCommandType(commandTypeId);
+	const CommandType* ct = g_prototypeFactory.getCommandType(commandTypeId);
 	if (!ct) {
 		throw runtime_error("Can not find command type with id: " + intToStr(commandTypeId) + " in unit: " + unit->getType()->getName() + ". Game out of synch.");
 	}
@@ -136,12 +136,12 @@ Command *NetworkCommand::toCommand() const {
 
 	const ProducibleType* prodType = 0;
 	if (prodTypeId != -1) {
-		prodType = g_simInterface.getProdType(prodTypeId);
+		prodType = g_prototypeFactory.getProdType(prodTypeId);
 
 		// sanity check... 
-		assert((g_simInterface.isGeneratedType(prodType) && ct->getClass() == CommandClass::GENERATE)
-			|| (g_simInterface.isUpgradeType(prodType) && ct->getClass() == CommandClass::UPGRADE)
-			|| (g_simInterface.isUnitType(prodType)
+		assert((g_prototypeFactory.isGeneratedType(prodType) && ct->getClass() == CommandClass::GENERATE)
+			|| (g_prototypeFactory.isUpgradeType(prodType) && ct->getClass() == CommandClass::UPGRADE)
+			|| (g_prototypeFactory.isUnitType(prodType)
 				&& (ct->getClass() == CommandClass::PRODUCE || ct->getClass() == CommandClass::MORPH
 					|| ct->getClass() == CommandClass::BUILD || ct->getClass() == CommandClass::TRANSFORM)));
 	}

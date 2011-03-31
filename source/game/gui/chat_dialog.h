@@ -36,21 +36,18 @@ public:
 	static const int maxTextLength = Net::TextMessage::maxStringSize; ///@todo implement input restriction...
 
 private:
-	StaticText*	m_label;
 	CheckBox*	m_teamCheckBox;
 	InputBox*	m_inputBox;
-	Panel*		m_panel;
-	Panel*		m_subPanel;
 
 	bool m_teamChat;
 
 private:
-	void onCheckChanged(Button*) { m_teamChat = m_teamCheckBox->isChecked(); }
-	void onInputEntered(TextBox*);
-	void onEscaped(InputBox *) { Escaped(this); }
+	void onCheckChanged(Widget*) { m_teamChat = m_teamCheckBox->isChecked(); }
+	void onInputEntered(Widget*);
+	void onEscaped(Widget*) { Escaped(this); }
 
 public:
-	ChatDialog(Container* parent, Vec2i pos, Vec2i size);
+	ChatDialog(Container* parent);
 //	static ChatDialog* showDialog(Vec2i pos, Vec2i size, bool teamOnly);
 
 	string getInput() const		{ return m_inputBox->getText(); }
@@ -61,9 +58,9 @@ public:
 
 	void clearText()			{ m_inputBox->setText(""); }
 
-	virtual bool mouseDown(MouseButton btn, Vec2i pos);
-	virtual void setVisible(bool vis);
-	virtual string desc() { return string("[ChatDialog: ") + descPosDim() + "]"; }
+	virtual bool mouseDown(MouseButton btn, Vec2i pos) override;
+	virtual void setVisible(bool vis) override;
+	virtual string descType() const override { return "ChatDialog"; }
 };
 
 }}//end namespace

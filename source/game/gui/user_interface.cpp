@@ -142,17 +142,25 @@ UserInterface::~UserInterface() {
 }
 
 void UserInterface::init() {
+	// refs
 	this->commander= g_simInterface.getCommander();
 	this->gameCamera= game.getGameCamera();
-	m_console = new Console(&g_widgetWindow);
-	m_dialogConsole = new Console(&g_widgetWindow, 10, 200, true);
 	this->world= &g_world;
+
 	buildPositions.reserve(max(world->getMap()->getH(), world->getMap()->getW()));
 	selection.init(this, world->getThisFactionIndex());
+
+	// Create Consoles...
+	m_console = new Console(&g_widgetWindow);
+	m_console->setPos(Vec2i(20, g_metrics.getScreenH() - (m_console->getReqHeight() + 20)));
+
+	m_dialogConsole = new Console(&g_widgetWindow, 10, true);
+	m_dialogConsole->setPos(Vec2i(20, 196));
 
 	int x = g_metrics.getScreenW() - 20 - 195;
 	int y = (g_metrics.getScreenH() - 500) / 2;
 
+	// Display Panel
 	m_display = new Display(this, Vec2i(x,y));
 
 	// get 'this' FactionType, discover what resources need to be displayed
@@ -176,11 +184,17 @@ void UserInterface::init() {
 			}
 		}
 		// create ResourceBar, connect thisFactions Resources to it...
-		m_resourceBar = new ResourceBar(fac, displayResources);
+		m_resourceBar = new ResourceBar();
+		m_resourceBar->init(fac, displayResources);
 
-		m_luaConsole = new LuaConsole(this, &g_program, Vec2i(200,200), Vec2i(500, 300));
+		m_luaConsole = new LuaConsole(this, &g_program);
+		m_luaConsole->setPos(Vec2i(200,200));
+		m_luaConsole->setSize(Vec2i(500, 300));
 		m_luaConsole->setVisible(false);
 		m_luaConsole->Button1Clicked.connect(this, &UserInterface::onCloseLuaConsole);
+		m_luaConsole->Close.connect(this, &UserInterface::onCloseLuaConsole);
+		//m_luaConsole->RollUp.connect(this, &UserInterface::onRollUpLuaConsole);
+		//m_luaConsole->RollDown.connect(this, &UserInterface::onRollDownLuaConsole);
 	}
 }
 
@@ -199,10 +213,11 @@ void UserInterface::initMinimap(bool fow, bool sod, bool resuming) {
 	} else { // (ratio > 1) {
 		size = Vec2i(128, (128 / ratio).intp());
 	}
-	size += Vec2i(8, 16);
+	BorderStyle style = g_widgetConfig.getBorderStyle(WidgetType::MINIMAP);
+	size += style.getBorderDims();
 
 	int mx = 10;
-	int my = g_metrics.getScreenH() - size.y - 30;
+	int my = 50;
 	m_minimap = new Minimap(fow, sod, WidgetWindow::getInstance(), Vec2i(mx, my), size);
 	m_minimap->init(g_map.getW(), g_map.getH(), &g_world, resuming);
 	m_minimap->LeftClickOrder.connect(this, &UserInterface::onLeftClickOrder);
@@ -241,7 +256,7 @@ void UserInterface::resetState() {
 	buildPositions.clear();
 	m_minimap->setLeftClickOrder(false);
 	m_minimap->setRightClickOrder(!selection.isEmpty());
-	g_program.setMouseCursorIcon();
+	g_program.getMouseCursor().setAppearance(MouseAppearance::DEFAULT);
 }
 
 static void calculateNearest(UnitVector &units, const Vec3f &pos) {
@@ -868,7 +883,7 @@ void UserInterface::mouseDownDisplayUnitSkills(int posDisplay) {
 				choosenBuildingType = static_cast<const UnitType*>(activeCommandType->getProduced(0));
 				assert(choosenBuildingType != NULL);
 				selectingPos = true;
-				g_program.setMouseCursorIcon(activeCommandType->getImage());
+				g_program.getMouseCursor().setAppearance(MouseAppearance::CMD_ICON, activeCommandType->getImage());
 				m_minimap->setLeftClickOrder(true);
 				activePos = posDisplay;
 			} else if ((activeCommandType && activeCommandType->getClicks() == Clicks::ONE)
@@ -881,7 +896,7 @@ void UserInterface::mouseDownDisplayUnitSkills(int posDisplay) {
 					m_selectingSecond = true;
 				} else {
 					selectingPos = true;
-					g_program.setMouseCursorIcon(ct->getImage());
+					g_program.getMouseCursor().setAppearance(MouseAppearance::CMD_ICON, ct->getImage());
 					m_minimap->setLeftClickOrder(true);
 					activePos = posDisplay;
 				}
@@ -909,7 +924,7 @@ void UserInterface::mouseDownSecondTier(int posDisplay) {
 				assert(choosenBuildingType != NULL);
 				selectingPos = true;
 				activePos = posDisplay;
-				g_program.setMouseCursorIcon(choosenBuildingType->getImage());
+				g_program.getMouseCursor().setAppearance(MouseAppearance::CMD_ICON, choosenBuildingType->getImage());
 			}
 		} else {
 			if (world->getFaction(factionIndex)->reqsOk(pt)) {
@@ -921,6 +936,7 @@ void UserInterface::mouseDownSecondTier(int posDisplay) {
 		}
 	}
 }
+
 ///@todo move to Display
 void UserInterface::computePortraitInfo(int posDisplay) {
 	if (selection.getCount() < posDisplay) {
@@ -1442,7 +1458,7 @@ void UserInterface::computeBuildPositions(const Vec2i &end) {
 	}
 }
 
-void UserInterface::onCloseLuaConsole(BasicDialog*) {
+void UserInterface::onCloseLuaConsole(Widget*) {
 	m_luaConsole->setVisible(false);
 }
 

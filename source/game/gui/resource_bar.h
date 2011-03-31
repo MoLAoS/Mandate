@@ -43,16 +43,18 @@ private:
 	Vec2i m_moveOffset;
 
 public:
-	ResourceBar(const Faction *faction, std::set<const ResourceType*> &types);
+	ResourceBar();
 	~ResourceBar();
 
-	virtual void update();
-	virtual void render();
-	virtual string desc() { return string("[ResourceBar: ") + descPosDim() + "]"; }
+	void init(const Faction *faction, std::set<const ResourceType*> &types);
 
-	virtual bool mouseDown(MouseButton btn, Vec2i pos);
-	virtual bool mouseUp(MouseButton btn, Vec2i pos);
-	virtual bool mouseMove(Vec2i pos);
+	virtual void update() override;
+	virtual void render() override;
+	virtual string descType() const override { return "ResourceBar"; }
+
+	virtual bool mouseDown(MouseButton btn, Vec2i pos) override;
+	virtual bool mouseUp(MouseButton btn, Vec2i pos) override;
+	virtual bool mouseMove(Vec2i pos) override;
 };
 
 }}//end namespace

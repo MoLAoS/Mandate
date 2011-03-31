@@ -107,6 +107,10 @@ namespace Sim {
 WRAPPED_ENUM( QuitSource, LOCAL, SERVER )
 WRAPPED_ENUM( GameStatus, NO_CHANGE, LOST, WON )
 
+// =====================================================
+//  class CycleInfo - skill cycle data
+// =====================================================
+
 class CycleInfo {
 	int skillFrames, animFrames;
 	int soundOffset, attackOffset;
@@ -131,6 +135,11 @@ public:
 	int getSoundOffset() const	{ return soundOffset;	}
 	int getAttackOffset() const { return attackOffset;	}
 };
+
+// =====================================================
+//  class SkillCycleTable - table of cycle infos
+//  indexed by SkillType::m_id
+// =====================================================
 
 class SkillCycleTable : public Net::Message {
 private:
@@ -157,7 +166,11 @@ public:
 	virtual void send(Socket* socket) const { throw runtime_error(string("you should implement ") + __FUNCTION__); }
 };
 
-class SimulationInterface : public MasterTypeFactory {
+// =====================================================
+//  class SimulationInterface
+// =====================================================
+
+class SimulationInterface /*: public PrototypeFactory*/ {
 public:
 	typedef vector<Plan::AiInterface*> AiInterfaces;
 	typedef vector<NetworkCommand> Commands;
@@ -167,7 +180,6 @@ protected:
 	GameState*		game;
 	World*			world;
 	Stats*			stats;
-
 	UnitMap			units;
 
 	GameSettings	gameSettings;
@@ -187,7 +199,8 @@ protected:
 	Commands requestedCommands;	//commands requested by the user
 	Commands pendingCommands;	//commands ready to be given
 
-	SkillCycleTable *skillCycleTable;
+	PrototypeFactory *m_prototypeFactory;
+	SkillCycleTable *m_skillCycleTable;
 
 	IF_MAD_SYNC_CHECKS(
 		WorldLog *worldLog;
@@ -198,6 +211,7 @@ public:
 	SimulationInterface(const SimulationInterface &si);
 	virtual ~SimulationInterface();
 
+	PrototypeFactory& getPrototypeFactory() { return *m_prototypeFactory; }
 	GameSettings &getGameSettings()			{ return gameSettings; }
 	XmlNode*& getSavedGame()				{ return savedGame; }
 	Commander *getCommander()				{ return commander; }
@@ -282,9 +296,9 @@ protected:
 
 	/** Create, create & send or receive the SkillCycleTable */
 	virtual void createSkillCycleTable(const TechTree *techTree) {
-		delete skillCycleTable;
-		skillCycleTable = new SkillCycleTable();
-		skillCycleTable->create(techTree);
+		delete m_skillCycleTable;
+		m_skillCycleTable = new SkillCycleTable();
+		m_skillCycleTable->create(techTree);
 	}
 
 	/** Create & Synchronise AI random number seeds */

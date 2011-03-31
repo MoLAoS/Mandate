@@ -90,7 +90,7 @@ namespace Glest {
 		template<typename Type> class EntityFactory;
 		template<typename Type> class SingleTypeFactory;
 		template<typename Enum, typename BaseType> class DynamicTypeFactory;
-		class MasterTypeFactory;
+		class PrototypeFactory;
 	}
 
 	namespace Entities {

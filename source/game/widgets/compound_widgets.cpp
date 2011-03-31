@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of The Glest Advanced Engine
 //
-//	Copyright (C) 2010	James McCulloch <silnarm at gmail>
+//	Copyright (C) 2010-2011 James McCulloch <silnarm at gmail>
 //
 //  GPL V3, see source/licence.txt
 // ==============================================================
@@ -13,13 +13,16 @@
 #include "core_data.h"
 #include "lang.h"
 #include "leak_dumper.h"
+#include "config.h"
+#include "renderer.h"
 
 #include <list>
 
 namespace Glest { namespace Widgets {
 using Shared::Util::intToStr;
-using Global::CoreData;
-using Global::Lang;
+using namespace Global;
+using namespace Shared::Graphics::Gl;
+
 
 // =====================================================
 //  class OptionContainer
@@ -27,12 +30,12 @@ using Global::Lang;
 
 OptionContainer::OptionContainer(Container* parent, Vec2i pos, Vec2i size, const string &text)
 		: Container(parent, pos, size) {
-	CoreData &coreData = CoreData::getInstance();
+	setWidgetStyle(WidgetType::TEXT_BOX);
 	m_abosulteLabelSize = false;
 	m_labelSize = 30;
 	int w = int(size.x * float(30) / 100.f);
 	m_label = new StaticText(this, Vec2i(0), Vec2i(w, size.y));
-	m_label->setTextParams(text, Vec4f(1.f), coreData.getFTMenuFontNormal(), true);
+	m_label->setText(text);
 	m_widget = 0;
 }
 
@@ -82,211 +85,223 @@ Vec2i OptionContainer::getMinSize() const {
 // =====================================================
 
 ScrollText::ScrollText(Container* parent)
-		: Panel(parent)
-		, MouseWidget(this)
+		: CellStrip(parent, Orientation::HORIZONTAL, 1)
 		, TextWidget(this) {
-	m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::TEXT_BOX);
-//	m_backgroundStyle = g_widgetConfig.getBackgroundStyle(WidgetType::TEXT_BOX);
-	setAutoLayout(false);
-	setPaddingParams(2, 0);
-	setTextParams("", Vec4f(1.f), g_coreData.getFTMenuFontSmall(), false);
-	m_scrollBar = new VerticalScrollBar(this);
+	init();
 }
 
 ScrollText::ScrollText(Container* parent, Vec2i pos, Vec2i size)
-		: Panel(parent, pos, size)
-		, MouseWidget(this)
+		: CellStrip(parent, pos, size, Orientation::HORIZONTAL, Origin::CENTRE, 1)
 		, TextWidget(this) {
-	m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::TEXT_BOX);
-//	m_backgroundStyle = g_widgetConfig.getBackgroundStyle(WidgetType::TEXT_BOX);
-	setAutoLayout(false);
-	setPaddingParams(2, 0);
-	setTextParams("", Vec4f(1.f), g_coreData.getFTMenuFontNormal(), false);
-	Vec2i sbp(size.x - 26, 2);
-	Vec2i sbs(24, size.y - 4);
-	m_scrollBar = new VerticalScrollBar(this, sbp, sbs);
-}
-
-void ScrollText::recalc() {
-	int th = getTextDimensions().y;
-	int ch = getHeight() - getBordersVert() - getPadding() * 2;
-	m_textBase = -(th - ch) + 2;
-	m_scrollBar->setRanges(th, ch);
-	setTextPos(Vec2i(5, m_textBase));
+	init();
+	recalc();
 }
 
 void ScrollText::init() {
-	recalc();
-	Vec2i sbp(getWidth() - 24 - getBorderRight(), getBorderBottom());
-	Vec2i sbs(24, getHeight() - getBordersVert());
-	m_scrollBar->setPos(sbp);
-	m_scrollBar->setSize(sbs);
+	setStyle(g_widgetConfig.getWidgetStyle(WidgetType::TEXT_BOX));
+
+	int itemSize = m_rootWindow->getConfig()->getDefaultItemHeight();
+
+	// Anchors for scroll-bar, stick to the top, right & bottom sides.
+	// Not anchored to left border, so we must set size (width will be respected, height will not)
+	Anchors anchors(Anchor(AnchorType::NONE, 0), Anchor(AnchorType::RIGID, 0), // left, top
+		Anchor(AnchorType::RIGID, 0), Anchor(AnchorType::RIGID, 0));           // right, bottom
+	
+	m_scrollBar = new ScrollBar(this, true, 10);
+	m_scrollBar->setCell(0);
+	m_scrollBar->setAnchors(anchors);
+	m_scrollBar->setSize(Vec2i(itemSize));
 	m_scrollBar->ThumbMoved.connect(this, &ScrollText::onScroll);
+
+	// Anchors for text widget, stick to left, top & bottom, and 'itemSize' in from right
+	anchors = Anchors(Anchor(AnchorType::RIGID, 0), Anchor(AnchorType::RIGID, 0),
+		Anchor(AnchorType::RIGID, itemSize), Anchor(AnchorType::RIGID, 0));
+
+	m_staticText = new StaticText(this);
+	m_staticText->setCell(0);
+	m_staticText->setAnchors(anchors);
+	m_staticText->setAlignment(Alignment::NONE);
 }
 
-void ScrollText::onScroll(VerticalScrollBar* sb) {
-	int offset = sb->getRangeOffset();
-	setTextPos(Vec2i(5, m_textBase - offset));
+void ScrollText::recalc() {
+	int th = m_staticText->getTextDimensions().h;
+	int ch = m_staticText->getHeight() - m_staticText->getBordersVert();
+	m_scrollBar->setRanges(th, ch);
+}
+
+void ScrollText::onScroll(int offset) {
+	int ox = m_staticText->getPos().x;
+	m_staticText->setPos(Vec2i(ox, - offset));
+}
+
+void ScrollText::setSize(const Vec2i &sz) {
+	const FontMetrics *fm = g_widgetConfig.getFont(m_staticText->textStyle().m_fontIndex)->getMetrics();
+	CellStrip::setSize(sz);
+	layoutCells(); // force
+	if (!m_origString.empty()) {
+		string text = m_origString;
+		int width = m_staticText->getSize().w - m_staticText->getBordersHoriz();
+		fm->wrapText(text, width);	
+		m_staticText->setText(text);
+	}
+	recalc();
 }
 
 void ScrollText::setText(const string &txt, bool scrollToBottom) {
-	const FontMetrics *fm = TextWidget::getTextFont()->getMetrics();
-	int width = getSize().x - getPadding() * 2 - 28;
-
+	const FontMetrics *fm = g_widgetConfig.getFont(m_staticText->textStyle().m_fontIndex)->getMetrics();
+	int width = getSize().w - m_scrollBar->getSize().w - getBordersHoriz() - m_staticText->getBordersHoriz();
+	m_origString = txt;
 	string text = txt;
 	fm->wrapText(text, width);
-	/*
-	std::list<string> words, lines;
-
-	string::size_type startPos = 0;
-	string::size_type spacePos = txt.find_first_of(' ');
-	while (spacePos != string::npos) {
-		words.push_back(txt.substr(startPos, spacePos - startPos));
-		startPos = spacePos + 1;
-		spacePos = txt.find_first_of(' ', startPos);
-	}
-	words.push_back(txt.substr(startPos));
-
-	string result;
-	string currLine;
-	do {
-		currLine = words.front();
-		words.pop_front();
-		while (!words.empty()) {
-			string testLine = currLine + ' ' + words.front();
-			if (fm->getTextDiminsions(testLine).x < width) {
-				currLine = testLine;
-				words.pop_front();
-			} else {
-				break;
-			}
-		}
-		result += currLine + "\n";
-	} while (!words.empty());
-	TextWidget::setText(result);
-	*/
-	TextWidget::setText(text);
+	
+	m_staticText->setText(text);
 	recalc();
 	
 	if (scrollToBottom) {
-		m_scrollBar->setOffset(100.f);
+		m_scrollBar->setOffsetPercent(100);
 	}
 }
 
 void ScrollText::render() {
-	Widget::renderBgAndBorders(false);
-	Vec2i pos = getScreenPos() + Vec2i(getBorderLeft(), getBorderBottom());
-	Vec2i size = getSize() - getBordersAll();
-	glPushAttrib(GL_SCISSOR_BIT);
-		glEnable(GL_SCISSOR_TEST);
-		glScissor(pos.x, pos.y, size.x, size.y);
-		Container::render();
-		TextWidget::renderText();
-		glDisable(GL_SCISSOR_TEST);
-	glPopAttrib();
+	CellStrip::render();
+	assertGl();
 }
 
 // =====================================================
 //  class TitleBar
 // =====================================================
 
-TitleBar::TitleBar(Container* parent)
-		: Container(parent)
-		, TextWidget(this)
-		, m_title("")
-		, m_closeButton(0) {
-	//m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::TITLE_BAR);
-	m_backgroundStyle.m_colourIndices[0] = g_widgetConfig.getColourIndex(Colour(0u, 0u, 0u, 255u));
-	m_backgroundStyle.m_colourIndices[1] = g_widgetConfig.getColourIndex(Colour(31u, 31u, 31u, 255u));
-	m_backgroundStyle.m_colourIndices[2] = g_widgetConfig.getColourIndex(Colour(127u, 127u, 127u, 255u));
-	m_backgroundStyle.m_colourIndices[3] = g_widgetConfig.getColourIndex(Colour(91u, 91u, 91u, 255u));
-	m_backgroundStyle.m_type = BackgroundType::CUSTOM_COLOURS;
-	setTextParams(m_title, Vec4f(1.f), g_coreData.getFTMenuFontNormal(), false);
-	setTextPos(Vec2i(5, 2));
+TitleBar::TitleBar(Container* parent, ButtonFlags flags)
+		: CellStrip(parent, Orientation::HORIZONTAL)
+		, m_titleText(0)
+		, m_closeButton(0)
+		, m_rollUpButton(0)
+		, m_rollDownButton(0)
+		, m_expandButton(0)
+		, m_shrinkButton(0) {
+	setWidgetStyle(WidgetType::TITLE_BAR);
+	init(flags);
 }
 
-TitleBar::TitleBar(Container* parent, Vec2i pos, Vec2i size, string title, bool closeBtn)
-		: Container(parent, pos, size)
-		//, MouseWidget(this)
-		, TextWidget(this)
-		, m_title(title)
-		, m_closeButton(0) {
-	///@todo specify in widget.cfg
-	//m_backgroundStyle = g_widgetConfig.getBorderStyle(WidgetType::TITLE_BAR);
-	//m_borderStyle = g_widgetConfig.getBackgroundStyle(WidgetType::TITLE_BAR);
-	m_backgroundStyle.m_colourIndices[0] = g_widgetConfig.getColourIndex(Colour(0u, 0u, 0u, 255u));
-	m_backgroundStyle.m_colourIndices[1] = g_widgetConfig.getColourIndex(Colour(31u, 31u, 31u, 255u));
-	m_backgroundStyle.m_colourIndices[2] = g_widgetConfig.getColourIndex(Colour(127u, 127u, 127u, 255u));
-	m_backgroundStyle.m_colourIndices[3] = g_widgetConfig.getColourIndex(Colour(91u, 91u, 91u, 255u));
-	m_backgroundStyle.m_type = BackgroundType::CUSTOM_COLOURS;
-	setTextParams(title, Vec4f(1.f), g_coreData.getFTMenuFontNormal(), false);
-	setTextPos(Vec2i(5, 2));
-	if (closeBtn) {
-		int btn_sz = size.y - 4;
-		Vec2i pos(size.x - btn_sz - 2, 2);
-		m_closeButton = new Button(this, pos, Vec2i(btn_sz));
-		m_closeButton->setImage(CoreData::getInstance().getCheckBoxCrossTexture());
+//TitleBar::TitleBar(Container* parent, ButtonFlags flags, Vec2i pos, Vec2i size, string title)
+//		: CellStrip(parent, pos, size, Orientation::HORIZONTAL)
+//		, m_titleText(0)
+//		, m_closeButton(0)
+//		, m_rollUpButton(0)
+//		, m_rollDownButton(0)
+//		, m_expandButton(0)
+//		, m_shrinkButton(0) {
+//	setWidgetStyle(WidgetType::TITLE_BAR);
+//	init(flags);
+//	m_titleText->setText(title);
+//}
+
+void TitleBar::init(ButtonFlags flags) {
+	m_flags = flags;
+	int n = flags.getCount() + 1;
+	addCells(n);
+	if (getHeight()) {
+		setSizeHints();
+	}
+	Anchors anchors(Anchor(AnchorType::RIGID, 2));
+	m_titleText = new StaticText(this);
+	m_titleText->setCell(0);
+	m_titleText->setAnchors(anchors);
+
+	int cell = 1;
+	if (flags.isSet(ButtonFlags::ROLL_UPDOWN)) {
+		m_rollDownButton = new RollDownButton(this);
+		m_rollDownButton->setCell(cell);
+		m_rollDownButton->setAnchors(anchors);
+		m_rollDownButton->Clicked.connect(this, &TitleBar::onButtonClicked);
+
+		m_rollUpButton = new RollUpButton(this);
+		m_rollUpButton->setCell(cell++);
+		m_rollUpButton->setAnchors(anchors);
+		m_rollUpButton->Clicked.connect(this, &TitleBar::onButtonClicked);
+		m_rollUpButton->setVisible(false);
+	}
+	if (flags.isSet(ButtonFlags::SHRINK)) {
+		m_shrinkButton = new ShrinkButton(this);
+		m_shrinkButton->setCell(cell++);
+		m_shrinkButton->setAnchors(anchors);
+		m_shrinkButton->Clicked.connect(this, &TitleBar::onButtonClicked);
+	}
+	if (flags.isSet(ButtonFlags::EXPAND)) {
+		m_expandButton = new ExpandButton(this);
+		m_expandButton->setCell(cell++);
+		m_expandButton->setAnchors(anchors);
+		m_expandButton->Clicked.connect(this, &TitleBar::onButtonClicked);
+	}
+	if (flags.isSet(ButtonFlags::CLOSE)) {
+		m_closeButton = new CloseButton(this);
+		m_closeButton->setCell(cell++);
+		m_closeButton->setAnchors(anchors);
+		m_closeButton->Clicked.connect(this, &TitleBar::onButtonClicked);
 	}
 }
 
-void TitleBar::render() {
-	Widget::renderBgAndBorders();
-	TextWidget::renderText();
-	Container::render();
+void TitleBar::onButtonClicked(Widget *source) {
+	Button *btn = static_cast<Button*>(source);
+	if (btn == m_rollDownButton) {
+		RollDown(this);
+	} else if (btn == m_rollUpButton) {
+		RollUp(this);
+	} else if (btn == m_shrinkButton) {
+		Shrink(this);
+	} else if (btn == m_expandButton) {
+		Expand(this);
+	} else if (btn == m_closeButton) {
+		Close(this);
+	}
 }
 
-Vec2i TitleBar::getPrefSize() const { return Vec2i(-1); }
-Vec2i TitleBar::getMinSize() const { return Vec2i(-1); }
+void TitleBar::setSizeHints() {
+	SizeHint hint(-1, getHeight());
+	const int n = m_flags.getCount() + 1;
+	for (int i=1; i < n; ++i) {
+		setSizeHint(i, hint);
+	}
+}
 
 // =====================================================
 //  class Frame
 // =====================================================
 
-Frame::Frame(WidgetWindow *ww)
-		: Container(ww)
+Frame::Frame(WidgetWindow *ww, ButtonFlags flags)
+		: CellStrip(ww, Orientation::VERTICAL, Origin::FROM_TOP, 2)
 		, MouseWidget(this)
 		, m_pressed(false) {
-	m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::MESSAGE_BOX);
-	m_backgroundStyle = g_widgetConfig.getBackgroundStyle(WidgetType::MESSAGE_BOX);
-	m_titleBar = new TitleBar(this);
+	init(flags);
 }
 
-Frame::Frame(Container *parent)
-		: Container(parent)
+Frame::Frame(Container *parent, ButtonFlags flags)
+		: CellStrip(parent, Orientation::VERTICAL, Origin::FROM_TOP, 2)
 		, MouseWidget(this)
 		, m_pressed(false) {
-	m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::MESSAGE_BOX);
-	m_backgroundStyle = g_widgetConfig.getBackgroundStyle(WidgetType::MESSAGE_BOX);
-	m_titleBar = new TitleBar(this);
+	init(flags);
 }
 
-Frame::Frame(Container *parent, Vec2i pos, Vec2i sz)
-		: Container(parent, pos, sz)
+Frame::Frame(Container *parent, ButtonFlags flags, Vec2i pos, Vec2i sz)
+		: CellStrip(parent, pos, sz, Orientation::VERTICAL, Origin::FROM_TOP, 2)
 		, MouseWidget(this)
 		, m_pressed(false) {
-	m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::MESSAGE_BOX);
-	m_backgroundStyle = g_widgetConfig.getBackgroundStyle(WidgetType::MESSAGE_BOX);
-	m_titleBar = new TitleBar(this);
+	init(flags);
 }
 
-void Frame::init(Vec2i pos, Vec2i size, const string &title) {
-	setPos(pos);
-	setSize(size);
-	setTitleText(title);
-}
+void Frame::init(ButtonFlags flags) {
+	setStyle(g_widgetConfig.getWidgetStyle(WidgetType::MESSAGE_BOX));
+	Anchors anchors(Anchor(AnchorType::RIGID, 0));
+	m_titleBar = new TitleBar(this, flags);
+	m_titleBar->setCell(0);
+	m_titleBar->setAnchors(anchors);
+	setSizeHint(0, SizeHint(-1, g_widgetConfig.getDefaultItemHeight() + 4));
 
-void Frame::setSize(Vec2i size) {
-	Container::setSize(size);
-	Vec2i p, s;
-	Font *font = g_coreData.getFTMenuFontNormal();
-	const FontMetrics *fm = font->getMetrics();
-
-	int a = int(fm->getHeight() + 1.f) + 4;
-	p = Vec2i(getBorderLeft(), getHeight() - a - getBorderTop());
-	s = Vec2i(getWidth() - getBordersHoriz(), a);
-
-	m_titleBar->setPos(p);
-	m_titleBar->setSize(s);
+	m_titleBar->Close.connect(this, &Frame::onClose);
+	m_titleBar->RollUp.connect(this, &Frame::onRollUp);
+	m_titleBar->RollDown.connect(this, &Frame::onRollDown);
+	m_titleBar->Shrink.connect(this, &Frame::onShrink);
+	m_titleBar->Expand.connect(this, &Frame::onExpand);
 }
 
 void Frame::setTitleText(const string &text) {
@@ -321,91 +336,96 @@ bool Frame::mouseUp(MouseButton btn, Vec2i pos) {
 	return false;
 }
 
-void Frame::render() {
-	renderBgAndBorders();
-	Container::render();
-}
-
 // =====================================================
 //  class BasicDialog
 // =====================================================
 
 BasicDialog::BasicDialog(WidgetWindow* window)
-		: Frame(window), m_content(0)
-		, m_button1(0), m_button2(0), m_buttonCount(0) {
-	m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::MESSAGE_BOX);
-	m_backgroundStyle = g_widgetConfig.getBackgroundStyle(WidgetType::MESSAGE_BOX);
-	m_titleBar = new TitleBar(this);
+		: Frame(window, ButtonFlags::CLOSE), m_content(0)
+		, m_button1(0), m_button2(0), m_buttonCount(0), m_btnPnl(0) {
+	init();
 }
 
-BasicDialog::BasicDialog(Container* parent, Vec2i pos, Vec2i sz)
-		: Frame(parent, pos, sz), m_content(0)
-		, m_button1(0) , m_button2(0), m_buttonCount(0) {
-	m_borderStyle = g_widgetConfig.getBorderStyle(WidgetType::MESSAGE_BOX);
-	m_backgroundStyle = g_widgetConfig.getBackgroundStyle(WidgetType::MESSAGE_BOX);
-	m_titleBar = new TitleBar(this);
+BasicDialog::BasicDialog(WidgetWindow* window, ButtonFlags flags)
+		: Frame(window, flags), m_content(0)
+		, m_button1(0) , m_button2(0), m_buttonCount(0), m_btnPnl(0) {
+	init();
+}
+
+BasicDialog::BasicDialog(Container* parent)
+		: Frame(parent, ButtonFlags::CLOSE), m_content(0)
+		, m_button1(0), m_button2(0), m_buttonCount(0), m_btnPnl(0) {
+	init();
+}
+
+BasicDialog::BasicDialog(Container* parent, ButtonFlags flags)
+		: Frame(parent, flags), m_content(0)
+		, m_button1(0) , m_button2(0), m_buttonCount(0), m_btnPnl(0) {
+	init();
+}
+
+void BasicDialog::init() {
+	setStyle(g_widgetConfig.getWidgetStyle(WidgetType::MESSAGE_BOX));
+	addCells(1);
 }
 
 void BasicDialog::init(Vec2i pos, Vec2i size, const string &title, 
 					   const string &btn1Text, const string &btn2Text) {
-	Frame::init(pos, size, title);
+	setPos(pos);
+	setSize(size);
+	setTitleText(title);
 	setButtonText(btn1Text, btn2Text);
 }
 
 void BasicDialog::setContent(Widget* content) {
 	m_content = content;
-	Vec2i p, s;
-	int a = m_titleBar->getHeight();
-	p = Vec2i(getBorderLeft(), getBorderBottom() + (m_button1 ? 50 : 0));
-	s = Vec2i(getWidth() - getBordersHoriz(), getHeight() - a - getBordersVert() - (m_button1 ? 50 : 0));
-	m_content->setPos(p);
-	m_content->setSize(s);
+	m_content->setCell(1);
+	m_content->setAnchors(Anchors(Anchor(AnchorType::RIGID, 0)));
+	setDirty();
 }
 
 void BasicDialog::setButtonText(const string &btn1Text, const string &btn2Text) {
-	Font *font = g_coreData.getFTMenuFontNormal();
-	delete m_button1;
-	m_button1 = 0;
-	delete m_button2;
-	m_button2 = 0;
-	if (btn2Text.empty()) {
-		if (btn1Text.empty()) {
-			m_buttonCount = 0;
-		} else {
-			m_buttonCount = 1;
+	delete m_btnPnl;  m_btnPnl  = 0;
+	delete m_button1; m_button1 = 0;
+	delete m_button2; m_button2 = 0;
+
+	m_buttonCount = btn2Text.empty() ? (btn1Text.empty() ? 0 : 1) : 2;
+	if (m_buttonCount) {
+		setSizeHint(2, SizeHint(-1, g_widgetConfig.getDefaultItemHeight() * 3 / 2));
+		m_btnPnl = new CellStrip(this, Orientation::HORIZONTAL, m_buttonCount);
+		m_btnPnl->setCell(2);
+		Anchors anchors(Anchor(AnchorType::RIGID, 0));
+		m_btnPnl->setAnchors(anchors);
+
+		Vec2i pos(0,0);
+		Vec2i size(g_widgetConfig.getDefaultItemHeight() * 5, g_widgetConfig.getDefaultItemHeight());
+		anchors.setCentre(true);
+		m_button1 = new Button(m_btnPnl, pos, size);
+		m_button1->setCell(0);
+		m_button1->setAnchors(anchors);
+		m_button1->setText(btn1Text);
+		m_button1->Clicked.connect(this, &MessageDialog::onButtonClicked);
+
+		if (m_buttonCount == 2) {
+			m_button2 = new Button(m_btnPnl, pos, size);
+			m_button2->setCell(1);
+			m_button2->setAnchors(anchors);
+			m_button2->setText(btn2Text);
+			m_button2->Clicked.connect(this, &MessageDialog::onButtonClicked);
 		}
 	} else {
-		m_buttonCount = 2;
+		setSizeHint(2, SizeHint(-1, 0));
 	}
-	if (!m_buttonCount) {
-		return;
-	}
-	int gap = (getWidth() - 150 * m_buttonCount) / (m_buttonCount + 1);
-	Vec2i p(gap, 10 + getBorderBottom());
-	Vec2i s(150, 30);
-	m_button1 = new Button(this, p, s);
-	m_button1->setTextParams(btn1Text, Vec4f(1.f), font);
-	m_button1->Clicked.connect(this, &MessageDialog::onButtonClicked);
-
-	if (m_buttonCount == 2) {
-		p.x += 150 + gap;
-		m_button2 = new Button(this, p, s);
-		m_button2->setTextParams(btn2Text, Vec4f(1.f), font);
-		m_button2->Clicked.connect(this, &MessageDialog::onButtonClicked);
-	}
+	setDirty();
 }
 
-void BasicDialog::onButtonClicked(Button* btn) {
+void BasicDialog::onButtonClicked(Widget *source) {
+	Button *btn = static_cast<Button*>(source);
 	if (btn == m_button1) {
 		Button1Clicked(this);
 	} else {
 		Button2Clicked(this);
 	}
-}
-
-void BasicDialog::render() {
-	renderBgAndBorders();
-	Container::render();
 }
 
 // =====================================================
@@ -433,7 +453,7 @@ MessageDialog::~MessageDialog(){
 void MessageDialog::setMessageText(const string &text) {
 	setContent(m_scrollText);
 	m_scrollText->setText(text);
-	m_scrollText->init();
+	//m_scrollText->init();
 }
 
 // =====================================================
@@ -444,9 +464,9 @@ InputBox::InputBox(Container *parent)
 		: TextBox(parent) {
 }
 
-InputBox::InputBox(Container *parent, Vec2i pos, Vec2i size)
-		: TextBox(parent, pos, size){
-}
+//InputBox::InputBox(Container *parent, Vec2i pos, Vec2i size)
+//		: TextBox(parent, pos, size){
+//}
 
 bool InputBox::keyDown(Key key) {
 	KeyCode code = key.getCode();
@@ -464,13 +484,19 @@ bool InputBox::keyDown(Key key) {
 
 InputDialog::InputDialog(WidgetWindow* window)
 		: BasicDialog(window) {
-	m_panel = new Panel(this);
-	m_panel->setLayoutParams(true, Panel::LayoutDirection::VERTICAL);
-	m_panel->setPaddingParams(10, 10);
-	m_label = new StaticText(m_panel);
-	m_label->setTextParams("", Vec4f(1.f), g_coreData.getFTMenuFontNormal());
-	m_inputBox = new InputBox(m_panel);
-	m_inputBox->setTextParams("", Vec4f(1.f), g_coreData.getFTMenuFontNormal());
+	Anchors cAnchors;
+	cAnchors.setCentre(true);
+
+	CellStrip *panel = new CellStrip(this, Orientation::VERTICAL, 2);
+	setContent(panel);
+	m_label = new StaticText(panel);
+	m_label->setCell(0);
+	m_label->setAnchors(cAnchors);
+	m_label->setText("");
+	m_inputBox = new InputBox(panel);
+	m_inputBox->setCell(1);
+	m_inputBox->setAnchors(cAnchors);
+	m_inputBox->setText("");
 	m_inputBox->InputEntered.connect(this, &InputDialog::onInputEntered);
 	m_inputBox->Escaped.connect(this, &InputDialog::onEscaped);
 }
@@ -480,19 +506,13 @@ InputDialog* InputDialog::showDialog(Vec2i pos, Vec2i size, const string &title,
 	InputDialog* dlg = new InputDialog(&g_widgetWindow);
 	g_widgetWindow.setFloatingWidget(dlg, true);
 	dlg->init(pos, size, title, btn1Text, btn2Text);
-	dlg->setContent(dlg->m_panel);
 	dlg->setMessageText(msg);
-	Vec2i sz = dlg->m_label->getPrefSize() + Vec2i(4);
-	dlg->m_label->setSize(sz);
-	sz.x = dlg->m_panel->getSize().x - 20;
-	dlg->m_inputBox->setSize(sz);
-	dlg->m_panel->layoutChildren();
 	dlg->m_inputBox->gainFocus();
 	dlg->m_inputBox->Escaped.connect(dlg, &InputDialog::onEscaped);
 	return dlg;
 }
 
-void InputDialog::onInputEntered(TextBox*) {
+void InputDialog::onInputEntered(Widget*) {
 	if (!m_inputBox->getText().empty()) {
 		Button1Clicked(this);
 	}

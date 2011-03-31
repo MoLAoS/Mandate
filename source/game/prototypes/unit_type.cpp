@@ -141,8 +141,9 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 		g_logger.logXmlError(path, e.what());
 		return false; // bail out
 	}
-	if (!UnitStats::load(parametersNode, dir, techTree, factionType))
+	if (!UnitStats::load(parametersNode, dir, techTree, factionType)) {
 		loadOk = false;
+	}
 	// armor type string
 	try {
 		string armorTypeName = parametersNode->getChildRestrictedValue("armor-type");
@@ -267,7 +268,7 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 		try { // cloak
 			const XmlNode *cloakNode = parametersNode->getOptionalChild("cloak");
 			if (cloakNode) {
-				m_cloakType = g_simInterface.newCloakType(this);
+				m_cloakType = g_prototypeFactory.newCloakType(this);
 				m_cloakType->load(dir, cloakNode, techTree, deCloakOnSkills, deCloakOnSkillClasses);
 			}
 		} catch (runtime_error e) {
@@ -345,10 +346,10 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 			if (sn->getName() != "skill") continue;
 			const XmlNode *typeNode = sn->getChild("type");
 			string classId = typeNode->getAttribute("value")->getRestrictedValue();
-			SkillType *skillType = g_simInterface.newSkillType(SkillClassNames.match(classId.c_str()));
+			SkillType *skillType = g_prototypeFactory.newSkillType(SkillClassNames.match(classId.c_str()));
 			skillType->load(sn, dir, techTree, this);
 			skillTypes.push_back(skillType);
-			g_simInterface.setChecksum(skillType);
+			g_prototypeFactory.setChecksum(skillType);
 		}
 	} catch (runtime_error e) {
 		g_logger.logXmlError(path, e.what());
@@ -364,10 +365,10 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 			const XmlNode *commandNode = commandsNode->getChild(i);
 			if (commandNode->getName() != "command") continue;
 			string classId = commandNode->getChildRestrictedValue("type");
-			CommandType *commandType = g_simInterface.newCommandType(CommandClassNames.match(classId.c_str()), this);
+			CommandType *commandType = g_prototypeFactory.newCommandType(CommandClassNames.match(classId.c_str()), this);
 			loadOk = commandType->load(commandNode, dir, techTree, factionType) && loadOk;
 			commandTypes.push_back(commandType);
-			g_simInterface.setChecksum(commandType);
+			g_prototypeFactory.setChecksum(commandType);
 		}
 	} catch (runtime_error e) {
 		g_logger.logXmlError(path, e.what());
@@ -377,9 +378,9 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 
 	// if type has a meeting point, add a SetMeetingPoint command
 	if (meetingPoint) {
-		CommandType *smpct = g_simInterface.newCommandType(CommandClass::SET_MEETING_POINT, this);
+		CommandType *smpct = g_prototypeFactory.newCommandType(CommandClass::SET_MEETING_POINT, this);
 		commandTypes.push_back(smpct);
-		g_simInterface.setChecksum(smpct);
+		g_prototypeFactory.setChecksum(smpct);
 	}
 
 	sortCommandTypes();
@@ -419,9 +420,10 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 				for (int i = 0; i < emanationsNode->getChildCount(); ++i) {
 					try {
 						const XmlNode *emanationNode = emanationsNode->getChild("emanation", i);
-						EmanationType *emanation = g_simInterface.newEmanationType();
+						EmanationType *emanation = g_prototypeFactory.newEmanationType();
 						emanation->load(emanationNode, dir, techTree, factionType);
 						emanations[i] = emanation;
+						///@todo set checksum ???
 					} catch (runtime_error e) {
 						g_logger.logXmlError(path, e.what());
 						loadOk = false;
@@ -457,11 +459,11 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 }
 
 void UnitType::addBeLoadedCommand() {
-	CommandType *blct = g_simInterface.newCommandType(CommandClass::BE_LOADED, this);
+	CommandType *blct = g_prototypeFactory.newCommandType(CommandClass::BE_LOADED, this);
 	static_cast<BeLoadedCommandType*>(blct)->setMoveSkill(getFirstMoveSkill());
 	commandTypes.push_back(blct);
 	commandTypesByClass[CommandClass::BE_LOADED].push_back(blct);
-	g_simInterface.setChecksum(blct);
+	g_prototypeFactory.setChecksum(blct);
 }
 
 void UnitType::doChecksum(Checksum &checksum) const {

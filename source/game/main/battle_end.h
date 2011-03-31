@@ -21,7 +21,7 @@ class GameStatsWidget : public Container {
 public:
 	GameStatsWidget(Container* parent, Vec2i p, Vec2i s);
 	
-	virtual string desc() { return string("[GameStatsWidget: ") + descPosDim() + "]"; }
+	virtual string descType() const override { return "GameStatsWidget"; }
 };
 
 // =====================================================
@@ -36,7 +36,6 @@ private:
 public:
 	BattleEnd(Program &program, bool quickExit=false);
 	~BattleEnd();
-	virtual int getUpdateFps() const {return 10;}
 	virtual void update();
 	virtual void renderBg();
 	virtual void renderFg();

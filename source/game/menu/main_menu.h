@@ -89,7 +89,6 @@ public:
 	virtual void update();
 	virtual void tick();
 	virtual void init();
-	virtual int getUpdateFps() const {return 40;}
 	virtual void mouseMove(int x, int y, const MouseState &mouseState);
 	virtual void mouseDownLeft(int x, int y);
 	virtual void mouseDownRight(int x, int y);
@@ -113,6 +112,7 @@ protected:
 	Program &program;
 	MainMenu *mainMenu;
 	bool	m_transition;
+	StaticText *m_debugText;
 
 protected:
 	float	m_fade;
@@ -123,14 +123,7 @@ private:
 	const MenuState &operator =(const MenuState &);
 
 public:
-	MenuState(Program &program, MainMenu *mainMenu)
-			: program(program), mainMenu(mainMenu)
-	 		, m_fade(0.f)
-			, m_fadeIn(true)
-			, m_fadeOut(false)
-			, m_transition(false) {
-		program.setFade(m_fade);
-	}
+	MenuState(Program &program, MainMenu *mainMenu);
 
 	virtual ~MenuState() {}
 	virtual void mouseClick(int x, int y, MouseButton mouseButton) {}
@@ -139,6 +132,8 @@ public:
 	virtual void update();
 	virtual void keyDown(const Key &key){}
 	virtual void keyPress(char c){}
+	
+	void setDebugString(const string &s);
 
 	virtual MenuStates getIndex() const = 0;
 

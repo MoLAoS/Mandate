@@ -83,17 +83,17 @@ void make_dlist(FT_Face face, unsigned char ch, GLuint list_base, GLuint *tex_ba
 	glNewList(list_base + ch, GL_COMPILE);
 		glBindTexture(GL_TEXTURE_2D, tex_base[ch]);
 		glPushMatrix();
-		glTranslatef(float(bitmap_glyph->left), float(bitmap_glyph->top-bitmap.rows), 0.f);
+		glTranslatef(float(bitmap_glyph->left), -float(bitmap_glyph->top), 0.f);
 
 		// Draw the glyph
 		glBegin(GL_QUADS);
-			glTexCoord2f(0.f, 0.f);
-			glVertex2f(0.f, float(bitmap.rows));
 			glTexCoord2f(0.f, max_v);
+			glVertex2f(0.f, float(bitmap.rows));
+			glTexCoord2f(0.f, 0.f);
 			glVertex2f(0.f, 0.f);
-			glTexCoord2f(max_u, max_v);
-			glVertex2f(float(bitmap.width), 0.f);
 			glTexCoord2f(max_u, 0.f);
+			glVertex2f(float(bitmap.width), 0.f);
+			glTexCoord2f(max_u, max_v);
 			glVertex2f(float(bitmap.width), float(bitmap.rows));
 		glEnd();
 		glPopMatrix();
@@ -116,6 +116,7 @@ void font_data::init(const char * fname, unsigned int h, FontMetrics &metrics) {
 	if (FSFactory::openFace(library, fname, 0, &face)) {
 		throw std::runtime_error("FT_New_Face failed (there is probably a problem with your font file)");
 	}
+	//FT_Set_Pixel_Sizes(face, 0, h);
 	FT_Set_Char_Size(face, h << 6, h << 6, 96, 96);
 	list_base = glGenLists(256);
 	glGenTextures(256, textures);
@@ -162,10 +163,6 @@ void render(const font_data &ft_font, Vec2i pos, const vector<string> &lines) {
 	GLuint font = ft_font.list_base;
 	float h = ft_font.h;// / .63f;
 
-	if (lines.size() > 1) {
-		pos.y += int(ft_font.h * (lines.size() - 1));
-	}
-
 	glPushAttrib(GL_LIST_BIT | GL_CURRENT_BIT  | GL_ENABLE_BIT | GL_TRANSFORM_BIT);
 	glMatrixMode(GL_MODELVIEW);
 	glDisable(GL_LIGHTING);
@@ -185,7 +182,8 @@ void render(const font_data &ft_font, Vec2i pos, const vector<string> &lines) {
 	for (int i = 0; i < lines.size(); ++i) {
 		 glPushMatrix();
 		 glLoadIdentity();
-		 glTranslatef(x, y - h * i, 0);
+
+		 glTranslatef(x, y + h * i, 0);
 		 glMultMatrixf(modelview_matrix);
 		 glCallLists(lines[i].length(), GL_UNSIGNED_BYTE, lines[i].c_str());
 		 glPopMatrix();
@@ -219,13 +217,12 @@ void print(const font_data &ft_font, float x, float y, const unsigned char *text
 	render(ft_font, Vec2i(int(x), int(y)), lines);
 }
 
-}
+} // end namespace Freetype
 
 namespace Gl {
 
 void FreeTypeFont::init() {
 	fontData.init(getType().c_str(), getSize(), metrics);
-
 }
 
 void FreeTypeFont::end() {

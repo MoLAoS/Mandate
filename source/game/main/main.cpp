@@ -199,6 +199,7 @@ int glestMain(int argc, char** argv) {
 			if (!g_config.getDisplayWindowed()) {
 				restoreVideoMode();
 			}
+			g_logger.logError(e.what());
 			exceptionMessage(e);
 		}
 #	endif
@@ -214,9 +215,7 @@ int glestMain(int argc, char** argv) {
 
 	Profile::profileEnd();  // to write profiler data out
 	g_coreData.closeSounds(); // close audio stuff with ogg files
-
 	// FSFactory is deleted atexit(), see FSFactory::getInstance()
-
 	return 0;
 }
 

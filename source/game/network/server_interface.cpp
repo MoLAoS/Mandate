@@ -189,9 +189,9 @@ void ServerInterface::dataSync(int playerNdx, DataSyncMessage &msg) {
 	}
 
 	int cmdOffset = 4;
-	int skllOffset = cmdOffset + m_commandTypeFactory.getTypeCount();
-	int prodOffset = skllOffset + m_skillTypeFactory.getTypeCount();
-	int cloakOffset = prodOffset + m_prodTypeFactory.getTypeCount();
+	int skllOffset = cmdOffset + m_prototypeFactory->getCommandTypeCount();
+	int prodOffset = skllOffset + m_prototypeFactory->getSkillTypeCount();
+	int cloakOffset = prodOffset + m_prototypeFactory->getProdTypeCount();
 
 	const int n = m_dataSync->getChecksumCount();
 	for (int i=0; i < n; ++i) {
@@ -207,31 +207,31 @@ void ServerInterface::dataSync(int playerNdx, DataSyncMessage &msg) {
 				}
 				NETWORK_LOG( "DataSync Fail: " << badBit << " data does not match." )
 			} else if (i < skllOffset) {
-				CommandType *ct = m_commandTypeFactory.getType(i - cmdOffset);
+				const CommandType *ct = m_prototypeFactory->getCommandType(i - cmdOffset);
 				NETWORK_LOG(
 					"DataSync Fail: CommandType '" << ct->getName() << "' of UnitType '"
 					<< ct->getUnitType()->getName() << "' of FactionType '"
 					<< ct->getUnitType()->getFactionType()->getName() << "'";
 				)
 			} else if (i < prodOffset) {
-				SkillType *skillType = m_skillTypeFactory.getType(i - skllOffset);
+				const SkillType *skillType = m_prototypeFactory->getSkillType(i - skllOffset);
 				NETWORK_LOG(
 					"DataSync Fail: SkillType '" << skillType->getName() << "' of UnitType '"
 					<< skillType->getUnitType()->getName() << "' of FactionType '"
 					<< skillType->getUnitType()->getFactionType()->getName() << "'";
 				)
 			} else if (i < cloakOffset) {
-				ProducibleType *pt = m_prodTypeFactory.getType(i - prodOffset);
-				if (isUnitType(pt)) {
-					UnitType *ut = static_cast<UnitType*>(pt);
+				const ProducibleType *pt = m_prototypeFactory->getProdType(i - prodOffset);
+				if (m_prototypeFactory->isUnitType(pt)) {
+					const UnitType *ut = static_cast<const UnitType*>(pt);
 					NETWORK_LOG( "DataSync Fail: UnitType " << i << ": " << ut->getName() 
 						<< " of FactionType: " << ut->getFactionType()->getName() );
-				} else if (isUpgradeType(pt)) {
-					UpgradeType *ut = static_cast<UpgradeType*>(pt);
+				} else if (m_prototypeFactory->isUpgradeType(pt)) {
+					const UpgradeType *ut = static_cast<const UpgradeType*>(pt);
 					NETWORK_LOG( "DataSync Fail: UpgradeType " << i << ": " << ut->getName() 
 						<< " of FactionType: " << ut->getFactionType()->getName() );
-				} else if (isGeneratedType(pt)) {
-					GeneratedType *gt = static_cast<GeneratedType*>(pt);
+				} else if (m_prototypeFactory->isGeneratedType(pt)) {
+					const GeneratedType *gt = static_cast<const GeneratedType*>(pt);
 					NETWORK_LOG( "DataSync Fail: GeneratedType " << i << ": " << gt->getName() << " of CommandType: " 
 						<< gt->getCommandType()->getName() << " of UnitType: " 
 						<< gt->getCommandType()->getUnitType()->getName() );
@@ -239,7 +239,7 @@ void ServerInterface::dataSync(int playerNdx, DataSyncMessage &msg) {
 					throw runtime_error(string("Unknown producible class for type: ") + pt->getName());
 				}
 			} else {
-				CloakType *ct = m_cloakTypeFactory.getType(i - cloakOffset);
+				const CloakType *ct = m_prototypeFactory->getCloakType(i - cloakOffset);
 				NETWORK_LOG(
 					"DataSync Fail: CloakType '" << ct->getName() << "' of UnitType '"
 					<< ct->getUnitType()->getName() << "' of FactionType '"
@@ -256,7 +256,7 @@ void ServerInterface::dataSync(int playerNdx, DataSyncMessage &msg) {
 void ServerInterface::createSkillCycleTable(const TechTree *techTree) {
 	NETWORK_LOG( __FUNCTION__ << " Creating and sending SkillCycleTable." );
 	SimulationInterface::createSkillCycleTable(techTree);
-	broadcastMessage(skillCycleTable);
+	broadcastMessage(m_skillCycleTable);
 }
 
 #if MAD_SYNC_CHECKING

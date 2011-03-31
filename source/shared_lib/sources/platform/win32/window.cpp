@@ -230,6 +230,9 @@ void Window::destroy() {
 
 // ===================== PRIVATE =======================
 
+// debug hook
+void nop() {}
+
 LRESULT CALLBACK Window::eventRouter(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 
 	Window *eventWindow;
@@ -264,10 +267,22 @@ LRESULT CALLBACK Window::eventRouter(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 			RECT windowRect;
 			POINT mousePos;
 
+			if (msg != WM_MOUSEMOVE) {
+				nop();
+			}
+
 			GetWindowRect(eventWindow->getHandle(), &windowRect);
 			mousePos.x = LOWORD(lParam) - windowRect.left;
 			mousePos.y = HIWORD(lParam) - windowRect.top;
-			ClientToScreen(eventWindow->getHandle(), &mousePos);
+			if (eventWindow->windowStyle == wsWindowedFixed) {
+				int titleBarHeight = GetSystemMetrics(SM_CYCAPTION);
+				int borderWidth = GetSystemMetrics(SM_CXFIXEDFRAME);
+				mousePos.x -= borderWidth;
+				mousePos.y -= titleBarHeight;
+			}
+			if (msg != WM_MOUSEWHEEL) { // don't ask me... I just work here
+				ClientToScreen(eventWindow->getHandle(), &mousePos);
+			}
 
 			eventWindow->input.setLastMouseEvent(Chrono::getCurMillis());
 			eventWindow->input.setMousePos(Vec2i(mousePos.x, mousePos.y));
@@ -486,6 +501,13 @@ void Window::createWindow(LPVOID creationData) {
 
 	assert(handle != NULL);
 
+	RECT rect;
+	SystemParametersInfo(SPI_GETWORKAREA, 0, &rect, 0);
+	Vec2i size(w, h);
+	Vec2i desktopPos(rect.left, rect.top);
+	Vec2i desktopSize(rect.right - rect.left, rect.bottom - rect.top);
+	Vec2i pos = (desktopSize - size) / 2 + desktopPos;
+	setPos(max(pos.x, desktopPos.x), max(0, pos.y));
 	ShowWindow(handle, SW_SHOW);
 	UpdateWindow(handle);
 }

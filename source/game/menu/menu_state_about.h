@@ -30,7 +30,7 @@ public:
 
 	MenuStates getIndex() const { return MenuStates::ABOUT; }
 
-	void onReturn(Button*);
+	void onReturn(Widget*);
 
 	void update();
 };

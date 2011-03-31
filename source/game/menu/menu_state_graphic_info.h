@@ -25,7 +25,7 @@ class MenuStateGraphicInfo: public MenuState {
 public:
 	MenuStateGraphicInfo(Program &program, MainMenu *mainMenu);
 
-	void onButtonClick(Widgets::Button*);
+	void onButtonClick(Widget*);
 
 	void update();
 

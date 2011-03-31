@@ -106,7 +106,6 @@ private:
 			m_carryImageOffset, // x,y offset for loaded unit portrait(s)
 			m_progressPos;		// x,y offset for progress bar
 	int m_progPrecentPos;		// progress bar percentage (and -1 when no progress bar)
-	Font *m_font;
 
 	DisplayButton	m_hoverBtn,		// section/index of button mouse is over
 					m_pressedBtn;	// section/index of button that received a mouse down event
@@ -161,14 +160,14 @@ public:
 
 	void switchColor() {currentColor = (currentColor + 1) % colorCount;}
 
-	virtual void render();
-	virtual string desc() { return string("[DisplayPanel: ") + descPosDim() + "]"; }
+	virtual void render() override;
+	virtual string descType() const override { return "DisplayPanel"; }
 
-	virtual bool mouseDown(MouseButton btn, Vec2i pos);
-	virtual bool mouseUp(MouseButton btn, Vec2i pos);
-	virtual bool mouseMove(Vec2i pos);
-	virtual bool mouseDoubleClick(MouseButton btn, Vec2i pos);
-	virtual void mouseOut();
+	virtual bool mouseDown(MouseButton btn, Vec2i pos) override;
+	virtual bool mouseUp(MouseButton btn, Vec2i pos) override;
+	virtual bool mouseMove(Vec2i pos) override;
+	virtual bool mouseDoubleClick(MouseButton btn, Vec2i pos) override;
+	virtual void mouseOut() override;
 };
 
 }}//end namespace

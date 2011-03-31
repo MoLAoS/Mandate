@@ -29,40 +29,41 @@ namespace Glest { namespace Gui {
 //  class ChatDialog
 // =====================================================
 
-ChatDialog::ChatDialog(Container* parent, Vec2i pos, Vec2i size)
-		: BasicDialog(parent, pos, size), m_teamChat(false) {
-	m_panel = new Panel(this);
-	m_panel->setLayoutParams(true, Panel::LayoutDirection::VERTICAL);
-	m_panel->setPaddingParams(10, 10);
+ChatDialog::ChatDialog(Container* parent)
+		: BasicDialog(parent), m_teamChat(false) {
+	Anchors anchors(Anchor(AnchorType::RIGID, 10));
+	// cell 1
+	CellStrip *content = new CellStrip(this, Orientation::VERTICAL, 2);
+	content->setCell(1);
+	content->setAnchors(anchors);
 
-	m_subPanel = new Panel(m_panel);
-	m_subPanel->setLayoutParams(true, Panel::LayoutDirection::HORIZONTAL);
-	m_subPanel->setPaddingParams(0, 10);
-	m_label = new StaticText(m_subPanel);
-	m_label->setTextParams(g_lang.get("TeamOnly") + ": ", Vec4f(1.f), g_coreData.getFTMenuFontNormal());
-	m_label->setSize(m_label->getPrefSize());
-	m_teamCheckBox = new CheckBox(m_subPanel);
-	m_teamCheckBox->setSize(m_teamCheckBox->getPrefSize());
+	int defHeight = g_widgetConfig.getDefaultItemHeight();
+	OptionWidget *ow = new OptionWidget(content, g_lang.get("TeamOnly"));
+	ow->setCell(0);
+	ow->setAnchors(Anchors::getCentreAnchors());
+	ow->setAbsoluteSplit(defHeight + 10, false);
+	int w = ow->getLabel()->getTextDimensions().w + defHeight + 20;
+	ow->setSize(Vec2i(w, defHeight + 4));
+
+	m_teamCheckBox = new CheckBox(ow);
+	m_teamCheckBox->setCell(1);
+	m_teamCheckBox->setAnchors(Anchors::getCentreAnchors());
+	m_teamCheckBox->setSize(Vec2i(defHeight));
 	m_teamCheckBox->setChecked(m_teamChat);
 	m_teamCheckBox->Clicked.connect(this, &ChatDialog::onCheckChanged);
 
-	m_subPanel->setSize(m_label->getWidth() + m_teamCheckBox->getWidth() + 15, 
-		std::max(m_label->getHeight(), m_teamCheckBox->getHeight())); 
-	m_subPanel->layoutChildren();
+	anchors = Anchors(Anchor(AnchorType::RIGID, 0), Anchor(AnchorType::NONE, 0));
 
-	m_inputBox = new InputBox(m_panel);
-	m_inputBox->setTextParams("", Vec4f(1.f), g_coreData.getFTMenuFontNormal());
+	m_inputBox = new InputBox(content);
+	m_inputBox->setCell(1);
+	m_inputBox->setAnchors(anchors);
+	m_inputBox->setSize(Vec2i(0, defHeight + 4));
+	m_inputBox->setText("");
 	m_inputBox->InputEntered.connect(this, &ChatDialog::onInputEntered);
 	m_inputBox->Escaped.connect(this, &ChatDialog::onEscaped);
 
-	init(pos, size, g_lang.get("ChatMsg"), g_lang.get("Send"), g_lang.get("Cancel"));
-	setContent(m_panel);
-
-	Vec2i sz = m_label->getPrefSize();
-	sz.x = m_panel->getSize().x - 20;
-	m_inputBox->setSize(sz);
-	m_subPanel->layoutChildren();
-	m_panel->layoutChildren();
+	setTitleText(g_lang.get("ChatMsg"));
+	setButtonText(g_lang.get("Send"), g_lang.get("Cancel"));
 }
 
 bool ChatDialog::mouseDown(MouseButton btn, Vec2i pos) {
@@ -86,7 +87,7 @@ void ChatDialog::setVisible(bool vis) {
 
 }
 
-void ChatDialog::onInputEntered(TextBox*) {
+void ChatDialog::onInputEntered(Widget*) {
 	if (!m_inputBox->getText().empty()) {
 		Button1Clicked(this);
 	}

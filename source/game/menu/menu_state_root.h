@@ -47,7 +47,7 @@ public:
 	void update();
 
 	// Event handler
-	void onButtonClick(Widgets::Button*);
+	void onButtonClick(Widget*);
 
 	MenuStates getIndex() const { return MenuStates::ROOT; }
 };

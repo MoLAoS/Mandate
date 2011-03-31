@@ -13,25 +13,26 @@
 #define _GLEST_GAME_GAMECONSTANTS_H_
 
 // The 'Globals'
-#define g_program			(*Program::getInstance())
-#define g_gameState			(*GameState::getInstance())
-#define g_world				(World::getInstance())
-#define g_map				(*World::getInstance().getMap())
-#define g_camera			(*GameState::getInstance()->getGameCamera())
-#define g_gameSettings		(GameState::getInstance()->getGameSettings())
-#define g_userInterface		(*Gui::UserInterface::getCurrentGui())
-#define g_console			(*Gui::UserInterface::getCurrentGui()->getRegularConsole())
-#define g_config			(Config::getInstance())
-#define g_routePlanner		(*World::getInstance().getRoutePlanner())
-#define g_cartographer		(*World::getInstance().getCartographer())
-#define g_renderer			(Renderer::getInstance())
-#define g_soundRenderer		(SoundRenderer::getInstance())
-#define g_logger			(Logger::getInstance())
-#define g_lang				(Lang::getInstance())
-#define g_metrics			(Metrics::getInstance())
-#define g_coreData			(CoreData::getInstance())
-#define g_fileFactory		(*FSFactory::getInstance())
-#define g_simInterface		(*Program::getInstance()->getSimulationInterface())
+#define g_program           (*Program::getInstance())
+#define g_gameState         (*GameState::getInstance())
+#define g_world             (World::getInstance())
+#define g_map               (*World::getInstance().getMap())
+#define g_camera            (*GameState::getInstance()->getGameCamera())
+#define g_gameSettings      (GameState::getInstance()->getGameSettings())
+#define g_userInterface     (*Gui::UserInterface::getCurrentGui())
+#define g_console           (*Gui::UserInterface::getCurrentGui()->getRegularConsole())
+#define g_config            (Config::getInstance())
+#define g_routePlanner      (*World::getInstance().getRoutePlanner())
+#define g_cartographer      (*World::getInstance().getCartographer())
+#define g_renderer          (Renderer::getInstance())
+#define g_soundRenderer     (SoundRenderer::getInstance())
+#define g_logger            (Logger::getInstance())
+#define g_lang              (Lang::getInstance())
+#define g_metrics           (Metrics::getInstance())
+#define g_coreData          (CoreData::getInstance())
+#define g_fileFactory       (*FSFactory::getInstance())
+#define g_simInterface      (*Program::getInstance()->getSimulationInterface())
+#define g_prototypeFactory  (Program::getInstance()->getSimulationInterface()->getPrototypeFactory())
 
 #if _GAE_DEBUG_EDITION_
 #	define g_debugRenderer	(Glest::Debug::getDebugRenderer())
@@ -48,7 +49,7 @@
 #	define IF_MAD_SYNC_CHECKS(x)
 #endif
 
-#define WORLD_FPS (40)
+#define WORLD_FPS (GameConstants::updateFps)
 
 #include "util.h"
 using Shared::Util::EnumNames;
@@ -109,9 +110,9 @@ namespace GameConstants {
 	const int maxColours = 16;
 	const int serverPort = 61357;
 
-	//const int defaultUpdateInterval = 6;
-	//const int updateFps = 240; // == GameSpeeds_lcm
+	const int updateFps = 40;
 	const int cameraFps = 100;
+	const int guiUpdatesPerSec = 120;
 	const int networkFramePeriod = 5;
 	const int networkExtraLatency = 250;
 

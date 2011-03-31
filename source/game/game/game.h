@@ -118,7 +118,6 @@ public:
 	// init
 	virtual void load();
 	virtual void init();
-	virtual int getUpdateFps() const {return 40;}
 	virtual void update();
 	virtual void updateCamera();
 	virtual void renderBg();
@@ -158,10 +157,10 @@ public:
 	void confirmQuitGame();
 	void confirmExitProgram();
 
-	void onConfirmQuitGame(BasicDialog*);
-	void onConfirmExitProgram(BasicDialog*);
+	void onConfirmQuitGame(Widget*);
+	void onConfirmExitProgram(Widget*);
 
-	void destroyDialog(BasicDialog* ptr = 0);
+	void destroyDialog(Widget* ptr = 0);
 
 	void doDefeatedMessage(Faction *f);
 	void doSaveBox();
@@ -178,21 +177,21 @@ protected:
 	
 	//char getStringFromFile(ifstream *fileStream, string *str);
 	void saveGame(string name) const;
-	void onSaveSelected(BasicDialog*);
+	void onSaveSelected(Widget*);
 
 	void displayError(std::exception &e);
-	void onErrorDismissed(BasicDialog*);
+	void onErrorDismissed(Widget*);
 
 	void doGameMenu();
 	void doExitMessage(const string &msg);
-	void onExitSelected(BasicDialog*);
+	void onExitSelected(Widget*);
 
 	void doScriptMessage();
 
 	void doChatDialog();
 
-	void onChatEntered(BasicDialog*);
-	void onChatCancel(BasicDialog*);
+	void onChatEntered(Widget*);
+	void onChatCancel(Widget*);
 };
 
 

@@ -62,8 +62,6 @@ public:
 	virtual void load(){}
 	virtual void end(){}
 
-	virtual int getUpdateFps() const = 0 ;//{ return GameConstants::defaultUpdateInterval; }
-
 	virtual void mouseDownLeft(int x, int y){}
 	virtual void mouseDownRight(int x, int y){}
 	virtual void mouseDownCenter(int x, int y){}
@@ -98,14 +96,14 @@ private:
 		CrashProgramState(Program &program, const exception *e);
 		virtual int getUpdateFps() const {return 10;}
 
-		void onExit(BasicDialog*);
-		virtual void update();
+		void onExit(Widget*);
+		virtual void update() override;
 
-		virtual void renderBg();
-		virtual void renderFg();
+		virtual void renderBg() override;
+		virtual void renderFg() override;
 	};
 
-	static const int maxUpdateTimes = 5 * 6;
+	static const int maxUpdateTimes = 5;
 	static const int maxUpdateBackLog = 12; ///@todo should be speed dependant
 	static const int maxTimes = 5;
 
@@ -116,10 +114,11 @@ private:
 	PerformanceTimer updateTimer;
 	PerformanceTimer renderTimer;
 	PerformanceTimer updateCameraTimer;
+	PerformanceTimer guiUpdateTimer;
 
 	SimulationInterface *simulationInterface;
 
-	ProgramState *programState;
+	ProgramState *m_programState;
 	bool crashed;
 	bool terminating;
 	bool visible;
@@ -140,18 +139,18 @@ public:
 	void setSimInterface(SimulationInterface *si);
 
 	// InputWidget virtuals
-	virtual bool mouseDown(MouseButton btn, Vec2i pos);
-	virtual bool mouseUp(MouseButton btn, Vec2i pos);
-	virtual bool mouseMove(Vec2i pos);
-	virtual bool mouseDoubleClick(MouseButton btn, Vec2i pos);
-	virtual bool mouseWheel(Vec2i pos, int zDelta);
-	virtual bool keyDown(Key key);
-	virtual bool keyUp(Key key);
-	virtual bool keyPress(char c);
+	virtual bool mouseDown(MouseButton btn, Vec2i pos) override;
+	virtual bool mouseUp(MouseButton btn, Vec2i pos) override;
+	virtual bool mouseMove(Vec2i pos) override;
+	virtual bool mouseDoubleClick(MouseButton btn, Vec2i pos) override;
+	virtual bool mouseWheel(Vec2i pos, int zDelta) override;
+	virtual bool keyDown(Key key) override;
+	virtual bool keyUp(Key key) override;
+	virtual bool keyPress(char c) override;
 
 	// Window virtuals
-	virtual void eventActivate(bool active) {}
-	virtual void eventResize(SizeState sizeState);
+	virtual void eventActivate(bool active) override {}
+	virtual void eventResize(SizeState sizeState) override;
 	/*
 	// Unused events of Window
 	virtual void eventCreate(){}
@@ -170,7 +169,7 @@ public:
 	void loop();
 	void exit();
 	void setMaxUpdateBacklog(int maxBacklog)	{updateTimer.setMaxBacklog(maxBacklog);}
-	void resetTimers(int updateFps);
+	void resetTimers();
 	void setUpdateFps(int updateFps);
 	void setTechTitle(const string &title) {
 		if (title.empty()) {
@@ -179,10 +178,6 @@ public:
 			Window::setText(title + " - Glest Advanced Engine");
 		}
 	}
-
-private:
-	void setDisplaySettings();
-	void restoreDisplaySettings();
 };
 
 }} //end namespace

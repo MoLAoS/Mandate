@@ -41,60 +41,67 @@ class Rect2{
 public:
 	Vec2<T> p[2];
 public:
-	Rect2(){
-	};
+	Rect2() {};
 
-	Rect2(const Vec2<T> &p0, const Vec2<T> &p1){
-		this->p[0]= p0;
-		this->p[1]= p1;
+	Rect2(const Vec2<T> &p0, const Vec2<T> &p1) {
+		p[0] = p0;
+		p[1] = p1;
 	}
 
 	Rect2(T p0x, T p0y, T p1x, T p1y){
-		p[0].x= p0x;
-		p[0].y= p0y;
-		p[1].x= p1x;
-		p[1].y= p1y;
+		p[0].x = p0x;
+		p[0].y = p0y;
+		p[1].x = p1x;
+		p[1].y = p1y;
 	}
 
-	Rect2<T> operator*(T scalar){
-		return Rect2<T>(
-			p[0]*scalar,
-			p[1]*scalar);
+	Rect2<T> operator*(T scalar) {
+		return Rect2<T>(p[0] * scalar, p[1] * scalar);
 	}
 
-	Rect2<T> operator/(T scalar){
-		return Rect2<T>(
-			p[0]/scalar,
-			p[1]/scalar);
+	Rect2<T> operator/(T scalar) {
+		return Rect2<T>(p[0] / scalar, p[1] / scalar);
 	}
 
-	bool operator ==(const Rect2<T> &v) const{
+	bool operator ==(const Rect2<T> &v) const {
 		return p[0] == v.p[0] && p[1] == v.p[1];
 	}
 
-	bool isInside(const Vec2<T> &p) const{
-		return
-			p.x>=this->p[0].x &&
-			p.y>=this->p[0].y &&
-			p.x<this->p[1].x &&
-			p.y<this->p[1].y;
+	bool isInside(const Vec2<T> &p) const {
+		return p.x >= this->p[0].x && p.y >= this->p[0].y
+			&& p.x <  this->p[1].x && p.y <  this->p[1].y;
 	}
 
-	void clamp(T minX, T minY,T  maxX, T maxY){
-		for(int i=0; i<2; ++i){
-			if(p[i].x<minX){
-				p[i].x= minX;
+	void clamp(T minX, T minY,T  maxX, T maxY) {
+		for (int i=0; i < 2; ++i) {
+			if (p[i].x < minX) {
+				p[i].x = minX;
 			}
-			if(p[i].y<minY){
-				p[i].y= minY;
+			if (p[i].y < minY) {
+				p[i].y = minY;
 			}
-			if(p[i].x>maxX){
-				p[i].x= maxX;
+			if (p[i].x > maxX) {
+				p[i].x = maxX;
 			}
-			if(p[i].y>maxY){
-				p[i].y= maxY;
+			if (p[i].y > maxY) {
+				p[i].y = maxY;
 			}
 		}
+	}
+
+	/** calculate the intersection of this and another rectangle
+	  * @return a rectangle decribing the intersection (p0 == p1 if no intersection)
+	  * @todo test me */
+	Rect2<T> interection(const Rect2<T> &that) const {
+		Rect2<T> res;
+		res.p[0].x = std::max(p[0].x, that.p[0].x);
+		res.p[0].y = std::max(p[0].y, that.p[0].y);
+		res.p[1].x = std::min(p[1].x, that.p[1].x);
+		res.p[1].y = std::min(p[1].y, that.p[1].y);
+		if (res.p[1].x <= res.p[0].x || res.p[1].y <= res.p[0].y) {
+			res.p[0] = res.p[1]; // give consistent behaviour if no intersection
+		}
+		return res;
 	}
 };
 

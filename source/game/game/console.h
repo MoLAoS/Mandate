@@ -40,12 +40,12 @@ class Console : public Widget, public TextWidget {
 public:
 	struct TextInfo {
 		string text;
-		Vec4f colour;
-		TextInfo(const string &text) : text(text), colour(1.f) {}
-		TextInfo(const string &text, Vec3f colour) : text(text), colour(colour, 1.f) {}
+		Colour colour;
+		TextInfo(const string &text) : text(text), colour(255u) {}
+		TextInfo(const string &text, Colour colour) : text(text), colour(colour) {}
 	};
 	struct Message : public vector<TextInfo> {
-		Message(const string &txt, Vec3f col) { push_back(TextInfo(txt, col)); }
+		Message(const string &txt, Colour col) { push_back(TextInfo(txt, col)); }
 		Message(const string &txt) { push_back(TextInfo(txt)); }
 	};
 	typedef pair<Message, float> MessageTimePair;
@@ -60,18 +60,19 @@ private:
 	int maxLines;
 	float timeout;
 
-	int yPos;
 	bool fromTop;
 
-	Font *m_font;
-
 public:
-	Console(Container* parent, int maxLines = 5, int yPos = 20, bool fromTop = false);
+	Console(Container* parent, int maxLines = 5, bool fromTop = false);
 	~Console();
 
-	virtual void update();
-	virtual void render();
-	virtual string desc() { return string("[Console: ") + descPosDim() + "]"; }
+	int getReqHeight() {
+		return (int(getFont()->getMetrics()->getHeight() + 1.f) * maxLines);
+	}
+
+	virtual void update() override;
+	virtual void render() override;
+	virtual string descType() const override { return "Console"; }
 
 	void addStdMessage(const string &s);
 	void addStdMessage(const string &s, const string &param1, const string &param2 = "", const string &param3 = "");

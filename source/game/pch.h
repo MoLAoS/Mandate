@@ -22,7 +22,7 @@
 #	define USE_PCH 0
 #endif
 
-#define ASSERT(condition, message) assert((condition) && message)
+#define INVARIANT(condition, message) assert((condition) && message)
 
 #if USE_PCH
 
@@ -33,10 +33,11 @@
 #	if defined (USE_SDL)
 #		error USE_SDL is not compatible with WIN32 or WIN64
 #	endif
+#	include <xaudio2.h>
 #	define NOMINMAX
 #	include <windows.h>
-#	include <io.h>
 #	include <crtdbg.h>
+#	include <io.h>
 #else
 #	include <unistd.h>
 #	include <signal.h>

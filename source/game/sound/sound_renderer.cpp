@@ -38,19 +38,21 @@ SoundRenderer::SoundRenderer(){
 	loadConfig();
 }
 
-void SoundRenderer::init(Window *window){
+void SoundRenderer::init(Window *window) {
 	g_logger.logProgramEvent("Initialising sound renderer");
 
 	SoundInterface &si= SoundInterface::getInstance();
 	FactoryRepository &fr= FactoryRepository::getInstance();
 	Config &config= Config::getInstance();
 
+	g_logger.logProgramEvent("\tRequesting sound factory of type '" + config.getSoundFactory() + "'");
 	si.setFactory(fr.getSoundFactory(config.getSoundFactory()));
 	soundPlayer= si.newSoundPlayer();
 
 	SoundPlayerParams soundPlayerParams;
 	soundPlayerParams.staticBufferCount= config.getSoundStaticBuffers();
 	soundPlayerParams.strBufferCount= config.getSoundStreamingBuffers();
+	g_logger.logProgramEvent("\tInitialising SoundPlayer");
 	soundPlayer->init(&soundPlayerParams);
 }
 

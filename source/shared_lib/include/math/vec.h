@@ -34,6 +34,7 @@ public:
 	union {
 		struct { T x, y; };
 		struct { T w, h; };
+		struct { T u, v; };
 		T raw[2];
 	};
 
@@ -83,14 +84,6 @@ public:
 
 	bool operator<(const Vec2<T> &v) const {
 		return x < v.x || (x == v.x && y < v.y);
-	}
-
-	bool northWestOf(const Vec2<T> &v) const {
-		return x < v.x && y < v.y;
-	}
-
-	bool southEastOf(const Vec2<T> &v) const {
-		return x >= v.x && y >= v.y;
 	}
 
 	Vec2<T> operator+(const Vec2<T> &v) const {

@@ -35,51 +35,55 @@ MenuStateGraphicInfo::MenuStateGraphicInfo(Program &program, MainMenu *mainMenu)
 	string glExt = renderer.getGlMoreInfo();
 	string glExt2 = renderer.getGlMoreInfo2();
 
-	Font *normFont = CoreData::getInstance().getFTMenuFontNormal();
-	Font *smallFont = CoreData::getInstance().getFTMenuFontSmall();
+	WidgetConfig &cfg = g_widgetConfig;
 
-	// text dimensions
-	Vec2f infoDims = smallFont->getMetrics()->getTextDiminsions(glInfo);
-	Vec2f glExtDims = smallFont->getMetrics()->getTextDiminsions(glExt);
-	Vec2f plExtDims = smallFont->getMetrics()->getTextDiminsions(glExt2);
+	int itemHeight = cfg.getDefaultItemHeight();
 
-	const Metrics &metrics = Metrics::getInstance();
-	int w = int(std::max(infoDims.x, std::max(glExtDims.x, plExtDims.x)));
-	w += 10;
-	int gap = (metrics.getScreenW() - 3 * w) / 4;
+	CellStrip *rootStrip = new CellStrip((Container*)&program, Orientation::VERTICAL, 2);
+	rootStrip->setSizeHint(0, SizeHint());
+	rootStrip->setSizeHint(1, SizeHint(-1, itemHeight * 3));
+	Vec2i pad(15, 25);
+	rootStrip->setPos(pad);
+	rootStrip->setSize(Vec2i(g_config.getDisplayWidth() - pad.w * 2, g_config.getDisplayHeight() - pad.h * 2));
 
-	// basic info
-	int x = gap;
-	int y = metrics.getScreenH() - 110 - int(infoDims.y);
-	int h = int(infoDims.y) + 10;
-	Widgets::StaticText* l_text = new Widgets::StaticText(&program, Vec2i(x, y), Vec2i(w, h));
-	l_text->setTextParams(glInfo, Vec4f(1.f), smallFont);
+	Anchors centreAnchors;
+	centreAnchors.setCentre(true, true);
+	Anchors fillAnchors(Anchor(AnchorType::RIGID, 0));
 
-	// gl extensions
-	x += gap + w;
-	y = 200;
-	h = metrics.getScreenH() - 300;
-	ScrollText* l_stext = new ScrollText(&program, Vec2i(x, y), Vec2i(w, h));
-	l_stext->setTextParams(glExt, Vec4f(1.f), smallFont, false);
-	l_stext->init();
+	CellStrip *mainStrip = new CellStrip(rootStrip, Orientation::HORIZONTAL, 3);
+	mainStrip->setCell(0);
+	mainStrip->setAnchors(fillAnchors);
 
-	// platform extensions
-	x += gap + w;
-	l_stext = new ScrollText(&program, Vec2i(x, y), Vec2i(w, h));
-	l_stext->setTextParams(glExt2, Vec4f(1.f), smallFont, false);
-	l_stext->init();
+	Widgets::StaticText* l_text = new Widgets::StaticText(mainStrip);
+	l_text->setCell(0);
+	l_text->setAnchors(fillAnchors);
+	l_text->setText(glInfo);
 
-	// return button
-	x = (metrics.getScreenW() - 150) / 2;
-	w = 150, y = 85, h = 30;
-	Button* l_button = new Button(&program, Vec2i(x, y), Vec2i(w, h));
-	l_button->setTextParams(lang.get("Return"), Vec4f(1.f), normFont);
+	ScrollText* l_stext = new ScrollText(mainStrip);
+	l_stext->setCell(1);
+	l_stext->setAnchors(fillAnchors);
+	l_stext->setText(glExt);
+
+	l_stext = new ScrollText(mainStrip);
+	l_stext->setCell(2);
+	l_stext->setAnchors(fillAnchors);
+	l_stext->setText(glExt2);
+
+	// buttons panel
+	CellStrip *btnPanel = new CellStrip(rootStrip, Orientation::HORIZONTAL, 3);
+	btnPanel->setCell(1);
+	btnPanel->setAnchors(fillAnchors);
+
+	// create buttons
+	Vec2i sz(itemHeight * 7, itemHeight);
+	Button* l_button = new Button(btnPanel, Vec2i(0), sz);
+	l_button->setCell(0);
+	l_button->setAnchors(centreAnchors);
+	l_button->setText(lang.get("Return"));
 	l_button->Clicked.connect(this, &MenuStateGraphicInfo::onButtonClick);
-
-	//program.setFade(0.f);
 }
 
-void MenuStateGraphicInfo::onButtonClick(Button* btn) {
+void MenuStateGraphicInfo::onButtonClick(Widget*) {
 	mainMenu->setCameraTarget(MenuStates::OPTIONS);
 	doFadeOut();
 }

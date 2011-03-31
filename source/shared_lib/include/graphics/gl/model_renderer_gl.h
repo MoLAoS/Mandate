@@ -47,9 +47,10 @@ public:
 	ModelRendererGl();
 	~ModelRendererGl();
 
+	void loadShader(const string &programName);
 	void loadShaders(const vector<string> &programNames);
-	UnitShaderSet* loadShaderSet(const string &xmlPath);
-	void deleteShaders(UnitShaderSet *ss);
+
+	void deleteModelShader();
 
 	void cycleShaderSet();
 	const string& getShaderName();

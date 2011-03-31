@@ -781,30 +781,29 @@ bool HarvestCommandType::canHarvest(const ResourceType *resourceType) const{
 	return find(m_harvestedResources.begin(), m_harvestedResources.end(), resourceType) != m_harvestedResources.end();
 }
 
-
-// hacky helper for !HarvestCommandType::canHarvest(u->getLoadType()) animanition issue
+// hacky helper for !HarvestCommandType::canHarvest(u->getLoadType()) animation issue
 const MoveSkillType* getMoveLoadedSkill(Unit *u) {
 	const MoveSkillType *mst = 0;
 	for (int i=0; i < u->getType()->getCommandTypeCount<HarvestCommandType>(); ++i) {
 		const HarvestCommandType *t = u->getType()->getCommandType<HarvestCommandType>(i);
-			if (t->canHarvest(u->getLoadType())) {
-				mst = t->getMoveLoadedSkillType();
-				break;
-			}
+		if (t->canHarvest(u->getLoadType())) {
+			mst = t->getMoveLoadedSkillType();
+			break;
 		}
+	}
 	return mst;
 }
 
-// hacky helper for !HarvestCommandType::canHarvest(u->getLoadType()) animanition issue
+// hacky helper for !HarvestCommandType::canHarvest(u->getLoadType()) animation issue
 const StopSkillType* getStopLoadedSkill(Unit *u) {
 	const StopSkillType *sst = 0;
 	for (int i=0; i < u->getType()->getCommandTypeCount<HarvestCommandType>(); ++i) {
 		const HarvestCommandType *t = u->getType()->getCommandType<HarvestCommandType>(i);
-			if (t->canHarvest(u->getLoadType())) {
-				sst = t->getStopLoadedSkillType();
-				break;
-			}
+		if (t->canHarvest(u->getLoadType())) {
+			sst = t->getStopLoadedSkillType();
+			break;
 		}
+	}
 	return sst;
 }
 

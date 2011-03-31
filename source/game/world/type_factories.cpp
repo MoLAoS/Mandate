@@ -13,10 +13,10 @@
 namespace Glest { namespace Sim {
 
 // =====================================================
-// 	class MasterTypeFactory
+// 	class PrototypeFactory
 // =====================================================
 
-MasterTypeFactory::MasterTypeFactory() {
+PrototypeFactory::PrototypeFactory() {
 	// Register Skill Types
 	m_skillTypeFactory.registerClass<StopSkillType>();
 	m_skillTypeFactory.registerClass<MoveSkillType>();

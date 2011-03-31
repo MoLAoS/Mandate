@@ -62,7 +62,7 @@ bool FactionType::preLoad(const string &dir, const TechTree *techTree) {
 	}
 	for (int i = 0; i < unitFilenames.size(); ++i) {
 		string path = dir + "/units/" + unitFilenames[i];
-		UnitType *ut = g_simInterface.newUnitType();
+		UnitType *ut = g_prototypeFactory.newUnitType();
 		unitTypes.push_back(ut);
 		unitTypes.back()->preLoad(path);
 	}
@@ -77,7 +77,7 @@ bool FactionType::preLoad(const string &dir, const TechTree *techTree) {
 	}
 	for (int i = 0; i < upgradeFilenames.size(); ++i) {
 		string path = dir + "/upgrades/" + upgradeFilenames[i];
-		UpgradeType *ut = g_simInterface.newUpgradeType();
+		UpgradeType *ut = g_prototypeFactory.newUpgradeType();
 		upgradeTypes.push_back(ut);
 		upgradeTypes.back()->preLoad(path);
 	}
@@ -99,7 +99,7 @@ bool FactionType::preLoadGlestimals(const string &dir, const TechTree *techTree)
 	}
 	for (int i = 0; i < unitFilenames.size(); ++i) {
 		string path = dir + "/glestimals/" + unitFilenames[i];
-		UnitType *ut = g_simInterface.newUnitType();
+		UnitType *ut = g_prototypeFactory.newUnitType();
 		unitTypes.push_back(ut);
 		unitTypes.back()->preLoad(path);
 	}
@@ -150,7 +150,7 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 	for (int i = 0; i < unitTypes.size(); ++i) {
 		string str = dir + "/units/" + unitTypes[i]->getName();
 		if (unitTypes[i]->load(str, techTree, this)) {
-			g_simInterface.setChecksum(unitTypes[i]);
+			g_prototypeFactory.setChecksum(unitTypes[i]);
 		} else {
 			loadOk = false;
 		}
@@ -179,7 +179,7 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 	for (int i = 0; i < upgradeTypes.size(); ++i) {
 		string str = dir + "/upgrades/" + upgradeTypes[i]->getName();
 		if (upgradeTypes[i]->load(str, techTree, this)) {
-			g_simInterface.setChecksum(upgradeTypes[i]);
+			g_prototypeFactory.setChecksum(upgradeTypes[i]);
 		} else {
 			loadOk = false;
 		}
@@ -230,34 +230,42 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 		bool value = musicNode->getAttribute("value")->getBoolValue();
 		if (value) {
 			XmlAttribute *playListAttr = musicNode->getAttribute("play-list", false);
-			if (playListAttr && playListAttr->getBoolValue()) {
-				const XmlAttribute *shuffleAttrib = musicNode->getAttribute("shuffle", false);
-				bool shuffle = (shuffleAttrib && shuffleAttrib->getBoolValue() ? true : false);
+			if (playListAttr) {
+				if (playListAttr->getBoolValue()) {
+					const XmlAttribute *shuffleAttrib = musicNode->getAttribute("shuffle", false);
+					bool shuffle = (shuffleAttrib && shuffleAttrib->getBoolValue() ? true : false);
 
-				vector<StrSound*> tracks;
-				for (int i=0; i < musicNode->getChildCount(); ++i) {
-					StrSound *sound = new StrSound();
-					sound->open(dir+"/"+musicNode->getChild("music-file", i)->getAttribute("path")->getRestrictedValue());
-					tracks.push_back(sound);
+					vector<StrSound*> tracks;
+					for (int i=0; i < musicNode->getChildCount(); ++i) {
+						StrSound *sound = new StrSound();
+						sound->open(dir+"/"+musicNode->getChild("music-file", i)->getAttribute("path")->getRestrictedValue());
+						tracks.push_back(sound);
+					}
+					if (tracks.empty()) {
+						throw runtime_error("No tracks in play-list!");
+					}
+					if (shuffle) {
+						int seed = int(Chrono::getCurTicks());
+						Random random(seed);
+						Shared::Util::jumble(tracks, random);
+					}
+					vector<StrSound*>::iterator it = tracks.begin();
+					vector<StrSound*>::iterator it2 = it + 1;
+					while (it2 != tracks.end()) {
+						(*it)->setNext(*it2);
+						++it; ++it2;
+					}
+					music = tracks[0];
 				}
-				if (tracks.empty()) {
-					throw runtime_error("No tracks in play-list!");
-				}
-				if (shuffle) {
-					int seed = int(Chrono::getCurTicks());
-					Random random(seed);
-					Shared::Util::jumble(tracks, random);
-				}
-				vector<StrSound*>::iterator it = tracks.begin();
-				vector<StrSound*>::iterator it2 = it + 1;
-				while (it2 != tracks.end()) {
-					(*it)->setNext(*it2);
-					++it; ++it2;
-				}
-				music = tracks[0];
 			} else {
-				music = new StrSound();
-				music->open(dir+"/"+musicNode->getAttribute("path")->getRestrictedValue());
+				XmlAttribute *pathAttr = musicNode->getAttribute("path", false);
+				if (pathAttr) {
+					music = new StrSound();
+					music->open(dir + "/" + pathAttr->getRestrictedValue());
+				} else {
+					g_logger.logXmlError(path, "'music' node must have either a 'path' or 'play-list' attribute");
+					loadOk = false;
+				}
 			}
 		}
 	} catch (runtime_error e) { 
@@ -353,7 +361,7 @@ bool FactionType::loadGlestimals(const string &dir, const TechTree *techTree) {
 		if (unitTypes[i]->load(str, techTree, this, true)) {
 			Checksum checksum;
 			unitTypes[i]->doChecksum(checksum);
-			g_simInterface.setChecksum(unitTypes[i]);
+			g_prototypeFactory.setChecksum(unitTypes[i]);
 		} else {
 			loadOk = false;
 		}

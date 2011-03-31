@@ -79,7 +79,7 @@ using Search::CardinalDir;
 
 class CommandType : public RequirableType {
 	friend class Glest::Sim::DynamicTypeFactory<CommandClass, CommandType>;
-	friend class Glest::Sim::MasterTypeFactory;
+	friend class Glest::Sim::PrototypeFactory;
 
 protected:
 	Clicks clicks;

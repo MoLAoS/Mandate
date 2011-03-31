@@ -14,7 +14,7 @@ set(folders
 )
 
 if(WIN32)
-	list(APPEND folders platform/win32 sound/ds8)
+	list(APPEND folders platform/win32 sound/ds8 sound/xa2)
 else(WIN32)
 	list(APPEND folders platform/sdl sound/openal)
 endif(WIN32)

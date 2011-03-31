@@ -129,7 +129,7 @@ void ClientInterface::doDataSync() {
 
 void ClientInterface::createSkillCycleTable(const TechTree *) {
 	NETWORK_LOG( __FUNCTION__ << " waiting for server to send Skill Cycle Table." );
-	int skillCount = m_skillTypeFactory.getTypeCount();
+	int skillCount = m_prototypeFactory->getSkillTypeCount();
 	int expectedSize = skillCount * sizeof(CycleInfo);
 	waitForMessage(readyWaitTimeout);
 	RawMessage raw = getNextMessage();
@@ -139,7 +139,7 @@ void ClientInterface::createSkillCycleTable(const TechTree *) {
 	if (raw.size != expectedSize) {
 		throw GarbledMessage(MessageType::SKILL_CYCLE_TABLE, NetSource::SERVER);
 	}
-	skillCycleTable = new SkillCycleTable(raw);
+	m_skillCycleTable = new SkillCycleTable(raw);
 }
 
 void ClientInterface::updateLobby() {
@@ -290,7 +290,7 @@ void ClientInterface::updateSkillCycle(Unit *unit) {
 	if (unit->isMoving()) {
 		updateMove(unit);
 	} else {
-		unit->updateSkillCycle(skillCycleTable->lookUp(unit).getSkillFrames());
+		unit->updateSkillCycle(m_skillCycleTable->lookUp(unit).getSkillFrames());
 	}
 }
 
@@ -379,7 +379,7 @@ void ClientInterface::checkProjectileUpdate(Unit *unit, int endFrame, int32 cs) 
 void ClientInterface::checkAnimUpdate(Unit *unit, int32 cs) {
 //	NETWORK_LOG( __FUNCTION__ );
 	if (cs != keyFrame.getNextChecksum()) {
-		const CycleInfo &inf = skillCycleTable->lookUp(unit);
+		const CycleInfo &inf = m_skillCycleTable->lookUp(unit);
 		NETWORK_LOG( __FUNCTION__ << " Sync Error: unit id: " << unit->getId()
 			<< " attack offset: " << inf.getAttackOffset() );
 		handleSyncError();

@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of The Glest Advanced Engine
 //
-//	Copyright (C) 2010	James McCulloch <silnarm at gmail>
+//	Copyright (C) 2010-2011 James McCulloch <silnarm at gmail>
 //
 //  GPL V3, see source/licence.txt
 // ==============================================================
@@ -9,7 +9,7 @@
 #ifndef _GLEST_COMPOUND_WIDGETS_INCLUDED_
 #define _GLEST_COMPOUND_WIDGETS_INCLUDED_
 
-#include "widgets.h"
+#include "complex_widgets.h"
 
 namespace Glest { namespace Widgets {
 
@@ -30,99 +30,175 @@ public:
 	void setWidget(Widget* widget);
 	Widget* getWidget() { return m_widget; }
 
-	virtual Vec2i getPrefSize() const;
-	virtual Vec2i getMinSize() const;
+	virtual Vec2i getPrefSize() const override;
+	virtual Vec2i getMinSize() const override;
 
-	virtual string desc() { return string("[OptionBox: ") + descPosDim() + "]"; }
+	virtual string descType() const override { return "OptionBox"; }
 };
 
-class ScrollText : public Panel, public MouseWidget, public TextWidget, public sigslot::has_slots {
+class ScrollText : public CellStrip, public TextWidget, public sigslot::has_slots {
+protected:
+	ScrollBar  *m_scrollBar;
+	StaticText *m_staticText;
+	string      m_origString;
+
 private:
-	VerticalScrollBar* m_scrollBar;
-	int m_textBase;
+	void init();
 
 public:
 	ScrollText(Container* parent);
 	ScrollText(Container* parent, Vec2i pos, Vec2i size);
 
 	void recalc();
-	void init();
-	void onScroll(VerticalScrollBar*);
+	void onScroll(int offset);
 	void setText(const string &txt, bool scrollToBottom = false);
 
-	void render();
+	virtual void setSize(const Vec2i &sz) override;
+	virtual void render() override;
 };
 
-class TitleBar : public Container, public TextWidget {
+class ButtonFlags {
 private:
-	string		m_title;
-	Button* m_closeButton;
+	int flags;
 
 public:
-	TitleBar(Container* parent);
-	TitleBar(Container* parent, Vec2i pos, Vec2i size, string title, bool closeBtn);
+	static const int numButtons = 4;
+	enum E { CLOSE = 1, ROLL_UPDOWN = 2, EXPAND = 4, SHRINK = 8 };
+	
+	ButtonFlags() : flags(0) {}
+	ButtonFlags(int f) : flags(f) {}
 
-	void render();
+	bool isSet(E e) { return (flags & e); }
 
-	virtual Vec2i getPrefSize() const;
-	virtual Vec2i getMinSize() const;
-
-	virtual string desc() { return string("[TitleBar: ") + descPosDim() + "]"; }
+	int getCount() const {
+		int n = 0;
+		for (int i=0; i < numButtons; ++i) {
+			if (flags & (1 << i)) {
+				++n;
+			}
+		}
+		return n;
+	}
 };
 
-class Frame : public Container, public MouseWidget {
-protected:
-	TitleBar*	m_titleBar;
-	bool			m_pressed;
-	Vec2i			m_lastPos;
+class TitleBar : public CellStrip, public sigslot::has_slots {
+private:
+#	define BUTTON_CLASS(X, WT)                      \
+		class X : public Button {                   \
+		public:                                     \
+			X(Container *parent) : Button(parent) { \
+				setWidgetStyle(WT);                 \
+			};                                      \
+			virtual void setStyle() override {      \
+				setWidgetStyle(WT);                 \
+			};                                      \
+		};
+	BUTTON_CLASS(CloseButton, WidgetType::TITLE_BAR_CLOSE);
+	BUTTON_CLASS(RollUpButton, WidgetType::TITLE_BAR_ROLL_UP);
+	BUTTON_CLASS(RollDownButton, WidgetType::TITLE_BAR_ROLL_DOWN);
+	BUTTON_CLASS(ExpandButton, WidgetType::TITLE_BAR_EXPAND);
+	BUTTON_CLASS(ShrinkButton, WidgetType::TITLE_BAR_SHRINK);
 
-protected:
-	Frame(WidgetWindow*);
-	Frame(Container*);
-	Frame(Container*, Vec2i pos, Vec2i sz);
+private:
+	ButtonFlags      m_flags;
+	StaticText      *m_titleText;
+	CloseButton     *m_closeButton;
+	RollUpButton    *m_rollUpButton;
+	RollDownButton  *m_rollDownButton;
+	ExpandButton    *m_expandButton;
+	ShrinkButton    *m_shrinkButton;
+
+	void init(ButtonFlags flags);
+	void setSizeHints();
+
+	// slots
+	void onButtonClicked(Widget *btn);
 
 public:
-	void init(Vec2i pos, Vec2i size, const string &title);
+	TitleBar(Container* parent, ButtonFlags flags);
+	//TitleBar(Container* parent, ButtonFlags flags, Vec2i pos, Vec2i size, string title);
+
+	const string& getText() const { return m_titleText->getText(); }
+	void setText(const string &txt) { m_titleText->setText(txt); }
+
+	// Widget overrides
+	virtual void setSize(const Vec2i &sz) override { CellStrip::setSize(sz); setSizeHints(); }
+	virtual string descType() const override { return "TitleBar"; }
+
+	// signals
+	sigslot::signal<Widget*> RollUp;
+	sigslot::signal<Widget*> RollDown;
+	sigslot::signal<Widget*> Expand;
+	sigslot::signal<Widget*> Shrink;
+	sigslot::signal<Widget*> Close;
+};
+
+class Frame : public CellStrip, public MouseWidget, public sigslot::has_slots {
+protected:
+	TitleBar*   m_titleBar;
+	bool        m_pressed;
+	Vec2i       m_lastPos;
+
+protected:
+	Frame(WidgetWindow*, ButtonFlags flags);
+	Frame(Container*, ButtonFlags flags);
+	Frame(Container*, ButtonFlags flags, Vec2i pos, Vec2i sz);
+
+	void init(ButtonFlags flags);
+
+public:
 	void setTitleText(const string &text);
 	const string& getTitleText() const { return m_titleBar->getText(); }
 
-	bool mouseDown(MouseButton btn, Vec2i pos);
-	bool mouseMove(Vec2i pos);
-	bool mouseUp(MouseButton btn, Vec2i pos);
+	bool mouseDown(MouseButton btn, Vec2i pos) override;
+	bool mouseMove(Vec2i pos) override;
+	bool mouseUp(MouseButton btn, Vec2i pos) override;
 
-	virtual void render();
-	virtual void setSize(Vec2i size);
+	// signals
+	sigslot::signal<Widget*>  Close;
+	sigslot::signal<Widget*>  RollUp;
+	sigslot::signal<Widget*>  RollDown;
+	sigslot::signal<Widget*>  Shrink;
+	sigslot::signal<Widget*>  Expand;
+
+private:
+	void onClose(Widget*)    { Close(this);    }
+	void onRollUp(Widget*)   { RollUp(this);   }
+	void onRollDown(Widget*) { RollDown(this); }
+	void onShrink(Widget*)   { Shrink(this);   }
+	void onExpand(Widget*)   { Expand(this);   }
 };
 
-class BasicDialog : public Frame, public sigslot::has_slots {
+class BasicDialog : public Frame {
 private:
-	//TitleBar*	m_titleBar;
-	Widget	*m_content;
-	Button	*m_button1,
-			*m_button2;
-
-	int		 m_buttonCount;
+	Widget	  *m_content;
+	Button	  *m_button1,
+			  *m_button2;
+	int		   m_buttonCount;
+	CellStrip *m_btnPnl;
 
 protected:
 	BasicDialog(WidgetWindow*);
-	BasicDialog(Container*, Vec2i pos, Vec2i sz);
-	void onButtonClicked(Button*);
+	BasicDialog(WidgetWindow*, ButtonFlags btnFlags);
+	BasicDialog(Container*);//, Vec2i pos, Vec2i sz);
+	BasicDialog(Container*, ButtonFlags btnFlags);
+	void onButtonClicked(Widget*);
+
+	void init();
 
 protected:
-	void setContent(Widget* content);
+	void setContent(Widget* content); //REMOVE: use cell 1
 	void init(Vec2i pos, Vec2i size, const string &title, const string &btn1, const string &btn2);
 
 public:
 	void setButtonText(const string &btn1Text, const string &btn2Text = "");
 
-	sigslot::signal<BasicDialog*>	Button1Clicked,
-									Button2Clicked,
-									Escaped;
+	// signals
+	sigslot::signal<Widget*>  Button1Clicked;
+	sigslot::signal<Widget*>  Button2Clicked;
+	sigslot::signal<Widget*>  Escaped;
 
-	void render();
-	virtual Vec2i getPrefSize() const { return Vec2i(-1); }
-	virtual Vec2i getMinSize() const { return Vec2i(-1); }
-	virtual string desc() { return string("[BasicDialog: ") + descPosDim() + "]"; }
+	virtual string descType() const override { return "BasicDialog"; }
 };
 
 class MessageDialog : public BasicDialog {
@@ -141,7 +217,7 @@ public:
 	void setMessageText(const string &text);
 	const string& getMessageText() const { return m_scrollText->getText(); }
 
-	virtual string desc() { return string("[MessageDialog: ") + descPosDim() + "]"; }
+	virtual string descType() const override { return "MessageDialog"; }
 };
 
 // =====================================================
@@ -151,10 +227,11 @@ public:
 class InputBox : public TextBox {
 public:
 	InputBox(Container *parent);
-	InputBox(Container *parent, Vec2i pos, Vec2i size);
+//	InputBox(Container *parent, Vec2i pos, Vec2i size);
 
-	virtual bool keyDown(Key key);
-	sigslot::signal<InputBox*> Escaped;
+	virtual bool keyDown(Key key) override;
+	sigslot::signal<Widget*> Escaped;
+	virtual string descType() const override { return "InputBox"; }
 };
 
 // =====================================================
@@ -165,13 +242,12 @@ class InputDialog : public BasicDialog {
 private:
 	StaticText*	m_label;
 	InputBox*	m_inputBox;
-	Panel*		m_panel;
 
 private:
 	InputDialog(WidgetWindow*);
 
-	void onInputEntered(TextBox*);
-	void onEscaped(InputBox*) { Escaped(this); }
+	void onInputEntered(Widget*);
+	void onEscaped(Widget*) { Escaped(this); }
 
 public:
 	static InputDialog* showDialog(Vec2i pos, Vec2i size, const string &title,
@@ -183,7 +259,7 @@ public:
 	const string& getMessageText() const { return m_label->getText(); }
 	string getInput() const { return m_inputBox->getText(); }
 
-	virtual string desc() { return string("[InputDialog: ") + descPosDim() + "]"; }
+	virtual string descType() const override { return "InputDialog"; }
 };
 
 }} // namespace Glest::Widgets

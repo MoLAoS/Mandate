@@ -532,7 +532,7 @@ void World::tick() {
 }
 
 const UnitType* World::findUnitTypeById(const FactionType* factionType, int id) {
-	return g_simInterface.getUnitType(id);
+	return g_prototypeFactory.getUnitType(id);
 }
 
 //looks for a place for a unit around a start lociacion, returns true if succeded

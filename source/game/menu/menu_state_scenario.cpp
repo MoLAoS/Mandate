@@ -37,55 +37,76 @@ using namespace Shared::Xml;
 MenuStateScenario::MenuStateScenario(Program &program, MainMenu *mainMenu)
 		: MenuState(program, mainMenu)
 		, m_targetTansition(Transition::INVALID) {
-	Font *font = g_coreData.getFTMenuFontNormal();
+	WidgetConfig &cfg = g_widgetConfig;
 
-	// create
-	int gap = (g_metrics.getScreenW() - 300) / 3;
-	int x = gap, w = 150, y = 150, h = 30;
-	Vec2i retBtnPos(x,y), btnSize(w,h);
+	int itemHeight = cfg.getDefaultItemHeight();
 
-	x += w + gap;
-	Vec2i playBtnPos(x,y);
+	CellStrip *rootStrip = new CellStrip((Container*)&program, Orientation::VERTICAL, 2);
+	rootStrip->setSizeHint(0, SizeHint());
+	rootStrip->setSizeHint(1, SizeHint(-1, itemHeight * 3));
+	Vec2i pad(15, 25);
+	rootStrip->setPos(pad);
+	rootStrip->setSize(Vec2i(g_config.getDisplayWidth() - pad.w * 2, g_config.getDisplayHeight() - pad.h * 2));
 
-	w = 200;
-	h = int(font->getMetrics()->getHeight()) + 6;
-	x = g_metrics.getScreenW() / 2 - (w * 2 + 50) / 2;
-	y = g_metrics.getScreenH() / 2 + (h * 2) / 2 + 100;
-	StaticText* l_text = new StaticText(&program, Vec2i(x, y), Vec2i(w, h));
-	l_text->setTextParams(g_lang.get("Category"), Vec4f(1.f), font);
-//	l_text->setBorderParams(BorderStyle::SOLID, 2, Vec3f(1.f, 0.f, 0.f), 0.5f);
+	Anchors centreAnchors;
+	centreAnchors.setCentre(true, true);
+	Anchors fillAnchors(Anchor(AnchorType::RIGID, 0));
 
-	y = g_metrics.getScreenH() / 2 - (h * 2) / 2 + 100;
-	l_text = new StaticText(&program, Vec2i(x, y), Vec2i(w,h));
-	l_text->setTextParams(g_lang.get("Scenario"), Vec4f(1.f), font);
-//	l_text->setBorderParams(BorderStyle::SOLID, 2, Vec3f(1.f, 0.f, 0.f), 0.5f);
+	// create scenario panel
+	CellStrip *sPanel = new CellStrip(rootStrip, Orientation::VERTICAL, 3);
+	sPanel->setSize(Vec2i(itemHeight * 24, itemHeight * 10));
+	sPanel->setCell(0);
+	sPanel->setAnchors(centreAnchors);
+	sPanel->setSizeHint(0, SizeHint(-1, itemHeight * 3 / 2));
+	sPanel->setSizeHint(1, SizeHint(-1, itemHeight * 3 / 2));
+	sPanel->setSizeHint(2, SizeHint());
+	sPanel->borderStyle().setSolid(g_widgetConfig.getColourIndex(Vec3f(0.f, 0.f, 1.f)));
+	sPanel->borderStyle().setSizes(2);
 
-	m_infoLabel = new StaticText(&program, Vec2i(x, y - 220), Vec2i(450, 200));
-	m_infoLabel->setTextParams("", Vec4f(1.f), font);
-//	m_infoLabel->setBorderParams(BorderStyle::SOLID, 2, Vec3f(1.f, 0.f, 0.f), 0.5f);
+	OptionWidget *ow = new OptionWidget(sPanel, g_lang.get("Category"));
+	ow->setCell(0);
+	m_categoryList = new DropList(ow);
+	m_categoryList->setCell(1);
+	m_categoryList->setAnchors(fillAnchors);
 
-	x += 220;
-	w = 230;
-	y = g_metrics.getScreenH() / 2 + (h * 2) / 2 + 100;
-	m_categoryList = new DropList(&program, Vec2i(x, y), Vec2i(w,h));
-	y = g_metrics.getScreenH() / 2 - (h * 2) / 2 + 100;
-	m_scenarioList = new DropList(&program, Vec2i(x, y), Vec2i(w,h));
+	ow = new OptionWidget(sPanel, g_lang.get("Scenario"));
+	ow->setCell(1);
+	m_scenarioList = new DropList(ow);
+	m_scenarioList->setCell(1);
+	m_scenarioList->setAnchors(fillAnchors);
 	m_scenarioList->SelectionChanged.connect(this, &MenuStateScenario::onScenarioChanged);
 
-	m_returnButton = new Button(&program, retBtnPos, btnSize);
-	m_returnButton->setTextParams(g_lang.get("Return"), Vec4f(1.f), font);
+	m_infoLabel = new StaticText(sPanel);
+	m_infoLabel->setCell(2);
+	m_infoLabel->setAnchors(fillAnchors);
+	m_infoLabel->setText("");
+
+	// buttons panel
+	CellStrip *btnPanel = new CellStrip(rootStrip, Orientation::HORIZONTAL, 3);
+	btnPanel->setCell(1);
+	btnPanel->setAnchors(fillAnchors);
+	btnPanel->borderStyle().setSolid(g_widgetConfig.getColourIndex(Vec3f(0.f, 1.f, 0.f)));
+	btnPanel->borderStyle().setSizes(2);
+
+	Vec2i sz(itemHeight * 7, itemHeight);
+
+	// create buttons
+	m_returnButton = new Button(btnPanel, Vec2i(0), sz);
+	m_returnButton->setCell(0);
+	m_returnButton->setAnchors(centreAnchors);
+	m_returnButton->setText(g_lang.get("Return"));
 	m_returnButton->Clicked.connect(this, &MenuStateScenario::onButtonClick);
 
-	m_playNowButton = new Button(&program, playBtnPos, btnSize);
-	m_playNowButton->setTextParams(g_lang.get("PlayNow"), Vec4f(1.f), font);
+	m_playNowButton = new Button(btnPanel, Vec2i(0), sz);
+	m_playNowButton->setCell(2);
+	m_playNowButton->setAnchors(centreAnchors);
+	m_playNowButton->setText(g_lang.get("PlayNow"));
 	m_playNowButton->Clicked.connect(this, &MenuStateScenario::onButtonClick);
 
+	// scan directories...
 	vector<string> results;
 	int match = 0;
-
-	//categories listBox
 	findAll("gae/scenarios/*.", results);
-
 	// remove empty directories...
 	for (vector<string>::iterator cat = results.begin(); cat != results.end(); ) {
 		vector<string> scenarios;
@@ -119,15 +140,15 @@ MenuStateScenario::MenuStateScenario(Program &program, MainMenu *mainMenu)
 	m_categoryList->setSelected(match);
 }
 
-void MenuStateScenario::onConfirmReturn(BasicDialog*) {
+void MenuStateScenario::onConfirmReturn(Widget*) {
 	m_targetTansition = Transition::RETURN;
 	g_soundRenderer.playFx(g_coreData.getClickSoundA());
 	mainMenu->setCameraTarget(MenuStates::ROOT);
 	doFadeOut();
 }
 
-void MenuStateScenario::onButtonClick(Button* btn) {
-	if (btn == m_returnButton) {
+void MenuStateScenario::onButtonClick(Widget* source) {
+	if (source == m_returnButton) {
 		m_targetTansition = Transition::RETURN;
 		g_soundRenderer.playFx(g_coreData.getClickSoundA());
 		mainMenu->setCameraTarget(MenuStates::ROOT);
@@ -164,12 +185,12 @@ void MenuStateScenario::setScenario(int i) {
 	m_scenarioList->setSelected(i);
 }
 
-void MenuStateScenario::onCategoryChanged(ListBase*) {
+void MenuStateScenario::onCategoryChanged(Widget*) {
 	updateScenarioList(categories[m_categoryList->getSelectedIndex()]);
 	updateConfig();
 }
 
-void MenuStateScenario::onScenarioChanged(ListBase*) {
+void MenuStateScenario::onScenarioChanged(Widget*) {
 	//update scenario info
 	Scenario::loadScenarioInfo(scenarioFiles[m_scenarioList->getSelectedIndex()],
 					categories[m_categoryList->getSelectedIndex()], &scenarioInfo);
