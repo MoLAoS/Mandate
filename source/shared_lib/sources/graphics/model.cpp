@@ -656,6 +656,9 @@ void Model::save(const string &path){
 	}
 }
 
+#define OUTPUT_MODEL_INFO(x)
+//#define OUTPUT_MODEL_INFO(x) cout << x
+
 // load a model from a g3d file
 void Model::loadG3d(const string &path){
 	std::auto_ptr<FileOps> f(FSFactory::getInstance()->getFileOps());
@@ -663,28 +666,28 @@ void Model::loadG3d(const string &path){
 
 	string dir = dirname(path);
 
-	cout << "loading G3D from " << path << endl;
+	OUTPUT_MODEL_INFO("loading G3D from " << path << endl);
 
 	// file header
 	FileHeader fileHeader;
 	f->read(&fileHeader, sizeof(FileHeader), 1);
 	if (strncmp(reinterpret_cast<char*>(fileHeader.id), "G3D", 3) != 0) {
-		cout << "Error: Bad magic cookie. Not a valid G3D model.\n";
+		OUTPUT_MODEL_INFO("Error: Bad magic cookie. Not a valid G3D model.\n");
 		throw runtime_error("Bad magic. Not a valid G3D model");
 	}
 	fileVersion = fileHeader.version;
 
 	if (fileHeader.version == 4) { // version 4
-		cout << "\tVersion: 4\n";
+		OUTPUT_MODEL_INFO("\tVersion: 4\n");
 		// model header
 		ModelHeader modelHeader;
 		f->read(&modelHeader, sizeof(ModelHeader), 1);
 		meshCount = modelHeader.meshCount;
 		if (modelHeader.type != mtMorphMesh) {
-			cout << "\tError: invalid mesh type.\n";
+			OUTPUT_MODEL_INFO("\tError: invalid mesh type.\n");
 			throw runtime_error("Invalid model type");
 		}
-		cout << "\tMesh count: " << meshCount << endl;
+		OUTPUT_MODEL_INFO("\tMesh count: " << meshCount << endl);
 
 		//load meshes
 		meshes = new Mesh[meshCount];
@@ -692,25 +695,25 @@ void Model::loadG3d(const string &path){
 			meshes[i].load(dir, f.get(), textureManager);
 			meshes[i].buildInterpolationData();
 
-			cout << "\tLoaded mesh " << i << endl;
-			cout << "\t\tVertex count: " << meshes[i].getVertexCount() << endl;
-			cout << "\t\tFrame count: " << meshes[i].getFrameCount() << endl;
+			OUTPUT_MODEL_INFO("\tLoaded mesh " << i << endl);
+			OUTPUT_MODEL_INFO("\t\tVertex count: " << meshes[i].getVertexCount() << endl);
+			OUTPUT_MODEL_INFO("\t\tFrame count: " << meshes[i].getFrameCount() << endl);
 		}
 	} else if (fileHeader.version == 3) { // version 3
-		cout << "\tVersion: 3\n";
+		OUTPUT_MODEL_INFO("\tVersion: 3\n");
 		f->read(&meshCount, sizeof(meshCount), 1);
-		cout << "\tMesh count: " << meshCount << endl;
+		OUTPUT_MODEL_INFO("\tMesh count: " << meshCount << endl);
 		meshes= new Mesh[meshCount];
 		for(uint32 i=0; i < meshCount; ++i){
 			meshes[i].loadV3(dir, f.get(), textureManager);
 			meshes[i].buildInterpolationData();
 
-			cout << "\tLoaded mesh " << i << endl;
-			cout << "\t\tVertex count: " << meshes[i].getVertexCount() << endl;
-			cout << "\t\tFrame count: " << meshes[i].getFrameCount() << endl;
+			OUTPUT_MODEL_INFO("\tLoaded mesh " << i << endl);
+			OUTPUT_MODEL_INFO("\t\tVertex count: " << meshes[i].getVertexCount() << endl);
+			OUTPUT_MODEL_INFO("\t\tFrame count: " << meshes[i].getFrameCount() << endl);
 		}
 	} else {
-		cout << "\tError: Invalid version: " << fileHeader.version << "\n";
+		OUTPUT_MODEL_INFO("\tError: Invalid version: " << fileHeader.version << "\n");
 		throw runtime_error("Invalid model version: "+ intToStr(fileHeader.version));
 	}
 	

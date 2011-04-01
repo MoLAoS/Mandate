@@ -1,0 +1,72 @@
+<unit-shader-set name="mat_colour">
+
+	<description>
+		<![CDATA[
+			A shader set for testing, using per-vertex lighting and material colour only (no textures).
+		]]>
+	</description>
+
+	<glsl-version value="110" />
+
+	<!-- varying and uniform vars -->
+	<variables>
+		<![CDATA[
+			varying float diffuseIntensity, fogFactor;
+			uniform vec3 teamColour;
+			uniform sampler2D baseTexture;
+		]]>
+	</variables>
+
+	<vertex-shader>
+		<![CDATA[
+			void main() {
+				// pass-on tex-coord & mesh colour
+				gl_TexCoord[0] = gl_MultiTexCoord0;
+				gl_FrontColor = gl_Color;
+
+				// Lighting
+				vec3 normal = normalize(gl_NormalMatrix * gl_Normal);        // convert normal to eye space
+				vec3 lightDir = normalize(vec3(gl_LightSource[0].position)); // direction of main light source
+				diffuseIntensity =	max(dot(lightDir, normal), 0.0);         // calculate diffuse term
+
+				// fog
+				float dist = length(vec3(gl_ModelViewMatrix * gl_Vertex)); // distance from camera
+				const float log_2 = 1.442695;
+				fogFactor = exp2(-gl_Fog.density * gl_Fog.density * dist * dist * log_2);
+				fogFactor = clamp(fogFactor, 0.0, 1.0);	
+
+				// determine pixel position
+				gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;
+			}
+		]]>
+	</vertex-shader>	
+
+	<team-fragment-shader>
+		<![CDATA[
+			void main() {
+				// light components
+				vec3 diffuse = gl_FrontLightProduct[0].diffuse.rgb * diffuseIntensity;
+				vec3 ambient = gl_FrontLightProduct[0].ambient.rgb + gl_FrontLightModelProduct.sceneColor.rgb;
+				
+				// final colour 
+				vec4 finalColour = vec4((diffuse + ambient), gl_FrontMaterial.diffuse.a);
+				gl_FragColor = mix(gl_Fog.color, finalColour, fogFactor);
+			}
+		]]>
+	</team-fragment-shader>
+
+	<rgba-fragment-shader>
+		<![CDATA[
+			void main() {
+				// light components
+				vec3 diffuse = gl_FrontLightProduct[0].diffuse.rgb * diffuseIntensity;
+				vec3 ambient = gl_FrontLightProduct[0].ambient.rgb + gl_FrontLightModelProduct.sceneColor.rgb;
+				
+				// final colour 
+				vec4 finalColour = vec4((diffuse + ambient), gl_FrontMaterial.diffuse.a);
+				gl_FragColor = mix(gl_Fog.color, finalColour, fogFactor);
+			}
+		]]>
+	</rgba-fragment-shader>
+
+</unit-shader-set>

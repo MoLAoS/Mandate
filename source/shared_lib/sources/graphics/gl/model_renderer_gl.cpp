@@ -245,12 +245,13 @@ void ModelRendererGl::renderMesh(const Mesh *mesh, Vec3f *anim, UnitShaderSet *c
 		glBindTexture(GL_TEXTURE_2D, textureNormal->getHandle());
 	} else {
 		glBindTexture(GL_TEXTURE_2D, 0);
+		glDisable(GL_TEXTURE_2D);
 	}
 
 	// custom map
 	if (customShaders && renderTextures) {
 		textureCustom = static_cast<const Texture2DGl*>(mesh->getTexture(mtCustom1));
-		glActiveTexture(customTextureUnit);
+		glActiveTexture(custom1TextureUnit);
 		if (textureCustom) {
 			glEnable(GL_TEXTURE_2D);
 			glBindTexture(GL_TEXTURE_2D, textureCustom->getHandle());
@@ -343,11 +344,15 @@ void ModelRendererGl::renderMesh(const Mesh *mesh, Vec3f *anim, UnitShaderSet *c
 		}
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->getIndexBuffer());
 		if (renderTextures && textureNormal) {
+			shaderProgram->setUniform("hasNormalMap", 1);
 			int loc = shaderProgram->getAttribLoc("tangent");
 			if (loc != -1) {
+				assert(mesh->getTangents());
 				glEnableVertexAttribArray(loc);
 				glVertexAttribPointer(loc, 3, GL_FLOAT, GL_TRUE, 0, mesh->getTangents());
 			}
+		} else {
+			shaderProgram->setUniform("hasNormalMap", 0);
 		}
 
 		// draw model
@@ -382,11 +387,14 @@ void ModelRendererGl::renderMesh(const Mesh *mesh, Vec3f *anim, UnitShaderSet *c
 			glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 		}
 		if (renderTextures && textureNormal) {
+			shaderProgram->setUniform("hasNormalMap", 1);
 			int loc = shaderProgram->getAttribLoc("tangent");
 			if (loc != -1) {
 				glEnableVertexAttribArray(loc);
 				glVertexAttribPointer(loc, 3, GL_FLOAT, GL_TRUE, 0, mesh->getTangents());
 			}
+		} else {
+			shaderProgram->setUniform("hasNormalMap", 0);
 		}
 		// draw model
 		glDrawRangeElements(GL_TRIANGLES, 0, vertexCount-1, indexCount, GL_UNSIGNED_INT, mesh->getIndices());

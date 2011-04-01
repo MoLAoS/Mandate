@@ -64,22 +64,22 @@ void MeshCallbackTeamColor::execute(const Mesh *mesh){
 		//texture 0
 		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
 
-		//set color to interpolation
-		glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_INTERPOLATE);
-
-		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_TEXTURE);
-		glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, GL_SRC_COLOR);
-
-		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB, GL_TEXTURE1);
-		glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB, GL_SRC_COLOR);
-
-		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE2_RGB, GL_TEXTURE);
-		glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND2_RGB, GL_SRC_ALPHA);
+		glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_INTERPOLATE); // Interpolate RGB components
+		// Arg0: source colour 1
+		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_TEXTURE);	   // from this tex (baseTexUnit),
+		glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, GL_SRC_COLOR);  // use rgb from sampled colour
+		// Arg1: source colour 2
+		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB, GL_TEXTURE1);	   // from team texture (in unit 1),
+		glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB, GL_SRC_COLOR);  // use rgb from sampled colour
+		// Arg2: 't' (interpolation factor)
+		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE2_RGB, GL_TEXTURE);     // 't' from this tex,
+		glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND2_RGB, GL_SRC_ALPHA);  // use alpha-channel from sampled colour
 
 		//set alpha to 1
-		glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_REPLACE);
-		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, GL_TEXTURE);
-		glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
+		glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_REPLACE);   // Replace alpha component
+		// Arg0: value
+		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, GL_TEXTURE);   // alpha from texture. wtf?
+		glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);// meh... this is overwritten below...
 
 		//texture 1
 		glActiveTexture(GL_TEXTURE1);
@@ -89,18 +89,18 @@ void MeshCallbackTeamColor::execute(const Mesh *mesh){
 		glBindTexture(GL_TEXTURE_2D, static_cast<const Texture2DGl*>(teamTexture)->getHandle());
 		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
 
-		glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_MODULATE);
+		glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_MODULATE);        // Modulate RGB components
 
-		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_PRIMARY_COLOR);
-		glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, GL_SRC_COLOR);
+		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_PRIMARY_COLOR);   // Arg0: Mesh Colour
+		glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, GL_SRC_COLOR);      // use RGB
 
-		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB, GL_PREVIOUS);
-		glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB, GL_SRC_COLOR);
+		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB, GL_PREVIOUS);        // Arg1: Result from above
+		glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB, GL_SRC_COLOR);      // use RGB
 
 		//set alpha to 1
-		glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_REPLACE);
-		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, GL_PRIMARY_COLOR);
-		glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
+		glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_REPLACE);       // Replace alpha component
+		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, GL_PRIMARY_COLOR); // from mesh colour,
+		glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);    // use alpha component
 
 		glActiveTexture(GL_TEXTURE0);
 	}
@@ -508,7 +508,10 @@ void Renderer::setupLighting() {
 	glLightfv(GL_LIGHT0, GL_POSITION, lightPos.ptr());
 	glLightfv(GL_LIGHT0, GL_AMBIENT, Vec4f(lightColour * lightAmbFactor, 1.f).ptr());
 	glLightfv(GL_LIGHT0, GL_DIFFUSE, Vec4f(lightColour, 1.f).ptr());
+
+	///@todo add some spec!
 	glLightfv(GL_LIGHT0, GL_SPECULAR, Vec4f(0.0f, 0.0f, 0.f, 1.f).ptr());
+
 
 	glFogfv(GL_FOG_COLOR, Vec4f(fogColor * lightColour, 1.f).ptr());
 
@@ -1039,17 +1042,17 @@ void Renderer::renderUnits(){
 			glRotatef(unit->getRotation(), 0.f, 1.f, 0.f);
 			glRotatef(unit->getVerticalRotation(), 1.f, 0.f, 0.f);
 
-			//dead alpha
+			// dead/cloak alpha
 			float alpha = unit->getRenderAlpha();
-			bool fade = alpha < 1.0;
+			bool fade = alpha < 1.f;
 
 			if (fade) {
-				glDisable(GL_COLOR_MATERIAL);
-				Vec4f fadeAmbientColor(defAmbientColor);
+				glDisable(GL_COLOR_MATERIAL); // ?
+				//Vec4f fadeAmbientColor(defAmbientColor);
 				Vec4f fadeDiffuseColor(defDiffuseColor);
-				fadeAmbientColor.a = alpha;
+				//fadeAmbientColor.a = alpha;
 				fadeDiffuseColor.a = alpha;
-				glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, fadeAmbientColor.ptr());
+				//glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, fadeAmbientColor.ptr());
 				glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, fadeDiffuseColor.ptr());
 				glAlphaFunc(GL_GREATER, 0.f);
 			} else {
@@ -1701,7 +1704,7 @@ void Renderer::autoConfig(){
 	// Model shaders...
 	if (isGlVersionSupported(2, 0, 0)) {
 		config.setRenderUseShaders(true);
-		config.setRenderModelShader("diffuse_only_pv");
+		config.setRenderModelShader("basic");
 	} else {
 		config.setRenderUseShaders(false);
 	}

@@ -143,13 +143,21 @@ void GlslProgram::end() {
 }
 
 void GlslProgram::setUniform(const string &name, GLuint value) {
-	int texture_location = glGetUniformLocation(m_p, name.c_str());
-	glUniform1i(texture_location, value);
+	int handle = glGetUniformLocation(m_p, name.c_str());
+	if (handle != -1) {
+		glUniform1i(handle, value);
+	} else {
+		//cout << "ERROR: uniform '" << name << "' not found." << endl;
+	}
 }
 
 void GlslProgram::setUniform(const string &name, const Vec3f &value) {
-	int uniform_loc = glGetUniformLocation(m_p, name.c_str());
-	glUniform3fv(uniform_loc, 1, value.ptr());
+	int handle = glGetUniformLocation(m_p, name.c_str());
+	if (handle != -1) {
+		glUniform3fv(handle, 1, value.ptr());
+	} else {
+		//cout << "ERROR: uniform '" << name << "' not found." << endl;
+	}
 }
 
 int GlslProgram::getAttribLoc(const string &name) {
