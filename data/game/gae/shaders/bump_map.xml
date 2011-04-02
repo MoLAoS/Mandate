@@ -1,6 +1,6 @@
 <!--
      This file is a part of The Glest Advanced Engine.
-     Copyright (C) 2010	Nathan Turner & James McCulloch
+     Copyright (C) 2010-2011 Nathan Turner & James McCulloch
      GPL V2, see source/licence.txt
 -->
 
@@ -68,9 +68,8 @@
 	<team-fragment-shader>
 		<![CDATA[
 			void main() {
-				// sample textures
+				// sample diffuse texture
 				vec4 texDiffuseBase = texture2D(baseTexture, vec2(gl_TexCoord[0].st));
-				vec3 texNormalMap = texture2D(normalMap, vec2(gl_TexCoord[0].st)).xyz;
 				
 				// interpolate the base and team colour according to the base alpha
 				vec3 baseColour = mix(teamColour, texDiffuseBase.rgb, texDiffuseBase.a);
@@ -81,6 +80,7 @@
 				vec3 diffuse;
 				if (hasNormalMap == 1) {
 					// calculate intensity from texture normal
+					vec3 texNormalMap = texture2D(normalMap, vec2(gl_TexCoord[0].st)).xyz;
 					vec3 n = normalize(texNormalMap * 2.0 - 1.0);
 					float bump = max(dot(tsLightDir, n), 0.0);
 					diffuse = gl_FrontLightProduct[0].diffuse.rgb * (bump * 0.8 + diffuseIntensity * 0.2);
@@ -99,9 +99,8 @@
 	<rgba-fragment-shader>
 		<![CDATA[
 			void main() {
-				// sample textures
+				// sample diffuse texture
 				vec4 texDiffuseBase = texture2D(baseTexture, vec2(gl_TexCoord[0].st));
-				vec3 texNormalMap = texture2D(normalMap, vec2(gl_TexCoord[0].st)).xyz;
 				
 				// diffuse shading
 				vec3 normal = normalize(normal);
@@ -109,6 +108,7 @@
 				vec3 diffuse;
 				if (hasNormalMap == 1) {
 					// calculate intensity from texture normal
+					vec3 texNormalMap = texture2D(normalMap, vec2(gl_TexCoord[0].st)).xyz;
 					vec3 n = normalize(texNormalMap * 2.0 - 1.0);
 					float bump = max(dot(tsLightDir, n), 0.0);
 					diffuse = gl_FrontLightProduct[0].diffuse.rgb * (bump * 0.8 + diffuseIntensity * 0.2);

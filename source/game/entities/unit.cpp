@@ -1327,9 +1327,7 @@ void Unit::doUnitBorn(const SkillCycleTable *skillCycleTable) {
 	updateAnimCycle(inf.getAnimFrames());
 }
 
-/** wrapper for sim interface 
-  * @returns the command that has been processed
-  */
+/** wrapper for sim interface */
 void Unit::doUpdateCommand() {
 	const SkillType *old_st = getCurrSkill();
 
