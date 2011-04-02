@@ -87,24 +87,38 @@ Mesh::~Mesh() {
 	delete interpolationData;
 }
 
+//#define MESH_DEBUG(x) cout << "\t\t\t" << x << endl
+#define MESH_DEBUG(x)
+
 /** Allocate memory to read in mesh data, and generate VBO handles */
 void Mesh::initMemory() {
 	if (!vertexCount) {
 		assert(!indexCount);
+		MESH_DEBUG( "Mesh has no vertices!" );
 		frameCount = 0;
 		return;
 	}
 	assert(vertexCount > 0);
 	assert(indexCount > 0);
 
+	MESH_DEBUG( "Mesh::initMemory() : vertexCount = " << vertexCount << ", indexCount = " <<  indexCount 
+				<< ", frameCount = " << frameCount );
+
 	if (use_vbos && frameCount == 1) {
 		glGenBuffers(1, &m_vertexBuffer);
 		glGenBuffers(1, &m_indexBuffer);
+		MESH_DEBUG( "Using VBOs, handles generated: vertexBuffer = " << m_vertexBuffer << ", indexBuffer = " << m_indexBuffer );
 	}
 	if ((use_vbos && frameCount == 1) || meshLerpMethod == LerpMethod::x87) {
+		if (meshLerpMethod == LerpMethod::x87) {
+			MESH_DEBUG( "Lerp method == x87, creating single vert and norm array." );
+		} else {
+			MESH_DEBUG( "Single frame, creating single vert and norm array." );
+		}
 		vertices = new Vec3f[frameCount * vertexCount];
 		normals = new Vec3f[frameCount * vertexCount];
 	} else {
+		MESH_DEBUG( "Lerp method == SIMD, creating " << frameCount << " aligned vert and norm arrays." );
 		vertArrays = new Vec3f*[frameCount];
 		normArrays = new Vec3f*[frameCount];
 		for (int i=0; i < frameCount; ++i) {
@@ -248,19 +262,24 @@ void Mesh::loadV3(const string &dir, FileOps *f, TextureManager *textureManager)
 
 	initMemory();
 
+	MESH_DEBUG( "Reading flags." );
+
 	// misc
 	twoSided = (meshHeader.properties & mp3TwoSided) != 0;
 	customColor = (meshHeader.properties & mp3CustomColor) != 0;
 
 	// texture
 	if (!(meshHeader.properties & mp3NoTexture) && textureManager != NULL) {
+		MESH_DEBUG( "texture...1" );
 		string texPath = toLower(reinterpret_cast<char*>(meshHeader.texName));
-		texturePaths[mtDiffuse] = toLower(reinterpret_cast<char*>(meshHeader.texName));
+		MESH_DEBUG( "texture...2 texPath = " << texPath );
 		texPath = dir + "/" + texPath;
 		texPath = cleanPath(texPath);
-
+		MESH_DEBUG( "Loading diffuse texture '" << texPath << "'." );
 		textures[mtDiffuse] = textureManager->getTexture(texPath);
 		loadAdditionalTextures(texPath, textureManager);
+	} else {
+		MESH_DEBUG( "no texture." );
 	}
 
 	// read data
@@ -269,7 +288,8 @@ void Mesh::loadV3(const string &dir, FileOps *f, TextureManager *textureManager)
 		int frameRead = sizeof(Vec3f) * vertexCount;
 		int nFloats = vertexCount * 3;
 		int framePad = nFloats % 4 == 0 ? 0 : 4 - (nFloats % 4);
-
+		MESH_DEBUG( "Reading data into aligned arrays." );
+		MESH_DEBUG( "Vertex position data: Reading " << nFloats << " floats per array, padding arrays with " << framePad << " 'zero' floats." );
 		for (int i=0; i < frameCount; ++i) {
 			f->read(vertArrays[i], frameRead, 1);
 			float *ptr = vertArrays[i][vertexCount].raw;
@@ -277,6 +297,7 @@ void Mesh::loadV3(const string &dir, FileOps *f, TextureManager *textureManager)
 				*ptr++ = 0.f;
 			}
 		}
+		MESH_DEBUG( "Vertex normal data: Reading " << nFloats << " floats per array, padding arrays with " << framePad << " 'zero' floats." );
 		for (int i=0; i < frameCount; ++i) {
 			f->read(normArrays[i], frameRead, 1);
 			float *ptr = normArrays[i][vertexCount].raw;
@@ -286,16 +307,22 @@ void Mesh::loadV3(const string &dir, FileOps *f, TextureManager *textureManager)
 		}
 	} else {
 		size_t vfCount = frameCount * vertexCount;
+		MESH_DEBUG( "Reading data into arrays." );
+		MESH_DEBUG( "Vertex position and normal data: Reading " << (vfCount * 6) << " floats into arrays." );
 		f->read(vertices, sizeof(Vec3f)*vfCount, 1);
 		f->read(normals, sizeof(Vec3f)*vfCount, 1);
 	}
-	if(textures[mtDiffuse]!=NULL){
-		for(int i=0; i<meshHeader.texCoordFrameCount; ++i){
-			f->read(texCoords, sizeof(Vec2f)*vertexCount, 1);
+	if (textures[mtDiffuse] != 0) {
+		int n = meshHeader.texCoordFrameCount * vertexCount * 2;
+		MESH_DEBUG( "Texture co-ordinate data: Reading " << n << " floats into array(s)." );
+		for (int i=0; i < meshHeader.texCoordFrameCount; ++i) {
+			f->read(texCoords, sizeof(Vec2f) * vertexCount, 1);
 		}
 	}
+	MESH_DEBUG( "Reading diffuse colour and opacity." );
 	f->read(&diffuseColor, sizeof(Vec3f), 1);
 	f->read(&opacity, sizeof(float32), 1);
+
 	f->seek(sizeof(Vec4f)*(meshHeader.colorFrameCount-1), SEEK_CUR);
 	f->read(indices, sizeof(uint32)*indexCount, 1);
 
@@ -332,20 +359,25 @@ void Mesh::load(const string &dir, FileOps *f, TextureManager *textureManager){
 
 	// maps
 	uint32 flag = 1;
-	for (int i=0; i<meshTextureCount; ++i) {
+	string diffuseTexPath;
+	for (int i=0; i < meshTextureCount; ++i) {
 		if ((meshHeader.textures & flag) && textureManager != NULL) {
 			uint8 cMapPath[mapPathSize];
 			f->read(cMapPath, mapPathSize, 1);
 			string mapPath = toLower(reinterpret_cast<char*>(cMapPath));
 			string mapFullPath = dir + "/" + mapPath;
 			assert(mapFullPath != "");
-
+			if (flag == 1) {
+				diffuseTexPath = mapFullPath;
+			}
+			//texturePaths[i] = mapPath;
 			textures[i] = static_cast<Texture2D*>(textureManager->getTexture(mapFullPath));
 		}
 		flag *= 2;
 	}
 	if (textures[mtDiffuse]) {
-		loadAdditionalTextures(textures[mtDiffuse]->getPath(), textureManager);
+		assert(!diffuseTexPath.empty());
+		loadAdditionalTextures(diffuseTexPath, textureManager);
 	}
 
 	// read data. (Assume packed vectors)
@@ -691,11 +723,10 @@ void Model::loadG3d(const string &path){
 
 		//load meshes
 		meshes = new Mesh[meshCount];
-		for(uint32 i=0; i < meshCount; ++i){
+		for (uint32 i=0; i < meshCount; ++i) {
+			OUTPUT_MODEL_INFO("\tLoading mesh " << i << endl);
 			meshes[i].load(dir, f.get(), textureManager);
 			meshes[i].buildInterpolationData();
-
-			OUTPUT_MODEL_INFO("\tLoaded mesh " << i << endl);
 			OUTPUT_MODEL_INFO("\t\tVertex count: " << meshes[i].getVertexCount() << endl);
 			OUTPUT_MODEL_INFO("\t\tFrame count: " << meshes[i].getFrameCount() << endl);
 		}
@@ -704,11 +735,10 @@ void Model::loadG3d(const string &path){
 		f->read(&meshCount, sizeof(meshCount), 1);
 		OUTPUT_MODEL_INFO("\tMesh count: " << meshCount << endl);
 		meshes= new Mesh[meshCount];
-		for(uint32 i=0; i < meshCount; ++i){
+		for (uint32 i=0; i < meshCount; ++i) {
+			OUTPUT_MODEL_INFO("\tLoading mesh " << i << endl);
 			meshes[i].loadV3(dir, f.get(), textureManager);
 			meshes[i].buildInterpolationData();
-
-			OUTPUT_MODEL_INFO("\tLoaded mesh " << i << endl);
 			OUTPUT_MODEL_INFO("\t\tVertex count: " << meshes[i].getVertexCount() << endl);
 			OUTPUT_MODEL_INFO("\t\tFrame count: " << meshes[i].getFrameCount() << endl);
 		}

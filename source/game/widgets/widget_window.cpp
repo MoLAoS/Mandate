@@ -153,7 +153,7 @@ WidgetWindow::WidgetWindow()
 		// error ?
 		Shared::Graphics::meshLerpMethod = LerpMethod::SIMD;
 	}
-	Shared::Graphics::use_vbos = true;
+	Shared::Graphics::use_vbos = false;
 	
 	// render
 	g_logger.logProgramEvent("Initialising OpenGL");
