@@ -758,7 +758,7 @@ void WidgetConfig::load() {
 	luaScript.startUp();
 	luaScript.atPanic(ScriptManager::panicFunc);
 	
-#	define GUI_FUNC(x) luaScript.registerFunction(GuiScript::##x, #x)
+#	define GUI_FUNC(x) luaScript.registerFunction(GuiScript::x, #x)
 
 	GUI_FUNC(setDefaultFont);
 	GUI_FUNC(setOverlayTexture);

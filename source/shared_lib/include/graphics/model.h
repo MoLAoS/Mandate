@@ -53,7 +53,7 @@ class Mesh {
 private:
 	// mesh data
 	Texture2D *textures[meshTextureCount];
-	string texturePaths[meshTextureCount];
+	//string texturePaths[meshTextureCount];
 
 	// vertex data counts
 	uint32 frameCount;
