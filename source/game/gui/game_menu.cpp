@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of The Glest Advanced Engine
 //
-//	Copyright (C) 2010	James McCulloch <silnarm at gmail>
+//	Copyright (C) 2010-2011 James McCulloch <silnarm at gmail>
 //
 //  GPL V3, see source/licence.txt
 // ==============================================================
@@ -44,12 +44,12 @@ GameMenu::GameMenu(Vec2i pos, Vec2i size)
 
 	Vec2i btnSize(dh * 5, dh);
 
-	buildButton(this, strip, 0, g_lang.get("ExitProgram"), &GameMenu::onExit);
-	buildButton(this, strip, 1, g_lang.get("QuitGame"), &GameMenu::onQuit);
-	buildButton(this, strip, 2, g_lang.get("SaveGame"), &GameMenu::onSaveGame);
-	buildButton(this, strip, 3, g_lang.get("TogglePhotoMode"), &GameMenu::onTogglePhotoMode);
-	buildButton(this, strip, 4, g_lang.get("ToggleDebug"), &GameMenu::onDebugToggle);
-	buildButton(this, strip, 5, g_lang.get("ReturnToGame"), &GameMenu::onReturnToGame);
+	buildButton(this, strip, 5, g_lang.get("ExitProgram"), &GameMenu::onExit);
+	buildButton(this, strip, 4, g_lang.get("QuitGame"), &GameMenu::onQuit);
+	buildButton(this, strip, 3, g_lang.get("SaveGame"), &GameMenu::onSaveGame);
+	buildButton(this, strip, 2, g_lang.get("TogglePhotoMode"), &GameMenu::onTogglePhotoMode);
+	buildButton(this, strip, 1, g_lang.get("ToggleDebug"), &GameMenu::onDebugToggle);
+	buildButton(this, strip, 0, g_lang.get("ReturnToGame"), &GameMenu::onReturnToGame);
 	Close.connect(this, &GameMenu::onReturnToGame);
 }
 
