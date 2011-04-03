@@ -235,6 +235,8 @@ void DebugRenderer::sceneEstablished(SceneCuller &culler) {
 	}
 }
 
+extern bool reportRenderUnitsFlag;
+
 void DebugRenderer::commandLine(string &line) {
 	string key, val;
 	size_t n = line.find('=');
@@ -299,6 +301,8 @@ void DebugRenderer::commandLine(string &line) {
 		} else if (val == "off" || val == "Off") {
 			showFrustum = false;
 		}
+	} else if (key == "RenderUnits") {
+		reportRenderUnitsFlag = true;
 	} else if (key == "ResourceMap") {
 		if ( val == "" ) { // no val supplied, toggle
 			resourceMapOverlay = !resourceMapOverlay;

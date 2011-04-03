@@ -965,6 +965,31 @@ void Renderer::renderWater(){
 	assertGl();
 }
 
+#if _GAE_DEBUG_EDITION_
+
+} // end namespace Graphics
+
+namespace Debug {
+
+bool reportRenderUnitsFlag = false;
+
+} // end namespace Debug
+
+namespace Graphics {
+
+void reportRenderUnits(vector<const Unit*> *unitLists) {
+	cout << "renderUnitsReport ::\n";
+	for (int i=0; i < GameConstants::maxPlayers + 1; ++i) {
+		foreach_const (vector<const Unit*>, it, unitLists[i]) {
+			string unitType = (*it)->getType()->getName();
+			string factionType = i ? (*it)->getFaction()->getType()->getName() : "gaia";
+			cout << "\tUnit: " << unitType << " of faction " << (i - 1) << " (" << factionType << ")\n";
+		}
+	}
+}
+
+#endif
+
 void Renderer::renderUnits(){
 	SECTION_TIMER(RENDER_UNITS);
 	SECTION_TIMER(RENDER_MODELS);
@@ -1009,6 +1034,12 @@ void Renderer::renderUnits(){
 				toRender[0].push_back(unit);
 			}
 	}
+	IF_DEBUG_EDITION(
+		if (Debug::reportRenderUnitsFlag) {
+			reportRenderUnits(toRender);
+			Debug::reportRenderUnitsFlag = false;
+		}
+	)
 	for (int i=0; i < GameConstants::maxPlayers + 1; ++i) {
 		if (toRender[i].empty()) continue;
 
@@ -1093,7 +1124,7 @@ void Renderer::renderUnits(){
 
 			// restore
 			if (fade) {
-				glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, defAmbientColor.ptr());
+				//glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, defAmbientColor.ptr());
 				glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, defDiffuseColor.ptr());
 			}
 			glPopMatrix();
