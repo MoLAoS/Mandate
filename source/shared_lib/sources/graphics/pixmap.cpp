@@ -901,39 +901,35 @@ void Pixmap1D::loadTga(const string &path){
 
 // ===================== PUBLIC ========================
 
-Pixmap2D::Pixmap2D(){
-	h= -1;
-	w= -1;
-	components= -1;
-	pixels= NULL;
+Pixmap2D::Pixmap2D() : h(-1), w(-1), components(-1), pixels(0) {
 }
 
-Pixmap2D::Pixmap2D(int components){
+Pixmap2D::Pixmap2D(int components) : h(-1), w(-1), components(-1), pixels(0) {
 	init(components);
 }
 
-Pixmap2D::Pixmap2D(int w, int h, int components){
+Pixmap2D::Pixmap2D(int w, int h, int components) : h(-1), w(-1), components(-1), pixels(0) {
 	init(w, h, components);
 }
 
 void Pixmap2D::init(int components){
-	if (!pixels) {
-		delete[] pixels; // in case init is called twice
+	if (pixels) {
+		delete [] pixels; // in case init is called twice
 	}
-	this->w= -1;
-	this->h= -1;
-	this->components= components;
-	pixels= NULL;
+	this->w = -1;
+	this->h = -1;
+	this->components = components;
+	pixels = 0;
 }
 
 void Pixmap2D::init(int w, int h, int components){
-	if (!pixels) {
+	if (pixels) {
 		delete[] pixels; // in case init is called twice
 	}
 	this->w= w;
 	this->h= h;
 	this->components= components;
-	pixels= new uint8[h*w*components];
+	pixels = new uint8[h*w*components];
 }
 
 Pixmap2D::~Pixmap2D(){

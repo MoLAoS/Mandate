@@ -34,90 +34,83 @@ namespace Glest { namespace Main {
 using namespace Sim;
 using namespace Menu;
 
+CellStrip* buildRow(CellStrip *parent, int cell) {
+	Anchors anchors(Anchor(AnchorType::SPRINGY, 5), Anchor(AnchorType::RIGID, 0));
+	CellStrip *strip = new CellStrip(parent, Orientation::HORIZONTAL, Origin::CENTRE, 8);
+	strip->setCell(cell);
+	strip->setAnchors(anchors);
+	int hints[8] = { 30, 10, 10, 10, 10, 10, 10, 10 };
+	strip->setPercentageHints(hints);
+	return strip;
+}
+
+StaticText* buildLabel(CellStrip *parent, int cell, const string &txt, int font, int colour) {
+	Anchors anchors(Anchor(AnchorType::RIGID, 0));
+	StaticText *label = new StaticText(parent);
+	label->setCell(cell);
+	label->setAnchors(anchors);
+	label->setAlignment(Alignment::CENTERED);
+	label->textStyle().m_colourIndex = colour;
+	label->textStyle().m_fontIndex = font;
+	label->setText(txt);
+	label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
+	return label;
+}
 
 GameStatsWidget::GameStatsWidget(Container* parent, Vec2i pos, Vec2i size)
-		: Container(parent, pos, size) {
+		: CellStrip(parent, pos, size, Orientation::VERTICAL, Origin::CENTRE, 0) {
+	setWidgetStyle(WidgetType::GAME_STATS);
 	GameSettings &gs = g_simInterface.getGameSettings();
 	Stats &stats = *g_simInterface.getStats();
 
-	int font = g_widgetConfig.getDefaultFontIndex(FontUsage::GAME);
-	int white = g_widgetConfig.getColourIndex(Colour(255u));
+	int font = m_textStyle.m_fontIndex;
+	int textColour = m_textStyle.m_colourIndex;
 
-	int y_lines = 3 + /*GameConstants::maxPlayers*/ 12 + 2; // headers, player row and 2 for spacing
-	int y_gap = g_metrics.getScreenH() / y_lines;
-	int y = g_metrics.getScreenH() - y_gap;
+	float u = clamp(g_metrics.getScreenH() / (15.f * g_widgetConfig.getDefaultItemHeight()), 1.f, 2.f);
+	int ch = int(u * g_widgetConfig.getDefaultItemHeight());
 
-	int w = g_metrics.getScreenW();
-	int x_centres[8];
-	int startX = w / 20; // 5% gap
-	int runningX = startX;
-	x_centres[0] = runningX + (w / 5) / 2; // x pos for centre of player label
-	runningX += (w / 5); // 20% for player label
-	for (int i=1; i < 8; ++i) {
-		x_centres[i] = runningX + (w / 10) / 2; // x pos for centres of each data column
-		runningX += (w / 10); // 10% for others
+	int cells = 3 + GameConstants::maxPlayers + 2;
+	int playerStartCell = 4;
+	addCells(cells);
+
+	setSizeHint(0, SizeHint(-1, ch + ch / 2));
+	for (int i=1; i < cells; ++i) {
+		setSizeHint(i, SizeHint(-1, ch));
 	}
-	// 5% gap at end
 
-	StaticText* label;
+	CellStrip *row = buildRow(this, 0);
 
 	string header = gs.getDescription() + " - " + (stats.getVictory(gs.getThisFactionIndex())
 													? g_lang.get("Victory") : g_lang.get("Defeat"));
-	pos = Vec2i(100, y);
-	size = Vec2i(0);
-	label = new StaticText(this, pos, size);
-	label->setText(header);
-	label->setAlignment(Alignment::NONE);
-	label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
-	
-	font = g_widgetConfig.getDefaultFontIndex(FontUsage::MENU);
-	const Font *fontPtr = g_widgetConfig.getMenuFont();
-	const FontMetrics *fm = fontPtr->getMetrics();
+	StaticText* label = buildLabel(row, 0, header, font, textColour);
+	label->textStyle().m_fontIndex = g_widgetConfig.getDefaultFontIndex(FontUsage::FANCY);
+	label->setAlignment(Alignment::FLUSH_LEFT);
 
-	y -= y_gap;
-	int x = x_centres[5] - int(fm->getTextDiminsions(g_lang.get("Units")).x) / 2;
-	label = new StaticText(this, Vec2i(x, y), size);
-	label->setText(g_lang.get("Units"));
-	label->setAlignment(Alignment::NONE);
-	label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
+	row = buildRow(this, 2);
+	label = buildLabel(row, 5, g_lang.get("Units"), font, textColour);
+	label = buildLabel(row, 7, g_lang.get("Resources"), font, textColour);
 
-	x = x_centres[7] - int(fm->getTextDiminsions(g_lang.get("Resources")).x) / 2;
-	label = new StaticText(this, Vec2i(x, y), size);
-	label->setText(g_lang.get("Resources"));
-	label->setAlignment(Alignment::NONE);
-	label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
-
-	y -= y_gap;
-
+	row = buildRow(this, 3);
 	const char *hdrs[] = {
 		"Result", "Score", "Team", "killed", "Lost", "Produced", "Harvested"
 	};
 	for (int i=1; i < 8; ++i) {
-		x = x_centres[i] - int(fm->getTextDiminsions(g_lang.get(hdrs[i-1])).x) / 2;
-		label = new StaticText(this, Vec2i(x, y), size);
-		label->setText(g_lang.get(hdrs[i-1]));
-		label->setAlignment(Alignment::NONE);
-		label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
+		label = buildLabel(row, i, g_lang.get(hdrs[i-1]), font, textColour);
 	}
 
 	for (int i=0; i < GameConstants::maxPlayers; ++i) {
-		y -= y_gap;
 		if (gs.getFactionControl(i) != ControlType::CLOSED) {
+			row = buildRow(this, 4 + i);
 			string name = gs.getPlayerName(i) + " [" + gs.getFactionTypeName(i) + "] - ";
 			Vec4f colour = Vec4f(factionColours[gs.getColourIndex(i)]) / Vec4f(255.f);
 			name += g_lang.get(ControlTypeNames[gs.getFactionControl(i)]);
-			x = x_centres[0] - int(fm->getTextDiminsions(name).x) / 2;
-			label = new StaticText(this, Vec2i(x, y), size);
-			label->setText(name);
-			label->setAlignment(Alignment::NONE);
+
+			label = buildLabel(row, 0, name, font, textColour);
 			label->setDoubleShadow(colour, Vec4f(0.f, 0.f, 0.f, 1.f), 1);
+			label->setAlignment(Alignment::FLUSH_RIGHT);
 
 			string winlose = stats.getVictory(i) ? "Victory" : "Defeat";
-			x = x_centres[1] - int(fm->getTextDiminsions(winlose).x) / 2;
-			label = new StaticText(this, Vec2i(x, y), size);
-			label->setText(winlose);
-			label->setAlignment(Alignment::NONE);
-			label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
+			label = buildLabel(row, 1, winlose, font, textColour);
 
 			int kills = stats.getKills(i);
 			int deaths = stats.getDeaths(i);
@@ -125,49 +118,16 @@ GameStatsWidget::GameStatsWidget(Container* parent, Vec2i pos, Vec2i size)
 			int harvested = stats.getResourcesHarvested(i);
 			int score = kills * 100 + produced * 50 + harvested / 10;
 	
-			string tmp = intToStr(score);
-			x = x_centres[2] - int(fm->getTextDiminsions(tmp).x) / 2;
-			label = new StaticText(this, Vec2i(x, y), size);
-			label->setText(tmp);
-			label->setAlignment(Alignment::NONE);
-			label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
-
-			tmp = intToStr(gs.getTeam(i));
-			x = x_centres[3] - int(fm->getTextDiminsions(tmp).x) / 2;
-			label = new StaticText(this, Vec2i(x, y), size);
-			label->setText(tmp);
-			label->setAlignment(Alignment::NONE);
-			label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
-
-			tmp = intToStr(kills);
-			x = x_centres[4] - int(fm->getTextDiminsions(tmp).x) / 2;
-			label = new StaticText(this, Vec2i(x, y), size);
-			label->setText(tmp);
-			label->setAlignment(Alignment::NONE);
-			label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
-
-			tmp = intToStr(deaths);
-			x = x_centres[5] - int(fm->getTextDiminsions(tmp).x) / 2;
-			label = new StaticText(this, Vec2i(x, y), size);
-			label->setText(tmp);
-			label->setAlignment(Alignment::NONE);
-			label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
-
-			tmp = intToStr(produced);
-			x = x_centres[6] - int(fm->getTextDiminsions(tmp).x) / 2;
-			label = new StaticText(this, Vec2i(x, y), size);
-			label->setText(tmp);
-			label->setAlignment(Alignment::NONE);
-			label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
-
-			tmp = intToStr(harvested);
-			x = x_centres[7] - int(fm->getTextDiminsions(tmp).x) / 2;
-			label = new StaticText(this, Vec2i(x, y), size);
-			label->setText(tmp);
-			label->setAlignment(Alignment::NONE);
-			label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
+			label = buildLabel(row, 2, intToStr(score), font, textColour);
+			label = buildLabel(row, 3, intToStr(gs.getTeam(i)), font, textColour);
+			label = buildLabel(row, 4, intToStr(kills), font, textColour);
+			label = buildLabel(row, 5, intToStr(deaths), font, textColour);
+			label = buildLabel(row, 6, intToStr(produced), font, textColour);
+			label = buildLabel(row, 7, intToStr(harvested), font, textColour);
 		}
 	}
+
+	setSize(size);
 }
 
 // =====================================================

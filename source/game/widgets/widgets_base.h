@@ -440,14 +440,17 @@ private:
 	Alignment     m_align;
 	bool          m_batchRender;
 	//int           m_defaultFont;
-	TextRenderer *m_textRenderer;
+	TextRenderer *m_textRenderer; // => WidgetConfig or WidgetWindow
 
 protected:
+	// worker bee
 	void renderText(const string &txt, int x, int y, const Colour &colour, const Font *font = 0);
+
+	// wrappers
 	void renderText(const string &txt, int x, int y, const Colour &colour, int fontNdx);
 	void renderText(int ndx = 0);
-	void renderTextShadowed(int ndx = 0, int offset = 2);
-	void renderTextDoubleShadowed(int ndx = 0, int offset = 2);
+	void renderTextShadowed(int ndx = 0);
+	void renderTextDoubleShadowed(int ndx = 0);
 
 	void startBatch(const Font *font);
 	void endBatch();
@@ -469,6 +472,7 @@ public:
 		setTextShadowColour(col1, ndx);
 		setTextShadowColour2(col2, ndx);
 	}
+	void setTextShadowOffset(const Vec2i &offset, int ndx = 0);
 	void setTextPos(const Vec2i &pos, int ndx=0);
 //	void setTextFont(int ndx) { m_defaultFont = ndx; }
 	void setTextFade(float alpha, int ndx=0);// { m_texts[ndx].m_fade = alpha; }
@@ -521,7 +525,7 @@ public:
 	MouseCursor(WidgetWindow *window) : Widget(window) {}
 	virtual ~MouseCursor() {}
 
-	virtual void setAppearance(MouseAppearance ma, const Texture2D *tex = 0) = 0;
+	virtual void setAppearance(MouseAppearance ma, const Texture2D *cmdIcon = 0) = 0;
 };
 
 // =====================================================
@@ -608,38 +612,6 @@ public:
 	virtual void setFade(float v) override;
 	virtual void render() override;
 };
-
-// =====================================================
-// class WidgetCell
-// =====================================================
-
-//class WidgetCell : public Container {
-//private:
-//	SizeHint   m_sizeHint;
-//
-//protected:
-//	void anchorWidgets();
-//
-//public:
-//	WidgetCell(Container *parent);
-//	WidgetCell(Container *parent, Vec2i pos, Vec2i size);
-//
-//	SizeHint getSizeHint() const { return m_sizeHint; }
-//
-//	void setSizeHint(SizeHint sh) { m_sizeHint = sh; }
-//
-//	virtual void setSize(const Vec2i &sz) override {
-//		Widget::setSize(sz);
-//		anchorWidgets();
-//	}
-//	virtual void setPos(const Vec2i &p) override {
-//		Widget::setPos(p); // skip Container, we reset children ourselves...
-//		anchorWidgets();
-//	}
-//
-//	virtual void clear() override { Container::clear(); }
-//	virtual string descType() const override { return "WidgetCell"; }
-//};
 
 }}
 

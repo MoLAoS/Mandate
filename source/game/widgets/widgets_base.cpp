@@ -983,6 +983,12 @@ void TextWidget::setTextShadowColour2(const Vec4f &col, int ndx) {
 	m_texts[ndx].m_shadowColour2 = g_widgetConfig.getColourIndex(col);
 }
 
+void TextWidget::setTextShadowOffset(const Vec2i &offset, int ndx) {
+	ASSERT_RANGE(ndx, m_texts.size());
+	m_texts[ndx].m_shadowOffset = offset;
+}
+
+
 void TextWidget::setTextFade(float alpha, int ndx) {
 	if (alpha == 0.f && numSnippets() == 1) {
 		DEBUG_HOOK();
@@ -1066,11 +1072,11 @@ void TextWidget::renderText(int ndx) {
 	renderText(m_texts[ndx].m_text, pos.x, pos.y, colour, m_texts[ndx].m_font);
 }
 
-void TextWidget::renderTextShadowed(int ndx, int offset) {
+void TextWidget::renderTextShadowed(int ndx) {
 	ASSERT_RANGE(ndx, m_texts.size());
 	WidgetConfig &cfg = g_widgetConfig;
 	Vec2i pos = me->getScreenPos() + m_texts[ndx].m_pos;
-	Vec2i sPos = pos + Vec2i(offset, offset);
+	Vec2i sPos = pos + m_texts[ndx].m_shadowOffset;
 	Colour colour = cfg.getColour(m_texts[ndx].m_colour);
 	Colour shadowColour = cfg.getColour(m_texts[ndx].m_shadowColour);
 	colour.a = uint8(clamp(unsigned(colour.a * me->getFade() * m_texts[ndx].m_fade), 0u, 255u));
@@ -1079,12 +1085,12 @@ void TextWidget::renderTextShadowed(int ndx, int offset) {
 	renderText(m_texts[ndx].m_text, pos.x, pos.y, colour);
 }
 
-void TextWidget::renderTextDoubleShadowed(int ndx, int offset) {
+void TextWidget::renderTextDoubleShadowed(int ndx) {
 	ASSERT_RANGE(ndx, m_texts.size());
 	WidgetConfig &cfg = g_widgetConfig;
 	Vec2i pos = me->getScreenPos() + m_texts[ndx].m_pos;
-	Vec2i sPos1 = pos + Vec2i(offset, offset);
-	Vec2i sPos2 = sPos1 + Vec2i(offset, offset);
+	Vec2i sPos1 = pos + m_texts[ndx].m_shadowOffset;
+	Vec2i sPos2 = sPos1 + m_texts[ndx].m_shadowOffset;
 	Colour colour = cfg.getColour(m_texts[ndx].m_colour);
 	Colour shadowColour = cfg.getColour(m_texts[ndx].m_shadowColour);
 	Colour shadowColour2 = cfg.getColour(m_texts[ndx].m_shadowColour2);

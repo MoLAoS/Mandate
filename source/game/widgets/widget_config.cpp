@@ -844,6 +844,7 @@ void WidgetConfig::load() {
 	loadStyles("MiniMap", WidgetType::MINIMAP);
 	loadStyles("Display", WidgetType::DISPLAY);
 	loadStyles("Console", WidgetType::CONSOLE);
+	loadStyles("GameStats", WidgetType::GAME_STATS);
 
 	loadStyles("TestWidget", WidgetType::TEST_WIDGET);
 	if (luaScript.getGlobal("TestWidget")) {

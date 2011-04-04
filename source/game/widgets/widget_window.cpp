@@ -128,8 +128,7 @@ WidgetWindow::WidgetWindow()
 		/*, mouseIcon(0)
 		, mouseMain(0)
 		, mouseAnimations(0) */{
-	m_size.x = Metrics::getInstance().getScreenW();
-	m_size.y = Metrics::getInstance().getScreenH();
+	m_size = g_metrics.getScreenDims();
 
 	// Window
 	Window::setText("Glest Advanced Engine");

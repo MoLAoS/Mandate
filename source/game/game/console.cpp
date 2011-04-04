@@ -107,9 +107,9 @@ void Console::addDialog(string speaker, Vec3f c, string text, bool playSound) {
 	Colour colour = toColour(c);
 	addDialog(speaker, colour, text, playSound);
 }
-
+ 
 void Console::update(){
-	timeElapsed += 1.f / WORLD_FPS;
+	timeElapsed += 1.f / GameConstants::guiUpdatesPerSec;
 
 	if (!lines.empty()) {
 		if(lines.back().second < timeElapsed - timeout){

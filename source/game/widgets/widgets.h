@@ -119,9 +119,8 @@ public:
 
 class StaticText : public Widget, public TextWidget {
 private:
-	bool	m_shadow;
-	int		m_shadowOffset;
-	bool	m_doubleShadow;
+	bool   m_shadow;
+	bool   m_doubleShadow;
 	
 public:
 	StaticText(Container* parent);

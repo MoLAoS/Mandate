@@ -36,13 +36,13 @@ namespace Glest { namespace Widgets {
 
 StaticText::StaticText(Container* parent)
 		: Widget(parent) , TextWidget(this)
-		, m_shadow(false), m_doubleShadow(false), m_shadowOffset(2) {
+		, m_shadow(false), m_doubleShadow(false) {
 	setWidgetStyle(WidgetType::STATIC_WIDGET);
 }
 
 StaticText::StaticText(Container* parent, Vec2i pos, Vec2i size)
 		: Widget(parent, pos, size), TextWidget(this)
-		, m_shadow(false), m_doubleShadow(false), m_shadowOffset(2) {
+		, m_shadow(false), m_doubleShadow(false) {
 	setWidgetStyle(WidgetType::STATIC_WIDGET);
 }
 
@@ -53,9 +53,9 @@ void StaticText::render() {
 	Widget::renderBackground();
 	if (TextWidget::getText(0) != "") {
 		if (m_doubleShadow) {
-			TextWidget::renderTextDoubleShadowed(0, m_shadowOffset);
+			TextWidget::renderTextDoubleShadowed();
 		} else if (m_shadow) {
-			TextWidget::renderTextShadowed(0, m_shadowOffset);
+			TextWidget::renderTextShadowed();
 		} else {
 			TextWidget::renderText();
 		}
@@ -76,13 +76,13 @@ Vec2i StaticText::getPrefSize() const {
 void StaticText::setShadow(const Vec4f &colour, int offset) {
 	m_shadow = true;
 	TextWidget::setTextShadowColour(colour);
-	m_shadowOffset = offset;
+	TextWidget::setTextShadowOffset(Vec2i(offset));
 }
 
 void StaticText::setDoubleShadow(const Vec4f &colour1, const Vec4f &colour2, int offset) {
 	m_doubleShadow = true;
 	TextWidget::setTextShadowColours(colour1, colour2);
-	m_shadowOffset = offset;
+	TextWidget::setTextShadowOffset(Vec2i(offset));
 }
 
 // =====================================================

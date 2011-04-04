@@ -87,8 +87,11 @@ Mesh::~Mesh() {
 	delete interpolationData;
 }
 
-//#define MESH_DEBUG(x) cout << "\t\t\t" << x << endl
+#define OUTPUT_MODEL_INFO(x)
+//#define OUTPUT_MODEL_INFO(x) cout << x
+
 #define MESH_DEBUG(x)
+//#define MESH_DEBUG(x) cout << "\t\t\t" << x << endl
 
 /** Allocate memory to read in mesh data, and generate VBO handles */
 void Mesh::initMemory() {
@@ -687,9 +690,6 @@ void Model::save(const string &path){
 		throw runtime_error("Unknown model format: " + extension);
 	}
 }
-
-#define OUTPUT_MODEL_INFO(x)
-//#define OUTPUT_MODEL_INFO(x) cout << x
 
 // load a model from a g3d file
 void Model::loadG3d(const string &path){

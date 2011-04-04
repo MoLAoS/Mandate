@@ -17,7 +17,7 @@
 
 namespace Glest { namespace Main {
 
-class GameStatsWidget : public Container {
+class GameStatsWidget : public CellStrip {
 public:
 	GameStatsWidget(Container* parent, Vec2i p, Vec2i s);
 	
@@ -33,6 +33,7 @@ public:
 class BattleEnd: public ProgramState {
 private:
 	bool isQuickExit;
+
 public:
 	BattleEnd(Program &program, bool quickExit=false);
 	~BattleEnd();
