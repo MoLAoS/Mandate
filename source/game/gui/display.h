@@ -22,6 +22,7 @@
 #include "widgets.h"
 #include "forward_decs.h"
 #include "selection.h"
+#include "tool_tips.h"
 
 using std::string;
 
@@ -110,7 +111,7 @@ private:
 	DisplayButton	m_hoverBtn,		// section/index of button mouse is over
 					m_pressedBtn;	// section/index of button that received a mouse down event
 
-	ToolTip	*m_toolTip;
+	CommandTip  *m_toolTip;
 
 private:
 	void renderProgressBar();
@@ -137,7 +138,9 @@ public:
 	void setPortraitTitle(const string title);
 	void setPortraitText(const string &text);
 	void setOrderQueueText(const string &text);
-	void setToolTipText(const string &i_txt, DisplaySection i_section = DisplaySection::COMMANDS);
+	void setToolTipText2(const string &hdr, const string &tip, DisplaySection i_section = DisplaySection::COMMANDS);
+	void addToolTipReq(const DisplayableType *dt, bool ok, const string &txt);
+	//void setToolTipText(const string &i_txt, DisplaySection i_section = DisplaySection::COMMANDS);
 	void setTransportedLabel(bool v);
 
 	void setUpImage(int i, const Texture2D *image) 		{setImage(image, i);}

@@ -152,7 +152,7 @@ Display::Display(UserInterface *ui, Vec2i pos)
 	clear();
 	setSize();
 
-	m_toolTip = new ToolTip(getParent());
+	m_toolTip = new CommandTip(WidgetWindow::getInstance());
 	m_toolTip->setVisible(false);
 }
 
@@ -271,14 +271,11 @@ void Display::setLoadInfo(const string &str) {
 	setText(str, 4);
 }
 
-void Display::setToolTipText(const string &i_txt, DisplaySection i_section) {
-	//WIDGET_LOG( __FUNCTION__ << "( \"" << i_txt << "\" )");
-	string str = i_txt;
-	trimTrailingNewlines(str);
-	const FontMetrics *fm = getFont(m_toolTip->textStyle().m_fontIndex)->getMetrics();
-	fm->wrapText(str, 32 * cellWidthCount);
-
-	m_toolTip->setText(str);
+void Display::setToolTipText2(const string &hdr, const string &tip, DisplaySection i_section) {
+	m_toolTip->setHeader(hdr);
+	m_toolTip->setTipText(tip);
+	m_toolTip->clearReqs();
+	m_toolTip->setVisible(true);
 	Vec2i a_offset;
 	if (i_section == DisplaySection::SELECTION) {
 		a_offset = m_upImageOffset;
@@ -289,6 +286,30 @@ void Display::setToolTipText(const string &i_txt, DisplaySection i_section) {
 	}
 	resetTipPos(a_offset);
 }
+
+void Display::addToolTipReq(const DisplayableType *dt, bool ok, const string &txt) {
+	m_toolTip->addReq(dt, ok, txt);
+	resetTipPos();
+}
+
+//void Display::setToolTipText(const string &i_txt, DisplaySection i_section) {
+//	//WIDGET_LOG( __FUNCTION__ << "( \"" << i_txt << "\" )");
+//	string str = i_txt;
+//	trimTrailingNewlines(str);
+//	const FontMetrics *fm = getFont(m_toolTip->textStyle().m_fontIndex)->getMetrics();
+//	fm->wrapText(str, 32 * cellWidthCount);
+//
+//	m_toolTip->setText(str);
+//	Vec2i a_offset;
+//	if (i_section == DisplaySection::SELECTION) {
+//		a_offset = m_upImageOffset;
+//	} else if (i_section == DisplaySection::TRANSPORTED) {
+//		a_offset = m_carryImageOffset;
+//	} else {
+//		a_offset = m_downImageOffset;
+//	}
+//	resetTipPos(a_offset);
+//}
 
 void Display::setTransportedLabel(bool v) {
 	TextWidget::setText((v ? g_lang.get("Transported") : ""), 4);
@@ -595,7 +616,7 @@ bool Display::mouseDoubleClick(MouseButton btn, Vec2i pos) {
 }
 
 void Display::resetTipPos(Vec2i i_offset) {
-	if (m_toolTip->getText().empty()) {
+	if (m_toolTip->isEmpty()) {
 		m_toolTip->setVisible(false);
 		return;
 	}
@@ -641,9 +662,9 @@ bool Display::mouseMove(Vec2i pos) {
 			} else if (currBtn.m_section == DisplaySection::COMMANDS) {
 				m_ui->computeCommandInfo(currBtn.m_index);
 			} else if (currBtn.m_section == DisplaySection::TRANSPORTED) {
-				setToolTipText(g_lang.get("TransportInfo"), DisplaySection::TRANSPORTED);
+				setToolTipText2("", g_lang.get("TransportInfo"), DisplaySection::TRANSPORTED);
 			} else {
-				setToolTipText("");
+				setToolTipText2("", "");
 			}
 			m_hoverBtn = currBtn;
 			return true;
@@ -651,7 +672,7 @@ bool Display::mouseMove(Vec2i pos) {
 			// don't do anything
 		}
 	} else {
-		setToolTipText("");
+		setToolTipText2("", "");
 	}
 	return false;
 }
@@ -659,7 +680,7 @@ bool Display::mouseMove(Vec2i pos) {
 void Display::mouseOut() {
 	WIDGET_LOG( __FUNCTION__ << "()" );
 	m_hoverBtn = DisplayButton(DisplaySection::INVALID, invalidPos);
-	setToolTipText("");
+	setToolTipText2("", "");
 	m_ui->invalidateActivePos();
 	//m_toolTip->setVisible(false);
 }

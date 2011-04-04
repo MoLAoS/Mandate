@@ -1070,6 +1070,7 @@ void Unit::born(bool reborn) {
 	if (type->isDetector()) {
 		g_world.getCartographer()->detectorCreated(this);
 	}
+	faction->onUnitActivated(type);
 }
 
 void checkTargets(const Unit *dead) {
@@ -1123,6 +1124,7 @@ void Unit::kill() {
 	} else {
 		faction->deApplyStaticCosts(type);
 		faction->removeStore(type);
+		faction->onUnitDeActivated(type);
 	}
 
 	Died(this);
@@ -2165,6 +2167,7 @@ bool Unit::morph(const MorphCommandType *mct, const UnitType *ut, Vec2i offset, 
 	Field newField = ut->getField();
 	CloakClass oldCloakClass = type->getCloakClass();
 	if (map->areFreeCellsOrHasUnit(pos + offset, ut->getSize(), newField, this)) {
+		const UnitType *oldType = type;
 		map->clearUnitCells(this, pos);
 		faction->deApplyStaticCosts(type);
 		type = ut;
@@ -2211,6 +2214,7 @@ bool Unit::morph(const MorphCommandType *mct, const UnitType *ut, Vec2i offset, 
 			commands = newCommands;
 		}
 		StateChanged(this);
+		faction->onUnitMorphed(type, oldType);
 		return true;
 	} else {
 		return false;
@@ -2221,12 +2225,14 @@ bool Unit::transform(const TransformCommandType *tct, const UnitType *ut, Vec2i 
 	RUNTIME_CHECK(ut->getFirstCtOfClass(CommandClass::BUILD_SELF) != 0);
 	Vec2i offset = pos - this->pos;
 	m_facing = facing; // needs to be set for putUnitCells() [happens in morph()]
+	const UnitType *oldType = type;
 	if (morph(tct, ut, offset, false)) {
 		rotation = facing * 90.f;
 		hp = 1;
 		commands.clear();
 		giveCommand(g_world.newCommand(type->getFirstCtOfClass(CommandClass::BUILD_SELF), CommandFlags()));
 		setCurrSkill(SkillClass::BUILD_SELF);
+		faction->onUnitMorphed(type, oldType);
 		return true;
 	}
 	return false;

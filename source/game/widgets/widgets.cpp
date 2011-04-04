@@ -823,34 +823,6 @@ Vec2i PicturePanel::getPrefSize() const {
 }
 
 // =====================================================
-//  class ToolTip
-// =====================================================
-
-void ToolTip::init() {
-	setWidgetStyle(WidgetType::TOOL_TIP);
-	TextWidget::setText("");
-	TextWidget::setAlignment(Alignment::NONE);
-	TextWidget::setTextPos(Vec2i(getBorderLeft(), getBorderTop()));
-}
-
-ToolTip::ToolTip(Container* parent)
-		: StaticText(parent) {
-	init();
-}
-
-ToolTip::ToolTip(Container* parent, Vec2i pos, Vec2i size)
-		: StaticText(parent, pos, size) {
-	init();
-}
-
-void ToolTip::setText(const string &txt) {
-	TextWidget::setText(txt);
-	Vec2i dims = TextWidget::getTextDimensions(0);
-	dims += getBordersAll() + Vec2i(4);
-	setSize(dims);
-}
-
-// =====================================================
 //  class OptionWidget
 // =====================================================
 

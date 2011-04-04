@@ -34,8 +34,8 @@ namespace Glest { namespace Entities {
 
 class ResourceAmount {
 protected:
-	const ResourceType *m_type;
-	int		m_amount;
+	const ResourceType  *m_type;
+	int	                 m_amount;
 
 public:
 	ResourceAmount() : m_type(0), m_amount(0) {}

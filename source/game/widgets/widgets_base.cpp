@@ -446,6 +446,11 @@ void Widget::renderBordersFromTexture(const BorderStyle &style, const Vec2i &off
 void Widget::renderBorders(const BorderStyle &style, const Vec2i &offset, const Vec2i &size) {
 	assert(glIsEnabled(GL_BLEND));
 	assert(style.m_type != BorderType::NONE);
+
+	if (style.m_type == BorderType::INVISIBLE) {
+		return;
+	}
+
 	if (size.x < style.m_sizes[Border::LEFT] + style.m_sizes[Border::RIGHT]
 	|| size.y < style.m_sizes[Border::TOP] + style.m_sizes[Border::BOTTOM]) {
 		return;
@@ -453,6 +458,7 @@ void Widget::renderBorders(const BorderStyle &style, const Vec2i &offset, const 
 
 	if (style.m_type == BorderType::TEXTURE) {
 		renderBordersFromTexture(style, offset, size);
+		return;
 	}
 
 	// O = Outside, I = Inside, L = Left, T = Top, R = Right, B = Bottom

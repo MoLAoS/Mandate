@@ -810,7 +810,15 @@ void WidgetConfig::load() {
 	loadStyles("Slider", WidgetType::SLIDER);
 	loadStyles("TitleBar", WidgetType::TITLE_BAR);
 	loadStyles("MessageBox", WidgetType::MESSAGE_BOX);
-	loadStyles("ToolTip", WidgetType::TOOL_TIP);
+	//loadStyles("ToolTip", WidgetType::TOOL_TIP);
+	loadStyles("ToolTip", WidgetType::TOOLTIP);
+	if (luaScript.getGlobal("ToolTip")) {
+		loadStyles("Header", WidgetType::TOOLTIP_HEADER, false);
+		loadStyles("Main", WidgetType::TOOLTIP_MAIN, false);
+		loadStyles("RequirementMet", WidgetType::TOOLTIP_REQ_OK, false);
+		loadStyles("RequirementNotMet", WidgetType::TOOLTIP_REQ_NOK, false);
+		luaScript.popTable();
+	}
 	loadStyles("ScrollBarButtonUp", WidgetType::SCROLLBAR_BTN_UP);
 	loadStyles("ScrollBarButtonDown", WidgetType::SCROLLBAR_BTN_DOWN);
 	loadStyles("ScrollBarButtonLeft", WidgetType::SCROLLBAR_BTN_LEFT);

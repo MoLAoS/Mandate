@@ -28,7 +28,7 @@ WRAPPED_ENUM( Corner, TOP_LEFT, TOP_RIGHT, BOTTOM_RIGHT, BOTTOM_LEFT );
 //  BorderStyle
 // =====================================================
 
-STRINGY_ENUM( BorderType, NONE, RAISE, EMBED, SOLID, CUSTOM_SIDES, CUSTOM_CORNERS, TEXTURE );
+STRINGY_ENUM( BorderType, NONE, INVISIBLE, RAISE, EMBED, SOLID, CUSTOM_SIDES, CUSTOM_CORNERS, TEXTURE );
 
 struct BorderStyle {
 	BorderType	m_type;

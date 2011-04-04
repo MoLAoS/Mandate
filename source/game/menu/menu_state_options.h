@@ -23,9 +23,9 @@ using namespace Widgets;
 class SpinnerValueBox : public StaticText {
 public:
 	SpinnerValueBox(Container *parent) : StaticText(parent) {
-		setWidgetStyle(WidgetType::TOOL_TIP);
+		setWidgetStyle(WidgetType::TEXT_BOX);
 	}
-	virtual void setStyle() override { setWidgetStyle(WidgetType::TOOL_TIP); }
+	virtual void setStyle() override { setWidgetStyle(WidgetType::TOOLTIP); }
 };
 
 class Spinner : public CellStrip,  public sigslot::has_slots {

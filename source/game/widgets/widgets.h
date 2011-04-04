@@ -342,25 +342,6 @@ public:
 };
 
 // =====================================================
-//  class ToolTip
-// =====================================================
-
-class ToolTip : public StaticText {
-private:
-	void init();
-
-public:
-	ToolTip(Container* parent);
-	ToolTip(Container* parent, Vec2i pos, Vec2i size);
-
-	void setText(const string &txt);
-
-	// Widget overrides
-	virtual void setStyle() override { setWidgetStyle(WidgetType::TOOL_TIP); }
-	virtual string descType() const override { return "Tooltip"; }
-};
-
-// =====================================================
 //  class OptionWidget
 // =====================================================
 

@@ -80,6 +80,7 @@ public:
 	typedef map<const ResourceType*, Modifier>         CostModifiers;
 	typedef map<const ProducibleType*, CostModifiers>  UnitCostModifiers;
 	typedef map<const UnitType*, CostModifiers>        StoreModifiers;
+	typedef map<const UnitType*, int>                  UnitTypeCountMap;
 
 private:
     typedef vector<StoredResource>	Resources;
@@ -91,6 +92,7 @@ private:
 	Units units;
 	UnitMap unitMap;
 	Products products;
+	UnitTypeCountMap  m_unitCountMap;  // count of each 'operative' UnitType in factionType.
 
 	ControlType control;
 
@@ -123,8 +125,10 @@ public:
 
 	//get
 	const StoredResource *getResource(const ResourceType *rt) const;
-	const StoredResource *getResource(int i) const			{assert(i < resources.size()); return &resources[i];}
+	const StoredResource *getResource(int i) const  {assert(i < resources.size()); return &resources[i];}
 	int getStoreAmount(const ResourceType *rt) const;
+
+	int getCountOfUnitType(const UnitType *ut) const    { return m_unitCountMap.find(ut)->second; }
 
 	const FactionType *getType() const					{return factionType;}
 	int getIndex() const								{return m_id;}
@@ -174,6 +178,8 @@ public:
 	void deApplyStaticCosts(const ProducibleType *p);
 	void deApplyStaticConsumption(const ProducibleType *p);
 	void applyCostsOnInterval(const ResourceType *rt);
+
+	// check resource costs
 	bool checkCosts(const ProducibleType *pt);
 	bool checkCosts(const ProducibleType *pt, int discount);
 
@@ -182,6 +188,11 @@ public:
 	bool reqsOk(const CommandType *ct) const;
 	bool reqsOk(const CommandType *ct, const ProducibleType *pt) const;
 
+	// get summary of commmand reqs and costs
+	void reportReqsAndCosts(const CommandType *ct, const ProducibleType *pt, CommandCheckResult &out_result);
+	void reportReqs(const RequirableType *rt, CheckReqsResult &out_result);
+
+	// subfaction checks
 	bool isAvailable(const CommandType *ct) const;
 	bool isAvailable(const CommandType *ct, const ProducibleType *pt) const;
 	bool isAvailable(const RequirableType *rt) const	{return rt->isAvailableInSubfaction(subfaction);}
@@ -200,6 +211,13 @@ public:
 
 	void add(Unit *unit);
 	void remove(Unit *unit);
+
+	void onUnitActivated(const UnitType *ut) { ++m_unitCountMap[ut]; }
+	void onUnitMorphed(const UnitType *new_ut, const UnitType *old_ut) {
+		--m_unitCountMap[old_ut];
+		++m_unitCountMap[new_ut];
+	}
+	void Faction::onUnitDeActivated(const UnitType *ut) { --m_unitCountMap[ut]; }
 
 	void addStore(const ResourceType *rt, int amount);
 	void addStore(const UnitType *unitType);

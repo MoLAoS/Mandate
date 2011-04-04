@@ -113,6 +113,10 @@ void Faction::init(const FactionType *factionType, ControlType control, string p
 	texture = 0;
 	m_logoTex = 0;
 
+	for (int i=0; i < factionType->getUnitTypeCount(); ++i) {
+		m_unitCountMap[factionType->getUnitType(i)] = 0;
+	}
+
 	if (factionIndex != -1) {
 		resources.resize(techTree->getResourceTypeCount());
 		for (int i = 0; i < techTree->getResourceTypeCount(); ++i) {
@@ -340,34 +344,19 @@ Modifier Faction::getStoreModifier(const UnitType *ut, const ResourceType *rt) c
 
 /** Checks if all required units and upgrades are present for a RequirableType */
 bool Faction::reqsOk(const RequirableType *rt) const {
-
-	//required units
+	// required units
 	for (int i = 0; i < rt->getUnitReqCount(); ++i) {
-		bool found = false;
-
-		for (int j = 0; j < getUnitCount(); ++j) {
-			Unit *unit = getUnit(j);
-			const UnitType *ut = unit->getType();
-
-			if (rt->getUnitReq(i) == ut && unit->isOperative()) {
-				found = true;
-				break;
-			}
-		}
-
-		if (!found) {
+		if (!getCountOfUnitType(rt->getUnitReq(i))) {
 			return false;
 		}
 	}
-
-	//required upgrades
+	// required upgrades
 	for (int i = 0; i < rt->getUpgradeReqCount(); ++i) {
 		if (!upgradeManager.isUpgraded(rt->getUpgradeReq(i))) {
 			return false;
 		}
 	}
-
-	//available in subfaction
+	// available in subfaction ?
 	return rt->isAvailableInSubfaction(subfaction);
 }
 
@@ -433,6 +422,50 @@ bool Faction::isAvailable(const CommandType *ct, const ProducibleType *pt) const
 		}
 	}
 	return true;
+}
+
+void Faction::reportReqs(const RequirableType *rt, CheckReqsResult &out_result) {
+	// required units
+	for (int i = 0; i < rt->getUnitReqCount(); ++i) {
+		const UnitType *ut = rt->getUnitReq(i);
+		bool ok = getCountOfUnitType(ut);
+		out_result.m_unitReqResults.push_back(UnitReqResult(ut, ok));
+	}
+	// required upgrades
+	for (int i = 0; i < rt->getUpgradeReqCount(); ++i) {
+		const UpgradeType *ut = rt->getUpgradeReq(i);
+		bool ok = upgradeManager.isUpgraded(ut);
+		out_result.m_upgradeReqResults.push_back(UpgradeReqResult(ut, ok));
+	}
+}
+
+void Faction::reportReqsAndCosts(const CommandType *ct, const ProducibleType *pt, CommandCheckResult &out_result) {
+	out_result.m_commandType = ct;
+	out_result.m_producibleType = pt;
+	reportReqs(ct, out_result.m_cmdReqsResult);
+	out_result.m_availableInSubFaction = isAvailable(ct);
+	if (pt) {
+		if (pt->getClass() == ProducibleClass::UPGRADE) {
+			const UpgradeType *ut = static_cast<const UpgradeType*>(pt);
+			out_result.m_upgradedAlready = upgradeManager.isUpgraded(ut);
+			out_result.m_upgradingAlready = upgradeManager.isUpgrading(ut);
+		} else {
+			out_result.m_upgradedAlready = false;
+			out_result.m_upgradingAlready = false;
+		}
+		reportReqs(pt, out_result.m_prodReqsResult);
+		for (int i=0; i < pt->getCostCount(); ++i) {
+			ResourceAmount res = pt->getCost(i, this);
+			int stored = getResource(res.getType())->getAmount();
+			out_result.m_prodCostsResult.push_back(ResourceCostResult(res.getType(), res.getAmount(), stored));
+		}
+		if (out_result.m_availableInSubFaction) { // don't overwrite false
+			out_result.m_availableInSubFaction = isAvailable(pt);
+		}
+	} else {
+		out_result.m_upgradedAlready = false;
+		out_result.m_upgradingAlready = false;
+	}
 }
 
 // ================== cost application ==================

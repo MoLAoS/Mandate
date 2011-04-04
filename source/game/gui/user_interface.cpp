@@ -93,6 +93,34 @@ void SelectionQuad::disable(){
 	enabled= false;
 }
 
+// ===============================
+//  Misc.
+// ===============================
+
+///@todo move into Lang
+string getTranslatedFactionName(const string &factionName, const string &name) {
+	string result = g_lang.getFactionString(factionName, name);
+	if (result == name) { // no custom name in faciton lang
+		result = g_lang.get(name); // try glob lang
+		if (result.find("???") != string::npos) { // or just use name formatted
+			result = formatString(name);
+		}
+	}
+	return result;
+}
+
+///@todo move into Lang
+string getTranslatedTechName(const string &name) {
+	string result = g_lang.getTechString(name);
+	if (result == name) {
+		result = g_lang.get(name);
+		if (result.find("???") != string::npos) {
+			result = formatString(name);
+		}
+	}
+	return result;
+}
+
 // =====================================================
 // 	class UserInterface
 // =====================================================
@@ -940,12 +968,14 @@ void UserInterface::mouseDownSecondTier(int posDisplay) {
 ///@todo move to Display
 void UserInterface::computePortraitInfo(int posDisplay) {
 	if (selection.getCount() < posDisplay) {
-		m_display->setToolTipText("");
+		m_display->setToolTipText2("", "");
 	} else {
 		if (selection.getCount() == 1 && !selection.isEnemy()) {
-			m_display->setToolTipText(selection.getFrontUnit()->getLongDesc(), DisplaySection::SELECTION);
+			const Unit *unit = selection.getFrontUnit();
+			string name = getTranslatedFactionName(unit->getFaction()->getType()->getName(), unit->getType()->getName());
+			m_display->setToolTipText2(name, unit->getLongDesc(), DisplaySection::SELECTION);
 		} else if (selection.isComandable()) {
-			m_display->setToolTipText(g_lang.get("PotraitInfo"), DisplaySection::SELECTION);
+			m_display->setToolTipText2("", g_lang.get("PotraitInfo"), DisplaySection::SELECTION);
 		}
 	}
 }
@@ -961,126 +991,175 @@ inline string describeAutoCommandState(AutoCmdState state) {
 	}
 	return "";
 }
+
+void UserInterface::computeCommandInfo(const CommandType *ct, const ProducibleType *pt) {
+	const Unit *unit = selection.getFrontUnit();
+	string factionName = unit->getFaction()->getType()->getName();
+	string commandName = getTranslatedFactionName(factionName, ct->getName());
+
+	string tip = (pt == 0)
+				? g_lang.getFactionString(factionName, ct->getTipKey())
+				: g_lang.getFactionString(factionName, ct->getTipKey(pt->getName()));
+
+	m_display->setToolTipText2(commandName, tip);
+
+	if (!pt && ct->getProducedCount() == 1) {
+		pt = ct->getProduced(0);
+	}
+
+	CommandCheckResult cmdCheckResult;
+	unit->getFaction()->reportReqsAndCosts(ct, pt, cmdCheckResult);
+
+	if (cmdCheckResult.m_upgradedAlready) {
+//		res << g_lang.get("AlreadyUpgraded");
+	} else if (cmdCheckResult.m_upgradingAlready) {
+//		res << g_lang.get("Upgrading");
+	} else if (!cmdCheckResult.m_availableInSubFaction) {
+//		res << g_lang.get("NotAvailableInSubfaction");
+		assert(false); // shouldn't be displayed in the first place, should never get here.
+	} else {
+		{
+			vector<UnitReqResult> &unitReqs = cmdCheckResult.m_cmdReqsResult.m_unitReqResults;
+			vector<UpgradeReqResult> &upgradeReqs = cmdCheckResult.m_cmdReqsResult.m_upgradeReqResults;
+			if (!unitReqs.empty() || !upgradeReqs.empty()) {
+				//res << commandName << " " << g_lang.get("Requires") << ":\n";
+				if (!unitReqs.empty()) {
+					//res << g_lang.get("UnitReqs") << ":\n";
+					foreach (vector<UnitReqResult>, it, cmdCheckResult.m_cmdReqsResult.m_unitReqResults) {
+						string name = getTranslatedFactionName(factionName, it->getUnitType()->getName());
+						m_display->addToolTipReq(it->getUnitType(), it->isRequirementMet(), name);
+						//res << name << " (" << (it->isRequirementMet() ? "Ok" : "Not met!" ) << ")\n";
+					}
+				}
+				if (!upgradeReqs.empty()) {
+					//res << g_lang.get("UpgradeReqs") << ":\n";
+					foreach (vector<UpgradeReqResult>, it, cmdCheckResult.m_cmdReqsResult.m_upgradeReqResults) {
+						string name = getTranslatedFactionName(factionName, it->getUpgradeType()->getName());
+						m_display->addToolTipReq(it->getUpgradeType(), it->isRequirementMet(), name);
+						//res << name << " (" << (it->isRequirementMet() ? "Ok" : "Not met!" ) << ")\n";
+					}
+				}
+				//res << endl;
+			}
+		}
+		if (pt) {
+			string prodName = getTranslatedFactionName(factionName, pt->getName());
+			vector<UnitReqResult> &unitReqs = cmdCheckResult.m_prodReqsResult.m_unitReqResults;
+			vector<UpgradeReqResult> &upgradeReqs = cmdCheckResult.m_prodReqsResult.m_upgradeReqResults;
+			if (!unitReqs.empty() || !upgradeReqs.empty()) {
+				//res << prodName << " " << g_lang.get("Requires") << ":\n";
+				if (!unitReqs.empty()) {
+					//res << g_lang.get("UnitReqs") << ":\n";
+					foreach (vector<UnitReqResult>, it, cmdCheckResult.m_prodReqsResult.m_unitReqResults) {
+						string name = getTranslatedFactionName(factionName, it->getUnitType()->getName());
+						m_display->addToolTipReq(it->getUnitType(), it->isRequirementMet(), name);
+						//res << name << " (" << (it->isRequirementMet() ? "Ok" : "Not met!" ) << ")\n";
+					}
+				}
+				if (!upgradeReqs.empty()) {
+					//res << g_lang.get("UpgradeReqs") << ":\n";
+					foreach (vector<UpgradeReqResult>, it, cmdCheckResult.m_prodReqsResult.m_upgradeReqResults) {
+						string name = getTranslatedFactionName(factionName, it->getUpgradeType()->getName());
+						m_display->addToolTipReq(it->getUpgradeType(), it->isRequirementMet(), name);
+						//res << name << " (" << (it->isRequirementMet() ? "Ok" : "Not met!" ) << ")\n";
+					}
+				}
+				//res << endl;
+			}
+			if (!cmdCheckResult.m_prodCostsResult.empty()) {
+				//res << prodName << " " << g_lang.get("Costs") << ":\n";
+				foreach (CheckCostsResult, it, cmdCheckResult.m_prodCostsResult) {
+					string name = getTranslatedTechName(it->getResourceType()->getName());
+					string msg = name + " (" + intToStr(it->getCost()) + ")";
+					if (it->isCostMet()) {
+						//res << "[Ok]\n";
+					} else {
+						msg += " [-" + intToStr(it->getDifference()) + " ]";
+						//res << "[NotOk] (-" << it->getDifference() << ")\n";
+					}
+					m_display->addToolTipReq(it->getResourceType(), it->isCostMet(), msg);
+				}
+			}
+		}
+	}
+	//m_display->setToolTipText(res.str());
+}
+
 ///@todo move to Display
 void UserInterface::computeCommandInfo(int posDisplay) {
 	WIDGET_LOG( __FUNCTION__ << "( " << posDisplay << " )");
 	if (!selection.isComandable() || posDisplay == invalidPos
 	|| (m_selectingSecond && posDisplay >= activeCommandType->getProducedCount())) {
-		m_display->setToolTipText("");
+		m_display->setToolTipText2("", "");
 		return;
 	}
-
 	if (!m_selectingSecond) {
 		if (posDisplay == cancelPos) {
-			m_display->setToolTipText(g_lang.get("Cancel"));
+			m_display->setToolTipText2("", g_lang.get("Cancel"));
 		} else if (posDisplay == meetingPointPos) {
-			m_display->setToolTipText(g_lang.get("SetMeetingPoint"));
+			m_display->setToolTipText2("", g_lang.get("SetMeetingPoint"));
 		} else if (posDisplay == autoRepairPos) {
 			string str = g_lang.get("AutoRepair") + " ";
 			str += describeAutoCommandState(selection.getAutoRepairState());
-			m_display->setToolTipText(str);
+			m_display->setToolTipText2("", str);
 		} else if (posDisplay == autoAttackPos) {
 			string str = g_lang.get("AutoAttack") + " ";
 			str += describeAutoCommandState(selection.getAutoCmdState(AutoCmdFlag::ATTACK));
-			m_display->setToolTipText(str);
+			m_display->setToolTipText2("", str);
 		} else if (posDisplay == autoFleePos) {
 			string str = g_lang.get("AutoFlee") + " ";
 			str += describeAutoCommandState(selection.getAutoCmdState(AutoCmdFlag::FLEE));
-			m_display->setToolTipText(str);
+			m_display->setToolTipText2("", str);
 		} else if (posDisplay == cloakTogglePos) {
-			m_display->setToolTipText(g_lang.get("ToggleCloak"));
-		} else { // uniform selection
-			if (selection.isUniform()) {
-				const Unit *unit = selection.getFrontUnit();
+			m_display->setToolTipText2("", g_lang.get("ToggleCloak"));
+		} else {
+			if (selection.isUniform()) { // uniform selection
 				const CommandType *ct = m_display->getCommandType(posDisplay);
-
 				if (ct != NULL) {
-					string factionName = unit->getFaction()->getType()->getName();
-					string commandName = g_lang.getFactionString(factionName, ct->getName());
-					if (commandName == ct->getName()) { // no custom command name
-						commandName = g_lang.get(ct->getName()); // assume command class is name
-						if (commandName.find("???") != string::npos) { // or just use name from xml
-							commandName = formatString(ct->getName());
-						}
-					}
-					string tip = g_lang.getFactionString(factionName, ct->getTipKey());
-					string res = commandName + "\n\n";
-					if (!tip.empty()) {
-						res += tip + "\n\n";
-					}
-
-					if (unit->getFaction()->reqsOk(ct)) {
-						res += ct->getDesc(unit);
-						m_display->setToolTipText(res);
-					} else {
-						if (ct->getClass() == CommandClass::UPGRADE) {
-							const UpgradeCommandType *uct = static_cast<const UpgradeCommandType*>(ct);
-
-							if (unit->getFaction()->getUpgradeManager()->isUpgrading(uct->getProducedUpgrade())) {
-								m_display->setToolTipText(g_lang.get("Upgrading")/* + "\n" + ct->getDesc(unit)*/);
-							} else if (unit->getFaction()->getUpgradeManager()->isUpgraded(uct->getProducedUpgrade())) {
-								m_display->setToolTipText(g_lang.get("AlreadyUpgraded")/* + "\n" + ct->getDesc(unit)*/);
-							} else {
-								res += formatString(ct->getReqDesc(unit->getFaction()));
-								m_display->setToolTipText(res);
-							}
-						} else {
-							res += formatString(ct->getReqDesc(unit->getFaction()));
-							m_display->setToolTipText(res);
-						}
-					}
+					computeCommandInfo(ct);
 				}			
 			} else { // non uniform selection
 				CommandClass cc = m_display->getCommandClass(posDisplay);
 
 				if (cc != CommandClass::NULL_COMMAND) {
-					m_display->setToolTipText(g_lang.get("CommonCommand") + ": "
+					m_display->setToolTipText2("", g_lang.get("CommonCommand") + ": "
 						+ g_lang.get(CommandClassNames[cc]));
 				}
 			}
 		}
 	} else { // m_selectingSecond
 		if (posDisplay == cancelPos) {
-			m_display->setToolTipText(g_lang.get("Return"));
+			m_display->setToolTipText2("", g_lang.get("Return"));
 			return;
 		}
 		RUNTIME_CHECK(activeCommandType != 0);
 		RUNTIME_CHECK(posDisplay >= 0 && posDisplay < activeCommandType->getProducedCount());
-		const Unit *unit = selection.getFrontUnit();
 		const ProducibleType *pt = activeCommandType->getProduced(m_display->getIndex(posDisplay));
-		string factionName = unit->getFaction()->getType()->getName();
-		string commandName = g_lang.getFactionString(factionName, activeCommandType->getName());
-		if (commandName == activeCommandType->getName()) { // no custom command name
-			CommandClass cc = activeCommandType->getClass(); // assume command class is name
-			commandName = g_lang.get(CommandClassNames[cc]);
-		}
-		string tip = g_lang.getFactionString(factionName, activeCommandType->getTipKey(pt->getName()));
-		
-		string prodName = pt->getName();
-		string prodName2 = g_lang.getFactionString(factionName, pt->getName());
-		if (prodName.compare(prodName2) == 0) {
-			prodName = formatString(prodName);
-		} else {
-			prodName = prodName2;
-		}
-		string res = commandName + " : " + prodName + "\n\n";
-		if (!tip.empty()) {
-			res += tip + "\n\n";
-		}
-		res += formatString(pt->getReqDesc(unit->getFaction()));
-		m_display->setToolTipText(res);
+		computeCommandInfo(activeCommandType, pt);
 	}
 }
 
 void UserInterface::computeSelectionPanel() {
 	int thisTeam = g_world.getThisTeamIndex();
 
-	// title, text and progress bar
+	// resource selected ?
+	if (selection.isEmpty() && selectedObject) {
+		MapResource *r = selectedObject->getResource();
+		if (r) {
+			string name = getTranslatedTechName(r->getType()->getName());
+			m_display->setPortraitTitle(name);
+			m_display->setPortraitText(g_lang.get("amount") + ": " + intToStr(r->getAmount()));
+			m_display->setUpImage(0, r->getType()->getImage());
+		} ///@todo else (selectable tileset objects ?)
+		return;
+	}
+
+	// title, text and progress bar (for single unit selected)
 	if (selection.getCount() == 1) {
 		const Unit *unit = selection.getFrontUnit();
 		bool friendly = unit->getFaction()->getTeam() == thisTeam;
 
-		string name = unit->getFullName();
+		string name = unit->getFullName(); ///@todo tricksy Lang use... will need a %s
 		IF_DEBUG_EDITION(
 			name += ": " + intToStr(unit->getId());
 		)
@@ -1247,17 +1326,9 @@ void UserInterface::computeDisplay() {
 	
 	// === Command Panel ===
 	computeCommandPanel();	
-
-	if (selection.isEmpty() && selectedObject) {
-		MapResource *r = selectedObject->getResource();
-		if (r) {
-			m_display->setPortraitTitle(r->getType()->getName());
-			m_display->setPortraitText(g_lang.get("amount") + ": " + intToStr(r->getAmount()));
-			m_display->setUpImage(0, r->getType()->getImage());
-		} ///@todo else
-	}
 }
-///@todo move parts to CommandType classes
+
+///@todo move parts to CommandType classes (hmmm... CommandTypes that need to know about Console ?!? Nope.)
 void UserInterface::addOrdersResultToConsole(CommandClass cc, CommandResult result) {
 	switch (result) {
 	case CommandResult::SUCCESS:

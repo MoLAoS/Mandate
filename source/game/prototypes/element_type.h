@@ -127,10 +127,11 @@ public:
 // =====================================================
 
 class RequirableType: public DisplayableType {
-protected:
+public:
 	typedef vector<const UnitType*> UnitReqs;
 	typedef vector<const UpgradeType*> UpgradeReqs;
 
+protected:
 	UnitReqs unitReqs;			//needed units
 	UpgradeReqs upgradeReqs;	//needed upgrades
 	int subfactionsReqs;		//bitmask of subfactions producable is restricted to
@@ -162,7 +163,7 @@ public:
 // =====================================================
 
 class ProducibleType : public RequirableType {
-private:
+public:
 	typedef vector<ResourceAmount> Costs;
 
 protected:
@@ -176,7 +177,7 @@ public:
     ProducibleType();
 	virtual ~ProducibleType();
 
-    //get
+    // get
 	int getCostCount() const						{return costs.size();}
 	//const ResourceAmount *getCost(int i) const			{return &costs[i];}
 	//const ResourceAmount *getCost(const ResourceType *rt) const {
@@ -195,8 +196,7 @@ public:
 	int getAdvancesToSubfaction() const				{return advancesToSubfaction;}
 	bool isAdvanceImmediately() const				{return advancementIsImmediate;}
 
-    //varios
-    void checkCostStrings(TechTree *techTree);
+    // varios
 	virtual bool load(const XmlNode *baseNode, const string &dir, const TechTree *techTree, const FactionType *factionType);
 
 	virtual void doChecksum(Checksum &checksum) const;
@@ -219,6 +219,65 @@ public:
 	void setCommandType(const CommandType *ct) { m_commandType = ct; }
 
 	ProducibleClass getClass() const override { return typeClass(); }
+};
+
+class UnitReqResult {
+private:
+	const UnitType     *m_unitType;
+	bool                m_ok;
+
+public:
+	UnitReqResult(const UnitType *unitType, bool ok) : m_unitType(unitType) , m_ok(ok) {}
+	bool isRequirementMet() const { return m_ok; }
+	const UnitType*    getUnitType() const { return m_unitType; }
+};
+
+class UpgradeReqResult {
+private:
+	const UpgradeType  *m_upgradeType;
+	bool                m_ok;
+
+public:
+	UpgradeReqResult(const UpgradeType *upgradeType, bool ok) : m_upgradeType(upgradeType), m_ok(ok) {}
+	bool isRequirementMet() const { return m_ok; }
+	const UpgradeType* getUpgradeType() const { return m_upgradeType; }
+};
+
+class ResourceCostResult {
+private:
+	const ResourceType  *m_type;  // resource type of this cost
+	int                  m_cost;  // required amount
+	int                  m_store; // amount faction has
+
+public:
+	ResourceCostResult(const ResourceType *resourcType, int cost, int store)
+		: m_type(resourcType), m_cost(cost), m_store(store) {}
+
+	bool isCostMet() const { return m_cost <= m_store; }
+	int  getCost() const { return m_cost; }
+	int  getDifference() const { assert(m_cost > m_store); return m_cost - m_store; }
+	const ResourceType* getResourceType() const { return m_type; }
+};
+
+struct CheckReqsResult {
+	vector<UnitReqResult>      m_unitReqResults;
+	vector<UpgradeReqResult>   m_upgradeReqResults;
+};
+
+struct CheckCostsResult : public vector<ResourceCostResult> { };
+
+// Command => Requirable
+// Produced => Producible
+
+struct CommandCheckResult {
+	const CommandType    *m_commandType;
+	const ProducibleType *m_producibleType;
+	CheckReqsResult       m_cmdReqsResult;
+	CheckReqsResult       m_prodReqsResult;
+	CheckCostsResult      m_prodCostsResult;
+	bool                  m_upgradedAlready;
+	bool                  m_upgradingAlready;
+	bool                  m_availableInSubFaction;
 };
 
 }}//end namespace
