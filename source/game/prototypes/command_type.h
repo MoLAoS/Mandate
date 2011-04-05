@@ -384,6 +384,10 @@ public:
 	virtual int getProducedCount() const					{return m_buildings.size();}
 	virtual ProdTypePtr getProduced(int i) const;
 
+	bool canBuild(const UnitType *ut) const		{
+		return std::find(m_buildings.begin(), m_buildings.end(), ut) != m_buildings.end();
+	}
+
 	int getBuildingCount() const					{return m_buildings.size();}
 	const UnitType * getBuilding(int i) const		{return m_buildings[i];}
 

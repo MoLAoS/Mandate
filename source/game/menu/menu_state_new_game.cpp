@@ -394,8 +394,8 @@ void MenuStateNewGame::onChangeFaction(Widget *source) {
 		int n = psw->getSelectedFactionIndex();
 		assert(n >= 0 && n < m_factionFiles.size() + 1); // + 1 for 'Random'
 		if (n < m_factionFiles.size()) {
-			gs.setFactionTypeName(ndx, m_factionFiles[n]);
-		} else {
+		gs.setFactionTypeName(ndx, m_factionFiles[n]);
+	} else {
 			gs.setFactionTypeName(ndx, "Random");
 		}
 	} else {

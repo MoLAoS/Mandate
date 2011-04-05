@@ -185,6 +185,7 @@ private:
 
 	Cartographer *cartographer;
 	RoutePlanner *routePlanner;
+	std::map<int, Surveyor*>	m_surveyorMap;
 
 	// to UserInterface, code using these should ultimately be reimplemented
 	// by Connecting signals from 'this' factions/teams units to the UserInterface
@@ -239,6 +240,8 @@ public:
 	Map *getMap() 									{return &map;}
 	Cartographer* getCartographer()					{return cartographer;}
 	RoutePlanner* getRoutePlanner()					{return routePlanner;}
+	Surveyor* getSurveyor(int ndx)					{return m_surveyorMap[ndx];}
+	Surveyor* getSurveyor(Faction *f)				{return m_surveyorMap[f->getIndex()];}
 	const Faction *getFaction(int i) const			{return &factions[i];}
 	Faction *getFaction(int i) 						{return &factions[i];}
 	const Faction *getGlestimals() const			{return &glestimals;}
@@ -257,6 +260,8 @@ public:
 	bool loadMap();
 	bool loadScenario(const string &path);
 	void activateUnits(bool resumingGame);
+
+	void initSurveyor(Faction *f);
 
 	// update
 	void processFrame();
@@ -281,8 +286,9 @@ public:
 	void appyEffect(Unit *unit, Effect *effect);
 
 	// scripting interface
-	int createUnit(const string &unitName, int factionIndex, const Vec2i &pos);
+	int createUnit(const string &unitName, int factionIndex, const Vec2i &pos, bool precise);
 	int givePositionCommand(int unitId, const string &commandName, const Vec2i &pos);
+	int giveBuildCommand(int unitId, const string &commandName, const string &buildType, const Vec2i &pos);
 	int giveTargetCommand( int unitId, const string &commandName, int targetId);
 	int giveStopCommand( int unitId, const string &commandName);
 	int giveProductionCommand(int unitId, const string &producedName);

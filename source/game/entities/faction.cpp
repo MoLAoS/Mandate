@@ -673,7 +673,7 @@ void Faction::applyCostsOnInterval(const ResourceType *rt) {
 				}
 			}
 		}
-	}
+	} 
 	// limit to store
 	capResource(rt);
 }

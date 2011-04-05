@@ -1270,12 +1270,12 @@ const CommandType *Unit::computeCommandType(const Vec2i &pos, const Unit *target
 				commandType = type->getFirstCtOfClass(CommandClass::BE_LOADED);
 			} else if (getType()->isOfClass(UnitClass::CARRIER)
 			&& type->getCommandType<LoadCommandType>(0)->canCarry(tType)) {
-				//load
-				commandType = type->getFirstCtOfClass(CommandClass::LOAD);
-			} else {
+			//load
+			commandType = type->getFirstCtOfClass(CommandClass::LOAD);
+		} else {
 				// repair
-				commandType = getRepairCommandType(targetUnit);
-			}
+			commandType = getRepairCommandType(targetUnit);
+		}
 		} else { // repair allies
 			commandType = getRepairCommandType(targetUnit);
 		}
@@ -1614,20 +1614,20 @@ bool Unit::update() { ///@todo should this be renamed to hasFinishedCycle()?
 	}
 
 	if (!carried) {
-		// update particle system location/orientation
-		if (fire && moved) {
-			fire->setPos(getCurrVector());
+	// update particle system location/orientation
+	if (fire && moved) {
+		fire->setPos(getCurrVector());
+	}
+	if (moved || rotated) {
+		foreach (UnitParticleSystems, it, skillParticleSystems) {
+			if (moved) (*it)->setPos(getCurrVector());
+			if (rotated) (*it)->setRotation(getRotation());
 		}
-		if (moved || rotated) {
-			foreach (UnitParticleSystems, it, skillParticleSystems) {
-				if (moved) (*it)->setPos(getCurrVector());
-				if (rotated) (*it)->setRotation(getRotation());
-			}
-			foreach (UnitParticleSystems, it, effectParticleSystems) {
-				if (moved) (*it)->setPos(getCurrVector());
-				if (rotated) (*it)->setRotation(getRotation());
-			}
+		foreach (UnitParticleSystems, it, effectParticleSystems) {
+			if (moved) (*it)->setPos(getCurrVector());
+			if (rotated) (*it)->setRotation(getRotation());
 		}
+	}
 	}
 	// check for cycle completion
 	// '>=' because nextCommandUpdate can be < frameCount if unit is dead

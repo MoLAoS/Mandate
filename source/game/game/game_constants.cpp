@@ -27,6 +27,7 @@
 #include "widget_style.h"
 #include "widget_config.h"
 #include "particle.h"
+#include "cartographer.h"
 #include "debug_stats.h"
 #include "logger.h"
 

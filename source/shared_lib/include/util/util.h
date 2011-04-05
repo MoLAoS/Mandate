@@ -142,8 +142,8 @@ public:
 // A run-time assert, that can be changed to assert() one day...
 // ... if we ever get to 1.0 maybe ;)
 //
-#define RUNTIME_CHECK(x)													\
-	if (!(x)) {																\
+#define RUNTIME_CHECK(x)                                                    \
+	if (!(x)) {                                                             \
 		std::stringstream ss;                                               \
 		ss << "In " << __FUNCTION__ << " () [" << __FILE__ << " : "         \
 			<< __LINE__ << "]\nRuntime check fail: "#x;                     \

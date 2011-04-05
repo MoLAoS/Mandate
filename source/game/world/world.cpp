@@ -220,6 +220,10 @@ bool World::loadScenario(const string &path) {
 	return true;
 }
 
+void World::initSurveyor(Faction *f) {
+	m_surveyorMap[f->getIndex()] = new Surveyor(f, cartographer);
+}
+
 // ==================== misc ====================
 #ifdef EARTHQUAKE_CODE
 void World::updateEarthquakes(float seconds) {
@@ -621,7 +625,7 @@ Unit *World::nearestStore(const Vec2i &pos, int factionIndex, const ResourceType
 }
 
 /** @return unit id, or < 0 on error, see LuaCmdResult */
-int World::createUnit(const string &unitName, int factionIndex, const Vec2i &pos) {
+int World::createUnit(const string &unitName, int factionIndex, const Vec2i &pos, bool precise) {
 	if (factionIndex  < 0 && factionIndex >= factions.size()) {
 		return LuaCmdResult::INVALID_FACTION_INDEX;
 	}
@@ -637,7 +641,8 @@ int World::createUnit(const string &unitName, int factionIndex, const Vec2i &pos
 		return LuaCmdResult::INVALID_POSITION;
 	}
 	Unit *unit = newUnit(pos, ut, faction, &map, CardinalDir::NORTH);
-	if (placeUnit(pos, generationArea, unit, true)) {
+	if ((precise && map.canOccupy(pos, ut->getField(),  ut, CardinalDir::NORTH))
+	|| (!precise && placeUnit(pos, generationArea, unit, true))) {
 		unit->create(true);
 		unit->born();
 		if (!unit->isMobile()) {
@@ -722,12 +727,40 @@ int World::givePositionCommand(int unitId, const string &commandName, const Vec2
 		cmdType = unit->getType()->getFirstCtOfClass(CommandClass::GUARD);
 	} else {
 		return LuaCmdResult::INVALID_COMMAND_CLASS;
-
 	}
 	if (!cmdType) {
 		return LuaCmdResult::NO_CAPABLE_COMMAND;
 	}
 	return unit->giveCommand(newCommand(cmdType, CommandFlags(), pos));
+}
+
+int World::giveBuildCommand(int unitId, const string &commandName, const string &buildType, const Vec2i &pos) {
+	Unit* unit= findUnitById(unitId);
+	if (!unit) {
+		return LuaCmdResult::INVALID_UNIT_ID;
+	}
+	const UnitType *ut = unit->getType();
+	const UnitType *but;
+	try {
+		but = unit->getFaction()->getType()->getUnitType(buildType);
+	} catch (runtime_error &e) {
+		return LuaCmdResult::PRODUCIBLE_NOT_FOUND;
+	}
+	const CommandType *cmdType = 0;
+
+	if (commandName == "build") {
+		for (int i=0; i < ut->getCommandTypeCount<BuildCommandType>(); ++i) {
+			const BuildCommandType *bct = ut->getCommandType<BuildCommandType>(i);
+			if (bct->canBuild(but)) {
+				return unit->giveCommand(newCommand(bct, CommandFlags(), pos, but, CardinalDir::NORTH));
+			}
+		}
+		return LuaCmdResult::NO_CAPABLE_COMMAND;
+//	} else if (commandName == "placed-morph") {
+//
+	} else {
+		return LuaCmdResult::INVALID_COMMAND_CLASS;
+	}
 }
 
 /** @return < 0 on error (see LuaCmdResult) else see CommandResult */

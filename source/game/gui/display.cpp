@@ -169,9 +169,9 @@ void Display::setSize() {
 			if (g_world.getThisFaction() && g_world.getThisFaction()->getLogoTex()) {
 				sz = Vec2i(width, smallHeight);
 			} else {
-				setVisible(false);
-				return;
-			}
+			setVisible(false);
+			return;
+		}
 		}
 	} else {
 		if (!m_ui->getSelection()->isComandable()) {
