@@ -527,7 +527,16 @@ void AiRuleProduce::produceResources(const ProduceTask *task) {
 	// 3. Give new produce/morph/generate command
 	int cmdNdx = RAND_RANGE(0, prodMap[unitToCmd->getType()].size() - 1);
 	ProdPair pp = prodMap[unitToCmd->getType()][cmdNdx];
-	aiInterface->giveCommand(unitToCmd, pp.first, Command::invalidPos, pp.second);
+	if (pp.first->getClass() == CommandClass::TRANSFORM) {
+		Vec2i pos;
+		if (ai->findPosForBuilding(static_cast<const UnitType*>(pp.second), ai->getRandomHomePosition(), pos)) {
+			aiInterface->giveCommand(unitToCmd, pp.first, Command::invalidPos, pp.second);
+		} else {
+			ai->retryTask(task);
+		}
+	} else {
+		aiInterface->giveCommand(unitToCmd, pp.first, Command::invalidPos, pp.second);
+	}
 }
 
 void AiRuleProduce::produceGeneric(const ProduceTask *task) {
