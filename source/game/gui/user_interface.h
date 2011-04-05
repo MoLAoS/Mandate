@@ -281,7 +281,7 @@ private:
 	void computeSelectionPanel();
 	void computeHousedUnitsPanel();
 	void computeCommandPanel();
-	void computeCommandInfo(const CommandType *ct, const ProducibleType *pt = 0);
+	void computeCommandTip(const CommandType *ct, const ProducibleType *pt = 0);
 	void selectAllUnitsOfType(UnitVector &out_units, const Unit *refUnit, int radius);
 };
 

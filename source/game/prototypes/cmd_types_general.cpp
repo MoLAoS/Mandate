@@ -65,6 +65,12 @@ bool CommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, 
 	} else {
 		m_tipKey = "";
 	}
+	XmlAttribute *tipHeaderAttrib = nameNode->getAttribute("tip-header", false);
+	if (tipHeaderAttrib) {
+		m_tipHeaderKey = tipHeaderAttrib->getRestrictedValue();
+	} else {
+		m_tipHeaderKey = "";
+	}
 	const XmlNode *energyNode = n->getOptionalChild("ep-cost");
 	if (energyNode) {
 		energyCost = energyNode->getIntValue();
@@ -195,6 +201,92 @@ void CommandType::replaceDeadReferences(Command &command) const {
 		command.setUnit2(NULL);
 		command.setPos2(unit2->getPos());
 	}
+}
+
+void CommandType::describe(const Faction *faction, DescriptorCallback *callback, const ProducibleType *pt) const {
+	string factionName = faction->getType()->getName();
+
+	string commandName = g_lang.getTranslatedFactionName(factionName, getName());
+
+	string tip = (pt == 0)
+				? g_lang.getFactionString(factionName, getTipKey())
+				: g_lang.getFactionString(factionName, getTipKey(pt->getName()));
+
+	if (pt && getProducedCount() > 1) {
+		string headerKey = getTipHeader();
+		if (!headerKey.empty()) {
+			string rawHeader = g_lang.getTranslatedFactionName(factionName, headerKey);
+			if (headerKey != rawHeader) {
+				string::size_type p = rawHeader.find("%s");
+				if (p != string::npos) {
+					string prodName = g_lang.getTranslatedFactionName(factionName, pt->getName());
+					if (prodName == pt->getName()) {
+						prodName = formatString(prodName);
+					}
+					rawHeader.replace(p, 2, prodName);
+				}
+				commandName = rawHeader;
+			}
+		}
+		
+	}
+	callback->setHeader(commandName);
+	callback->setTipText(tip);
+
+	if (!pt && getProducedCount() == 1) {
+		pt = getProduced(0);
+	}
+
+	CommandCheckResult cmdCheckResult;
+	faction->reportReqsAndCosts(this, pt, cmdCheckResult);
+
+	if (cmdCheckResult.m_upgradedAlready) {
+		callback->addItem(pt, g_lang.get("AlreadyUpgraded"));
+	} else if (cmdCheckResult.m_upgradingAlready) {
+		callback->addItem(pt, g_lang.get("Upgrading"));
+	} else if (!cmdCheckResult.m_availableInSubFaction) {
+		callback->addItem(this, g_lang.get("NotAvailableInSubfaction"));
+	} else {
+		vector<UnitReqResult> &unitReqs = cmdCheckResult.m_unitReqResults;
+		vector<UpgradeReqResult> &upgradeReqs = cmdCheckResult.m_upgradeReqResults;
+		if (!unitReqs.empty() || !upgradeReqs.empty()) {
+			callback->addElement("\n" + g_lang.get("Reqs") + ":");
+			if (!unitReqs.empty()) {
+				foreach (vector<UnitReqResult>, it, cmdCheckResult.m_unitReqResults) {
+					string name = g_lang.getTranslatedFactionName(factionName, it->getUnitType()->getName());
+					callback->addReq(it->getUnitType(), it->isRequirementMet(), name);
+				}
+			}
+			if (!upgradeReqs.empty()) {
+				foreach (vector<UpgradeReqResult>, it, cmdCheckResult.m_upgradeReqResults) {
+					string name = g_lang.getTranslatedFactionName(factionName, it->getUpgradeType()->getName());
+					callback->addReq(it->getUpgradeType(), it->isRequirementMet(), name);
+				}
+			}
+		}
+		if (pt) {
+			if (!cmdCheckResult.m_resourceCostResults.empty()) {
+				callback->addElement("\n" + g_lang.get("Costs") + ":");
+				foreach (ResourceCostResults, it, cmdCheckResult.m_resourceCostResults) {
+					string name = g_lang.getTranslatedTechName(it->getResourceType()->getName());
+					string msg = name + " (" + intToStr(it->getCost()) + ")";
+					if (!it->isCostMet()) {
+						msg += " [-" + intToStr(it->getDifference()) + "]";
+					}
+					callback->addReq(it->getResourceType(), it->isCostMet(), msg);
+				}
+			}
+			if (!cmdCheckResult.m_resourceMadeResults.empty()) {
+				callback->addElement("\n" + g_lang.get("Generated") + ":");
+				foreach (ResourceMadeResults, it, cmdCheckResult.m_resourceMadeResults) {
+					string name = g_lang.getTranslatedTechName(it->getResourceType()->getName());
+					string msg = name + " (" + intToStr(it->getAmount()) + ")";
+					callback->addItem(it->getResourceType(), msg);
+				}
+			}
+		}
+	}
+	subDesc(faction, callback, pt);
 }
 
 // =====================================================
@@ -459,6 +551,17 @@ string ProduceCommandType::getReqDesc(const Faction *f) const {
 	return res;
 }
 
+void ProduceCommandType::subDesc(const Faction *faction, DescriptorCallback *callback, const ProducibleType *pt) const {
+	if (!pt) {
+		Lang &lang = g_lang;
+		const string factionName = faction->getType()->getName();
+		callback->addElement("\n" + g_lang.get("Produced") + ":");
+		foreach_const (vector<const UnitType*>, it, m_producedUnits) {
+			callback->addItem(*it, lang.getTranslatedFactionName(factionName, (*it)->getName()));
+		}
+	}
+}
+
 int ProduceCommandType::getProducedNumber(const UnitType *ut) const {
 	for (int i=0; i < m_producedUnits.size(); ++i) {
 		if (m_producedUnits[i] == ut) {
@@ -579,6 +682,17 @@ void GenerateCommandType::getDesc(string &str, const Unit *unit) const {
 	}
 }
 
+void GenerateCommandType::subDesc(const Faction *faction, DescriptorCallback *callback, const ProducibleType *pt) const {
+	if (!pt) {
+		Lang &lang = g_lang;
+		const string factionName = faction->getType()->getName();
+		callback->addElement("\n" + g_lang.get("Produced") + ":");
+		foreach_const (vector<const GeneratedType*>, it, m_producibles) {
+			callback->addItem(*it, lang.getTranslatedFactionName(factionName, (*it)->getName()));
+		}
+	}
+}
+
 string GenerateCommandType::getReqDesc(const Faction *f) const {
 	string res = RequirableType::getReqDesc(f);
 	if (m_producibles.size() == 1) {
@@ -670,6 +784,11 @@ void UpgradeCommandType::doChecksum(Checksum &checksum) const {
 string UpgradeCommandType::getReqDesc(const Faction *f) const {
 	return RequirableType::getReqDesc(f)
 		+ "\n" + getProducedUpgrade()->getReqDesc(f);
+}
+
+void UpgradeCommandType::subDesc(const Faction *faction, DescriptorCallback *callback, const ProducibleType *pt) const {
+	///@todo implement multi-tier upgrade, implement this.
+	assert(pt);
 }
 
 const ProducibleType *UpgradeCommandType::getProduced() const {
@@ -845,6 +964,17 @@ void MorphCommandType::getDesc(string &str, const Unit *unit) const {
 	}
 	if (m_morphUnits.size() == 1) {
 		str += "\n" + m_morphUnits[0]->getReqDesc(unit->getFaction());
+	}
+}
+
+void MorphCommandType::subDesc(const Faction *faction, DescriptorCallback *callback, const ProducibleType *pt) const {
+	if (!pt) {
+		Lang &lang = g_lang;
+		const string factionName = faction->getType()->getName();
+		callback->addElement("\n" + g_lang.get("MorphUnits") + ":");
+		foreach_const (vector<const UnitType*>, it, m_morphUnits) {
+			callback->addItem(*it, lang.getTranslatedFactionName(factionName, (*it)->getName()));
+		}
 	}
 }
 
@@ -1070,6 +1200,15 @@ void LoadCommandType::getDesc(string &str, const Unit *unit) const {
 
 string LoadCommandType::getReqDesc(const Faction *f) const {
 	return RequirableType::getReqDesc(f);
+}
+
+void LoadCommandType::subDesc(const Faction *faction, DescriptorCallback *callback, const ProducibleType *pt) const {
+	Lang &lang = g_lang;
+	const string factionName = faction->getType()->getName();
+	callback->addElement("\n" + g_lang.get("CanLoad") + ":");
+	foreach_const (vector<const UnitType*>, it, m_canLoadList) {
+		callback->addItem(*it, lang.getTranslatedFactionName(factionName, (*it)->getName()));
+	}
 }
 
 void LoadCommandType::update(Unit *unit) const {

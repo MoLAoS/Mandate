@@ -13,11 +13,12 @@
 #define _GLEST_GAME_LANG_H_
 
 #include "properties.h"
+#include "util.h"
 #include <set>
 
 namespace Glest { namespace Global {
 
-using Shared::Util::Properties;
+using namespace Shared::Util;
 using std::set;
 
 // =====================================================
@@ -64,6 +65,28 @@ public:
 	string getFactionString(const string &faction, const string &s);
 	string getScenarioString(const string &s);
 	string getDefeatedMessage() const;
+
+	string getTranslatedFactionName(const string &factionName, const string &name) {
+		string result = getFactionString(factionName, name);
+		if (result == name) { // no custom name in faciton lang
+			result = get(name); // try glob lang
+			if (result.find("???") != string::npos) { // or just use name formatted
+				result = formatString(name);
+			}
+		}
+		return result;
+	}
+
+	string getTranslatedTechName(const string &name) {
+		string result = getTechString(name);
+		if (result == name) {
+			result = get(name);
+			if (result.find("???") != string::npos) {
+				result = formatString(name);
+			}
+		}
+		return result;
+	}
 
 	static vector<string>& getLookUpErrors();
 };

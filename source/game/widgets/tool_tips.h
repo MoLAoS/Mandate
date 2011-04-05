@@ -12,11 +12,13 @@
 #include "widgets.h"
 #include "element_type.h"
 #include "config.h"
+#include "command_type.h"
 
 namespace Glest { namespace Widgets {
 
 using namespace Global;
 using ProtoTypes::DisplayableType;
+using ProtoTypes::DescriptorCallback;
 
 class CommandTipHeader : public StaticText {
 public:
@@ -54,41 +56,58 @@ public:
 	virtual void setStyle() override { setWidgetStyle(WidgetType::TOOLTIP_MAIN); }
 };
 
-class CommandTipReq : public StaticText, public ImageWidget {
+class CommandTipElement : public StaticText {
+public:
+	CommandTipElement(Container *parent, const string &msg);
+	virtual void setStyle() override { setWidgetStyle(WidgetType::TOOLTIP_ITEM); }
+};
+
+class CommandTipItem : public CommandTipElement, public ImageWidget {
+public:
+	CommandTipItem(Container *parent, const DisplayableType *dt, const string &msg);
+
+	virtual Vec2i getPrefSize() const override;
+	virtual void render() override;
+};
+
+class CommandTipReq : public CommandTipItem {
 private:
 	bool    m_reqMet;
 
 public:
 	CommandTipReq(Container *parent, const DisplayableType *dt, bool ok, const string &msg);
 
-	virtual Vec2i getPrefSize() const override;
 	virtual void setStyle() override;
-	virtual void render() override;
 };
 
 // =====================================================
 //  class CommandTip
 // =====================================================
 
-class CommandTip : public Container {
+class CommandTip : public Container, public DescriptorCallback {
 private:
-	CommandTipHeader      *m_header;
-	CommandTipMain        *m_tip;
-	vector<CommandTipReq*> m_reqs;
+	typedef vector<CommandTipElement*> Elements;
+private:
+	CommandTipHeader  *m_header;
+	CommandTipMain    *m_tip;
+	Elements           m_items;
 
-	string                 m_commandName;
-	string                 m_tipText;
+	string             m_commandName;
+	string             m_tipText;
 
 	void layout();
 
 public:
 	CommandTip(Container *parent);
 
-	void setHeader(const string &header);
-	void setTipText(const string &mainText);
-	void addReq(const DisplayableType *dt, bool ok, const string &msg);
+	virtual void setHeader(const string &header) override;
+	virtual void setTipText(const string &mainText) override;
 
-	void clearReqs();
+	virtual void addElement(const string &msg) override;
+	virtual void addItem(const DisplayableType *dt, const string &msg) override;
+	virtual void addReq(const DisplayableType *dt, bool ok, const string &msg) override;
+
+	void clearItems();
 
 	bool isEmpty() const { return m_header->getText().empty() &&  m_tip->getText().empty(); }
 

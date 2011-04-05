@@ -259,22 +259,31 @@ public:
 	const ResourceType* getResourceType() const { return m_type; }
 };
 
-struct CheckReqsResult {
-	vector<UnitReqResult>      m_unitReqResults;
-	vector<UpgradeReqResult>   m_upgradeReqResults;
+class ResourceMadeResult {
+private:
+	const ResourceType  *m_type;  // resource type of this cost
+	int                  m_made;  // amount made
+
+public:
+	ResourceMadeResult(const ResourceType *resourcType, int made)
+		: m_type(resourcType), m_made(made) {}
+
+	int  getAmount() const { return m_made; }
+	const ResourceType* getResourceType() const { return m_type; }
 };
 
-struct CheckCostsResult : public vector<ResourceCostResult> { };
-
-// Command => Requirable
-// Produced => Producible
+typedef vector<UnitReqResult>      UnitReqResults;
+typedef vector<UpgradeReqResult>   UpgradeReqResults;
+typedef vector<ResourceCostResult> ResourceCostResults;
+typedef vector<ResourceMadeResult> ResourceMadeResults;
 
 struct CommandCheckResult {
 	const CommandType    *m_commandType;
 	const ProducibleType *m_producibleType;
-	CheckReqsResult       m_cmdReqsResult;
-	CheckReqsResult       m_prodReqsResult;
-	CheckCostsResult      m_prodCostsResult;
+	UnitReqResults        m_unitReqResults;
+	UpgradeReqResults     m_upgradeReqResults;
+	ResourceCostResults   m_resourceCostResults;
+	ResourceMadeResults   m_resourceMadeResults;
 	bool                  m_upgradedAlready;
 	bool                  m_upgradingAlready;
 	bool                  m_availableInSubFaction;

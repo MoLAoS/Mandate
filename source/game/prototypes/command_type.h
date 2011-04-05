@@ -71,6 +71,17 @@ using Glest::Gui::Clicks;
 namespace Glest { namespace ProtoTypes {
 using Search::CardinalDir;
 
+
+class DescriptorCallback {
+public:
+	virtual void setHeader(const string &header) = 0;
+	virtual void setTipText(const string &mainText) = 0;
+	virtual void addElement(const string &msg) = 0;
+	virtual void addItem(const DisplayableType *dt, const string &msg) = 0;
+	virtual void addReq(const DisplayableType *dt, bool ok, const string &msg) = 0;
+};
+
+
 // =====================================================
 //  class CommandType
 //
@@ -86,6 +97,7 @@ protected:
 	bool queuable;
 	const UnitType *unitType;
 	string m_tipKey;
+	string m_tipHeaderKey;
 	int energyCost;
 
 	void setId(int v) { m_id = v; }
@@ -99,6 +111,9 @@ public:
 	virtual void update(Unit *unit) const = 0;
 	virtual void getDesc(string &str, const Unit *unit) const = 0;
 
+	void describe(const Faction *faction, DescriptorCallback *callback, const ProducibleType *pt = 0) const;
+	virtual void subDesc(const Faction *faction, DescriptorCallback *callback, const ProducibleType *pt) const {}
+
 	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
 	virtual void doChecksum(Checksum &checksum) const;
 
@@ -107,6 +122,7 @@ public:
 	virtual string toString() const						{return g_lang.get(m_name);}
 	const string& getTipKey() const						{return m_tipKey;}
 	virtual string getTipKey(const string &name) const  {return emptyString;}
+	virtual string getTipHeader() const                 {return m_tipHeaderKey;}
 
 	virtual int getProducedCount() const					{return 0;}
 	virtual const ProducibleType *getProduced(int i) const{return 0;}
@@ -341,6 +357,7 @@ public:
 	~BuildCommandType();
 	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
 	virtual void doChecksum(Checksum &checksum) const;
+	virtual void subDesc(const Faction *faction, DescriptorCallback *callback, const ProducibleType *pt) const override;
 	virtual void getDesc(string &str, const Unit *unit) const {
 		m_buildSkillType->getDesc(str, unit);
 	}
@@ -404,6 +421,7 @@ public:
 	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void getDesc(string &str, const Unit *unit) const;
+	virtual void subDesc(const Faction *faction, DescriptorCallback *callback, const ProducibleType *pt) const override;
 	virtual void update(Unit *unit) const;
 
 	//get
@@ -435,6 +453,7 @@ public:
 	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void getDesc(string &str, const Unit *unit) const;
+	virtual void subDesc(const Faction *faction, DescriptorCallback *callback, const ProducibleType *pt) const override;
 	virtual void update(Unit *unit) const;
 	virtual void tick(const Unit *unit, Command &command) const;
 
@@ -479,6 +498,7 @@ public:
 	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void getDesc(string &str, const Unit *unit) const;
+	virtual void subDesc(const Faction *faction, DescriptorCallback *callback, const ProducibleType *pt) const override;
 	virtual void update(Unit *unit) const;
 	virtual string getReqDesc(const Faction *f) const;
 	
@@ -521,6 +541,7 @@ public:
 	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void getDesc(string &str, const Unit *unit) const;
+	virtual void subDesc(const Faction *faction, DescriptorCallback *callback, const ProducibleType *pt) const override;
 	virtual void update(Unit *unit) const;
 	virtual string getReqDesc(const Faction *f) const;
 	StaticSound *getFinishedSound() const	{return m_finishedSounds.getRandSound();}
@@ -559,6 +580,7 @@ public:
 	virtual string getReqDesc(const Faction *f) const;
 	virtual const ProducibleType *getProduced() const;
 	virtual void getDesc(string &str, const Unit *unit) const;
+	virtual void subDesc(const Faction *faction, DescriptorCallback *callback, const ProducibleType *pt) const override;
 	StaticSound *getFinishedSound() const	{return m_finishedSounds.getRandSound();}
 	virtual void update(Unit *unit) const;
 	virtual void start(Unit *unit, Command &command) const;
@@ -605,6 +627,7 @@ public:
 	virtual void getDesc(string &str, const Unit *unit) const;
 	virtual void update(Unit *unit) const;
 	virtual string getReqDesc(const Faction *f) const;
+	virtual void subDesc(const Faction *faction, DescriptorCallback *callback, const ProducibleType *pt) const override;
 	
 	// get
 	virtual int getProducedCount() const	{return m_morphUnits.size();}
@@ -682,6 +705,7 @@ public:
 	virtual void getDesc(string &str, const Unit *unit) const;
 	virtual void update(Unit *unit) const;
 	virtual string getReqDesc(const Faction *f) const;
+	virtual void subDesc(const Faction *faction, DescriptorCallback *callback, const ProducibleType *pt) const override;
 	virtual CommandResult check(const Unit *unit, const Command &command) const;
 	virtual void start(Unit *unit, Command *command) const;
 

@@ -274,7 +274,7 @@ void Display::setLoadInfo(const string &str) {
 void Display::setToolTipText2(const string &hdr, const string &tip, DisplaySection i_section) {
 	m_toolTip->setHeader(hdr);
 	m_toolTip->setTipText(tip);
-	m_toolTip->clearReqs();
+	m_toolTip->clearItems();
 	m_toolTip->setVisible(true);
 	Vec2i a_offset;
 	if (i_section == DisplaySection::SELECTION) {

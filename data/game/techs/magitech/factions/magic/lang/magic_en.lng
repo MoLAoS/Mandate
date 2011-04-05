@@ -34,7 +34,19 @@ summoner_guild_info=Produces Summoners and can upgrade Ancient Summoning.
 tower_of_souls=Tower Of Souls
 tower_of_souls_info=Defensive structure capable of devastating anti air attacks.
 wicker_behemoth=Wicker Behemoth
-wicker_behemoth_info=Intermediate required to produce Behemoths
+wicker_behemoth_info=Intermediate lifeless construction required to produce Behemoths.
+
+;
+; additional command tips
+;
+stop_info=Stand around doing nothing.
+move_info=Gets some exercise.
+attack_info=Smite your enemies!
+repair_info=Repair damage to buildings and constructions.
+build_info=Build structures needed to train more mages and research upgrades.
+ritual_info=Perform rituals to give life to constructions.
+harvest1_info=Harvest gold and stone, required to hire and build your army.
+harvest2_info=Harvest wood, Magic don't need much, but don't completely ignore it!
 
 ;
 ; Upgrade names and tips
@@ -78,6 +90,10 @@ research_ancient_summoning=Research Ancient Summoning
 attack_off=Attack Off
 attack_on=Attack On
 promote_to_behemoth=Animate Behemoth
+
+build_specific=Build %s
+ritual_specific=Construct %s
+
 
 ;
 ; Level names

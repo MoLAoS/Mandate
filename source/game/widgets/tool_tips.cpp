@@ -24,39 +24,51 @@ inline Vec4f Vec4ubToVec4f(const Colour &c) {
 	return Vec4f(c.r / 255.f, c.g / 255.f, c.b / 255.f, c.a / 255.f);
 }
 
-// =====================================================
-//  class CommandTipReq
-// =====================================================
-
-CommandTipReq::CommandTipReq(Container *parent, const DisplayableType *dt, bool ok, const string &msg)
-		: StaticText(parent)
-		, ImageWidget(this)
-		, m_reqMet(ok) {
+CommandTipElement::CommandTipElement(Container *parent, const string &msg)
+		: StaticText(parent) {
 	WidgetConfig &cfg = g_widgetConfig;
-	setWidgetStyle(ok ? WidgetType::TOOLTIP_REQ_OK : WidgetType::TOOLTIP_REQ_NOK);
-	int imgSz = cfg.getDefaultItemHeight();
-	Vec2i imgOffset = Vec2i(getBorderLeft(), getBorderTop());
-	Vec2i txtOffset = imgOffset + Vec2i(imgSz + 4, (imgSz - int(getFont()->getMetrics()->getHeight())) / 2);
-
-	ImageWidget::addImageX(dt->getImage(), imgOffset, Vec2i(imgSz, imgSz));
+	setWidgetStyle(WidgetType::TOOLTIP_ITEM);
+	int max_w = g_config.getDisplayWidth() / 5;
+	string txt = msg;
+	getFont()->getMetrics()->wrapText(txt, max_w);
+	Vec2i dims = Vec2i(getFont()->getMetrics()->getTextDiminsions(txt));
+	Vec2i txtOffset = Vec2i(getBorderLeft(), getBorderTop());
 	TextWidget::setAlignment(Alignment::NONE);
-	TextWidget::setText(msg);
+	TextWidget::setText(txt);
 	TextWidget::setTextPos(txtOffset);
+	TextWidget::setTextColour(Vec4ubToVec4f(cfg.getColour(m_textStyle.m_colourIndex)));
 	if (m_textStyle.m_shadow) {
 		StaticText::setShadow(Vec4ubToVec4f(cfg.getColour(m_textStyle.m_shadowColourIndex)), 1);
 	}
 }
 
-void CommandTipReq::setStyle() {
-	setWidgetStyle(m_reqMet ? WidgetType::TOOLTIP_REQ_OK : WidgetType::TOOLTIP_REQ_NOK);
+// =====================================================
+//  class CommandTipItem
+// =====================================================
+
+CommandTipItem::CommandTipItem(Container *parent, const DisplayableType *dt, const string &msg)
+		: CommandTipElement(parent, msg)
+		, ImageWidget(this) {
+	WidgetConfig &cfg = g_widgetConfig;
+	int imgSz = cfg.getDefaultItemHeight();
+	Vec2i imgOffset = Vec2i(getBorderLeft(), getBorderTop());
+
+	int max_w = g_config.getDisplayWidth() / 5 - (imgSz + 4);
+	string txt = msg;
+	getFont()->getMetrics()->wrapText(txt, max_w);
+	Vec2i dims = Vec2i(getFont()->getMetrics()->getTextDiminsions(txt));
+	Vec2i txtOffset = imgOffset + Vec2i(imgSz + 4, (imgSz - dims.h) / 2);
+
+	ImageWidget::addImageX(dt->getImage(), imgOffset, Vec2i(imgSz, imgSz));
+	TextWidget::setTextPos(txtOffset);
 }
 
-void CommandTipReq::render() {
+void CommandTipItem::render() {
 	ImageWidget::renderImage();
 	StaticText::render();
 }
 
-Vec2i CommandTipReq::getPrefSize() const {
+Vec2i CommandTipItem::getPrefSize() const {
 	int imgSz = g_widgetConfig.getDefaultItemHeight();
 	Vec2i res = StaticText::getPrefSize();
 	res.w += imgSz + 4;
@@ -64,6 +76,25 @@ Vec2i CommandTipReq::getPrefSize() const {
 		res.h = imgSz + getBordersVert();
 	}
 	return res;
+}
+
+// =====================================================
+//  class CommandTipReq
+// =====================================================
+
+CommandTipReq::CommandTipReq(Container *parent, const DisplayableType *dt, bool ok, const string &msg)
+		: CommandTipItem(parent, dt, msg)
+		, m_reqMet(ok) {
+	WidgetConfig &cfg = g_widgetConfig;
+	setWidgetStyle(ok ? WidgetType::TOOLTIP_REQ_OK : WidgetType::TOOLTIP_REQ_NOK);
+	TextWidget::setTextColour(Vec4ubToVec4f(cfg.getColour(m_textStyle.m_colourIndex)));
+	if (m_textStyle.m_shadow) {
+		StaticText::setShadow(Vec4ubToVec4f(cfg.getColour(m_textStyle.m_shadowColourIndex)), 1);
+	}
+}
+
+void CommandTipReq::setStyle() {
+	setWidgetStyle(m_reqMet ? WidgetType::TOOLTIP_REQ_OK : WidgetType::TOOLTIP_REQ_NOK);
 }
 
 // =====================================================
@@ -91,16 +122,25 @@ void CommandTip::setTipText(const string &tipText) {
 	layout();
 }
 
+void CommandTip::addElement(const string &msg) {
+	CommandTipElement *elmnt = new CommandTipElement(this, msg);
+	elmnt->setSize(elmnt->getPrefSize());
+	m_items.push_back(elmnt);
+	layout();
+}
+
+void CommandTip::addItem(const DisplayableType *dt, const string &msg) {
+	CommandTipItem *item = new CommandTipItem(this, dt, msg);
+	item->setSize(item->getPrefSize());
+	m_items.push_back(item);
+	layout();
+}
+
 void CommandTip::addReq(const DisplayableType *dt, bool ok, const string &msg) {
 	CommandTipReq *ctr = new CommandTipReq(this, dt, ok, msg);
 	ctr->setSize(ctr->getPrefSize());
-	m_reqs.push_back(ctr);
-	if (m_reqs.size() == 1) {
-		string newTip = m_tipText + "\n\n" + m_commandName + " " + g_lang.get("Reqs") + ":";
-		setTipText(newTip);
-	} else {
-		layout();
-	}
+	m_items.push_back(ctr);
+	layout();
 }
 
 void CommandTip::layout() {
@@ -117,7 +157,7 @@ void CommandTip::layout() {
 			size.w = m_tip->getWidth();
 		}
 	}
-	foreach (vector<CommandTipReq*>, it, m_reqs) {
+	foreach (vector<CommandTipElement*>, it, m_items) {
 		Vec2i sz = (*it)->getSize();
 		(*it)->setPos(offset);
 		offset.y += sz.h;
@@ -130,11 +170,11 @@ void CommandTip::layout() {
 	setSize(size);
 }
 
-void CommandTip::clearReqs() {
-	foreach (vector<CommandTipReq*>, it, m_reqs) {
+void CommandTip::clearItems() {
+	foreach (vector<CommandTipElement*>, it, m_items) {
 		delete *it;
 	}
-	m_reqs.clear();
+	m_items.clear();
 	layout();
 }
 

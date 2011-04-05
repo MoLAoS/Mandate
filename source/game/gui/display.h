@@ -132,6 +132,7 @@ public:
 	Vec3f getColor() const							{return colors[currentColor];}
 	int getProgressBar() const						{return m_progress;}
 	int getSelectedCommandIndex() const				{return m_selectedCommandIndex;}
+	CommandTip* getCommandTip()                     {return m_toolTip;}
 
 	//set
 	void setSize();

@@ -424,25 +424,49 @@ bool Faction::isAvailable(const CommandType *ct, const ProducibleType *pt) const
 	return true;
 }
 
-void Faction::reportReqs(const RequirableType *rt, CheckReqsResult &out_result) {
+void Faction::reportReqs(const RequirableType *rt, CommandCheckResult &out_result, bool checkDups) const {
 	// required units
 	for (int i = 0; i < rt->getUnitReqCount(); ++i) {
 		const UnitType *ut = rt->getUnitReq(i);
+		if (checkDups) {
+			bool duplicate = false;
+			foreach (UnitReqResults, it, out_result.m_unitReqResults) {
+				if (it->getUnitType() == ut) {
+					duplicate = true;
+					break;
+				}
+			}
+			if (duplicate) {
+				continue;
+			}
+		}
 		bool ok = getCountOfUnitType(ut);
 		out_result.m_unitReqResults.push_back(UnitReqResult(ut, ok));
 	}
 	// required upgrades
 	for (int i = 0; i < rt->getUpgradeReqCount(); ++i) {
 		const UpgradeType *ut = rt->getUpgradeReq(i);
+		if (checkDups) {
+			bool duplicate = false;
+			foreach (UpgradeReqResults, it, out_result.m_upgradeReqResults) {
+				if (it->getUpgradeType() == ut) {
+					duplicate = true;
+					break;
+				}
+			}
+			if (duplicate) {
+				continue;
+			}
+		}
 		bool ok = upgradeManager.isUpgraded(ut);
 		out_result.m_upgradeReqResults.push_back(UpgradeReqResult(ut, ok));
 	}
 }
 
-void Faction::reportReqsAndCosts(const CommandType *ct, const ProducibleType *pt, CommandCheckResult &out_result) {
+void Faction::reportReqsAndCosts(const CommandType *ct, const ProducibleType *pt, CommandCheckResult &out_result) const {
 	out_result.m_commandType = ct;
 	out_result.m_producibleType = pt;
-	reportReqs(ct, out_result.m_cmdReqsResult);
+	reportReqs(ct, out_result);
 	out_result.m_availableInSubFaction = isAvailable(ct);
 	if (pt) {
 		if (pt->getClass() == ProducibleClass::UPGRADE) {
@@ -453,11 +477,15 @@ void Faction::reportReqsAndCosts(const CommandType *ct, const ProducibleType *pt
 			out_result.m_upgradedAlready = false;
 			out_result.m_upgradingAlready = false;
 		}
-		reportReqs(pt, out_result.m_prodReqsResult);
+		reportReqs(pt, out_result, true);
 		for (int i=0; i < pt->getCostCount(); ++i) {
 			ResourceAmount res = pt->getCost(i, this);
-			int stored = getResource(res.getType())->getAmount();
-			out_result.m_prodCostsResult.push_back(ResourceCostResult(res.getType(), res.getAmount(), stored));
+			if (res.getAmount() < 0) {
+				out_result.m_resourceMadeResults.push_back(ResourceMadeResult(res.getType(), -res.getAmount()));
+			} else {
+				int stored = getResource(res.getType())->getAmount();
+				out_result.m_resourceCostResults.push_back(ResourceCostResult(res.getType(), res.getAmount(), stored));
+			}
 		}
 		if (out_result.m_availableInSubFaction) { // don't overwrite false
 			out_result.m_availableInSubFaction = isAvailable(pt);

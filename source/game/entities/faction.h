@@ -189,8 +189,8 @@ public:
 	bool reqsOk(const CommandType *ct, const ProducibleType *pt) const;
 
 	// get summary of commmand reqs and costs
-	void reportReqsAndCosts(const CommandType *ct, const ProducibleType *pt, CommandCheckResult &out_result);
-	void reportReqs(const RequirableType *rt, CheckReqsResult &out_result);
+	void reportReqsAndCosts(const CommandType *ct, const ProducibleType *pt, CommandCheckResult &out_result) const;
+	void reportReqs(const RequirableType *rt, CommandCheckResult &out_result, bool checkDups = false) const;
 
 	// subfaction checks
 	bool isAvailable(const CommandType *ct) const;

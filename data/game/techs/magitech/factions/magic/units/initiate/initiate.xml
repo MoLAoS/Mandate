@@ -223,7 +223,7 @@
 
     <command>
       <type value="stop"/>
-      <name value="stop"/>
+      <name value="stop" tip="stop_info" />
       <image path="../archmage/images/magic_stop.bmp"/>
       <unit-requirements/>
       <upgrade-requirements/>
@@ -232,7 +232,7 @@
 
     <command>
       <type value= "move"/>
-      <name value="move"/>
+      <name value="move" tip="move_info" />
       <image path="../archmage/images/magic_move.bmp"/>
       <unit-requirements/>
       <upgrade-requirements/>
@@ -241,7 +241,7 @@
 
     <command>
       <type value="attack"/>
-      <name value="attack"/>
+      <name value="attack" tip="attack_info" />
       <image path="images/initiate_attack.bmp"/>
       <unit-requirements/>
       <upgrade-requirements/>
@@ -251,7 +251,7 @@
 
     <command>
       <type value="repair"/>
-      <name value="repair"/>
+      <name value="repair" tip="repair_info" />
       <image path="images/initiate_repair.bmp"/>
       <unit-requirements/>
       <upgrade-requirements/>
@@ -271,7 +271,7 @@
 
     <command>
       <type value="build"/>
-      <name value="build"/>
+      <name value="build" tip="build_info" tip-header="build_specific"/>
       <image path="images/initiate_build.bmp"/>
       <unit-requirements/>
       <upgrade-requirements/>
@@ -297,7 +297,7 @@
 
     <command>
       <type value="build"/>
-      <name value="ritual"/>
+      <name value="ritual" tip="ritual_info" tip-header="ritual_specific" />
       <image path="../behemoth/images/behemoth.bmp"/>
       <unit-requirements/>
       <upgrade-requirements/>
@@ -321,7 +321,7 @@
 
     <command>
       <type value="harvest"/>
-      <name value="mine"/>
+      <name value="mine" tip="harvest1_info"/>
       <image path="images/initiate_harvest.bmp"/>
       <unit-requirements/>
       <upgrade-requirements/>
@@ -339,7 +339,7 @@
 
     <command>
       <type value="harvest"/>
-      <name value="harvest"/>
+      <name value="harvest" tip="harvest2_info"/>
       <image path="images/initiate_harvest_wood.bmp"/>
       <unit-requirements/>
       <upgrade-requirements/>

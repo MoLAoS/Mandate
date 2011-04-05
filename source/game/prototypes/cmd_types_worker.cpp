@@ -190,6 +190,17 @@ void RepairCommandType::getDesc(string &str, const Unit *unit) const{
 	}
 }
 
+void RepairCommandType::subDesc(const Faction *faction, DescriptorCallback *callback, const ProducibleType *pt) const {
+	if (!pt) {
+		Lang &lang = g_lang;
+		const string factionName = faction->getType()->getName();
+		callback->addElement("\n" + g_lang.get("Repaired") + ":");
+		foreach_const (vector<const UnitType*>, it, repairableUnits) {
+			callback->addItem(*it, lang.getTranslatedFactionName(factionName, (*it)->getName()));
+		}
+	}
+}
+
 //get
 bool RepairCommandType::canRepair(const UnitType *unitType) const{
 	for(int i=0; i<repairableUnits.size(); ++i){
@@ -450,6 +461,18 @@ void BuildCommandType::doChecksum(Checksum &checksum) const {
 	checksum.add(m_buildSkillType->getName());
 	for (int i=0; i < m_buildings.size(); ++i) {
 		checksum.add(m_buildings[i]->getName());
+	}
+}
+
+void BuildCommandType::subDesc(const Faction *faction, DescriptorCallback *callback, const ProducibleType *pt) const {
+	if (!pt) {
+		Lang &lang = g_lang;
+		const string factionName = faction->getType()->getName();
+		// buildings built
+		callback->addElement("\n" + g_lang.get("Buildings") + ":");
+		foreach_const (vector<const UnitType*>, it, m_buildings) {
+			callback->addItem(*it, lang.getTranslatedFactionName(factionName, (*it)->getName()));
+		}
 	}
 }
 
@@ -774,6 +797,14 @@ void HarvestCommandType::getDesc(string &str, const Unit *unit) const{
 	str+=lang.get("Resources")+":\n";
 	for(int i=0; i<getHarvestedResourceCount(); ++i){
 		str+= getHarvestedResource(i)->getName()+"\n";
+	}
+}
+
+void HarvestCommandType::subDesc(const Faction *faction, DescriptorCallback *callback, const ProducibleType *pt) const {
+	Lang &lang = g_lang;
+	callback->addElement("\n" + g_lang.get("Harvested") + ":");
+	foreach_const (vector<const ResourceType*>, it, m_harvestedResources) {
+		callback->addItem(*it, lang.getTranslatedTechName((*it)->getName()));
 	}
 }
 

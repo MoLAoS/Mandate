@@ -815,6 +815,7 @@ void WidgetConfig::load() {
 	if (luaScript.getGlobal("ToolTip")) {
 		loadStyles("Header", WidgetType::TOOLTIP_HEADER, false);
 		loadStyles("Main", WidgetType::TOOLTIP_MAIN, false);
+		loadStyles("Item", WidgetType::TOOLTIP_ITEM, false);
 		loadStyles("RequirementMet", WidgetType::TOOLTIP_REQ_OK, false);
 		loadStyles("RequirementNotMet", WidgetType::TOOLTIP_REQ_NOK, false);
 		luaScript.popTable();

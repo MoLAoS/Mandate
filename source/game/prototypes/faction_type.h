@@ -81,7 +81,6 @@ public:
 	~FactionType();
 
 	//get
-	string getName() const								{return m_name;}
 	int getUnitTypeCount() const						{return unitTypes.size();}
 	int getUpgradeTypeCount() const						{return upgradeTypes.size();}
 	int getSubfactionCount() const						{return subfactions.size();}
