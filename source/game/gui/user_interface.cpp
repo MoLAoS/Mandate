@@ -966,7 +966,7 @@ inline string describeAutoCommandState(AutoCmdState state) {
 
 void UserInterface::computeCommandTip(const CommandType *ct, const ProducibleType *pt) {
 	m_display->getCommandTip()->clearItems();
-	ct->describe(selection.getFrontUnit()->getFaction(), m_display->getCommandTip(), pt);
+	ct->describe(selection.getFrontUnit(), m_display->getCommandTip(), pt);
 	m_display->resetTipPos();
 }
 

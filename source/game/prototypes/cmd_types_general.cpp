@@ -166,7 +166,7 @@ bool CommandType::getArrowDetails(const Command *cmd, Vec3f &out_arrowTarget, Ve
 }
 
 void CommandType::apply(Faction *faction, const Command &command) const {
-	const ProducibleType *produced = command.getProdType();
+	ProdTypePtr produced = command.getProdType();
 	if (produced && !command.getFlags().get(CommandProperties::DONT_RESERVE_RESOURCES)) {
 		if (command.getType()->getClass() == CommandClass::MORPH) {
 			int discount = static_cast<const MorphCommandType*>(command.getType())->getDiscount();
@@ -179,7 +179,7 @@ void CommandType::apply(Faction *faction, const Command &command) const {
 
 void CommandType::undo(Unit *unit, const Command &command) const {
 	//return cost
-	const ProducibleType *produced = command.getProdType();
+	ProdTypePtr produced = command.getProdType();
 	if (produced) {
 		unit->getFaction()->deApplyCosts(produced);
 	}
@@ -203,8 +203,8 @@ void CommandType::replaceDeadReferences(Command &command) const {
 	}
 }
 
-void CommandType::describe(const Faction *faction, DescriptorCallback *callback, const ProducibleType *pt) const {
-	string factionName = faction->getType()->getName();
+void CommandType::describe(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const {
+	string factionName = unit->getFaction()->getType()->getName();
 
 	string commandName = g_lang.getTranslatedFactionName(factionName, getName());
 
@@ -237,8 +237,10 @@ void CommandType::describe(const Faction *faction, DescriptorCallback *callback,
 		pt = getProduced(0);
 	}
 
+	descSkills(unit, callback, pt);
+
 	CommandCheckResult cmdCheckResult;
-	faction->reportReqsAndCosts(this, pt, cmdCheckResult);
+	unit->getFaction()->reportReqsAndCosts(this, pt, cmdCheckResult);
 
 	if (cmdCheckResult.m_upgradedAlready) {
 		callback->addItem(pt, g_lang.get("AlreadyUpgraded"));
@@ -286,7 +288,7 @@ void CommandType::describe(const Faction *faction, DescriptorCallback *callback,
 			}
 		}
 	}
-	subDesc(faction, callback, pt);
+	subDesc(unit, callback, pt);
 }
 
 // =====================================================
@@ -356,6 +358,12 @@ void MoveCommandType::tick(const Unit *unit, Command &command) const {
 	replaceDeadReferences(command);
 }
 
+void MoveCommandType::descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const {
+	string msg;
+	m_moveSkillType->getDesc(msg, unit);
+	callback->addElement(msg);
+}
+
 // =====================================================
 // 	class TeleportCommandType
 // =====================================================
@@ -407,6 +415,15 @@ void TeleportCommandType::update(Unit *unit) const {
 	}
 }
 
+void TeleportCommandType::descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const {
+	string msg = "\n";
+	if (m_moveSkillType->getVisibleOnly()) {
+		msg += g_lang.get("ExploredTargetOnly");
+	} else {
+		msg += g_lang.get("UnexploredTargetOk");
+	}
+	callback->addElement(msg);
+}
 
 // =====================================================
 // 	class StopBaseCommandType
@@ -537,7 +554,8 @@ void ProduceCommandType::doChecksum(Checksum &checksum) const {
 }
 
 void ProduceCommandType::getDesc(string &str, const Unit *unit) const {
-	m_produceSkillType->getDesc(str, unit);
+	string msg;
+	m_produceSkillType->getDesc(msg, unit);
 	if (m_producedUnits.size() == 1) {
 		str += "\n" + m_producedUnits[0]->getReqDesc(unit->getFaction());
 	}
@@ -551,10 +569,23 @@ string ProduceCommandType::getReqDesc(const Faction *f) const {
 	return res;
 }
 
-void ProduceCommandType::subDesc(const Faction *faction, DescriptorCallback *callback, const ProducibleType *pt) const {
+void ProduceCommandType::descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const {
+	string msg;
+	if (!pt) {
+		m_produceSkillType->getDesc(msg, unit);
+	} else {
+		// do the time-to-produce calc... 
+		int framesPerCycle = int(floorf((1.f / (float(unit->getSpeed(m_produceSkillType)) / 4000.f)) + 1.f));
+		int timeToBuild = pt->getProductionTime() * framesPerCycle / 40;
+		msg = "\n" + g_lang.get("TimeToBuild") + ": " + intToStr(timeToBuild);
+	}
+	callback->addElement(msg);
+}
+
+void ProduceCommandType::subDesc(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const {
 	if (!pt) {
 		Lang &lang = g_lang;
-		const string factionName = faction->getType()->getName();
+		const string factionName = unit->getFaction()->getType()->getName();
 		callback->addElement("\n" + g_lang.get("Produced") + ":");
 		foreach_const (vector<const UnitType*>, it, m_producedUnits) {
 			callback->addItem(*it, lang.getTranslatedFactionName(factionName, (*it)->getName()));
@@ -682,10 +713,23 @@ void GenerateCommandType::getDesc(string &str, const Unit *unit) const {
 	}
 }
 
-void GenerateCommandType::subDesc(const Faction *faction, DescriptorCallback *callback, const ProducibleType *pt) const {
+void GenerateCommandType::descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const {
+	string msg;
+	if (!pt) {
+		m_produceSkillType->getDesc(msg, unit);
+	} else {
+		// do the time-to-produce calc... 
+		int framesPerCycle = int(floorf((1.f / (float(unit->getSpeed(m_produceSkillType)) / 4000.f)) + 1.f));
+		int timeToBuild = pt->getProductionTime() * framesPerCycle / 40;
+		msg = "\n" + g_lang.get("TimeToBuild") + ": " + intToStr(timeToBuild);
+	}
+	callback->addElement(msg);
+}
+
+void GenerateCommandType::subDesc(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const {
 	if (!pt) {
 		Lang &lang = g_lang;
-		const string factionName = faction->getType()->getName();
+		const string factionName = unit->getFaction()->getType()->getName();
 		callback->addElement("\n" + g_lang.get("Produced") + ":");
 		foreach_const (vector<const GeneratedType*>, it, m_producibles) {
 			callback->addItem(*it, lang.getTranslatedFactionName(factionName, (*it)->getName()));
@@ -786,12 +830,27 @@ string UpgradeCommandType::getReqDesc(const Faction *f) const {
 		+ "\n" + getProducedUpgrade()->getReqDesc(f);
 }
 
-void UpgradeCommandType::subDesc(const Faction *faction, DescriptorCallback *callback, const ProducibleType *pt) const {
+void UpgradeCommandType::descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const {
+	string msg;
+	m_upgradeSkillType->getDesc(msg, unit);
+	callback->addElement(msg);
+	//if (!pt) {
+	//	string msg = "\n" + g_lang.get("ProdSpeed") + ": " + intToStr(unit->getSpeed(m_produceSkillType));
+	//	callback->addElement(msg);
+	//} else {
+	//	// do the time-to-produce calc... 
+	//	int framesPerCycle = int(floorf((1.f / (float(unit->getSpeed(m_produceSkillType)) / 4000.f)) + 1.f));
+	//	int timeToBuild = pt->getProductionTime() * framesPerCycle / 40;
+	//	string msg = "\n" + g_lang.get("TimeToBuild") + ": " + intToStr(timeToBuild);
+	//}
+}
+
+void UpgradeCommandType::subDesc(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const {
 	///@todo implement multi-tier upgrade, implement this.
 	assert(pt);
 }
 
-const ProducibleType *UpgradeCommandType::getProduced() const {
+ProdTypePtr UpgradeCommandType::getProduced() const {
 	return m_producedUpgrade;
 }
 
@@ -939,7 +998,7 @@ bool MorphCommandType::load(const XmlNode *n, const string &dir, const TechTree 
 	return loadOk;
 }
 
-const ProducibleType *MorphCommandType::getProduced(int i) const {
+ProdTypePtr MorphCommandType::getProduced(int i) const {
 	return m_morphUnits[i];
 }
 
@@ -967,10 +1026,29 @@ void MorphCommandType::getDesc(string &str, const Unit *unit) const {
 	}
 }
 
-void MorphCommandType::subDesc(const Faction *faction, DescriptorCallback *callback, const ProducibleType *pt) const {
+void MorphCommandType::descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const {
+	string msg;
+	if (!pt) {
+		m_morphSkillType->getDesc(msg, unit);
+	} else {
+		// do the time-to-produce calc... 
+		int framesPerCycle = int(floorf((1.f / (float(unit->getSpeed(m_morphSkillType)) / 4000.f)) + 1.f));
+		int timeToBuild = pt->getProductionTime() * framesPerCycle / 40;
+		msg = "\n" + g_lang.get("TimeToMorph") + ": " + intToStr(timeToBuild);
+		if (m_discount != 0) { // discount
+			msg += "\n" + g_lang.get("Discount") + ": " + intToStr(m_discount) + "%";
+		}
+		if (m_refund != 0) {
+			msg += "\n" + g_lang.get("Refund") + ": " + intToStr(m_refund) + "%";
+		}
+	}
+	callback->addElement(msg);
+}
+
+void MorphCommandType::subDesc(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const {
 	if (!pt) {
 		Lang &lang = g_lang;
-		const string factionName = faction->getType()->getName();
+		const string factionName = unit->getFaction()->getType()->getName();
 		callback->addElement("\n" + g_lang.get("MorphUnits") + ":");
 		foreach_const (vector<const UnitType*>, it, m_morphUnits) {
 			callback->addItem(*it, lang.getTranslatedFactionName(factionName, (*it)->getName()));
@@ -1067,6 +1145,12 @@ void TransformCommandType::doChecksum(Checksum &checksum) const {
 	MorphCommandType::doChecksum(checksum);
 	checksum.add(m_moveSkillType->getName()); // name or id ?
 	checksum.add(m_position);
+}
+
+void TransformCommandType::descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const {
+	///@todo
+
+	//callback->addElement(msg);
 }
 
 void TransformCommandType::update(Unit *unit) const {
@@ -1202,9 +1286,18 @@ string LoadCommandType::getReqDesc(const Faction *f) const {
 	return RequirableType::getReqDesc(f);
 }
 
-void LoadCommandType::subDesc(const Faction *faction, DescriptorCallback *callback, const ProducibleType *pt) const {
+void LoadCommandType::descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const {
+	string msg;
+	if (moveSkillType) {
+		moveSkillType->getDesc(msg, unit);
+	}
+	loadSkillType->getDesc(msg, unit);
+	callback->addElement(msg);
+}
+
+void LoadCommandType::subDesc(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const {
 	Lang &lang = g_lang;
-	const string factionName = faction->getType()->getName();
+	const string factionName = unit->getFaction()->getType()->getName();
 	callback->addElement("\n" + g_lang.get("CanLoad") + ":");
 	foreach_const (vector<const UnitType*>, it, m_canLoadList) {
 		callback->addItem(*it, lang.getTranslatedFactionName(factionName, (*it)->getName()));
@@ -1336,6 +1429,15 @@ string UnloadCommandType::getReqDesc(const Faction *f) const {
 	return RequirableType::getReqDesc(f) /*+ "\n" + getProduced()->getReqDesc()*/;
 }
 
+void UnloadCommandType::descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const {
+	string msg;
+	if (moveSkillType) {
+		moveSkillType->getDesc(msg, unit);
+	}
+	unloadSkillType->getDesc(msg, unit);
+	callback->addElement(msg);
+}
+
 void UnloadCommandType::update(Unit *unit) const {
 	_PROFILE_COMMAND_UPDATE();
 	Command *command = unit->getCurrCommand();
@@ -1442,6 +1544,12 @@ bool CastSpellCommandType::load(const XmlNode *n, const string &dir, const TechT
 	return loadOk;
 }
 
+void CastSpellCommandType::descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const {
+	string msg;
+	m_castSpellSkillType->getDesc(msg, unit);
+	callback->addElement(msg);
+}
+
 void CastSpellCommandType::update(Unit *unit) const {
 	if (unit->getCurrSkill() != m_castSpellSkillType) {
 		unit->setCurrSkill(m_castSpellSkillType);
@@ -1482,6 +1590,12 @@ void BuildSelfCommandType::update(Unit *unit) const {
 	} else {
 		unit->setCurrSkill(m_buildSelfSkill);
 	}
+}
+
+void BuildSelfCommandType::descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const {
+	///@todo
+
+	//callback->addElement(msg);
 }
 
 // ===============================

@@ -190,10 +190,16 @@ void RepairCommandType::getDesc(string &str, const Unit *unit) const{
 	}
 }
 
-void RepairCommandType::subDesc(const Faction *faction, DescriptorCallback *callback, const ProducibleType *pt) const {
+void RepairCommandType::descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const {
+	string msg;
+	repairSkillType->getDesc(msg, unit);
+	callback->addElement(msg);
+}
+
+void RepairCommandType::subDesc(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const {
 	if (!pt) {
 		Lang &lang = g_lang;
-		const string factionName = faction->getType()->getName();
+		const string factionName = unit->getFaction()->getType()->getName();
 		callback->addElement("\n" + g_lang.get("Repaired") + ":");
 		foreach_const (vector<const UnitType*>, it, repairableUnits) {
 			callback->addItem(*it, lang.getTranslatedFactionName(factionName, (*it)->getName()));
@@ -203,8 +209,8 @@ void RepairCommandType::subDesc(const Faction *faction, DescriptorCallback *call
 
 //get
 bool RepairCommandType::canRepair(const UnitType *unitType) const{
-	for(int i=0; i<repairableUnits.size(); ++i){
-		if(static_cast<const UnitType*>(repairableUnits[i])==unitType){
+	for(int i=0; i < repairableUnits.size(); ++i) {
+		if (static_cast<const UnitType*>(repairableUnits[i]) == unitType) {
 			return true;
 		}
 	}
@@ -464,10 +470,10 @@ void BuildCommandType::doChecksum(Checksum &checksum) const {
 	}
 }
 
-void BuildCommandType::subDesc(const Faction *faction, DescriptorCallback *callback, const ProducibleType *pt) const {
+void BuildCommandType::subDesc(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const {
 	if (!pt) {
 		Lang &lang = g_lang;
-		const string factionName = faction->getType()->getName();
+		const string factionName = unit->getFaction()->getType()->getName();
 		// buildings built
 		callback->addElement("\n" + g_lang.get("Buildings") + ":");
 		foreach_const (vector<const UnitType*>, it, m_buildings) {
@@ -476,10 +482,15 @@ void BuildCommandType::subDesc(const Faction *faction, DescriptorCallback *callb
 	}
 }
 
-const ProducibleType *BuildCommandType::getProduced(int i) const {
-	return m_buildings[i];
+void BuildCommandType::descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const {
+	string msg;
+	m_buildSkillType->getDesc(msg, unit);
+	callback->addElement(msg);
 }
 
+ProdTypePtr BuildCommandType::getProduced(int i) const {
+	return m_buildings[i];
+}
 
 const string cmdCancelMsg = " Command cancelled.";
 
@@ -787,20 +798,21 @@ void HarvestCommandType::doChecksum(Checksum &checksum) const {
 
 void HarvestCommandType::getDesc(string &str, const Unit *unit) const{
 	Lang &lang= Lang::getInstance();
-
-	str+= lang.get("HarvestSpeed")+": "+ intToStr(m_harvestSkillType->getBaseSpeed() / m_hitsPerUnit);
-	m_harvestSkillType->descEpCost(str, unit);
+	str += lang.get("HarvestSpeed") + ": " + intToStr(m_harvestSkillType->getBaseSpeed() / m_hitsPerUnit);
 	EnhancementType::describeModifier(str, (unit->getSpeed(m_harvestSkillType) - m_harvestSkillType->getBaseSpeed()) / m_hitsPerUnit);
 	str+= "\n";
+	m_harvestSkillType->descEpCost(str, unit);
 	str += lang.get("MaxLoad") + ": " + intToStr(m_maxLoad) + "\n";
 	str += lang.get("LoadedSpeed") + ": " + intToStr(m_moveLoadedSkillType->getBaseSpeed()) + "\n";
-	str+=lang.get("Resources")+":\n";
-	for(int i=0; i<getHarvestedResourceCount(); ++i){
-		str+= getHarvestedResource(i)->getName()+"\n";
-	}
 }
 
-void HarvestCommandType::subDesc(const Faction *faction, DescriptorCallback *callback, const ProducibleType *pt) const {
+void HarvestCommandType::descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const {
+	string msg;
+	getDesc(msg, unit);
+	callback->addElement(msg);
+}
+
+void HarvestCommandType::subDesc(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const {
 	Lang &lang = g_lang;
 	callback->addElement("\n" + g_lang.get("Harvested") + ":");
 	foreach_const (vector<const ResourceType*>, it, m_harvestedResources) {

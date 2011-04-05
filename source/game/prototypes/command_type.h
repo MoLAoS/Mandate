@@ -72,7 +72,7 @@ namespace Glest { namespace ProtoTypes {
 using Search::CardinalDir;
 
 
-class DescriptorCallback {
+class CmdDescriptor {
 public:
 	virtual void setHeader(const string &header) = 0;
 	virtual void setTipText(const string &mainText) = 0;
@@ -81,6 +81,7 @@ public:
 	virtual void addReq(const DisplayableType *dt, bool ok, const string &msg) = 0;
 };
 
+typedef const ProducibleType* ProdTypePtr;
 
 // =====================================================
 //  class CommandType
@@ -111,8 +112,9 @@ public:
 	virtual void update(Unit *unit) const = 0;
 	virtual void getDesc(string &str, const Unit *unit) const = 0;
 
-	void describe(const Faction *faction, DescriptorCallback *callback, const ProducibleType *pt = 0) const;
-	virtual void subDesc(const Faction *faction, DescriptorCallback *callback, const ProducibleType *pt) const {}
+	void describe(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt = 0) const;
+	virtual void descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt = 0) const = 0;
+	virtual void subDesc(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const {}
 
 	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
 	virtual void doChecksum(Checksum &checksum) const;
@@ -125,7 +127,7 @@ public:
 	virtual string getTipHeader() const                 {return m_tipHeaderKey;}
 
 	virtual int getProducedCount() const					{return 0;}
-	virtual const ProducibleType *getProduced(int i) const{return 0;}
+	virtual ProdTypePtr getProduced(int i) const{return 0;}
 
 	// candidates for lua callbacks
 	/** Apply costs for a command. */
@@ -231,6 +233,7 @@ public:
 	StopCommandType() : StopBaseCommandType("Stop", Clicks::ONE) {}
 	virtual void update(Unit *unit) const;
 
+	virtual void descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt = 0) const override {}
 	virtual CommandClass getClass() const { return typeClass(); }
 	static CommandClass typeClass() { return CommandClass::STOP; }
 };
@@ -245,6 +248,7 @@ public:
 	virtual void update(Unit *unit) const;
 	virtual void tick(const Unit *unit, Command &command) const;
 
+	virtual void descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt = 0) const override;
 	virtual Vec3f getArrowColor() const {return Vec3f(0.f, 1.f, 0.f);}
 	virtual CommandClass getClass() const { return typeClass(); }
 	static CommandClass typeClass() { return CommandClass::MOVE; }
@@ -259,6 +263,7 @@ public:
 	TeleportCommandType() : MoveBaseCommandType("Teleport", Clicks::TWO) {}
 	virtual void update(Unit *unit) const;
 
+	virtual void descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt = 0) const override;
 	virtual CommandClass getClass() const { return typeClass(); }
 	static CommandClass typeClass() { return CommandClass::TELEPORT; }
 	virtual CommandResult check(const Unit *unit, const Command &command) const;
@@ -301,6 +306,7 @@ public:
 		MoveBaseCommandType::getDesc(str, unit);
 		AttackCommandTypeBase::getDesc(str, unit);
 	}
+	virtual void descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt = 0) const override;
 
 	bool updateGeneric(Unit *unit, Command *command, const AttackCommandType *act, Unit* target, const Vec2i &targetPos) const;
 
@@ -329,6 +335,7 @@ public:
 	virtual void getDesc(string &str, const Unit *unit) const {
 		AttackCommandTypeBase::getDesc(str, unit);
 	}
+	virtual void descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt = 0) const override;
 	virtual void update(Unit *unit) const;
 
 	virtual Vec3f getArrowColor() const {return Vec3f(1.f, 0.f, 0.f);}
@@ -357,7 +364,8 @@ public:
 	~BuildCommandType();
 	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
 	virtual void doChecksum(Checksum &checksum) const;
-	virtual void subDesc(const Faction *faction, DescriptorCallback *callback, const ProducibleType *pt) const override;
+	virtual void subDesc(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const override;
+	virtual void descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt = 0) const override;
 	virtual void getDesc(string &str, const Unit *unit) const {
 		m_buildSkillType->getDesc(str, unit);
 	}
@@ -374,7 +382,7 @@ public:
 	const BuildSkillType *getBuildSkillType() const	{return m_buildSkillType;}
 
 	virtual int getProducedCount() const					{return m_buildings.size();}
-	virtual const ProducibleType *getProduced(int i) const;
+	virtual ProdTypePtr getProduced(int i) const;
 
 	int getBuildingCount() const					{return m_buildings.size();}
 	const UnitType * getBuilding(int i) const		{return m_buildings[i];}
@@ -421,7 +429,8 @@ public:
 	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void getDesc(string &str, const Unit *unit) const;
-	virtual void subDesc(const Faction *faction, DescriptorCallback *callback, const ProducibleType *pt) const override;
+	virtual void subDesc(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const override;
+	virtual void descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt = 0) const override;
 	virtual void update(Unit *unit) const;
 
 	//get
@@ -453,7 +462,8 @@ public:
 	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void getDesc(string &str, const Unit *unit) const;
-	virtual void subDesc(const Faction *faction, DescriptorCallback *callback, const ProducibleType *pt) const override;
+	virtual void descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt = 0) const override;
+	virtual void subDesc(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const override;
 	virtual void update(Unit *unit) const;
 	virtual void tick(const Unit *unit, Command &command) const;
 
@@ -498,7 +508,8 @@ public:
 	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void getDesc(string &str, const Unit *unit) const;
-	virtual void subDesc(const Faction *faction, DescriptorCallback *callback, const ProducibleType *pt) const override;
+	virtual void subDesc(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const override;
+	virtual void descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt = 0) const override;
 	virtual void update(Unit *unit) const;
 	virtual string getReqDesc(const Faction *f) const;
 	
@@ -541,7 +552,8 @@ public:
 	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void getDesc(string &str, const Unit *unit) const;
-	virtual void subDesc(const Faction *faction, DescriptorCallback *callback, const ProducibleType *pt) const override;
+	virtual void subDesc(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const override;
+	virtual void descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt = 0) const override;
 	virtual void update(Unit *unit) const;
 	virtual string getReqDesc(const Faction *f) const;
 	StaticSound *getFinishedSound() const	{return m_finishedSounds.getRandSound();}
@@ -550,7 +562,7 @@ public:
 	const ProduceSkillType *getProduceSkillType() const	{return m_produceSkillType;}
 
 	virtual int getProducedCount() const	{return m_producibles.size();}
-	virtual const ProducibleType *getProduced(int i) const	{return m_producibles[i];}
+	virtual ProdTypePtr getProduced(int i) const	{return m_producibles[i];}
 
 	string getTipKey(const string &name) const  {
 		map<string,string>::const_iterator it = m_tipKeys.find(name);
@@ -578,16 +590,17 @@ public:
 	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual string getReqDesc(const Faction *f) const;
-	virtual const ProducibleType *getProduced() const;
+	virtual ProdTypePtr getProduced() const;
 	virtual void getDesc(string &str, const Unit *unit) const;
-	virtual void subDesc(const Faction *faction, DescriptorCallback *callback, const ProducibleType *pt) const override;
+	virtual void subDesc(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const override;
+	virtual void descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt = 0) const override;
 	StaticSound *getFinishedSound() const	{return m_finishedSounds.getRandSound();}
 	virtual void update(Unit *unit) const;
 	virtual void start(Unit *unit, Command &command) const;
 
 	//get
 	virtual int getProducedCount() const	{return 1;}
-	virtual const ProducibleType *getProduced(int i) const	{assert(!i); return m_producedUpgrade;}
+	virtual ProdTypePtr getProduced(int i) const	{assert(!i); return m_producedUpgrade;}
 
 	const UpgradeSkillType *getUpgradeSkillType() const	{return m_upgradeSkillType;}
 	const UpgradeType *getProducedUpgrade() const		{return m_producedUpgrade;}
@@ -627,7 +640,8 @@ public:
 	virtual void getDesc(string &str, const Unit *unit) const;
 	virtual void update(Unit *unit) const;
 	virtual string getReqDesc(const Faction *f) const;
-	virtual void subDesc(const Faction *faction, DescriptorCallback *callback, const ProducibleType *pt) const override;
+	virtual void descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt = 0) const override;
+	virtual void subDesc(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const override;
 	
 	// get
 	virtual int getProducedCount() const	{return m_morphUnits.size();}
@@ -669,6 +683,7 @@ public:
 	virtual void doChecksum(Checksum &checksum) const;
 
 	virtual void update(Unit *unit) const;
+	virtual void descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt = 0) const override;
 
 	const MoveSkillType *getMoveSkillType() const {return m_moveSkillType;}
 	virtual CommandClass getClass() const         { return typeClass(); }
@@ -705,7 +720,8 @@ public:
 	virtual void getDesc(string &str, const Unit *unit) const;
 	virtual void update(Unit *unit) const;
 	virtual string getReqDesc(const Faction *f) const;
-	virtual void subDesc(const Faction *faction, DescriptorCallback *callback, const ProducibleType *pt) const override;
+	virtual void subDesc(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const override;
+	virtual void descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt = 0) const override;
 	virtual CommandResult check(const Unit *unit, const Command &command) const;
 	virtual void start(Unit *unit, Command *command) const;
 
@@ -739,6 +755,7 @@ public:
 	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void getDesc(string &str, const Unit *unit) const;
+	virtual void descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt = 0) const override;
 	virtual void update(Unit *unit) const;
 	virtual string getReqDesc(const Faction *f) const;
 	virtual void start(Unit *unit, Command *command) const;
@@ -771,6 +788,8 @@ public:
 	virtual void update(Unit *unit) const;
 	virtual string getReqDesc(const Faction *f) const {return "";}
 
+	virtual void descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt = 0) const override {}
+
 	//get
 	const MoveSkillType *getMoveSkillType() const	{return moveSkillType;}
 
@@ -795,6 +814,7 @@ public:
 	virtual void update(Unit *unit) const;
 	virtual void tick(const Unit *unit, Command &command) const;
 	int getMaxDistance() const {return m_maxDistance;}
+	virtual void descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt = 0) const override;
 
 	virtual CommandClass getClass() const { return typeClass(); }
 	static CommandClass typeClass() { return CommandClass::GUARD; }
@@ -810,6 +830,7 @@ public:
 	virtual void update(Unit *unit) const;
 	virtual void tick(const Unit *unit, Command &command) const;
 	virtual void finish(Unit *unit, Command &command) const;
+	virtual void descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt = 0) const override;
 
 	virtual CommandClass getClass() const { return typeClass(); }
 	static CommandClass typeClass() { return CommandClass::PATROL; }
@@ -836,6 +857,7 @@ public:
 	virtual void getDesc(string &str, const Unit *unit) const {
 		m_castSpellSkillType->getDesc(str, unit);
 	}
+	virtual void descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt = 0) const override;
 	const CastSpellSkillType *getCastSpellSkillType() const			{return m_castSpellSkillType;}
 
 	virtual void update(Unit *unit) const;
@@ -855,6 +877,7 @@ private:
 public:
 	BuildSelfCommandType() : CommandType("build-self", Clicks::TWO), m_buildSelfSkill(0) {}
 	virtual void getDesc(string &str, const Unit *unit) const {}
+	virtual void descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt = 0) const override;
 	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
 	virtual void update(Unit *unit) const;
 	virtual CommandClass getClass() const { return typeClass(); }
@@ -870,6 +893,7 @@ public:
 	SetMeetingPointCommandType() : CommandType("SetMeetingPoint", Clicks::TWO) {}
 	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft) {return true;}
 	virtual void getDesc(string &str, const Unit *unit) const {}
+	virtual void descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt = 0) const override {}
 	virtual void update(Unit *unit) const {
 		throw std::runtime_error("Set meeting point command in queue. Thats wrong.");
 	}

@@ -18,7 +18,7 @@ namespace Glest { namespace Widgets {
 
 using namespace Global;
 using ProtoTypes::DisplayableType;
-using ProtoTypes::DescriptorCallback;
+using ProtoTypes::CmdDescriptor;
 
 class CommandTipHeader : public StaticText {
 public:
@@ -84,7 +84,7 @@ public:
 //  class CommandTip
 // =====================================================
 
-class CommandTip : public Container, public DescriptorCallback {
+class CommandTip : public Container, public CmdDescriptor {
 private:
 	typedef vector<CommandTipElement*> Elements;
 private:

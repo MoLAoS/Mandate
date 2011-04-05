@@ -815,6 +815,9 @@ void Unit::setAutoCmdEnable(AutoCmdFlag f, bool v) {
 CommandResult Unit::giveCommand(Command *command) {
 	assert(command);
 	const CommandType *ct = command->getType();
+	if (ct->getClass() == CommandClass::TRANSFORM) {
+		DEBUG_HOOK();
+	}
 	CMD_UNIT_LOG( this, "giveCommand() " << *command );
 	if (ct->getClass() == CommandClass::SET_MEETING_POINT) {
 		if(command->isQueue() && !commands.empty()) {
@@ -1204,6 +1207,9 @@ void Unit::deCloak() {
   * @return true when completed (maxed out BLOCKED, IMPOSSIBLE or ARRIVED)
   */
 TravelState Unit::travel(const Vec2i &pos, const MoveSkillType *moveSkill) {
+	if (!g_world.getMap()->isInside(pos)) {
+		DEBUG_HOOK();
+	}
 	RUNTIME_CHECK(g_world.getMap()->isInside(pos));
 	assert(moveSkill);
 

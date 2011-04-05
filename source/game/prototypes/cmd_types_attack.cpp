@@ -186,6 +186,13 @@ bool AttackCommandType::load(const XmlNode *n, const string &dir, const TechTree
 	return AttackCommandTypeBase::load(n, dir, tt, ft, unitType) && ok;
 }
 
+void AttackCommandType::descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const {
+	string msg = "\n" + g_lang.get("WalkSpeed") + ": " + intToStr(unit->getSpeed(m_moveSkillType)) + "\n";
+	attackSkillTypes.getDesc(msg, unit);	
+	callback->addElement(msg);
+}
+
+
 Command *AttackCommandType::doAutoAttack(Unit *unit) const {
 	if (!unit->isAutoCmdEnabled(AutoCmdFlag::ATTACK)) {
 		return 0;
@@ -235,6 +242,12 @@ Command *AttackStoppedCommandType::doAutoAttack(Unit *unit) const {
 	return newCommand;
 }
 
+void AttackStoppedCommandType::descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const {
+	string msg;
+	attackSkillTypes.getDesc(msg, unit);	
+	callback->addElement(msg);
+}
+
 // =====================================================
 // 	class PatrolCommandType
 // =====================================================
@@ -276,6 +289,14 @@ void PatrolCommandType::tick(const Unit *unit, Command &command) const {
 void PatrolCommandType::finish(Unit *unit, Command &command) const {
 	// remember where we started from
 	command.setPos2(unit->getPos());
+}
+
+void PatrolCommandType::descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const {
+	string msg;
+	m_moveSkillType->getDesc(msg, unit);
+	// max-range ...
+	attackSkillTypes.getDesc(msg, unit);
+	callback->addElement(msg);
 }
 
 // =====================================================
@@ -327,6 +348,14 @@ bool GuardCommandType::load(const XmlNode *n, const string &dir, const TechTree 
 void GuardCommandType::doChecksum(Checksum &checksum) const {
 	AttackCommandType::doChecksum(checksum);
 	checksum.add<int>(m_maxDistance);
+}
+
+void GuardCommandType::descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const {
+	string msg;
+	m_moveSkillType->getDesc(msg, unit);
+	// max-range ...
+	attackSkillTypes.getDesc(msg, unit);
+	callback->addElement(msg);
 }
 
 // update helper, move somewhere sensible
