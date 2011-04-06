@@ -112,12 +112,23 @@ UpgradeTask::UpgradeTask(const UpgradeType *upgradeType)
 }
 
 string UpgradeTask::toString() const {
-	string str = "Build ";
+	string str = "Research ";
 	if (upgradeType) {
 		str += upgradeType->getName();
 	}
 	return str;
 }
+
+//
+// Logging macros...
+//
+
+#define FACTION_INDEX aiInterface->getFactionIndex()
+
+#define AI_LOG(component, level, message)                                                 \
+	if (g_logger.shouldLogAiEvent(FACTION_INDEX, Util::AiComponent::component, level)) {  \
+		LOG_AI( FACTION_INDEX, Util::AiComponent::component, level, message );            \
+	}
 
 // =====================================================
 // 	class Ai
@@ -166,6 +177,7 @@ void Ai::updateUsableResources() {
 	const Faction *faction = aiInterface->getMyFaction();
 	usableResources.clear();
 
+	// 1. Find all tech and tileset resources we can spend on something (anything)
 	ResourceTypes typesNeeded;
 	for (int i=0; i < aiInterface->getMyFactionType()->getUnitTypeCount(); ++i) {
 		const UnitType *ut = aiInterface->getMyFactionType()->getUnitType(i);
@@ -193,6 +205,7 @@ void Ai::updateUsableResources() {
 			}
 		}
 	}
+	// 2. Find all currently harvestable resources, and put any also found in step 1 in usableResources
 	foreach (UnitTypeCount, it, unitTypeCount) {
 		const UnitType *ut = it->first;
 		int n = ut->getCommandTypeCount<HarvestCommandType>();
@@ -217,14 +230,10 @@ Ai::~Ai() {
 
 void Ai::update() {
 	_PROFILE_FUNCTION();
-	//process ai rules
-	for (AiRules::iterator it = aiRules.begin(); it != aiRules.end(); ++it) {
+	foreach (AiRules, it, aiRules) { // process ai rules
 		if ((aiInterface->getTimer() % ((*it)->getTestInterval() * WORLD_FPS / 1000)) == 0) {
 			if ((*it)->test()) {
-				LOG_AI(
-					aiInterface->getFactionIndex(), AiComponent::GENERAL, 2,
-					"Executing rule: " << (*it)->getName()
-				);
+				AI_LOG( GENERAL, 3, "Ai::update: Executing rule: " << (*it)->getName() );
 				(*it)->execute();
 			}
 		}
@@ -235,20 +244,16 @@ void Ai::update() {
 // ==================== state requests ====================
 
 int Ai::getCountOfType(const UnitType *ut) {
-	int count = 0;
-	for (int i = 0; i < aiInterface->getMyUnitCount(); ++i) {
-		if (ut == aiInterface->getMyUnit(i)->getType()) {
-			count++;
-		}
-	}
-	return count;
+	return aiInterface->getFaction()->getCountOfUnitType(ut);
 }
 
 int Ai::getCountOfClass(UnitClass uc) {
+	const FactionType *factionType = aiInterface->getFaction()->getType();
 	int count = 0;
-	for (int i = 0; i < aiInterface->getMyUnitCount(); ++i) {
-		if (aiInterface->getMyUnit(i)->getType()->isOfClass(uc)) {
-			++count;
+	for (int i=0; i < factionType->getUnitTypeCount(); ++i) {
+		const UnitType *ut = factionType->getUnitType(i);
+		if (ut->isOfClass(uc)) {
+			count += aiInterface->getFaction()->getCountOfUnitType(ut);
 		}
 	}
 	return count;
@@ -284,10 +289,11 @@ bool Ai::beingAttacked(Vec2i &pos, Field &field, int radius) {
 		field = (*it)->getCurrField();
 		if (pos.dist(aiInterface->getHomeLocation()) < radius) {
 			baseSeen = true;
-			LOG_AI( aiInterface->getFactionIndex(), AiComponent::MILITARY, 1, "Being attacked at pos " << pos);
+			AI_LOG( MILITARY, 2, "Ai::beingAttacked: enemy found at pos " << pos );
 			return true;
 		}
 	}
+	AI_LOG( MILITARY, 2, "Ai::beingAttacked: no enemies found in range." );
 	return false;
 }
 
@@ -298,10 +304,8 @@ bool Ai::isStaticResourceUsed(const ResourceType *rt) const {
 
 bool Ai::isStableBase() {
 	if (getCountOfClass(UnitClass::WARRIOR) > minWarriors) {
-		LOG_AI( aiInterface->getFactionIndex(), AiComponent::MILITARY, 1, "Base is stable." );
 		return true;
 	} else {
-		LOG_AI( aiInterface->getFactionIndex(), AiComponent::MILITARY, 1, "Base is not stable" );
 		return false;
 	}
 }
@@ -467,17 +471,17 @@ bool Ai::isRepairable(const Unit *u) const {
 
 // ==================== tasks ====================
 
-void Ai::addTask(const Task *task){
+void Ai::addTask(const Task *task) {
 	tasks.push_back(task);
-	LOG_AI( aiInterface->getFactionIndex(), AiComponent::GENERAL, 2, "Task added: " + task->toString() );
+	LOG_AI( FACTION_INDEX, AiComponent::GENERAL, 2, "Ai::addTask: Task added: " + task->toString() );
 }
 
-void Ai::addPriorityTask(const Task *task){
+void Ai::addPriorityTask(const Task *task) {
 	deleteValues(tasks.begin(), tasks.end());
 	tasks.clear();
 
 	tasks.push_back(task);
-	LOG_AI( aiInterface->getFactionIndex(), AiComponent::GENERAL, 2, "Priority Task added: " + task->toString() );
+	AI_LOG( GENERAL, 2, "Ai::addPriorityTask: Priority Task added: " + task->toString() );
 }
 
 bool Ai::anyTask(){
@@ -494,7 +498,7 @@ const Task *Ai::getTask() const{
 }
 
 void Ai::removeTask(const Task *task){
-	LOG_AI( aiInterface->getFactionIndex(), AiComponent::GENERAL, 2, "Task removed: " + task->toString() );
+	AI_LOG( GENERAL, 2, "Ai::removeTask: Task removed: " + task->toString() );
 	tasks.remove(task);
 	delete task;
 }
@@ -506,146 +510,134 @@ void Ai::retryTask(const Task *task){
 // ==================== expansions ====================
 
 void Ai::addExpansion(const Vec2i &pos){
-
 	//check if there is a nearby expansion
-	for(Positions::iterator it= expansionPositions.begin(); it!=expansionPositions.end(); ++it){
-		if((*it).dist(pos)<villageRadius){
+	for (Positions::iterator it = expansionPositions.begin(); it != expansionPositions.end(); ++it) {
+		if ((*it).dist(pos) < villageRadius) {
 			return;
 		}
 	}
-
 	//add expansion
 	expansionPositions.push_front(pos);
 
 	//remove expansion if queue is list is full
-	if(expansionPositions.size()>maxExpansions){
+	if (expansionPositions.size()>maxExpansions) {
 		expansionPositions.pop_back();
 	}
 }
 
-Vec2i Ai::getRandomHomePosition(){
-
-	if(expansionPositions.empty() || random.randRange(0, 1) == 0){
+Vec2i Ai::getRandomHomePosition() {
+	if (expansionPositions.empty() || random.randRange(0, 1) == 0) {
 		return aiInterface->getHomeLocation();
 	}
-
-	return expansionPositions[random.randRange(0, expansionPositions.size()-1)];
+	return expansionPositions[random.randRange(0, expansionPositions.size() - 1)];
 }
 
 // ==================== actions ====================
 
-void Ai::sendScoutPatrol(){
+void Ai::sendScoutPatrol() {
     Vec2i pos;
     int unit;
 
-	startLoc= (startLoc+1) % aiInterface->getMapMaxPlayers();
-	pos= aiInterface->getStartLocation(startLoc);
+	startLoc = (startLoc+1) % aiInterface->getMapMaxPlayers();
+	pos = aiInterface->getStartLocation(startLoc);
 
-	if(aiInterface->getFactionIndex()!=startLoc){
-		if(findAbleUnit(&unit, CommandClass::ATTACK, false)){
+	if (aiInterface->getFactionIndex() != startLoc) {
+		if (findAbleUnit(&unit, CommandClass::ATTACK, false)) {
 			aiInterface->giveCommand(unit, CommandClass::ATTACK, pos);
-			LOG_AI( aiInterface->getFactionIndex(), AiComponent::MILITARY, 1, "Scout patrol sent to: " << pos );
+			AI_LOG( MILITARY, 1, "Ai::sendScoutPatrol: Scout patrol sent to: " << pos );
 		}
 	}
 }
-
-
 
 void Ai::massiveAttack(const Vec2i &pos, Field field, bool ultraAttack){
-	int producerWarriorCount=0;
-	int maxProducerWarriors=random.randRange(1,11);
-    for(int i=0; i<aiInterface->getMyUnitCount(); ++i){
+	int producerWarriorCount = 0;
+	int maxProducerWarriors = random.randRange(1, 11);
+	AI_LOG( MILITARY, 1, "Ai::massiveAttack: Massive attack to pos: " << pos );
+    for (int i=0; i < aiInterface->getMyUnitCount(); ++i) {
     	bool isWarrior;
-        const Unit *unit= aiInterface->getMyUnit(i);
-		const AttackCommandType *act= unit->getType()->getAttackCommand(field==Field::AIR?Zone::AIR:Zone::LAND);
-		if(act!=NULL && unit->getType()->hasCommandClass(CommandClass::PRODUCE))
-		{
-			producerWarriorCount++;
+        const Unit *unit = aiInterface->getMyUnit(i);
+		const AttackCommandType *act = unit->getType()->getAttackCommand(field==Field::AIR?Zone::AIR:Zone::LAND);
+
+		if (act && unit->getType()->hasCommandClass(CommandClass::PRODUCE)) {
+			++producerWarriorCount;
 		}
 		
-		if(aiInterface->getControlType()==ControlType::CPU_MEGA)
-		{
-			if(producerWarriorCount>maxProducerWarriors)
-			{
-				if(
-					unit->getCommandCount()>0 &&
-					unit->getCurrCommand()->getType()!=NULL && (
-				    unit->getCurrCommand()->getType()->getClass()==CommandClass::BUILD || 
-					unit->getCurrCommand()->getType()->getClass()==CommandClass::MORPH || 
-					unit->getCurrCommand()->getType()->getClass()==CommandClass::PRODUCE
-					)
-				)
-				{
-					isWarrior=false;
+		if (aiInterface->getControlType() == ControlType::CPU_MEGA) {
+			//if (producerWarriorCount > maxProducerWarriors) {
+				if (unit->getCommandCount() > 0 
+				&& unit->getCurrCommand()->getType() != 0
+				&& ( unit->getCurrCommand()->getType()->getClass() == CommandClass::BUILD
+				||   unit->getCurrCommand()->getType()->getClass() == CommandClass::MORPH
+				||   unit->getCurrCommand()->getType()->getClass() == CommandClass::PRODUCE )) {
+					AI_LOG( MILITARY, 3, "Ai::massiveAttack: candidate is producer and currently producing." );
+					isWarrior = false;
+				} else {
+					isWarrior = !unit->getType()->hasCommandClass(CommandClass::HARVEST);
 				}
-				else
-				{
-					isWarrior=!unit->getType()->hasCommandClass(CommandClass::HARVEST);
-				}
-			}
-			else
-			{
-				isWarrior= !unit->getType()->hasCommandClass(CommandClass::HARVEST) && !unit->getType()->hasCommandClass(CommandClass::PRODUCE);  
-			}
+			//} else {
+			//	isWarrior = !unit->getType()->hasCommandClass(CommandClass::HARVEST) && !unit->getType()->hasCommandClass(CommandClass::PRODUCE);  
+			//}
+		} else {
+			isWarrior = !unit->getType()->hasCommandClass(CommandClass::HARVEST) && !unit->getType()->hasCommandClass(CommandClass::PRODUCE);
 		}
-		else
-		{
-			isWarrior= !unit->getType()->hasCommandClass(CommandClass::HARVEST) && !unit->getType()->hasCommandClass(CommandClass::PRODUCE);
-		}
-		
-		
-		bool alreadyAttacking= unit->getCurrSkill()->getClass()==SkillClass::ATTACK; 
-		if(!alreadyAttacking && act!=NULL && (ultraAttack || isWarrior)){
-			aiInterface->giveCommand(i, act, pos);
+		if (act) {
+			bool alreadyAttacking = unit->getCurrSkill()->getClass() == SkillClass::ATTACK;
+			if (alreadyAttacking) {
+				AI_LOG( MILITARY, 3, "Ai::massiveAttack: attacker " << unit->getId() << " [type="
+					<< unit->getType()->getName() << "] already attacking." );
+			} else if (ultraAttack || isWarrior) {
+				CommandResult res = aiInterface->giveCommand(i, act, pos);
+				AI_LOG( MILITARY, 2, "Ai::massiveAttack: attacker " << unit->getId() << " [type="
+					<< unit->getType()->getName() << "] issued attack command to " << pos );
+			} else {
+				AI_LOG( MILITARY, 3, "Ai::massiveAttack: attacker " << unit->getId() << " [type="
+					<< unit->getType()->getName() << "] not ultra-attack, not attacking." );
+			}
 		}
     }
-
-    if(aiInterface->getControlType()==ControlType::CPU_EASY)
-	{
-		minWarriors+= 1;
-	}
-	else if(aiInterface->getControlType()==ControlType::CPU_MEGA)
-	{
-		minWarriors+= 3;
-		if(minWarriors>maxMinWarriors-1 || randomMinWarriorsReached)
-		{
-			randomMinWarriorsReached=true;
-			minWarriors=random.randRange(maxMinWarriors-10, maxMinWarriors*2);
+    if (aiInterface->getControlType() == ControlType::CPU_EASY) {
+		minWarriors += 1;
+	} else if(aiInterface->getControlType() == ControlType::CPU_MEGA) {
+		minWarriors += 3;
+		if (minWarriors > maxMinWarriors - 1 || randomMinWarriorsReached) {
+			randomMinWarriorsReached = true;
+			minWarriors = random.randRange(maxMinWarriors - 10, maxMinWarriors * 2);
 		}
+	} else if (minWarriors < maxMinWarriors) {
+		minWarriors += 3;
 	}
-	else if(minWarriors<maxMinWarriors){
-		minWarriors+= 3;
-	}
-	LOG_AI( aiInterface->getFactionIndex(), AiComponent::MILITARY, 1, "Massive attack to pos: " << pos );
 }
 
-void Ai::returnBase(int unitIndex){
-    Vec2i pos;
-    CommandResult r;
-
-	pos= Vec2i(
-		random.randRange(-villageRadius, villageRadius), random.randRange(-villageRadius, villageRadius)) +
-		getRandomHomePosition();
-    r= aiInterface->giveCommand(unitIndex, CommandClass::MOVE, pos);
-
-	LOG_AI( 
-		aiInterface->getFactionIndex(), AiComponent::MILITARY, 2, 
-		"Order return to base pos:" << pos << " result: " << CommandResultNames[r]
-	);
+inline Vec2i randPos(Random &rand, int radius) {
+	return Vec2i(rand.randRange(-radius, radius), rand.randRange(-radius, radius));
 }
 
-void Ai::harvest(int unitIndex){
+void Ai::returnBase(int unitIndex) {
+    Vec2i pos = getRandomHomePosition() + randPos(random, villageRadius);
+    CommandResult r = aiInterface->giveCommand(unitIndex, CommandClass::MOVE, pos);
+	AI_LOG( MILITARY, 2, "Ai::returnBase: Order return to base pos:" << pos 
+		<< " result: " << CommandResultNames[r] );
+}
 
-	const ResourceType *rt= getNeededResource();
-
-	if(rt!=NULL){
-		const HarvestCommandType *hct= aiInterface->getMyUnit(unitIndex)->getType()->getHarvestCommand(rt);
-		Vec2i resPos;
-		if(hct!=NULL && aiInterface->getNearestSightedResource(rt, aiInterface->getHomeLocation(), resPos)){
-			resPos= resPos+Vec2i(random.randRange(-2, 2), random.randRange(-2, 2));
-			aiInterface->giveCommand(unitIndex, hct, resPos);
-			//aiInterface->printLog(4, "Order harvest pos:" + intToStr(resPos.x)+", "+intToStr(resPos.y)+": "+rrToStr(r)+"\n");
-		}
+void Ai::harvest(int unitIndex) {
+	const ResourceType *rt = getNeededResource();
+	if (!rt) {
+		AI_LOG( ECONOMY, 1, "Ai::harvest: No needed resources!?!" );
+		return;
+	}
+	const HarvestCommandType *hct = aiInterface->getMyUnit(unitIndex)->getType()->getHarvestCommand(rt);
+	if (!hct) {
+		AI_LOG( ECONOMY, 1, "Ai::harvest: worker " << unitIndex 
+			<< " [type=" << aiInterface->getMyUnit(unitIndex)->getType()->getName() << "] "
+			<< "can not harvest " << rt->getName() );
+		return;
+	}
+	Vec2i resPos;
+	if (aiInterface->getNearestSightedResource(rt, aiInterface->getHomeLocation(), resPos)) {
+		resPos = resPos + Vec2i(random.randRange(-2, 2), random.randRange(-2, 2));
+		aiInterface->giveCommand(unitIndex, hct, resPos);
+		AI_LOG( ECONOMY, 2, "Ai::harvest: Harvest command for resource " << rt->getName() 
+			<< " at pos " << resPos << " issued." );
 	}
 }
 

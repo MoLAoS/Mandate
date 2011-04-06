@@ -36,11 +36,10 @@ using std::stringstream;
 
 #define AI_LOGGING 1
 #if AI_LOGGING
-#	define LOG_AI(factionIndex, component, level, message) {    \
-		stringstream _ss;										\
-		_ss << "Frame: " << g_world.getFrameCount()				\
-			<< ", faction: " << factionIndex << ": " << message;\
-		g_logger.logAiEvent(factionIndex, component, level, _ss.str()); }
+#	define LOG_AI(faction, cmpnt, lvl, message) {             \
+		stringstream _ss;                                     \
+		_ss <<  message;                                      \
+		g_logger.logAiEvent(faction, cmpnt, lvl, _ss.str()); }
 #else
 #	define LOG_AI(factionIndex, component, level, message)
 #endif
@@ -134,6 +133,7 @@ public:
 
 STRINGY_ENUM( AiComponent,
 	ECONOMY,
+	PRODUCTION,
 	GENERAL,
 	MILITARY,
 	RESEARCH
@@ -154,28 +154,32 @@ public:
 
 	void add(int faction, AiComponent component, int level, const string &msg);
 
+	// get
 	bool isEnabled(int faction) const {
 		ASSERT_RANGE(faction, GameConstants::maxPlayers);
 		return m_flags[faction].m_enabled; 
 	}
-	bool getLevel(int faction) const {
+
+	int getLevel(int faction) const {
 		ASSERT_RANGE(faction, GameConstants::maxPlayers);
 		return m_flags[faction].m_level;
-	}
-
-	void setEnabled(int faction, bool val) {
-		ASSERT_RANGE(faction, GameConstants::maxPlayers);
-		m_flags[faction].m_enabled = val; 
-	}
-	void setLevel(int faction, int level) { 
-		ASSERT_RANGE(faction, GameConstants::maxPlayers);
-		m_flags[faction].m_level = level;
 	}
 
 	bool isEnabled(int faction, AiComponent component) const {
 		ASSERT_RANGE(faction, GameConstants::maxPlayers);
 		ASSERT_RANGE(component, AiComponent::COUNT);
 		return m_flags[faction].m_enabled && m_flags[faction].m_components[component]; 
+	}
+
+	// set
+	void setEnabled(int faction, bool val) {
+		ASSERT_RANGE(faction, GameConstants::maxPlayers);
+		m_flags[faction].m_enabled = val; 
+	}
+
+	void setLevel(int faction, int level) { 
+		ASSERT_RANGE(faction, GameConstants::maxPlayers);
+		m_flags[faction].m_level = level;
 	}
 
 	void setEnabled(int faction, AiComponent component, bool val) {
@@ -252,6 +256,10 @@ public:
 		m_networkLog->addNetworkMsg(msg);
 	}
 
+	// AI
+	bool shouldLogAiEvent(int faction, AiComponent component, int level) const {
+		return m_aiLog->isEnabled(faction, component) && level <= m_aiLog->getLevel(faction);
+	}
 	void logAiEvent(int faction, AiComponent component, int level, const string &msg) {
 		m_aiLog->add(faction, component, level, msg);
 	}

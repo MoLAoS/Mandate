@@ -16,14 +16,12 @@
 #include "pch.h"
 #include "config.h"
 #include "util.h"
-
-#ifndef WIN32
 #include "platform_util.h"
-#endif
-
 #include "leak_dumper.h"
 
 namespace Glest { namespace Global {
+
+using Shared::Util::fileExists;
 
 // =====================================================
 // 	class Config
@@ -31,20 +29,18 @@ namespace Glest { namespace Global {
 
 Config::Config(const char* fileName) {
 	Properties *p = new Properties();
-	if(Shared::Util::fileExists(fileName)) {
+	if (fileExists(fileName)) {
 		p->load(fileName, true);
 	}
 
-	int width=1024, height=768;
-#ifndef WIN32
+	int width=800, height=600;
 	getScreenMode(width, height);
-#endif
 
 CONFIG_INIT
 
 	delete p;
 
-	if (!Shared::Util::fileExists(fileName)) {
+	if (!fileExists(fileName)) {
 		save();
 	}
 }

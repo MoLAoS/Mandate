@@ -418,7 +418,9 @@ public:
 
 	//is
 	bool isIdle() const					{return currSkill->getClass() == SkillClass::STOP;}
+	
 	bool isMoving() const				{return currSkill->getClass() == SkillClass::MOVE;}
+
 	bool isCarried() const				{return carried;}
 	bool isHighlighted() const			{return highlight > 0.f;}
 	bool isDead() const					{return !hp;}

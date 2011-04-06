@@ -25,10 +25,6 @@ using std::vector;
 using std::list;
 using Shared::Util::Random;
 
-#define LOG_AI_BUILD(x) /*GAME_LOG(x)*/
-#define LOG_AI_PRODUCE(x) /*GAME_LOG(x)*/
-#define LOG_AI_HARVEST(x) GAME_LOG(x)
-
 namespace Glest { namespace Plan {
 
 class GlestAiInterface;

@@ -16,14 +16,12 @@
 #include "pch.h"
 #include "config.h"
 #include "util.h"
-
-#ifndef WIN32
 #include "platform_util.h"
-#endif
-
 #include "leak_dumper.h"
 
 namespace Glest { namespace Global {
+
+using Shared::Util::fileExists;
 
 // =====================================================
 // 	class Config
@@ -31,15 +29,15 @@ namespace Glest { namespace Global {
 
 Config::Config(const char* fileName) {
 	Properties *p = new Properties();
-	if(Shared::Util::fileExists(fileName)) {
+	if (fileExists(fileName)) {
 		p->load(fileName, true);
 	}
 
-	int width=1024, height=768;
-#ifndef WIN32
+	int width=800, height=600;
 	getScreenMode(width, height);
-#endif
 
+	aiLogLevel = p->getInt("AiLogLevel", 1, 1, 3);
+	aiLoggingEnabled = p->getBool("AiLoggingEnabled", true);
 	cameraInvertXAxis = p->getBool("CameraInvertXAxis", true);
 	cameraInvertYAxis = p->getBool("CameraInvertYAxis", true);
 	cameraMaxDistance = p->getFloat("CameraMaxDistance", 64.f, 32.f, 2048.f);
@@ -105,7 +103,7 @@ Config::Config(const char* fileName) {
 
 	delete p;
 
-	if (!Shared::Util::fileExists(fileName)) {
+	if (!fileExists(fileName)) {
 		save();
 	}
 }
@@ -113,6 +111,8 @@ Config::Config(const char* fileName) {
 void Config::save(const char *path) {
 	Properties *p = new Properties();
 
+	p->setInt("AiLogLevel", aiLogLevel);
+	p->setBool("AiLoggingEnabled", aiLoggingEnabled);
 	p->setBool("CameraInvertXAxis", cameraInvertXAxis);
 	p->setBool("CameraInvertYAxis", cameraInvertYAxis);
 	p->setFloat("CameraMaxDistance", cameraMaxDistance);

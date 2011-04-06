@@ -30,7 +30,6 @@
 #define g_lang              (Lang::getInstance())
 #define g_metrics           (Metrics::getInstance())
 #define g_coreData          (CoreData::getInstance())
-#define g_fileFactory       (*FSFactory::getInstance())
 #define g_simInterface      (*Program::getInstance()->getSimulationInterface())
 #define g_prototypeFactory  (Program::getInstance()->getSimulationInterface()->getPrototypeFactory())
 

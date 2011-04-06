@@ -31,6 +31,8 @@ using Shared::Util::Properties;
 class Config {
 private:
 
+	int aiLogLevel;
+	bool aiLoggingEnabled;
 	bool cameraInvertXAxis;
 	bool cameraInvertYAxis;
 	float cameraMaxDistance;
@@ -95,13 +97,13 @@ private:
 	float uiScrollSpeed;
 
 	Config(const char* fileName);
-
+	
 	static bool isWindows() {
-#if defined(WIN32) || defined(WIN64)
-		return true;
-#else
-		return false;
-#endif
+#		ifdef WIN32
+			return true;
+#		else
+			return false;
+#		endif
 	}
 
 public:
@@ -112,6 +114,8 @@ public:
 
 	void save(const char *path = "glestadv.ini");
 
+	int getAiLogLevel() const					{return aiLogLevel;}
+	bool getAiLoggingEnabled() const			{return aiLoggingEnabled;}
 	bool getCameraInvertXAxis() const			{return cameraInvertXAxis;}
 	bool getCameraInvertYAxis() const			{return cameraInvertYAxis;}
 	float getCameraMaxDistance() const			{return cameraMaxDistance;}
@@ -175,6 +179,8 @@ public:
 	bool getUiPhotoMode() const					{return uiPhotoMode;}
 	float getUiScrollSpeed() const				{return uiScrollSpeed;}
 
+	void setAiLogLevel(int val)					{aiLogLevel = val;}
+	void setAiLoggingEnabled(bool val)			{aiLoggingEnabled = val;}
 	void setCameraInvertXAxis(bool val)			{cameraInvertXAxis = val;}
 	void setCameraInvertYAxis(bool val)			{cameraInvertYAxis = val;}
 	void setCameraMaxDistance(float val)		{cameraMaxDistance = val;}

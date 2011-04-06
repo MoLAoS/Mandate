@@ -73,6 +73,8 @@ class FSFactory{
 		static void doneFace(FT_Face face);
 };
 
+#define g_fileFactory (*Shared::PhysFS::FSFactory::getInstance())
+
 }}
 
 #endif

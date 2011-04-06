@@ -42,7 +42,7 @@ void Properties::load(const string &path, bool trim) {
 
 	this->path = path;
 
-	istream *fileStream = FSFactory::getInstance()->getIStream(path.c_str());
+	istream *fileStream = g_fileFactory.getIStream(path.c_str());
 	//fileStream.exceptions(ios::failbit | ios::badbit);
 
 	if (fileStream->fail()) {
@@ -63,7 +63,7 @@ void Properties::load(const string &path, bool trim) {
 		// gracefully handle win32 \r\n line endings
 		size_t len = strlen(lineBuffer);
 		if (len > 0 && lineBuffer[len - 1] == '\r') {
-			lineBuffer[len-1] = 0;
+			lineBuffer[len - 1] = 0;
 		}
 
 		line = lineBuffer;
@@ -149,8 +149,8 @@ static inline void checkRange(const T &val, const T *pMin, const T *pMax) {
 
 bool Properties::_getBool(const string &key, const bool *pDef) const {
 	//try {
-		const string *pstrVal = _getString(key, !pDef);
-		if(!pstrVal) {
+		const string *pstrVal = _getString(key, bool(!pDef));
+		if (!pstrVal) {
 			assert(pDef);
 			return *pDef;
 		}

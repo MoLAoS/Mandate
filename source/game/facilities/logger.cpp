@@ -235,8 +235,8 @@ void ProgramLog::renderLoadingScreen(){
 AiLogFile::AiLogFile()
 		: LogFile("glestadv-ai.log", "AI", TimeStampType::NONE) {
 	for (int i=0; i < GameConstants::maxPlayers; ++i) {
-		m_flags[i].m_level = 2;
-		m_flags[i].m_enabled = true;
+		m_flags[i].m_level = g_config.getAiLogLevel();
+		m_flags[i].m_enabled = g_config.getAiLoggingEnabled();
 		for (int j=0; j < AiComponent::COUNT; ++j) {
 			m_flags[i].m_components[j] = true;
 		}
@@ -245,12 +245,15 @@ AiLogFile::AiLogFile()
 
 void AiLogFile::add(int f, AiComponent c, int level, const string &msg) {
 	ASSERT_RANGE(f, GameConstants::maxPlayers);
-	if (m_flags[f].m_enabled && level <= m_flags[f].m_level	&& m_flags[f].m_components[c]) {
+	// enabled/level/component test is embedded in macros now, to avoid lots of
+	// streaming for disabled logging.
+
+	//if (m_flags[f].m_enabled && level <= m_flags[f].m_level	&& m_flags[f].m_components[c]) {
 		stringstream ss;
 		ss << "AI: " << f << " [" << AiComponentNames[c] << "] Frame: " 
-			<< g_world.getFrameCount() << ", " << ": " << msg;
+			<< g_world.getFrameCount() << " : " << msg;
 		LogFile::add(ss.str());
-	}
+	//}
 }
 
 // =====================================================

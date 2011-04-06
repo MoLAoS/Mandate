@@ -4,6 +4,8 @@
 # character in this file unless you want to modify the script.
 #
 # variable					type	default			min		max
+aiLoggingEnabled			bool	true
+aiLogLevel					int		1				1		3
 cameraInvertXAxis			bool	true
 cameraInvertYAxis			bool	true
 cameraMaxDistance			float	64.f			32.f	2048.f

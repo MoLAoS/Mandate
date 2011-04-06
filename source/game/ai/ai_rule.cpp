@@ -28,6 +28,14 @@ using Shared::Math::Vec2i;
 
 namespace Glest { namespace Plan {
 
+#define FACTION_INDEX ai->getAiInterface()->getFactionIndex()
+
+#define AI_LOG(component, level, message)                                                 \
+	if (g_logger.shouldLogAiEvent(FACTION_INDEX, Util::AiComponent::component, level)) {  \
+		LOG_AI( FACTION_INDEX, Util::AiComponent::component, level, message );            \
+	}
+
+
 // =====================================================
 //	class AiRule
 // =====================================================
@@ -44,7 +52,12 @@ AiRuleWorkerHarvest::AiRuleWorkerHarvest(Ai *ai)
 }
 
 bool AiRuleWorkerHarvest::test() {
-	return ai->findAbleUnit(&stoppedWorkerIndex, CommandClass::HARVEST, true);
+	if (ai->findAbleUnit(&stoppedWorkerIndex, CommandClass::HARVEST, true)) {
+		AI_LOG( ECONOMY, 3, "AiRuleWorkerHarvest::test: found idle worker, unit index = " << stoppedWorkerIndex );
+		return true;
+	}
+	AI_LOG( ECONOMY, 2, "AiRuleWorkerHarvest::test: failed to find idle worker" );
+	return false;
 }
 
 void AiRuleWorkerHarvest::execute() {
@@ -61,7 +74,12 @@ AiRuleRefreshHarvester::AiRuleRefreshHarvester(Ai *ai)
 }
 
 bool AiRuleRefreshHarvester::test() {
-	return ai->findAbleUnit(&workerIndex, CommandClass::HARVEST, true); // should be idleOnly == false ?
+	if (ai->findAbleUnit(&workerIndex, CommandClass::HARVEST, false)) {
+		AI_LOG( ECONOMY, 3, "AiRuleRefreshHarvester::test: found worker, unit index = " << workerIndex );
+		return true;
+	}
+	AI_LOG( ECONOMY, 2, "AiRuleRefreshHarvester::test: failed to find any worker!" );
+	return false;
 }
 
 void AiRuleRefreshHarvester::execute() {
@@ -83,6 +101,7 @@ bool AiRuleScoutPatrol::test() {
 void AiRuleScoutPatrol::execute() {
 	ai->sendScoutPatrol();
 }
+
 // =====================================================
 //	class AiRuleRepair
 // =====================================================
@@ -95,14 +114,19 @@ bool AiRuleRepair::test() {
 	GlestAiInterface *aiInterface = ai->getAiInterface();
 	repairable.clear();
 
-	//look for a damaged unit that we can repair
-	for(int i = 0; i < aiInterface->getMyUnitCount(); ++i) {
+	// look for a damaged unit that we can repair
+	for (int i = 0; i < aiInterface->getMyUnitCount(); ++i) {
 		const Unit *u = aiInterface->getMyUnit(i);
-		if(u->getHpRatio() < 1.f && ai->isRepairable(u)) {
+		if (u->getHpRatio() < 1.f && ai->isRepairable(u)) {
 			repairable.push_back(u);
 		}
 	}
-	return !repairable.empty();
+	if (!repairable.empty()) {
+		AI_LOG( GENERAL, 2, "AiRuleRepair::test: repairable units updated, with unit(s) needing repair." );
+		return true;
+	}
+	AI_LOG( GENERAL, 2, "AiRuleRepair::test: repairable units updated, with no units needing repair." );
+	return false;
 }
 
 void AiRuleRepair::execute() {
@@ -114,34 +138,43 @@ void AiRuleRepair::execute() {
 
 	//try all of our repairable units in case one type of repairer is busy, but
 	//others aren't.
-	for (Units::iterator ui = repairable.begin(); ui != repairable.end(); ++ui) {
-		const Unit *damagedUnit = *ui;
+	foreach (Units, it, repairable) {
+		const Unit *damagedUnit = *it;
+		AI_LOG( GENERAL, 3, "AiRuleRepair::execute: Trying to find repairer for damaged unit id " << damagedUnit->getId()
+			<< " @ " << damagedUnit->getPos() );
 
 		fixedVec2 fpos = damagedUnit->getFixedCenteredPos();
 		int size = damagedUnit->getType()->getSize();
 
-		//find the nearest available repairer and issue command
-		for(int i = 0; i < aiInterface->getMyUnitCount(); ++i) {
+		// find the nearest available repairer and issue command
+		for (int i = 0; i < aiInterface->getMyUnitCount(); ++i) {
 			const Unit *u = aiInterface->getMyUnit(i);
 			const RepairCommandType *rct;
-			if ((u->isIdle() || u->isMoving()) && (rct = u->getRepairCommandType(damagedUnit))) {
+			if ( (u->isIdle() || u->isMoving()) && (rct = u->getRepairCommandType(damagedUnit)) ) {
 				fixed dist = fpos.dist(u->getFixedCenteredPos()) + size + u->getType()->getHalfSize();
 				if (minDist > dist) {
 					nearestRct = rct;
 					nearest = i;
 					minDist = dist;
+					AI_LOG( GENERAL, 3, "AiRuleRepair::execute: Candidate repairer id " 
+						<< u->getId() << " @ " << u->getPos() << " distance " << dist.toFloat() 
+						<< " (closest seen so far)" );
 				}
 			}
 		}
 
 		if (nearestRct) {
-			aiInterface->giveCommand(nearest, nearestRct, const_cast<Unit*>(damagedUnit));
-			LOG_AI(
-				ai->getAiInterface()->getFactionIndex(), 
-				Util::AiComponent::ECONOMY, 1,
-				"Repairing order issued"
-			);
+			CommandResult res = aiInterface->giveCommand(nearest, nearestRct, const_cast<Unit*>(damagedUnit));
+			const Unit *repairer = aiInterface->getMyUnit(nearest);
+			AI_LOG( GENERAL, 2, "AiRuleRepair::execute: Repair command issued, repairer id "
+				<< repairer->getId() << " @ " << repairer->getPos() << ", repairee id " << damagedUnit->getId()
+				<< " [type=" << damagedUnit->getType()->getName() << "] @ " << damagedUnit->getPos()
+				<< " Reult: " << CommandResultNames[res] );
 			return;
+		} else {
+			AI_LOG( GENERAL, 2, "AiRuleRepair::execute: Damaged unit id " << damagedUnit->getId() << " [type="
+				<< damagedUnit->getType()->getName() << "] @ " << damagedUnit->getPos()
+				<< " could not find a repairer." );
 		}
 	}
 }
@@ -157,7 +190,12 @@ AiRuleReturnBase::AiRuleReturnBase(Ai *ai)
 }
 
 bool AiRuleReturnBase::test() {
-	return ai->findAbleUnit(&stoppedUnitIndex, CommandClass::MOVE, true);
+	if (ai->findAbleUnit(&stoppedUnitIndex, CommandClass::MOVE, true)) {
+		AI_LOG( MILITARY, 3, "AiRuleReturnBase::test: found idle unit." );
+		return true;
+	}
+	AI_LOG( MILITARY, 3, "AiRuleReturnBase::test: found no idle units." );
+	return false;
 }
 
 void AiRuleReturnBase::execute() {
@@ -174,9 +212,13 @@ AiRuleMassiveAttack::AiRuleMassiveAttack(Ai *ai)
 
 bool AiRuleMassiveAttack::test() {
 	if (ai->isStableBase()) {
+		AI_LOG( MILITARY, 2, "AiRuleMassiveAttack::test: base stable, will launch "
+			<< "'ultra attack' if any enemy found." );
 		ultraAttack = false;
 		return ai->beingAttacked(attackPos, field, INT_MAX);
 	} else {
+		AI_LOG( MILITARY, 2, "AiRuleMassiveAttack::test: base is not stable, will "
+			<< "counter only if being attacked." );
 		ultraAttack = true;
 		return ai->beingAttacked(attackPos, field, baseRadius);
 	}
@@ -195,7 +237,12 @@ AiRuleAddTasks::AiRuleAddTasks(Ai *ai)
 }
 
 bool AiRuleAddTasks::test() {
-	return !ai->anyTask() || ai->getCountOfClass(UnitClass::WORKER) < 4;
+	if (!ai->anyTask() || ai->getCountOfClass(UnitClass::WORKER) < 4) {
+		AI_LOG( GENERAL, 3, "AiRuleAddTasks::test: No tasks or need emergency worker." );
+		return true;
+	}
+	AI_LOG( GENERAL, 3, "AiRuleAddTasks::test: still tasks to attend to, not running." );
+	return false;
 }
 
 void AiRuleAddTasks::execute() {
@@ -212,98 +259,68 @@ void AiRuleAddTasks::execute() {
 	ai->updateStatistics();
 
 	//standard tasks
-
-	//emergency workers
-	if (workerCount < 4 && canProduce(UnitClass::WORKER)) {
+	if (workerCount < 4 && canProduce(UnitClass::WORKER)) { // emergency workers
+		AI_LOG( GENERAL, 2, "AiRuleAddTasks::execute: Emergency! Priority task => produce worker." );
 		ai->addPriorityTask(new ProduceTask(UnitClass::WORKER));
+		return;
 	}
-	else{
-		if(aiInterface->getControlType()==ControlType::CPU_MEGA)
-		{
-			//workers
-			if(workerCount<5) ai->addTask(new ProduceTask(UnitClass::WORKER));
-			if(workerCount<10) ai->addTask(new ProduceTask(UnitClass::WORKER));
-			if(workerRatio<0.20) ai->addTask(new ProduceTask(UnitClass::WORKER));
-			if(workerRatio<0.30) ai->addTask(new ProduceTask(UnitClass::WORKER));
-			
-			//warriors
-			if(warriorCount<10) ai->addTask(new ProduceTask(UnitClass::WARRIOR));
-			if(warriorRatio<0.20) ai->addTask(new ProduceTask(UnitClass::WARRIOR));
-			if(warriorRatio<0.30) ai->addTask(new ProduceTask(UnitClass::WARRIOR));
-			if(workerCount>=10) ai->addTask(new ProduceTask(UnitClass::WARRIOR));
-			if(workerCount>=15) ai->addTask(new ProduceTask(UnitClass::WARRIOR));			
-			if(warriorCount<ai->getMinWarriors()+2) 
-			{
-				ai->addTask(new ProduceTask(UnitClass::WARRIOR));
-				if( buildingCount>9 )
-				{
-					ai->addTask(new ProduceTask(UnitClass::WARRIOR));
-					ai->addTask(new ProduceTask(UnitClass::WARRIOR));
-				}
-				if( buildingCount>12 )
-				{
-					ai->addTask(new ProduceTask(UnitClass::WARRIOR));
-					ai->addTask(new ProduceTask(UnitClass::WARRIOR));
-				}
-			}
-			
-			//buildings
-			if(buildingCount<6 || buildingRatio<0.20) ai->addTask(new BuildTask());
-			if(buildingCount<10 && workerCount>12) ai->addTask(new BuildTask());
-			//upgrades
-			if(upgradeCount==0 && workerCount>5) ai->addTask(new UpgradeTask());
-			if(upgradeCount==1 && workerCount>10) ai->addTask(new UpgradeTask());
-			if(upgradeCount==2 && workerCount>15) ai->addTask(new UpgradeTask());
-			if(ai->isStableBase()) ai->addTask(new UpgradeTask());
+
+	int workers = 0, warriors = 0, buildings = 0, upgrades = 0;
+
+	// workers
+	workers += workerCount < 5    ? 2 : workerCount < 10   ? 1 : 0;
+	workers += workerRatio < 0.2f ? 2 : workerRatio < 0.3f ? 1 : 0;
+
+	// warriors
+	warriors += warriorCount < 10   ? 1 : 0;
+	warriors += warriorRatio < 0.2f ? 2 : warriorRatio < 0.3f ? 1 : 0;
+	warriors += workerCount >= 15   ? 2 : workerCount >= 10   ? 1 : 0;
+	
+	// buildings
+	if (buildingCount < 6 || buildingRatio < 0.2f) ++buildings;
+	if (buildingCount < 10 && workerCount > 12) ++buildings;
+		
+	// upgrades
+	if (workerCount > 5 * (upgradeCount + 1)) ++upgrades;
+
+	if (aiInterface->getControlType() == ControlType::CPU_MEGA) {
+		// additional warriors
+		if (warriorCount < ai->getMinWarriors() + 2) {
+			warriors += buildingCount > 12 ? 5 : buildingCount > 9 ? 3 : 1;
 		}
-		else if(aiInterface->getControlType()==ControlType::CPU_EASY)
-		{// Easy CPU
-			//workers
-			if(workerCount<buildingCount+2) ai->addTask(new ProduceTask(UnitClass::WORKER));
-			if(workerCount>5 && workerRatio<0.20) ai->addTask(new ProduceTask(UnitClass::WORKER));
-			
-			//warriors
-			if(warriorCount<10) ai->addTask(new ProduceTask(UnitClass::WARRIOR));
-			if(warriorRatio<0.20) ai->addTask(new ProduceTask(UnitClass::WARRIOR));
-			if(warriorRatio<0.30) ai->addTask(new ProduceTask(UnitClass::WARRIOR));
-			if(workerCount>=10) ai->addTask(new ProduceTask(UnitClass::WARRIOR));
-			if(workerCount>=15) ai->addTask(new ProduceTask(UnitClass::WARRIOR));			
-			
-			//buildings
-			if(buildingCount<6 || buildingRatio<0.20) ai->addTask(new BuildTask());
-			if(buildingCount<10 && ai->isStableBase()) ai->addTask(new BuildTask());
-			
-			//upgrades
-			if(upgradeCount==0 && workerCount>6) ai->addTask(new UpgradeTask());
-			if(upgradeCount==1 && workerCount>7) ai->addTask(new UpgradeTask());
-			if(upgradeCount==2 && workerCount>9) ai->addTask(new UpgradeTask());
-			//if(ai->isStableBase()) ai->addTask(new UpgradeTask());
-		}
-		else
-		{// normal CPU / UltraCPU ...
-			//workers
-			if(workerCount<5) ai->addTask(new ProduceTask(UnitClass::WORKER));
-			if(workerCount<10) ai->addTask(new ProduceTask(UnitClass::WORKER));
-			if(workerRatio<0.20) ai->addTask(new ProduceTask(UnitClass::WORKER));
-			if(workerRatio<0.30) ai->addTask(new ProduceTask(UnitClass::WORKER));
-			
-			//warriors
-			if(warriorCount<10) ai->addTask(new ProduceTask(UnitClass::WARRIOR));
-			if(warriorRatio<0.20) ai->addTask(new ProduceTask(UnitClass::WARRIOR));
-			if(warriorRatio<0.30) ai->addTask(new ProduceTask(UnitClass::WARRIOR));
-			if(workerCount>=10) ai->addTask(new ProduceTask(UnitClass::WARRIOR));
-			if(workerCount>=15) ai->addTask(new ProduceTask(UnitClass::WARRIOR));			
-			
-			//buildings
-			if(buildingCount<6 || buildingRatio<0.20) ai->addTask(new BuildTask());
-			if (buildingCount < 10 && workerCount > 12) ai->addTask(new BuildTask());
-			
-			//upgrades
-			if(upgradeCount==0 && workerCount>5) ai->addTask(new UpgradeTask());
-			if(upgradeCount==1 && workerCount>10) ai->addTask(new UpgradeTask());
-			if(upgradeCount==2 && workerCount>15) ai->addTask(new UpgradeTask());
-			if(ai->isStableBase()) ai->addTask(new UpgradeTask());
-		}
+		// additional upgrades
+		if (ai->isStableBase()) ++upgrades;
+
+	} else if(aiInterface->getControlType() == ControlType::CPU_EASY) {// Easy CPU
+		// workers
+		workers = 0; // reset
+		if (workerCount < buildingCount + 2) ++workers;
+		if (workerCount > 5 && workerRatio < 0.20) ++workers;
+		
+		// buildings
+		buildings = 0; // reset
+		if (buildingCount < 6 || buildingRatio < 0.2f) ++buildings;
+		if (buildingCount < 10 && ai->isStableBase()) ++buildings;
+	
+	} else {// normal CPU / UltraCPU ...
+		// additional upgrades
+		if (ai->isStableBase()) ++upgrades;
+	}
+	AI_LOG( GENERAL, 2, "AiRuleAddTasks::execute: Adding " << workers << " produce worker tasks." );
+	for (int i=0; i < workers; ++i) {
+		ai->addTask(new ProduceTask(UnitClass::WORKER));
+	}
+	AI_LOG( GENERAL, 2, "AiRuleAddTasks::execute: Adding " << warriors << " produce warrior tasks." );
+	for (int i=0; i < warriors; ++i) {
+		ai->addTask(new ProduceTask(UnitClass::WARRIOR));
+	}
+	AI_LOG( GENERAL, 2, "AiRuleAddTasks::execute: Adding " << buildings << " build tasks." );
+	for (int i=0; i < buildings; ++i) {
+		 ai->addTask(new BuildTask());
+	}
+	AI_LOG( GENERAL, 2, "AiRuleAddTasks::execute: Adding " << upgrades << " research upgrade tasks." );
+	for (int i=0; i < upgrades; ++i) {
+		ai->addTask(new UpgradeTask());
 	}
 }
 
@@ -365,6 +382,7 @@ bool AiRuleBuildOneFarm::test() {
 					if (r.getAmount() < 0 && r.getType()->getClass() == ResourceClass::CONSUMABLE 
 					&& ai->getCountOfType(ut) == 0) {
 						farm = ut;
+						AI_LOG( PRODUCTION, 1, "AiRuleBuildOneFarm::test: found unbuilt farm-type " << farm->getName() );
 						return true;
 					}
 				}
@@ -372,10 +390,12 @@ bool AiRuleBuildOneFarm::test() {
 			}
 		}
 	}
+	AI_LOG( PRODUCTION, 2, "AiRuleBuildOneFarm::test: found no farms I don't already have." );
 	return false;
 }
 
 void AiRuleBuildOneFarm::execute() {
+	AI_LOG( PRODUCTION, 1, "AiRuleBuildOneFarm::execute: adding priority task to build a " << farm->getName() );
 	ai->addPriorityTask(new BuildTask(farm));
 }
 
@@ -394,33 +414,42 @@ bool AiRuleProduceResourceProducer::test() {
 
 	// consumables first
 	for (int i = 0; i < aiInterface->getTechTree()->getResourceTypeCount(); ++i) {
-        rt = aiInterface->getTechTree()->getResourceType(i);
+		rt = aiInterface->getTechTree()->getResourceType(i);
 		const StoredResource *r = aiInterface->getResource(rt);
 		if (rt->getClass() == ResourceClass::CONSUMABLE && r->getBalance() < 0) {
+			AI_LOG( PRODUCTION, 2, "AiRuleProduceResourceProducer::test: found consumable resource "
+				<< rt->getName() << " with balance less than 0" );
 			interval = longInterval;
 			return true;
-
-        }
-    }
+		}
+	}
 	if (!ai->usesStaticResources()) {
+		AI_LOG( PRODUCTION, 3, "AiRuleProduceResourceProducer::test: found no needed consumable resources"
+			<< " and don't use any statics" );
 		interval = shortInterval;
 		return false;
 	}
 	// statics second
 	for (int i = 0; i < aiInterface->getTechTree()->getResourceTypeCount(); ++i) {
-        rt = aiInterface->getTechTree()->getResourceType(i);
+		rt = aiInterface->getTechTree()->getResourceType(i);
 		const StoredResource *r = aiInterface->getResource(rt);
 		if (rt->getClass() == ResourceClass::STATIC && ai->isStaticResourceUsed(rt)
 		&& r->getAmount() < minStaticResources) {
+			AI_LOG( PRODUCTION, 2, "AiRuleProduceResourceProducer::test: found static resource "
+				<< rt->getName() << " below min-static threshold" );
 			interval = longInterval;
 			return true;
-        }
-    }
+		}
+	}
+	AI_LOG( PRODUCTION, 3, "AiRuleProduceResourceProducer::test: found no needed consumable or "
+		<< "static resources" );
 	interval = shortInterval;
 	return false;
 }
 
 void AiRuleProduceResourceProducer::execute() {
+	AI_LOG( PRODUCTION, 1, "AiRuleProduceResourceProducer::execute: adding priority task "
+		<< "to produce " << rt->getName() );
 	ai->addPriorityTask(new ProduceTask(rt));
 	ai->addTask(new BuildTask(rt));
 }
@@ -438,11 +467,10 @@ AiRuleProduce::AiRuleProduce(Ai *ai)
 
 bool AiRuleProduce::test() {
 	const Task *task = ai->getTask();
-
 	if (task == NULL || task->getClass() != TaskClass::PRODUCE) {
+		AI_LOG( PRODUCTION, 3, "AiRuleProduce::test: head of task queue is not produce task" );
 		return false;
 	}
-
 	produceTask = static_cast<const ProduceTask*>(task);
 	return true;
 }
@@ -462,14 +490,13 @@ void AiRuleProduce::execute() {
 		//remove the task
 		ai->removeTask(produceTask);
 	} else {
-		LOG_AI_PRODUCE(__FUNCTION__ << " produceTask is NULL.");
+		AI_LOG( PRODUCTION, 1, "AiRuleProduce::execute: produceTask is NULL." );
 	}
 }
 
 void AiRuleProduce::produceResources(const ProduceTask *task) {
 	assert(task->getResourceType());
 	assert(task->getUnitClass() == UnitClass::INVALID && !task->getUnitType());
-	LOG_AI_PRODUCE(__FUNCTION__);
 	
 	GlestAiInterface *aiInterface = ai->getAiInterface();
 	const FactionType *ft = aiInterface->getMyFactionType();
@@ -498,6 +525,8 @@ void AiRuleProduce::produceResources(const ProduceTask *task) {
 		}
 	}
 	if (prodMap.empty()) {
+		AI_LOG( PRODUCTION, 3, "AiRuleProduce::produceResources: unable to find any unit types that can"
+			<< " produce " << task->getResourceType()->getName() );
 		return;
 	}
 
@@ -521,6 +550,8 @@ void AiRuleProduce::produceResources(const ProduceTask *task) {
 		}
 	}
 	if (!unitToCmd) {
+		AI_LOG( PRODUCTION, 3, "AiRuleProduce::produceResources: unable to find any active units that can"
+			<< " produce " << task->getResourceType()->getName() );
 		return;
 	}
 
@@ -530,11 +561,18 @@ void AiRuleProduce::produceResources(const ProduceTask *task) {
 	if (pp.first->getClass() == CommandClass::TRANSFORM) {
 		Vec2i pos;
 		if (ai->findPosForBuilding(static_cast<const UnitType*>(pp.second), ai->getRandomHomePosition(), pos)) {
-			aiInterface->giveCommand(unitToCmd, pp.first, Command::invalidPos, pp.second);
+			AI_LOG( PRODUCTION, 2, "AiRuleProduce::produceResources: giving unit id " << unitToCmd->getId()
+				<< "[type=" << unitToCmd->getType()->getName() << "] command to tranform to "
+				<< pp.second->getName() );
+			aiInterface->giveCommand(unitToCmd, pp.first, pos, pp.second);
 		} else {
+			AI_LOG( PRODUCTION, 2, "AiRuleProduce::produceResources: could not find location to "
+				<< " tranform unit, reposting task." );
 			ai->retryTask(task);
 		}
 	} else {
+		AI_LOG( PRODUCTION, 1, "AiRuleProduce::produceResources: giving unit id " << unitToCmd->getId()
+			<< "[type=" << unitToCmd->getType()->getName() << "] command to produce " << pp.second->getName() );
 		aiInterface->giveCommand(unitToCmd, pp.first, Command::invalidPos, pp.second);
 	}
 }
@@ -542,7 +580,6 @@ void AiRuleProduce::produceResources(const ProduceTask *task) {
 void AiRuleProduce::produceGeneric(const ProduceTask *task) {
 	assert(task->getUnitClass() != UnitClass::INVALID);
 	assert(!task->getResourceType() && !task->getUnitType());
-	LOG_AI_PRODUCE(__FUNCTION__);
 	
 	GlestAiInterface *aiInterface = ai->getAiInterface();
 	const FactionType *ft = aiInterface->getMyFactionType();
@@ -564,22 +601,21 @@ void AiRuleProduce::produceGeneric(const ProduceTask *task) {
 			|| (ct->getClass() != CommandClass::PRODUCE && ct->getClass() != CommandClass::MORPH)) {
 				continue;
 			}
-			
-			if (ct->getClass() == CommandClass::PRODUCE && task->getUnitClass() == UnitClass::WARRIOR
-			&& ut->isMobile()) {
-				DEBUG_HOOK();
-			}
-
+			//if (ct->getClass() == CommandClass::PRODUCE && task->getUnitClass() == UnitClass::WARRIOR
+			//&& ut->isMobile()) {
+			//	DEBUG_HOOK();
+			//}
 			for (int k=0; k < ct->getProducedCount(); ++k) {
 				const UnitType *pt = static_cast<const UnitType*>(ct->getProduced(k));
 				if (faction->reqsOk(pt) && pt->isOfClass(task->getUnitClass())) {
 					prodMap[ut].push_back(std::make_pair(ct, pt));
 				}
 			}
-
 		}
 	}
 	if (prodMap.empty()) {
+		AI_LOG( PRODUCTION, 3, "AiRuleProduce::produceGeneric: unable to find any unit types that can"
+			<< " produce units of class " << UnitClassNames[task->getUnitClass()] );
 		return;
 	}
 
@@ -602,17 +638,21 @@ void AiRuleProduce::produceGeneric(const ProduceTask *task) {
 		}
 	}
 	if (!unitToCmd) {
+		AI_LOG( PRODUCTION, 3, "AiRuleProduce::produceGeneric: unable to find any active units that can"
+			<< " produce units of class " << UnitClassNames[task->getUnitClass()] );
 		return;
 	}
 
 	// 3. Give produce/morph command.
 	int cmdNdx = RAND_RANGE(0, prodMap[unitToCmd->getType()].size() - 1);
 	ProdPair pp = prodMap[unitToCmd->getType()][cmdNdx];
+	AI_LOG( PRODUCTION, 1, "AiRuleProduce::produceGeneric: giving unit id " << unitToCmd->getId()
+		<< "[type=" << unitToCmd->getType()->getName() << "] command to produce/morph-to "
+		<< pp.second->getName() );
 	aiInterface->giveCommand(unitToCmd, pp.first, Command::invalidPos, pp.second);
 }
 
 void AiRuleProduce::produceSpecific(const ProduceTask *task) {
-	LOG_AI_PRODUCE(__FUNCTION__ << " type to build: " << task->getUnitType()->getName());
 	assert(task->getUnitType());
 	GlestAiInterface *aiInterface = ai->getAiInterface();
 	const FactionType *ft = aiInterface->getMyFactionType();
@@ -624,11 +664,11 @@ void AiRuleProduce::produceSpecific(const ProduceTask *task) {
 
 	// 1. Do we meet requirements and costs?
 	if (!aiInterface->reqsOk(task->getUnitType())) { // if unit meets requirements
-		LOG_AI_PRODUCE(__FUNCTION__ << " unit/upgrade reqs not met.");
+		AI_LOG( PRODUCTION, 3, "AiRuleProduce::produceSpecific: unit/upgrade reqs not met." );
 		return;
 	}
 	if (!aiInterface->checkCosts(task->getUnitType())) { //if unit doesnt meet resources retry
-		LOG_AI_PRODUCE(__FUNCTION__ << " resource reqs not met, reposting.");
+		AI_LOG( PRODUCTION, 3, "AiRuleProduce::produceSpecific: resource reqs not met, reposting.");
 		ai->retryTask(task);
 		return;
 	}		
@@ -653,6 +693,11 @@ void AiRuleProduce::produceSpecific(const ProduceTask *task) {
 			}
 		}
 	}
+	if (prodMap.empty()) {
+		AI_LOG( PRODUCTION, 3, "AiRuleProduce::produceSpecific: unable to find any unit types that can"
+			<< " produce unit type " << task->getUnitType()->getName() );
+		return;
+	}
 
 	// 3. find all units of types found in 2, and remember the best (lowest command count)
 	int lowCmd = numeric_limits<int>::max();
@@ -673,6 +718,8 @@ void AiRuleProduce::produceSpecific(const ProduceTask *task) {
 		}
 	}
 	if (!unitToCmd) { // no one can currently make it
+		AI_LOG( PRODUCTION, 3, "AiRuleProduce::produceSpecific: unable to find any active units that can"
+			<< " produce unit type " << task->getUnitType()->getName() << ", reposting." );
 		ai->retryTask(task);
 		return;
 	}
@@ -681,6 +728,8 @@ void AiRuleProduce::produceSpecific(const ProduceTask *task) {
 	if (lowCmd > 2) {
 		if (aiInterface->reqsOk(unitToCmd->getType())) { 
 			if (ai->getCountOfClass(UnitClass::BUILDING) > 5) {
+				AI_LOG( PRODUCTION, 3, "AiRuleProduce::produceSpecific: lowest producer command queue is "
+					<< lowCmd << ", adding task to build/produce another " << unitToCmd->getType()->getName() );
 				if (unitToCmd->getType()->isOfClass(UnitClass::BUILDING)) {
 					ai->addTask(new BuildTask(unitToCmd->getType()));
 				} else {
@@ -693,6 +742,9 @@ void AiRuleProduce::produceSpecific(const ProduceTask *task) {
 	// 5. Give produce/morph command.
 	int cmdNdx = RAND_RANGE(0, prodMap[unitToCmd->getType()].size() - 1);
 	ProdPair pp = prodMap[unitToCmd->getType()][cmdNdx];
+	AI_LOG( PRODUCTION, 1, "AiRuleProduce::produceSpecific: giving unit id " << unitToCmd->getId()
+		<< "[type=" << unitToCmd->getType()->getName() << "] command to produce/morph-to "
+		<< pp.second->getName() );
 	aiInterface->giveCommand(unitToCmd, pp.first, Command::invalidPos, pp.second);
 }
 
@@ -708,12 +760,12 @@ AiRuleBuild::AiRuleBuild(Ai *ai)
 bool AiRuleBuild::test() {
 	const Task *task = ai->getTask();
 	if (task == NULL || task->getClass() != TaskClass::BUILD) {
+		AI_LOG( PRODUCTION, 3, "AiRuleProduce::test: head of task queue is not build task" );
 		return false;
 	}
 	buildTask = static_cast<const BuildTask*>(task);
 	return true;
 }
-
 
 void AiRuleBuild::execute() {
 	if (buildTask) {
@@ -750,8 +802,6 @@ void AiRuleBuild::findBuildingTypes(UnitTypeList &utList, const ResourceType *rt
 						//if any building, or produces resource
 						ResourceAmount cost = buildingType->getCost(rt, ai->getAiInterface()->getFaction());
 						if (!rt || (cost.getType() && cost.getAmount() < 0)) {
-							//LOG_AI_BUILD(__FUNCTION__ << " candidate building " 
-							//	<< buildingType->getName());
 							utList.push_back(buildingType);
 						}
 					}
@@ -761,19 +811,21 @@ void AiRuleBuild::findBuildingTypes(UnitTypeList &utList, const ResourceType *rt
 	}
 }
 
-void AiRuleBuild::buildGeneric(const BuildTask *bt){
-	LOG_AI_BUILD(__FUNCTION__);
-	//find buildings that can be built
+void AiRuleBuild::buildGeneric(const BuildTask *bt) {
+	// find buildings that can be built
 	UnitTypeList buildingTypes;
 	findBuildingTypes(buildingTypes, bt->getResourceType());
+	if (buildingTypes.empty()) {
+		AI_LOG( PRODUCTION, 3, "AiRuleBuild::buildGeneric: could not find any buildable unit types" );
+	}
 
-	//add specific build task
+	// add specific build task
 	buildBestBuilding(buildingTypes);
 }
 
 void AiRuleBuild::buildBestBuilding(const UnitTypeList &buildingTypes) {
 	if (buildingTypes.empty()) {
-		LOG_AI_BUILD(__FUNCTION__ << " no building types to build." );
+		AI_LOG( PRODUCTION, 1, "AiRuleBuild::buildBestBuilding: no building types to build." );
 		return;
 	}
 	// build the least built buildingType
@@ -783,8 +835,8 @@ void AiRuleBuild::buildBestBuilding(const UnitTypeList &buildingTypes) {
 			for (int j=0; j < buildingTypes.size(); ++j) {
 				const UnitType *buildingType = buildingTypes[j];
 				if (ai->getCountOfType(buildingType) <= i + 1 && isDefensive(buildingType)) {
-					LOG_AI_BUILD(__FUNCTION__ << " adding task, Defensive building, type = "
-						<< buildingType->getName());
+					AI_LOG( PRODUCTION, 2, "AiRuleBuild::buildBestBuilding: adding build task, "
+						<< "Defensive building, type = " << buildingType->getName() );
 					ai->addTask(new BuildTask(buildingType));
 					return;
 				}
@@ -793,8 +845,8 @@ void AiRuleBuild::buildBestBuilding(const UnitTypeList &buildingTypes) {
 			for (int j=0; j < buildingTypes.size(); ++j) {
 				const UnitType *buildingType = buildingTypes[j];
 				if (ai->getCountOfType(buildingType) <= i + 1 && isWarriorProducer(buildingType)) {
-					LOG_AI_BUILD(__FUNCTION__ << " adding task, Warrior producing building, type = "
-						<< buildingType->getName());
+					AI_LOG( PRODUCTION, 1, "AiRuleBuild::buildBestBuilding: adding build task, "
+						<< "Warrior producing building, type = " << buildingType->getName() );
 					ai->addTask(new BuildTask(buildingType));
 					return;
 				}
@@ -803,8 +855,8 @@ void AiRuleBuild::buildBestBuilding(const UnitTypeList &buildingTypes) {
 			for (int j=0; j < buildingTypes.size(); ++j) {
 				const UnitType *buildingType = buildingTypes[j];
 				if (ai->getCountOfType(buildingType) <= i + 1 && isResourceProducer(buildingType)) {
-					LOG_AI_BUILD(__FUNCTION__ << " adding task, Resource producing building, type = "
-						<< buildingType->getName());
+					AI_LOG( PRODUCTION, 1, "AiRuleBuild::buildBestBuilding: adding build task, "
+						<< "Resource producing building, type = " << buildingType->getName() );
 					ai->addTask(new BuildTask(buildingType));
 					return;
 				}
@@ -814,8 +866,8 @@ void AiRuleBuild::buildBestBuilding(const UnitTypeList &buildingTypes) {
 		for (int j=0; j < buildingTypes.size(); ++j) {
 			const UnitType *buildingType = buildingTypes[j];
 			if (ai->getCountOfType(buildingType) <= i) {
-				LOG_AI_BUILD(__FUNCTION__ << " adding task, low-ratio building, type = "
-					<< buildingType->getName());
+				AI_LOG( PRODUCTION, 1, "AiRuleBuild::buildBestBuilding: adding build task, "
+					<< "low-ratio building, type = " << buildingType->getName() );
 				ai->addTask(new BuildTask(buildingType));
 				return;
 			}
@@ -852,19 +904,25 @@ void AiRuleBuild::buildSpecific(const BuildTask *bt){
 	const Units &units = faction->getUnits();
 
 	if (!aiInterface->reqsOk(bt->getUnitType())) { // if reqs not met, bail
-		LOG_AI_BUILD(__FUNCTION__ << " building to build : " << bt->getUnitType()->getName()
-			<< ", unit/upgrade reqs not met.");
+		AI_LOG( PRODUCTION, 3, "AiRuleBuild::buildSpecific: building to build : "
+			<< bt->getUnitType()->getName() << ", unit/upgrade reqs not met" );
 		return;
 	}
 	if (!aiInterface->checkCosts(bt->getUnitType())) { // retry if not enough resources
-		LOG_AI_BUILD(__FUNCTION__ << " building to build : " << bt->getUnitType()->getName()
-			<< ", resource reqs not met.");
+		AI_LOG( PRODUCTION, 3, "AiRuleBuild::buildSpecific: building to build : "
+			<< bt->getUnitType()->getName() << ", resource reqs not met, re-posting" );
 		ai->retryTask(bt);
 		return;
 	}
 
 	CmdByUtMap cmdMap;
 	findBuilderTypes(bt->getUnitType(), cmdMap);
+	if (cmdMap.empty()) {
+		AI_LOG( PRODUCTION, 3, "AiRuleBuild::buildSpecific: failed to find any unit types who can build a "
+			<< bt->getUnitType()->getName() );
+		return;
+	}
+
 	ConstUnitVector potentialBuilders;
 
 	foreach_const (Units, it, units) {
@@ -876,8 +934,8 @@ void AiRuleBuild::buildSpecific(const BuildTask *bt){
 	}
 	//use random builder to build
 	if (potentialBuilders.empty()) {
-		LOG_AI_BUILD(__FUNCTION__ << " building to build : " << bt->getUnitType()->getName()
-			<< ", could not find a builder unit.");
+		AI_LOG( PRODUCTION, 2, "AiRuleBuild::buildSpecific: failed to find any active units who can build a "
+			<< bt->getUnitType()->getName() );
 		return;
 	}
 	const Unit *unit = potentialBuilders[RAND_RANGE(0, potentialBuilders.size() - 1)];
@@ -885,13 +943,13 @@ void AiRuleBuild::buildSpecific(const BuildTask *bt){
 	Vec2i searchPos = bt->getForcePos() ? bt->getPos() : ai->getRandomHomePosition();
 	// if free pos give command, else retry
 	if (ai->findPosForBuilding(bt->getUnitType(), searchPos, pos)) {
-		LOG_AI_BUILD(__FUNCTION__ << " building to build : " << bt->getUnitType()->getName()
-			<< ", " << cmdMap[unit->getType()]->getName() << " command given to unit"
-			<< unit->getId() << " [" << unit->getType()->getName() << "]");
+		AI_LOG( PRODUCTION, 1, "AiRuleBuild::buildSpecific: building to build : " << bt->getUnitType()->getName()
+			<< ", " << cmdMap[unit->getType()]->getName() << " command given to unit "
+			<< unit->getId() << " [" << unit->getType()->getName() << "]" );
 		aiInterface->giveCommand(unit, cmdMap[unit->getType()], pos, bt->getUnitType());
 	} else {
-		LOG_AI_BUILD(__FUNCTION__ << " building to build : " << bt->getUnitType()->getName()
-			<< ", could not find position for building. Re-posting.");
+		AI_LOG( PRODUCTION, 2, "AiRuleBuild::buildSpecific: building to build : " << bt->getUnitType()->getName()
+			<< ", could not find position for building. Re-posting." );
 		ai->retryTask(bt);
 	}
 }
@@ -929,100 +987,89 @@ bool AiRuleBuild::isWarriorProducer(const UnitType *building){
 // 	class AiRuleUpgrade
 // ========================================
 
-AiRuleUpgrade::AiRuleUpgrade(Ai *ai):
-	AiRule(ai)
-{
-	upgradeTask= NULL;
+AiRuleUpgrade::AiRuleUpgrade(Ai *ai)
+		: AiRule(ai), upgradeTask(0) {
 }
 
-bool AiRuleUpgrade::test(){
-	const Task *task= ai->getTask();
-
-	if(task==NULL || task->getClass()!=TaskClass::UPGRADE){
+bool AiRuleUpgrade::test() {
+	const Task *task = ai->getTask();
+	if (task == 0 || task->getClass()!=TaskClass::UPGRADE) {
+		AI_LOG( RESEARCH, 3, "AiRuleUpgrade::test: head of task queue is not upgrade task" );
 		return false;
 	}
-
-	upgradeTask= static_cast<const UpgradeTask*>(task);
+	upgradeTask = static_cast<const UpgradeTask*>(task);
 	return true;
 }
 
-void AiRuleUpgrade::execute(){
-
-	//upgrade any upgrade
-	if(upgradeTask->getUpgradeType()==NULL){
+void AiRuleUpgrade::execute() {
+	// upgrade any upgrade
+	if (upgradeTask->getUpgradeType() == 0) {
 		upgradeGeneric(upgradeTask);
-	}
-	//upgrade specific upgrade
-	else{
+	} else { // upgrade specific upgrade
 		upgradeSpecific(upgradeTask);
 	}
-
-	//remove the task
+	// remove the task
 	ai->removeTask(upgradeTask);
 }
 
-void AiRuleUpgrade::upgradeGeneric(const UpgradeTask *upgt){
-
+void AiRuleUpgrade::upgradeGeneric(const UpgradeTask *upgt) {
 	typedef vector<const UpgradeType*> UpgradeTypes;
 	GlestAiInterface *aiInterface= ai->getAiInterface();
 
-	//find upgrades that can be upgraded
+	// 1. find upgrades that can be upgraded
 	UpgradeTypes upgrades;
-
-	//for each upgrade, upgrade it if possible
-	for(int i=0; i<aiInterface->getMyUnitCount(); ++i){
-
-		//for each command
-		const UnitType *ut= aiInterface->getMyUnit(i)->getType();
-		for(int j=0; j<ut->getCommandTypeCount(); ++j){
-			const CommandType *ct= ut->getCommandType(j);
-
-			//if the command is upgrade
-			if(ct->getClass()==CommandClass::UPGRADE){
-				const UpgradeCommandType *upgct= static_cast<const UpgradeCommandType*>(ct);
-				const UpgradeType *upgrade= upgct->getProducedUpgrade();
-				if(aiInterface->reqsOk(upgct)){
+	for (int i=0; i < aiInterface->getMyUnitCount(); ++i) { // foreach unit
+		const UnitType *ut = aiInterface->getMyUnit(i)->getType();
+		for (int j=0; j < ut->getCommandTypeCount(); ++j) { // for each command
+			const CommandType *ct = ut->getCommandType(j);
+			if (ct->getClass() == CommandClass::UPGRADE) { // if the command is upgrade
+				const UpgradeCommandType *upgct = static_cast<const UpgradeCommandType*>(ct);
+				const UpgradeType *upgrade = upgct->getProducedUpgrade();
+				if (aiInterface->reqsOk(upgct)) { ///@todo: does this weed out already/in-progress ?
 					upgrades.push_back(upgrade);
 				}
 			}
 		}
 	}
-
-	//add specific upgrade task
-	if(!upgrades.empty()){
-		ai->addTask(new UpgradeTask(upgrades[ai->getRandom()->randRange(0, upgrades.size()-1)]));
+	if (upgrades.empty()) {
+		AI_LOG( RESEARCH, 3, "AiRuleUpgrade::upgradeGeneric: failed to find any upgrades that can be researched" );
+		return;
 	}
+	// add specific upgrade task
+	const UpgradeType *ut = upgrades[ai->getRandom()->randRange(0, upgrades.size()-1)];
+	AI_LOG( RESEARCH, 2, "AiRuleUpgrade::upgradeGeneric: adding task to research " << ut->getName() );
+	ai->addTask(new UpgradeTask(ut));
 }
 
-void AiRuleUpgrade::upgradeSpecific(const UpgradeTask *upgt){
-
-	GlestAiInterface *aiInterface= ai->getAiInterface();
-
-	//if reqs ok
-	if(aiInterface->reqsOk(upgt->getUpgradeType())){
-
-		//if resources dont meet retry
-		if(!aiInterface->checkCosts(upgt->getUpgradeType())){
+void AiRuleUpgrade::upgradeSpecific(const UpgradeTask *upgt) {
+	GlestAiInterface *aiInterface = ai->getAiInterface();
+	
+	if (aiInterface->reqsOk(upgt->getUpgradeType())) { // if reqs ok
+		// if resources dont meet retry
+		if (!aiInterface->checkCosts(upgt->getUpgradeType())) {
+			AI_LOG( RESEARCH, 3, "AiRuleUpgrade::upgradeSpecific: can't afford upgrade " 
+				<< upgt->getUpgradeType()->getName() << ", re-posting" );
 			ai->retryTask(upgt);
 			return;
 		}
+		// for each unit
+		for (int i=0; i < aiInterface->getMyUnitCount(); ++i) {
+			// for each command
+			const UnitType *ut = aiInterface->getMyUnit(i)->getType();
+			for (int j=0; j < ut->getCommandTypeCount(); ++j) {
+				const CommandType *ct = ut->getCommandType(j);
 
-		//for each unit
-		for(int i=0; i<aiInterface->getMyUnitCount(); ++i){
+				// if the command is upgrade
+				if (ct->getClass() == CommandClass::UPGRADE) {
+					const UpgradeCommandType *uct = static_cast<const UpgradeCommandType*>(ct);
+					const UpgradeType *producedUpgrade = uct->getProducedUpgrade();
 
-			//for each command
-			const UnitType *ut= aiInterface->getMyUnit(i)->getType();
-			for(int j=0; j<ut->getCommandTypeCount(); ++j){
-				const CommandType *ct= ut->getCommandType(j);
-
-				//if the command is upgrade
-				if(ct->getClass()==CommandClass::UPGRADE){
-					const UpgradeCommandType *uct= static_cast<const UpgradeCommandType*>(ct);
-					const UpgradeType *producedUpgrade= uct->getProducedUpgrade();
-
-					//if upgrades match
-					if(producedUpgrade == upgt->getUpgradeType()){
-						if(aiInterface->reqsOk(uct)){
+					// if upgrades match
+					if (producedUpgrade == upgt->getUpgradeType()) {
+						if (aiInterface->reqsOk(uct)) {
+							AI_LOG( RESEARCH, 1, "AiRuleUpgrade::upgradeSpecific: issueing command to unit "
+								<< aiInterface->getMyUnit(i)->getId() << " to research "
+								<< upgt->getUpgradeType()->getName() );
 							aiInterface->giveCommand(i, uct);
 						}
 					}
@@ -1037,59 +1084,53 @@ void AiRuleUpgrade::upgradeSpecific(const UpgradeTask *upgt){
 // 	class AiRuleExpand
 // ========================================
 
-AiRuleExpand::AiRuleExpand(Ai *ai):
-	AiRule(ai)
-{
-	storeType= NULL;
+AiRuleExpand::AiRuleExpand(Ai *ai)
+		: AiRule(ai), storeType(0) {
 }
 
-bool AiRuleExpand::test(){
+bool AiRuleExpand::test() {
 	GlestAiInterface *aiInterface = ai->getAiInterface();
 
-	for(int i= 0; i<aiInterface->getTechTree()->getResourceTypeCount(); ++i){
+	for (int i= 0; i < aiInterface->getTechTree()->getResourceTypeCount(); ++i) {
 		const ResourceType *rt = aiInterface->getTechTree()->getResourceType(i);
-
-		if(rt->getClass()==ResourceClass::TECHTREE){
-
+		if (rt->getClass() == ResourceClass::TECHTREE) {
 			// If any resource sighted
-			if(aiInterface->getNearestSightedResource(rt, aiInterface->getHomeLocation(), expandPos)){
-
-				int minDistance= INT_MAX;
-				storeType= NULL;
-
-				// If there is no close store
-				for (int j=0; j < aiInterface->getMyUnitCount(); ++j) {
+			if (aiInterface->getNearestSightedResource(rt, aiInterface->getHomeLocation(), expandPos)) {
+				int minDistance = numeric_limits<int>::max();
+				storeType = 0;
+				for (int j=0; j < aiInterface->getMyUnitCount(); ++j) { // foreach unit
 					const Unit *u = aiInterface->getMyUnit(j);
 					const UnitType *ut = aiInterface->getMyUnit(j)->getType();
-
-					// If this building is a store
-					if (ut->getStore(rt, ai->getAiInterface()->getFaction()) > 0) {
+					if (ut->getStore(rt, ai->getAiInterface()->getFaction()) > 0) { // store ?
 						storeType = ut;
-						int distance= static_cast<int> (u->getPos().dist(expandPos));
-
-						if(distance < minDistance){
+						int distance = static_cast<int>(u->getPos().dist(expandPos));
+						if (distance < minDistance) {
 							minDistance = distance;
 						}
 					}
 				}
-
-				if(minDistance>expandDistance)
-				{
+				if (minDistance > expandDistance ) {
+					// if min distance from store to any tech resource is more than expandDistance (30)
+					AI_LOG( ECONOMY, 1, "AiRuleExpand::test: Need to expand." );
 					return true;
 				}
-			}
-			else{
-				// send patrol to look for resource
+			} else {
+				// else send patrol to look for resource
+				AI_LOG( ECONOMY, 2, "AiRuleExpand::test: Need expansion, but can't find any "
+					<< "resources, sending scout." );
 				ai->sendScoutPatrol();
 			}
 		}
 	}
-
+	AI_LOG( ECONOMY, 3, "AiRuleExpand::test: No need to expand at this time." );
 	return false;
 }
 
-void AiRuleExpand::execute(){
+void AiRuleExpand::execute() {
+	AI_LOG( ECONOMY, 2, "AiRuleExpand::execute: Adding expansion @ " << expandPos );
 	ai->addExpansion(expandPos);
+	AI_LOG( ECONOMY, 2, "AiRuleExpand::execute: Adding priority task to build a " << storeType->getName()
+		<< " at new expansion" );
 	ai->addPriorityTask(new BuildTask(storeType, expandPos));
 }
 
