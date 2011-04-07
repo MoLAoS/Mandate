@@ -125,9 +125,9 @@ Widget::Widget(Container* parent)
 		: m_parent(parent) {
 	m_id = Widget_idCounter++;
 	WIDGET_LOG( descId() << " : Widget::Widget( parent:" << m_parent->getId() << " )" );
-	init(Vec2i(0), Vec2i(0));
 	m_rootWindow = m_parent->getRootWindow();
 	m_parent->addChild(this);
+	init(Vec2i(0), Vec2i(0));
 }
 
 Widget::Widget(Container* parent, Vec2i pos, Vec2i size)
@@ -135,10 +135,10 @@ Widget::Widget(Container* parent, Vec2i pos, Vec2i size)
 	m_id = Widget_idCounter++;
 	WIDGET_LOG( descId() << " : Widget::Widget( parent:" << m_parent->getId() << ", "
 		<< pos << ", " << size << " )" );
-	init(pos, size);
 	m_screenPos = m_parent->getScreenPos() + pos;
 	m_rootWindow = m_parent->getRootWindow();
 	m_parent->addChild(this);
+	init(pos, size);
 }
 
 Widget::Widget(WidgetWindow* window)
@@ -146,8 +146,8 @@ Widget::Widget(WidgetWindow* window)
 		, m_screenPos(0) {
 	m_id = Widget_idCounter++;
 	WIDGET_LOG( descId() << " : Widget::Widget( window:" << m_parent->getId() << " )" );
-	init(Vec2i(0), Vec2i(0));
 	m_rootWindow = window;
+	init(Vec2i(0), Vec2i(0));
 }
 
 Widget::~Widget() {
