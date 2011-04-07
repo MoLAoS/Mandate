@@ -240,6 +240,41 @@ void Ai::update() {
 	}
 }
 
+void Ai::evaluateEnemies() {
+
+	// 1. maintain knownEnemyLocations
+	// remove if enemy building is dead and visible, null Unit pointers if dead and not visible
+	const int teamIndex = aiInterface->getFaction()->getTeam();
+	UnitPositions::iterator it = m_knownEnemyLocations.begin();
+	UnitPositions::iterator itEnd = m_knownEnemyLocations.end();
+	while (it != itEnd) {
+		const Vec2i tPos = Map::toTileCoords(it->first);
+		bool dead = it->second->isDead();
+		if (dead && g_map.getTile(tPos)->isVisible(teamIndex)) {
+			it = m_knownEnemyLocations.erase(it);
+		} else {
+			if (dead) {
+				it->second = 0;
+			}
+			++it;
+		}
+	}
+
+	// 2. refresh visibleEnemies and closestEnemy
+	m_visibleEnemies.clear();
+	aiInterface->findEnemies(m_visibleEnemies, m_closestEnemy);
+
+	// 3. update knownEnemyLocations with any previously unseen enemy buildings
+	foreach_const (ConstUnitVector, it, m_visibleEnemies) {
+		const Unit &enemy = **it;
+		if (enemy.isBuilding()) {
+			Vec2i bPos = enemy.getCenteredPos();
+			if (m_knownEnemyLocations.find(bPos) == m_knownEnemyLocations.end()) {
+				m_knownEnemyLocations[bPos] = &enemy;
+			}
+		}
+	}
+}
 
 // ==================== state requests ====================
 
@@ -281,19 +316,36 @@ const ResourceType *Ai::getNeededResource() {
 	return neededResource;
 }
 
-bool Ai::beingAttacked(Vec2i &pos, Field &field, int radius) {
-	ConstUnitVector enemies;
-	aiInterface->getUnitsSeen(enemies);
-	foreach_const (ConstUnitVector, it, enemies) {
-		pos = (*it)->getPos();
-		field = (*it)->getCurrField();
-		if (pos.dist(aiInterface->getHomeLocation()) < radius) {
+bool Ai::beingAttacked(float radius, Vec2i &out_pos, Field &out_field) {
+	evaluateEnemies();
+	if (m_closestEnemy) {
+		Vec2i basePos = aiInterface->getHomeLocation();
+		float dist = basePos.dist(m_closestEnemy->getCenteredPos());
+		if (dist < radius) {
 			baseSeen = true;
-			AI_LOG( MILITARY, 2, "Ai::beingAttacked: enemy found at pos " << pos );
+			out_pos = m_closestEnemy->getCenteredPos();
+			out_field = m_closestEnemy->getCurrField();
+			AI_LOG( MILITARY, 2, "Ai::beingAttacked: enemy found at pos " << out_pos );
 			return true;
 		}
 	}
 	AI_LOG( MILITARY, 2, "Ai::beingAttacked: no enemies found in range." );
+	return false;
+}
+
+bool Ai::blindAttack(Vec2i &out_pos) {
+	if (m_knownEnemyLocations.empty()) {
+		return false;
+	}
+	int ndx = random.randRange(0, m_knownEnemyLocations.size() - 1);
+	int i = 0;
+	foreach_const (UnitPositions, it, m_knownEnemyLocations) {
+		if (i == ndx) {
+			out_pos = it->first;
+			return true;
+		}
+	}
+	assert(false);
 	return false;
 }
 
@@ -383,15 +435,13 @@ void Ai::updateStatistics() {
 	neededBuildings.clear();
 	availableUpgrades.clear();
 
-	//get a count of all unit types that we have
-	for (int i = 0; i < aiInterface->getMyUnitCount(); ++i){
-		const UnitType *ut = aiInterface->getMyUnit(i)->getType();
-
-		uti = unitTypeCount.find(ut);
-		if(uti == unitTypeCount.end()) {
-			unitTypeCount[ut] = 1;
-		} else {
-			++uti->second;
+	// get a count of all unit types that we have
+	const Faction *faction = aiInterface->getFaction();
+	for (int i = 0; i < faction->getType()->getUnitTypeCount(); ++i){
+		const UnitType *ut = faction->getType()->getUnitType(i);
+		int count = faction->getCountOfUnitType(ut);
+		if (count) {
+			unitTypeCount[ut] = count;
 		}
 	}
 
@@ -608,12 +658,12 @@ void Ai::massiveAttack(const Vec2i &pos, Field field, bool ultraAttack){
 	}
 }
 
-inline Vec2i randPos(Random &rand, int radius) {
+inline Vec2i randOffset(Random &rand, int radius) {
 	return Vec2i(rand.randRange(-radius, radius), rand.randRange(-radius, radius));
 }
 
 void Ai::returnBase(int unitIndex) {
-    Vec2i pos = getRandomHomePosition() + randPos(random, villageRadius);
+    Vec2i pos = getRandomHomePosition() + randOffset(random, villageRadius);
     CommandResult r = aiInterface->giveCommand(unitIndex, CommandClass::MOVE, pos);
 	AI_LOG( MILITARY, 2, "Ai::returnBase: Order return to base pos:" << pos 
 		<< " result: " << CommandResultNames[r] );

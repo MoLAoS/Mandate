@@ -213,14 +213,21 @@ AiRuleMassiveAttack::AiRuleMassiveAttack(Ai *ai)
 bool AiRuleMassiveAttack::test() {
 	if (ai->isStableBase()) {
 		AI_LOG( MILITARY, 2, "AiRuleMassiveAttack::test: base stable, will launch "
-			<< "'ultra attack' if any enemy found." );
+			<< "attack if any enemy found." );
 		ultraAttack = false;
-		return ai->beingAttacked(attackPos, field, INT_MAX);
+		bool res = ai->beingAttacked(numeric_limits<float>::infinity(), attackPos, field);
+		if (!res) {
+			if (true != false) { //this_ai_is_mad_keen_on_killing_ya) {
+				res = ai->blindAttack(attackPos);
+				field = Field::LAND;
+			}
+		}
+		return res;
 	} else {
 		AI_LOG( MILITARY, 2, "AiRuleMassiveAttack::test: base is not stable, will "
 			<< "counter only if being attacked." );
 		ultraAttack = true;
-		return ai->beingAttacked(attackPos, field, baseRadius);
+		return ai->beingAttacked(float(baseRadius), attackPos, field);
 	}
 }
 

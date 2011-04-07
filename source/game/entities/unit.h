@@ -115,11 +115,13 @@ public:
 	void condense();
 };
 
-typedef vector<Unit*>		UnitVector;
+typedef Unit*               UnitPtr;
+typedef const Unit*         ConstUnitPtr;
+typedef vector<Unit*>       UnitVector;
 typedef vector<const Unit*> ConstUnitVector;
-typedef set<const Unit*>	UnitSet;
-typedef list<Unit*>			UnitList;
-typedef list<UnitId> UnitIdList;
+typedef set<const Unit*>    UnitSet;
+typedef list<Unit*>         UnitList;
+typedef list<UnitId>        UnitIdList;
 
 // ===============================
 // 	class Unit

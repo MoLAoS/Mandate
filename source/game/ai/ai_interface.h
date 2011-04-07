@@ -77,7 +77,7 @@ public:
 	int getMyUpgradeCount() const;
 	const StoredResource *getResource(const ResourceType *rt);
 	const Unit *getMyUnit(int unitIndex);
-	void getUnitsSeen(ConstUnitVector &list);
+	void findEnemies(ConstUnitVector &out_list, ConstUnitPtr &out_closest);
 	const FactionType *getMyFactionType();
 	Faction* getFaction() { return faction; }
 	Faction* getMyFaction() { return faction; }

@@ -132,6 +132,7 @@ private:
 	typedef vector<AiRule*> AiRules;
 	typedef list<const Task*> Tasks;
 	typedef deque<Vec2i> Positions;
+	typedef map<Vec2i, const Unit*> UnitPositions;
 	typedef map<const UnitType *, int> UnitTypeCount;
 	typedef vector<const UnitType*> UnitTypes;
 	typedef vector<const UpgradeType*> UpgradeTypes;
@@ -146,7 +147,11 @@ private:
 	int minWarriors;
 	Tasks tasks;
 	Positions expansionPositions;
-	Positions knownEnemyLocatoins;
+
+	UnitPositions   m_knownEnemyLocations;
+	ConstUnitVector m_visibleEnemies;
+	ConstUnitPtr    m_closestEnemy;
+
 	Random random;
 	bool baseSeen;
 	float aggressivness;
@@ -160,6 +165,9 @@ private:
 	UpgradeTypes availableUpgrades;
 	ResourceTypes staticResourceUsed;
 	ResourceTypes usableResources;
+
+private:
+	void evaluateEnemies();
 
 public:
 	~Ai();
@@ -179,7 +187,10 @@ public:
 	bool findPosForBuilding(const UnitType* building, const Vec2i &searchPos, Vec2i &pos);
 	bool findAbleUnit(int *unitIndex, CommandClass ability, bool idleOnly);
 	bool findAbleUnit(int *unitIndex, CommandClass ability, CommandClass currentCommand);
-	bool beingAttacked(Vec2i &pos, Field &field, int radius);
+
+	bool beingAttacked(float radius, Vec2i &out_pos, Field &out_field);
+	bool blindAttack(Vec2i &out_pos);
+
 	bool isStaticResourceUsed(const ResourceType *rt) const;
 	bool usesStaticResources() const {return !staticResourceUsed.empty();}
 	void updateUsableResources();

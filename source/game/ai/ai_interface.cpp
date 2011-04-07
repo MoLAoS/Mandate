@@ -113,8 +113,10 @@ int GlestAiInterface::getMyUpgradeCount() const{
 	return faction->getUpgradeManager()->getUpgradeCount();
 }
 
-void GlestAiInterface::getUnitsSeen(ConstUnitVector &list) {
-	assert(list.empty());
+void GlestAiInterface::findEnemies(ConstUnitVector &out_list, ConstUnitPtr &out_closest) {
+	assert(out_list.empty());
+	float closestDist = numeric_limits<float>::infinity();
+	Vec2i homePos = getHomeLocation();
 
 	for (int i=0; i < world->getFactionCount(); ++i) {
 		Faction *f = world->getFaction(i);
@@ -123,10 +125,19 @@ void GlestAiInterface::getUnitsSeen(ConstUnitVector &list) {
 			continue;
 		}
 		foreach_const (Units, it, f->getUnits()) {
-			if ((*it)->isAlive() && faction->canSee(*it)) {
-				list.push_back(*it);
+			const Unit *enemy = *it;
+			if (enemy->isAlive() && faction->canSee(enemy)) {
+				out_list.push_back(enemy);
+				float dist = homePos.dist(enemy->getCenteredPos());
+				if (dist < closestDist) {
+					out_closest = enemy;
+					closestDist = dist;
+				}
 			}
 		}
+	}
+	if (out_list.empty()) {
+		out_closest = 0;
 	}
 }
 
