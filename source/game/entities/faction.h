@@ -217,7 +217,7 @@ public:
 		--m_unitCountMap[old_ut];
 		++m_unitCountMap[new_ut];
 	}
-	void Faction::onUnitDeActivated(const UnitType *ut) { --m_unitCountMap[ut]; }
+	void onUnitDeActivated(const UnitType *ut) { --m_unitCountMap[ut]; }
 
 	void addStore(const ResourceType *rt, int amount);
 	void addStore(const UnitType *unitType);
