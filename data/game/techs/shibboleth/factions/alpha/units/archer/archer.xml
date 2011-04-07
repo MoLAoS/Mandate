@@ -11,7 +11,8 @@
 		<sight value="15"/>
 		<time value="60"/>
 		<cloak type="permanent">
-			<de-cloak skill-class="attack" />
+			<!--de-cloak skill-class="attack" /-->
+			<group value="stealth" />
 		</cloak>
 		<multi-selection value="true"/>
 		<cellmap value="false"/>

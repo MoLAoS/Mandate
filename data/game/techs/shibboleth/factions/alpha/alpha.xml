@@ -10,8 +10,9 @@
 	<starting-units>
 		<unit name="castle" amount="1"/>
 		<unit name="worker" amount="3"/>
-		<unit name="swordman" amount="2"/>
-		<unit name="archer" amount="1"/>
+		<unit name="swordman" amount="1"/>
+		<unit name="archer" amount="2"/>
+		<unit name="merlin" amount="1" />
 		<unit name="pig" amount="1"/>
 		<!-- Un-listed units default to 0 -->
 	</starting-units>	

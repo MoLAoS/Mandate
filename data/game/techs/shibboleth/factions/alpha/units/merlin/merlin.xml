@@ -10,6 +10,9 @@
     <armor-type value="leather"/>
     <sight value="12"/>
     <time value="200"/>
+	  <detector type="permanent">
+		  <group value="stealth" />
+	  </detector>
     <multi-selection value="true"/>
     <cellmap value="false"/>
     <levels>
