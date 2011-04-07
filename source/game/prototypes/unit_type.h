@@ -149,9 +149,9 @@ public:
 	const Texture2D* getCloakImage() const {
 		return m_cloakType ? m_cloakType->getImage() : 0;
 	}
-	const CloakType* getCloakType() const	{return m_cloakType;}
-	//const DetectorType* getDetectorType() const {return m_detectorType;}
-	bool isDetector() const					{return m_detectorType? true : false;}
+	const CloakType* getCloakType() const        { return m_cloakType; }
+	const DetectorType* getDetectorType() const  { return m_detectorType; }
+	bool isDetector() const                      { return m_detectorType ? true : false; }
 
 	//get
 	const Model *getIdleAnimation() const	{return getFirstStOfClass(SkillClass::STOP)->getAnimation();}

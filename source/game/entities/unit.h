@@ -344,9 +344,9 @@ public:
 	const Commands &getCommands() const			{return commands;}
 	const RepairCommandType *getRepairCommandType(const Unit *u) const;
 	int getDeadCount() const					{return deadCount;}
-	bool isMobile ()							{ return type->isMobile(); }
 	void setModelFacing(CardinalDir value);
 	CardinalDir getModelFacing() const			{ return m_facing; }
+	int getCloakGroup() const                   { return type->getCloakType()->getCloakGroup(); }
 
 	//-- for carry units
 	const UnitIdList& getCarriedUnits() const	{return m_carriedUnits;}
@@ -369,9 +369,6 @@ public:
 	void setHPAboveTrigger(int i)				{ hp_above_trigger = i; }
 	void setAttackedTrigger(bool val)			{ attacked_trigger = val; }
 	bool getAttackedTrigger() const				{ return attacked_trigger; }
-
-	void resetAnim(int frame) { nextAnimReset = frame; }
-
 
 	/**
 	 * Returns the total attack strength (base damage) for this unit using the
@@ -408,31 +405,23 @@ public:
 		return (asts->getMaxRange() * attackRangeMult + attackRange).intp();
 	}
 
-	//pos
+	// pos
 	Vec2i getPos() const				{return pos;}//carried ? carrier->getPos() : pos;}
 	Vec2i getLastPos() const			{return lastPos;}
 	Vec2i getCenteredPos() const		{return Vec2i(type->getHalfSize().intp()) + getPos();}
 	fixedVec2 getFixedCenteredPos() const	{ return fixedVec2(pos.x + type->getHalfSize(), pos.y + type->getHalfSize()); }
 	Vec2i getNearestOccupiedCell(const Vec2i &from) const;
 
+	// alpha (for cloaking or putrefacting)
 	float getCloakAlpha() const			{return m_cloakAlpha;}
 	float getRenderAlpha() const;
 
-	//is
-	bool isIdle() const					{return currSkill->getClass() == SkillClass::STOP;}
-	
+	// is
+	bool isIdle() const					{return currSkill->getClass() == SkillClass::STOP;}	
 	bool isMoving() const				{return currSkill->getClass() == SkillClass::MOVE;}
-
+	bool isMobile ()					{ return type->isMobile(); }
 	bool isCarried() const				{return carried;}
 	bool isHighlighted() const			{return highlight > 0.f;}
-	bool isDead() const					{return !hp;}
-	bool isAlive() const				{return hp;}
-	bool isDamaged() const				{return hp < getMaxHp();}
-	bool isOperative() const			{return isAlive() && isBuilt();}
-	bool isBeingBuilt() const			{
-		return currSkill->getClass() == SkillClass::BE_BUILT || currSkill->getClass() == SkillClass::BUILD_SELF;
-	}
-	bool isBuilt() const				{return !isBeingBuilt();}
 	bool isPutrefacting() const			{return deadCount;}
 	bool isAlly(const Unit *unit) const	{return faction->isAlly(unit->getFaction());}
 	bool isInteresting(InterestingUnitType iut) const;
@@ -443,8 +432,17 @@ public:
 	bool isTargetUnitVisible(int teamIndex) const;
 	bool isActive() const;
 	bool isBuilding() const;
+	bool isDead() const					{return !hp;}
+	bool isAlive() const				{return hp;}
+	bool isDamaged() const				{return hp < getMaxHp();}
+	bool isOperative() const			{return isAlive() && isBuilt();}
+	bool isBuilt() const				{return !isBeingBuilt();}
+	bool isBeingBuilt() const			{
+		return currSkill->getClass() == SkillClass::BE_BUILT
+			|| currSkill->getClass() == SkillClass::BUILD_SELF;
+	}
 
-	//set
+	// set
 	void setCurrSkill(const SkillType *currSkill);
 	void setCurrSkill(SkillClass sc)					{setCurrSkill(getType()->getFirstStOfClass(sc));}
 	void setLoadCount(int loadCount)					{this->loadCount = loadCount;}
@@ -456,10 +454,6 @@ public:
 	void setTarget(const Unit *unit, bool faceTarget = true, bool useNearestOccupiedCell = true);
 	void setTargetVec(const Vec3f &targetVec)			{this->targetVec = targetVec;}
 	void setMeetingPos(const Vec2i &meetingPos)			{this->meetingPos = meetingPos;}
-	//void setAutoRepairEnabled(bool autoRepairEnabled) {
-	//	this->autoRepairEnabled = autoRepairEnabled;
-	//	StateChanged(this);
-	//}
 	void setAutoCmdEnable(AutoCmdFlag f, bool v);
 
 	//render related
@@ -530,9 +524,9 @@ public:
 	bool decHp(int i);
 	bool decEp(int i);
 	int update2()										{return ++progress2;}
+	TravelState travel(const Vec2i &pos, const MoveSkillType *moveSkill);
+	void stop() {setCurrSkill(SkillClass::STOP); }
 	void clearPath();
-	/// make idle
-	void stop()	{setCurrSkill(SkillClass::STOP);}
 
 	// SimulationInterface wrappers
 	void updateSkillCycle(const SkillCycleTable *skillCycleTable);
@@ -550,6 +544,7 @@ public:
 	void updateMoveSkillCycle();
 	void updateAnimDead();
 	void updateAnimCycle(int animOffset, int soundOffset = -1, int attackOffset = -1);
+	void resetAnim(int frame) { nextAnimReset = frame; }
 
 	bool update();
 	void updateEmanations();
@@ -576,7 +571,6 @@ public:
 
 	void cloak();
 	void deCloak();
-	TravelState travel(const Vec2i &pos, const MoveSkillType *moveSkill);
 
 private:
 	float computeHeight(const Vec2i &pos) const;

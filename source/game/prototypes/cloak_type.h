@@ -38,7 +38,7 @@ class CloakType : public RequirableType {
 private:
 	const UnitType   *m_unitType;
 	CloakClass        m_class;
-	uint32            m_tags;
+	int32             m_group;
 	int32             m_cost;
 	StaticSound      *m_cloakSound;
 	StaticSound      *m_deCloakSound;
@@ -57,24 +57,56 @@ public:
 
 	const UnitType* getUnitType() const    { return m_unitType; }
 	CloakClass getClass() const            { return m_class; }
-	bool isTagType(int tag) const          { assert(tag); return (1 << tag) & m_tags; }
-	int getEnergyCost() const              { return m_cost; }
+	bool isCloakGroup(int group) const     { return m_group == group; }
+	int  getCloakGroup() const             { return m_group; }
+	int  getEnergyCost() const             { return m_cost; }
 	StaticSound* getCloakSound() const     { return m_cloakSound; }
 	StaticSound* getDeCloakSound() const   { return m_deCloakSound; }
-	/*const Texture2D* getImage() const      { return m_image; }*/
 	UnitShaderSet* getAllyShaders() const  { return m_allyShaders; }
 	UnitShaderSet* getEnemyShaders() const { return m_enemyShaders; }
 
 	void doChecksum(Checksum &cs) const;
 };
 
+// =====================================================
+//  class DetectorType
+// =====================================================
+
 class DetectorType : public RequirableType {
+	friend class Sim::SingleTypeFactory<DetectorType>;
+
+public:
+	typedef vector<int>  Groups;
+
 private:
-	bool	m_detector;
-	///@todo ... lots ...
-	//DetectorClass     m_class;
-	//uint32            m_tags;
-	//etc...
+	const UnitType   *m_unitType;
+	DetectorClass     m_class;
+	Groups            m_groups;
+	int               m_cost;
+	StaticSound      *m_detectionOnSound;
+	StaticSound      *m_detectionOffSound;
+	StaticSound      *m_detectionMadeSound;
+
+private:
+	DetectorType(const UnitType *ut);
+
+public:
+	virtual ~DetectorType();
+
+	void load(const string &dir, const XmlNode *xmlNode, const TechTree *tt);
+
+	const UnitType* getUnitType() const    { return m_unitType; }
+	DetectorClass getClass() const         { return m_class; }
+	int  getEnergyCost() const             { return m_cost; }
+	bool detectsCloakGroup(int group) const;
+	Groups::const_iterator groups_begin() const  { return m_groups.begin(); }
+	Groups::const_iterator groups_end() const    { return m_groups.end();   }
+
+	StaticSound* getDetectOnSound() const  { return m_detectionOnSound; }
+	StaticSound* getDetectffSound() const  { return m_detectionOffSound; }
+	StaticSound* getDetectSound() const    { return m_detectionMadeSound; }
+
+	void doChecksum(Checksum &cs) const;
 };
 
 }}

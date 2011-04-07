@@ -157,6 +157,9 @@ private:
 	typedef vector<Faction> Factions;
 	typedef std::map< string,set<string> > UnitTypes;
 
+	typedef map<string, int>   CloakGroupIdMap;
+	typedef map<int, string>   CloakGroupNameMap;
+
 public:
 	/** max radius to look when placing units */
 	static const int generationArea= 100;
@@ -215,6 +218,11 @@ private:
 
 	ModelFactory			 m_modelFactory;
 
+	// cloaking groups
+	CloakGroupIdMap      m_cloakGroupIds;
+	CloakGroupNameMap    m_cloakGroupNames;
+	int m_cloakGroupIdCounter;
+
 public:
 	World(SimulationInterface *iSim);
 	~World();
@@ -263,6 +271,11 @@ public:
 
 	void initSurveyor(Faction *f);
 
+	int getCloakGroupId(const string &name);
+	const string& getCloakGroupName(int id);
+
+	int getCloakGroupCount() const { return m_cloakGroupIdCounter; }
+
 	// update
 	void processFrame();
 
@@ -310,11 +323,10 @@ public:
 #endif
 
 private:
-	void initCells();
 	void initSplattedTextures();
 	void initFactions();
 	void initUnits();
-	void initExplorationState();
+	void initExplorationState(bool thisFctionOnly = false);
 
 	//misc
 	//void updateEarthquakes(float seconds);

@@ -245,6 +245,7 @@ AiLogFile::AiLogFile()
 
 void AiLogFile::add(int f, AiComponent c, int level, const string &msg) {
 	ASSERT_RANGE(f, GameConstants::maxPlayers);
+
 	// enabled/level/component test is embedded in macros now, to avoid lots of
 	// streaming for disabled logging.
 

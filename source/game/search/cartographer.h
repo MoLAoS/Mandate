@@ -114,40 +114,36 @@ private:
 	typedef map<StoreMapKey,	PatchMap<1>*> StoreMaps;	// goal maps for harvester path searches to store
 	typedef map<BuildSiteMapKey,PatchMap<1>*> SiteMaps;		// goal maps for building sites.
 
-	typedef list<pair<rt_ptr, Vec2i> >	ResourcePosList;
-	typedef map<rt_ptr, V2iList> ResourcePosMap;
+	typedef list<pair<rt_ptr, Vec2i> >	ResourcePosList;    // list of resource type / position pairs
+	typedef map<rt_ptr, V2iList>        ResourcePosMap;     // resource positions by type
+
+	typedef TypeMap<int>                DetectorMap;
+	typedef map<int, DetectorMap*>      DetectorMaps;
+//	typedef vector<DetectorMap*>        DetectorMaps;
+	typedef map<int, DetectorMaps>      TeamDetectorMaps;
+
+	typedef map<int, AnnotatedMap*>     TeamAnnotatedMaps;
+	typedef map<int, ExplorationMap*>   TeamExplorationMaps;
 
 private:
-	/** Master annotated map, always correct */
-	AnnotatedMap *masterMap;
-
-	/*/* Team annotateded maps, 'foggy' */
-	//map< int, AnnotatedMap* > teamMaps;
-
-	/** The ClusterMap (Hierarchical map abstraction) */
-	ClusterMap *clusterMap;
+	// Map abstractions for A* and HAA* search
+	AnnotatedMap      *masterMap;     /**< Master annotated map, always correct */
+//	TeamAnnotatedMaps  teamMaps;      /**< Team annotateded maps, 'foggy' */
+	ClusterMap        *clusterMap;    /**< The ClusterMap (Hierarchical map abstraction) */
 
 	// Resources
-	/** The locations of each and every resource on the map */
-	ResourcePosMap resourceLocations;
-
+	ResourcePosMap resourceLocations; /**< The locations of each and every resource on the map */
 	set<ResourceMapKey> resourceMapKeys;
-	
-	/** areas where resources have been depleted and updates are required */
-	ResourcePosMap resDirtyAreas;
+	ResourcePosMap resDirtyAreas; /**< areas where resources have been depleted and updates are required */
 
-	/** Goal Maps for each tech & tileset resource */
-	ResourceMaps resourceMaps;
-
-	StoreMaps storeMaps;
-	SiteMaps siteMaps;
+	// Special search goal maps
+	ResourceMaps   resourceMaps; /**< Goal Maps for each tech & tileset resource */
+	StoreMaps      storeMaps;    /**< Goal maps for 'store' units */
+	SiteMaps       siteMaps;     /**< Goal maps for building sites */
 
 	// Exploration
-	/** Exploration maps for each team */
-	map< int, ExplorationMap* > explorationMaps;
-
-	map< int, TypeMap<int>* > m_detectorMaps;
-
+	TeamExplorationMaps  m_explorationMaps; /**< Exploration maps for each team */
+	TeamDetectorMaps     m_detectorMaps;    /**< Detector maps */
 
 	// A* stuff
 	NodeMap *nodeMap;
@@ -205,7 +201,7 @@ public:
 	/** @return the number of units of team that can see a tile 
 	  * @param team team index 
 	  * @param pos the co-ordinates of the <b>tile</b> of interest. */
-	int getTeamVisibility(int team, const Vec2i &pos) { return explorationMaps[team]->getVisCounter(pos); }
+	int getTeamVisibility(int team, const Vec2i &pos) { return m_explorationMaps[team]->getVisCounter(pos); }
 	/** Adds a unit's visibility to its team's exploration map */
 	void applyUnitVisibility(Unit *unit)	{ maintainUnitVisibility(unit, true); }
 	/** Removes a unit's visibility from its team's exploration map */
@@ -276,9 +272,9 @@ public:
 
 	Map*	getCellMap() { return cellMap; }
 
-	void detectorCreated(Unit *unit);
+	void detectorActivated(Unit *unit);
 	void detectorMoved(Unit *unit, Vec2i oldPos);
-	void detectorDied(Unit *unit);
+	void detectorDeactivated(Unit *unit);
 
 	ClusterMap* getClusterMap() const { return clusterMap; }
 
@@ -287,8 +283,8 @@ public:
 	AnnotatedMap* getAnnotatedMap(const Faction *faction) 	{ return getAnnotatedMap(faction->getTeam()); }
 	AnnotatedMap* getAnnotatedMap(const Unit *unit)			{ return getAnnotatedMap(unit->getTeam()); }
 
-	bool canDetect(int team, Vec2i pos) {
-		return m_detectorMaps[team]->getInfluence(pos);
+	bool canDetect(int team, int cloakGroup, Vec2i tilePos) {
+		return m_detectorMaps[team][cloakGroup]->getInfluence(tilePos);
 	}
 };
 
@@ -297,7 +293,7 @@ STRINGY_ENUM( LocationType,
 	DEAD_WEIGHT,		/**< For buildings with no further purpose (housing/energy source/etc) */
 	DEFENSIVE_SITE,		/**< A site for defensive towers */
 	RESOURCE_STORE,		/**< Location for a store */
-	WARRIOR_PRODUCER,	/**< Loaction for a warrior producing building */
+	WARRIOR_PRODUCER,	/**< Location for a warrior producing building */
 	RESEARCH_BUILDING	/**< Location for a research building */
 )
 

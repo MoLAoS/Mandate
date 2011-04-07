@@ -91,7 +91,7 @@ bool UpgradeType::loadNewStyle(const XmlNode *node, const string &dir, const Tec
 			if (const XmlNode *storeModsNode = enhancementNode->getOptionalChild("store-modifiers")) {
 				loadResourceModifier(storeModsNode, m_enhancements[i].m_storeModifiers, techTree);
 			}
-		} catch (runtime_error e) { 
+		} catch (runtime_error e) {
 			g_logger.logXmlError(dir, e.what());
 			loadOk = false;
 		} 

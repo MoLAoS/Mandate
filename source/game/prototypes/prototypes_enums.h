@@ -185,6 +185,12 @@ STRINGY_ENUM( CloakClass,
 	EFFECT
 );
 
+STRINGY_ENUM( DetectorClass,
+	PERMANENT,
+	ENERGY,
+	EFFECT
+);
+
 }}
 
 #endif

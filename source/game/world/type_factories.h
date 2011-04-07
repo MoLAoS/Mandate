@@ -250,6 +250,7 @@ typedef DynamicTypeFactory<CommandClass, CommandType>        CommandTypeFactory;
 typedef DynamicTypeFactory<ProducibleClass, ProducibleType>  ProducibleTypeFactory;
 typedef DynamicTypeFactory<EffectClass, EffectType>	         EffectTypeFactory;
 typedef SingleTypeFactory<CloakType>                         CloakTypeFactory;
+typedef SingleTypeFactory<DetectorType>                      DetectorTypeFactory;
 
 class PrototypeFactory {
 protected:
@@ -258,9 +259,50 @@ protected:
 	CommandTypeFactory     m_commandTypeFactory;
 	EffectTypeFactory      m_effectTypeFactory;
 	CloakTypeFactory       m_cloakTypeFactory;
+	DetectorTypeFactory    m_detectorTypeFactory;
 
 public:
 	PrototypeFactory();
+
+
+public:	// create objects
+
+	// Producibles...
+	GeneratedType* newGeneratedType() {
+		return static_cast<GeneratedType*>(m_prodTypeFactory.newInstance(ProducibleClass::GENERATED));
+	}
+	UpgradeType* newUpgradeType() {
+		return static_cast<UpgradeType*>(m_prodTypeFactory.newInstance(ProducibleClass::UPGRADE));
+ 	}
+	UnitType*	newUnitType() {
+		return static_cast<UnitType*>(m_prodTypeFactory.newInstance(ProducibleClass::UNIT));
+ 	}
+
+	// skills
+	SkillType*		newSkillType(SkillClass sc)		{ return m_skillTypeFactory.newInstance(sc); }
+
+	// commands
+	CommandType*	newCommandType(CommandClass cc, const UnitType *ut)	{
+		CommandType *ct = m_commandTypeFactory.newInstance(cc);
+		ct->setUnitType(ut);
+		return ct;
+	}
+
+	// Effects
+	EffectType*		newEffectType()		{ return m_effectTypeFactory.newInstance(EffectClass::EFFECT); }
+	EmanationType*	newEmanationType()	{ 
+		return static_cast<EmanationType*>(m_effectTypeFactory.newInstance(EffectClass::EMANATION));
+ 	}
+
+	// Cloaks and Detectors
+	CloakType* newCloakType(const UnitType *ut) { return m_cloakTypeFactory.newInstance(ut);  }
+	DetectorType* newDetectorType(const UnitType *ut) { return m_detectorTypeFactory.newInstance(ut); }
+
+public:
+	// is derived producible type
+	bool isGeneratedType(const ProducibleType *pt) { return pt->getClass() == ProducibleClass::GENERATED;}
+	bool isUpgradeType(const ProducibleType *pt) { return pt->getClass() == ProducibleClass::UPGRADE;}
+	bool isUnitType(const ProducibleType *pt) { return pt->getClass() == ProducibleClass::UNIT;}
 
 	// get checksums
 	int32 getChecksum(const ProducibleType *pt) { return m_prodTypeFactory.getChecksum(pt); }
@@ -268,60 +310,30 @@ public:
 	int32 getChecksum(const SkillType *st) { return m_skillTypeFactory.getChecksum(st); }
 	int32 getChecksum(const EffectType *et) { return m_effectTypeFactory.getChecksum(et); }
 	int32 getChecksum(const CloakType *ct) { return m_cloakTypeFactory.getChecksum(ct); }
+	int32 getChecksum(const DetectorType *dt) { return m_detectorTypeFactory.getChecksum(dt); }
 
-	// is
-	bool isGeneratedType(const ProducibleType *pt) { return pt->getClass() == ProducibleClass::GENERATED;}
-	bool isUpgradeType(const ProducibleType *pt) { return pt->getClass() == ProducibleClass::UPGRADE;}
-	bool isUnitType(const ProducibleType *pt) { return pt->getClass() == ProducibleClass::UNIT;}
-
-public:	// create objects
-	GeneratedType* newGeneratedType() {
-		ProducibleType *pt = m_prodTypeFactory.newInstance(ProducibleClass::GENERATED);
-		return static_cast<GeneratedType*>(pt);
-	}
-	UpgradeType* newUpgradeType() {
-		ProducibleType *pt = m_prodTypeFactory.newInstance(ProducibleClass::UPGRADE);
-		return static_cast<UpgradeType*>(pt);
- 	}
-	UnitType*	newUnitType() {
-		ProducibleType *pt = m_prodTypeFactory.newInstance(ProducibleClass::UNIT);
-		return static_cast<UnitType*>(pt);
- 	}
-	SkillType*		newSkillType(SkillClass sc)		{ return m_skillTypeFactory.newInstance(sc); }
-	CommandType*	newCommandType(CommandClass cc, const UnitType *ut)	{
-		CommandType *ct = m_commandTypeFactory.newInstance(cc);
-		ct->setUnitType(ut);
-		return ct;
-	}
-
-	EffectType*		newEffectType()		{ return m_effectTypeFactory.newInstance(EffectClass::EFFECT); }
-	EmanationType*	newEmanationType()	{ 
-		return static_cast<EmanationType*>(m_effectTypeFactory.newInstance(EffectClass::EMANATION));
- 	}
-
-	CloakType* newCloakType(const UnitType *ut) { 
-		CloakType *ct = m_cloakTypeFactory.newInstance(ut);
-		return ct;
-	}
-
-	// checksums
+	// set checksums
 	void setChecksum(const SkillType *st) { m_skillTypeFactory.setChecksum(st); }
 	void setChecksum(const CommandType *ct) { m_commandTypeFactory.setChecksum(ct); }
 	void setChecksum(const ProducibleType *pt) { m_prodTypeFactory.setChecksum(pt); }
 	void setChecksum(const EffectType *et) { m_effectTypeFactory.setChecksum(et); }
 	void setChecksum(const CloakType *ct) { m_cloakTypeFactory.setChecksum(ct); }
+	void setChecksum(const DetectorType *dt) { m_detectorTypeFactory.setChecksum(dt); }
 
 	// get
-	//ProducibleType* getProducibleType(int id) { return m_prodTypeFactory.getType(id); }
-	const ProducibleType* getProdType(int id) { return m_prodTypeFactory.getType(id); }
 	int getProdTypeCount() const { return m_prodTypeFactory.getTypeCount(); }
+	int getSkillTypeCount() const { return m_skillTypeFactory.getTypeCount(); }
+	int getCommandTypeCount() const { return m_commandTypeFactory.getTypeCount(); }
+	int getCloakTypeCount() const { return m_cloakTypeFactory.getTypeCount(); }
+	int getDetectorTypeCount() const { return m_detectorTypeFactory.getTypeCount(); }
+
+	// get proto-types by id
+	const ProducibleType* getProdType(int id) { return m_prodTypeFactory.getType(id); }
 	const UnitType* getUnitType(int id) { return m_prodTypeFactory.getTypeById<UnitType>(id); }
 	const SkillType* getSkillType(int id) { return m_skillTypeFactory.getType(id); }
-	int getSkillTypeCount() const { return m_skillTypeFactory.getTypeCount(); }
 	const CommandType* getCommandType(int id) { return m_commandTypeFactory.getType(id); }
-	int getCommandTypeCount() const { return m_commandTypeFactory.getTypeCount(); }
 	const CloakType* getCloakType(int i) { return m_cloakTypeFactory.getType(i); }
-	int getCloakTypeCount() const { return m_cloakTypeFactory.getTypeCount(); }
+	const DetectorType* getDetectorType(int i) { return m_detectorTypeFactory.getType(i); }
 };
 
 }}

@@ -969,7 +969,7 @@ bool MorphCommandType::load(const XmlNode *n, const string &dir, const TechTree 
 		} else {
 			const XmlNode *dn = n->getOptionalChild("discount");
 			if (dn) {
-				m_refund = dn->getAttribute("value")->getIntValue();
+				m_refund = dn->getAttribute("value")->getIntValue(); // not an error.
 				g_logger.logError(dir, "Warning: node 'discount' of morph command is deprecated,"
 					" use 'cost-modifier' instead");
 			}
@@ -1641,7 +1641,8 @@ bool CommandType::unitInRange(const Unit *unit, int range, Unit **rangedPtr,
 		}
 		if (*rangedPtr && (*rangedPtr)->isCloaked()) {
 			Vec2i tpos = Map::toTileCoords((*rangedPtr)->getCenteredPos());
-			if (!g_cartographer.canDetect(unit->getTeam(), tpos)) {
+			int cloakGroup = (*rangedPtr)->getType()->getCloakType()->getCloakGroup();
+			if (!g_cartographer.canDetect(unit->getTeam(), cloakGroup, tpos)) {
 				*rangedPtr = 0;
 			}
 		}
@@ -1668,8 +1669,9 @@ bool CommandType::unitInRange(const Unit *unit, int range, Unit **rangedPtr,
 					Unit *possibleEnemy = map->getCell(pos)->getUnit(z);
 					if (possibleEnemy && possibleEnemy->isAlive() && !unit->isAlly(possibleEnemy)) {
 						if (possibleEnemy->isCloaked()) {
+							int cloakGroup = possibleEnemy->getCloakGroup();
 							Vec2i tpos = Map::toTileCoords(possibleEnemy->getCenteredPos());
-							if (!g_cartographer.canDetect(unit->getTeam(), tpos)) {
+							if (!g_cartographer.canDetect(unit->getTeam(), cloakGroup, tpos)) {
 								continue;
 							}
 						}

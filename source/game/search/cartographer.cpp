@@ -68,11 +68,13 @@ Cartographer::Cartographer(World *world)
 		if (teams.find(team) == teams.end()) {
 			teams.insert(team);
 			// AnnotatedMap needs to be 'bound' to explored status
-			explorationMaps[team] = new ExplorationMap(cellMap);
-			//teamMaps[team] = new AnnotatedMap(world, explorationMaps[team]);
+			m_explorationMaps[team] = new ExplorationMap(cellMap);
+			//teamMaps[team] = new AnnotatedMap(world, m_explorationMaps[team]);
 			Rectangle rect(0,0, cellMap->getTileW(), cellMap->getTileH());
-			m_detectorMaps[team] = new TypeMap<int>(rect, 0);
-			m_detectorMaps[team]->zeroMap();
+			for (int j=0; j < world->getCloakGroupCount(); ++j) {
+				m_detectorMaps[team][j] = new DetectorMap(rect, 0);
+				m_detectorMaps[team][j]->zeroMap();
+			}
 		}
 	}
 
@@ -126,27 +128,27 @@ Cartographer::Cartographer(World *world)
 
 /** Destruct */
 Cartographer::~Cartographer() {
+	// Search maps and engine
 	delete masterMap;
 	delete clusterMap;
-	delete nmSearchEngine;
+	delete nmSearchEngine; // & therefore nodeMap
 
 	// Team Annotated Maps
 	//deleteMapValues(teamMaps.begin(), teamMaps.end());
 	//teamMaps.clear();
 
 	// Exploration Maps
-	deleteMapValues(explorationMaps.begin(), explorationMaps.end());
-	explorationMaps.clear();
+	deleteMapValues(m_explorationMaps);
+
+	// Detector maps
+	foreach (TeamDetectorMaps, it, m_detectorMaps) {
+		deleteMapValues(it->second);
+	}
 	
 	// Goal Maps
-	deleteMapValues(resourceMaps.begin(), resourceMaps.end());
-	resourceMaps.clear();
-	deleteMapValues(storeMaps.begin(), storeMaps.end());
-	storeMaps.clear();
-	deleteMapValues(siteMaps.begin(), siteMaps.end());
-	siteMaps.clear();
-
-	deleteMapValues(m_detectorMaps);
+	deleteMapValues(resourceMaps);
+	deleteMapValues(storeMaps);
+	deleteMapValues(siteMaps);
 }
 
 void Cartographer::initResourceMap(ResourceMapKey key, PatchMap<1> *pMap) {
@@ -339,28 +341,49 @@ void deccrementMap(TypeMap<int> *iMap, Vec2i pos, int radius) {
 	}
 }
 
-void Cartographer::detectorCreated(Unit *unit) {
-	TypeMap<int> *iMap = m_detectorMaps[unit->getTeam()];
-	Vec2i tpos = Map::toTileCoords(unit->getCenteredPos());
+void Cartographer::detectorActivated(Unit *unit) {
+	const DetectorType *dt = unit->getType()->getDetectorType();
+	assert(dt);
+	Vec2i tilepos = Map::toTileCoords(unit->getCenteredPos());
 	int radius = unit->getSight() / 2 + 1;
-	incrementMap(iMap, tpos, radius);
+	DetectorType::Groups::const_iterator it = dt->groups_begin();
+	DetectorType::Groups::const_iterator itEnd = dt->groups_end();
+	while (it != itEnd) {
+		TypeMap<int> *iMap = m_detectorMaps[unit->getTeam()][*it];
+		incrementMap(iMap, tilepos, radius);
+		++it;
+	}
 }
 
 void Cartographer::detectorMoved(Unit *unit, Vec2i oldPos) {
-	TypeMap<int> *iMap = m_detectorMaps[unit->getTeam()];
-	Vec2i tpos = Map::toTileCoords(oldPos);
+	const DetectorType *dt = unit->getType()->getDetectorType();
+	assert(dt);
+	Vec2i oldTilePos = Map::toTileCoords(oldPos);
+	Vec2i newTilePos = Map::toTileCoords(unit->getCenteredPos());
+	assert(oldTilePos != newTilePos); // doesn't need to be true, but should be.
 	int radius = unit->getSight() / 2 + 1;
-	deccrementMap(iMap, tpos, radius);
-
-	tpos = Map::toTileCoords(unit->getCenteredPos());
-	incrementMap(iMap, tpos, radius);
+	DetectorType::Groups::const_iterator it = dt->groups_begin();
+	DetectorType::Groups::const_iterator itEnd = dt->groups_end();
+	while (it != itEnd) {
+		TypeMap<int> *iMap = m_detectorMaps[unit->getTeam()][*it];
+		deccrementMap(iMap, oldTilePos, radius);
+		incrementMap(iMap, newTilePos, radius);
+		++it;
+	}
 }
 
-void Cartographer::detectorDied(Unit *unit) {
-	TypeMap<int> *iMap = m_detectorMaps[unit->getTeam()];
-	Vec2i tpos = Map::toTileCoords(unit->getCenteredPos());
+void Cartographer::detectorDeactivated(Unit *unit) {
+	const DetectorType *dt = unit->getType()->getDetectorType();
+	assert(dt);
+	Vec2i tilepos = Map::toTileCoords(unit->getCenteredPos());
 	int radius = unit->getSight() / 2 + 1;
-	deccrementMap(iMap, tpos, radius);
+	DetectorType::Groups::const_iterator it = dt->groups_begin();
+	DetectorType::Groups::const_iterator itEnd = dt->groups_end();
+	while (it != itEnd) {
+		TypeMap<int> *iMap = m_detectorMaps[unit->getTeam()][*it];
+		deccrementMap(iMap, tilepos, radius);
+		++it;
+	}
 }
 
 void Cartographer::tick() {
@@ -462,8 +485,8 @@ void Cartographer::buildGlestimalMap(Field f, V2iList &positions) {
 
 /** Initialise annotated maps for each team, call after initial units visibility is applied */
 void Cartographer::initTeamMaps() {
-	map<int, ExplorationMap*>::iterator it = explorationMaps.begin();
-	for ( ; it != explorationMaps.end(); ++it ) {
+	map<int, ExplorationMap*>::iterator it = m_explorationMaps.begin();
+	for ( ; it != m_explorationMaps.end(); ++it ) {
 		AnnotatedMap *aMap = getAnnotatedMap(it->first);
 		ExplorationMap *eMap = it->second;
 		
@@ -514,7 +537,7 @@ void Cartographer::maintainUnitVisibility(Unit *unit, bool add) {
 	/* This might be too expensive using Dijkstra...
 
 	// set up goal function
-	VisibilityMaintainerGoal goalFunc((float)unit->getSight(), explorationMaps[unit->getTeam()], add);
+	VisibilityMaintainerGoal goalFunc((float)unit->getSight(), m_explorationMaps[unit->getTeam()], add);
 	// set up search engine
 	GridNeighbours::setSearchSpace(SearchSpace::TILEMAP);
 	nmSearchEngine->setNodeLimit(-1);

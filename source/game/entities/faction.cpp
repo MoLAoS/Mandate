@@ -746,8 +746,11 @@ bool Faction::canSee(const Unit *unit) const {
 		return true;
 	}
 	Vec2i tPos = Map::toTileCoords(unit->getCenteredPos());
-	if (unit->isCloaked() && !g_cartographer.canDetect(teamIndex, tPos)) {
-		return false;
+	if (unit->isCloaked()) {
+		int cloakGroup = unit->getType()->getCloakType()->getCloakGroup();
+		if (!g_cartographer.canDetect(teamIndex, cloakGroup, tPos)) {
+			return false;
+		}
 	}
 	if (map.getTile(tPos)->isVisible(teamIndex)) {
 		return true;

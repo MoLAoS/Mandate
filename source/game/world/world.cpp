@@ -72,14 +72,15 @@ World::World(SimulationInterface *simInterface)
 		: scenario(NULL)
 		, m_simInterface(simInterface)
 		, game(*simInterface->getGameState())
-		, cartographer(NULL)
-		, routePlanner(NULL)
+		, cartographer(0)
+		, routePlanner(0)
 		, thisFactionIndex(-1)
-		, posIteratorFactory(65) {
+		, posIteratorFactory(65)
+		, m_cloakGroupIdCounter(0) {
 	GameSettings &gs = m_simInterface->getGameSettings();
 	string techName = formatString(basename(gs.getTechPath()));
 	g_program.setTechTitle(techName);
-	
+
 	fogOfWar = gs.getFogOfWar();
 	shroudOfDarkness = gs.getShroudOfDarkness();
 
@@ -121,27 +122,46 @@ void World::save(XmlNode *node) const {
 void World::init(const XmlNode *worldNode) {
 	//_PROFILE_FUNCTION();
 	initFactions();
-	initCells(); //must be done after knowing faction number and dimensions
+	initExplorationState(); // must be done after loadMap()
 	map.init();
 
-	// must be done after initMap()
+	// must be done after map.init()
 	routePlanner = new RoutePlanner(this);
 	cartographer = new Cartographer(this);
 	
 	if (worldNode) {
-		initExplorationState();
 		loadSaved(worldNode);
 		g_userInterface.initMinimap(fogOfWar, shroudOfDarkness, true);
 		g_cartographer.loadMapState(worldNode->getChild("mapState"));
 	} else if (m_simInterface->getGameSettings().getDefaultUnits()) {
 		g_userInterface.initMinimap(fogOfWar, shroudOfDarkness, false);
 		initUnits();
-		initExplorationState();
+		initExplorationState(true); // reset for human, so we get funky alpha fade in
 	} else {
 		g_userInterface.initMinimap(fogOfWar, shroudOfDarkness, false);
 	}
 	computeFow();
 	alive = true;
+}
+
+int World::getCloakGroupId(const string &name) {
+	CloakGroupIdMap::iterator it = m_cloakGroupIds.find(name);
+	if (it == m_cloakGroupIds.end()) {
+		m_cloakGroupIds[name] = m_cloakGroupIdCounter;
+		m_cloakGroupNames[m_cloakGroupIdCounter] = name;
+		return m_cloakGroupIdCounter++;
+	}
+	return it->second;
+}
+
+const string noneString = "none";
+
+const string& World::getCloakGroupName(int id) {
+	CloakGroupNameMap::iterator it = m_cloakGroupNames.find(id);
+	if (it != m_cloakGroupNames.end()) {
+		return it->second;
+	}
+	return noneString;
 }
 
 //load saved game
@@ -957,21 +977,6 @@ int World::getUnitCountOfType(int factionIndex, const string &typeName) {
 
 // ==================== private init ====================
 
-//init basic cell state
-void World::initCells() {
-	GameSettings &gs = m_simInterface->getGameSettings();
-	g_logger.logProgramEvent("State cells", true);
-	for (int i = 0; i < map.getTileW(); ++i) {
-		for (int j = 0; j < map.getTileH(); ++j) {
-			Tile *tile = map.getTile(i, j);
-			for (int k = 0; k < GameConstants::maxPlayers; ++k) {
-				tile->setExplored(k, !gs.getFogOfWar());
-				tile->setVisible(k, !gs.getFogOfWar());
-			}
-		}
-	}
-}
-
 //creates each faction looking at each faction name contained in GameSettings
 void World::initFactions() {
 	g_logger.logProgramEvent("Faction types", true);
@@ -1065,11 +1070,20 @@ void World::activateUnits(bool resumingGame) {
 //	}
 }
 
-void World::initExplorationState() {
+// init tile exploration state
+void World::initExplorationState(bool thisFactionOnly) {
 	for (int i = 0; i < map.getTileW(); ++i) {
 		for (int j = 0; j < map.getTileH(); ++j) {
-			map.getTile(i, j)->setVisible(thisTeamIndex, !fogOfWar);
-			map.getTile(i, j)->setExplored(thisTeamIndex, !shroudOfDarkness);
+			Tile *tile = map.getTile(i, j);
+			if (thisFactionOnly) {
+				tile->setVisible(thisTeamIndex, !fogOfWar);
+				tile->setExplored(thisTeamIndex, !shroudOfDarkness);
+			} else {
+				for (int k = 0; k < GameConstants::maxPlayers; ++k) {
+					tile->setVisible(k, !fogOfWar);
+					tile->setExplored(k, !shroudOfDarkness);
+				}
+			}
 		}
 	}
 }

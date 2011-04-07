@@ -276,7 +276,16 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 			loadOk = false;
 		}
 
-//		m_detector = parametersNode->getOptionalBoolValue("detector");
+		try { // detector
+			const XmlNode *detectNode = parametersNode->getOptionalChild("detector");
+			if (detectNode) {
+				m_detectorType = g_prototypeFactory.newDetectorType(this);
+				m_detectorType->load(dir, detectNode, techTree);
+			}
+		} catch (runtime_error e) {
+			g_logger.logXmlError(path, e.what());
+			loadOk = false;
+		}
 
 		try { // Resources stored
 			const XmlNode *resourcesStoredNode= parametersNode->getChild("resources-stored", 0, false);

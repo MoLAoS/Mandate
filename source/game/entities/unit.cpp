@@ -1071,7 +1071,7 @@ void Unit::born(bool reborn) {
 	}
 	StateChanged(this);
 	if (type->isDetector()) {
-		g_world.getCartographer()->detectorCreated(this);
+		g_world.getCartographer()->detectorActivated(this);
 	}
 	faction->onUnitActivated(type);
 }
@@ -1098,10 +1098,11 @@ void Unit::kill() {
 	assert(hp <= 0);
 	ULC_UNIT_LOG( this, "killed." );
 	hp = 0;
+	World &world = g_world;
 
 	if (!m_unitsToCarry.empty()) {
 		foreach (UnitIdList, it, m_unitsToCarry) {
-			Unit *unit = g_world.getUnit(*it);
+			Unit *unit = world.getUnit(*it);
 			unit->cancelCurrCommand();
 		}
 		m_unitsToCarry.clear();
@@ -1109,7 +1110,7 @@ void Unit::kill() {
 
 	if (!m_carriedUnits.empty()) {
 		foreach (UnitIdList, it, m_carriedUnits) {
-			Unit *unit = g_world.getUnit(*it);
+			Unit *unit = world.getUnit(*it);
 			int hp = unit->getHp();
 			unit->decHp(hp);
 		}
@@ -1137,14 +1138,14 @@ void Unit::kill() {
 	deadCount = Random(id).randRange(-256, 256); // random decay time
 
 	//REFACTOR use signal, send this to World/Cartographer/SimInterface
-	g_world.getCartographer()->removeUnitVisibility(this);
+	world.getCartographer()->removeUnitVisibility(this);
 	if (!isCarried()) { // if not in transport, clear cells
 		map->clearUnitCells(this, pos);
 	}
 	g_simInterface.doUpdateAnimOnDeath(this);
 	checkTargets(this); // hack... 'tracking' particle systems might reference this
 	if (type->isDetector()) {
-		g_world.getCartographer()->detectorDied(this);
+		world.getCartographer()->detectorDeactivated(this);
 	}
 }
 

@@ -29,6 +29,7 @@ using Glest::Entities::Unit;
 
 namespace Glest { namespace ProtoTypes {
 
+///@todo: ResourceModifierType ...
 /** resource amount modifier */
 typedef map<const ResourceType*, Modifier> ResModifierMap;
 
