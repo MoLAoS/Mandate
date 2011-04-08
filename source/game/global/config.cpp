@@ -86,6 +86,7 @@ Config::Config(const char* fileName) {
 	renderTestingShaders = p->getBool("RenderTestingShaders", false);
 	renderTextures3D = p->getBool("RenderTextures3D", true);
 	renderUseShaders = p->getBool("RenderUseShaders", true);
+	renderUseVBOs = p->getBool("RenderUseVBOs", false);
 	soundFactory = p->getString("SoundFactory", isWindows()?"DirectSound8":"OpenAL");
 	soundStaticBuffers = p->getInt("SoundStaticBuffers", 16);
 	soundStreamingBuffers = p->getInt("SoundStreamingBuffers", 5);
@@ -161,6 +162,7 @@ void Config::save(const char *path) {
 	p->setBool("RenderTestingShaders", renderTestingShaders);
 	p->setBool("RenderTextures3D", renderTextures3D);
 	p->setBool("RenderUseShaders", renderUseShaders);
+	p->setBool("RenderUseVBOs", renderUseVBOs);
 	p->setString("SoundFactory", soundFactory);
 	p->setInt("SoundStaticBuffers", soundStaticBuffers);
 	p->setInt("SoundStreamingBuffers", soundStreamingBuffers);

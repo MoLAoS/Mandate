@@ -81,6 +81,7 @@ private:
 	bool renderTestingShaders;
 	bool renderTextures3D;
 	bool renderUseShaders;
+	bool renderUseVBOs;
 	string soundFactory;
 	int soundStaticBuffers;
 	int soundStreamingBuffers;
@@ -164,6 +165,7 @@ public:
 	bool getRenderTestingShaders() const		{return renderTestingShaders;}
 	bool getRenderTextures3D() const			{return renderTextures3D;}
 	bool getRenderUseShaders() const			{return renderUseShaders;}
+	bool getRenderUseVBOs() const				{return renderUseVBOs;}
 	string getSoundFactory() const				{return soundFactory;}
 	int getSoundStaticBuffers() const			{return soundStaticBuffers;}
 	int getSoundStreamingBuffers() const		{return soundStreamingBuffers;}
@@ -229,6 +231,7 @@ public:
 	void setRenderTestingShaders(bool val)		{renderTestingShaders = val;}
 	void setRenderTextures3D(bool val)			{renderTextures3D = val;}
 	void setRenderUseShaders(bool val)			{renderUseShaders = val;}
+	void setRenderUseVBOs(bool val)				{renderUseVBOs = val;}
 	void setSoundFactory(string val)			{soundFactory = val;}
 	void setSoundStaticBuffers(int val)			{soundStaticBuffers = val;}
 	void setSoundStreamingBuffers(int val)		{soundStreamingBuffers = val;}

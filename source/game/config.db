@@ -42,7 +42,6 @@ renderFov					float	60.f			0.01f	360.f
 renderFpsMax				int		60				0		1000000
 renderGraphicsFactory		string	"OpenGL"
 renderInterpolationMethod	string	"SIMD"
-#renderInterpolateWithSIMD	bool	true
 renderLightsMax				int		1				0		8
 renderShadowAlpha			float	0.2f			0.f		1.f
 renderShadowFrameSkip		int		2
@@ -51,6 +50,7 @@ renderShadows				string	"Projected"
 #renderStencilBits			int		0
 renderTextures3D			bool	true
 renderUseShaders			bool	true
+renderUseVBOs				bool	false
 renderTestingShaders		bool	false
 renderModelTestShaders		string	"basic,bump_map"
 renderModelShader			string	"basic"
