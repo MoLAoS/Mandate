@@ -220,7 +220,13 @@ public:
 		this->z = v.z;
 	}
 
-	Vec3 &operator =(const Vec3<T> &v) {
+	template<typename S> explicit Vec3(const Vec4<S> &v) {
+		this->x = v.x;
+		this->y = v.y;
+		this->z = v.z;
+	}
+
+	Vec3& operator=(const Vec3<T> &v) {
 		x = v.x;
 		y = v.y;
 		z = v.z;

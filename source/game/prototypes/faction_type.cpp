@@ -106,34 +106,34 @@ bool FactionType::preLoadGlestimals(const string &dir, const TechTree *techTree)
 	return loadOk;
 }
 
-//load a faction, given a directory
+/// load a faction, given a directory @param ndx faction index, and hence id 
+/// @param dir path to faction directory @param techTree pointer to TechTree
 bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
-	Logger &logger = Logger::getInstance();
-	logger.logProgramEvent("Faction type: "+ dir, true);
 	m_id = ndx;
 	m_name = basename(dir);
-
+	Logger &logger = g_logger;
+	logger.logProgramEvent("Loading faction type: " + m_name, true);
 	bool loadOk = true;
 
-	//open xml file
-	string path = dir+"/"+m_name+".xml";
+	// 1. Open xml file
+	string path = dir + "/" + m_name + ".xml";
 	XmlTree xmlTree;
-	try { 
-		xmlTree.load(path); 
-	} catch (runtime_error e) { 
+	try {
+		xmlTree.load(path);
+	} catch (runtime_error e) {
 		g_logger.logXmlError(path, "File missing or wrongly named.");
 		return false; // bail
 	}
 	const XmlNode *factionNode;
-	try { 
-		factionNode = xmlTree.getRootNode(); 
-	} catch (runtime_error e) { 
+	try {
+		factionNode = xmlTree.getRootNode();
+	} catch (runtime_error e) {
 		g_logger.logXmlError(path, "File appears to lack contents.");
 		return false; // bail
 	}
-	//read subfaction list
-	const XmlNode *subfactionsNode = factionNode->getChild("subfactions", 0, false);
 
+	// 2. Read subfaction list
+	const XmlNode *subfactionsNode = factionNode->getChild("subfactions", 0, false);
 	if (subfactionsNode) {
 		for (int i = 0; i < subfactionsNode->getChildCount(); ++i) {
 			// can't have more subfactions than an int has bits
@@ -146,7 +146,7 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 
 	// progress : 0 - unitFileNames.size()
 
-	// b1) load units
+	// 3. Load units
 	for (int i = 0; i < unitTypes.size(); ++i) {
 		string str = dir + "/units/" + unitTypes[i]->getName();
 		if (unitTypes[i]->load(str, techTree, this)) {
@@ -157,6 +157,9 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 		logger.getProgramLog().unitLoaded();
 	}
 
+	// 4. Add BeLoadedCommandType to units that need them
+
+	// 4a. Discover which mobile unit types can be loaded(/housed) in other units
 	foreach_const (UnitTypes, uit, unitTypes) {
 		const UnitType *ut = *uit;
 		for (int i=0; i < ut->getCommandTypeCount<LoadCommandType>(); ++i) {
@@ -170,12 +173,12 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 		}
 
 	}
+	// 4b. Give mobile housable unit types a be-loaded command type
 	foreach (UnitTypeSet, it, loadableUnitTypes) {
 		(*it)->addBeLoadedCommand();
 	}
 
-
-	// b2) load upgrades
+	// 5. Load upgrades
 	for (int i = 0; i < upgradeTypes.size(); ++i) {
 		string str = dir + "/upgrades/" + upgradeTypes[i]->getName();
 		if (upgradeTypes[i]->load(str, techTree, this)) {
@@ -185,7 +188,7 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 		}
 	}
 
-	//read starting resources
+	// 6. Read starting resources
 	try {
 		const XmlNode *startingResourcesNode = factionNode->getChild("starting-resources");
 		startingResources.resize(startingResourcesNode->getChildCount());
@@ -205,7 +208,7 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 		loadOk = false;
 	}
 
-	//read starting units
+	// 7. Read starting units
 	try {
 		const XmlNode *startingUnitsNode = factionNode->getChild("starting-units");
 		for (int i = 0; i < startingUnitsNode->getChildCount(); ++i) {
@@ -224,7 +227,7 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 		loadOk = false;
 	}
 
-	//read music
+	// 8. Read music
 	try {
 		const XmlNode *musicNode= factionNode->getChild("music");
 		bool value = musicNode->getAttribute("value")->getBoolValue();
@@ -273,6 +276,7 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 		loadOk = false;
 	}
 
+	// 9. Load faction logo pixmaps
 	try {
 		const XmlNode *logoNode = factionNode->getOptionalChild("logo");
 		if (logoNode && logoNode->getBoolValue()) {
@@ -300,7 +304,9 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 		m_logoTeamColour = m_logoRgba = 0;
 	}
 
-	// notification of being attacked off screen
+	// 10. Notification sounds
+
+	// 10a. Notification of being attacked off screen
 	try {
 		const XmlNode *attackNoticeNode= factionNode->getChild("attack-notice", 0, false);
 		if (attackNoticeNode && attackNoticeNode->getAttribute("enabled")->getBoolValue()) {
@@ -322,8 +328,7 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 		g_logger.logXmlError(path, e.what());
 		loadOk = false;
 	}
-
-	// notification of visual contact with enemy off screen
+	// 10b. Notification of visual contact with enemy off screen
 	try {
 		const XmlNode *enemyNoticeNode= factionNode->getChild("enemy-notice", 0, false);
 		if (enemyNoticeNode && enemyNoticeNode->getAttribute("enabled")->getRestrictedValue() == "true") {

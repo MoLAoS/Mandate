@@ -115,6 +115,9 @@ private:
 
 	static ResourceTypes neededResources;
 
+private:
+	void buildLogoPixmap();
+
 public:
 	void init(const FactionType *factionType, ControlType control, string playerName, TechTree *techTree,
 		int factionIndex, int teamIndex, int startLocationIndex, int colourIndex,

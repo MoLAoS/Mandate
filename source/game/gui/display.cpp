@@ -144,7 +144,7 @@ Display::Display(UserInterface *ui, Vec2i pos)
 	// -loadmap doesn't have any faction
 	const Texture2D *logoTex = (g_world.getThisFaction()) ? g_world.getThisFaction()->getLogoTex() : 0;
 	if (logoTex) {
-		m_logo = addImageX(logoTex, Vec2i(3,0), Vec2i(192,192));
+		m_logo = addImageX(logoTex, Vec2i(getBorderLeft(), getBorderTop()), Vec2i(192,192));
 	}
 
 	m_selectedCommandIndex = invalidPos;
