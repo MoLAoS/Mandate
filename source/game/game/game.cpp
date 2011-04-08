@@ -657,7 +657,7 @@ void GameState::mouseMove(int x, int y, const MouseState &ms) {
 			if (moveVec.length() > 50) { /// @todo add to config if this is staying - hailstone 11Feb2011
 				moveVec.normalize();
 				g_program.getMouseCursor().setAppearance(MouseAppearance::MOVE_FREE);
-				gameCamera.setMoveZ(moveVec.y * scrollSpeed, true);
+				gameCamera.setMoveZ(moveVec.y * -scrollSpeed, true);
 				gameCamera.setMoveX(moveVec.x * scrollSpeed, true);
 			}
 		}
@@ -665,9 +665,9 @@ void GameState::mouseMove(int x, int y, const MouseState &ms) {
 		if (!noInput) {
 			//main window
 			if (y < 10) {
-				gameCamera.setMoveZ(-scrollSpeed, true);
-			} else if (y > g_metrics.getScreenH() - 10) {
 				gameCamera.setMoveZ(scrollSpeed, true);
+			} else if (y > g_metrics.getScreenH() - 10) {
+				gameCamera.setMoveZ(-scrollSpeed, true);
 			} else {
 				gameCamera.setMoveZ(0, true);
 			}
