@@ -332,10 +332,13 @@ Widget* WidgetWindow::findCommonAncestor(Widget* widget1, Widget* widget2) {
 }
 
 void WidgetWindow::doMouseInto(Widget* widget) {
+	assert(widget != 0);
+	assert(!mouseOverStack.empty());
 	if (widget != mouseOverStack.top()) {
 		Widget* ancestor = findCommonAncestor(widget, mouseOverStack.top());
-		RUNTIME_CHECK(ancestor != 0);
+		assert(ancestor != 0);
 		unwindMouseOverStack(ancestor);
+		assert(!mouseOverStack.empty());
 		std::stack<Widget*> tmpStack;
 		while (widget != ancestor) {
 			tmpStack.push(widget);
