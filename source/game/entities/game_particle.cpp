@@ -336,9 +336,7 @@ void Projectile::setPath(Vec3f startPos, Vec3f endPos, int frames) {
 	if (frames  == -1) {
 		Vec3f flatVector = zVector * trajectorySpeed;
 		Vec3f traj = endPos - startPos;
-		assert(traj.length() > 0.5f);
 		frames = int((traj.length() - 0.5f) / flatVector.length());
-		// just in case
 		frames = clamp(frames, 1, 255); // as dictated by Glest::Net::ProjectileUpdate (maybe give more resolution ?)
 	}
 
