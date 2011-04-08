@@ -344,6 +344,7 @@ bool Ai::blindAttack(Vec2i &out_pos) {
 			out_pos = it->first;
 			return true;
 		}
+		++i;
 	}
 	assert(false);
 	return false;
