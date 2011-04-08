@@ -57,6 +57,7 @@ if(DEFINED GAE_WINDEPS AND WIN32)
 else(DEFINED GAE_WINDEPS AND WIN32)
 	if (WIN32)
 		set (GAE_WINDEPS "" CACHE PATH "Windows dependencies folder")
+		message("Warning: GAE_WINDEPS is not set, delete cache and set GAE_WINDEPS.")
 	endif(WIN32)
 endif(DEFINED GAE_WINDEPS AND WIN32)
 
@@ -87,13 +88,15 @@ option(GAE_DEBUG_EDITION "Enable debug edition extensions.")
 # Option: leak dumping
 option(GAE_LEAK_DUMP "Enable leak dumping, for detecting memory leaks.")
 
-# Option: mad synchronisation checking (for network play)
-option(GAE_SYNC_TEST "Enable mass synchronisation checks, for detecting multiplayer sync issues.")
-
 # Option: pre-compiled headers (MSVC only atm)
 if (MSVC)
 	option(GAE_USE_PRECOMPILED_HDR "Enable pre-compiled headers." ON)
 endif (MSVC)
+
+# Option: include the XAudio2 SoundPlayer
+if (WIN32)
+	option(GAE_USE_XAUDIO2 "Include XAudio2 SoundPlayer" OFF)
+endif(WIN32)
 
 if(NOT WIN32)
 	try_compile(HAVE_SSE2 ${CMAKE_BINARY_DIR}/test_sse ${CMAKE_SOURCE_DIR}/cmake/tests/sse.cpp COMPILE_DEFINITIONS "-msse2")

@@ -33,7 +33,9 @@
 #	if defined (USE_SDL)
 #		error USE_SDL is not compatible with WIN32 or WIN64
 #	endif
-#	include <xaudio2.h>
+#	if _GAE_USE_XAUDIO2_
+#		include <xaudio2.h>
+#	endif
 #	define NOMINMAX
 #	include <windows.h>
 #	include <crtdbg.h>

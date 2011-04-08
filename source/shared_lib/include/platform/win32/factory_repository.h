@@ -19,7 +19,11 @@
 
 #include "graphics_factory_gl.h"
 #include "sound_factory_ds8.h"
-#include "sound_factory_xa2.h"
+
+#if _GAE_USE_XAUDIO2_
+#	include "sound_factory_xa2.h"
+	using Shared::Sound::Xa2::SoundFactoryXa2;
+#endif
 
 using std::string;
 
@@ -27,7 +31,6 @@ using Shared::Graphics::GraphicsFactory;
 using Shared::Sound::SoundFactory;
 using Shared::Graphics::Gl::GraphicsFactoryGl;
 using Shared::Sound::Ds8::SoundFactoryDs8;
-using Shared::Sound::Xa2::SoundFactoryXa2;
 
 namespace Shared { namespace Platform {
 
@@ -44,7 +47,9 @@ private:
 private:
 	GraphicsFactoryGl graphicsFactoryGl;
 	SoundFactoryDs8 soundFactoryDs8;
-	SoundFactoryXa2 soundFactoryXa2;
+#	if _GAE_USE_XAUDIO2_
+		SoundFactoryXa2 soundFactoryXa2;
+#	endif
 
 public:
 	static FactoryRepository &getInstance();

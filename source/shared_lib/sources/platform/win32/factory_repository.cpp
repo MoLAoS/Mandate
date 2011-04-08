@@ -36,8 +36,14 @@ GraphicsFactory *FactoryRepository::getGraphicsFactory(const string &name){
 SoundFactory *FactoryRepository::getSoundFactory(const string &name){
 	if (name == "DirectSound8") {
 		return &soundFactoryDs8;
+
+#	if _GAE_USE_XAUDIO2_
+
 	} else if (name == "XAudio2") {
 		return &soundFactoryXa2;
+
+#	endif
+
 	}
 	throw runtime_error("Unknown sound factory: " + name);
 }

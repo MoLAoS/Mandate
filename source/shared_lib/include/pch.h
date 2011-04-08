@@ -39,7 +39,9 @@
 #include <malloc.h>
 #include <stdlib.h>
 //----
-#	include <xaudio2.h>
+#	if _GAE_USE_XAUDIO2_
+#		include <xaudio2.h>
+#	endif
 #	include <windows.h>
 #	include <crtdbg.h>
 #else

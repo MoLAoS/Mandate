@@ -14,7 +14,11 @@ set(folders
 )
 
 if(WIN32)
-	list(APPEND folders platform/win32 sound/ds8 sound/xa2)
+	list(APPEND folders platform/win32 sound/ds8)
+	if (GAE_USE_XAUDIO2)
+		message("Using XAudio.")
+		list(APPEND folders platform/win32 sound/xa2)
+	endif (GAE_USE_XAUDIO2)
 else(WIN32)
 	list(APPEND folders platform/sdl sound/openal)
 endif(WIN32)

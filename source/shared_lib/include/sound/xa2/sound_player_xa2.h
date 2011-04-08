@@ -50,7 +50,7 @@ protected:
 };
 
 // =====================================================
-//	class StaticSoundBuffer
+//	class StaticXaVoice
 // =====================================================
 
 class StaticXaVoice : public XaVoice {
@@ -62,7 +62,7 @@ public:
 };
 
 // =====================================================
-//	class StrSoundBuffer
+//	class StreamXaVoice
 // =====================================================
 
 class StreamXaVoice : public XaVoice {
@@ -101,6 +101,13 @@ private:
 };
 
 class SoundPlayerXa2;
+
+// =====================================================
+//	class SoundCallback
+//
+///	Helper object, handles callbacks from XAudio2 and communicates 
+/// the information to the SoundPlayer using thread safe methods.
+// =====================================================
 
 class SoundCallback : public IXAudio2VoiceCallback {
 private:
