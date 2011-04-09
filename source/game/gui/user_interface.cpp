@@ -891,7 +891,7 @@ void UserInterface::mouseDownDisplayUnitSkills(int posDisplay) {
 				invalidatePosObjWorld();
 				giveOneClickOrders();
 			} else {
-				if (activeCommandType && activeCommandType->getProducedCount() > 1) {
+				if (activeCommandType && activeCommandType->getProducedCount() > 0) {
 					assert(selection.isUniform());
 					m_selectingSecond = true;
 				} else {

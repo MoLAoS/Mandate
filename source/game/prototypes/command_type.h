@@ -585,16 +585,17 @@ public:
 
 class UpgradeCommandType: public CommandType {
 private:
-	const UpgradeSkillType* m_upgradeSkillType;
-	const UpgradeType*		m_producedUpgrade;
-	SoundContainer			m_finishedSounds;
+	const UpgradeSkillType*     m_upgradeSkillType;
+	vector<const UpgradeType*>  m_producedUpgrades;
+	SoundContainer			    m_finishedSounds;
+	map<string, string>		    m_tipKeys;
 
 public:
-	UpgradeCommandType() : CommandType("Upgrade", Clicks::ONE, true), m_upgradeSkillType(0), m_producedUpgrade(0)  {}
+	UpgradeCommandType() : CommandType("Upgrade", Clicks::ONE, true), m_upgradeSkillType(0) { }
 	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual string getReqDesc(const Faction *f) const;
-	virtual ProdTypePtr getProduced() const;
+	//virtual ProdTypePtr getProduced() const;
 	virtual void getDesc(string &str, const Unit *unit) const;
 	virtual void subDesc(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const override;
 	virtual void descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt = 0) const override;
@@ -602,12 +603,21 @@ public:
 	virtual void update(Unit *unit) const;
 	virtual void start(Unit *unit, Command &command) const;
 
-	//get
-	virtual int getProducedCount() const	{return 1;}
-	virtual ProdTypePtr getProduced(int i) const	{assert(!i); return m_producedUpgrade;}
+	// get
+	virtual int getProducedCount() const	{return m_producedUpgrades.size();}
+	virtual ProdTypePtr getProduced(int i) const {
+		ASSERT_RANGE(i, m_producedUpgrades.size());
+		return m_producedUpgrades[i];
+	}
 
 	const UpgradeSkillType *getUpgradeSkillType() const	{return m_upgradeSkillType;}
-	const UpgradeType *getProducedUpgrade() const		{return m_producedUpgrade;}
+
+	const UpgradeType *getProducedUpgrade(int i) const		{return m_producedUpgrades[i];}
+
+	string getTipKey(const string &name) const  {
+		map<string,string>::const_iterator it = m_tipKeys.find(name);
+		return it->second;
+	}
 
 	virtual CommandClass getClass() const { return typeClass(); }
 	static CommandClass typeClass() { return CommandClass::UPGRADE; }

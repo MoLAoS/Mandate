@@ -1027,11 +1027,10 @@ void AiRuleUpgrade::upgradeGeneric(const UpgradeTask *upgt) {
 	UpgradeTypes upgrades;
 	for (int i=0; i < aiInterface->getMyUnitCount(); ++i) { // foreach unit
 		const UnitType *ut = aiInterface->getMyUnit(i)->getType();
-		for (int j=0; j < ut->getCommandTypeCount(); ++j) { // for each command
-			const CommandType *ct = ut->getCommandType(j);
-			if (ct->getClass() == CommandClass::UPGRADE) { // if the command is upgrade
-				const UpgradeCommandType *upgct = static_cast<const UpgradeCommandType*>(ct);
-				const UpgradeType *upgrade = upgct->getProducedUpgrade();
+		for (int j=0; j < ut->getCommandTypeCount<UpgradeCommandType>(); ++j) { // for each upgrade command
+			const UpgradeCommandType *upgct = ut->getCommandType<UpgradeCommandType>(j);
+			for (int k=0; k < upgct->getProducedCount(); ++k) {
+				const UpgradeType *upgrade = upgct->getProducedUpgrade(k);
 				if (aiInterface->reqsOk(upgct)) { ///@todo: does this weed out already/in-progress ?
 					upgrades.push_back(upgrade);
 				}
@@ -1061,15 +1060,12 @@ void AiRuleUpgrade::upgradeSpecific(const UpgradeTask *upgt) {
 		}
 		// for each unit
 		for (int i=0; i < aiInterface->getMyUnitCount(); ++i) {
-			// for each command
+			// for each upgrade command
 			const UnitType *ut = aiInterface->getMyUnit(i)->getType();
-			for (int j=0; j < ut->getCommandTypeCount(); ++j) {
-				const CommandType *ct = ut->getCommandType(j);
-
-				// if the command is upgrade
-				if (ct->getClass() == CommandClass::UPGRADE) {
-					const UpgradeCommandType *uct = static_cast<const UpgradeCommandType*>(ct);
-					const UpgradeType *producedUpgrade = uct->getProducedUpgrade();
+			for (int j=0; j < ut->getCommandTypeCount<UpgradeCommandType>(); ++j) {
+				const UpgradeCommandType *uct = ut->getCommandType<UpgradeCommandType>(j);
+				for (int k=0; k < uct->getProducedCount(); ++k) {
+					const UpgradeType *producedUpgrade = uct->getProducedUpgrade(k);
 
 					// if upgrades match
 					if (producedUpgrade == upgt->getUpgradeType()) {
@@ -1077,13 +1073,12 @@ void AiRuleUpgrade::upgradeSpecific(const UpgradeTask *upgt) {
 							AI_LOG( RESEARCH, 1, "AiRuleUpgrade::upgradeSpecific: issueing command to unit "
 								<< aiInterface->getMyUnit(i)->getId() << " to research "
 								<< upgt->getUpgradeType()->getName() );
-							aiInterface->giveCommand(i, uct);
+							aiInterface->giveCommand(i, uct, invalidPos, producedUpgrade);
 						}
 					}
 				}
 			}
 		}
-
 	}
 }
 

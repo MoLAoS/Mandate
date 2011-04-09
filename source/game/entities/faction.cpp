@@ -387,9 +387,10 @@ bool Faction::reqsOk(const CommandType *ct, const ProducibleType *pt) const {
 		return false;
 	}
 
-	if (ct->getClass() == CommandClass::UPGRADE) {
+	if (ct->getClass() == CommandClass::UPGRADE && pt) {
 		const UpgradeCommandType *uct = static_cast<const UpgradeCommandType*>(ct);
-		if (upgradeManager.isUpgradingOrUpgraded(uct->getProducedUpgrade())) {
+		const UpgradeType *ut = static_cast<const UpgradeType*>(pt);
+		if (upgradeManager.isUpgradingOrUpgraded(ut)) {
 			return false;
 		}
 	}

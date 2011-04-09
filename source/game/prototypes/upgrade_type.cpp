@@ -70,7 +70,7 @@ bool UpgradeType::loadNewStyle(const XmlNode *node, const string &dir, const Tec
 							   const FactionType *factionType) {
 	bool loadOk = true;
 	m_enhancements.resize(node->getChildCount());
-	m_unitsAffected.resize(node->getChildCount());
+	m_unitsAffected.resize(node->getChildCount()); // one vector per enhancement
 	for (int i=0; i < m_enhancements.size(); ++i) {
 		const XmlNode *enhanceNode, *enhancementNode;
 		try {
@@ -133,6 +133,8 @@ bool UpgradeType::loadOldStyle(const XmlNode *node, const string &dir, const Tec
 	m_enhancements.resize(1);
 	m_unitsAffected.resize(1);
 
+	///@todo deprecate
+
 	// values
 	// maintain backward compatibility using legacy format
 	EnhancementType &e = m_enhancements[0].m_enhancement;
@@ -190,7 +192,7 @@ bool UpgradeType::load(const string &dir, const TechTree *techTree, const Factio
 		return false;
 	}
 
-	// ProducibleType parameters (unit/upgrade reqs and resource reqs)
+	// ProducibleType parameters (unit/upgrade reqs, resource reqs, prod time ...)
 	if (!ProducibleType::load(upgradeNode, dir, techTree, factionType)) {
 		loadOk = false;
 	}

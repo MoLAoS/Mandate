@@ -471,10 +471,11 @@ void Ai::updateStatistics() {
 		// upgrade commands
 		for (int i=0; i < uti->first->getCommandTypeCount<UpgradeCommandType>(); ++i) {
 			const UpgradeCommandType *uct = uti->first->getCommandType<UpgradeCommandType>(i);
-			const UpgradeType *upgrade = uct->getProducedUpgrade();
-
-			if (aiInterface->reqsOk(uct) && aiInterface->reqsOk(upgrade)) {
-				availableUpgrades.push_back(upgrade);
+			for (int j=0; j < uct->getProducedCount(); ++j) {
+				const UpgradeType *upgrade = uct->getProducedUpgrade(j);
+				if (aiInterface->reqsOk(uct) && aiInterface->reqsOk(upgrade)) {
+					availableUpgrades.push_back(upgrade);
+				}
 			}
 		}
 		if (uti->first->hasSkillClass(SkillClass::BE_BUILT)) {

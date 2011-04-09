@@ -65,7 +65,7 @@ bool CommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, 
 	} else {
 		m_tipKey = "";
 	}
-	XmlAttribute *tipHeaderAttrib = nameNode->getAttribute("tip-header", false);
+	XmlAttribute *tipHeaderAttrib = nameNode->getAttribute("sub-header", false);
 	if (tipHeaderAttrib) {
 		m_tipHeaderKey = tipHeaderAttrib->getRestrictedValue();
 	} else {
@@ -204,36 +204,30 @@ void CommandType::replaceDeadReferences(Command &command) const {
 }
 
 void CommandType::describe(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const {
+	Lang lang = g_lang;
 	string factionName = unit->getFaction()->getType()->getName();
-
-	string commandName = g_lang.getTranslatedFactionName(factionName, getName());
-
-	string tip = (pt == 0)
-				? g_lang.getFactionString(factionName, getTipKey())
-				: g_lang.getFactionString(factionName, getTipKey(pt->getName()));
-
-	if (pt && getProducedCount() > 1) {
-		string headerKey = getTipHeader();
-		if (!headerKey.empty()) {
-			string rawHeader = g_lang.getTranslatedFactionName(factionName, headerKey);
-			if (headerKey != rawHeader) {
-				string::size_type p = rawHeader.find("%s");
-				if (p != string::npos) {
-					string prodName = g_lang.getTranslatedFactionName(factionName, pt->getName());
-					if (prodName == pt->getName()) {
-						prodName = formatString(prodName);
-					}
-					rawHeader.replace(p, 2, prodName);
-				}
-				commandName = rawHeader;
-			}
+	string commandName, tip, prodName;
+	if (!lang.lookUp(getName(), factionName, commandName)) {
+		commandName = formatString(getName());
+	}
+	if (pt == 0) {
+		lang.lookUp(getTipKey(), factionName, tip);
+	} else {
+		if (!lang.lookUp(pt->getName(), factionName, prodName)) {
+			prodName = formatString(pt->getName());
 		}
-		
+		assert(getProducedCount() > 0);
+		lang.lookUp(getTipKey(pt->getName()), factionName, tip);
+		string header;
+		if (lang.lookUp(getTipHeader(), factionName, prodName, header)) {
+			commandName = header;
+		}
 	}
 	callback->setHeader(commandName);
-	callback->setTipText(tip);
-
-	if (!pt && getProducedCount() == 1) {
+	if (!tip.empty()) {
+		callback->setTipText(tip);
+	}
+	if (!pt && getProducedCount() == 1 && getClicks() == Clicks::ONE) {
 		pt = getProduced(0);
 	}
 
@@ -498,6 +492,7 @@ bool ProduceCommandType::load(const XmlNode *n, const string &dir, const TechTre
 			g_logger.logXmlError(dir, e.what ());
 			loadOk = false;
 		}
+		clicks = Clicks::ONE;
 	} else {
 		try {
 			const XmlNode *un = n->getChild("produced-units");
@@ -520,6 +515,7 @@ bool ProduceCommandType::load(const XmlNode *n, const string &dir, const TechTre
 			g_logger.logXmlError(dir, e.what ());
 			loadOk = false;
 		}
+		clicks = Clicks::TWO;
 	}
 	// finished sound
 	try {
@@ -779,7 +775,7 @@ void GenerateCommandType::update(Unit *unit) const {
 bool UpgradeCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft) {
 	bool loadOk = CommandType::load(n, dir, tt, ft);
 
-	//upgrade
+	// upgrade skill
 	try {
 		string skillName = n->getChild("upgrade-skill")->getAttribute("value")->getRestrictedValue();
 		m_upgradeSkillType = static_cast<const UpgradeSkillType*>(unitType->getSkillType(skillName, SkillClass::UPGRADE));
@@ -787,9 +783,30 @@ bool UpgradeCommandType::load(const XmlNode *n, const string &dir, const TechTre
 		g_logger.logXmlError(dir, e.what ());
 		loadOk = false;
 	}
+	// upgrade(s)
 	try {
-		string producedUpgradeName = n->getChild("produced-upgrade")->getAttribute("name")->getRestrictedValue();
-		m_producedUpgrade = ft->getUpgradeType(producedUpgradeName);
+		const XmlNode *node = n->getChild("produced-upgrade", 0, false);
+		if (node) {
+			string producedUpgradeName = node->getAttribute("name")->getRestrictedValue();
+			m_producedUpgrades.push_back(ft->getUpgradeType(producedUpgradeName));
+			clicks = Clicks::ONE;
+		} else {
+			node = n->getChild("produced-upgrades");
+			for (int i=0; i < node->getChildCount(); ++i) {
+				const XmlNode *upgradeNode = node->getChild(i);
+				if (upgradeNode->getName() != "upgrade") {
+					continue;
+				}
+				string name = upgradeNode->getRestrictedAttribute("name");
+				m_producedUpgrades.push_back(ft->getUpgradeType(name));
+				try {
+					m_tipKeys[name] = upgradeNode->getRestrictedAttribute("tip");
+				} catch (runtime_error &e) {
+					m_tipKeys[name] = "";
+				}
+			}
+			clicks = Clicks::TWO;
+		}
 	} catch (runtime_error e) {
 		g_logger.logXmlError(dir, e.what ());
 		loadOk = false;
@@ -816,62 +833,77 @@ bool UpgradeCommandType::load(const XmlNode *n, const string &dir, const TechTre
 
 void UpgradeCommandType::getDesc(string &str, const Unit *unit) const {
 	m_upgradeSkillType->getDesc(str, unit);
-	str += "\n" + getProducedUpgrade()->getDesc(unit->getFaction());
+	if (clicks == Clicks::ONE) {
+		str += "\n" + getProducedUpgrade(0)->getDesc(unit->getFaction());
+	}
 }
 
 void UpgradeCommandType::doChecksum(Checksum &checksum) const {
 	CommandType::doChecksum(checksum);
 	checksum.add(m_upgradeSkillType->getName());
-	checksum.add(m_producedUpgrade->getName());
+	foreach_const (vector<const UpgradeType*>, it, m_producedUpgrades) {
+		checksum.add((*it)->getName());
+	}
 }
 
 string UpgradeCommandType::getReqDesc(const Faction *f) const {
-	return RequirableType::getReqDesc(f)
-		+ "\n" + getProducedUpgrade()->getReqDesc(f);
+	string res = RequirableType::getReqDesc(f);
+	if (clicks == Clicks::ONE) {
+		res += "\n" + getProducedUpgrade(0)->getReqDesc(f);
+	}
+	return res;
 }
+
 
 void UpgradeCommandType::descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const {
 	string msg;
 	m_upgradeSkillType->getDesc(msg, unit);
 	callback->addElement(msg);
-	//if (!pt) {
-	//	string msg = "\n" + g_lang.get("ProdSpeed") + ": " + intToStr(unit->getSpeed(m_produceSkillType));
-	//	callback->addElement(msg);
-	//} else {
-	//	// do the time-to-produce calc... 
-	//	int framesPerCycle = int(floorf((1.f / (float(unit->getSpeed(m_produceSkillType)) / 4000.f)) + 1.f));
-	//	int timeToBuild = pt->getProductionTime() * framesPerCycle / 40;
-	//	string msg = "\n" + g_lang.get("TimeToBuild") + ": " + intToStr(timeToBuild);
-	//}
+	msg = "";
+	if (!pt) {
+		m_upgradeSkillType->getDesc(msg, unit);
+	} else {
+		// do the time-to-produce calc... 
+		int framesPerCycle = int(floorf((1.f / (float(unit->getSpeed(m_upgradeSkillType)) / 4000.f)) + 1.f));
+		int timeToUpgrade = pt->getProductionTime() * framesPerCycle / 40;
+		msg = "\n" + g_lang.get("TimeToResearch") + ": " + intToStr(timeToUpgrade);
+	}
+	callback->addElement(msg);
 }
 
 void UpgradeCommandType::subDesc(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const {
-	///@todo implement multi-tier upgrade, implement this.
-	assert(pt);
-}
+	if (!pt) {
+		Lang &lang = g_lang;
+		const string factionName = unit->getFaction()->getType()->getName();
+		callback->addElement("\n" + g_lang.get("Upgrades") + ":");
+		foreach_const (vector<const UpgradeType*>, it, m_producedUpgrades) {
+			callback->addItem(*it, lang.getTranslatedFactionName(factionName, (*it)->getName()));
+		}
+	} else {
 
-ProdTypePtr UpgradeCommandType::getProduced() const {
-	return m_producedUpgrade;
+	}
 }
 
 void UpgradeCommandType::update(Unit *unit) const {
 	_PROFILE_COMMAND_UPDATE();
 	Command *command = unit->getCurrCommand();
+	const UpgradeType *upgrade = static_cast<const UpgradeType*>(command->getProdType());
 	Faction *faction = unit->getFaction();
 	assert(command->getType() == this);
+	assert(upgrade);
 
 	if (unit->getCurrSkill() != m_upgradeSkillType) {
 		//if not producing
 		unit->setCurrSkill(m_upgradeSkillType);
-		faction->checkAdvanceSubfaction(m_producedUpgrade, false);
+		faction->checkAdvanceSubfaction(upgrade, false);
 	} else {
 		//if producing
 		unit->update2();
-		if (unit->getProgress2() >= m_producedUpgrade->getProductionTime()) {
+		if (unit->getProgress2() >= upgrade->getProductionTime()) {
 			unit->finishCommand();
 			unit->setCurrSkill(SkillClass::STOP);
-			faction->finishUpgrade(m_producedUpgrade);
-			faction->checkAdvanceSubfaction(m_producedUpgrade, true);
+			faction->finishUpgrade(upgrade);
+			faction->checkAdvanceSubfaction(upgrade, true);
 			if (unit->getFactionIndex() == g_world.getThisFactionIndex()) {
 				RUNTIME_CHECK(!unit->isCarried());
 				g_soundRenderer.playFx(getFinishedSound(), unit->getCurrVector(), 
@@ -882,23 +914,27 @@ void UpgradeCommandType::update(Unit *unit) const {
 }
 
 void UpgradeCommandType::start(Unit *unit, Command &command) const {
-	command.setProdType(getProducedUpgrade());
+
+	// ???
+	//command.setProdType(getProducedUpgrade());
+
 }
 
 void UpgradeCommandType::apply(Faction *faction, const Command &command) const {
 	CommandType::apply(faction, command);
 
-	faction->startUpgrade(getProducedUpgrade());
+	faction->startUpgrade(static_cast<const UpgradeType*>(command.getProdType()));
 }
 
 void UpgradeCommandType::undo(Unit *unit, const Command &command) const {
 	CommandType::undo(unit, command);
 	// upgrade command cancel from list
-	unit->getFaction()->cancelUpgrade(getProducedUpgrade());
+	unit->getFaction()->cancelUpgrade(static_cast<const UpgradeType*>(command.getProdType()));
 }
 
 CommandResult UpgradeCommandType::check(const Unit *unit, const Command &command) const {
-	if (unit->getFaction()->getUpgradeManager()->isUpgradingOrUpgraded(getProducedUpgrade())) {
+	const UpgradeType *upgrade = static_cast<const UpgradeType*>(command.getProdType());
+	if (unit->getFaction()->getUpgradeManager()->isUpgradingOrUpgraded(upgrade)) {
 		return CommandResult::FAIL_UNDEFINED;
 	}
 	return CommandResult::SUCCESS;

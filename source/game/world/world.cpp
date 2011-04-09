@@ -880,12 +880,11 @@ int World::giveUpgradeCommand(int unitId, const string &upgradeName) {
 	}
 	const UnitType *ut= unit->getType();
 	//Search for a command that can produce the upgrade
-	for(int i= 0; i<ut->getCommandTypeCount(); ++i) {
-		const CommandType* ct= ut->getCommandType(i);
-		if (ct->getClass()==CommandClass::UPGRADE) {
-			const UpgradeCommandType *uct= static_cast<const UpgradeCommandType*>(ct);
-			if (uct->getProducedUpgrade() == upgrd) {
-				CommandResult cmdRes = unit->giveCommand(newCommand(uct, CommandFlags()));
+	for(int i= 0; i < ut->getCommandTypeCount<UpgradeCommandType>(); ++i) {
+		const UpgradeCommandType* uct = ut->getCommandType<UpgradeCommandType>(i);
+		for (int i=0; i < uct->getProducedCount(); ++i) {
+			if (uct->getProducedUpgrade(i) == upgrd) {
+				CommandResult cmdRes = unit->giveCommand(newCommand(uct, CommandFlags(), invalidPos, upgrd, CardinalDir::NORTH));
 				return cmdRes;
 			}
 		}
