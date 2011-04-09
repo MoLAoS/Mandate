@@ -153,6 +153,17 @@ bool UpgradeManager::isUpgrading(const UpgradeType *upgradeType) const{
 	return false;
 }
 
+void UpgradeManager::addPointBoosts(Unit *unit) const {
+	foreach_const (Upgrades, it, upgrades) {
+		if ((*it)->getFactionIndex() == unit->getFactionIndex()
+		&& (*it)->getType()->isAffected(unit->getType())
+		&& (*it)->getState() == UpgradeState::UPGRADED) {
+			const EnhancementType &e = *(*it)->getType()->getEnhancement(unit->getType());
+			unit->doRegen(e.getHpBoost(), e.getEpBoost());
+		}
+	}
+}
+
 void UpgradeManager::computeTotalUpgrade(const Unit *unit, EnhancementType *totalUpgrade) const{
 	totalUpgrade->reset();
 	foreach_const (Upgrades, it, upgrades) {

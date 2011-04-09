@@ -103,6 +103,7 @@ public:
 	bool isUpgrading(const UpgradeType *upgradeType) const;
 	bool isUpgradingOrUpgraded(const UpgradeType *upgradeType) const;
 	void computeTotalUpgrade(const Unit *unit, EnhancementType *totalUpgrade) const;
+	void addPointBoosts(Unit *unit) const;
 
 	void load(const XmlNode *node, Faction *f);
 	void save(XmlNode *node) const;

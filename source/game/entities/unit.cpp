@@ -1068,6 +1068,7 @@ void Unit::born(bool reborn) {
 		faction->checkAdvanceSubfaction(type, true);
 		g_world.getCartographer()->applyUnitVisibility(this);
 		g_simInterface.doUnitBorn(this);
+		faction->applyUpgradeBoosts(this);
 	}
 	StateChanged(this);
 	if (type->isDetector()) {

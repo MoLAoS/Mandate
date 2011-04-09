@@ -169,6 +169,8 @@ public:
 	void cancelUpgrade(const UpgradeType *ut);
 	void finishUpgrade(const UpgradeType *ut);
 
+	void applyUpgradeBoosts(Unit *unit) { upgradeManager.addPointBoosts(unit); }
+
 	// cost application
 	bool applyCosts(const ProducibleType *p);
 	bool applyCosts(const ProducibleType *p, int discount);
