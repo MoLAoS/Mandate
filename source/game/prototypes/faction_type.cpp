@@ -73,7 +73,7 @@ bool FactionType::preLoad(const string &dir, const TechTree *techTree) {
 		findAll(upgradesPath, upgradeFilenames); 
 	} catch (runtime_error e) {
 		g_logger.logError(e.what());
-		loadOk = false;
+		// allow no upgrades
 	}
 	for (int i = 0; i < upgradeFilenames.size(); ++i) {
 		string path = dir + "/upgrades/" + upgradeFilenames[i];
