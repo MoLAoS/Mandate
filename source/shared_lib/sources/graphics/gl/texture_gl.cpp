@@ -199,7 +199,7 @@ void Texture2DGl::init(Filter filter, int maxAnisotropy){
 		if (mipmap) {
 			GLuint glFilter = filter == fTrilinear ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR_MIPMAP_NEAREST;
 
-			//build mipmaps
+			// build mipmaps
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, glFilter);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
@@ -217,7 +217,7 @@ void Texture2DGl::init(Filter filter, int maxAnisotropy){
 				throw runtime_error(ss.str());
 			}
 		} else {
-			//build single texture
+			// build single texture
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
@@ -228,7 +228,12 @@ void Texture2DGl::init(Filter filter, int maxAnisotropy){
 
 			GLint error = glGetError();
 			if (error != GL_NO_ERROR){
-				throw runtime_error("Error creating texture 2D");
+				string msg = (char*)gluErrorString(error);
+				stringstream ss;
+				ss	<< "Error sending pixmap data to GL: " << msg << endl 
+					<< "Format: " << format << ", components: " << pixmap.getComponents() << endl
+					<< "Width: " << pixmap.getW() << ", height: " << pixmap.getH() << endl;
+				throw runtime_error(ss.str());
 			}
 		}
 		inited= true;
