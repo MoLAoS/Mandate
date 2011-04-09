@@ -44,7 +44,7 @@ using namespace Shared::Graphics::Gl;
 namespace Glest { namespace Main {
 
 // Program widget event logging...
-#define ENABLE_WIDGET_LOGGING 0
+#define ENABLE_WIDGET_LOGGING 1
 // widget logging still needs to be turned on (in widgets_base.h), this just disables 
 // the logging macros in this file.
 #if !ENABLE_WIDGET_LOGGING
