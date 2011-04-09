@@ -346,12 +346,9 @@ void Cartographer::detectorActivated(Unit *unit) {
 	assert(dt);
 	Vec2i tilepos = Map::toTileCoords(unit->getCenteredPos());
 	int radius = unit->getSight() / 2 + 1;
-	DetectorType::Groups::const_iterator it = dt->groups_begin();
-	DetectorType::Groups::const_iterator itEnd = dt->groups_end();
-	while (it != itEnd) {
-		TypeMap<int> *iMap = m_detectorMaps[unit->getTeam()][*it];
-		incrementMap(iMap, tilepos, radius);
-		++it;
+	for (int i=0; i < dt->getGroupCount(); ++i) {
+		TypeMap<int> *iMap = m_detectorMaps[unit->getTeam()][dt->getGroup(i)];
+		incrementMap(iMap, tilepos, radius);		
 	}
 }
 
@@ -362,13 +359,10 @@ void Cartographer::detectorMoved(Unit *unit, Vec2i oldPos) {
 	Vec2i newTilePos = Map::toTileCoords(unit->getCenteredPos());
 	assert(oldTilePos != newTilePos); // doesn't need to be true, but should be.
 	int radius = unit->getSight() / 2 + 1;
-	DetectorType::Groups::const_iterator it = dt->groups_begin();
-	DetectorType::Groups::const_iterator itEnd = dt->groups_end();
-	while (it != itEnd) {
-		TypeMap<int> *iMap = m_detectorMaps[unit->getTeam()][*it];
+	for (int i=0; i < dt->getGroupCount(); ++i) {
+		TypeMap<int> *iMap = m_detectorMaps[unit->getTeam()][dt->getGroup(i)];
 		deccrementMap(iMap, oldTilePos, radius);
 		incrementMap(iMap, newTilePos, radius);
-		++it;
 	}
 }
 
@@ -377,12 +371,9 @@ void Cartographer::detectorDeactivated(Unit *unit) {
 	assert(dt);
 	Vec2i tilepos = Map::toTileCoords(unit->getCenteredPos());
 	int radius = unit->getSight() / 2 + 1;
-	DetectorType::Groups::const_iterator it = dt->groups_begin();
-	DetectorType::Groups::const_iterator itEnd = dt->groups_end();
-	while (it != itEnd) {
-		TypeMap<int> *iMap = m_detectorMaps[unit->getTeam()][*it];
+	for (int i=0; i < dt->getGroupCount(); ++i) {
+		TypeMap<int> *iMap = m_detectorMaps[unit->getTeam()][dt->getGroup(i)];
 		deccrementMap(iMap, tilepos, radius);
-		++it;
 	}
 }
 

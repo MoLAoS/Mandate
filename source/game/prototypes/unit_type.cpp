@@ -236,24 +236,37 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 		}
 	} // !glestimal
 
-	// fields: begin clumsy... multiple fields are 'allowed' here, but we only want one...
-	Fields fields;
-	try {
-		fields.load(parametersNode->getChild("fields"), dir, techTree, factionType);
+	const XmlNode *fieldNode = parametersNode->getChild("field", 0, false);
+	if (fieldNode) {
+		try {
+			field = FieldNames.match(fieldNode->getRestrictedValue().c_str());
+			zone = field == Field::AIR ? Zone::AIR : Zone::LAND;
+		} catch (runtime_error &e) {
+			g_logger.logXmlError(path, e.what());
+			loadOk = false;
+		}
+	} else {
+		///@todo deprecate 'fields' node.
+		// fields: begin clumsy... multiple fields are 'allowed' here, but we only want one...
+		Fields fields;
+		try {
+			fields.load(parametersNode->getChild("fields"), dir, techTree, factionType);
 
-		// extract ONE, making sure to chose Land over Air (for magitech compatability)
-		field = Field::INVALID;
-		if (fields.get(Field::AMPHIBIOUS))		field = Field::AMPHIBIOUS;
-		else if (fields.get(Field::ANY_WATER))	field = Field::ANY_WATER;
-		else if (fields.get(Field::DEEP_WATER))	field = Field::DEEP_WATER;
-		else if(fields.get(Field::LAND))		field = Field::LAND;
-		else if(fields.get(Field::AIR))			field = Field::AIR;
-		else throw runtime_error("unit prototypes must specify a field");
-		zone = field == Field::AIR ? Zone::AIR : Zone::LAND;
-	} catch (runtime_error e) {
-		g_logger.logXmlError(path, e.what());
-		loadOk = false;
+			// extract ONE, making sure to chose Land over Air (for magitech compatability)
+			field = Field::INVALID;
+			if (fields.get(Field::AMPHIBIOUS))		field = Field::AMPHIBIOUS;
+			else if (fields.get(Field::ANY_WATER))	field = Field::ANY_WATER;
+			else if (fields.get(Field::DEEP_WATER))	field = Field::DEEP_WATER;
+			else if(fields.get(Field::LAND))		field = Field::LAND;
+			else if(fields.get(Field::AIR))			field = Field::AIR;
+			else throw runtime_error("unit prototypes must specify a field");
+			zone = field == Field::AIR ? Zone::AIR : Zone::LAND;
+		} catch (runtime_error e) {
+			g_logger.logXmlError(path, e.what());
+			loadOk = false;
+		}
 	}
+
 	vector<string> deCloakOnSkills;
 	vector<SkillClass> deCloakOnSkillClasses;
 

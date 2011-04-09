@@ -1881,9 +1881,11 @@ string Unit::getShortDesc() const {
 
 string Unit::getLongDesc() const {
 	Lang &lang = g_lang;
+	World &world = g_world;
 	string shortDesc = getShortDesc();
 	stringstream ss;
 
+	const string factionName = type->getFactionType()->getName();
 	int armorBonus = getArmor() - type->getArmor();
 	int sightBonus = getSight() - type->getSight();
 
@@ -1903,8 +1905,29 @@ string Unit::getLongDesc() const {
 	if (sightBonus) {
 		ss << (sightBonus > 0 ? " +" : " ") << sightBonus;
 	}
+	// permanent cloak ?
+	if (type->getCloakClass() == CloakClass::PERMANENT) {
+		string res;
+		string group = world.getCloakGroupName(type->getCloakType()->getCloakGroup());
+		g_lang.lookUp("Cloak", factionName, group, res);
+		ss << endl << res;
+	}
+	// detector ?
 	if (type->isDetector()) {
-		ss << " (" << lang.get("Detector") << ")";
+		string res;
+		const DetectorType *dt = type->getDetectorType();
+		if (dt->getGroupCount() == 1) {
+			int id = dt->getGroup(0);
+			string group = world.getCloakGroupName(id);
+			g_lang.lookUp("SingleDetector", factionName, group, res);
+		} else {
+			vector<string> list;
+			for (int i=0; i < dt->getGroupCount(); ++i) {
+				list.push_back(world.getCloakGroupName(dt->getGroup(i)));
+			}
+			g_lang.lookUp("MultiDetector", factionName, list, res);
+		}		
+		ss << endl << res;
 	}
 
 	// kills

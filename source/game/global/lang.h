@@ -21,6 +21,10 @@ namespace Glest { namespace Global {
 using namespace Shared::Util;
 using std::set;
 
+typedef const string&          instring;
+typedef string&                outstring;
+typedef const vector<string>&  instringList;
+
 // =====================================================
 //  class Lang
 //
@@ -48,6 +52,11 @@ private:
 private:
 	Lang() {}
 
+	bool propertiesLookUp(const Properties &props, instring in_key, outstring out_res) const;
+	bool replaceLookUp(instring in_key, instring in_faction, instring in_param, outstring out_res) const;
+	bool cascadingLookUp(instring in_key, instring in_faction, outstring out_res) const;
+	bool cascadingLookUp(instring in_key, instring in_faction, instring in_param, outstring out_res) const;
+
 public:
 	static Lang &getInstance() {
 		static Lang lang;
@@ -61,12 +70,22 @@ public:
 	void loadFactionStrings(const string &tech, set<string> &factions);
 
 	string get(const string &s) const;
-	string getTechString(const string &s);
-	string getFactionString(const string &faction, const string &s);
-	string getScenarioString(const string &s);
+
+	bool lookUp(instring in_key, instring in_faction, outstring out_res) const {
+		return cascadingLookUp(in_key, in_faction, out_res);
+	}
+	bool lookUp(instring in_key, instring in_faction, instring in_param, outstring out_res) const {
+		return cascadingLookUp(in_key, in_faction, in_param, out_res);
+	}
+	bool lookUp(instring in_key, instring in_faction, instringList in_params, outstring out_res) const;
+
+	string getTechString(const string &s) const;
+	string getFactionString(const string &faction, const string &s) const;
+
+	string getScenarioString(const string &s) const;
 	string getDefeatedMessage() const;
 
-	string getTranslatedFactionName(const string &factionName, const string &name) {
+	string getTranslatedFactionName(const string &factionName, const string &name) const {
 		string result = getFactionString(factionName, name);
 		if (result == name) { // no custom name in faciton lang
 			result = get(name); // try glob lang
@@ -77,7 +96,7 @@ public:
 		return result;
 	}
 
-	string getTranslatedTechName(const string &name) {
+	string getTranslatedTechName(const string &name) const {
 		string result = getTechString(name);
 		if (result == name) {
 			result = get(name);

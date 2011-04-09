@@ -99,8 +99,10 @@ public:
 	DetectorClass getClass() const         { return m_class; }
 	int  getEnergyCost() const             { return m_cost; }
 	bool detectsCloakGroup(int group) const;
-	Groups::const_iterator groups_begin() const  { return m_groups.begin(); }
-	Groups::const_iterator groups_end() const    { return m_groups.end();   }
+	int  getGroupCount() const             { return m_groups.size(); }
+	int  getGroup(int i) const             { return m_groups[i]; }
+	//Groups::const_iterator groups_begin() const  { return m_groups.begin(); }
+	//Groups::const_iterator groups_end() const    { return m_groups.end();   }
 
 	StaticSound* getDetectOnSound() const  { return m_detectionOnSound; }
 	StaticSound* getDetectffSound() const  { return m_detectionOffSound; }

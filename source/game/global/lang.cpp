@@ -31,7 +31,7 @@ using Util::Logger;
 //  class Lang
 // =====================================================
 
-void Lang::setLocale(const string &locale) {
+void Lang::setLocale(instring locale) {
 	g_logger.logProgramEvent("Setting locale to '" + locale + "'");
 	m_locale = locale;
 	setlocale(LC_CTYPE, m_locale.c_str());
@@ -74,7 +74,7 @@ void Lang::setLocale(const string &locale) {
 	delete f;
 }
 
-void Lang::loadScenarioStrings(const string &scenarioDir, const string &scenarioName) {
+void Lang::loadScenarioStrings(instring scenarioDir, instring scenarioName) {
 	m_scenarioFile = scenarioDir + "/" + scenarioName + "_" + m_locale + ".lng";
 	m_scenarioStrings.clear();
 	if (fileExists(m_scenarioFile)) { // try to load the current m_locale first
@@ -87,7 +87,7 @@ void Lang::loadScenarioStrings(const string &scenarioDir, const string &scenario
 	}
 }
 
-void Lang::loadTechStrings(const string &tech) {
+void Lang::loadTechStrings(instring tech) {
 	m_techFile = "techs/" + tech + "/lang/" + tech + "_" + m_locale + ".lng";
 	m_techStrings.clear();
 	if (fileExists(m_techFile)) { // try to load the current m_locale first
@@ -100,9 +100,9 @@ void Lang::loadTechStrings(const string &tech) {
 	}
 }
 
-void Lang::loadFactionStrings(const string &tech, set<string> &factions) {
+void Lang::loadFactionStrings(instring tech, set<string> &factions) {
 	foreach_const (set<string>, it, factions) {
-		const string &faction = *it;
+		instring faction = *it;
 		Properties &p = m_factionStringsMap[faction];
 		string prePath = "techs/" + tech + "/factions/" + faction + "/lang/" + faction + "_";
 		m_factionFiles[faction] = prePath + m_locale + ".lng";
@@ -123,7 +123,7 @@ class LangErrors : private vector<LangError> {
 public:
 	LangErrors() {}
 
-	void addLookUpMiss(const string &key, const string &file) {
+	void addLookUpMiss(instring key, instring file) {
 		for (const_iterator it = begin(); it != end(); ++it) {
 			if (it->first == key && it->second == file) {
 				return;
@@ -142,7 +142,7 @@ public:
 LangErrors f_langErrors;
 
 
-string Lang::get(const string &s) const {
+string Lang::get(instring s) const {
 	try {
 		return m_mainStrings.getString(s);
 	} catch (exception &) {
@@ -151,7 +151,14 @@ string Lang::get(const string &s) const {
 	}
 }
 
-string Lang::getScenarioString(const string &s) {
+const string emptyString = "";
+
+bool Lang::propertiesLookUp(const Properties &props, instring in_key, outstring out_res) const {
+	out_res = props.getString(in_key, emptyString);
+	return !out_res.empty();
+}
+
+string Lang::getScenarioString(instring s) const {
 	try {
 		return m_scenarioStrings.getString(s);
 	} catch (exception &) {
@@ -171,7 +178,8 @@ string Lang::getDefeatedMessage() const {
 	}
 }
 
-string Lang::getTechString(const string &s) {
+///@deprecated use lookUp()
+string Lang::getTechString(instring s) const {
 	try {
 		return m_techStrings.getString(s);
 	} catch (exception &) {
@@ -180,7 +188,8 @@ string Lang::getTechString(const string &s) {
 	}
 }
 
-string Lang::getFactionString(const string &faction, const string &s) {
+///@deprecated use lookUp()
+string Lang::getFactionString(instring faction, instring s) const {
 	FactionStrings::const_iterator it = m_factionStringsMap.find(faction);
 	if (it == m_factionStringsMap.end()) {
 		throw runtime_error("Invalid faction name passed to Lang::getFactionString() '" + faction + "'");
@@ -188,9 +197,63 @@ string Lang::getFactionString(const string &faction, const string &s) {
 	try {
 		return it->second.getString(s);
 	} catch (exception &) {
-		f_langErrors.addLookUpMiss(s, m_factionFiles[faction]);
+		map<string, string>::const_iterator it = m_factionFiles.find(faction);
+		if (it != m_factionFiles.end()) {
+			string file = it->second;
+			f_langErrors.addLookUpMiss(s, file);
+		}
 		return s;
 	}
+}
+
+bool Lang::cascadingLookUp(instring key, instring faction, outstring out_result) const {
+	// 1. Validate faction string, and get faction PropertyMap
+	FactionStrings::const_iterator it = m_factionStringsMap.find(faction);
+	if (it == m_factionStringsMap.end()) {
+		throw runtime_error("Invalid faction name passed to Lang::cascadingLookUp() '" + faction + "'");
+	}
+	// 2. try faction langfile,
+	if (propertiesLookUp(it->second, key, out_result)) {
+		return true;
+	}
+	// 3. try tech-tree langfile
+	if (propertiesLookUp(m_techStrings, key, out_result)) {
+		return true;
+	}
+	// 4. use global langfile
+	if (propertiesLookUp(m_mainStrings, key, out_result)) {
+		return true;
+	}
+	out_result = "???" + key + "???";
+	return false;
+}
+
+bool Lang::replaceLookUp(instring in_key, instring in_faction, instring in_param, outstring out_res) const {
+	if (cascadingLookUp(in_key, in_faction, out_res)) {
+		string::size_type p = out_res.find("%s");
+		if (p != string::npos) {
+			out_res.replace(p, 2, in_param);
+		}
+		return true;
+	}
+	return false;
+}
+
+bool Lang::cascadingLookUp(instring in_key, instring in_faction, instring in_param, outstring out_res) const {
+	string param;
+	cascadingLookUp(in_param, in_faction, param);
+	return replaceLookUp(in_key, in_faction, param, out_res);
+}
+
+bool Lang::lookUp(instring in_key, instring in_faction, instringList in_params, outstring out_res) const {
+	string list;
+	const int lastIndex = in_params.size() - 1;
+	for (int i=0; i < lastIndex; ++i) {
+		string res;
+		g_lang.lookUp(in_params[i], in_faction, res);
+		list += (i == lastIndex ? " & " : i ? ", " : "") + res;
+	}
+	return replaceLookUp(in_key, in_faction, list, out_res);
 }
 
 vector<string>& Lang::getLookUpErrors() {
