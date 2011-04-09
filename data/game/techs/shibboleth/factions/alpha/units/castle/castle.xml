@@ -153,12 +153,17 @@
 
 		<command>
 			<type value="upgrade"/>
-			<name value="research_spinach" />
-			<image path="../../upgrades/spinach/spinach.bmp" />
+			<name value="research" sub-header="upgrade_subheader" />
+			<image path="../../icons/research.png" />
 			<unit-requirements />
 			<upgrade-requirements />
 			<upgrade-skill value="upgrade_skill"/>
-			<produced-upgrade name="spinach"/>
+			<produced-upgrades>
+				<upgrade name="spinach" tip="spinach_tip" />
+				<upgrade name="telescope" tip="telescope_tip" />
+				<upgrade name="archer_cloak" tip="archer_cloak_tip" />
+				<upgrade name="book_of_secrets" tip="book_of_secrets_tip" />
+			</produced-upgrades>			
 		</command>
 
 		<command>

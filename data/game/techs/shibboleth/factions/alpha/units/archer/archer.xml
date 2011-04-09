@@ -12,6 +12,9 @@
 		<time value="60"/>
 		<cloak type="permanent">
 			<!--de-cloak skill-class="attack" /-->
+			<upgrade-requirements>
+				<upgrade name="archer_cloak" />
+			</upgrade-requirements>
 			<group value="stealth" />
 		</cloak>
 		<multi-selection value="true"/>
@@ -19,10 +22,7 @@
 		<levels>
 			<level name="elite" kills="5"/>
 		</levels>
-		<fields>
-			<field value="land"/>
-			<field value="air"/>
-		</fields>
+		<field value="land"/>
 		<properties/>
 		<light enabled="false"/>
 		<tags>

@@ -1,0 +1,16 @@
+<?xml version="1.0" standalone="no"?>
+
+<upgrade>
+	<image path="../../icons/magic_cloak.png" />
+	<image-cancel path="../../units/merlin/images/magic_cancel.bmp" />
+	<time value="200"/>
+	<unit-requirements>
+		<unit name="merlin" />
+	</unit-requirements>
+	<upgrade-requirements/>
+	<resource-requirements>
+		<resource name="wood" amount="100"/>
+		<resource name="gold" amount="300"/>
+	</resource-requirements>
+	<enhancements/>
+</upgrade>

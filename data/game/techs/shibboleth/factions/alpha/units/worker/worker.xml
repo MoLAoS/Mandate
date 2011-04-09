@@ -231,7 +231,7 @@
 
 		<command>
 			<type value= "build"/>
-			<name value="build_basic"/>
+			<name value="build_basic" sub-header="build_subheader" />
 			<image path="images/worker_build_basic.bmp"/>
 			<unit-requirements/>
 			<upgrade-requirements/>
@@ -250,7 +250,7 @@
 
 		<command>
 			<type value= "build"/>
-			<name value="build_advanced"/>
+			<name value="build_advanced" sub-header="build_subheader" />
 			<image path="images/worker_build_advanced.bmp"/>
 			<unit-requirements/>
 			<upgrade-requirements/>

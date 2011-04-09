@@ -5,7 +5,7 @@
     <size value="1"/>
     <height value="2"/>
     <max-hp value="450" regeneration="5"/>
-    <max-ep value="3000" regeneration="30"/>
+    <max-ep value="2000" regeneration="20"/>
     <armor value="15"/>
     <armor-type value="leather"/>
     <sight value="12"/>
@@ -191,7 +191,9 @@
       <name value="teleport"/>
       <image path="images/magic_teleport.bmp"/>
       <unit-requirements/>
-      <upgrade-requirements/>
+      <upgrade-requirements>
+		  <upgrade name="book_of_secrets" />
+	  </upgrade-requirements>
       <move-skill value="teleport_skill"/>
     </command>
 

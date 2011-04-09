@@ -1,0 +1,33 @@
+<?xml version="1.0" standalone="no"?>
+
+<upgrade>
+	<image path="../../icons/telescope.png" />
+	<image-cancel path="../advanced_architecture/images/tech_upgrade_cancel.bmp"/>
+	<time value="150"/>
+	<unit-requirements>
+		<unit name="technician" />
+	</unit-requirements>
+	<upgrade-requirements/>
+	<resource-requirements>
+		<resource name="wood" amount="100"/>
+		<resource name="gold" amount="200"/>
+	</resource-requirements>
+
+	<enhancements>
+
+		<enhancement>
+			<!-- Increase sight of Defense Tower & Castle -->
+			<affects>
+				<unit name="defense_tower"/>
+				<unit name="castle" />
+			</affects>
+			<effects>
+				<static-modifiers>
+					<sight value="5" />
+				</static-modifiers>
+			</effects>
+		</enhancement>
+
+	</enhancements>
+
+</upgrade>

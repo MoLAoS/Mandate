@@ -65,6 +65,14 @@ stables=Stables
 stables_info=Allow the production of Horsemen.
 training_field=Training Field
 training_field_info=Increases Barracks production speed and allows warriors to hold position.
+spinach=Spinach
+spinach_tip=Unlock the mystical power of spinach, allows your swordsmen to (a limited number of times) consume spinach for a Popeye like effect.
+archer_cloak=Archer's magic cloak
+archer_cloak_tip=Make your archers unseen to the enemy with magical cloaks that render them invisible! (except to wizards...)
+telescope=Telescope
+telescope_tip=With the research complete, the telescope will increase the sight of our towers, giving us more warning of incoming attacks.
+book_of_secrets=Book of Secrets
+book_of_secrets_tip=The arcane knowledge found in this book is very dangerous in the hands of a master of arcane lore, making them powerfull foes indeed. As well as an increase in mana reserves, the book reveals the secret of teleportation.
 
 ;
 ; Custom command names
@@ -85,6 +93,7 @@ produce_worker=Produce Worker
 fire_ball=Fire Ball
 produce_pig=Produce Pig
 produce_cow=Produce Cow
+research=Research
 research_stables=Research Stables
 molotov=Molotov
 fire_arrow=Fire Arrow
@@ -103,6 +112,11 @@ build_advanced=Build Advanced
 mine=Mine
 harvest_wood=Harvest wood
 
+;
+; Command sub-headers, for 'two-click' production commands, %s is replaced with translated 'producible' name
+;
+build_subheader=Build %s
+upgrade_subheader=Research %s
 
 ;
 ; Levels

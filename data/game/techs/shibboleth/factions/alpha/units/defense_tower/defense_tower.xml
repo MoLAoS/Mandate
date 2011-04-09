@@ -8,7 +8,7 @@
 		<max-ep value="0"/>
 		<armor value="20"/>
 		<armor-type value="wood"/>
-		<sight value="16"/>
+		<sight value="15"/>
 		<time value="140"/>
 		<multi-selection value="false"/>
 		<cellmap value="false"/>

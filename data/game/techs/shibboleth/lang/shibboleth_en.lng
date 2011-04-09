@@ -30,3 +30,14 @@ leather=Leather
 wood=Wood
 metal=Metal
 stone=Stone
+
+;
+; Cloak groups
+;
+Stealth=Stealth
+;
+; Cloak/Detect strings
+;
+Cloak=%s cloak
+SingleDetector=%s detector
+MultiDetector=Detector (%s)
