@@ -65,12 +65,9 @@ Vec2i operator*(const Vec2i &lhs, const fixed &rhs) {
 	return Vec2i((lhs.x * rhs).intp(), (lhs.y * rhs).intp());
 }
 
-void AttackNoticeCircle::render(Vec2i mmPos, int mmHeight, fixed ratio) {
+void AttackNoticeCircle::render(Vec2i mmPos, int, fixed ratio) {
 	const int sz = 16;
-	Vec2i tPos = m_pos * ratio;
-	Vec2i pos = mmPos;
-	pos.y += mmHeight - tPos.y;
-	pos.x += tPos.x;
+	Vec2i pos = mmPos + m_pos * ratio;
 
 	Vec2i verts[4];
 	Vec2f texCoord[4];
@@ -131,13 +128,6 @@ Minimap::Minimap(bool FoW, bool SoD, Container* parent, Vec2i pos, Vec2i size)
 		, m_rightClickOrder(false)
 		, m_moveOffset(0) {
 	setWidgetStyle(WidgetType::MINIMAP);
-	//m_borderStyle.setSizes(4);
-	//m_borderStyle.m_sizes[Border::TOP] = 12;
-	//m_borderStyle.m_type = BorderType::CUSTOM_CORNERS;
-	//m_borderStyle.m_colourIndices[Corner::TOP_LEFT]		= g_widgetConfig.getColourIndex(Colour(255, 255, 255, 127));
-	//m_borderStyle.m_colourIndices[Corner::TOP_RIGHT]	= g_widgetConfig.getColourIndex(Colour(191, 191, 191, 127));
-	//m_borderStyle.m_colourIndices[Corner::BOTTOM_RIGHT] = g_widgetConfig.getColourIndex(Colour(63, 63, 63, 127));
-	//m_borderStyle.m_colourIndices[Corner::BOTTOM_LEFT]	= g_widgetConfig.getColourIndex(Colour(191, 191, 191, 127));
 }
 
 void Minimap::init(int w, int h, const World *world, bool resumingGame) {
@@ -228,11 +218,11 @@ void Minimap::update(int frameCount) {
 
 void Minimap::addAttackNotice(Vec2i pos) {
 	// translate from cell coords to minimap coords
-	// the 8 and 16 are needed since they're subtracted from the size in Minimap::render()
-	Vec2f ratio = Vec2f(float(getSize().x - 8) / g_map.getW(), float(getSize().y - 16) / g_map.getH());
+	Vec2f ratio = Vec2f(float(getSize().w - getBordersHoriz()) / g_map.getW(),
+						float(getSize().h - getBordersVert()) / g_map.getH());
 	pos = Vec2i(Vec2f(pos) * ratio);
 
-	// is this to prevent overlapping notices? - hailstone 28Feb2011
+	// prevent overlapping notices
 	foreach (AttackNotices, it, m_attackNotices) {
 		if (it->m_pos.dist(pos) < 12.f) {
 			return;
