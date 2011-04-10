@@ -281,6 +281,10 @@ void Renderer::initGame(GameState *game){
 
 	// shadows
 	if (m_shadowMode == ShadowMode::PROJECTED || m_shadowMode == ShadowMode::MAPPED) {
+		if (g_metrics.getScreenH() < shadowTextureSize || g_metrics.getScreenH() < shadowTextureSize) {
+			throw runtime_error("Texture size must be smaller than display resolution.");
+		}
+
 		static_cast<ModelRendererGl*>(modelRenderer)->setSecondaryTexCoordUnit(2);
 
 		glGenTextures(1, &shadowMapHandle);
