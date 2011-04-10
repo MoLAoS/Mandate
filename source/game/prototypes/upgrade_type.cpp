@@ -246,7 +246,7 @@ void descResourceModifier(pair<const ResourceType*, Modifier> i_mod, string &io_
 
 string UpgradeType::getDesc(const Faction *f) const {
 	Lang &lang = Lang::getInstance();
-	string str = getReqDesc(f);
+	string str;// = getReqDesc(f);
 
 	if (!m_enhancements.empty()) {
 		for (int i=0; i < m_enhancements.size(); ++i) {
