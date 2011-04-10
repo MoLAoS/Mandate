@@ -126,7 +126,7 @@ namespace Gui {
 
 /** click count [could be WRAPPED_ENUM in Gui ?]
   */
-REGULAR_ENUM( Clicks,
+STRINGY_ENUM( Clicks,
 					ONE,
 					TWO
 			);
@@ -136,7 +136,7 @@ REGULAR_ENUM( Clicks,
   *		<li><b>RAINY</b> Rainy weather..</li>
   *		<li><b>SNOWY</b> Snowy.</li></ul>
   */
-REGULAR_ENUM( Weather,
+STRINGY_ENUM( Weather,
 					SUNNY,
 					RAINY,
 					SNOWY

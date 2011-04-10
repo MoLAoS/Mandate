@@ -15,13 +15,13 @@ using Shared::Util::EnumNames;
 namespace Glest { namespace Entities {
 
 /** upgrade states */
-REGULAR_ENUM( UpgradeState,
+STRINGY_ENUM( UpgradeState,
 	UPGRADING,
 	UPGRADED
 );
 
 /** command properties */
-REGULAR_ENUM( CommandProperties,
+STRINGY_ENUM( CommandProperties,
 	QUEUE,
 	AUTO,
 	DONT_RESERVE_RESOURCES,
@@ -29,7 +29,7 @@ REGULAR_ENUM( CommandProperties,
 );
 
 /** Command Archetypes */
-REGULAR_ENUM( CommandArchetype,
+STRINGY_ENUM( CommandArchetype,
 	GIVE_COMMAND,
 	CANCEL_COMMAND,
 	SET_AUTO_REPAIR,

@@ -104,7 +104,7 @@ STRINGY_ENUM( Property,
 
 /** unit classes [could be WRAPPED_ENUM in Unit ?]
   */
-REGULAR_ENUM( UnitClass,
+STRINGY_ENUM( UnitClass,
 	WARRIOR,
 	WORKER,
 	BUILDING,
@@ -134,7 +134,7 @@ STRINGY_ENUM( CommandResult,
 
 /** interesting unit types [not WRAPPED, will want stringy version in debug edition]
   */
-REGULAR_ENUM( InterestingUnitType,
+STRINGY_ENUM( InterestingUnitType,
 	IDLE_BUILDER,
 	IDLE_HARVESTER,
 	IDLE_WORKER,

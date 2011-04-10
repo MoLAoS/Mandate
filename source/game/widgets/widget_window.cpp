@@ -361,6 +361,7 @@ void WidgetWindow::doMouseInto(Widget* widget) {
 //}
 
 void WidgetWindow::setFloatingWidget(Widget* floater, bool modal) {
+	WIDGET_LOG( __FUNCTION__ << "(0x" << intToHex(int(floater)) << ", " << (modal ? "true)" : "false)") );
 	delete floatingWidget;
 	floatingWidget = floater;
 	unwindMouseOverStack(this);
@@ -368,6 +369,7 @@ void WidgetWindow::setFloatingWidget(Widget* floater, bool modal) {
 }
 
 void WidgetWindow::removeFloatingWidget(Widget* floater) {
+	WIDGET_LOG( __FUNCTION__ << "(0x" << intToHex(int(floater)) << ")" );
 	if (floater != floatingWidget) {
 		throw runtime_error("WidgetWindow::removeFloatingWidget() passed bad argument.");
 	}
@@ -384,28 +386,26 @@ void WidgetWindow::removeFloatingWidget(Widget* floater) {
 }
 
 void WidgetWindow::registerUpdate(Widget* widget) {
-	// only register for updating once, if the widget is already in the container do nothing
-	if (std::find(updateList.begin(), updateList.end(), widget) == updateList.end()
-	&& std::find(addUpdateQueue.begin(), addUpdateQueue.end(), widget) == addUpdateQueue.end()) {
+	// if not on the updateList or addUpdateQueue yet, add to addUpdateQueue
+	if (!find(updateList, widget) && !find(addUpdateQueue, widget)) {
 		addUpdateQueue.push_back(widget);
 	}
-	// /@ todo it might be better to use a set instead of a vector to achieve the desired behaviour
-	// JM: set<> == fast look-up, not fast iterate,  better to iterate fast and do this as you have, 
-	// registerUpdate() should not be called often
 }
 
 void WidgetWindow::unregisterUpdate(Widget* widget) {
-	WidgetList::iterator it = std::find(addUpdateQueue.begin(), addUpdateQueue.end(), widget);
-	if (it != addUpdateQueue.end()) {
+	WidgetList::iterator it;
+	// check addUpdateQueue, in case it hasn't made it onto the updateList yet
+	if (find(addUpdateQueue, widget, it)) {
 		addUpdateQueue.erase(it);
 	}
-	it = std::find(updateList.begin(), updateList.end(), widget);
-	if (it != updateList.end()) {
+	// if it is in the updateList already, then put it on the remUpdateQueue
+	if (find(updateList, widget, it)) {
 		remUpdateQueue.push_back(*it);
 	}
 }
 
 void WidgetWindow::update() {
+	// update anim vars
 	const float animSpeed = 0.01f;
 	anim += animSpeed;
 	if (anim > 1.f) {
@@ -415,21 +415,34 @@ void WidgetWindow::update() {
 	if (slowAnim > 1.f) {
 		slowAnim -= 1.f;
 	}
+	// delayed delete, stops iterators in siglot::signal objects going bad in emit() when 
+	// the response to the signal is deletion of the source widget
 	if (!toClean.empty()) {
 		foreach (WidgetList, it, toClean) {
 			delete *it;
 		}
 		toClean.clear();
 	}
+
+	// updateList: adding widgets to the update list, and removing them, is a delayed
+	// action. If in response to an update() some other widget was added to the list, or
+	// the one update()ing removed itself, the loop iterator wiould go bad, hence
+	// the addUpdateQueue and remUpdateQueue
+
+	// clean updateList
 	foreach (WidgetList, it, remUpdateQueue) {
 		WidgetList::iterator it2 = std::find(updateList.begin(), updateList.end(), *it);
 		assert(it2 != updateList.end());
 		updateList.erase(it2);
 	}
 	remUpdateQueue.clear();
+
+	// call update() on everyone in updateList
 	foreach (WidgetList, it, updateList) {
 		(*it)->update();
 	}
+
+	// service any registerUpdate() requests 
 	foreach (WidgetList, it, addUpdateQueue) {
 		updateList.push_back(*it);
 	}
@@ -449,6 +462,7 @@ void WidgetWindow::update() {
 }
 
 void WidgetWindow::destroyFloater() {
+	WIDGET_LOG( __FUNCTION__ << "() : floatingWidget is @ 0x" << intToHex(int(floatingWidget)) );
 	// destroy floater
 	delete floatingWidget;
 	floatingWidget = 0;

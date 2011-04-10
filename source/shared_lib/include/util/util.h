@@ -71,12 +71,6 @@ namespace Shared { namespace Xml {
 	WRAPPED_ENUM(Name,__VA_ARGS__)						\
 	STRINGY_ENUM_NAMES(Name, Name::COUNT, __VA_ARGS__);
 
-#ifdef NDEBUG
-#	define REGULAR_ENUM WRAPPED_ENUM
-#else
-#	define REGULAR_ENUM STRINGY_ENUM
-#endif
-
 #ifdef GAME_CONSTANTS_DEF
 #	define STRINGY_ENUM_NAMES(name, count, ...) EnumNames<name> name##Names(#__VA_ARGS__, count, true)
 #else
@@ -91,6 +85,20 @@ E enum_cast(unsigned i) {
 namespace Shared { namespace Util {
 
 extern const string sharedLibVersionString;
+
+// some helpers to find stuff in vectors
+
+template<typename C, typename T>
+bool find(C &c, T &val) {
+	return std::find(c.begin(), c.end(), val) != c.end();
+}
+
+template<typename C, typename T>
+bool find(C &c, T &val, typename C::iterator &out) {
+	out = std::find(c.begin(), c.end(), val);
+	return out != c.end();
+}
+
 
 // =====================================================
 //	class EnumNames

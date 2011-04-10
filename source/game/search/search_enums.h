@@ -19,7 +19,7 @@ namespace Glest { namespace Search {
   *		<li><b>MOVING</b> On the way to destination</li>
   *		<li><b>BLOCKED</b> path is blocked</li></ul>
   */
-REGULAR_ENUM( TravelState, 
+STRINGY_ENUM( TravelState, 
 	ARRIVED,
 	MOVING,
 	BLOCKED,
@@ -32,7 +32,7 @@ REGULAR_ENUM( TravelState,
   *		<li><b>NODE_LIMIT</b> node limit reached, partial path available</li>
   *		<li><b>TIME_LIMIT</b> search ongoing (time limit reached)</li></ul>
   */
-REGULAR_ENUM( AStarResult, 
+STRINGY_ENUM( AStarResult, 
 	FAILURE,
 	COMPLETE,
 	NODE_LIMIT,
@@ -45,7 +45,7 @@ REGULAR_ENUM( AStarResult,
   *		<li><b>START_TRAP</b> path found, but transitions in start cluster are blocked</li>
   *		<li><b>GOAL_TRAP</b> path found, but transitions in destination cluster are blocked</li></ul>
   */
-REGULAR_ENUM( HAAStarResult,
+STRINGY_ENUM( HAAStarResult,
 	FAILURE,
 	COMPLETE,
 	START_TRAP,
@@ -56,13 +56,13 @@ REGULAR_ENUM( HAAStarResult,
   * <ul><li><b>CELLMAP</b> search on cell map</li>
   *		<li><b>TILEMAP</b> search on tile map</li></ul>
   */
-REGULAR_ENUM( SearchSpace,
+STRINGY_ENUM( SearchSpace,
 	CELLMAP,
 	TILEMAP
 );
 
 /** The cardinal and ordinal directions enumerated for convenience */
-REGULAR_ENUM( OrdinalDir,
+STRINGY_ENUM( OrdinalDir,
 	NORTH,
 	NORTH_EAST,
 	EAST,
@@ -73,7 +73,7 @@ REGULAR_ENUM( OrdinalDir,
 	NORTH_WEST
 );
 
-REGULAR_ENUM( CardinalDir, 
+STRINGY_ENUM( CardinalDir, 
 	NORTH,
 	EAST,
 	SOUTH,
