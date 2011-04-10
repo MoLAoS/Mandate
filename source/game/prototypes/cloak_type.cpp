@@ -54,7 +54,7 @@ void CloakType::load(const string &dir, const XmlNode *cloakNode, const TechTree
 		const XmlNode *childNode = cloakNode->getChild(i);
 
 		if (childNode->getName() == "de-cloak") { // de-cloak on skill name/class
-			const XmlNode *deCloakNode = cloakNode->getChild("de-cloak", i);
+			const XmlNode *deCloakNode = childNode;
 			const XmlAttribute *skillNameAttrib = deCloakNode->getAttribute("skill-name", false);
 			if (skillNameAttrib) {
 				string str = skillNameAttrib->getValue();
