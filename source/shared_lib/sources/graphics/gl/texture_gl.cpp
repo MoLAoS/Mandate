@@ -134,8 +134,13 @@ void Texture1DGl::init(Filter filter, int maxAnisotropy){
 				GL_TEXTURE_1D, glInternalFormat, pixmap.getW(),
 				glFormat, GL_UNSIGNED_BYTE, pixels);
 
-			if(error!=0){
-				throw runtime_error("Error building texture 1D mipmaps");
+			if (error != GL_NO_ERROR) {
+				string msg = (char*)gluErrorString(error);
+				stringstream ss;
+				ss	<< "Error building 1D mipmaps: " << msg << endl 
+					<< "Format: " << format << ", components: " << pixmap.getComponents() << endl
+					<< "Width: " << pixmap.getW() << endl;
+				throw runtime_error(ss.str());
 			}
 		}
 		else{
@@ -147,9 +152,14 @@ void Texture1DGl::init(Filter filter, int maxAnisotropy){
 				GL_TEXTURE_1D, 0, glInternalFormat, pixmap.getW(),
 				0, glFormat, GL_UNSIGNED_BYTE, pixels);
 
-			GLint error= glGetError();
-			if(error!=GL_NO_ERROR){
-				throw runtime_error("Error creating texture 1D");
+			GLint error = glGetError();
+			if (error != GL_NO_ERROR) {
+				string msg = (char*)gluErrorString(error);
+				stringstream ss;
+				ss	<< "Error sending pixmap data to GL: " << msg << endl 
+					<< "Format: " << format << ", components: " << pixmap.getComponents() << endl
+					<< "Width: " << pixmap.getW() << endl;
+				throw runtime_error(ss.str());
 			}
 		}
 		inited= true;
@@ -285,11 +295,17 @@ void Texture3DGl::init(Filter filter, int maxAnisotropy){
 			pixmap.getW(), pixmap.getH(), pixmap.getD(),
 			0, glFormat, GL_UNSIGNED_BYTE, pixels);
 
-		GLint error= glGetError();
-		if(error!=GL_NO_ERROR){
-			throw runtime_error("Error creating texture 3D");
+		GLint error = glGetError();
+		if (error != GL_NO_ERROR){
+			string msg = (char*)gluErrorString(error);
+			stringstream ss;
+			ss	<< "Error sending pixmap data to GL: " << msg << endl 
+				<< "Format: " << format << ", components: " << pixmap.getComponents() << endl
+				<< "Width: " << pixmap.getW() << ", height: " << pixmap.getH()
+				<< ", Depth: " << pixmap.getD() << endl;
+			throw runtime_error(ss.str());
 		}
-		inited= true;
+		inited = true;
 	}
 
 	assertGl();
@@ -307,34 +323,32 @@ void Texture3DGl::end(){
 //	class TextureCubeGl
 // =====================================================
 
-void TextureCubeGl::init(Filter filter, int maxAnisotropy){
+void TextureCubeGl::init(Filter filter, int maxAnisotropy) {
 	assertGl();
 
-	if(!inited){
-
+	if (!inited) {
 		//gen texture
 		glGenTextures(1, &handle);
 		glBindTexture(GL_TEXTURE_CUBE_MAP, handle);
 
-		//wrap
-		GLint wrap= toWrapModeGl(wrapMode);
+		// wrap
+		GLint wrap = toWrapModeGl(wrapMode);
 		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, wrap);
 		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, wrap);
 
-		//filter
-		if(mipmap){
-			GLuint glFilter= filter==fTrilinear? GL_LINEAR_MIPMAP_LINEAR: GL_LINEAR_MIPMAP_NEAREST;
+		// filter
+		if (mipmap) {
+			GLuint glFilter = filter==fTrilinear? GL_LINEAR_MIPMAP_LINEAR: GL_LINEAR_MIPMAP_NEAREST;
 			glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, glFilter);
 			glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		}
-		else{
+		} else {
 			glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 			glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		}
 
-		for(int i=0; i<6; ++i){
+		for (int i=0; i < 6; ++i) {
 			//params
-			const Pixmap2D *currentPixmap= pixmap.getFace(i);
+			const Pixmap2D *currentPixmap = pixmap.getFace(i);
 
 			GLint glFormat= toFormatGl(format, currentPixmap->getComponents());
 			GLint glInternalFormat= toInternalFormatGl(format, currentPixmap->getComponents());
@@ -343,25 +357,35 @@ void TextureCubeGl::init(Filter filter, int maxAnisotropy){
 			const uint8* pixels= pixmapInit? currentPixmap->getPixels(): NULL;
 			GLenum target= GL_TEXTURE_CUBE_MAP_POSITIVE_X + i;
 
-			if(mipmap){
-				int error= gluBuild2DMipmaps(
+			if (mipmap) {
+				int error = gluBuild2DMipmaps(
 					target, glInternalFormat,
 					currentPixmap->getW(), currentPixmap->getH(),
 					glFormat, GL_UNSIGNED_BYTE, pixels);
 
-				if(error!=0){
-					throw runtime_error("Error building texture cube mipmaps");
+				if (error != 0) {
+					string msg = (char*)gluErrorString(error);
+					stringstream ss;
+					ss	<< "Error building TextureCube mipmaps: " << msg << endl 
+						<< "Format: " << format << ", components: " << currentPixmap->getComponents() << endl
+						<< "Width: " << currentPixmap->getW() << ", Height: " << currentPixmap->getH();
+					throw runtime_error(ss.str());
 				}
-			}
-			else{
+			} else {
 				glTexImage2D(
 					target, 0, glInternalFormat,
 					currentPixmap->getW(), currentPixmap->getH(),
 					0, glFormat, GL_UNSIGNED_BYTE, pixels);
-			}
 
-			if(glGetError()!=GL_NO_ERROR){
-				throw runtime_error("Error creating texture cube");
+				int error = glGetError();
+				if (error != GL_NO_ERROR) {
+					string msg = (char*)gluErrorString(error);
+					stringstream ss;
+					ss	<< "Error creating texture cube: " << msg << endl 
+						<< "Format: " << format << ", components: " << currentPixmap->getComponents() << endl
+						<< "Width: " << currentPixmap->getW() << ", Height: " << currentPixmap->getH();
+					throw runtime_error(ss.str());
+				}
 			}
 		}
 		inited= true;
