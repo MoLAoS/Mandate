@@ -254,6 +254,8 @@ void Ai::evaluateEnemies() {
 		if (canSee) {
 			if (dead || it->second->isDead()) {
 				it = m_knownEnemyLocations.erase(it);
+			} else {
+				++it;
 			}
 		} else {
 			if (!dead) {
@@ -261,6 +263,7 @@ void Ai::evaluateEnemies() {
 					it->second = 0;
 				}
 			}
+			++it;
 		}
 	}
 
