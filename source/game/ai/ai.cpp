@@ -249,14 +249,18 @@ void Ai::evaluateEnemies() {
 	UnitPositions::iterator itEnd = m_knownEnemyLocations.end();
 	while (it != itEnd) {
 		const Vec2i tPos = Map::toTileCoords(it->first);
-		bool dead = it->second->isDead();
-		if (dead && g_map.getTile(tPos)->isVisible(teamIndex)) {
-			it = m_knownEnemyLocations.erase(it);
-		} else {
-			if (dead) {
-				it->second = 0;
+		bool canSee = g_map.getTile(tPos)->isVisible(teamIndex);
+		bool dead = it->second == 0;
+		if (canSee) {
+			if (dead || it->second->isDead()) {
+				it = m_knownEnemyLocations.erase(it);
 			}
-			++it;
+		} else {
+			if (!dead) {
+				if (it->second->isDead()) {
+					it->second = 0;
+				}
+			}
 		}
 	}
 
