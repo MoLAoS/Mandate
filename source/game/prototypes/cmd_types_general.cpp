@@ -203,31 +203,39 @@ void CommandType::replaceDeadReferences(Command &command) const {
 	}
 }
 
+string CommandType::toString() const {
+	return g_lang.lookUp(m_name, unitType->getFactionType()->getName());
+}
+
 void CommandType::describe(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const {
 	Lang lang = g_lang;
 	string factionName = unit->getFaction()->getType()->getName();
-	string commandName, tip, prodName;
+	string commandName, header, tip;
 	if (!lang.lookUp(getName(), factionName, commandName)) {
 		commandName = formatString(getName());
 	}
-	if (pt == 0) {
-		lang.lookUp(getTipKey(), factionName, tip);
-	} else {
-		if (!lang.lookUp(pt->getName(), factionName, prodName)) {
-			prodName = formatString(pt->getName());
+	if (pt == 0) { // no producible, header is command name, tip is command tip
+		header = commandName;
+		if (!lang.lookUp(getTipKey(), factionName, tip)) {
+			tip = "";
 		}
+	} else { // producible
+		// header is composed from command 'sub-header', with producible name replacing "%s"
+		// tip is from command tip for this producible (not the 'tip' in command the name node
+		// but the tip in the 'producible' node.
 		assert(getProducedCount() > 0);
-		lang.lookUp(getTipKey(pt->getName()), factionName, tip);
-		string header;
-		if (lang.lookUp(getTipHeader(), factionName, prodName, header)) {
-			commandName = header;
+		if (!lang.lookUp(getSubHeader(), factionName, pt->getName(), header)) { // header
+			header = commandName;
+		}
+		if (!lang.lookUp(getTipKey(pt->getName()), factionName, tip)) { // tip
+			tip = "";
 		}
 	}
-	callback->setHeader(commandName);
-	if (!tip.empty()) {
-		callback->setTipText(tip);
-	}
+	callback->setHeader(header);
+	callback->setTipText(tip);
+
 	if (!pt && getProducedCount() == 1 && getClicks() == Clicks::ONE) {
+		// if no producible was supplied but this is a single click production command, set producible
 		pt = getProduced(0);
 	}
 
@@ -880,7 +888,9 @@ void UpgradeCommandType::subDesc(const Unit *unit, CmdDescriptor *callback, Prod
 			callback->addItem(*it, lang.getTranslatedFactionName(factionName, (*it)->getName()));
 		}
 	} else {
-
+		///@todo pass descriptor on, to describe effects nicely ...
+		string upgradeDesc = static_cast<const UpgradeType*>(pt)->getDesc(unit->getFaction());
+		callback->addElement(upgradeDesc);
 	}
 }
 

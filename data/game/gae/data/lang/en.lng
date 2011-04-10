@@ -312,6 +312,7 @@ Store=Store
 StoreModifiers=Storage Adjustments
 TimeToBuild=Time to produce
 TimeToMorph=Time to morph
+TimeToResearch=Time to research
 ToggleCloak=Toggle Cloak
 Transported=Transported Units
 Unavailable=No information available.

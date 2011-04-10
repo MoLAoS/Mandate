@@ -79,6 +79,12 @@ public:
 	}
 	bool lookUp(instring in_key, instring in_faction, instringList in_params, outstring out_res) const;
 
+	string lookUp(instring in_key, instring in_faction) const {
+		string res;
+		lookUp(in_key, in_faction, res);
+		return res;
+	}
+
 	string getTechString(const string &s) const;
 	string getFactionString(const string &faction, const string &s) const;
 

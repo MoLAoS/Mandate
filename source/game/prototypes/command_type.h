@@ -109,34 +109,49 @@ protected:
 public:
 	CommandType(const char* name, Clicks clicks, bool queuable = false);
 
-	virtual void update(Unit *unit) const = 0;
-	virtual void getDesc(string &str, const Unit *unit) const = 0;
-
+	// describe(), and virtual helpers descSkills() and subDesc()
 	void describe(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt = 0) const;
 	virtual void descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt = 0) const = 0;
 	virtual void subDesc(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const {}
 
+	// old skool desc()
+	virtual void getDesc(string &str, const Unit *unit) const = 0;
+	virtual string toString() const;
+
+	// load & checksum
 	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
 	virtual void doChecksum(Checksum &checksum) const;
 
-	const UnitType* getUnitType() const { return unitType; }
-
-	virtual string toString() const						{return g_lang.get(m_name);}
+	/** tip key for this command, from the tip attribute of the command name node */
 	const string& getTipKey() const						{return m_tipKey;}
+	
+	/** tip key for a producible this command makes, from the tip attribute of the producible node */
 	virtual string getTipKey(const string &name) const  {return emptyString;}
-	virtual string getTipHeader() const                 {return m_tipHeaderKey;}
 
-	virtual int getProducedCount() const					{return 0;}
-	virtual ProdTypePtr getProduced(int i) const{return 0;}
+	/** sub-heading, for two-click production commands, is the heading used on the tip for a 
+	  * 'sub-selection', if the lang entry this points to included '%s' it will be replaced
+	  * by the translated producible name */
+	virtual string getSubHeader() const                 {return m_tipHeaderKey;}
+
+	// Production
+	/** return number of things (ProducibleType derivitives) this command can make.
+	  * CommandTypes that make stuff MUST override this method */
+	virtual int getProducedCount() const            { return 0; }
+	/** return the thing (ProducibleType derivitive) this command makes at index i.
+	  * CommandTypes that make stuff MUST override this method */
+	virtual ProdTypePtr getProduced(int i) const    { return 0; }
 
 	// candidates for lua callbacks
+	/** Check if a command can be executed */
+	virtual CommandResult check(const Unit *unit, const Command &command) const { return CommandResult::SUCCESS; }
 	/** Apply costs for a command. */
 	virtual void apply(Faction *faction, const Command &command) const;
 	/** De-Apply costs for a command */
 	virtual void undo(Unit *unit, const Command &command) const;
-	/** Check if a command can be executed */
-	virtual CommandResult check(const Unit *unit, const Command &command) const { return CommandResult::SUCCESS; }
-	/** Update the command by one tick. */
+	/** Update the command by one frame. */
+	///@todo virtual void update(Unit*, Command&) const = 0
+	virtual void update(Unit *unit) const = 0;
+	/** Update the command by one tick (40 frames). */
 	virtual void tick(const Unit *unit, Command &command) const {}
 	/** Final actions to finish */
 	virtual void finish(Unit *unit, Command &command) const {}
@@ -146,12 +161,12 @@ public:
 
 	bool isQueuable() const								{return queuable;}
 
-	//get
-	int getEnergyCost() const		{ return energyCost; }
-	bool getArrowDetails(const Command *cmd, Vec3f &out_arrowTarget, Vec3f &out_arrowColor) const;
-	virtual Vec3f getArrowColor() const {return Vec3f(1.f, 1.f, 0.f);}
-	virtual CommandClass getClass() const = 0;
-	virtual Clicks getClicks() const					{return clicks;}
+	// get
+	const UnitType*       getUnitType() const   { return unitType; }
+	int                   getEnergyCost() const	{ return energyCost; }
+	bool                  getArrowDetails(const Command *cmd, Vec3f &out_target, Vec3f &out_color) const;
+	virtual Vec3f         getArrowColor() const {return Vec3f(1.f, 1.f, 0.f);}
+	virtual Clicks        getClicks() const     {return clicks;}
 	string getDesc(const Unit *unit) const {
 		string str;
 		//str = name + "\n";
@@ -161,6 +176,12 @@ public:
 		}
 		return str;
 	}
+	virtual CommandClass getClass() const = 0;
+
+	Command* doAutoCommand(Unit *unit) const;
+
+protected:
+	void replaceDeadReferences(Command &command) const;
 
 protected:
 	// static command update helpers... don't really belong here, but it's convenient for now
@@ -176,11 +197,6 @@ protected:
 
 	static bool attackableInSight(const Unit *unit, Unit **rangedPtr, 
 								const AttackSkillTypes *asts, const AttackSkillType **past);
-
-	void replaceDeadReferences(Command &command) const;
-
-public:
-	Command* doAutoCommand(Unit *unit) const;
 };
 
 // ===============================

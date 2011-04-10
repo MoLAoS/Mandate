@@ -112,6 +112,8 @@ build_advanced=Build Advanced
 mine=Mine
 harvest_wood=Harvest wood
 
+popeye_strength=Eat spinach for super human attack speed and strength, beware though: unlike with Popeye, this doesn't make you invincible.
+
 ;
 ; Command sub-headers, for 'two-click' production commands, %s is replaced with translated 'producible' name
 ;
