@@ -258,6 +258,7 @@
 			<build-skill value="build_skill"/>
 			<buildings>
 				<building name="castle" tip="castle_info"/>
+				<building name="wall" tip="wall_info" />
 				<!--building name="defense_tower" tip="defense_tower_info"/-->
 			</buildings>
 			<start-sound enabled="false"/>
