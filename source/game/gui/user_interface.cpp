@@ -322,9 +322,9 @@ void UserInterface::commandButtonPressed(int posDisplay) {
 	if (!selectingPos && !selectingMeetingPoint) {
 		if (selection.isComandable()) {
 			if (m_selectingSecond) {
-				mouseDownSecondTier(posDisplay);
+				onSecondTierSelect(posDisplay);
 			} else {
-				mouseDownDisplayUnitSkills(posDisplay);
+				onFirstTierSelect(posDisplay);
 			}
 		} else {
 			resetState();
@@ -332,10 +332,9 @@ void UserInterface::commandButtonPressed(int posDisplay) {
 		activePos = posDisplay;
 		computeDisplay();
 		computeCommandInfo(activePos);
-	} else { // m_selectingSecond
+	} else { // m_selectingSecond || m_selectingPos
 		// if they clicked on a button again, they must have changed their mind
 		resetState();
-		activePos = invalidPos;
 	}
 }
 
@@ -688,6 +687,7 @@ void UserInterface::giveDefaultOrders(const Vec2i &targetPos, Unit *targetUnit) 
 	}
 	// reset
 	resetState();
+	computeDisplay();
 }
 
 void UserInterface::giveTwoClickOrders(const Vec2i &targetPos, Unit *targetUnit) {
@@ -815,13 +815,13 @@ void UserInterface::clickCommonCommand(CommandClass commandClass) {
 		const CommandType* ct = m_display->getCommandType(i);
 		if (((ct && ct->getClass() == commandClass) || m_display->getCommandClass(i) == commandClass)
 		&& m_display->getDownLighted(i)) {
-			mouseDownDisplayUnitSkills(i);
+			onFirstTierSelect(i);
 			break;
 		}
 	}
 }
 ///@todo move to Display
-void UserInterface::mouseDownDisplayUnitSkills(int posDisplay) {
+void UserInterface::onFirstTierSelect(int posDisplay) {
 	WIDGET_LOG( __FUNCTION__ << "( " << posDisplay << " )");
 	if (selection.isEmpty()) {
 		return;
@@ -834,6 +834,8 @@ void UserInterface::mouseDownDisplayUnitSkills(int posDisplay) {
 		} else {
 			// not our click
 		}
+
+	// Auto-Command toggles, if selection is not all-on, turn on, else turn off
 	} else if (posDisplay == autoRepairPos) {
 		AutoCmdState state = selection.getAutoCmdState(AutoCmdFlag::REPAIR);
 		bool action = (state != AutoCmdState::ALL_ON);
@@ -846,9 +848,12 @@ void UserInterface::mouseDownDisplayUnitSkills(int posDisplay) {
 		AutoCmdState state = selection.getAutoCmdState(AutoCmdFlag::FLEE);
 		bool action = (state != AutoCmdState::ALL_ON);
 		commander->trySetAutoCommandEnabled(selection, AutoCmdFlag::FLEE, action);
+
+	// Cloak toggle, if selection has any units cloaked, then de-cloak, else cloak
 	} else if (posDisplay == cloakTogglePos) {
 		bool action = !selection.anyCloaked();
 		commander->trySetCloak(selection, action);
+
 	} else if (posDisplay == meetingPointPos) {
 		activePos= posDisplay;
 		selectingMeetingPoint= true;
@@ -870,34 +875,33 @@ void UserInterface::mouseDownDisplayUnitSkills(int posDisplay) {
 			activeCommandClass = m_display->getCommandClass(posDisplay);
 		}
 
-		if (!selection.isEmpty()) { // give orders depending on command type
-			const CommandType *ct = selection.getUnit(0)->getFirstAvailableCt(activeCommandClass);
-			if (activeCommandType && activeCommandType->getClass() == CommandClass::BUILD) {
+		// give orders depending on command type
+		const CommandType *ct = selection.getUnit(0)->getFirstAvailableCt(activeCommandClass);
+		if (activeCommandType && activeCommandType->getClass() == CommandClass::BUILD) {
+			assert(selection.isUniform());
+			m_selectedFacing = CardinalDir::NORTH;
+			m_selectingSecond = true;
+		} else if (activeCommandType && activeCommandType->getClass() == CommandClass::TRANSFORM
+		&& activeCommandType->getProducedCount() == 1) {
+			choosenBuildingType = static_cast<const UnitType*>(activeCommandType->getProduced(0));
+			assert(choosenBuildingType != NULL);
+			selectingPos = true;
+			g_program.getMouseCursor().setAppearance(MouseAppearance::CMD_ICON, activeCommandType->getImage());
+			m_minimap->setLeftClickOrder(true);
+			activePos = posDisplay;
+		} else if ((activeCommandType && activeCommandType->getClicks() == Clicks::ONE)
+		|| (!activeCommandType && ct->getClicks() == Clicks::ONE)) {
+			invalidatePosObjWorld();
+			giveOneClickOrders();
+		} else {
+			if (activeCommandType && activeCommandType->getProducedCount() > 0) {
 				assert(selection.isUniform());
-				m_selectedFacing = CardinalDir::NORTH;
 				m_selectingSecond = true;
-			} else if (activeCommandType && activeCommandType->getClass() == CommandClass::TRANSFORM
-			&& activeCommandType->getProducedCount() == 1) {
-				choosenBuildingType = static_cast<const UnitType*>(activeCommandType->getProduced(0));
-				assert(choosenBuildingType != NULL);
+			} else {
 				selectingPos = true;
-				g_program.getMouseCursor().setAppearance(MouseAppearance::CMD_ICON, activeCommandType->getImage());
+				g_program.getMouseCursor().setAppearance(MouseAppearance::CMD_ICON, ct->getImage());
 				m_minimap->setLeftClickOrder(true);
 				activePos = posDisplay;
-			} else if ((activeCommandType && activeCommandType->getClicks() == Clicks::ONE)
-			|| (!activeCommandType && ct->getClicks() == Clicks::ONE)) {
-				invalidatePosObjWorld();
-				giveOneClickOrders();
-			} else {
-				if (activeCommandType && activeCommandType->getProducedCount() > 0) {
-					assert(selection.isUniform());
-					m_selectingSecond = true;
-				} else {
-					selectingPos = true;
-					g_program.getMouseCursor().setAppearance(MouseAppearance::CMD_ICON, ct->getImage());
-					m_minimap->setLeftClickOrder(true);
-					activePos = posDisplay;
-				}
 			}
 		}
 	}
@@ -905,7 +909,7 @@ void UserInterface::mouseDownDisplayUnitSkills(int posDisplay) {
 }
 
 ///@todo move to Display
-void UserInterface::mouseDownSecondTier(int posDisplay) {
+void UserInterface::onSecondTierSelect(int posDisplay) {
 	WIDGET_LOG( __FUNCTION__ << "( " << posDisplay << " )");
 	int factionIndex = world->getThisFactionIndex();
 

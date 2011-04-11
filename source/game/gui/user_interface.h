@@ -250,31 +250,36 @@ public:
 private:
 	//void mouseDownLeftDisplay(int posDisplay);
 
-	//orders
+	// orders
 	void giveDefaultOrders(const Vec2i &targetPos, Unit *targetUnit);
 	void giveOneClickOrders();
 	void giveTwoClickOrders(const Vec2i &targetPos, Unit *targetUnit);
 
-	//hotkeys
+	// hotkeys
 	void centerCameraOnSelection();
 	void centerCameraOnLastEvent();
 	void selectInterestingUnit(InterestingUnitType iut);
 	void clickCommonCommand(CommandClass commandClass);
 
+	// 'close' (hide) LuaConsole
 	void onCloseLuaConsole(Widget*);
 
-	//misc
-	//int computePosDisplay(int x, int y);
-	void mouseDownDisplayUnitSkills(int posDisplay);
-	void mouseDownSecondTier(int posDisplay);
+	// handle command button-click / hotkey
+	void onFirstTierSelect(int posDisplay);
+	// handle producible button-click / hotkey(?)
+	void onSecondTierSelect(int posDisplay);
+
+	// misc
 	void addOrdersResultToConsole(CommandClass cc, CommandResult rr);
 	bool isSharedCommandClass(CommandClass commandClass);
+
 public:
 	void resetState();
 	void computeDisplay();
 	void computePortraitInfo(int posDisplay);
 	void computeCommandInfo(int posDisplay);
 	void updateSelection(bool doubleClick, UnitVector &units);
+
 private:
 	bool computeTarget(const Vec2i &screenPos, Vec2i &worldPos, UnitVector &units, bool setObj);
 	void computeBuildPositions(const Vec2i &end);
