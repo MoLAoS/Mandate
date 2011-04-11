@@ -792,7 +792,9 @@ void GameState::keyDown(const Key &key) {
 		}
 	}
 	if (cmd == ucMenuQuit) { // exit
-		doGameMenu();
+		if (!gui.cancelPending()) {
+			doGameMenu();
+		}
 	} else if (cmd == ucMenuSave) { // save
 		if (!m_modalDialog) {
 			doSaveBox();
