@@ -211,6 +211,7 @@ void Display::setDownSelectedPos(int i) {
 	}
 	m_selectedCommandIndex = i;
 	if (m_selectedCommandIndex != invalidPos) {
+		assert(!m_ui->getSelection()->isEmpty());
 		// enlarge
 		int ndx = m_selectedCommandIndex + selectionCellCount;
 		Vec2i pos = getImagePos(ndx);

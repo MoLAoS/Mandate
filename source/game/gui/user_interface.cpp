@@ -507,6 +507,7 @@ void UserInterface::groupKey(int groupIndex){
 
 		selection.recallGroup(groupIndex);
 		currentGroup = groupIndex;
+		resetState();
 		computeDisplay();
 	}
 }
@@ -629,15 +630,12 @@ void UserInterface::hotKey(UserCommand cmd) {
 }
 
 bool UserInterface::cancelPending() {
-	if (selectingPos || selectingMeetingPoint) {
+	if (selectingPos || selectingMeetingPoint || m_selectingSecond) {
 		resetState();
+		computeDisplay();
 		return true;
-	} else if (!selection.isEmpty()) {
-		selection.clear();
-		return true;
-	} else {
-		return false;
 	}
+	return false;
 }
 
 void UserInterface::load(const XmlNode *node) {
@@ -903,7 +901,9 @@ void UserInterface::mouseDownDisplayUnitSkills(int posDisplay) {
 			}
 		}
 	}
+	computeDisplay();
 }
+
 ///@todo move to Display
 void UserInterface::mouseDownSecondTier(int posDisplay) {
 	WIDGET_LOG( __FUNCTION__ << "( " << posDisplay << " )");
@@ -1103,6 +1103,7 @@ void UserInterface::computeHousedUnitsPanel() {
 
 void UserInterface::computeCommandPanel() {
 	if (selectingPos || selectingMeetingPoint) {
+		assert(!selection.isEmpty());
 		m_display->setDownSelectedPos(activePos);
 	}
 
