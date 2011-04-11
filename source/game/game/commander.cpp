@@ -86,7 +86,9 @@ CommandResult Commander::tryGiveCommand(const Selection &selection, CommandFlags
 				if (effectiveCt->getClass() == CommandClass::BUILD) {
 					//COMMAND_LOG(__FUNCTION__ << "() build command, setting DONT_RESERVE_RESOURCES flag = "
 					//	<< (i != units.begin() ? "true." : "false."));
-					flags.set(CommandProperties::DONT_RESERVE_RESOURCES, i != units.begin());
+					if (!flags.get(CommandProperties::DONT_RESERVE_RESOURCES) && i != units.begin()) {
+						flags.set(CommandProperties::DONT_RESERVE_RESOURCES, true);
+					}
 				}
 				result = pushCommand(g_world.newCommand(effectiveCt, flags, pos, prodType, facing, *i));
 			} else if (targetUnit) { // 'target' based command

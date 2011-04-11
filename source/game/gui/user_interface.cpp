@@ -710,10 +710,10 @@ void UserInterface::giveTwoClickOrders(const Vec2i &targetPos, Unit *targetUnit)
 	} else {
 		if (activeCommandClass == CommandClass::BUILD
 		|| activeCommandClass == CommandClass::TRANSFORM) {
-			// selecting building
+			// selecting pos for building
 			assert(isPlacingBuilding());
 
-			// if this is a drag & drop then start dragging and wait for mouse up
+			// if this is a multi-build (ie. walls) then start dragging and wait for mouse up
 			if (activeCommandClass == CommandClass::BUILD
 			&& choosenBuildingType->isMultiBuild() && !dragging) {
 				dragging = true;
@@ -722,13 +722,16 @@ void UserInterface::giveTwoClickOrders(const Vec2i &targetPos, Unit *targetUnit)
 			}
 
 			computeBuildPositions(posObjWorld);
-			bool firstBuildPosition = true;
 
-			BuildPositions::const_iterator i;
-			for (i = buildPositions.begin(); i != buildPositions.end(); ++i) {
-				flags.set(CommandProperties::QUEUE, input.isShiftDown() || !firstBuildPosition);
-				flags.set(CommandProperties::DONT_RESERVE_RESOURCES, selection.getCount() > 1 || !firstBuildPosition);
-				result = commander->tryGiveCommand(selection, flags, activeCommandType, CommandClass::NULL_COMMAND, *i, NULL, choosenBuildingType, m_selectedFacing);
+			// give command(s) (one for each building-pos if multi-build)
+			foreach_const(BuildPositions, i, buildPositions) {
+				bool first = i == buildPositions.begin();
+				// queue if not shift down or first build pos
+				flags.set(CommandProperties::QUEUE, input.isShiftDown() || !first);
+				// don't reserve any resources if multiple builders or if not first build pos
+				flags.set(CommandProperties::DONT_RESERVE_RESOURCES, selection.getCount() > 1 || !first);
+				result = commander->tryGiveCommand(selection, flags, activeCommandType,
+					CommandClass::NULL_COMMAND, *i, NULL, choosenBuildingType, m_selectedFacing);
 			}
 		}
 	}
@@ -858,9 +861,10 @@ void UserInterface::onFirstTierSelect(int posDisplay) {
 		activePos= posDisplay;
 		selectingMeetingPoint= true;
 	} else {
+		// posDisplay is for a real command...
 		const Unit *unit= selection.getFrontUnit();
 
-		if (selection.isUniform()) { // uniform selection
+		if (selection.isUniform()) { // uniform selection, use activeCommandType
 			if (unit->getFaction()->reqsOk(m_display->getCommandType(posDisplay))) {
 				activeCommandType = m_display->getCommandType(posDisplay);
 				activeCommandClass = activeCommandType->getClass();
@@ -870,7 +874,7 @@ void UserInterface::onFirstTierSelect(int posDisplay) {
 				activeCommandClass = CommandClass::STOP;
 				return;
 			}
-		} else { // non uniform selection
+		} else { // non uniform selection, use activeCommandClass
 			activeCommandType = NULL;
 			activeCommandClass = m_display->getCommandClass(posDisplay);
 		}
