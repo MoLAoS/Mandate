@@ -265,12 +265,14 @@ void WidgetWindow::releaseKeyboardFocus(KeyboardWidget* widget) {
 }
 
 void WidgetWindow::unwindMouseOverStack(Widget* newTop) {
+	assert(newTop != 0);
 	while (mouseOverStack.top() != newTop) {
 		MouseWidget* mw = mouseOverStack.top()->asMouseWidget();
 		if (mw) {
 			mw->mouseOut();
 		}
 		mouseOverStack.pop();
+		assert(!mouseOverStack.empty());
 	}
 }
 
@@ -331,17 +333,17 @@ Widget* WidgetWindow::findCommonAncestor(Widget* widget1, Widget* widget2) {
 	return this;
 }
 
-void WidgetWindow::doMouseInto(Widget* widget) {
-	assert(widget != 0);
+void WidgetWindow::doMouseInto(Widget *widget) {
 	assert(!mouseOverStack.empty());
+
 	if (widget != mouseOverStack.top()) {
-		Widget* ancestor = findCommonAncestor(widget, mouseOverStack.top());
-		assert(ancestor != 0);
+		Widget *ancestor = findCommonAncestor(widget, mouseOverStack.top());
 		unwindMouseOverStack(ancestor);
-		assert(!mouseOverStack.empty());
+
 		std::stack<Widget*> tmpStack;
 		while (widget != ancestor) {
 			tmpStack.push(widget);
+			assert(widget->getParent() != 0);
 			widget = widget->getParent();
 			assert(widget != 0);
 		}
@@ -476,21 +478,32 @@ void WidgetWindow::destroyFloater() {
 	}
 }
 
-void WidgetWindow::eventMouseDown(int x, int y, MouseButton msBtn) {
-	WIDGET_LOG( __FUNCTION__ << "( " << x << ", " << y << ", " << MouseButtonNames[msBtn] << " )");
-	mousePos = Vec2i(x, y);
+Widget* WidgetWindow::getWidgetForMouseEvent() {
 	Widget* widget = 0;
 	if (floatingWidget) {
 		if (floatingWidget->isInside(mousePos)) {
 			widget = floatingWidget->getWidgetAt(mousePos);
-		} else {
-			if (!modalFloater) {
-				destroyFloater();
-			}
-			return;
 		}
 	} else {
-		widget = getWidgetAt(mousePos);
+		if (isInside(mousePos)) {
+			widget = getWidgetAt(mousePos);
+		}
+	}
+	if (!widget) {
+		widget = this;
+	}
+	return widget;
+}
+
+void WidgetWindow::eventMouseDown(int x, int y, MouseButton msBtn) {
+	WIDGET_LOG( __FUNCTION__ << "( " << x << ", " << y << ", " << MouseButtonNames[msBtn] << " )");
+	mousePos = Vec2i(x, y);
+	Widget* widget = getWidgetForMouseEvent();
+	if (floatingWidget && widget == this) {
+		if (!modalFloater) {
+			destroyFloater();
+		}
+		return;
 	}
 	//cout << "eventMouseDown @" << mousePos << " on " << widget->desc() << endl;
 
@@ -528,11 +541,7 @@ void WidgetWindow::eventMouseUp(int x, int y, MouseButton msBtn) {
 	}
 	if (lastMouseDownWidget == downWidget) {
 		lastMouseDownWidget = 0;
-		if (floatingWidget) {
-			doMouseInto(floatingWidget->getWidgetAt(mousePos));
-		} else {
-			doMouseInto(getWidgetAt(mousePos));
-		}
+		doMouseInto(getWidgetForMouseEvent());
 	}
 }
 
@@ -542,34 +551,21 @@ void WidgetWindow::eventMouseMove(int x, int y, const MouseState &ms) {
 	mousePos = Vec2i(x, y);
 	m_mouseCursor->setPos(mousePos);
 
-	Widget* widget = 0;
-	if (floatingWidget) {
-		if (floatingWidget->isInside(mousePos)) {
-			widget = floatingWidget->getWidgetAt(mousePos);
-		}
-	} else {
-		if (isInside(mousePos)) {
-			widget = getWidgetAt(mousePos);
-		}
-	}
-	if (!widget) {
-		widget = this;
-	}
-	assert(widget);
-	assert(!widget->descId().empty());
-
 	if (lastMouseDownWidget) {
 		lastMouseDownWidget->mouseMove(mousePos);
-	} else {
-		doMouseInto(widget);
-		while (widget) {
-			if (widget->asMouseWidget()) {
-				if (widget->asMouseWidget()->mouseMove(mousePos)) {
-					return;
-				}
+		return;
+	}
+	Widget* widget = getWidgetForMouseEvent();
+	unwindMouseOverStack(findCommonAncestor(widget, mouseOverStack.top()));
+	widget = getWidgetForMouseEvent();
+	doMouseInto(widget);
+	while (widget) {
+		if (widget->asMouseWidget()) {
+			if (widget->asMouseWidget()->mouseMove(mousePos)) {
+				return;
 			}
-			widget = widget->getParent();
 		}
+		widget = widget->getParent();
 	}
 }
 

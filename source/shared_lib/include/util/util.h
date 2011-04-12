@@ -89,12 +89,12 @@ extern const string sharedLibVersionString;
 // some helpers to find stuff in vectors
 
 template<typename C, typename T>
-bool find(C &c, T &val) {
+bool find(C &c, const T &val) {
 	return std::find(c.begin(), c.end(), val) != c.end();
 }
 
 template<typename C, typename T>
-bool find(C &c, T &val, typename C::iterator &out) {
+bool find(C &c, const T &val, typename C::iterator &out) {
 	out = std::find(c.begin(), c.end(), val);
 	return out != c.end();
 }

@@ -52,10 +52,9 @@ public:
   * and is base class to Glest::Main::Program */
 class WidgetWindow : public Container, public MouseWidget, public KeyboardWidget, public WindowGl {
 private:
-	typedef std::stack<Widget*>	WidgetStack;
-	//typedef std::list<Layer*>	LayerList;
-	typedef std::set<string>		NameSet;
-	typedef std::stack<Rect2i>      ClipStack;
+	typedef std::stack<Widget*> WidgetStack;
+	typedef std::set<string>    NameSet;
+	typedef std::stack<Rect2i>  ClipStack;
 
 protected:
 	static WidgetWindow *instance;
@@ -74,6 +73,7 @@ private:
 	WidgetList	updateList;
 	WidgetList  addUpdateQueue;
 	WidgetList  remUpdateQueue;
+
 	WidgetStack mouseOverStack;
 
 	TextRenderer *textRendererFT;
@@ -92,9 +92,10 @@ private:
 	void restoreDisplaySettings();
 
 	Widget* findCommonAncestor(Widget* widget1, Widget* widget2);
+	Widget* getWidgetForMouseEvent();
 	void unwindMouseOverStack(Widget* newTop);
 	void unwindMouseOverStack();
-	void doMouseInto(Widget* widget);
+	void doMouseInto(Widget *widget);
 	void destroyFloater();
 	void setScissor(const Rect2i &rect);
 
