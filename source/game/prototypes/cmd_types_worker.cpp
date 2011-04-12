@@ -1002,7 +1002,7 @@ void HarvestCommandType::update(Unit *unit) const {
 				// if resource exausted, then delete it and stop (and let the cartographer know)
 				if (res->decrement()) {
 					Vec2i rPos = res->getPos();
-					tile->deleteResource();
+					map->getTile(Map::toTileCoords(rPos))->deleteResource();
 					g_world.getCartographer()->updateMapMetrics(rPos, GameConstants::cellScale);
 					unit->setCurrSkill(getStopLoadedSkill(unit));
 				}
