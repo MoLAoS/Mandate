@@ -27,6 +27,8 @@
 
 #include "prototypes_enums.h"
 #include "entities_enums.h"
+#include "logger.h"
+
 #include <set>
 using std::set;
 
@@ -39,29 +41,25 @@ using std::set;
 #	define _PROFILE_COMMAND_UPDATE()
 #endif
 
-#if defined(LOG_BUILD_COMMAND) && LOG_BUILD_COMMAND
-#	define BUILD_LOG(x) STREAM_LOG(x)
+#if defined(LOG_WORLD_EVENTS) && LOG_WORLD_EVENTS
+#	define COMMAND_LOG(f, l, c, x)                      \
+		if (g_logger.shouldLogCmdEvent(f, c, l)) {      \
+			stringstream ss;                            \
+			ss << "Faction ndx:" << f << " CmdClass::"  \
+				<< CommandClassNames[c] << ": " << x;   \
+			g_logger.logWorldEvent(ss.str());           \
+		}
+#	define BUILD_LOG(u, x)     COMMAND_LOG(u->getFaction()->getIndex(), 1, CommandClass::BUILD, x)
+#	define REPAIR_LOG(u, x)    COMMAND_LOG(u->getFaction()->getIndex(), 1, CommandClass::REPAIR, x)
+#	define REPAIR_LOG2(u, x)   COMMAND_LOG(u->getFaction()->getIndex(), 2, CommandClass::REPAIR, x)
+#	define HARVEST_LOG(u, x)   COMMAND_LOG(u->getFaction()->getIndex(), 1, CommandClass::HARVEST, x)
+#	define HARVEST_LOG2(u, x)  COMMAND_LOG(u->getFaction()->getIndex(), 2, CommandClass::HARVEST, x)
 #else
-#	define BUILD_LOG(x)
-#endif
-
-#if defined(LOG_REPAIR_COMMAND) && LOG_REPAIR_COMMAND
-#	if LOG_REPAIR_COMMAND > 1
-#		define REPAIR_LOG(x) STREAM_LOG(x)
-#		define REPAIR_LOG2(x) STREAM_LOG(x)
-#	else
-#		define REPAIR_LOG(x) STREAM_LOG(x)
-#		define REPAIR_LOG2(x)
-#	endif
-#else
-#	define REPAIR_LOG(x)
-#	define REPAIR_LOG2(x)
-#endif
-
-#if defined(LOG_HARVEST_COMMAND) && LOG_HARVEST_COMMAND
-#	define HARVEST_LOG(x) STREAM_LOG(x)
-#else
-#	define HARVEST_LOG(x)
+#	define BUILD_LOG(u, x)
+#	define REPAIR_LOG(u, x)
+#	define REPAIR_LOG2(u, x)
+#	define HARVEST_LOG(u, x)
+#	define HARVEST_LOG2(u, x)
 #endif
 
 using Shared::Util::MultiFactory;

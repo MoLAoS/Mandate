@@ -22,11 +22,16 @@
 #include "FSFactory.hpp"
 #include "timer.h"
 #include "texture.h"
+#include "prototypes_enums.h"
 
 using std::deque;
 using std::string;
 using std::stringstream;
 
+// master switch, 'world' logging
+#define LOG_WORLD_EVENTS 1
+
+// master switch, widget logging
 #define LOG_WIDGET_EVENTS 1
 #if LOG_WIDGET_EVENTS
 #	define WIDGET_LOG(x) {stringstream ss; ss << x; g_logger.logWidgetEvent(ss.str()); }
@@ -131,6 +136,10 @@ public:
 	void unitLoaded();
 };
 
+// =====================================================
+//  enum AiComponent
+// =====================================================
+
 STRINGY_ENUM( AiComponent,
 	ECONOMY,
 	PRODUCTION,
@@ -139,11 +148,19 @@ STRINGY_ENUM( AiComponent,
 	RESEARCH
 );
 
+// =====================================================
+//  struct AiLogFlags
+// =====================================================
+
 struct AiLogFlags {
 	bool  m_enabled;
 	int   m_level;
 	bool  m_components[AiComponent::COUNT];
 };
+
+// =====================================================
+//  class AiLogFile 
+// =====================================================
 
 class AiLogFile : public LogFile {
 private:
@@ -190,6 +207,31 @@ public:
 };
 
 // =====================================================
+//  class WorldLogFile
+/// LogFile for debug spam
+// =====================================================
+using ProtoTypes::CommandClass;
+
+class WorldLogFile : public LogFile {
+protected:
+	bool         m_factionFlags[GameConstants::maxPlayers];
+	int          m_commandFlags[CommandClass::COUNT];
+
+public:
+	WorldLogFile();
+	virtual ~WorldLogFile() {}
+
+	void setEnabled(int faction, bool v) { m_factionFlags[faction] = v; }
+	void setEnabled(CommandClass cc, int level) { m_commandFlags[cc] = level; }
+
+	int getLogLevel(int faction, CommandClass cmdClass) const { return m_commandFlags[cmdClass]; }
+
+	bool isEnabled(int faction, CommandClass cmdClass, int level) const {
+		return m_factionFlags[faction] && level <= m_commandFlags[cmdClass];
+	}
+};
+
+// =====================================================
 // class Logger
 //
 /// Interface to write log files
@@ -197,13 +239,13 @@ public:
 
 class Logger {
 private:
-	ProgramLog	*m_programLog;  // Always enabled
-	LogFile     *m_errorLog;    // Always enabled
-	AiLogFile   *m_aiLog;       // Always enabled
-	LogFile     *m_networkLog;  // Always enabled
+	ProgramLog	  *m_programLog;  // Always enabled
+	LogFile       *m_errorLog;    // Always enabled
+	AiLogFile     *m_aiLog;       // Always enabled
+	LogFile       *m_networkLog;  // Always enabled
 
-	LogFile     *m_widgetLog;   // Pre-processor controlled
-	LogFile     *m_worldLog;    // Pre-processor controlled
+	LogFile       *m_widgetLog;   // Pre-processor controlled
+	WorldLogFile  *m_worldLog;    // Pre-processor controlled
 
 private:
 	Logger();
@@ -265,15 +307,23 @@ public:
 	}
 
 #	if LOG_WORLD_EVENTS
-		void logWorldEvent(const string &msg) {
-			m_worldLog->add(msg);
-		}
+
+	bool shouldLogCmdEvent(int faction, CommandClass cc,  int level) const {
+		return m_worldLog->isEnabled(faction, cc,  level);
+	}
+
+	void logWorldEvent(const string &msg) {
+		m_worldLog->add(msg);
+	}
+
 #	endif
 
 #	if LOG_WIDGET_EVENTS
-		void logWidgetEvent(const string &msg) {
-			m_widgetLog->add(msg);
-		}
+
+	void logWidgetEvent(const string &msg) {
+		m_widgetLog->add(msg);
+	}
+
 #	endif
 
 };
@@ -322,9 +372,6 @@ public:
 		g_logger.addWorldLogMsg(_ss.str());				\
 	}													\
 }
-
-// master switch, 'world' logging
-#define LOG_WORLD_EVENTS 0
 
 // Log pathfinding results
 #define LOG_PATHFINDER 0

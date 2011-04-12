@@ -258,6 +258,22 @@ void AiLogFile::add(int f, AiComponent c, int level, const string &msg) {
 }
 
 // =====================================================
+//	class WorldLogFile
+// =====================================================
+
+WorldLogFile::WorldLogFile()
+		: LogFile("glestadv-world.log", "World", TimeStampType::MILLIS) {
+	for (int i=0; i < GameConstants::maxPlayers; ++i) {
+		m_factionFlags[i] = true;
+	}
+	for (int i=0; i < CommandClass::COUNT; ++i) {
+		m_commandFlags[i] = 0;
+	}
+
+	m_commandFlags[CommandClass::HARVEST] = 2;
+}
+
+// =====================================================
 //	class Logger
 // =====================================================
 
@@ -283,7 +299,7 @@ Logger::Logger()
 #	endif
 
 #	if LOG_WORLD_EVENTS
-		m_worldLog  = new LogFile("glestadv-world.log", "World", TimeStampType::NONE);
+		m_worldLog  = new WorldLogFile();
 #	endif
 }
 

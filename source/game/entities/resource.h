@@ -20,11 +20,11 @@ using std::string;
 #include "sigslot.h"
 #include "forward_decs.h"
 
+namespace Glest { namespace Entities {
+
 using Shared::Xml::XmlNode;
 using Shared::Math::Vec2i;
 using namespace Glest::ProtoTypes;
-
-namespace Glest { namespace Entities {
 
 // =====================================================
 // 	class ResourceAmount
@@ -44,11 +44,10 @@ public:
 	void init(const XmlNode *n, const TechTree *tt);
 	void init(const ResourceType *rt, const int amount);
 
-	void setAmount(int v) { m_amount = v; }
+	virtual void setAmount(int v) { m_amount = v; }
 	int  getAmount() const { return m_amount; }
 	const ResourceType *getType() const { return m_type; }
 
-	virtual bool decAmount(int v);
 	void save(XmlNode *node) const;
 };
 
@@ -57,9 +56,15 @@ public:
 // =====================================================
 
 class MapResource : public ResourceAmount {
+private:
 	Vec2i	m_pos;
 
+private:
+	MapResource(const MapResource &r) { assert(false); }
+
 public:
+	MapResource() : ResourceAmount(), m_pos(-1) {}
+
 	sigslot::signal<Vec2i>	Depleted;
 
 	void init(const XmlNode *n, const TechTree *tt);
@@ -69,14 +74,12 @@ public:
 
 	void save(XmlNode *n) const;
 
-	bool decAmount(int v) override {
-		if (ResourceAmount::decAmount(v)) {
-			Depleted(m_pos);
-			return true;
-		}
-		return false;
-	}
+	bool decrement();
+
+	virtual void setAmount(int v) override { assert(false); }
 };
+
+ostream& operator<<(ostream &stream, const MapResource &res);
 
 // =====================================================
 // 	class StoredResource

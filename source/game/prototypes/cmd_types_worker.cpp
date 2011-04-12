@@ -54,7 +54,7 @@ bool RepairCommandType::repairableInRange(const Unit *unit, Vec2i centre, int ce
 		Unit **rangedPtr, const RepairCommandType *rct, const RepairSkillType *rst,
 		int range, bool allowSelf, bool militaryOnly, bool damagedOnly) {
 	_PROFILE_COMMAND_UPDATE();
-	REPAIR_LOG2( 
+	REPAIR_LOG2( unit,
 		__FUNCTION__ << "(): with unit: " << *unit << " @ " << unit->getPos() << ", "
 		<< " centre: " << centre << ", centreSize: " << centreSize;		
 	);
@@ -67,7 +67,7 @@ bool RepairCommandType::repairableInRange(const Unit *unit, Vec2i centre, int ce
 
 	if (target && target->isAlive() && target->isDamaged() && rct->canRepair(target->getType())) {
 		fixed rangeToTarget = fixedCentre.dist(target->getFixedCenteredPos()) - (centreSize + target->getSize()) / fixed(2);
-		REPAIR_LOG2( "\tRange check to target : " << (rangeToTarget > range ? "not " : "") << "in range." );
+		REPAIR_LOG2( unit, "\tRange check to target : " << (rangeToTarget > range ? "not " : "") << "in range." );
 
 		if (rangeToTarget <= range) { // current target is in range
 			return true;
@@ -102,11 +102,11 @@ bool RepairCommandType::repairableInRange(const Unit *unit, Vec2i centre, int ce
 	}
 	// if no repairables or just one then it's a simple choice.
 	if (repairables.empty()) {
-		REPAIR_LOG2( "\tSearch found no targets." );
+		REPAIR_LOG2( unit, "\tSearch found no targets." );
 		return false;
 	} else if (repairables.size() == 1) {
 		*rangedPtr = repairables.begin()->first;
-		REPAIR_LOG2( "\tSearch found single possible target. Unit: " 
+		REPAIR_LOG2( unit, "\tSearch found single possible target. Unit: " 
 			<< **rangedPtr << " @ " << (*rangedPtr)->getPos() );
 		return true;
 	}
@@ -116,12 +116,12 @@ bool RepairCommandType::repairableInRange(const Unit *unit, Vec2i centre, int ce
 	if(!(*rangedPtr = repairables.getNearestSkillClass(SkillClass::ATTACK))
 	&& !(*rangedPtr = repairables.getNearestHpRatio(fixed(2) / 10))
 	&& !(*rangedPtr = repairables.getNearest())) {
-		REPAIR_LOG2( "\tSomething very odd happened..." );
+		REPAIR_LOG2( unit, "\tSomething very odd happened..." );
 		// this is unreachable, we've already established repaiables is not empty, so
 		// getNearest() will always return something for us...
 		return false;
 	}
-	REPAIR_LOG2( "\tSearch found " << repairables.size() << " possible targets. Selected Unit: " 
+	REPAIR_LOG2( unit, "\tSearch found " << repairables.size() << " possible targets. Selected Unit: " 
 		<< **rangedPtr << " @ " << (*rangedPtr)->getPos() );
 	return true;
 }
@@ -299,14 +299,14 @@ void RepairCommandType::update(Unit *unit) const {
 					unit->setCurrSkill(SkillClass::STOP);
 					unit->clearPath();
 					unit->finishCommand();
-					REPAIR_LOG( "Unit: " << unit->getId() << " path blocked, cancelling." );
+					REPAIR_LOG( unit, "Unit: " << unit->getId() << " path blocked, cancelling." );
 				}
 				break;
 
 			case TravelState::IMPOSSIBLE:
 				unit->setCurrSkill(SkillClass::STOP);
 				unit->finishCommand();
-				REPAIR_LOG( "Unit: " << unit->getId() << " path impossible, cancelling." );
+				REPAIR_LOG( unit, "Unit: " << unit->getId() << " path impossible, cancelling." );
 				break;
 
 			default: throw runtime_error("Error: RoutePlanner::findPath() returned invalid result.");
@@ -372,12 +372,12 @@ Command *RepairCommandType::doAutoRepair(Unit *unit) const {
 	Unit *sighted = NULL;
 	if (unit->getEp() >= repairSkillType->getEpCost()
 	&& repairableInSight(unit, &sighted, this, repairSkillType->isSelfAllowed())) {
-		REPAIR_LOG( __FUNCTION__ << "(): Unit:" << *unit << " @ " << unit->getPos()
+		REPAIR_LOG( unit, __FUNCTION__ << "(): Unit:" << *unit << " @ " << unit->getPos()
 			<< ", found someone (" << *sighted << ") to repair @ " << sighted->getPos() );
 		Command *newCommand;
 		
 		Vec2i pos = Map::getNearestPos(unit->getPos(), sighted, repairSkillType->getMinRange(), repairSkillType->getMaxRange());
-		REPAIR_LOG( "\tMap::getNearestPos(): " << pos );
+		REPAIR_LOG( unit, "\tMap::getNearestPos(): " << pos );
 
 		newCommand = g_world.newCommand(this, CommandFlags(CommandProperties::QUEUE, CommandProperties::AUTO), pos);
 		newCommand->setPos2(unit->getPos());
@@ -500,7 +500,7 @@ void BuildCommandType::update(Unit *unit) const {
 	assert(command->getType() == this);
 	const UnitType *builtUnitType = static_cast<const UnitType*>(command->getProdType());
 
-	BUILD_LOG( 
+	BUILD_LOG( unit, 
 		__FUNCTION__ << " : Updating unit " << unit->getId() << ", building type = " << builtUnitType->getName()
 		<< ", command target = " << command->getPos();
 	);
@@ -589,7 +589,7 @@ bool BuildCommandType::hasArrived(Unit *unit, const Command *command, const Unit
 		case TravelState::MOVING:
 			unit->setCurrSkill(this->getMoveSkillType());
 			unit->face(unit->getNextPos());
-			BUILD_LOG( "Moving." );
+			BUILD_LOG( unit, "Moving." );
 			break;
 
 		case TravelState::BLOCKED:
@@ -598,7 +598,7 @@ bool BuildCommandType::hasArrived(Unit *unit, const Command *command, const Unit
 				g_console.addStdMessage("Blocked");
 				unit->clearPath();
 				unit->cancelCurrCommand();
-				BUILD_LOG( "Blocked." << cmdCancelMsg );
+				BUILD_LOG( unit, "Blocked." << cmdCancelMsg );
 			}
 			break;
 
@@ -609,7 +609,7 @@ bool BuildCommandType::hasArrived(Unit *unit, const Command *command, const Unit
 		case TravelState::IMPOSSIBLE:
 			g_console.addStdMessage("Unreachable");
 			unit->cancelCurrCommand();
-			BUILD_LOG( "Route impossible," << cmdCancelMsg );
+			BUILD_LOG( unit, "Route impossible," << cmdCancelMsg );
 			break;
 
 		default:
@@ -628,7 +628,7 @@ void BuildCommandType::existingBuild(Unit *unit, Command *command, Unit *builtUn
 	unit->setTarget(builtUnit, true, true);
 	unit->setCurrSkill(this->getBuildSkillType());
 	command->setUnit(builtUnit);
-	BUILD_LOG( "in position, building already under construction." );
+	BUILD_LOG( unit, "in position, building already under construction." );
 }
 
 bool BuildCommandType::attemptMoveUnits(const vector<Unit *> &occupants) const {
@@ -642,7 +642,7 @@ bool BuildCommandType::attemptMoveUnits(const vector<Unit *> &occupants) const {
 			return false;
 		}
 	}
-	BUILD_LOG( "in position, site blocked, waiting for people to get out of the way." );
+//	BUILD_LOG( unit, "in position, site blocked, waiting for people to get out of the way." );
 	// they all have a move command, so we'll wait
 	return true;
 
@@ -658,7 +658,7 @@ void BuildCommandType::blockedBuild(Unit *unit) const {
 	if (unit->getFactionIndex() == g_world.getThisFactionIndex()) {
 		g_console.addStdMessage("BuildingNoPlace");
 	}
-	BUILD_LOG( "site blocked." << cmdCancelMsg );
+	BUILD_LOG( unit, "site blocked." << cmdCancelMsg );
 }
 
 void BuildCommandType::acceptBuild(Unit *unit, Command *command, const UnitType *builtUnitType) const {
@@ -671,14 +671,14 @@ void BuildCommandType::acceptBuild(Unit *unit, Command *command, const UnitType 
 			if (unit->getFactionIndex() == g_world.getThisFactionIndex()) {
 				g_console.addStdMessage("BuildingNoRes");
 			}
-			BUILD_LOG( "in positioin, late resource allocation failed." << cmdCancelMsg );
+			BUILD_LOG( unit, "in positioin, late resource allocation failed." << cmdCancelMsg );
 			unit->finishCommand();
 			return;
 		}
 		unit->getFaction()->applyCosts(static_cast<const UnitType*>(command->getProdType()));
 	}
 
-	BUILD_LOG( "in position, starting construction." );
+	BUILD_LOG( unit, "in position, starting construction." );
 	builtUnit = g_world.newUnit(command->getPos(), builtUnitType, unit->getFaction(), map, command->getFacing());
 	builtUnit->create();
 	unit->setCurrSkill(m_buildSkillType);
@@ -698,14 +698,14 @@ void BuildCommandType::acceptBuild(Unit *unit, Command *command, const UnitType 
 	}
 	
 	//play start sound
-	if (unit->getFactionIndex() == g_world.getThisFactionIndex()) {
+	if (unit->getFaction()->isThisFaction()) {
 		RUNTIME_CHECK(!unit->isCarried());
 		g_soundRenderer.playFx(getStartSound(), unit->getCurrVector(), g_gameState.getGameCamera()->getPos());
 	}
 }
 
 void BuildCommandType::continueBuild(Unit *unit, const Command *command, const UnitType *builtUnitType) const {
-	BUILD_LOG( "building." );
+	BUILD_LOG( unit, "building." );
 	Unit *builtUnit = command->getUnit();
 
 	if (builtUnit && builtUnit->getType() != builtUnitType) {
@@ -854,7 +854,7 @@ const int maxResSearchRadius= 10;
 
 /// looks for a resource of a type that hct can harvest, searching from command target pos
 /// @return pointer to Resource if found (unit's command pos will have been re-set).
-/// NULL if no resource was found within UnitUpdater::maxResSearchRadius.
+/// NULL if no resource was found within maxResSearchRadius.
 MapResource* searchForResource(Unit *unit, const HarvestCommandType *hct) {
 	Vec2i pos;
 	Map *map = g_world.getMap();
@@ -865,10 +865,12 @@ MapResource* searchForResource(Unit *unit, const HarvestCommandType *hct) {
 	while (pci.getNext(pos)) {
 		MapResource *r = map->getTile(Map::toTileCoords(pos))->getResource();
 		if (r && hct->canHarvest(r->getType())) {
+			HARVEST_LOG2( unit, "Found new target at @ " << pos );
 			unit->getCurrCommand()->setPos(pos);
 			return r;
 		}
 	}
+	HARVEST_LOG2( unit, "Failed to find new target" );
 	return 0;
 }
 
@@ -879,22 +881,26 @@ void HarvestCommandType::update(Unit *unit) const {
 	Vec2i targetPos;
 	Map *map = g_world.getMap();
 
-	Tile *tile = map->getTile(Map::toTileCoords(unit->getCurrCommand()->getPos()));
+	// 1. find resource at command's pos
+	Tile *tile = map->getTile(Map::toTileCoords(command->getPos()));
 	MapResource *res = tile->getResource();
-
 	if (!res) { // reset command pos, but not Unit::targetPos
-		HARVEST_LOG( "No resource at command target." );
+		HARVEST_LOG( unit, "No resource at command target " << command->getPos() << "." );
 		if (!(res = searchForResource(unit, this))) {
 			if (!unit->getLoadCount()) {
+				HARVEST_LOG( unit, "No resource found nearby, finishing command." );
 				unit->finishCommand();
 				unit->setCurrSkill(SkillClass::STOP);
-				HARVEST_LOG( "No resource found nearby, command finished." );
 				return;
 			}
-			HARVEST_LOG( "No resource found nearby, returning to store." );
+			HARVEST_LOG( unit, "No resource found nearby, returning to store." );
+		} else {
+			HARVEST_LOG2( unit, "Found resource nearby: " << *res << ", command pos reset." );
 		}
-		HARVEST_LOG( "Found resource nearby, command target reset." );
+	} else {
+		HARVEST_LOG2( unit, "Resource at command target: " << *res );
 	}
+
 	if (unit->getCurrSkill()->getClass() != SkillClass::HARVEST) { // if not working
 		if  (!unit->getLoadCount() || (res && unit->getLoadType() == res->getType()
 		&& unit->getLoadCount() < this->getMaxLoad() / 2)) {
@@ -903,7 +909,7 @@ void HarvestCommandType::update(Unit *unit) const {
 				switch (g_routePlanner.findPathToResource(unit, command->getPos(), res->getType())) {
 					case TravelState::ARRIVED:
 						if (map->isResourceNear(unit->getPos(), unit->getSize(), res->getType(), targetPos)) {
-							HARVEST_LOG( "Arrived, my pos: " << unit->getPos() << ", targetPos" << targetPos );
+							HARVEST_LOG( unit, "Arrived, my pos: " << unit->getPos() << ", targetPos" << targetPos );
 							// if it finds resources it starts harvesting
 							unit->setCurrSkill(this->getHarvestSkillType());
 							unit->setTargetPos(targetPos);
@@ -915,10 +921,10 @@ void HarvestCommandType::update(Unit *unit) const {
 					case TravelState::MOVING:
 						unit->setCurrSkill(this->getMoveSkillType());
 						unit->face(unit->getNextPos());
-						HARVEST_LOG( "Moving, pos: " << unit->getPos() << ", nextPos: " << unit->getNextPos() );
+						HARVEST_LOG( unit, "Moving, pos: " << unit->getPos() << ", nextPos: " << unit->getNextPos() );
 						break;
 					default:
-						HARVEST_LOG( "Blocked?" );
+						HARVEST_LOG( unit, "Blocked?" );
 						unit->setCurrSkill(SkillClass::STOP);
 						break;
 				}
@@ -971,42 +977,47 @@ void HarvestCommandType::update(Unit *unit) const {
 			unit->finishCommand();
 		}
 	} else { // if working
-		HARVEST_LOG( "Working, targetPos: " << unit->getTargetPos() );
+		// Unit::targetPos is the resource we were harvesting, (Command::pos may have been reset).
 		res = map->getTile(Map::toTileCoords(unit->getTargetPos()))->getResource();
 		if (res) { // if there is a resource, continue working, until loaded
+			HARVEST_LOG2( unit, "Resource at unit target-pos: " << *res );
 			if (!this->canHarvest(res->getType())) { // wrong resource type, command changed
 				unit->setCurrSkill(getStopLoadedSkill(unit));
 				unit->clearPath();
-				HARVEST_LOG( "wrong resource type, command changed." );
+				HARVEST_LOG( unit, "wrong resource type, command changed." );
 				return;
 			}
-			HARVEST_LOG( "Working..." );
+			HARVEST_LOG( unit, "Working, targetPos: " << unit->getTargetPos() );
 			unit->update2();
 			if (unit->getProgress2() >= this->getHitsPerUnit()) {
 				unit->setProgress2(0);
 				if (unit->getLoadCount() < this->getMaxLoad()) {
 					unit->setLoadCount(unit->getLoadCount() + 1);
 				}
-				HARVEST_LOG( "Harvested 1 unit, load now: " << unit->getLoadCount() );
+				HARVEST_LOG( unit, "Harvested 1 unit, load now: " << unit->getLoadCount() );
+				if (res->getAmount() < 1) {
+					DEBUG_HOOK();
+				}
+				assert(res->getAmount() > 0);
 				// if resource exausted, then delete it and stop (and let the cartographer know)
-				if (res->decAmount(1)) {
+				if (res->decrement()) {
 					Vec2i rPos = res->getPos();
 					tile->deleteResource();
 					g_world.getCartographer()->updateMapMetrics(rPos, GameConstants::cellScale);
 					unit->setCurrSkill(getStopLoadedSkill(unit));
 				}
 				if (unit->getLoadCount() == this->getMaxLoad()) {
-					HARVEST_LOG( "Loaded, setting stop-loaded." );
+					HARVEST_LOG( unit, "Loaded, setting stop-loaded." );
 					unit->setCurrSkill(getStopLoadedSkill(unit));
 					unit->clearPath();
 				}
 			}
 		} else { // if there is no resource
 			if (unit->getLoadCount()) {
-				HARVEST_LOG( "No resource..." );
+				HARVEST_LOG( unit, "No resource..." );
 				unit->setCurrSkill(getStopLoadedSkill(unit));
 			} else {
-				HARVEST_LOG( "No resource, finsihed." );
+				HARVEST_LOG( unit, "No resource, finsihed." );
 				unit->finishCommand();
 				unit->setCurrSkill(SkillClass::STOP);
 			}

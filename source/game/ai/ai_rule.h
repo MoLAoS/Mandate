@@ -13,19 +13,17 @@
 #define _GLEST_GAME_AIRULE_H_
 
 #include <string>
-
 #include "vec.h"
-#include "skill_type.h"
+#include "unit_type.h"
 
+namespace Glest { namespace Plan {
+
+// using
 using std::string;
-
 using Shared::Math::Vec2i;
+using namespace ProtoTypes;
 
-namespace Glest { 
-namespace ProtoTypes { class CommandType; }
-
-namespace Plan {
-
+// forward decs
 class Ai;
 class ProduceTask;
 class BuildTask;

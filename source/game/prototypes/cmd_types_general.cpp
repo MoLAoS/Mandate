@@ -119,11 +119,11 @@ Command* CommandType::doAutoCommand(Unit *unit) const {
 	if (!unit->getFaction()->getCpuControl() && rct && (autoCmd = rct->doAutoRepair(unit))) {
 		//REMOVE
 		if (autoCmd->getUnit()) {
-			REPAIR_LOG( "Auto-Repair command generated, target unit: "
+			REPAIR_LOG( unit, "Auto-Repair command generated, target unit: "
 				<< *autoCmd->getUnit() << ", command pos:" << autoCmd->getPos()
 			);
 		} else {
-			REPAIR_LOG( "Auto-Repair command generated, no target unit, command pos:" << autoCmd->getPos() );
+			REPAIR_LOG( unit, "Auto-Repair command generated, no target unit, command pos:" << autoCmd->getPos() );
 		}
 		return autoCmd;
 	}

@@ -44,35 +44,43 @@ void ResourceAmount::init(const ResourceType *rt, int amount) {
     m_amount = amount;
 }
 
-bool ResourceAmount::decAmount(int i) {
-	if (!i) { // just test
-		return !m_amount;
-	}
-	RUNTIME_CHECK(m_amount >= i);
-	m_amount -= i;
-	if (m_amount) {
-		return false;
-	}
-	return true;
-}
-
 // =====================================================
 // 	class MapResource
 // =====================================================
 
 void MapResource::init(const XmlNode *n, const TechTree *tt) {
 	ResourceAmount::init(n, tt);
+	assert(m_amount > 0);
 	m_pos = n->getChildVec2iValue("pos");
 }
 
 void MapResource::init(const ResourceType *rt, const Vec2i &pos) {
 	ResourceAmount::init(rt, rt->getDefResPerPatch());
+	assert(m_amount > 0);
 	m_pos = pos;
 }
 
 void MapResource::save(XmlNode *n) const {
 	ResourceAmount::save(n);
 	n->addChild("pos", m_pos);
+}
+
+bool MapResource::decrement() {
+	if (m_amount < 1) {
+		DEBUG_HOOK();
+	}
+	assert(m_amount > 0);
+	--m_amount;
+	if (m_amount) {
+		return false;
+	}
+	Depleted(m_pos);
+	return true;
+}
+
+ostream& operator<<(ostream &stream, const MapResource &res) {
+	return stream << "Type: " << res.getType()->getName() << " Pos: " << res.getPos() 
+		<< " Amount: " << res.getAmount();
 }
 
 // =====================================================
