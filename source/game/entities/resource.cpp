@@ -66,9 +66,6 @@ void MapResource::save(XmlNode *n) const {
 }
 
 bool MapResource::decrement() {
-	if (m_amount < 1) {
-		DEBUG_HOOK();
-	}
 	assert(m_amount > 0);
 	--m_amount;
 	if (m_amount) {

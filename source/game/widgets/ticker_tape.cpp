@@ -163,9 +163,6 @@ void TickerTape::update() {
 	while (a != m_actions.end()) {
 		bool rem = false;
 		if (a->update()) {
-			if (m_displayInterval == -1) {
-				DEBUG_HOOK();
-			}
 			if (m_displayInterval != -1
 			&& ((a->m_phaseNumber == 1 && m_overlapTransitions)
 			|| (a->m_phaseNumber == 2 && !m_overlapTransitions)))  {

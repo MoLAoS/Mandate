@@ -345,11 +345,6 @@ bool AiRuleAddTasks::canProduce(UnitClass unitClass) const {
 			|| (ct->getClass() != CommandClass::PRODUCE && ct->getClass() != CommandClass::MORPH)) {
 				continue;
 			}
-			
-			if (ct->getClass() == CommandClass::PRODUCE && unitClass == UnitClass::WARRIOR
-			&& ut->isMobile()) {
-				DEBUG_HOOK();
-			}
 
 			for (int k=0; k < ct->getProducedCount(); ++k) {
 				const UnitType *pt = static_cast<const UnitType*>(ct->getProduced(k));
@@ -599,19 +594,12 @@ void AiRuleProduce::produceGeneric(const ProduceTask *task) {
 	// 1. Find all UnitTypes who can produce/morph-to UnitTypes of UnitClass requested and that have reqsOk
 	for (int i=0; i < ft->getUnitTypeCount(); ++i) {
 		const UnitType *ut = ft->getUnitType(i);
-//		if (!faction->reqsOk(ut)) {
-//			continue;
-//		}
 		for (int j=0; j < ut->getCommandTypeCount(); ++j) {
 			const CommandType *ct = ut->getCommandType(j);
 			if (!faction->reqsOk(ct)
 			|| (ct->getClass() != CommandClass::PRODUCE && ct->getClass() != CommandClass::MORPH)) {
 				continue;
 			}
-			//if (ct->getClass() == CommandClass::PRODUCE && task->getUnitClass() == UnitClass::WARRIOR
-			//&& ut->isMobile()) {
-			//	DEBUG_HOOK();
-			//}
 			for (int k=0; k < ct->getProducedCount(); ++k) {
 				const UnitType *pt = static_cast<const UnitType*>(ct->getProduced(k));
 				if (faction->reqsOk(pt) && pt->isOfClass(task->getUnitClass())) {

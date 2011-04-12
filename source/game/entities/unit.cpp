@@ -815,9 +815,6 @@ void Unit::setAutoCmdEnable(AutoCmdFlag f, bool v) {
 CommandResult Unit::giveCommand(Command *command) {
 	assert(command);
 	const CommandType *ct = command->getType();
-	if (ct->getClass() == CommandClass::TRANSFORM) {
-		DEBUG_HOOK();
-	}
 	CMD_UNIT_LOG( this, "giveCommand() " << *command );
 	if (ct->getClass() == CommandClass::SET_MEETING_POINT) {
 		if(command->isQueue() && !commands.empty()) {

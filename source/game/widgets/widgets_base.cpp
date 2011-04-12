@@ -394,10 +394,6 @@ void Widget::renderBordersFromTexture(const BorderStyle &style, const Vec2i &off
 	buildArrayQuad(pos + Vec2f(0.f, sz.h - float(cornerSize)),
 		cnrSize, Vec2f(0.f, 1.f - uvStepCorner.v), uvStepCorner, &verts[12], &uvCoords[12]);
 
-	if (size.w == 16) {
-		DEBUG_HOOK();
-	}
-
 	// and 4 sides,
 	// top & bottom
 	Vec2f tbSize(sz.w - float(cornerSize) * 2.f, float(borderSize));
@@ -996,9 +992,6 @@ void TextWidget::setTextShadowOffset(const Vec2i &offset, int ndx) {
 
 
 void TextWidget::setTextFade(float alpha, int ndx) {
-	if (alpha == 0.f && numSnippets() == 1) {
-		DEBUG_HOOK();
-	}
 	m_texts[ndx].m_fade = alpha;
 }
 

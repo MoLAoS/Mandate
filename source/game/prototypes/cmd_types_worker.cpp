@@ -995,9 +995,6 @@ void HarvestCommandType::update(Unit *unit) const {
 					unit->setLoadCount(unit->getLoadCount() + 1);
 				}
 				HARVEST_LOG( unit, "Harvested 1 unit, load now: " << unit->getLoadCount() );
-				if (res->getAmount() < 1) {
-					DEBUG_HOOK();
-				}
 				assert(res->getAmount() > 0);
 				// if resource exausted, then delete it and stop (and let the cartographer know)
 				if (res->decrement()) {

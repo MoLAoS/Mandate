@@ -29,10 +29,10 @@ using std::string;
 using std::stringstream;
 
 // master switch, 'world' logging
-#define LOG_WORLD_EVENTS 1
+#define LOG_WORLD_EVENTS 0
 
 // master switch, widget logging
-#define LOG_WIDGET_EVENTS 1
+#define LOG_WIDGET_EVENTS 0
 #if LOG_WIDGET_EVENTS
 #	define WIDGET_LOG(x) {stringstream ss; ss << x; g_logger.logWidgetEvent(ss.str()); }
 #else
