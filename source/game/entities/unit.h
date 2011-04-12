@@ -354,6 +354,7 @@ public:
 	UnitIdList& getUnitsToCarry()				{return m_unitsToCarry;}
 	UnitIdList& getUnitsToUnload()				{return m_unitsToUnload;}
 	UnitId getCarrier() const					{return m_carrier;}
+	void housedUnitDied(Unit *unit);
 
 	//bool isVisible() const					{return carried;}
 	void setCarried(Unit *host)				{carried = (host != 0); m_carrier = (host ? host->getId() : -1);}

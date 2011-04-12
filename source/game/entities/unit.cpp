@@ -1104,7 +1104,9 @@ void Unit::kill() {
 	if (!m_unitsToCarry.empty()) {
 		foreach (UnitIdList, it, m_unitsToCarry) {
 			Unit *unit = world.getUnit(*it);
-			unit->cancelCurrCommand();
+			if (unit->anyCommand() && unit->getCurrCommand()->getType()->getClass() == CommandClass::BE_LOADED) {
+				unit->cancelCurrCommand();
+			}
 		}
 		m_unitsToCarry.clear();
 	}
@@ -1116,6 +1118,10 @@ void Unit::kill() {
 			unit->decHp(hp);
 		}
 		m_carriedUnits.clear();
+	}
+	if (isCarried()) {
+		Unit *carrier = g_world.getUnit(getCarrier());
+		carrier->housedUnitDied(this);
 	}
 
 	if (fire) {
@@ -1147,6 +1153,13 @@ void Unit::kill() {
 	checkTargets(this); // hack... 'tracking' particle systems might reference this
 	if (type->isDetector()) {
 		world.getCartographer()->detectorDeactivated(this);
+	}
+}
+
+void Unit::housedUnitDied(Unit *unit) {
+	UnitIdList::iterator it;
+	if (Shared::Util::find(m_carriedUnits, unit->getId(), it)) {
+		m_carriedUnits.erase(it);
 	}
 }
 
