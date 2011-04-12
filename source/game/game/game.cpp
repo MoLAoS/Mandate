@@ -517,10 +517,12 @@ void GameState::onChatCancel(Widget*) {
 }
 
 void GameState::destroyDialog(Widget*) {
-	program.removeFloatingWidget(m_modalDialog);
-	m_modalDialog = 0;
-	if (!m_scriptMessages.empty()) {
-		doScriptMessage();
+	if (m_modalDialog) {
+		program.removeFloatingWidget(m_modalDialog);
+		m_modalDialog = 0;
+		if (!m_scriptMessages.empty()) {
+			doScriptMessage();
+		}
 	}
 }
 
