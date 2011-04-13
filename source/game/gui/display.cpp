@@ -509,21 +509,36 @@ DisplayButton Display::computeIndex(Vec2i i_pos, bool screenPos) {
 		m_upImageOffset, m_downImageOffset, m_carryImageOffset
 	};
 	int counts[3] = { selectionCellCount, commandCellCount, transportCellCount };
-	for (int i=0; i < 3; ++i) {
+	for (int i = 0; i < 3; ++i) {
 		pos.y = i_pos.y - (offsets[i].y - cellHeightCount * imageSize);
 		if (pos.y >= 0 && pos.y < imageSize * cellHeightCount) {
-	int cellX = pos.x / imageSize;
-	int cellY = (pos.y / imageSize) % cellHeightCount;
-	int index = (cellHeightCount - cellY - 1) * cellWidthCount + cellX;
+			int cellX = pos.x / imageSize;
+			int cellY = (pos.y / imageSize) % cellHeightCount;
+			int index = (cellHeightCount - cellY - 1) * cellWidthCount + cellX;
 			if (index >= 0 && index < counts[i]) {
 				if (getImage(i * cellHeightCount * cellWidthCount + index)) {
 					return DisplayButton(DisplaySection(i), index);
-	}
+				}
 				return DisplayButton(DisplaySection::INVALID, invalidPos);
 			}
 		}
 	}
 	return DisplayButton(DisplaySection::INVALID, invalidPos);
+}
+
+/** Check if the pos is in the bounds of the widget.
+  * @param pos the screen pos to check
+  * @param out_pos provides the relative pos in the widget
+  * @returns true if pos is in the widget
+  */
+bool Display::isInBounds(const Vec2i &pos, Vec2i &out_pos) {
+	Vec2i myPos = getScreenPos();
+	Vec2i mySize = getSize();
+
+	out_pos = pos - myPos - Vec2i(getBorderLeft(), getBorderBottom());
+	
+	return pos.x >= myPos.x + getBorderLeft() && pos.y >= myPos.y + getBorderBottom()
+		&& pos.x < myPos.x + mySize.x - getBorderRight() && pos.y < myPos.y + mySize.y - getBorderTop();
 }
 
 bool Display::mouseDown(MouseButton btn, Vec2i pos) {
@@ -538,10 +553,8 @@ bool Display::mouseDown(MouseButton btn, Vec2i pos) {
 			return true;
 		}
 
-		if (pos.x >= myPos.x + getBorderLeft() && pos.y >= myPos.y + getBorderBottom()
-		&& pos.x < myPos.x + mySize.x - getBorderRight() && pos.y < myPos.y + mySize.y - getBorderTop()) {
-			Vec2i tPos = pos - myPos - Vec2i(getBorderLeft(), getBorderBottom());
-
+		Vec2i tPos;
+		if (isInBounds(pos, tPos)) {
 			m_hoverBtn = computeIndex(tPos);
 			if (m_hoverBtn.m_section == DisplaySection::COMMANDS) {
 				m_pressedBtn = m_hoverBtn;
@@ -582,18 +595,14 @@ bool Display::mouseDown(MouseButton btn, Vec2i pos) {
 
 bool Display::mouseUp(MouseButton btn, Vec2i pos) {
 	WIDGET_LOG( __FUNCTION__ << "( " << MouseButtonNames[btn] << ", " << pos << " )");
-	Vec2i myPos = getScreenPos();
-	Vec2i mySize = getSize();
-
 	if (m_draggingWidget) {
 		m_draggingWidget = false;
 		return true;
 	}
 	if (btn == MouseButton::LEFT) {
 		if (m_pressedBtn.m_section != DisplaySection::INVALID) {
-			if (pos.x >= myPos.x + getBorderLeft() && pos.y >= myPos.y + getBorderBottom()
-			&& pos.x < myPos.x + mySize.x - getBorderRight() && pos.y < myPos.y + mySize.y - getBorderTop()) {
-				Vec2i tPos = pos - myPos - Vec2i(getBorderLeft(), getBorderBottom());
+			Vec2i tPos;
+			if (isInBounds(pos, tPos)) {
 				m_hoverBtn = computeIndex(tPos);
 				if (m_hoverBtn == m_pressedBtn) {
 					if (m_hoverBtn.m_section == DisplaySection::COMMANDS) {
@@ -602,21 +611,17 @@ bool Display::mouseUp(MouseButton btn, Vec2i pos) {
 					m_pressedBtn = DisplayButton(DisplaySection::INVALID, invalidPos);
 					return true;
 				}
-				}
-			m_pressedBtn = DisplayButton(DisplaySection::INVALID, invalidPos);
 			}
+			m_pressedBtn = DisplayButton(DisplaySection::INVALID, invalidPos);
 		}
+	}
 	return false;
 }
 
 bool Display::mouseDoubleClick(MouseButton btn, Vec2i pos) {
 	WIDGET_LOG( __FUNCTION__ << "( " << MouseButtonNames[btn] << ", " << pos << " )");
-	Vec2i myPos = getScreenPos();
-	Vec2i mySize = getSize();
-
-	if (pos.x >= myPos.x + getBorderLeft() && pos.y >= myPos.y + getBorderBottom()
-	&& pos.x < myPos.x + mySize.x - getBorderRight() && pos.y < myPos.y + mySize.y - getBorderTop()) {
-		Vec2i tPos = pos - myPos - Vec2i(getBorderLeft(), getBorderBottom());
+	Vec2i tPos;
+	if (isInBounds(pos, tPos)) {
 		m_hoverBtn = computeIndex(tPos);
 		if (m_hoverBtn.m_section == DisplaySection::TRANSPORTED) {
 			m_ui->unloadRequest(m_hoverBtn.m_index);
@@ -652,20 +657,14 @@ ostream& operator<<(ostream &stream, const DisplayButton &btn) {
 
 bool Display::mouseMove(Vec2i pos) {
 	WIDGET_LOG( __FUNCTION__ << "( " << pos << " )");
-	Vec2i myPos = getScreenPos();
-	Vec2i mySize = getSize();
-
 	if (m_draggingWidget) {
 		setPos(pos + m_moveOffset);
 		return true;
 	}
 
-	if (pos.x >= myPos.x + getBorderLeft() && pos.y >= myPos.y + getBorderBottom()
-	&& pos.x < myPos.x + mySize.x - getBorderRight() && pos.y < myPos.y + mySize.y - getBorderTop()) {
-		Vec2i tPos = pos - myPos - Vec2i(getBorderLeft(), getBorderBottom());
-
+	Vec2i tPos;
+	if (isInBounds(pos, tPos)) {
 		DisplayButton currBtn = computeIndex(tPos);
-		
 		if (currBtn != m_hoverBtn) {
 			// change stuff
 			if (currBtn.m_section == DisplaySection::SELECTION) {
@@ -684,7 +683,7 @@ bool Display::mouseMove(Vec2i pos) {
 		}
 	} else {
 		setToolTipText("");
-		}
+	}
 	return false;
 }
 
