@@ -304,24 +304,26 @@ void UserInterface::tick() {
 ///@todo move to Display
 void UserInterface::commandButtonPressed(int posDisplay) {
 	WIDGET_LOG( __FUNCTION__ << "( " << posDisplay << " )");
-	if (!selectingPos && !selectingMeetingPoint) {
+	
+	if (activePos != posDisplay) {
 		if (selection.isComandable()) {
 			if (m_selectingSecond) {
 				mouseDownSecondTier(posDisplay);
 			} else {
+				resetState();
 				mouseDownDisplayUnitSkills(posDisplay);
 			}
 		} else {
 			resetState();
 		}
 		activePos = posDisplay;
-		computeDisplay();
-		computeCommandInfo(activePos);
-	} else { // m_selectingSecond
+	} else if (!specialUnitSkill(posDisplay)) {
 		// if they clicked on a button again, they must have changed their mind
+		// but allow toggling an auto button
 		resetState();
-		activePos = invalidPos;
 	}
+	computeDisplay();
+	computeCommandInfo(activePos);
 }
 
 void UserInterface::unloadRequest(int carryIndex) {
@@ -810,6 +812,10 @@ void UserInterface::clickCommonCommand(CommandClass commandClass) {
 
 /** @pre selection must not be empty */
 bool UserInterface::specialUnitSkill(int posDisplay) {
+	if (selection.isEmpty()) {
+		return false;
+	}
+
 	bool result = true;
 
 	if (posDisplay == cancelPos) {
