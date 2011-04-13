@@ -126,10 +126,10 @@ MenuBackground::MenuBackground(){
 	aboutPosition.z= positionNode->getAttribute("z")->getFloatValue();
 	rotationNode= cameraNode->getChild("about-rotation");
 
-	targetCamera= NULL;
-	t= 0.f;
-	fade= 0.f;
-	anim= 0.f;
+	targetCamera = 0;
+	t = 0.f;
+	fade = 0.f;
+	anim = 0.f;
 }
 
 void MenuBackground::setTargetCamera(const Camera *targetCamera){
@@ -139,18 +139,18 @@ void MenuBackground::setTargetCamera(const Camera *targetCamera){
 }
 
 void MenuBackground::update(){
-
-	//rain drops
-	for(int i=0; i<raindropCount; ++i){
-		raindropStates[i]+= 1.f / Config::getInstance().getGsWorldUpdateFps();
-		if(raindropStates[i]>=1.f){
-			raindropStates[i]= 0.f;
-			raindropPos[i]= computeRaindropPos();
+	// rain drops
+	for (int i=0; i < raindropCount; ++i) {
+		raindropStates[i] += 1.f / WORLD_FPS;
+		if (raindropStates[i] >= 1.f) {
+			raindropStates[i] = 0.f;
+			raindropPos[i] = computeRaindropPos();
 		}
 	}
 
-	if(targetCamera!=NULL){
-		t+= ((0.01f+(1.f-t)/10.f)/20.f)*(60.f/Config::getInstance().getGsWorldUpdateFps());
+	// camera transition?
+	if (targetCamera != 0) {
+		t += ((0.1f + (1.f - t) / 10.f) / 20.f) * (60.f / WORLD_FPS);
 
 		//interpolate position
 		camera.setPosition(lastCamera.getPosition().lerp(t, targetCamera->getPosition()));
@@ -159,24 +159,24 @@ void MenuBackground::update(){
 		Quaternion q= lastCamera.getOrientation().lerp(t, targetCamera->getOrientation());
 		camera.setOrientation(q);
 
-		if(t>=1.f){
-			targetCamera= NULL;
-			t= 0.f;
+		if (t >= 1.f) {
+			targetCamera = 0;
+			t = 0.f;
 		}
 	}
 
-	//fade
-	if(fade<=1.f){
-		fade+= 0.6f/Config::getInstance().getGsWorldUpdateFps();
-		if(fade>1.f){
-			fade= 1.f;
+	// fade-in
+	if (fade < 1.f) {
+		fade += 0.6f / WORLD_FPS;
+		if (fade > 1.f) {
+			fade = 1.f;
 		}
 	}
 
-	//animation
-	anim+=(0.6f/Config::getInstance().getGsWorldUpdateFps())/5+random.randRange(0.f, (0.6f/Config::getInstance().getGsWorldUpdateFps())/5.f);
-	if(anim>1.f){
-		anim= 0.f;
+	// animation
+	anim += (0.6f / WORLD_FPS) / 5 + random.randRange(0.f, (0.6f / WORLD_FPS) / 5.f);
+	if (anim > 1.f) {
+		anim = 0.f;
 	}
 }
 

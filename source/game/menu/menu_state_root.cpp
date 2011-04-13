@@ -184,7 +184,8 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 		label->setSize(size);
 	}
 
-	// end network interface
+	// fade everything we just added & end network interface (if coming back from new-game menu)
+	program.setFade(0.f);
 	program.getSimulationInterface()->changeRole(GameRole::LOCAL);
 }
 
