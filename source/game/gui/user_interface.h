@@ -265,6 +265,9 @@ private:
 
 	//misc
 	//int computePosDisplay(int x, int y);
+	bool specialUnitSkill(int posDisplay);
+	bool determineActiveCommand(int posDisplay);
+	void giveCommandTypeOrder(int posDisplay);
 	void mouseDownDisplayUnitSkills(int posDisplay);
 	void mouseDownSecondTier(int posDisplay);
 	void addOrdersResultToConsole(CommandClass cc, CommandResult rr);

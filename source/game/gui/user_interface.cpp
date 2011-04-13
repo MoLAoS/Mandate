@@ -807,12 +807,11 @@ void UserInterface::clickCommonCommand(CommandClass commandClass) {
 		}
 	}
 }
-///@todo move to Display
-void UserInterface::mouseDownDisplayUnitSkills(int posDisplay) {
-	WIDGET_LOG( __FUNCTION__ << "( " << posDisplay << " )");
-	if (selection.isEmpty()) {
-		return;
-	}
+
+/** @pre selection must not be empty */
+bool UserInterface::specialUnitSkill(int posDisplay) {
+	bool result = true;
+
 	if (posDisplay == cancelPos) {
 		if (isPlacingBuilding()) {
 			resetState();
@@ -837,55 +836,80 @@ void UserInterface::mouseDownDisplayUnitSkills(int posDisplay) {
 		bool action = !selection.anyCloaked();
 		commander->trySetCloak(selection, action);
 	} else if (posDisplay == meetingPointPos) {
-		activePos= posDisplay;
-		selectingMeetingPoint= true;
+		activePos = posDisplay;
+		selectingMeetingPoint = true;
 	} else {
-		const Unit *unit= selection.getFrontUnit();
+		result = false;
+	}
 
-		if (selection.isUniform()) { // uniform selection
-			if (unit->getFaction()->reqsOk(m_display->getCommandType(posDisplay))) {
-				activeCommandType = m_display->getCommandType(posDisplay);
-				activeCommandClass = activeCommandType->getClass();
-			} else {
-				posDisplay = invalidPos;
-				activeCommandType = NULL;
-				activeCommandClass = CommandClass::STOP;
-				return;
-			}
-		} else { // non uniform selection
+	return result;
+}
+
+/** @return true if should carry out command */
+bool UserInterface::determineActiveCommand(int posDisplay) {
+	if (selection.isUniform()) { // uniform selection
+		const Unit *unit = selection.getFrontUnit();
+		if (unit->getFaction()->reqsOk(m_display->getCommandType(posDisplay))) {
+			activeCommandType = m_display->getCommandType(posDisplay);
+			activeCommandClass = activeCommandType->getClass();
+		} else {
+			posDisplay = invalidPos;
 			activeCommandType = NULL;
-			activeCommandClass = m_display->getCommandClass(posDisplay);
+			activeCommandClass = CommandClass::STOP;
+			return false;
 		}
+	} else { // non uniform selection
+		activeCommandType = NULL;
+		activeCommandClass = m_display->getCommandClass(posDisplay);
+	}
 
-		if (!selection.isEmpty()) { // give orders depending on command type
-			const CommandType *ct = selection.getUnit(0)->getFirstAvailableCt(activeCommandClass);
-			if (activeCommandType && activeCommandType->getClass() == CommandClass::BUILD) {
-				assert(selection.isUniform());
-				m_selectedFacing = CardinalDir::NORTH;
-				m_selectingSecond = true;
-			} else if (activeCommandType && activeCommandType->getClass() == CommandClass::TRANSFORM
-			&& activeCommandType->getProducedCount() == 1) {
-				choosenBuildingType = static_cast<const UnitType*>(activeCommandType->getProduced(0));
-				assert(choosenBuildingType != NULL);
-				selectingPos = true;
-				g_program.setMouseCursorIcon(activeCommandType->getImage());
-				m_minimap->setLeftClickOrder(true);
-				activePos = posDisplay;
-			} else if ((activeCommandType && activeCommandType->getClicks() == Clicks::ONE)
-			|| (!activeCommandType && ct->getClicks() == Clicks::ONE)) {
-				invalidatePosObjWorld();
-				giveOneClickOrders();
-			} else {
-				if (activeCommandType && activeCommandType->getProducedCount() > 1) {
-					assert(selection.isUniform());
-					m_selectingSecond = true;
-				} else {
-					selectingPos = true;
-					g_program.setMouseCursorIcon(ct->getImage());
-					m_minimap->setLeftClickOrder(true);
-					activePos = posDisplay;
-				}
-			}
+	return true;
+}
+
+/** @pre selection must not be empty */
+void UserInterface::giveCommandTypeOrder(int posDisplay) {
+	const CommandType *ct = selection.getUnit(0)->getFirstAvailableCt(activeCommandClass);
+	if (activeCommandType && activeCommandType->getClass() == CommandClass::BUILD) {
+		assert(selection.isUniform());
+		m_selectedFacing = CardinalDir::NORTH;
+		m_selectingSecond = true;
+	} else if (activeCommandType && activeCommandType->getClass() == CommandClass::TRANSFORM
+	&& activeCommandType->getProducedCount() == 1) {
+		choosenBuildingType = static_cast<const UnitType*>(activeCommandType->getProduced(0));
+		assert(choosenBuildingType != NULL);
+		selectingPos = true;
+		g_program.setMouseCursorIcon(activeCommandType->getImage());
+		m_minimap->setLeftClickOrder(true);
+		activePos = posDisplay;
+	} else if ((activeCommandType && activeCommandType->getClicks() == Clicks::ONE)
+	|| (!activeCommandType && ct->getClicks() == Clicks::ONE)) {
+		invalidatePosObjWorld();
+		giveOneClickOrders();
+	} else {
+		if (activeCommandType && activeCommandType->getProducedCount() > 1) {
+			assert(selection.isUniform());
+			m_selectingSecond = true;
+		} else {
+			selectingPos = true;
+			g_program.setMouseCursorIcon(ct->getImage());
+			m_minimap->setLeftClickOrder(true);
+			activePos = posDisplay;
+		}
+	}
+}
+
+///@todo move to Display
+void UserInterface::mouseDownDisplayUnitSkills(int posDisplay) {
+	WIDGET_LOG( __FUNCTION__ << "( " << posDisplay << " )");
+	
+	if (selection.isEmpty()) {
+		return;
+	}
+
+	if (!specialUnitSkill(posDisplay)) {
+		if (determineActiveCommand(posDisplay)) {
+			// give orders depending on command type
+			giveCommandTypeOrder(posDisplay);
 		}
 	}
 }
