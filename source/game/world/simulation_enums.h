@@ -120,7 +120,7 @@ STRINGY_ENUM( UnitClass,
   *		<li><b>FAIL_UNDEFINED</b> failed.</li>
   *		<li><b>SOME_FAILED</b> partially failed.</li></ul>
   */
-STRINGY_ENUM( CommandResult,
+STRINGY_ENUM( CmdResult,
 	SUCCESS,
 	FAIL_BLOCKED,
 	FAIL_RESOURCES,

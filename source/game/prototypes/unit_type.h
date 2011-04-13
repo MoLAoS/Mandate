@@ -107,7 +107,7 @@ private:
 	Texture2D *meetingPointImage;
 
 	CommandTypes commandTypes;
-	CommandTypes commandTypesByClass[CommandClass::COUNT]; // command types mapped by CommandClass
+	CommandTypes commandTypesByClass[CmdClass::COUNT]; // command types mapped by CmdClass
 
 	SkillTypes skillTypes;
 	SkillTypes skillTypesByClass[SkillClass::COUNT];
@@ -190,10 +190,10 @@ public:
 	const ConcreteType* getCommandType(int i) const {
 		return static_cast<const ConcreteType*>(commandTypesByClass[ConcreteType::typeClass()][i]);
 	}
-	const CommandTypes& getCommandTypes(CommandClass cc) const {
+	const CommandTypes& getCommandTypes(CmdClass cc) const {
 		return commandTypesByClass[cc];
 	}
-	const CommandType *getFirstCtOfClass(CommandClass cc) const {
+	const CommandType *getFirstCtOfClass(CmdClass cc) const {
 		return commandTypesByClass[cc].empty() ? 0 : commandTypesByClass[cc].front();
 	}
     const HarvestCommandType *getHarvestCommand(const ResourceType *resourceType) const;
@@ -238,7 +238,7 @@ public:
 
 	// has
 	bool hasCommandType(const CommandType *ct) const;
-	bool hasCommandClass(CommandClass cc) const		{return !commandTypesByClass[cc].empty();}
+	bool hasCommandClass(CmdClass cc) const		{return !commandTypesByClass[cc].empty();}
 	bool hasSkillType(const SkillType *skillType) const;
 	bool hasSkillClass(SkillClass skillClass) const;
 	bool hasCellMap() const							{return m_cellMap != NULL;}

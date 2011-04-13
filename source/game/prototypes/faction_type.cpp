@@ -166,7 +166,7 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 			const LoadCommandType *lct = ut->getCommandType<LoadCommandType>(i);
 			foreach (UnitTypes, luit, unitTypes) {
 				UnitType *lut = *luit;
-				if (lct->canCarry(lut) && lut->getFirstCtOfClass(CommandClass::MOVE)) {
+				if (lct->canCarry(lut) && lut->getFirstCtOfClass(CmdClass::MOVE)) {
 					loadableUnitTypes.insert(lut);
 				}
 			}

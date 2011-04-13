@@ -246,7 +246,7 @@ public:
 // ===============================
 
 typedef DynamicTypeFactory<SkillClass, SkillType>            SkillTypeFactory;
-typedef DynamicTypeFactory<CommandClass, CommandType>        CommandTypeFactory;
+typedef DynamicTypeFactory<CmdClass, CommandType>        CommandTypeFactory;
 typedef DynamicTypeFactory<ProducibleClass, ProducibleType>  ProducibleTypeFactory;
 typedef DynamicTypeFactory<EffectClass, EffectType>	         EffectTypeFactory;
 typedef SingleTypeFactory<CloakType>                         CloakTypeFactory;
@@ -282,7 +282,7 @@ public:	// create objects
 	SkillType*		newSkillType(SkillClass sc)		{ return m_skillTypeFactory.newInstance(sc); }
 
 	// commands
-	CommandType*	newCommandType(CommandClass cc, const UnitType *ut)	{
+	CommandType*	newCommandType(CmdClass cc, const UnitType *ut)	{
 		CommandType *ct = m_commandTypeFactory.newInstance(cc);
 		ct->setUnitType(ut);
 		return ct;

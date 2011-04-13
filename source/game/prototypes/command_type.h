@@ -46,14 +46,14 @@ using std::set;
 		if (g_logger.shouldLogCmdEvent(f, c, l)) {      \
 			stringstream ss;                            \
 			ss << "Faction ndx:" << f << " CmdClass::"  \
-				<< CommandClassNames[c] << ": " << x;   \
+				<< CmdClassNames[c] << ": " << x;   \
 			g_logger.logWorldEvent(ss.str());           \
 		}
-#	define BUILD_LOG(u, x)     COMMAND_LOG(u->getFaction()->getIndex(), 1, CommandClass::BUILD, x)
-#	define REPAIR_LOG(u, x)    COMMAND_LOG(u->getFaction()->getIndex(), 1, CommandClass::REPAIR, x)
-#	define REPAIR_LOG2(u, x)   COMMAND_LOG(u->getFaction()->getIndex(), 2, CommandClass::REPAIR, x)
-#	define HARVEST_LOG(u, x)   COMMAND_LOG(u->getFaction()->getIndex(), 1, CommandClass::HARVEST, x)
-#	define HARVEST_LOG2(u, x)  COMMAND_LOG(u->getFaction()->getIndex(), 2, CommandClass::HARVEST, x)
+#	define BUILD_LOG(u, x)     COMMAND_LOG(u->getFaction()->getIndex(), 1, CmdClass::BUILD, x)
+#	define REPAIR_LOG(u, x)    COMMAND_LOG(u->getFaction()->getIndex(), 1, CmdClass::REPAIR, x)
+#	define REPAIR_LOG2(u, x)   COMMAND_LOG(u->getFaction()->getIndex(), 2, CmdClass::REPAIR, x)
+#	define HARVEST_LOG(u, x)   COMMAND_LOG(u->getFaction()->getIndex(), 1, CmdClass::HARVEST, x)
+#	define HARVEST_LOG2(u, x)  COMMAND_LOG(u->getFaction()->getIndex(), 2, CmdClass::HARVEST, x)
 #else
 #	define BUILD_LOG(u, x)
 #	define REPAIR_LOG(u, x)
@@ -88,7 +88,7 @@ typedef const ProducibleType* ProdTypePtr;
 // =====================================================
 
 class CommandType : public RequirableType {
-	friend class Glest::Sim::DynamicTypeFactory<CommandClass, CommandType>;
+	friend class Glest::Sim::DynamicTypeFactory<CmdClass, CommandType>;
 	friend class Glest::Sim::PrototypeFactory;
 
 protected:
@@ -141,7 +141,7 @@ public:
 
 	// candidates for lua callbacks
 	/** Check if a command can be executed */
-	virtual CommandResult check(const Unit *unit, const Command &command) const { return CommandResult::SUCCESS; }
+	virtual CmdResult check(const Unit *unit, const Command &command) const { return CmdResult::SUCCESS; }
 	/** Apply costs for a command. */
 	virtual void apply(Faction *faction, const Command &command) const;
 	/** De-Apply costs for a command */
@@ -174,7 +174,7 @@ public:
 		}
 		return str;
 	}
-	virtual CommandClass getClass() const = 0;
+	virtual CmdClass getClass() const = 0;
 
 	Command* doAutoCommand(Unit *unit) const;
 
@@ -248,8 +248,8 @@ public:
 	virtual void update(Unit *unit) const;
 
 	virtual void descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt = 0) const override {}
-	virtual CommandClass getClass() const { return typeClass(); }
-	static CommandClass typeClass() { return CommandClass::STOP; }
+	virtual CmdClass getClass() const { return typeClass(); }
+	static CmdClass typeClass() { return CmdClass::STOP; }
 };
 
 // ===============================
@@ -264,8 +264,8 @@ public:
 
 	virtual void descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt = 0) const override;
 	virtual Vec3f getArrowColor() const {return Vec3f(0.f, 1.f, 0.f);}
-	virtual CommandClass getClass() const { return typeClass(); }
-	static CommandClass typeClass() { return CommandClass::MOVE; }
+	virtual CmdClass getClass() const { return typeClass(); }
+	static CmdClass typeClass() { return CmdClass::MOVE; }
 };
 
 // ===============================
@@ -278,9 +278,9 @@ public:
 	virtual void update(Unit *unit) const;
 
 	virtual void descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt = 0) const override;
-	virtual CommandClass getClass() const { return typeClass(); }
-	static CommandClass typeClass() { return CommandClass::TELEPORT; }
-	virtual CommandResult check(const Unit *unit, const Command &command) const;
+	virtual CmdClass getClass() const { return typeClass(); }
+	static CmdClass typeClass() { return CmdClass::TELEPORT; }
+	virtual CmdResult check(const Unit *unit, const Command &command) const;
 };
 
 // ===============================
@@ -327,8 +327,8 @@ public:
 	virtual void update(Unit *unit) const;
 
 	virtual Vec3f getArrowColor() const {return Vec3f(1.f, 0.f, 0.f);}
-	virtual CommandClass getClass() const { return typeClass(); }
-	static CommandClass typeClass() { return CommandClass::ATTACK; }
+	virtual CmdClass getClass() const { return typeClass(); }
+	static CmdClass typeClass() { return CmdClass::ATTACK; }
 
 public:
 	Command* doAutoAttack(Unit *unit) const;
@@ -353,8 +353,8 @@ public:
 	virtual void update(Unit *unit) const;
 
 	virtual Vec3f getArrowColor() const {return Vec3f(1.f, 0.f, 0.f);}
-	virtual CommandClass getClass() const { return typeClass(); }
-	static CommandClass typeClass() { return CommandClass::ATTACK_STOPPED; }
+	virtual CmdClass getClass() const { return typeClass(); }
+	static CmdClass typeClass() { return CmdClass::ATTACK_STOPPED; }
 
 public:
 	Command* doAutoAttack(Unit *unit) const;
@@ -389,7 +389,7 @@ public:
 	/** @param builtUnitType the unitType to build
 	  * @param pos the position to put the unit */
 	bool isBlocked(const UnitType *builtUnitType, const Vec2i &pos, CardinalDir facing) const;
-	virtual CommandResult check(const Unit *unit, const Command &command) const;
+	virtual CmdResult check(const Unit *unit, const Command &command) const;
 	virtual void undo(Unit *unit, const Command &command) const;
 
 	//get
@@ -413,8 +413,8 @@ public:
 	StaticSound *getStartSound() const				{return m_startSounds.getRandSound();}
 	StaticSound *getBuiltSound() const				{return m_builtSounds.getRandSound();}
 
-	virtual CommandClass getClass() const { return typeClass(); }
-	static CommandClass typeClass() { return CommandClass::BUILD; }
+	virtual CmdClass getClass() const { return typeClass(); }
+	static CmdClass typeClass() { return CmdClass::BUILD; }
 
 private:
 	bool hasArrived(Unit *unit, const Command *command, const UnitType *builtUnitType) const;
@@ -461,8 +461,8 @@ public:
 	const ResourceType* getHarvestedResource(int i) const	{return m_harvestedResources[i];}
 	bool canHarvest(const ResourceType *resourceType) const;
 
-	virtual CommandClass getClass() const { return typeClass(); }
-	static CommandClass typeClass() { return CommandClass::HARVEST; }
+	virtual CmdClass getClass() const { return typeClass(); }
+	static CmdClass typeClass() { return CmdClass::HARVEST; }
 };
 
 // ===============================
@@ -489,8 +489,8 @@ public:
 	const RepairSkillType *getRepairSkillType() const	{return repairSkillType;}
 	bool canRepair(const UnitType *unitType) const;
 
-	virtual CommandClass getClass() const { return typeClass(); }
-	static CommandClass typeClass() { return CommandClass::REPAIR; }
+	virtual CmdClass getClass() const { return typeClass(); }
+	static CmdClass typeClass() { return CmdClass::REPAIR; }
 
 protected:
 	///@todo move to Cartographer, generalise so that the same code can be used for searching 
@@ -550,8 +550,8 @@ public:
 	const ProduceSkillType *getProduceSkillType() const	{return m_produceSkillType;}
 	virtual Clicks getClicks() const	{ return m_producedUnits.size() == 1 ? Clicks::ONE : Clicks::TWO; }
 
-	virtual CommandClass getClass() const { return typeClass(); }
-	static CommandClass typeClass() { return CommandClass::PRODUCE; }
+	virtual CmdClass getClass() const { return typeClass(); }
+	static CmdClass typeClass() { return CmdClass::PRODUCE; }
 };
 
 // ===============================
@@ -589,8 +589,8 @@ public:
 
 	virtual Clicks getClicks() const	{ return m_producibles.size() == 1 ? Clicks::ONE : Clicks::TWO; }
 
-	virtual CommandClass getClass() const { return typeClass(); }
-	static CommandClass typeClass() { return CommandClass::GENERATE; }
+	virtual CmdClass getClass() const { return typeClass(); }
+	static CmdClass typeClass() { return CmdClass::GENERATE; }
 };
 
 // ===============================
@@ -633,12 +633,12 @@ public:
 		return it->second;
 	}
 
-	virtual CommandClass getClass() const { return typeClass(); }
-	static CommandClass typeClass() { return CommandClass::UPGRADE; }
+	virtual CmdClass getClass() const { return typeClass(); }
+	static CmdClass typeClass() { return CmdClass::UPGRADE; }
 
 	virtual void apply(Faction *faction, const Command &command) const;
 	virtual void undo(Unit *unit, const Command &command) const;
-	virtual CommandResult check(const Unit *unit, const Command &command) const;
+	virtual CmdResult check(const Unit *unit, const Command &command) const;
 };
 
 // ===============================
@@ -690,8 +690,8 @@ public:
 	int getDiscount() const							{return m_discount;}
 	int getRefund() const                           {return m_refund;}
 
-	virtual CommandClass getClass() const { return typeClass(); }
-	static CommandClass typeClass() { return CommandClass::MORPH; }
+	virtual CmdClass getClass() const { return typeClass(); }
+	static CmdClass typeClass() { return CmdClass::MORPH; }
 };
 
 // ===============================
@@ -714,9 +714,9 @@ public:
 	virtual void descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt = 0) const override;
 
 	const MoveSkillType *getMoveSkillType() const {return m_moveSkillType;}
-	virtual CommandClass getClass() const         { return typeClass(); }
+	virtual CmdClass getClass() const         { return typeClass(); }
 
-	static CommandClass typeClass()               { return CommandClass::TRANSFORM; }
+	static CmdClass typeClass()               { return CmdClass::TRANSFORM; }
 };
 
 // ===============================
@@ -750,7 +750,7 @@ public:
 	virtual string getReqDesc(const Faction *f) const;
 	virtual void subDesc(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const override;
 	virtual void descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt = 0) const override;
-	virtual CommandResult check(const Unit *unit, const Command &command) const;
+	virtual CmdResult check(const Unit *unit, const Command &command) const;
 	virtual void start(Unit *unit, Command *command) const;
 
 	//get
@@ -765,8 +765,8 @@ public:
 	bool	areProjectilesAllowed() const	{ return m_allowProjectiles; }
 	Vec2f	getProjectileOffset() const		{ return m_projectileOffsets; }
 
-	virtual CommandClass getClass() const { return typeClass(); }
-	static CommandClass typeClass() { return CommandClass::LOAD; }
+	virtual CmdClass getClass() const { return typeClass(); }
+	static CmdClass typeClass() { return CmdClass::LOAD; }
 };
 
 // ===============================
@@ -793,8 +793,8 @@ public:
 	const UnloadSkillType *getUnloadSkillType() const	{return unloadSkillType;}
 
 	virtual Clicks getClicks() const { return (moveSkillType ? Clicks::TWO : Clicks::ONE); }
-	virtual CommandClass getClass() const { return typeClass(); }
-	static CommandClass typeClass() { return CommandClass::UNLOAD; }
+	virtual CmdClass getClass() const { return typeClass(); }
+	static CmdClass typeClass() { return CmdClass::UNLOAD; }
 };
 
 // ===============================
@@ -822,8 +822,8 @@ public:
 	const MoveSkillType *getMoveSkillType() const	{return moveSkillType;}
 
 	virtual Clicks getClicks() const { return Clicks::ONE; }
-	virtual CommandClass getClass() const { return typeClass(); }
-	static CommandClass typeClass() { return CommandClass::BE_LOADED; }
+	virtual CmdClass getClass() const { return typeClass(); }
+	static CmdClass typeClass() { return CmdClass::BE_LOADED; }
 };
 
 // ===============================
@@ -844,8 +844,8 @@ public:
 	int getMaxDistance() const {return m_maxDistance;}
 	virtual void descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt = 0) const override;
 
-	virtual CommandClass getClass() const { return typeClass(); }
-	static CommandClass typeClass() { return CommandClass::GUARD; }
+	virtual CmdClass getClass() const { return typeClass(); }
+	static CmdClass typeClass() { return CmdClass::GUARD; }
 };
 
 // ===============================
@@ -860,8 +860,8 @@ public:
 	virtual void finish(Unit *unit, Command &command) const;
 	virtual void descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt = 0) const override;
 
-	virtual CommandClass getClass() const { return typeClass(); }
-	static CommandClass typeClass() { return CommandClass::PATROL; }
+	virtual CmdClass getClass() const { return typeClass(); }
+	static CmdClass typeClass() { return CmdClass::PATROL; }
 };
 
 // ===============================
@@ -890,8 +890,8 @@ public:
 
 	virtual void update(Unit *unit) const;
 
-	virtual CommandClass getClass() const { return typeClass(); }
-	static CommandClass typeClass() { return CommandClass::CAST_SPELL; }
+	virtual CmdClass getClass() const { return typeClass(); }
+	static CmdClass typeClass() { return CmdClass::CAST_SPELL; }
 };
 
 // ===============================
@@ -908,8 +908,8 @@ public:
 	virtual void descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt = 0) const override;
 	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
 	virtual void update(Unit *unit) const;
-	virtual CommandClass getClass() const { return typeClass(); }
-	static CommandClass typeClass() { return CommandClass::BUILD_SELF; }
+	virtual CmdClass getClass() const { return typeClass(); }
+	static CmdClass typeClass() { return CmdClass::BUILD_SELF; }
 };
 
 // ===============================
@@ -925,9 +925,9 @@ public:
 	virtual void update(Unit *unit) const {
 		throw std::runtime_error("Set meeting point command in queue. Thats wrong.");
 	}
-	virtual CommandClass getClass() const { return typeClass(); }
-	static CommandClass typeClass() { return CommandClass::SET_MEETING_POINT; }
-	virtual CommandResult check(const Unit *unit, const Command &command) const;
+	virtual CmdClass getClass() const { return typeClass(); }
+	static CmdClass typeClass() { return CmdClass::SET_MEETING_POINT; }
+	virtual CmdResult check(const Unit *unit, const Command &command) const;
 };
 
 // update helper, move somewhere sensible

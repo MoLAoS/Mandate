@@ -82,7 +82,7 @@ bool CommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, 
 
 void CommandType::doChecksum(Checksum &checksum) const {
 	RequirableType::doChecksum(checksum);
-	checksum.add<CommandClass>(getClass());
+	checksum.add<CmdClass>(getClass());
 }
 
 typedef const AttackStoppedCommandType* AttackStoppedCmd;
@@ -96,7 +96,7 @@ Command* CommandType::doAutoCommand(Unit *unit) const {
 	if (unit->isCarried()) {
 		Unit *carrier = g_world.getUnit(unit->getCarrier());
 		const LoadCommandType *lct = 
-			static_cast<const LoadCommandType *>(carrier->getType()->getFirstCtOfClass(CommandClass::LOAD));
+			static_cast<const LoadCommandType *>(carrier->getType()->getFirstCtOfClass(CmdClass::LOAD));
 		if (!lct->areProjectilesAllowed() || !unit->getType()->hasProjectileAttack()) {
 			return 0;
 		}
@@ -107,7 +107,7 @@ Command* CommandType::doAutoCommand(Unit *unit) const {
 		return autoCmd;
 	}
 	///@todo check all attack-stopped commands
-	AttackStoppedCmd asct = static_cast<AttackStoppedCmd>(ut->getFirstCtOfClass(CommandClass::ATTACK_STOPPED));
+	AttackStoppedCmd asct = static_cast<AttackStoppedCmd>(ut->getFirstCtOfClass(CmdClass::ATTACK_STOPPED));
 	if (asct && (autoCmd = asct->doAutoAttack(unit))) {
 		return autoCmd;
 	}
@@ -115,7 +115,7 @@ Command* CommandType::doAutoCommand(Unit *unit) const {
 		return 0;
 	}
 	// can we repair any ally ? ///@todo check all repair commands
-	RepairCmd rct = static_cast<RepairCmd>(ut->getFirstCtOfClass(CommandClass::REPAIR));
+	RepairCmd rct = static_cast<RepairCmd>(ut->getFirstCtOfClass(CmdClass::REPAIR));
 	if (!unit->getFaction()->getCpuControl() && rct && (autoCmd = rct->doAutoRepair(unit))) {
 		//REMOVE
 		if (autoCmd->getUnit()) {
@@ -128,7 +128,7 @@ Command* CommandType::doAutoCommand(Unit *unit) const {
 		return autoCmd;
 	}
 	// can we see an enemy we cant attack ? can we run ?
-	MoveBaseCmdType mct = static_cast<MoveBaseCmdType>(ut->getFirstCtOfClass(CommandClass::MOVE));
+	MoveBaseCmdType mct = static_cast<MoveBaseCmdType>(ut->getFirstCtOfClass(CmdClass::MOVE));
 	if (mct && (autoCmd = mct->doAutoFlee(unit))) {
 		return autoCmd;
 	}
@@ -167,8 +167,8 @@ bool CommandType::getArrowDetails(const Command *cmd, Vec3f &out_arrowTarget, Ve
 
 void CommandType::apply(Faction *faction, const Command &command) const {
 	ProdTypePtr produced = command.getProdType();
-	if (produced && !command.getFlags().get(CommandProperties::DONT_RESERVE_RESOURCES)) {
-		if (command.getType()->getClass() == CommandClass::MORPH) {
+	if (produced && !command.getFlags().get(CmdProps::DONT_RESERVE_RESOURCES)) {
+		if (command.getType()->getClass() == CmdClass::MORPH) {
 			int discount = static_cast<const MorphCommandType*>(command.getType())->getDiscount();
 			faction->applyCosts(produced, discount);
 		} else {
@@ -319,7 +319,7 @@ Command *MoveBaseCommandType::doAutoFlee(Unit *unit) const {
 	Unit *sighted = NULL;
 	if (attackerInSight(unit, &sighted)) {
 		Vec2i escapePos = unit->getPos() * 2 - sighted->getPos();
-		return g_world.newCommand(this, CommandFlags(CommandProperties::AUTO, true), escapePos);
+		return g_world.newCommand(this, CmdFlags(CmdProps::AUTO, true), escapePos);
 	}
 	return 0;
 }
@@ -370,15 +370,15 @@ void MoveCommandType::descSkills(const Unit *unit, CmdDescriptor *callback, Prod
 // 	class TeleportCommandType
 // =====================================================
 
-CommandResult TeleportCommandType::check(const Unit *unit, const Command &command) const {
+CmdResult TeleportCommandType::check(const Unit *unit, const Command &command) const {
 	if (m_moveSkillType->getVisibleOnly()) {
 		if (g_map.getTileFromCellPos(command.getPos())->isVisible(unit->getTeam())) {
-			return CommandResult::SUCCESS;
+			return CmdResult::SUCCESS;
 		} else {
-			return CommandResult::FAIL_UNDEFINED;
+			return CmdResult::FAIL_UNDEFINED;
 		}
 	}
-	return CommandResult::SUCCESS;
+	return CmdResult::SUCCESS;
 }
 
 void TeleportCommandType::update(Unit *unit) const {
@@ -635,7 +635,7 @@ void ProduceCommandType::update(Unit *unit) const {
 					g_simInterface.getStats()->produce(unit->getFactionIndex());
 					const CommandType *ct = produced->computeCommandType(unit->getMeetingPos());
 					if (ct) {
-						produced->giveCommand(g_world.newCommand(ct, CommandFlags(), unit->getMeetingPos()));
+						produced->giveCommand(g_world.newCommand(ct, CmdFlags(), unit->getMeetingPos()));
 					}
 				}
 			}
@@ -942,12 +942,12 @@ void UpgradeCommandType::undo(Unit *unit, const Command &command) const {
 	unit->getFaction()->cancelUpgrade(static_cast<const UpgradeType*>(command.getProdType()));
 }
 
-CommandResult UpgradeCommandType::check(const Unit *unit, const Command &command) const {
+CmdResult UpgradeCommandType::check(const Unit *unit, const Command &command) const {
 	const UpgradeType *upgrade = static_cast<const UpgradeType*>(command.getProdType());
 	if (unit->getFaction()->getUpgradeManager()->isUpgradingOrUpgraded(upgrade)) {
-		return CommandResult::FAIL_UNDEFINED;
+		return CmdResult::FAIL_UNDEFINED;
 	}
-	return CommandResult::SUCCESS;
+	return CmdResult::SUCCESS;
 }
 
 // =====================================================
@@ -1387,9 +1387,9 @@ void LoadCommandType::update(Unit *unit) const {
 		if (unit->getCarriedCount() == m_loadCapacity && !unitsToCarry.empty()) {
 			foreach (UnitIdList, it, unitsToCarry) {
 				Unit *unit = g_world.getUnit(*it);
-				if (unit->getType()->getFirstCtOfClass(CommandClass::MOVE)) {
+				if (unit->getType()->getFirstCtOfClass(CmdClass::MOVE)) {
 					assert(unit->getCurrCommand());
-					assert(unit->getCurrCommand()->getType()->getClass() == CommandClass::BE_LOADED);
+					assert(unit->getCurrCommand()->getType()->getClass() == CmdClass::BE_LOADED);
 					unit->cancelCommand();
 				}
 			}
@@ -1419,15 +1419,15 @@ void LoadCommandType::start(Unit *unit, Command *command) const {
 	unit->loadUnitInit(command);
 }
 
-CommandResult LoadCommandType::check(const Unit *unit, const Command &command) const {
+CmdResult LoadCommandType::check(const Unit *unit, const Command &command) const {
 	if (getLoadCapacity() > unit->getCarriedCount()) {
 		if (canCarry(command.getUnit()->getType())
 		&& command.getUnit()->getFactionIndex() == unit->getFactionIndex()) {
-			return CommandResult::SUCCESS;
+			return CmdResult::SUCCESS;
 		}
-		return CommandResult::FAIL_INVALID_LOAD;
+		return CmdResult::FAIL_INVALID_LOAD;
 	} else {
-		return CommandResult::FAIL_LOAD_LIMIT;
+		return CmdResult::FAIL_LOAD_LIMIT;
 	}
 }
 
@@ -1648,8 +1648,8 @@ void BuildSelfCommandType::descSkills(const Unit *unit, CmdDescriptor *callback,
 //  class SetMeetingPointCommandType
 // ===============================
 
-CommandResult SetMeetingPointCommandType::check(const Unit *unit, const Command &command) const {
-	return unit->getType()->hasMeetingPoint() ? CommandResult::SUCCESS : CommandResult::FAIL_UNDEFINED;
+CmdResult SetMeetingPointCommandType::check(const Unit *unit, const Command &command) const {
+	return unit->getType()->hasMeetingPoint() ? CmdResult::SUCCESS : CmdResult::FAIL_UNDEFINED;
 }
 
 // Update helpers...
@@ -1722,7 +1722,7 @@ bool CommandType::unitInRange(const Unit *unit, int range, Unit **rangedPtr,
 							}
 						}
 						// If bad guy has an attack command we can short circut this loop now
-						if (possibleEnemy->getType()->hasCommandClass(CommandClass::ATTACK)) {
+						if (possibleEnemy->getType()->hasCommandClass(CmdClass::ATTACK)) {
 							*rangedPtr = possibleEnemy;
 							goto unitOnRange_exitLoop;
 						}

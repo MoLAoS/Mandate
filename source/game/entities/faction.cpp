@@ -363,7 +363,7 @@ bool Faction::reqsOk(const RequirableType *rt) const {
   * @return true if the Command can be executed, or if is a multi-tier Produce/Morph/Generate
   */
 bool Faction::reqsOk(const CommandType *ct) const {
-	if (ct->getClass() == CommandClass::MOVE) {
+	if (ct->getClass() == CmdClass::MOVE) {
 		DEBUG_HOOK();
 	}
 	if (ct->getProducedCount() == 1) {
@@ -378,8 +378,8 @@ bool Faction::reqsOk(const CommandType *ct) const {
   */
 bool Faction::reqsOk(const CommandType *ct, const ProducibleType *pt) const {
 
-	if (ct->getClass() == CommandClass::SET_MEETING_POINT
-	|| ct->getClass() == CommandClass::BE_LOADED) {
+	if (ct->getClass() == CmdClass::SET_MEETING_POINT
+	|| ct->getClass() == CmdClass::BE_LOADED) {
 		return true;
 	}
 	
@@ -387,7 +387,7 @@ bool Faction::reqsOk(const CommandType *ct, const ProducibleType *pt) const {
 		return false;
 	}
 
-	if (ct->getClass() == CommandClass::UPGRADE && pt) {
+	if (ct->getClass() == CmdClass::UPGRADE && pt) {
 		const UpgradeCommandType *uct = static_cast<const UpgradeCommandType*>(ct);
 		const UpgradeType *ut = static_cast<const UpgradeType*>(pt);
 		if (upgradeManager.isUpgradingOrUpgraded(ut)) {

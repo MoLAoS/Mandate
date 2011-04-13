@@ -121,7 +121,7 @@ UserInterface::UserInterface(GameState &game)
 	validPosObjWorld= false;
 	choosenBuildingType= NULL;
 	activeCommandType= NULL;
-	activeCommandClass= CommandClass::STOP;
+	activeCommandClass= CmdClass::STOP;
 	selectingPos= false;
 	selectedObject = 0;
 	selectingMeetingPoint= false;
@@ -228,8 +228,8 @@ void UserInterface::initMinimap(bool fow, bool sod, bool resuming) {
 
 const UnitType *UserInterface::getBuilding() const {
 	RUNTIME_CHECK(activeCommandType);
-	RUNTIME_CHECK(activeCommandType->getClass() == CommandClass::BUILD
-		|| activeCommandType->getClass() == CommandClass::TRANSFORM);
+	RUNTIME_CHECK(activeCommandType->getClass() == CmdClass::BUILD
+		|| activeCommandType->getClass() == CmdClass::TRANSFORM);
 	return choosenBuildingType;
 }
 
@@ -237,8 +237,8 @@ const UnitType *UserInterface::getBuilding() const {
 
 bool UserInterface::isPlacingBuilding() const {
 	return isSelectingPos() && activeCommandType
-		&& (activeCommandType->getClass() == CommandClass::BUILD 
-		|| activeCommandType->getClass() == CommandClass::TRANSFORM);
+		&& (activeCommandType->getClass() == CmdClass::BUILD 
+		|| activeCommandType->getClass() == CmdClass::TRANSFORM);
 }
 
 // ==================== reset state ====================
@@ -248,7 +248,7 @@ void UserInterface::resetState() {
 	selectingPos = false;
 	selectingMeetingPoint = false;
 	activePos = invalidPos;
-	activeCommandClass = CommandClass::STOP;
+	activeCommandClass = CmdClass::STOP;
 	activeCommandType = 0;
 	dragging = false;
 	needSelectionUpdate = false;
@@ -357,9 +357,9 @@ void UserInterface::unloadRequest(int carryIndex) {
 		}
 	}
 	assert(transportUnit && unloadUnit);
-	CommandResult res = commander->tryUnloadCommand(transportUnit, CommandFlags(), Command::invalidPos, unloadUnit);
-	if (res != CommandResult::SUCCESS) {
-		addOrdersResultToConsole(CommandClass::UNLOAD, res);
+	CmdResult res = commander->tryUnloadCommand(transportUnit, CmdFlags(), Command::invalidPos, unloadUnit);
+	if (res != CmdResult::SUCCESS) {
+		addOrdersResultToConsole(CmdClass::UNLOAD, res);
 	}
 }
 
@@ -390,8 +390,8 @@ void UserInterface::mouseDownLeft(int x, int y) {
 	// set meeting point
 	} else if (selectingMeetingPoint) {
 		if (selection.isComandable()) {
-			commander->tryGiveCommand(selection, CommandFlags(), NULL,
-					CommandClass::SET_MEETING_POINT, worldPos);
+			commander->tryGiveCommand(selection, CmdFlags(), NULL,
+					CmdClass::SET_MEETING_POINT, worldPos);
 		}
 		resetState();
 
@@ -577,26 +577,26 @@ void UserInterface::hotKey(UserCommand cmd) {
 
  	// Attack
 	case ucAttack:
-		clickCommonCommand(CommandClass::ATTACK);
+		clickCommonCommand(CmdClass::ATTACK);
 		break;
 
 	// Stop
 	case ucStop:
-		clickCommonCommand(CommandClass::STOP);
+		clickCommonCommand(CmdClass::STOP);
 
  	// Move
 	case ucMove:
-		clickCommonCommand(CommandClass::MOVE);
+		clickCommonCommand(CmdClass::MOVE);
 		break;
 
  	// Repair / Heal / Replenish
 	case ucReplenish:
-		clickCommonCommand(CommandClass::REPAIR);
+		clickCommonCommand(CmdClass::REPAIR);
 		break;
 
  	// Guard
 	case ucGuard:
-		clickCommonCommand(CommandClass::GUARD);
+		clickCommonCommand(CmdClass::GUARD);
 		break;
 
  	// Follow
@@ -606,7 +606,7 @@ void UserInterface::hotKey(UserCommand cmd) {
 
  	// Patrol
 	case ucPatrol:
-		clickCommonCommand(CommandClass::PATROL);
+		clickCommonCommand(CmdClass::PATROL);
 		break;
 
 	case ucRotate:
@@ -651,12 +651,12 @@ void UserInterface::save(XmlNode *node) const {
 // ================= PRIVATE =================
 
 void UserInterface::giveOneClickOrders() {
-	CommandResult result;
-	CommandFlags flags(CommandProperties::QUEUE, input.isShiftDown());
+	CmdResult result;
+	CmdFlags flags(CmdProps::QUEUE, input.isShiftDown());
 	if (selection.isUniform()) {
 		if (activeCommandType->getProducedCount()) {
 			result = commander->tryGiveCommand(selection, flags, activeCommandType,
-				CommandClass::NULL_COMMAND, Command::invalidPos, 0, activeCommandType->getProduced(0));
+				CmdClass::NULL_COMMAND, Command::invalidPos, 0, activeCommandType->getProduced(0));
 		} else {
 			result = commander->tryGiveCommand(selection, flags, activeCommandType);
 		}
@@ -665,17 +665,17 @@ void UserInterface::giveOneClickOrders() {
 	}
 	addOrdersResultToConsole(activeCommandClass, result);
 	activeCommandType = NULL;
-	activeCommandClass = CommandClass::STOP;
+	activeCommandClass = CmdClass::STOP;
 }
 
 void UserInterface::giveDefaultOrders(const Vec2i &targetPos, Unit *targetUnit) {
 	// give order
-	CommandResult result = commander->tryGiveCommand(selection,
-			CommandFlags(CommandProperties::QUEUE, input.isShiftDown()), NULL, CommandClass::NULL_COMMAND, targetPos, targetUnit);
+	CmdResult result = commander->tryGiveCommand(selection,
+			CmdFlags(CmdProps::QUEUE, input.isShiftDown()), NULL, CmdClass::NULL_COMMAND, targetPos, targetUnit);
 
 	// graphical result
 	addOrdersResultToConsole(activeCommandClass, result);
-	if (result == CommandResult::SUCCESS || result == CommandResult::SOME_FAILED) {
+	if (result == CmdResult::SUCCESS || result == CmdResult::SOME_FAILED) {
 		posObjWorld = targetPos;
 		if (!targetUnit) {
 			mouse3d.show(targetPos);
@@ -691,30 +691,30 @@ void UserInterface::giveDefaultOrders(const Vec2i &targetPos, Unit *targetUnit) 
 }
 
 void UserInterface::giveTwoClickOrders(const Vec2i &targetPos, Unit *targetUnit) {
-	CommandResult result;
-	CommandFlags flags(CommandProperties::QUEUE, input.isShiftDown());
+	CmdResult result;
+	CmdFlags flags(CmdProps::QUEUE, input.isShiftDown());
 
 	// give orders to the units of this faction
 	if (!m_selectingSecond) {
 		if (selection.isUniform()) {
 			if (choosenBuildingType) {
 				result = commander->tryGiveCommand(selection, flags, activeCommandType,
-					CommandClass::NULL_COMMAND, targetPos, 0, choosenBuildingType, m_selectedFacing);
+					CmdClass::NULL_COMMAND, targetPos, 0, choosenBuildingType, m_selectedFacing);
 			} else {
 				result = commander->tryGiveCommand(selection, flags, activeCommandType,
-					CommandClass::NULL_COMMAND, targetPos, targetUnit);
+					CmdClass::NULL_COMMAND, targetPos, targetUnit);
 			}
 		} else {
 			result = commander->tryGiveCommand(selection, flags, NULL, activeCommandClass, targetPos, targetUnit);
 		}
 	} else {
-		if (activeCommandClass == CommandClass::BUILD
-		|| activeCommandClass == CommandClass::TRANSFORM) {
+		if (activeCommandClass == CmdClass::BUILD
+		|| activeCommandClass == CmdClass::TRANSFORM) {
 			// selecting pos for building
 			assert(isPlacingBuilding());
 
 			// if this is a multi-build (ie. walls) then start dragging and wait for mouse up
-			if (activeCommandClass == CommandClass::BUILD
+			if (activeCommandClass == CmdClass::BUILD
 			&& choosenBuildingType->isMultiBuild() && !dragging) {
 				dragging = true;
 				dragStartPos = posObjWorld;
@@ -727,11 +727,11 @@ void UserInterface::giveTwoClickOrders(const Vec2i &targetPos, Unit *targetUnit)
 			foreach_const(BuildPositions, i, buildPositions) {
 				bool first = i == buildPositions.begin();
 				// queue if not shift down or first build pos
-				flags.set(CommandProperties::QUEUE, input.isShiftDown() || !first);
+				flags.set(CmdProps::QUEUE, input.isShiftDown() || !first);
 				// don't reserve any resources if multiple builders or if not first build pos
-				flags.set(CommandProperties::DONT_RESERVE_RESOURCES, selection.getCount() > 1 || !first);
+				flags.set(CmdProps::DONT_RESERVE_RESOURCES, selection.getCount() > 1 || !first);
 				result = commander->tryGiveCommand(selection, flags, activeCommandType,
-					CommandClass::NULL_COMMAND, *i, NULL, choosenBuildingType, m_selectedFacing);
+					CmdClass::NULL_COMMAND, *i, NULL, choosenBuildingType, m_selectedFacing);
 			}
 		}
 	}
@@ -739,7 +739,7 @@ void UserInterface::giveTwoClickOrders(const Vec2i &targetPos, Unit *targetUnit)
 	// graphical result
 	addOrdersResultToConsole(activeCommandClass, result);
 
-	if (result == CommandResult::SUCCESS || result == CommandResult::SOME_FAILED) {
+	if (result == CmdResult::SUCCESS || result == CmdResult::SOME_FAILED) {
 		if (!targetUnit) {
 			mouse3d.show(targetPos);
 		}
@@ -749,7 +749,7 @@ void UserInterface::giveTwoClickOrders(const Vec2i &targetPos, Unit *targetUnit)
 				unit->getCurrVector(), gameCamera->getPos());
 		}
 		resetState();
-	} else if (result == CommandResult::FAIL_BLOCKED) {
+	} else if (result == CmdResult::FAIL_BLOCKED) {
 		// let the player choose again
 	} else {
 		resetState();
@@ -813,7 +813,7 @@ void UserInterface::selectInterestingUnit(InterestingUnitType iut){
 	}
 }
 ///@todo move to Display
-void UserInterface::clickCommonCommand(CommandClass commandClass) {
+void UserInterface::clickCommonCommand(CmdClass commandClass) {
 	for(int i=0; i < Display::commandCellCount; ++i) {
 		const CommandType* ct = m_display->getCommandType(i);
 		if (((ct && ct->getClass() == commandClass) || m_display->getCommandClass(i) == commandClass)
@@ -871,7 +871,7 @@ void UserInterface::onFirstTierSelect(int posDisplay) {
 			} else {
 				posDisplay = invalidPos;
 				activeCommandType = NULL;
-				activeCommandClass = CommandClass::STOP;
+				activeCommandClass = CmdClass::STOP;
 				return;
 			}
 		} else { // non uniform selection, use activeCommandClass
@@ -881,11 +881,11 @@ void UserInterface::onFirstTierSelect(int posDisplay) {
 
 		// give orders depending on command type
 		const CommandType *ct = selection.getUnit(0)->getFirstAvailableCt(activeCommandClass);
-		if (activeCommandType && activeCommandType->getClass() == CommandClass::BUILD) {
+		if (activeCommandType && activeCommandType->getClass() == CmdClass::BUILD) {
 			assert(selection.isUniform());
 			m_selectedFacing = CardinalDir::NORTH;
 			m_selectingSecond = true;
-		} else if (activeCommandType && activeCommandType->getClass() == CommandClass::TRANSFORM
+		} else if (activeCommandType && activeCommandType->getClass() == CmdClass::TRANSFORM
 		&& activeCommandType->getProducedCount() == 1) {
 			choosenBuildingType = static_cast<const UnitType*>(activeCommandType->getProduced(0));
 			assert(choosenBuildingType != NULL);
@@ -925,8 +925,8 @@ void UserInterface::onSecondTierSelect(int posDisplay) {
 		RUNTIME_CHECK(ndx >= 0 && ndx < activeCommandType->getProducedCount());
 		const ProducibleType *pt = activeCommandType->getProduced(ndx);
 
-		if (activeCommandType->getClass() == CommandClass::BUILD
-		|| activeCommandType->getClass() == CommandClass::TRANSFORM) {
+		if (activeCommandType->getClass() == CmdClass::BUILD
+		|| activeCommandType->getClass() == CmdClass::TRANSFORM) {
 			if (world->getFaction(factionIndex)->reqsOk(pt)) {
 				choosenBuildingType = static_cast<const UnitType*>(pt);
 				assert(choosenBuildingType != NULL);
@@ -936,8 +936,8 @@ void UserInterface::onSecondTierSelect(int posDisplay) {
 			}
 		} else {
 			if (world->getFaction(factionIndex)->reqsOk(pt)) {
-				CommandResult result = commander->tryGiveCommand(selection, CommandFlags(),
-					activeCommandType, CommandClass::NULL_COMMAND, Command::invalidPos, 0, pt);
+				CmdResult result = commander->tryGiveCommand(selection, CmdFlags(),
+					activeCommandType, CmdClass::NULL_COMMAND, Command::invalidPos, 0, pt);
 				addOrdersResultToConsole(activeCommandClass, result);
 				resetState();
 			}
@@ -1012,10 +1012,10 @@ void UserInterface::computeCommandInfo(int posDisplay) {
 					computeCommandTip(ct);
 				}
 			} else { // non uniform selection
-				CommandClass cc = m_display->getCommandClass(posDisplay);
-				if (cc != CommandClass::NULL_COMMAND) {
+				CmdClass cc = m_display->getCommandClass(posDisplay);
+				if (cc != CmdClass::NULL_COMMAND) {
 					m_display->setToolTipText2("", g_lang.get("CommonCommand") + ": "
-						+ g_lang.get(CommandClassNames[cc]));
+						+ g_lang.get(CmdClassNames[cc]));
 				}
 			}
 		}
@@ -1121,20 +1121,20 @@ void UserInterface::computeCommandPanel() {
 			const UnitType *ut = u->getType();
 
 			if (selection.canRepair()) { // auto-repair toggle
-				m_display->setDownImage(autoRepairPos, selection.getCommandImage(CommandClass::REPAIR));
+				m_display->setDownImage(autoRepairPos, selection.getCommandImage(CmdClass::REPAIR));
 			}
 
 			if (selection.canAttack()) {
-				m_display->setDownImage(autoAttackPos, selection.getCommandImage(CommandClass::ATTACK));
+				m_display->setDownImage(autoAttackPos, selection.getCommandImage(CmdClass::ATTACK));
 				AutoCmdState attackState = selection.getAutoCmdState(AutoCmdFlag::ATTACK);
 				if (attackState == AutoCmdState::NONE || attackState == AutoCmdState::ALL_OFF) {
 					if (selection.canMove()) {
-						m_display->setDownImage(autoFleePos, selection.getCommandImage(CommandClass::MOVE));
+						m_display->setDownImage(autoFleePos, selection.getCommandImage(CmdClass::MOVE));
 					}
 				}
 			} else {
 				if (selection.canMove()) {
-					m_display->setDownImage(autoFleePos, selection.getCommandImage(CommandClass::MOVE));
+					m_display->setDownImage(autoFleePos, selection.getCommandImage(CmdClass::MOVE));
 				}
 			}
 
@@ -1161,9 +1161,9 @@ void UserInterface::computeCommandPanel() {
 					int morphPos = cellWidthCount * 2;
 					for (int i = 0, j = 0; i < ut->getCommandTypeCount(); ++i) {
 						const CommandType *ct = ut->getCommandType(i);
-						int displayPos = ct->getClass() == CommandClass::MORPH ? morphPos++ : j;
+						int displayPos = ct->getClass() == CmdClass::MORPH ? morphPos++ : j;
 						if (u->getFaction()->isAvailable(ct) 
-						&& ct->getClass() != CommandClass::SET_MEETING_POINT) {
+						&& ct->getClass() != CmdClass::SET_MEETING_POINT) {
 							m_display->setDownImage(displayPos, ct->getImage());
 							m_display->setCommandType(displayPos, ct);
 							m_display->setDownLighted(displayPos, u->getFaction()->reqsOk(ct));
@@ -1173,8 +1173,8 @@ void UserInterface::computeCommandPanel() {
 				}
 			} else { // non uniform selection
 				int lastCommand = 0;
-				foreach_enum (CommandClass, cc) {
-					if (selection.isSharedCommandClass(cc) && cc != CommandClass::BUILD) {
+				foreach_enum (CmdClass, cc) {
+					if (selection.isSharedCommandClass(cc) && cc != CmdClass::BUILD) {
 						m_display->setDownLighted(lastCommand, true);
 						m_display->setDownImage(lastCommand, ut->getFirstCtOfClass(cc)->getImage());
 						m_display->setCommandClass(lastCommand, cc);
@@ -1222,29 +1222,29 @@ void UserInterface::computeDisplay() {
 }
 
 ///@todo move parts to CommandType classes (hmmm... CommandTypes that need to know about Console ?!? Nope.)
-void UserInterface::addOrdersResultToConsole(CommandClass cc, CommandResult result) {
+void UserInterface::addOrdersResultToConsole(CmdClass cc, CmdResult result) {
 	switch (result) {
-	case CommandResult::SUCCESS:
+	case CmdResult::SUCCESS:
 		break;
-	case CommandResult::FAIL_BLOCKED:
+	case CmdResult::FAIL_BLOCKED:
 		m_console->addStdMessage("BuildingNoPlace");
 		break;
-	case CommandResult::FAIL_REQUIREMENTS:
+	case CmdResult::FAIL_REQUIREMENTS:
 			switch (cc) {
-		case CommandClass::BUILD:
+		case CmdClass::BUILD:
 			m_console->addStdMessage("BuildingNoReqs");
 			break;
-		case CommandClass::PRODUCE:
+		case CmdClass::PRODUCE:
 			m_console->addStdMessage("UnitNoReqs");
 			break;
-		case CommandClass::UPGRADE:
+		case CmdClass::UPGRADE:
 			m_console->addStdMessage("UpgradeNoReqs");
 			break;
 		default:
 			break;
 		}
 		break;
-	case CommandResult::FAIL_RESOURCES: {
+	case CmdResult::FAIL_RESOURCES: {
    			const Faction::ResourceTypes &needed = Faction::getNeededResources();
 			string a, b;
 				for (int i = 0; i < needed.size(); ++i) {
@@ -1260,16 +1260,16 @@ void UserInterface::addOrdersResultToConsole(CommandClass cc, CommandResult resu
 
 				if (needed.size() == 1) {
 					switch(cc) {
-				case CommandClass::BUILD:
+				case CmdClass::BUILD:
 					m_console->addStdMessage("BuildingNoRes1", a);
 					break;
-				case CommandClass::PRODUCE:
+				case CmdClass::PRODUCE:
 					m_console->addStdMessage("UnitNoRes1", a);
 					break;
-				case CommandClass::UPGRADE:
+				case CmdClass::UPGRADE:
 					m_console->addStdMessage("UpgradeNoRes1", a);
 					break;
-				case CommandClass::MORPH:
+				case CmdClass::MORPH:
 					m_console->addStdMessage("MorphNoRes1", a);
 					break;
 				default:
@@ -1278,16 +1278,16 @@ void UserInterface::addOrdersResultToConsole(CommandClass cc, CommandResult resu
 				}
 			} else {
 					switch (cc) {
-				case CommandClass::BUILD:
+				case CmdClass::BUILD:
 					m_console->addStdMessage("BuildingNoRes2", a, b);
 					break;
-				case CommandClass::PRODUCE:
+				case CmdClass::PRODUCE:
 					m_console->addStdMessage("UnitNoRes2", a, b);
 					break;
-				case CommandClass::UPGRADE:
+				case CmdClass::UPGRADE:
 					m_console->addStdMessage("UpgradeNoRes2", a, b);
 					break;
-				case CommandClass::MORPH:
+				case CmdClass::MORPH:
 					m_console->addStdMessage("MorphNoRes2", a, b);
 					break;
 				default:
@@ -1299,27 +1299,27 @@ void UserInterface::addOrdersResultToConsole(CommandClass cc, CommandResult resu
 
 		break;
 
-	case CommandResult::FAIL_PET_LIMIT:
+	case CmdResult::FAIL_PET_LIMIT:
 		m_console->addStdMessage("PetLimitReached");
 		break;
 
-	case CommandResult::FAIL_LOAD_LIMIT:
+	case CmdResult::FAIL_LOAD_LIMIT:
 		m_console->addStdMessage("LoadLimitReached");
 		break;
 
-	case CommandResult::FAIL_INVALID_LOAD:
+	case CmdResult::FAIL_INVALID_LOAD:
 		m_console->addStdMessage("CanNotLoadUnit");
 		break;
 
-	case CommandResult::FAIL_UNDEFINED:
+	case CmdResult::FAIL_UNDEFINED:
 		m_console->addStdMessage("InvalidOrder");
 		break;
 
-	case CommandResult::SOME_FAILED:
+	case CmdResult::SOME_FAILED:
 		m_console->addStdMessage("SomeOrdersFailed");
 		break;
 	default:
-		throw runtime_error("unhandled CommandResult");
+		throw runtime_error("unhandled CmdResult");
 	}
 }
 

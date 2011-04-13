@@ -208,7 +208,7 @@ WRAPPED_ENUM( NetworkCommandType,
 #pragma pack(push, 4)
 	class NetworkCommand {
 	private:
-		struct CmdFlags { enum { QUEUE = 1, NO_RESERVE_RESOURCES = 2, MISC_ENABLE = 4 }; };
+		struct Flags { enum { QUEUE = 1, NO_RESERVE_RESOURCES = 2, MISC_ENABLE = 4 }; };
 		uint32 networkCommandType	:  8;
 		int32 unitId				: 24;
 		int32 commandTypeId			: 16;

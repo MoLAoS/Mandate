@@ -87,7 +87,7 @@ SimulationInterface::SimulationInterface(Program &program)
 		, speed(GameSpeed::NORMAL)
 		, m_prototypeFactory(0)
 		, m_skillCycleTable(0)
-		, m_processingCommand(CommandClass::NULL_COMMAND) {
+		, m_processingCommand(CmdClass::NULL_COMMAND) {
 	m_prototypeFactory = new PrototypeFactory();
 }
 
@@ -388,22 +388,22 @@ void SimulationInterface::requestCommand(Command *command) {
 		pendingCommands.push_back(command);
 	} else {
 		// else add to request queue
-		if (command->getArchetype() == CommandArchetype::GIVE_COMMAND) {
+		if (command->getArchetype() == CmdDirective::GIVE_COMMAND) {
 			requestedCommands.push_back(NetworkCommand(command));
-		} else if (command->getArchetype() == CommandArchetype::CANCEL_COMMAND) {
+		} else if (command->getArchetype() == CmdDirective::CANCEL_COMMAND) {
 			requestedCommands.push_back(NetworkCommand(NetworkCommandType::CANCEL_COMMAND, unit, Vec2i(-1)));
-		} else if (command->getArchetype() == CommandArchetype::SET_AUTO_REPAIR) {
+		} else if (command->getArchetype() == CmdDirective::SET_AUTO_REPAIR) {
 			requestedCommands.push_back(NetworkCommand(NetworkCommandType::SET_AUTO_REPAIR, 
-				unit, command->getFlags().get(CommandProperties::MISC_ENABLE)));
-		} else if (command->getArchetype() == CommandArchetype::SET_AUTO_ATTACK) {
+				unit, command->getFlags().get(CmdProps::MISC_ENABLE)));
+		} else if (command->getArchetype() == CmdDirective::SET_AUTO_ATTACK) {
 			requestedCommands.push_back(NetworkCommand(NetworkCommandType::SET_AUTO_ATTACK, 
-				unit, command->getFlags().get(CommandProperties::MISC_ENABLE)));
-		} else if (command->getArchetype() == CommandArchetype::SET_AUTO_FLEE) {
+				unit, command->getFlags().get(CmdProps::MISC_ENABLE)));
+		} else if (command->getArchetype() == CmdDirective::SET_AUTO_FLEE) {
 			requestedCommands.push_back(NetworkCommand(NetworkCommandType::SET_AUTO_FLEE, 
-				unit, command->getFlags().get(CommandProperties::MISC_ENABLE)));
-		} else if (command->getArchetype() == CommandArchetype::SET_CLOAK) {
+				unit, command->getFlags().get(CmdProps::MISC_ENABLE)));
+		} else if (command->getArchetype() == CmdDirective::SET_CLOAK) {
 			requestedCommands.push_back(NetworkCommand(NetworkCommandType::SET_CLOAK, 
-				unit, command->getFlags().get(CommandProperties::MISC_ENABLE)));
+				unit, command->getFlags().get(CmdProps::MISC_ENABLE)));
 		}
 	}
 	g_world.deleteCommand(command);
@@ -442,6 +442,7 @@ void SimulationInterface::doUpdateAnim(Unit *unit) {
 
 void SimulationInterface::doUnitBorn(Unit *unit) {
 	unit->doUnitBorn(m_skillCycleTable);
+	
 	IF_MAD_SYNC_CHECKS(
 		postUnitBorn(unit);
 	)

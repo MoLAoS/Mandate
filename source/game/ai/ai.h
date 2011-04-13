@@ -185,8 +185,8 @@ public:
 	const ResourceType *getNeededResource();
 	bool isStableBase();
 	bool findPosForBuilding(const UnitType* building, const Vec2i &searchPos, Vec2i &pos);
-	bool findAbleUnit(int *unitIndex, CommandClass ability, bool idleOnly);
-	bool findAbleUnit(int *unitIndex, CommandClass ability, CommandClass currentCommand);
+	bool findAbleUnit(int *unitIndex, CmdClass ability, bool idleOnly);
+	bool findAbleUnit(int *unitIndex, CmdClass ability, CmdClass currentCommand);
 
 	bool beingAttacked(float radius, Vec2i &out_pos, Field &out_field);
 	bool blindAttack(Vec2i &out_pos);

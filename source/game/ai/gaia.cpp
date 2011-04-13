@@ -85,9 +85,9 @@ void Gaia::update() {
 			m_updateTable[glestimal->getId()] = frame + m_rand.randRange(minUpdateDelay, maxUpdateDelay);
 			const UnitType *ut = glestimal->getType();
 
-			const CommandType *ct = ut->getFirstCtOfClass(CommandClass::ATTACK);
+			const CommandType *ct = ut->getFirstCtOfClass(CmdClass::ATTACK);
 			if (!ct) {
-				ct = ut->getFirstCtOfClass(CommandClass::MOVE);
+				ct = ut->getFirstCtOfClass(CmdClass::MOVE);
 			}
 			if (!ct) {
 				continue;
@@ -95,7 +95,7 @@ void Gaia::update() {
 			Vec2i target = glestimal->getPos() + 
 				Vec2i(m_rand.randRange(-12,12), m_rand.randRange(-12,12));
 			g_map.clampPos(target);
-			glestimal->giveCommand(g_world.newCommand(ct, CommandFlags(), target));
+			glestimal->giveCommand(g_world.newCommand(ct, CmdFlags(), target));
 		}
 	}
 }

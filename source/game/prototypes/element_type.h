@@ -72,7 +72,7 @@ struct Modifier {
 class NameIdPair {
 	friend class Sim::DynamicTypeFactory<ProducibleClass, ProducibleType>;
 	friend class Sim::DynamicTypeFactory<SkillClass, SkillType>;
-	friend class Sim::DynamicTypeFactory<CommandClass, CommandType>;
+	friend class Sim::DynamicTypeFactory<CmdClass, CommandType>;
 	friend class Sim::DynamicTypeFactory<EffectClass, EffectType>;
 
 protected:

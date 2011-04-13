@@ -52,7 +52,7 @@ AiRuleWorkerHarvest::AiRuleWorkerHarvest(Ai *ai)
 }
 
 bool AiRuleWorkerHarvest::test() {
-	if (ai->findAbleUnit(&stoppedWorkerIndex, CommandClass::HARVEST, true)) {
+	if (ai->findAbleUnit(&stoppedWorkerIndex, CmdClass::HARVEST, true)) {
 		AI_LOG( ECONOMY, 3, "AiRuleWorkerHarvest::test: found idle worker, unit index = " << stoppedWorkerIndex );
 		return true;
 	}
@@ -74,7 +74,7 @@ AiRuleRefreshHarvester::AiRuleRefreshHarvester(Ai *ai)
 }
 
 bool AiRuleRefreshHarvester::test() {
-	if (ai->findAbleUnit(&workerIndex, CommandClass::HARVEST, false)) {
+	if (ai->findAbleUnit(&workerIndex, CmdClass::HARVEST, false)) {
 		AI_LOG( ECONOMY, 3, "AiRuleRefreshHarvester::test: found worker, unit index = " << workerIndex );
 		return true;
 	}
@@ -164,12 +164,12 @@ void AiRuleRepair::execute() {
 		}
 
 		if (nearestRct) {
-			CommandResult res = aiInterface->giveCommand(nearest, nearestRct, const_cast<Unit*>(damagedUnit));
+			CmdResult res = aiInterface->giveCommand(nearest, nearestRct, const_cast<Unit*>(damagedUnit));
 			const Unit *repairer = aiInterface->getMyUnit(nearest);
 			AI_LOG( GENERAL, 2, "AiRuleRepair::execute: Repair command issued, repairer id "
 				<< repairer->getId() << " @ " << repairer->getPos() << ", repairee id " << damagedUnit->getId()
 				<< " [type=" << damagedUnit->getType()->getName() << "] @ " << damagedUnit->getPos()
-				<< " Reult: " << CommandResultNames[res] );
+				<< " Reult: " << CmdResultNames[res] );
 			return;
 		} else {
 			AI_LOG( GENERAL, 2, "AiRuleRepair::execute: Damaged unit id " << damagedUnit->getId() << " [type="
@@ -190,7 +190,7 @@ AiRuleReturnBase::AiRuleReturnBase(Ai *ai)
 }
 
 bool AiRuleReturnBase::test() {
-	if (ai->findAbleUnit(&stoppedUnitIndex, CommandClass::MOVE, true)) {
+	if (ai->findAbleUnit(&stoppedUnitIndex, CmdClass::MOVE, true)) {
 		AI_LOG( MILITARY, 3, "AiRuleReturnBase::test: found idle unit." );
 		return true;
 	}
@@ -342,7 +342,7 @@ bool AiRuleAddTasks::canProduce(UnitClass unitClass) const {
 		for (int j=0; j < ut->getCommandTypeCount(); ++j) {
 			const CommandType *ct = ut->getCommandType(j);
 			if (!faction->reqsOk(ct)
-			|| (ct->getClass() != CommandClass::PRODUCE && ct->getClass() != CommandClass::MORPH)) {
+			|| (ct->getClass() != CmdClass::PRODUCE && ct->getClass() != CmdClass::MORPH)) {
 				continue;
 			}
 
@@ -540,7 +540,7 @@ void AiRuleProduce::produceResources(const ProduceTask *task) {
 		Unit *unit = faction->getUnit(i);
 		if (prodMap.find(unit->getType()) != prodMap.end()) {
 			int cmds = unit->getCommands().size();
-			if (cmds == 1 && unit->getCommands().front()->getType()->getClass() == CommandClass::STOP) {
+			if (cmds == 1 && unit->getCommands().front()->getType()->getClass() == CmdClass::STOP) {
 				cmds = 0;
 			}
 			if (cmds < lowCmd) {
@@ -560,7 +560,7 @@ void AiRuleProduce::produceResources(const ProduceTask *task) {
 	// 3. Give new produce/morph/generate command
 	int cmdNdx = RAND_RANGE(0, prodMap[unitToCmd->getType()].size() - 1);
 	ProdPair pp = prodMap[unitToCmd->getType()][cmdNdx];
-	if (pp.first->getClass() == CommandClass::TRANSFORM) {
+	if (pp.first->getClass() == CmdClass::TRANSFORM) {
 		Vec2i pos;
 		if (ai->findPosForBuilding(static_cast<const UnitType*>(pp.second), ai->getRandomHomePosition(), pos)) {
 			AI_LOG( PRODUCTION, 2, "AiRuleProduce::produceResources: giving unit id " << unitToCmd->getId()
@@ -597,7 +597,7 @@ void AiRuleProduce::produceGeneric(const ProduceTask *task) {
 		for (int j=0; j < ut->getCommandTypeCount(); ++j) {
 			const CommandType *ct = ut->getCommandType(j);
 			if (!faction->reqsOk(ct)
-			|| (ct->getClass() != CommandClass::PRODUCE && ct->getClass() != CommandClass::MORPH)) {
+			|| (ct->getClass() != CmdClass::PRODUCE && ct->getClass() != CmdClass::MORPH)) {
 				continue;
 			}
 			for (int k=0; k < ct->getProducedCount(); ++k) {
@@ -621,7 +621,7 @@ void AiRuleProduce::produceGeneric(const ProduceTask *task) {
 		Unit *unit = faction->getUnit(i);
 		if (prodMap.find(unit->getType()) != prodMap.end()) {
 			int cmds = unit->getCommands().size();
-			if (cmds == 1 && unit->getCommands().front()->getType()->getClass() == CommandClass::STOP) {
+			if (cmds == 1 && unit->getCommands().front()->getType()->getClass() == CmdClass::STOP) {
 				cmds = 0;
 			}
 			if (cmds < lowCmd) {
@@ -677,7 +677,7 @@ void AiRuleProduce::produceSpecific(const ProduceTask *task) {
 		for (int j=0; j < ut->getCommandTypeCount(); ++j) {
 			const CommandType *ct = ut->getCommandType(j);
 			if (!faction->reqsOk(ct) 
-			|| (ct->getClass() != CommandClass::PRODUCE && ct->getClass() != CommandClass::MORPH)) {
+			|| (ct->getClass() != CmdClass::PRODUCE && ct->getClass() != CmdClass::MORPH)) {
 				continue;
 			}
 			for (int k=0; k < ct->getProducedCount(); ++k) {
@@ -701,7 +701,7 @@ void AiRuleProduce::produceSpecific(const ProduceTask *task) {
 		Unit *unit = faction->getUnit(i);
 		if (prodMap.find(unit->getType()) != prodMap.end()) {
 			int cmds = unit->getCommands().size();
-			if (cmds == 1 && unit->getCommands().front()->getType()->getClass() == CommandClass::STOP) {
+			if (cmds == 1 && unit->getCommands().front()->getType()->getClass() == CmdClass::STOP) {
 				cmds = 0;
 			}
 			if (cmds < lowCmd) {
@@ -788,7 +788,7 @@ void AiRuleBuild::findBuildingTypes(UnitTypeList &utList, const ResourceType *rt
 		}
 		for(int j = 0; j < ut->getCommandTypeCount(); ++j) {
 			const CommandType *ct = ut->getCommandType(j);
-			if (ct->getClass() == CommandClass::BUILD) { // if the command is build
+			if (ct->getClass() == CmdClass::BUILD) { // if the command is build
 				const BuildCommandType *bct= static_cast<const BuildCommandType*>(ct);
 				//for each building
 				for (int k=0; k < bct->getBuildingCount(); ++k) {
@@ -879,7 +879,7 @@ void AiRuleBuild::findBuilderTypes(const UnitType *buildingType, CmdByUtMap &cmd
 		}
 		for(int j = 0; j < ut->getCommandTypeCount(); ++j) {
 			const CommandType *ct = ut->getCommandType(j);
-			if (ct->getClass() == CommandClass::BUILD) { // if the command is build
+			if (ct->getClass() == CmdClass::BUILD) { // if the command is build
 				const BuildCommandType *bct= static_cast<const BuildCommandType*>(ct);
 				for (int k=0; k < bct->getBuildingCount(); ++k) { // for each building
 					const UnitType *canBuildType = bct->getBuilding(k);
@@ -923,7 +923,7 @@ void AiRuleBuild::buildSpecific(const BuildTask *bt){
 	foreach_const (Units, it, units) {
 		const Unit *const &unit = *it;
 		if (cmdMap.find(unit->getType()) != cmdMap.end()
-		&& (!unit->anyCommand() || unit->getCurrCommand()->getType()->getClass() != CommandClass::BUILD)) {
+		&& (!unit->anyCommand() || unit->getCurrCommand()->getType()->getClass() != CmdClass::BUILD)) {
 			potentialBuilders.push_back(unit);
 		}
 	}
@@ -965,7 +965,7 @@ bool AiRuleBuild::isResourceProducer(const UnitType *building){
 bool AiRuleBuild::isWarriorProducer(const UnitType *building){
 	for (int i= 0; i < building->getCommandTypeCount(); i++) {
 		const CommandType *ct= building->getCommandType(i);
-		if (ct->getClass() == CommandClass::PRODUCE) {
+		if (ct->getClass() == CmdClass::PRODUCE) {
 			const ProduceCommandType *pt = static_cast<const ProduceCommandType*>(ct);
 			for (int j=0; j < pt->getProducedUnitCount(); ++j) {
 				const UnitType *ut= pt->getProducedUnit(j);

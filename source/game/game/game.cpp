@@ -906,35 +906,6 @@ void GameState::render2d(){
 		stringstream str;
 		m_debugStats.report(str);
 
-#		if _GAE_DEBUG_EDITION_ && !_GAE_LEAK_DUMP_
-#			define REPORT_MEMORY_USE(X)									\
-			{															\
-				size_t B = X::getAllocatedMemSize();					\
-				size_t MiB = (B > 1024 * 1024) ? B / (1024 * 1024) : 0;	\
-				size_t KiB = (B > 1024) ? B / 1024 : 0;					\
-				str << #X << " mem use: ";								\
-				if (MiB) { str << MiB << " MiB (" << KiB << " KiB)\n";}	\
-				else if (KiB) { str << KiB << " KiB (" << B << " B)\n";}\
-				else { str << B << " B\n";}								\
-			}
-#			define REPORT_MEMORY_USE_AND_SINGLE_ALLOCATIONS(X)				\
-			{																\
-				REPORT_MEMORY_USE(X)										\
-				str << "   Allocations: " << X::getAllocCount() << "\n"		\
-					<< "   DeAllocations: " << X::getDeAllocCount() << "\n";\
-			}
-			REPORT_MEMORY_USE(Unit);
-			REPORT_MEMORY_USE(Upgrade);
-			REPORT_MEMORY_USE(Effect);
-			REPORT_MEMORY_USE_AND_SINGLE_ALLOCATIONS(Command);
-			REPORT_MEMORY_USE(Particle);
-			REPORT_MEMORY_USE(GameParticleSystem);
-			REPORT_MEMORY_USE(Stats);
-			REPORT_MEMORY_USE(Widget);
-			REPORT_MEMORY_USE(Plan::Task);
-
-#		endif // _GAE_DEBUG_EDITION_
-
 		///@todo put on widget
 		//g_renderer.renderText(str.str(), g_coreData.getFTDisplayFont(),
 		//	gui.getDisplay()->getColor(), 10, 120, false);

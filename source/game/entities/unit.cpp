@@ -418,9 +418,9 @@ Vec2i Unit::getNearestOccupiedCell(const Vec2i &from) const {
   * @return percentage complete, or -1 if not currently producing anything */
 int Unit::getProductionPercent() const {
 	if (anyCommand()) {
-		CommandClass cmdClass = commands.front()->getType()->getClass();
-		if (cmdClass == CommandClass::PRODUCE || cmdClass == CommandClass::MORPH
-		|| cmdClass == CommandClass::GENERATE || cmdClass == CommandClass::UPGRADE) {
+		CmdClass cmdClass = commands.front()->getType()->getClass();
+		if (cmdClass == CmdClass::PRODUCE || cmdClass == CmdClass::MORPH
+		|| cmdClass == CmdClass::GENERATE || cmdClass == CmdClass::UPGRADE) {
 			const ProducibleType *produced = commands.front()->getProdType();
 			if (produced) {
 				return clamp(progress2 * 100 / produced->getProductionTime(), 0, 100);
@@ -489,11 +489,11 @@ float Unit::getRenderAlpha() const {
 bool Unit::isInteresting(InterestingUnitType iut) const{
 	switch(iut){
 	case InterestingUnitType::IDLE_HARVESTER:
-		if(type->hasCommandClass(CommandClass::HARVEST)) {
+		if(type->hasCommandClass(CmdClass::HARVEST)) {
 			if(!commands.empty()) {
 				const CommandType *ct = commands.front()->getType();
 				if(ct) {
-					return ct->getClass() == CommandClass::STOP;
+					return ct->getClass() == CmdClass::STOP;
 				}
 			}
 		}
@@ -657,7 +657,7 @@ void Unit::startAttackSystems(const AttackSkillType *ast) {
 			RUNTIME_CHECK(!carrier->isCarried() && carrier->getPos().x >= 0 && carrier->getPos().y >= 0);
 			startPos = carrier->getCurrVectorFlat();
 			const LoadCommandType *lct = 
-				static_cast<const LoadCommandType *>(carrier->getType()->getFirstCtOfClass(CommandClass::LOAD));
+				static_cast<const LoadCommandType *>(carrier->getType()->getFirstCtOfClass(CmdClass::LOAD));
 			assert(lct->areProjectilesAllowed());
 			Vec2f offsets = lct->getProjectileOffset();
 			startPos.y += offsets.y;
@@ -740,10 +740,10 @@ void Unit::startAttackSystems(const AttackSkillType *ast) {
 }
 
 void Unit::clearPath() {
-	CommandClass cc = g_simInterface.processingCommandClass();
-	if (cc != CommandClass::NULL_COMMAND && cc != CommandClass::INVALID) {
+	CmdClass cc = g_simInterface.processingCommandClass();
+	if (cc != CmdClass::NULL_COMMAND && cc != CmdClass::INVALID) {
 		PF_UNIT_LOG( this, "path cleared." );
-		PF_LOG( "Command class = " << CommandClassNames[cc] );
+		PF_LOG( "Command class = " << CmdClassNames[cc] );
 	} else {
 		CMD_LOG( "path cleared." );
 	}
@@ -773,10 +773,10 @@ Vec3f Unit::getCurrVectorFlat() const {
 // =================== Command list related ===================
 
 /** query first available (and currently executable) command type of a class
-  * @param commandClass CommandClass of interest
+  * @param commandClass CmdClass of interest
   * @return the first executable CommandType matching commandClass, or NULL
   */
-const CommandType *Unit::getFirstAvailableCt(CommandClass commandClass) const {
+const CommandType *Unit::getFirstAvailableCt(CmdClass commandClass) const {
 	typedef vector<CommandType*> CommandTypes;
 	const  CommandTypes &cmdTypes = type->getCommandTypes(commandClass);
 	foreach_const (CommandTypes, it, cmdTypes) {
@@ -810,13 +810,13 @@ void Unit::setAutoCmdEnable(AutoCmdFlag f, bool v) {
 
 /** give one command, queue or clear command queue and push back (depending on flags)
   * @param command the command to execute
-  * @return a CommandResult describing success or failure
+  * @return a CmdResult describing success or failure
   */
-CommandResult Unit::giveCommand(Command *command) {
+CmdResult Unit::giveCommand(Command *command) {
 	assert(command);
 	const CommandType *ct = command->getType();
 	CMD_UNIT_LOG( this, "giveCommand() " << *command );
-	if (ct->getClass() == CommandClass::SET_MEETING_POINT) {
+	if (ct->getClass() == CmdClass::SET_MEETING_POINT) {
 		if(command->isQueue() && !commands.empty()) {
 			commands.push_back(command);
 		} else {
@@ -824,7 +824,7 @@ CommandResult Unit::giveCommand(Command *command) {
 			g_world.deleteCommand(command);
 		}
 		CMD_LOG( "Result = SUCCESS" );
-		return CommandResult::SUCCESS;
+		return CmdResult::SUCCESS;
 	}
 
 	if (ct->isQueuable() || command->isQueue()) { // user wants this queued...
@@ -841,23 +841,23 @@ CommandResult Unit::giveCommand(Command *command) {
 		// HACK... The AI likes to re-issue the same commands, which stresses the pathfinder 
 		// on big maps. If current and incoming are both attack and have same pos, then do
 		// not clear path... (route cache will still be good).
-		if (! (!commands.empty() && command->getType()->getClass() == CommandClass::ATTACK
-		&& commands.front()->getType()->getClass() == CommandClass::ATTACK
+		if (! (!commands.empty() && command->getType()->getClass() == CmdClass::ATTACK
+		&& commands.front()->getType()->getClass() == CmdClass::ATTACK
 		&& command->getPos() == commands.front()->getPos()) ) {
 			clearPath();
 		}
 		clearCommands();
 
 		// for patrol commands, remember where we started from
-		if(ct->getClass() == CommandClass::PATROL) {
+		if(ct->getClass() == CmdClass::PATROL) {
 			command->setPos2(pos);
 		}
 	}
 
 	// check command
-	CommandResult result = checkCommand(*command);
+	CmdResult result = checkCommand(*command);
 	bool energyRes = checkEnergy(command->getType());
-	if (result == CommandResult::SUCCESS && energyRes) {
+	if (result == CmdResult::SUCCESS && energyRes) {
 		applyCommand(*command);
 		
 		// start the command type
@@ -877,7 +877,7 @@ CommandResult Unit::giveCommand(Command *command) {
 	StateChanged(this);
 
 	if (command) {
-		CMD_UNIT_LOG( this, "giveCommand() Result = " << CommandResultNames[result] );
+		CMD_UNIT_LOG( this, "giveCommand() Result = " << CmdResultNames[result] );
 	}
 	return result;
 }
@@ -890,7 +890,7 @@ void Unit::loadUnitInit(Command *command) {
 		/// while doing multiple loads increases the queue count but it decreases afterwards.
 		/// Furious clicking to make queued commands causes a crash in AnnotatedMap::annotateLocal.
 		/// - hailstone 2Feb2011
-		/*if (!commands.empty() && commands.front()->getType()->getClass() == CommandClass::LOAD) {
+		/*if (!commands.empty() && commands.front()->getType()->getClass() == CmdClass::LOAD) {
 			CMD_LOG( "deleting load command, already loading.")
 			g_world.deleteCommand(command);
 			command = 0;
@@ -904,7 +904,7 @@ void Unit::unloadUnitInit(Command *command) {
 			assert(std::find(m_carriedUnits.begin(), m_carriedUnits.end(), command->getUnitRef()) != m_carriedUnits.end());
 			m_unitsToUnload.push_back(command->getUnitRef());
 			CMD_LOG( "adding unit to unload list " << *command->getUnit() )
-			if (!commands.empty() && commands.front()->getType()->getClass() == CommandClass::UNLOAD) {
+			if (!commands.empty() && commands.front()->getType()->getClass() == CmdClass::UNLOAD) {
 				CMD_LOG( "deleting unload command, already unloading.")
 				g_world.deleteCommand(command);
 				command = 0;
@@ -929,7 +929,7 @@ Command *Unit::popCommand() {
 	Command *command = commands.empty() ? NULL : commands.front();
 
 	// we don't let hacky set meeting point commands actually get anywhere
-	while(command && command->getType()->getClass() == CommandClass::SET_MEETING_POINT) {
+	while(command && command->getType()->getClass() == CmdClass::SET_MEETING_POINT) {
 		setMeetingPos(command->getPos());
 		g_world.deleteCommand(command);
 		commands.erase(commands.begin());
@@ -944,13 +944,13 @@ Command *Unit::popCommand() {
 	return command;
 }
 /** pop current command (used when order is done)
-  * @return CommandResult::SUCCESS, or CommandResult::FAIL_UNDEFINED on catastrophic failure
+  * @return CmdResult::SUCCESS, or CmdResult::FAIL_UNDEFINED on catastrophic failure
   */
-CommandResult Unit::finishCommand() {
+CmdResult Unit::finishCommand() {
 	//is empty?
 	if(commands.empty()) {
 		CMD_UNIT_LOG( this, "finishCommand() no command to finish!" );
-		return CommandResult::FAIL_UNDEFINED;
+		return CmdResult::FAIL_UNDEFINED;
 	}
 	CMD_UNIT_LOG( this, commands.front()->getType()->getName() << " command finished." );
 
@@ -966,15 +966,15 @@ CommandResult Unit::finishCommand() {
 		CMD_LOG( commands.front()->getType()->getName() << " command next on queue." );
 	}
 
-	return CommandResult::SUCCESS;
+	return CmdResult::SUCCESS;
 }
 
 /** cancel command on back of queue */
-CommandResult Unit::cancelCommand() {
+CmdResult Unit::cancelCommand() {
 	// is empty?
 	if(commands.empty()){
 		CMD_UNIT_LOG( this, "cancelCommand() No commands to cancel!");
-		return CommandResult::FAIL_UNDEFINED;
+		return CmdResult::FAIL_UNDEFINED;
 	}
 
 	//undo command
@@ -995,15 +995,15 @@ CommandResult Unit::cancelCommand() {
 	} else {
 		CMD_UNIT_LOG( this, "a queued " << ct->getName() << " command cancelled.");
 	}
-	return CommandResult::SUCCESS;
+	return CmdResult::SUCCESS;
 }
 
 /** cancel current command */
-CommandResult Unit::cancelCurrCommand() {
+CmdResult Unit::cancelCurrCommand() {
 	//is empty?
 	if(commands.empty()) {
 		CMD_UNIT_LOG( this, "cancelCurrCommand() No commands to cancel!");
-		return CommandResult::FAIL_UNDEFINED;
+		return CmdResult::FAIL_UNDEFINED;
 	}
 
 	//undo command
@@ -1016,7 +1016,7 @@ CommandResult Unit::cancelCurrCommand() {
 	} else {
 		CMD_UNIT_LOG( this, command->getType()->getName() << " command next on queue." );
 	}
-	return CommandResult::SUCCESS;
+	return CmdResult::SUCCESS;
 }
 
 void Unit::removeCommands() {
@@ -1066,6 +1066,12 @@ void Unit::born(bool reborn) {
 		g_world.getCartographer()->applyUnitVisibility(this);
 		g_simInterface.doUnitBorn(this);
 		faction->applyUpgradeBoosts(this);
+		if (faction->isThisFaction() && !g_config.getGsAutoRepairEnabled()
+		&& type->getFirstCtOfClass(CmdClass::REPAIR)) {
+			CmdFlags cmdFlags = CmdFlags(CmdProps::MISC_ENABLE, false);
+			Command *cmd = g_world.newCommand(CmdDirective::SET_AUTO_REPAIR, cmdFlags, invalidPos, this);
+			g_simInterface.getCommander()->pushCommand(cmd);
+		}
 	}
 	StateChanged(this);
 	if (type->isDetector()) {
@@ -1101,7 +1107,7 @@ void Unit::kill() {
 	if (!m_unitsToCarry.empty()) {
 		foreach (UnitIdList, it, m_unitsToCarry) {
 			Unit *unit = world.getUnit(*it);
-			if (unit->anyCommand() && unit->getCurrCommand()->getType()->getClass() == CommandClass::BE_LOADED) {
+			if (unit->anyCommand() && unit->getCurrCommand()->getType()->getClass() == CmdClass::BE_LOADED) {
 				unit->cancelCurrCommand();
 			}
 		}
@@ -1279,11 +1285,11 @@ const CommandType *Unit::computeCommandType(const Vec2i &pos, const Unit *target
 			if (tType->isOfClass(UnitClass::CARRIER)
 			&& tType->getCommandType<LoadCommandType>(0)->canCarry(type)) {
 				//move to be loaded
-				commandType = type->getFirstCtOfClass(CommandClass::BE_LOADED);
+				commandType = type->getFirstCtOfClass(CmdClass::BE_LOADED);
 			} else if (getType()->isOfClass(UnitClass::CARRIER)
 			&& type->getCommandType<LoadCommandType>(0)->canCarry(tType)) {
 			//load
-			commandType = type->getFirstCtOfClass(CommandClass::LOAD);
+			commandType = type->getFirstCtOfClass(CmdClass::LOAD);
 		} else {
 				// repair
 			commandType = getRepairCommandType(targetUnit);
@@ -1301,11 +1307,11 @@ const CommandType *Unit::computeCommandType(const Vec2i &pos, const Unit *target
 
 	//default command is move command
 	if (!commandType) {
-		commandType = type->getFirstCtOfClass(CommandClass::MOVE);
+		commandType = type->getFirstCtOfClass(CmdClass::MOVE);
 	}
 
 	if (!commandType && type->hasMeetingPoint()) {
-		commandType = type->getFirstCtOfClass(CommandClass::SET_MEETING_POINT);
+		commandType = type->getFirstCtOfClass(CmdClass::SET_MEETING_POINT);
 	}
 
 	return commandType;
@@ -1371,8 +1377,8 @@ void Unit::doUpdateCommand() {
 	if (!anyCommand() && isOperative()) {
 		const UnitType *ut = getType();
 		setCurrSkill(SkillClass::STOP);
-		if (ut->hasCommandClass(CommandClass::STOP)) {
-			giveCommand(g_world.newCommand(ut->getFirstCtOfClass(CommandClass::STOP), CommandFlags()));
+		if (ut->hasCommandClass(CmdClass::STOP)) {
+			giveCommand(g_world.newCommand(ut->getFirstCtOfClass(CmdClass::STOP), CmdFlags()));
 		}
 	}
 	//if unit is out of EP, it stops
@@ -1880,7 +1886,7 @@ string Unit::getShortDesc() const {
 		string nameString = g_lang.getFactionString(factionName, commandName);
 		if (nameString == commandName) {
 			nameString = formatString(commandName);
-			string classString = formatString(CommandClassNames[commands.front()->getType()->getClass()]);
+			string classString = formatString(CmdClassNames[commands.front()->getType()->getClass()]);
 			if (nameString == classString) {
 				nameString = g_lang.get(classString);
 			}
@@ -2232,8 +2238,8 @@ bool Unit::morph(const MorphCommandType *mct, const UnitType *ut, Vec2i offset, 
 
 			// add current command, which should be the morph command
 			assert(commands.size() > 0 
-				&& (commands.front()->getType()->getClass() == CommandClass::MORPH
-				|| commands.front()->getType()->getClass() == CommandClass::TRANSFORM));
+				&& (commands.front()->getType()->getClass() == CmdClass::MORPH
+				|| commands.front()->getType()->getClass() == CmdClass::TRANSFORM));
 			newCommands.push_back(commands.front());
 			i = commands.begin();
 			++i;
@@ -2263,7 +2269,7 @@ bool Unit::morph(const MorphCommandType *mct, const UnitType *ut, Vec2i offset, 
 }
 
 bool Unit::transform(const TransformCommandType *tct, const UnitType *ut, Vec2i pos, CardinalDir facing) {
-	RUNTIME_CHECK(ut->getFirstCtOfClass(CommandClass::BUILD_SELF) != 0);
+	RUNTIME_CHECK(ut->getFirstCtOfClass(CmdClass::BUILD_SELF) != 0);
 	Vec2i offset = pos - this->pos;
 	m_facing = facing; // needs to be set for putUnitCells() [happens in morph()]
 	const UnitType *oldType = type;
@@ -2271,7 +2277,7 @@ bool Unit::transform(const TransformCommandType *tct, const UnitType *ut, Vec2i 
 		rotation = facing * 90.f;
 		hp = 1;
 		commands.clear();
-		giveCommand(g_world.newCommand(type->getFirstCtOfClass(CommandClass::BUILD_SELF), CommandFlags()));
+		giveCommand(g_world.newCommand(type->getFirstCtOfClass(CmdClass::BUILD_SELF), CmdFlags()));
 		setCurrSkill(SkillClass::BUILD_SELF);
 		faction->onUnitMorphed(type, oldType);
 		return true;
@@ -2339,34 +2345,34 @@ void Unit::clearCommands() {
 
 /** Check if a command can be executed
   * @param command the command to check
-  * @return a CommandResult describing success or failure
+  * @return a CmdResult describing success or failure
   */
-CommandResult Unit::checkCommand(const Command &command) const {
+CmdResult Unit::checkCommand(const Command &command) const {
 	const CommandType *ct = command.getType();
 
-	if (command.getArchetype() != CommandArchetype::GIVE_COMMAND) {
-		return CommandResult::SUCCESS;
+	if (command.getArchetype() != CmdDirective::GIVE_COMMAND) {
+		return CmdResult::SUCCESS;
 	}
 
 	//if not operative or has not command type => fail
 	if (!isOperative() || command.getUnit() == this || !getType()->hasCommandType(ct)) {
-		return CommandResult::FAIL_UNDEFINED;
+		return CmdResult::FAIL_UNDEFINED;
 	}
 
 	//if pos is not inside the world
 	if (command.getPos() != Command::invalidPos && !map->isInside(command.getPos())) {
-		return CommandResult::FAIL_UNDEFINED;
+		return CmdResult::FAIL_UNDEFINED;
 	}
 
 	//check produced
 	const ProducibleType *produced = command.getProdType();
 	if (produced) {
 		if (!faction->reqsOk(produced)) {
-			return CommandResult::FAIL_REQUIREMENTS;
+			return CmdResult::FAIL_REQUIREMENTS;
 		}
-		if (!command.getFlags().get(CommandProperties::DONT_RESERVE_RESOURCES)
+		if (!command.getFlags().get(CmdProps::DONT_RESERVE_RESOURCES)
 		&& !faction->checkCosts(produced)) {
-			return CommandResult::FAIL_RESOURCES;
+			return CmdResult::FAIL_RESOURCES;
 		}
 	}
 
@@ -2385,11 +2391,11 @@ void Unit::applyCommand(const Command &command) {
 
 /** De-Apply costs for a command
   * @param command the command to cancel
-  * @return CommandResult::SUCCESS
+  * @return CmdResult::SUCCESS
   */
-CommandResult Unit::undoCommand(const Command &command) {
+CmdResult Unit::undoCommand(const Command &command) {
 	command.getType()->undo(this, command);
-	return CommandResult::SUCCESS;
+	return CmdResult::SUCCESS;
 }
 
 /** query the speed at which a skill type is executed

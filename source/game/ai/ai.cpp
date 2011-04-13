@@ -370,14 +370,14 @@ bool Ai::isStableBase() {
 	}
 }
 
-bool Ai::findAbleUnit(int *unitIndex, CommandClass ability, bool idleOnly) {
+bool Ai::findAbleUnit(int *unitIndex, CmdClass ability, bool idleOnly) {
 	vector<int> units;
 
 	*unitIndex = -1;
 	for (int i = 0; i < aiInterface->getMyUnitCount(); ++i) {
 		const Unit *unit = aiInterface->getMyUnit(i);
 		if (unit->getType()->hasCommandClass(ability)) {
-			if ((!idleOnly || !unit->anyCommand() || unit->getCurrCommand()->getType()->getClass() == CommandClass::STOP)) {
+			if ((!idleOnly || !unit->anyCommand() || unit->getCurrCommand()->getType()->getClass() == CmdClass::STOP)) {
 				units.push_back(i);
 			}
 		}
@@ -391,7 +391,7 @@ bool Ai::findAbleUnit(int *unitIndex, CommandClass ability, bool idleOnly) {
 	}
 }
 
-bool Ai::findAbleUnit(int *unitIndex, CommandClass ability, CommandClass currentCommand) {
+bool Ai::findAbleUnit(int *unitIndex, CmdClass ability, CmdClass currentCommand) {
 	vector<int> units;
 
 	*unitIndex = -1;
@@ -601,8 +601,8 @@ void Ai::sendScoutPatrol() {
 	pos = aiInterface->getStartLocation(startLoc);
 
 	if (aiInterface->getFactionIndex() != startLoc) {
-		if (findAbleUnit(&unit, CommandClass::ATTACK, false)) {
-			aiInterface->giveCommand(unit, CommandClass::ATTACK, pos);
+		if (findAbleUnit(&unit, CmdClass::ATTACK, false)) {
+			aiInterface->giveCommand(unit, CmdClass::ATTACK, pos);
 			AI_LOG( MILITARY, 1, "Ai::sendScoutPatrol: Scout patrol sent to: " << pos );
 		}
 	}
@@ -617,7 +617,7 @@ void Ai::massiveAttack(const Vec2i &pos, Field field, bool ultraAttack){
         const Unit *unit = aiInterface->getMyUnit(i);
 		const AttackCommandType *act = unit->getType()->getAttackCommand(field==Field::AIR?Zone::AIR:Zone::LAND);
 
-		if (act && unit->getType()->hasCommandClass(CommandClass::PRODUCE)) {
+		if (act && unit->getType()->hasCommandClass(CmdClass::PRODUCE)) {
 			++producerWarriorCount;
 		}
 		
@@ -625,19 +625,19 @@ void Ai::massiveAttack(const Vec2i &pos, Field field, bool ultraAttack){
 			//if (producerWarriorCount > maxProducerWarriors) {
 				if (unit->getCommandCount() > 0 
 				&& unit->getCurrCommand()->getType() != 0
-				&& ( unit->getCurrCommand()->getType()->getClass() == CommandClass::BUILD
-				||   unit->getCurrCommand()->getType()->getClass() == CommandClass::MORPH
-				||   unit->getCurrCommand()->getType()->getClass() == CommandClass::PRODUCE )) {
+				&& ( unit->getCurrCommand()->getType()->getClass() == CmdClass::BUILD
+				||   unit->getCurrCommand()->getType()->getClass() == CmdClass::MORPH
+				||   unit->getCurrCommand()->getType()->getClass() == CmdClass::PRODUCE )) {
 					AI_LOG( MILITARY, 3, "Ai::massiveAttack: candidate is producer and currently producing." );
 					isWarrior = false;
 				} else {
-					isWarrior = !unit->getType()->hasCommandClass(CommandClass::HARVEST);
+					isWarrior = !unit->getType()->hasCommandClass(CmdClass::HARVEST);
 				}
 			//} else {
-			//	isWarrior = !unit->getType()->hasCommandClass(CommandClass::HARVEST) && !unit->getType()->hasCommandClass(CommandClass::PRODUCE);  
+			//	isWarrior = !unit->getType()->hasCommandClass(CmdClass::HARVEST) && !unit->getType()->hasCommandClass(CmdClass::PRODUCE);  
 			//}
 		} else {
-			isWarrior = !unit->getType()->hasCommandClass(CommandClass::HARVEST) && !unit->getType()->hasCommandClass(CommandClass::PRODUCE);
+			isWarrior = !unit->getType()->hasCommandClass(CmdClass::HARVEST) && !unit->getType()->hasCommandClass(CmdClass::PRODUCE);
 		}
 		if (act) {
 			bool alreadyAttacking = unit->getCurrSkill()->getClass() == SkillClass::ATTACK;
@@ -645,7 +645,7 @@ void Ai::massiveAttack(const Vec2i &pos, Field field, bool ultraAttack){
 				AI_LOG( MILITARY, 3, "Ai::massiveAttack: attacker " << unit->getId() << " [type="
 					<< unit->getType()->getName() << "] already attacking." );
 			} else if (ultraAttack || isWarrior) {
-				CommandResult res = aiInterface->giveCommand(i, act, pos);
+				CmdResult res = aiInterface->giveCommand(i, act, pos);
 				AI_LOG( MILITARY, 2, "Ai::massiveAttack: attacker " << unit->getId() << " [type="
 					<< unit->getType()->getName() << "] issued attack command to " << pos );
 			} else {
@@ -673,9 +673,9 @@ inline Vec2i randOffset(Random &rand, int radius) {
 
 void Ai::returnBase(int unitIndex) {
     Vec2i pos = getRandomHomePosition() + randOffset(random, villageRadius);
-    CommandResult r = aiInterface->giveCommand(unitIndex, CommandClass::MOVE, pos);
+    CmdResult r = aiInterface->giveCommand(unitIndex, CmdClass::MOVE, pos);
 	AI_LOG( MILITARY, 2, "Ai::returnBase: Order return to base pos:" << pos 
-		<< " result: " << CommandResultNames[r] );
+		<< " result: " << CmdResultNames[r] );
 }
 
 void Ai::harvest(int unitIndex) {

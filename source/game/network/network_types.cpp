@@ -38,16 +38,16 @@ NetworkCommand::NetworkCommand(Command *command) {
 	positionY = command->getPos().y;
 	prodTypeId = command->getProdType() ? command->getProdType()->getId() : -1;
 
-	if (command->getType()->getClass() == CommandClass::BUILD
-	|| command->getType()->getClass() == CommandClass::TRANSFORM) {
+	if (command->getType()->getClass() == CmdClass::BUILD
+	|| command->getType()->getClass() == CmdClass::TRANSFORM) {
 		targetId = command->getFacing();
 	} else {
 		targetId = command->getUnit() ? command->getUnit()->getId() : -1;
 	}
 	flags = 0;
-	if (!command->isReserveResources()) flags |= CmdFlags::NO_RESERVE_RESOURCES;
-	if (command->isQueue()) flags |= CmdFlags::QUEUE;
-	if (command->isMiscEnabled()) flags |= CmdFlags::MISC_ENABLE;
+	if (!command->isReserveResources()) flags |= Flags::NO_RESERVE_RESOURCES;
+	if (command->isQueue()) flags |= Flags::QUEUE;
+	if (command->isMiscEnabled()) flags |= Flags::MISC_ENABLE;
 }
 
 /** Construct archetype SET_AUTO_ [REPAIR|ATTACK|FLEE] */
@@ -59,7 +59,7 @@ NetworkCommand::NetworkCommand(NetworkCommandType type, const Unit *unit, bool v
 	this->positionY= -1;
 	this->prodTypeId = -1;
 	this->targetId = -1;
-	this->flags = (value ? CmdFlags::MISC_ENABLE : 0);
+	this->flags = (value ? Flags::MISC_ENABLE : 0);
 }
 
 /** Construct archetype CANCEL_COMMAND */
@@ -94,29 +94,30 @@ Command *NetworkCommand::toCommand() const {
 		throw runtime_error("Can not find unit with id: " + intToStr(unitId) + ". Game out of synch.");
 	}
 
-	// handle CommandArchetype != GIVE_COMMAND
+	// handle CmdDirective != GIVE_COMMAND
 	if (networkCommandType == NetworkCommandType::CANCEL_COMMAND) {
-		return g_world.newCommand(CommandArchetype::CANCEL_COMMAND, CommandFlags(), Vec2i(-1), unit);
+		return g_world.newCommand(CmdDirective::CANCEL_COMMAND, CmdFlags(), Vec2i(-1), unit);
 	}
 	if (networkCommandType == NetworkCommandType::SET_AUTO_REPAIR) {
-		bool auto_cmd_enable = flags & CmdFlags::MISC_ENABLE;
-		return g_world.newCommand(CommandArchetype::SET_AUTO_REPAIR,
-			CommandFlags(CommandProperties::MISC_ENABLE, auto_cmd_enable), Command::invalidPos, unit);
+		bool auto_cmd_enable = flags & Flags::MISC_ENABLE;
+		return g_world.newCommand(CmdDirective::SET_AUTO_REPAIR,
+			CmdFlags(CmdProps::MISC_ENABLE, auto_cmd_enable), Command::invalidPos, unit);
 	} else if (networkCommandType == NetworkCommandType::SET_AUTO_ATTACK) {
-		bool auto_cmd_enable = flags & CmdFlags::MISC_ENABLE;
-		return g_world.newCommand(CommandArchetype::SET_AUTO_ATTACK,
-			CommandFlags(CommandProperties::MISC_ENABLE, auto_cmd_enable), Command::invalidPos, unit);
+		bool auto_cmd_enable = flags & Flags::MISC_ENABLE;
+		return g_world.newCommand(CmdDirective::SET_AUTO_ATTACK,
+			CmdFlags(CmdProps::MISC_ENABLE, auto_cmd_enable), Command::invalidPos, unit);
 	} else if (networkCommandType == NetworkCommandType::SET_AUTO_FLEE) {
-		bool auto_cmd_enable = flags & CmdFlags::MISC_ENABLE;
-		return g_world.newCommand(CommandArchetype::SET_AUTO_FLEE,
-			CommandFlags(CommandProperties::MISC_ENABLE, auto_cmd_enable), Command::invalidPos, unit);
+		bool auto_cmd_enable = flags & Flags::MISC_ENABLE;
+		return g_world.newCommand(CmdDirective::SET_AUTO_FLEE,
+			CmdFlags(CmdProps::MISC_ENABLE, auto_cmd_enable), Command::invalidPos, unit);
 	} else if (networkCommandType == NetworkCommandType::SET_CLOAK) {
-		bool enable = flags & CmdFlags::MISC_ENABLE;
-		return g_world.newCommand(CommandArchetype::SET_CLOAK,
-			CommandFlags(CommandProperties::MISC_ENABLE, enable), Command::invalidPos, unit);
+		bool enable = flags & Flags::MISC_ENABLE;
+		return g_world.newCommand(CmdDirective::SET_CLOAK,
+			CmdFlags(CmdProps::MISC_ENABLE, enable), Command::invalidPos, unit);
 	}
 
-	// else CommandArchetype == GIVE_COMMAND
+	// else CmdDirective == GIVE_COMMAND
+
 	// validate command type
 	const CommandType* ct = g_prototypeFactory.getCommandType(commandTypeId);
 	if (!ct) {
@@ -126,7 +127,7 @@ Command *NetworkCommand::toCommand() const {
 	// get target, the target might be dead due to lag, cope with it
 	Unit* target = NULL;
 	CardinalDir facing = CardinalDir::NORTH;
-	if (ct->getClass() == CommandClass::BUILD || ct->getClass() == CommandClass::TRANSFORM) {
+	if (ct->getClass() == CmdClass::BUILD || ct->getClass() == CmdClass::TRANSFORM) {
 		facing = enum_cast<CardinalDir>(targetId);
 	} else {
 		if (targetId != GameConstants::invalidId) {
@@ -139,20 +140,20 @@ Command *NetworkCommand::toCommand() const {
 		prodType = g_prototypeFactory.getProdType(prodTypeId);
 
 		// sanity check... 
-		assert((g_prototypeFactory.isGeneratedType(prodType) && ct->getClass() == CommandClass::GENERATE)
-			|| (g_prototypeFactory.isUpgradeType(prodType) && ct->getClass() == CommandClass::UPGRADE)
+		assert((g_prototypeFactory.isGeneratedType(prodType) && ct->getClass() == CmdClass::GENERATE)
+			|| (g_prototypeFactory.isUpgradeType(prodType) && ct->getClass() == CmdClass::UPGRADE)
 			|| (g_prototypeFactory.isUnitType(prodType)
-				&& (ct->getClass() == CommandClass::PRODUCE || ct->getClass() == CommandClass::MORPH
-					|| ct->getClass() == CommandClass::BUILD || ct->getClass() == CommandClass::TRANSFORM)));
+				&& (ct->getClass() == CmdClass::PRODUCE || ct->getClass() == CmdClass::MORPH
+					|| ct->getClass() == CmdClass::BUILD || ct->getClass() == CmdClass::TRANSFORM)));
 	}
 
 	// create command
 	Command *command= NULL;
-	bool queue = flags & CmdFlags::QUEUE;
-	bool no_reserve_res = flags & CmdFlags::NO_RESERVE_RESOURCES;
-	CommandFlags cmdFlags;
-	cmdFlags.set(CommandProperties::QUEUE, queue);
-	cmdFlags.set(CommandProperties::DONT_RESERVE_RESOURCES, no_reserve_res);
+	bool queue = flags & Flags::QUEUE;
+	bool no_reserve_res = flags & Flags::NO_RESERVE_RESOURCES;
+	CmdFlags cmdFlags;
+	cmdFlags.set(CmdProps::QUEUE, queue);
+	cmdFlags.set(CmdProps::DONT_RESERVE_RESOURCES, no_reserve_res);
 	if (target) {
 		command = g_world.newCommand(ct, cmdFlags, target, unit);
 	} else {

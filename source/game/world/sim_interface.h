@@ -194,7 +194,7 @@ protected:
 	bool quit;
 	GameSpeed speed, prevSpeed;
 
-	CommandClass m_processingCommand;
+	CmdClass m_processingCommand;
 
 	Commands requestedCommands;	//commands requested by the user
 	Commands pendingCommands;	//commands ready to be given
@@ -223,10 +223,10 @@ public:
 	Stats* getStats()						{ return stats; }
 	bool getQuit() const					{ return quit; }
 	
-	void setProcessingCommandClass(CommandClass cc = CommandClass::NULL_COMMAND) {
+	void setProcessingCommandClass(CmdClass cc = CmdClass::NULL_COMMAND) {
 		m_processingCommand = cc;
 	}
-	CommandClass processingCommandClass() const {
+	CmdClass processingCommandClass() const {
 		return m_processingCommand;
 	}
 

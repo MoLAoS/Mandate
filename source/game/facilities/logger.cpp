@@ -266,11 +266,11 @@ WorldLogFile::WorldLogFile()
 	for (int i=0; i < GameConstants::maxPlayers; ++i) {
 		m_factionFlags[i] = true;
 	}
-	for (int i=0; i < CommandClass::COUNT; ++i) {
+	for (int i=0; i < CmdClass::COUNT; ++i) {
 		m_commandFlags[i] = 0;
 	}
 
-	m_commandFlags[CommandClass::HARVEST] = 2;
+	m_commandFlags[CmdClass::HARVEST] = 2;
 }
 
 // =====================================================

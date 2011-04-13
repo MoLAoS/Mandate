@@ -132,7 +132,7 @@ void Selection::clear(){
 	update();
 }
 
-bool Selection::isSharedCommandClass(CommandClass commandClass){
+bool Selection::isSharedCommandClass(CmdClass commandClass){
 	for (int i = 0; i < getCount(); ++i) {
 		if (!getUnit(i)->getFirstAvailableCt(commandClass)) {
 			return false;
@@ -231,7 +231,7 @@ void Selection::update() {
 		m_canMove = true;
 		m_canRepair = true;
 		m_canCloak = false;
-		if (frontUT->hasCommandClass(CommandClass::REPAIR)) {
+		if (frontUT->hasCommandClass(CmdClass::REPAIR)) {
 			if (m_selectedUnits.front()->isAutoCmdEnabled(AutoCmdFlag::REPAIR)) {
 				m_autoCmdStates[AutoCmdFlag::REPAIR] = AutoCmdState::ALL_ON;
 			} else {
@@ -242,7 +242,7 @@ void Selection::update() {
 		}
 		removeCarried(); /// @todo: probably not needed if individual units are removed in load command
 
-		if (frontUT->hasCommandClass(CommandClass::ATTACK)) {
+		if (frontUT->hasCommandClass(CmdClass::ATTACK)) {
 			if (m_selectedUnits.front()->isAutoCmdEnabled(AutoCmdFlag::ATTACK)) {
 				m_autoCmdStates[AutoCmdFlag::ATTACK] = AutoCmdState::ALL_ON;
 			} else {
@@ -252,7 +252,7 @@ void Selection::update() {
 			m_autoCmdStates[AutoCmdFlag::ATTACK] = AutoCmdState::NONE;
 		}
 
-		if (frontUT->hasCommandClass(CommandClass::MOVE)) {
+		if (frontUT->hasCommandClass(CmdClass::MOVE)) {
 			if (m_selectedUnits.front()->isAutoCmdEnabled(AutoCmdFlag::FLEE)) {
 				m_autoCmdStates[AutoCmdFlag::FLEE] = AutoCmdState::ALL_ON;
 			} else {
@@ -267,7 +267,7 @@ void Selection::update() {
 			if (ut != frontUT) {
 				m_uniform = false;
 			}
-			if (ut->hasCommandClass(CommandClass::REPAIR)) {
+			if (ut->hasCommandClass(CmdClass::REPAIR)) {
 				if (((*i)->isAutoCmdEnabled(AutoCmdFlag::REPAIR))) {
 					if (m_autoCmdStates[AutoCmdFlag::REPAIR] == AutoCmdState::ALL_OFF) {
 						m_autoCmdStates[AutoCmdFlag::REPAIR] = AutoCmdState::MIXED;
@@ -282,7 +282,7 @@ void Selection::update() {
 					} // else MIXED or ALL_OFF already
 				}
 			}
-			if (ut->hasCommandClass(CommandClass::ATTACK)) {
+			if (ut->hasCommandClass(CmdClass::ATTACK)) {
 				if (((*i)->isAutoCmdEnabled(AutoCmdFlag::ATTACK))) {
 					if (m_autoCmdStates[AutoCmdFlag::ATTACK] == AutoCmdState::ALL_OFF) {
 						m_autoCmdStates[AutoCmdFlag::ATTACK] = AutoCmdState::MIXED;
@@ -297,7 +297,7 @@ void Selection::update() {
 					} // else MIXED or ALL_OFF already
 				}
 			}
-			if (ut->hasCommandClass(CommandClass::MOVE)) {
+			if (ut->hasCommandClass(CmdClass::MOVE)) {
 				if (((*i)->isAutoCmdEnabled(AutoCmdFlag::FLEE))) {
 					if (m_autoCmdStates[AutoCmdFlag::FLEE] == AutoCmdState::ALL_OFF) {
 						m_autoCmdStates[AutoCmdFlag::FLEE] = AutoCmdState::MIXED;
@@ -313,7 +313,7 @@ void Selection::update() {
 				}
 			}
 			m_cancelable = m_cancelable || ((*i)->anyCommand()
-					&& (*i)->getCurrCommand()->getType()->getClass() != CommandClass::STOP);
+					&& (*i)->getCurrCommand()->getType()->getClass() != CmdClass::STOP);
 			m_commandable = m_commandable || (*i)->isOperative();
 
 			if ((*i)->getType()->getCloakClass() == CloakClass::ENERGY) {
@@ -331,7 +331,7 @@ void Selection::update() {
 	}
 }
 
-const Texture2D* Selection::getCommandImage(CommandClass cc) const {
+const Texture2D* Selection::getCommandImage(CmdClass cc) const {
 	foreach_const (UnitVector, it, m_selectedUnits) {
 		const CommandType *ct = (*it)->getType()->getFirstCtOfClass(cc);
 		if (ct) {

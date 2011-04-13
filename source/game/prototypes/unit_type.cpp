@@ -387,7 +387,7 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 			const XmlNode *commandNode = commandsNode->getChild(i);
 			if (commandNode->getName() != "command") continue;
 			string classId = commandNode->getChildRestrictedValue("type");
-			CommandType *commandType = g_prototypeFactory.newCommandType(CommandClassNames.match(classId.c_str()), this);
+			CommandType *commandType = g_prototypeFactory.newCommandType(CmdClassNames.match(classId.c_str()), this);
 			loadOk = commandType->load(commandNode, dir, techTree, factionType) && loadOk;
 			commandTypes.push_back(commandType);
 			g_prototypeFactory.setChecksum(commandType);
@@ -400,7 +400,7 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 
 	// if type has a meeting point, add a SetMeetingPoint command
 	if (meetingPoint) {
-		CommandType *smpct = g_prototypeFactory.newCommandType(CommandClass::SET_MEETING_POINT, this);
+		CommandType *smpct = g_prototypeFactory.newCommandType(CmdClass::SET_MEETING_POINT, this);
 		commandTypes.push_back(smpct);
 		g_prototypeFactory.setChecksum(smpct);
 	}
@@ -481,10 +481,10 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 }
 
 void UnitType::addBeLoadedCommand() {
-	CommandType *blct = g_prototypeFactory.newCommandType(CommandClass::BE_LOADED, this);
+	CommandType *blct = g_prototypeFactory.newCommandType(CmdClass::BE_LOADED, this);
 	static_cast<BeLoadedCommandType*>(blct)->setMoveSkill(getFirstMoveSkill());
 	commandTypes.push_back(blct);
-	commandTypesByClass[CommandClass::BE_LOADED].push_back(blct);
+	commandTypesByClass[CmdClass::BE_LOADED].push_back(blct);
 	g_prototypeFactory.setChecksum(blct);
 }
 
@@ -529,7 +529,7 @@ const CommandType *UnitType::getCommandType(const string &m_name) const {
 }
 
 const HarvestCommandType *UnitType::getHarvestCommand(const ResourceType *rt) const {
-	foreach_const (CommandTypes, it, commandTypesByClass[CommandClass::HARVEST]) {
+	foreach_const (CommandTypes, it, commandTypesByClass[CmdClass::HARVEST]) {
 		const HarvestCommandType *hct = static_cast<const HarvestCommandType*>(*it);
 		if (hct->canHarvest(rt)) {
 			return hct;
@@ -539,7 +539,7 @@ const HarvestCommandType *UnitType::getHarvestCommand(const ResourceType *rt) co
 }
 
 const AttackCommandType *UnitType::getAttackCommand(Zone zone) const {
-	foreach_const (CommandTypes, it, commandTypesByClass[CommandClass::ATTACK]) {
+	foreach_const (CommandTypes, it, commandTypesByClass[CmdClass::ATTACK]) {
 		const AttackCommandType *act = static_cast<const AttackCommandType*>(*it);
 		if (act->getAttackSkillTypes()->getZone(zone)) {
 			return act;
@@ -549,7 +549,7 @@ const AttackCommandType *UnitType::getAttackCommand(Zone zone) const {
 }
 
 const RepairCommandType *UnitType::getRepairCommand(const UnitType *repaired) const {
-	foreach_const (CommandTypes, it, commandTypesByClass[CommandClass::REPAIR]) {
+	foreach_const (CommandTypes, it, commandTypesByClass[CmdClass::REPAIR]) {
 		const RepairCommandType *rct = static_cast<const RepairCommandType*>(*it);
 		if (rct->canRepair(repaired)) {
 			return rct;
@@ -709,7 +709,7 @@ void UnitType::setDeCloakSkills(const vector<string> &names, const vector<SkillC
 }
 
 void UnitType::sortCommandTypes() {
-	foreach_enum (CommandClass, cc) {
+	foreach_enum (CmdClass, cc) {
 		foreach (CommandTypes, it, commandTypes) {
 			if ((*it)->getClass() == cc) {
 				commandTypesByClass[cc].push_back(*it);

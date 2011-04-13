@@ -30,7 +30,7 @@ MEMORY_CHECK_IMPLEMENTATION(Command)
 
 const Vec2i Command::invalidPos = Vec2i(-1);
 
-Command::Command(CreateParamsArch params)//CommandArchetype archetype, CommandFlags flags, const Vec2i &pos, Unit *commandedUnit)
+Command::Command(CreateParamsArch params)//CmdDirective archetype, CmdFlags flags, const Vec2i &pos, Unit *commandedUnit)
 		: m_id(-1)
 		, archetype(params.archetype)
 		, type(NULL)
@@ -43,9 +43,9 @@ Command::Command(CreateParamsArch params)//CommandArchetype archetype, CommandFl
 		, commandedUnit(params.commandedUnit) {
 }
 
-Command::Command(CreateParamsPos params)//const CommandType *type, CommandFlags flags, const Vec2i &pos, Unit *commandedUnit)
+Command::Command(CreateParamsPos params)//const CommandType *type, CmdFlags flags, const Vec2i &pos, Unit *commandedUnit)
 		: m_id(-1)
-		, archetype(CommandArchetype::GIVE_COMMAND)
+		, archetype(CmdDirective::GIVE_COMMAND)
 		, type(params.type)
 		, flags(params.flags)
 		, pos(params.pos)
@@ -56,9 +56,9 @@ Command::Command(CreateParamsPos params)//const CommandType *type, CommandFlags 
 		, commandedUnit(params.commandedUnit) {
 }
 
-Command::Command(CreateParamsUnit params)//const CommandType *type, CommandFlags flags, Unit* unit, Unit *commandedUnit)
+Command::Command(CreateParamsUnit params)//const CommandType *type, CmdFlags flags, Unit* unit, Unit *commandedUnit)
 		: m_id(-1)
-		, archetype(CommandArchetype::GIVE_COMMAND)
+		, archetype(CmdDirective::GIVE_COMMAND)
 		, type(params.type)
 		, flags(params.flags)
 		, pos(-1)
@@ -77,10 +77,10 @@ Command::Command(CreateParamsUnit params)//const CommandType *type, CommandFlags
 }
 
 
-Command::Command(CreateParamsProd params)//const CommandType *type, CommandFlags flags, const Vec2i &pos, 
+Command::Command(CreateParamsProd params)//const CommandType *type, CmdFlags flags, const Vec2i &pos, 
 				 //const ProducibleType *prodType, CardinalDir facing, Unit *commandedUnit)
 		: m_id(-1)
-		, archetype(CommandArchetype::GIVE_COMMAND)
+		, archetype(CmdDirective::GIVE_COMMAND)
 		, type(params.type)
 		, flags(params.flags)
 		, pos(params.pos)
@@ -98,7 +98,7 @@ Command::Command(CreateParamsLoad params) {// const XmlNode *node, const UnitTyp
 	m_id = node->getChildIntValue("id");
 	unitRef = node->getOptionalIntValue("unitRef", -1);
 	unitRef2 = node->getOptionalIntValue("unitRef2", -1);
-	archetype = CommandArchetype(node->getChildIntValue("archetype"));
+	archetype = CmdDirective(node->getChildIntValue("archetype"));
 	type = params.ut->getCommandType(node->getChildStringValue("type"));
 	flags.flags = node->getChildIntValue("flags");
 	pos = node->getChildVec2iValue("pos");

@@ -596,7 +596,7 @@ void World::moveUnitCells(Unit *unit) {
 		// remove unit's visibility
 		cartographer->removeUnitVisibility(unit);
 	}
-	if (unit->getCurrCommand()->getType()->getClass() != CommandClass::TELEPORT) {
+	if (unit->getCurrCommand()->getType()->getClass() != CmdClass::TELEPORT) {
 		RUNTIME_CHECK(routePlanner->isLegalMove(unit, newPos));
 	}
 	map.clearUnitCells(unit, unit->getPos());
@@ -609,7 +609,7 @@ void World::moveUnitCells(Unit *unit) {
 		}
 	}
 
-	if (unit->getCurrCommand()->getType()->getClass() != CommandClass::TELEPORT) {
+	if (unit->getCurrCommand()->getType()->getClass() != CmdClass::TELEPORT) {
 		// water splash
 		if (tileset.getWaterEffects() && unit->getCurrField() == Field::LAND
 		&& getThisFaction()->canSee(unit) && map.getCell(unit->getLastPos())->isSubmerged()
@@ -708,7 +708,7 @@ void World::unfogMap(const Vec4i &rect, int time) {
 	}
 }
 
-/** @return < 0 on error (see LuaCmdResult) else see CommandResult */
+/** @return < 0 on error (see LuaCmdResult) else see CmdResult */
 int World::givePositionCommand(int unitId, const string &commandName, const Vec2i &pos) {
 	Unit* unit= findUnitById(unitId);
 	if (!unit) {
@@ -717,17 +717,17 @@ int World::givePositionCommand(int unitId, const string &commandName, const Vec2
 	const CommandType *cmdType = 0;
 
 	if (commandName == "move") {
-		cmdType = unit->getType()->getFirstCtOfClass(CommandClass::MOVE);
+		cmdType = unit->getType()->getFirstCtOfClass(CmdClass::MOVE);
 	} else if (commandName == "attack") {
-		cmdType = unit->getType()->getFirstCtOfClass(CommandClass::ATTACK);
+		cmdType = unit->getType()->getFirstCtOfClass(CmdClass::ATTACK);
 	} else if (commandName == "harvest") {
 		MapResource *r = map.getTile(Map::toTileCoords(pos))->getResource();
 		bool found = false;
-		if (!unit->getType()->getFirstCtOfClass(CommandClass::HARVEST)) {
+		if (!unit->getType()->getFirstCtOfClass(CmdClass::HARVEST)) {
 			return LuaCmdResult::NO_CAPABLE_COMMAND;
 		}
 		if (!r) {
-			cmdType = unit->getType()->getFirstCtOfClass(CommandClass::HARVEST);
+			cmdType = unit->getType()->getFirstCtOfClass(CmdClass::HARVEST);
 		} else {
 			for (int i=0; i < unit->getType()->getCommandTypeCount<HarvestCommandType>(); ++i) {
 				const HarvestCommandType *hct = unit->getType()->getCommandType<HarvestCommandType>(i);
@@ -738,20 +738,20 @@ int World::givePositionCommand(int unitId, const string &commandName, const Vec2
 				}
 			}
 			if (!found) {
-				cmdType = unit->getType()->getFirstCtOfClass(CommandClass::HARVEST);
+				cmdType = unit->getType()->getFirstCtOfClass(CmdClass::HARVEST);
 			}
 		}
 	} else if (commandName == "patrol") {
-		cmdType = unit->getType()->getFirstCtOfClass(CommandClass::PATROL);
+		cmdType = unit->getType()->getFirstCtOfClass(CmdClass::PATROL);
 	} else if (commandName == "guard") {
-		cmdType = unit->getType()->getFirstCtOfClass(CommandClass::GUARD);
+		cmdType = unit->getType()->getFirstCtOfClass(CmdClass::GUARD);
 	} else {
 		return LuaCmdResult::INVALID_COMMAND_CLASS;
 	}
 	if (!cmdType) {
 		return LuaCmdResult::NO_CAPABLE_COMMAND;
 	}
-	return unit->giveCommand(newCommand(cmdType, CommandFlags(), pos));
+	return unit->giveCommand(newCommand(cmdType, CmdFlags(), pos));
 }
 
 int World::giveBuildCommand(int unitId, const string &commandName, const string &buildType, const Vec2i &pos) {
@@ -772,7 +772,7 @@ int World::giveBuildCommand(int unitId, const string &commandName, const string 
 		for (int i=0; i < ut->getCommandTypeCount<BuildCommandType>(); ++i) {
 			const BuildCommandType *bct = ut->getCommandType<BuildCommandType>(i);
 			if (bct->canBuild(but)) {
-				return unit->giveCommand(newCommand(bct, CommandFlags(), pos, but, CardinalDir::NORTH));
+				return unit->giveCommand(newCommand(bct, CmdFlags(), pos, but, CardinalDir::NORTH));
 			}
 		}
 		return LuaCmdResult::NO_CAPABLE_COMMAND;
@@ -783,7 +783,7 @@ int World::giveBuildCommand(int unitId, const string &commandName, const string 
 	}
 }
 
-/** @return < 0 on error (see LuaCmdResult) else see CommandResult */
+/** @return < 0 on error (see LuaCmdResult) else see CmdResult */
 int World::giveTargetCommand (int unitId, const string & cmdName, int targetId) {
 	Unit *unit = findUnitById(unitId);
 	Unit *target = findUnitById(targetId);
@@ -794,49 +794,49 @@ int World::giveTargetCommand (int unitId, const string & cmdName, int targetId) 
 	if (cmdName == "attack") {
 		const AttackCommandType *act = unit->getType()->getAttackCommand(target->getCurrZone());
 		if (act) {
-			return unit->giveCommand(newCommand(act, CommandFlags(), target));
+			return unit->giveCommand(newCommand(act, CmdFlags(), target));
 		} else {
 			return LuaCmdResult::NO_CAPABLE_COMMAND;
 		}
 	} else if (cmdName == "repair") {
 		const RepairCommandType *rct = unit->getType()->getRepairCommand(target->getType());
 		if (rct) {
-			return unit->giveCommand(newCommand(rct, CommandFlags(), target));
+			return unit->giveCommand(newCommand(rct, CmdFlags(), target));
 		} else {
 			return LuaCmdResult::NO_CAPABLE_COMMAND;
 		}
 	} else if (cmdName == "guard") {
-		cmdType = unit->getType()->getFirstCtOfClass(CommandClass::GUARD);
+		cmdType = unit->getType()->getFirstCtOfClass(CmdClass::GUARD);
 	} else if (cmdName == "patrol") {
-		cmdType = unit->getType()->getFirstCtOfClass(CommandClass::PATROL);
+		cmdType = unit->getType()->getFirstCtOfClass(CmdClass::PATROL);
 	} else {
 		return LuaCmdResult::INVALID_COMMAND_CLASS;
 	}
 	if (cmdType) {
-		return unit->giveCommand(newCommand(cmdType, CommandFlags(), target));
+		return unit->giveCommand(newCommand(cmdType, CmdFlags(), target));
 	}
 	return LuaCmdResult::NO_CAPABLE_COMMAND;
 }
 
-/** @return < 0 on error (see LuaCmdResult) else see CommandResult */
+/** @return < 0 on error (see LuaCmdResult) else see CmdResult */
 int World::giveStopCommand(int unitId, const string &cmdName) {
 	Unit *unit = findUnitById(unitId);
 	if (!unit) {
 		return LuaCmdResult::INVALID_UNIT_ID;
 	}
 	if (cmdName == "stop") {
-		const StopCommandType *sct = (StopCommandType*)unit->getType()->getFirstCtOfClass(CommandClass::STOP);
+		const StopCommandType *sct = (StopCommandType*)unit->getType()->getFirstCtOfClass(CmdClass::STOP);
 		if (sct) {
-			// return CommandResult
-			return unit->giveCommand(newCommand(sct, CommandFlags()));
+			// return CmdResult
+			return unit->giveCommand(newCommand(sct, CmdFlags()));
 		} else {
 			return LuaCmdResult::NO_CAPABLE_COMMAND;
 		}
 	} else if (cmdName == "attack-stopped") {
 		const AttackStoppedCommandType *asct = 
-			(AttackStoppedCommandType *)unit->getType()->getFirstCtOfClass(CommandClass::ATTACK_STOPPED);
+			(AttackStoppedCommandType *)unit->getType()->getFirstCtOfClass(CmdClass::ATTACK_STOPPED);
 		if (asct) {
-			return unit->giveCommand(newCommand(asct, CommandFlags()));
+			return unit->giveCommand(newCommand(asct, CmdFlags()));
 		} else {
 			return LuaCmdResult::NO_CAPABLE_COMMAND;
 		}
@@ -844,7 +844,7 @@ int World::giveStopCommand(int unitId, const string &cmdName) {
 	return LuaCmdResult::INVALID_COMMAND_CLASS;
 }
 
-/** @return < 0 on error (see LuaCmdResult) else see CommandResult */
+/** @return < 0 on error (see LuaCmdResult) else see CmdResult */
 int World::giveProductionCommand(int unitId, const string &producedName) {
 	Unit *unit= findUnitById(unitId);
 	if (!unit) {
@@ -857,8 +857,8 @@ int World::giveProductionCommand(int unitId, const string &producedName) {
 		for (int j=0; j < ct->getProducedCount(); ++j) {
 			const ProducibleType *pt = ct->getProduced(j);
 			if (pt->getName() == producedName) {
-				CommandResult res = unit->giveCommand(
-					newCommand(ct, CommandFlags(), Command::invalidPos, pt, CardinalDir::NORTH));
+				CmdResult res = unit->giveCommand(
+					newCommand(ct, CmdFlags(), Command::invalidPos, pt, CardinalDir::NORTH));
 				return res;
 			}
 		}
@@ -866,7 +866,7 @@ int World::giveProductionCommand(int unitId, const string &producedName) {
 	return LuaCmdResult::NO_CAPABLE_COMMAND;
 }
 
-/** @return < 0 on error (see LuaCmdResult) else see CommandResult */
+/** @return < 0 on error (see LuaCmdResult) else see CmdResult */
 int World::giveUpgradeCommand(int unitId, const string &upgradeName) {
 	Unit *unit= findUnitById(unitId);
 	if (!unit) {
@@ -884,7 +884,7 @@ int World::giveUpgradeCommand(int unitId, const string &upgradeName) {
 		const UpgradeCommandType* uct = ut->getCommandType<UpgradeCommandType>(i);
 		for (int i=0; i < uct->getProducedCount(); ++i) {
 			if (uct->getProducedUpgrade(i) == upgrd) {
-				CommandResult cmdRes = unit->giveCommand(newCommand(uct, CommandFlags(), invalidPos, upgrd, CardinalDir::NORTH));
+				CmdResult cmdRes = unit->giveCommand(newCommand(uct, CmdFlags(), invalidPos, upgrd, CardinalDir::NORTH));
 				return cmdRes;
 			}
 		}

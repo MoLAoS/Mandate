@@ -203,7 +203,7 @@ Command *AttackCommandType::doAutoAttack(Unit *unit) const {
 	|| !attackableInSight(unit, &sighted, &attackSkillTypes, NULL)) {
 		return 0;
 	}
-	Command *newCommand = g_world.newCommand(this, CommandFlags(CommandProperties::AUTO, true), sighted->getPos());
+	Command *newCommand = g_world.newCommand(this, CmdFlags(CmdProps::AUTO, true), sighted->getPos());
 	newCommand->setPos2(unit->getPos());
 	assert(newCommand->isAuto());
 	return newCommand;
@@ -238,7 +238,7 @@ Command *AttackStoppedCommandType::doAutoAttack(Unit *unit) const {
 	if (!unit->getFaction()->isAvailable(this) || !attackableInRange(unit, &sighted, &attackSkillTypes, NULL)) {
 		return 0;
 	}
-	Command *newCommand = g_world.newCommand(this, CommandFlags(CommandProperties::AUTO, true), sighted->getPos());
+	Command *newCommand = g_world.newCommand(this, CmdFlags(CmdProps::AUTO, true), sighted->getPos());
 	return newCommand;
 }
 

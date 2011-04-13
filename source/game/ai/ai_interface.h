@@ -56,14 +56,14 @@ public:
 	int getTimer() const		{return timer;}
 
 	//interact
-	CommandResult giveCommand(int unitIndex, CommandClass commandClass, const Vec2i &pos=Vec2i(0));
-	CommandResult giveCommand(int unitIndex, const CommandType *commandType, const Vec2i &pos,
+	CmdResult giveCommand(int unitIndex, CmdClass commandClass, const Vec2i &pos=Vec2i(0));
+	CmdResult giveCommand(int unitIndex, const CommandType *commandType, const Vec2i &pos,
 		const ProducibleType* prodType);
-	CommandResult giveCommand(int unitIndex, const CommandType *commandType, const Vec2i &pos);
-	CommandResult giveCommand(int unitIndex, const CommandType *commandType, Unit *u= NULL);
+	CmdResult giveCommand(int unitIndex, const CommandType *commandType, const Vec2i &pos);
+	CmdResult giveCommand(int unitIndex, const CommandType *commandType, Unit *u= NULL);
 
-	CommandResult giveCommand(const Unit *unit, const CommandType *commandType);
-	CommandResult giveCommand(const Unit *unit, const CommandType *commandType, const Vec2i &pos,
+	CmdResult giveCommand(const Unit *unit, const CommandType *commandType);
+	CmdResult giveCommand(const Unit *unit, const CommandType *commandType, const Vec2i &pos,
 		const ProducibleType* prodType);
 
 	//get data

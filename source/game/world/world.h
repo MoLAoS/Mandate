@@ -104,19 +104,19 @@ public:
 		return m_projectileFactory.newInstance(params);
 	}
 
-	Command* newCommand(CommandArchetype archetype, CommandFlags flags, const Vec2i &pos = invalidPos, Unit *commandedUnit = NULL) {
+	Command* newCommand(CmdDirective archetype, CmdFlags flags, const Vec2i &pos = invalidPos, Unit *commandedUnit = NULL) {
 		Command::CreateParamsArch params(archetype, flags, pos, commandedUnit);
 		return m_commandFactory.newInstance(params);
 	}
-	Command* newCommand(const CommandType *type, CommandFlags flags, const Vec2i &pos = invalidPos, Unit *commandedUnit = NULL) {
+	Command* newCommand(const CommandType *type, CmdFlags flags, const Vec2i &pos = invalidPos, Unit *commandedUnit = NULL) {
 		Command::CreateParamsPos params(type, flags, pos, commandedUnit);
 		return m_commandFactory.newInstance(params);
 	}
-	Command* newCommand(const CommandType *type, CommandFlags flags, Unit *unit, Unit *commandedUnit = NULL) {
+	Command* newCommand(const CommandType *type, CmdFlags flags, Unit *unit, Unit *commandedUnit = NULL) {
 		Command::CreateParamsUnit params(type, flags, unit, commandedUnit);
 		return m_commandFactory.newInstance(params);
 	}
-	Command* newCommand(const CommandType *type, CommandFlags flags, const Vec2i &pos, const ProducibleType *prodType, CardinalDir facing, Unit *commandedUnit = NULL) {
+	Command* newCommand(const CommandType *type, CmdFlags flags, const Vec2i &pos, const ProducibleType *prodType, CardinalDir facing, Unit *commandedUnit = NULL) {
 		Command::CreateParamsProd params(type, flags, pos, prodType, facing, commandedUnit);
 		return m_commandFactory.newInstance(params);
 	}

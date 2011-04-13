@@ -88,7 +88,7 @@ private:
 	bool downLighted[commandCellCount];
 	int index[commandCellCount];
 	const CommandType *commandTypes[commandCellCount];
-	CommandClass commandClasses[commandCellCount];
+	CmdClass commandClasses[commandCellCount];
 	Vec3f colors[colorCount];
 	int m_progress;
 	int currentColor;
@@ -128,7 +128,7 @@ public:
 	int getIndex(int i)								{return index[i];}
 	bool getDownLighted(int index) const			{return downLighted[index];}
 	const CommandType *getCommandType(int i)		{return commandTypes[i];}
-	CommandClass getCommandClass(int i)				{return commandClasses[i];}
+	CmdClass getCommandClass(int i)				{return commandClasses[i];}
 	Vec3f getColor() const							{return colors[currentColor];}
 	int getProgressBar() const						{return m_progress;}
 	int getSelectedCommandIndex() const				{return m_selectedCommandIndex;}
@@ -148,7 +148,7 @@ public:
 	void setDownImage(int i, const Texture2D *image)	{setImage(image, selectionCellCount + i);}
 	void setCarryImage(int i, const Texture2D *image)	{setImage(image, selectionCellCount + commandCellCount + i);}
 	void setCommandType(int i, const CommandType *ct)	{commandTypes[i]= ct;}
-	void setCommandClass(int i, const CommandClass cc)	{commandClasses[i]= cc;}
+	void setCommandClass(int i, const CmdClass cc)	{commandClasses[i]= cc;}
 	void setDownLighted(int i, bool lighted)			{downLighted[i]= lighted;}
 	void setIndex(int i, int value)						{index[i] = value;}
 	void setProgressBar(int i);

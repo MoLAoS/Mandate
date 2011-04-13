@@ -133,7 +133,7 @@ private:
 	// display
 	const UnitType *choosenBuildingType;
 	const CommandType *activeCommandType;
-	CommandClass activeCommandClass;
+	CmdClass activeCommandClass;
 	int activePos;
 
 	// multi-build
@@ -259,7 +259,7 @@ private:
 	void centerCameraOnSelection();
 	void centerCameraOnLastEvent();
 	void selectInterestingUnit(InterestingUnitType iut);
-	void clickCommonCommand(CommandClass commandClass);
+	void clickCommonCommand(CmdClass commandClass);
 
 	// 'close' (hide) LuaConsole
 	void onCloseLuaConsole(Widget*);
@@ -270,8 +270,8 @@ private:
 	void onSecondTierSelect(int posDisplay);
 
 	// misc
-	void addOrdersResultToConsole(CommandClass cc, CommandResult rr);
-	bool isSharedCommandClass(CommandClass commandClass);
+	void addOrdersResultToConsole(CmdClass cc, CmdResult rr);
+	bool isSharedCommandClass(CmdClass commandClass);
 
 public:
 	void resetState();

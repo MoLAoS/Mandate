@@ -17,8 +17,8 @@
 
 namespace Glest { namespace Script {
 
-using Sim::CommandResult;
-using Sim::CommandResultNames;
+using Sim::CmdResult;
+using Sim::CmdResultNames;
 
 class PlayerModifiers {
 private:
@@ -80,8 +80,8 @@ struct LuaCmdResult {
 				return "Ok.";
 			default:
 				if (unitCommand) {
-					CommandResult res(val);
-					return string("CommandResult == ") + CommandResultNames[res];
+					CmdResult res(val);
+					return string("CmdResult == ") + CmdResultNames[res];
 				} else {
 					return "Result = " + intToStr(val);
 				}

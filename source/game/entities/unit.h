@@ -491,7 +491,7 @@ public:
 	}
 
 	//command related
-	const CommandType *getFirstAvailableCt(CommandClass commandClass) const;
+	const CommandType *getFirstAvailableCt(CmdClass commandClass) const;
 	bool anyCommand() const								{return !commands.empty();}
 
 	/** return current command, assert that there is always one command */
@@ -500,10 +500,10 @@ public:
 		return commands.front();
 	}
 	unsigned int getCommandCount() const;
-	CommandResult giveCommand(Command *command);		//give a command
-	CommandResult finishCommand();						//command finished
-	CommandResult cancelCommand();						//cancel command on back of queue
-	CommandResult cancelCurrCommand();					//cancel current command
+	CmdResult giveCommand(Command *command);		//give a command
+	CmdResult finishCommand();						//command finished
+	CmdResult cancelCommand();						//cancel command on back of queue
+	CmdResult cancelCurrCommand();					//cancel current command
 	void removeCommands();
 
 	//lifecycle
@@ -558,7 +558,7 @@ public:
 	void incKills();
 	bool morph(const MorphCommandType *mct, const UnitType *ut, Vec2i offset = Vec2i(0), bool reprocessCommands = true);
 	bool transform(const TransformCommandType *tct, const UnitType *ut, Vec2i pos, CardinalDir facing);
-	CommandResult checkCommand(const Command &command) const;
+	CmdResult checkCommand(const Command &command) const;
 	bool checkEnergy(const CommandType *ct) const { return ep >= ct->getEnergyCost(); }
 	void applyCommand(const Command &command);
 	void startAttackSystems(const AttackSkillType *ast);
@@ -577,7 +577,7 @@ private:
 	float computeHeight(const Vec2i &pos) const;
 	void updateTarget(const Unit *target = NULL);
 	void clearCommands();
-	CommandResult undoCommand(const Command &command);
+	CmdResult undoCommand(const Command &command);
 	void recalculateStats();
 	Command *popCommand();
 };

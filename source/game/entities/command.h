@@ -27,7 +27,7 @@ using Glest::ProtoTypes::CommandType;
 
 namespace Glest { namespace Entities {
 
-typedef Flags<CommandProperties, CommandProperties::COUNT, uint8> CommandFlags;
+typedef Flags<CmdProps, CmdProps::COUNT, uint8> CmdFlags;
 
 class TargetList {
 private:
@@ -58,9 +58,9 @@ public:
 
 private:
 	int m_id;
-	CommandArchetype archetype;
+	CmdDirective archetype;
 	const CommandType *type;
-	CommandFlags flags;
+	CmdFlags flags;
 	Vec2i pos;
 	Vec2i pos2;			// for patrol command, the position traveling away from.
 	UnitId unitRef;		// target unit, used to move and attack optinally
@@ -72,44 +72,44 @@ private:
 public:
 
 	struct CreateParamsArch {
-		CommandArchetype archetype;
-		CommandFlags flags;
+		CmdDirective archetype;
+		CmdFlags flags;
 		const Vec2i pos;
 		Unit *commandedUnit;
 
-		CreateParamsArch(CommandArchetype archetype, CommandFlags flags, const Vec2i &pos = invalidPos, Unit *commandedUnit = NULL)
+		CreateParamsArch(CmdDirective archetype, CmdFlags flags, const Vec2i &pos = invalidPos, Unit *commandedUnit = NULL)
 			: archetype(archetype), flags(flags), pos(pos), commandedUnit(commandedUnit) { }
 	};
 	
 	struct CreateParamsPos { // create params for order with target position
 		const CommandType *type;
-		CommandFlags flags;
+		CmdFlags flags;
 		Vec2i pos;
 		Unit *commandedUnit;
 
-		CreateParamsPos(const CommandType *type, CommandFlags flags, const Vec2i &pos = invalidPos, Unit *commandedUnit = NULL) 
+		CreateParamsPos(const CommandType *type, CmdFlags flags, const Vec2i &pos = invalidPos, Unit *commandedUnit = NULL) 
 			: type(type), flags(flags), pos(pos), commandedUnit(commandedUnit) { }
 	};
 
 	struct CreateParamsUnit { // create params for order with target unit
 		const CommandType *type;
-		CommandFlags flags;
+		CmdFlags flags;
 		Unit *unit;
 		Unit *commandedUnit;
 
-		CreateParamsUnit(const CommandType *type, CommandFlags flags, Unit *unit, Unit *commandedUnit = NULL) 
+		CreateParamsUnit(const CommandType *type, CmdFlags flags, Unit *unit, Unit *commandedUnit = NULL) 
 			: type(type), flags(flags), unit(unit), commandedUnit(commandedUnit) { }
 	};
 
 	struct CreateParamsProd { // create params for order with producible
 		const CommandType *type;
-		CommandFlags flags;
+		CmdFlags flags;
 		Vec2i pos;
 		const ProducibleType *prodType;
 		CardinalDir facing;
 		Unit *commandedUnit;
 
-		CreateParamsProd(const CommandType *type, CommandFlags flags, const Vec2i &pos, const ProducibleType *prodType, CardinalDir facing, Unit *commandedUnit = NULL) 
+		CreateParamsProd(const CommandType *type, CmdFlags flags, const Vec2i &pos, const ProducibleType *prodType, CardinalDir facing, Unit *commandedUnit = NULL) 
 			: type(type), flags(flags), pos(pos), prodType(prodType), facing(facing), commandedUnit(commandedUnit) { }
 	};
 
@@ -137,13 +137,13 @@ public:
 	MEMORY_CHECK_DECLARATIONS(Command)
 
 	//get
-	CommandArchetype getArchetype() const		{return archetype;}
+	CmdDirective getArchetype() const		{return archetype;}
 	const CommandType *getType() const			{return type;}
-	CommandFlags getFlags() const				{return flags;}
-	bool isQueue() const						{return flags.get(CommandProperties::QUEUE);}
-	bool isAuto() const							{return flags.get(CommandProperties::AUTO);}
-	bool isReserveResources() const				{return !flags.get(CommandProperties::DONT_RESERVE_RESOURCES);}
-	bool isMiscEnabled() const					{return flags.get(CommandProperties::MISC_ENABLE);}
+	CmdFlags getFlags() const				{return flags;}
+	bool isQueue() const						{return flags.get(CmdProps::QUEUE);}
+	bool isAuto() const							{return flags.get(CmdProps::AUTO);}
+	bool isReserveResources() const				{return !flags.get(CmdProps::DONT_RESERVE_RESOURCES);}
+	bool isMiscEnabled() const					{return flags.get(CmdProps::MISC_ENABLE);}
 	Vec2i getPos() const						{return pos;}
 	Vec2i getPos2() const						{return pos2;}
 	UnitId getUnitRef() const					{return unitRef;}
@@ -160,11 +160,11 @@ public:
 
 	//set
 	void setType(const CommandType *type)				{this->type= type;}
-	void setFlags(CommandFlags flags)					{this->flags = flags;}
-	void setQueue(bool queue)							{flags.set(CommandProperties::QUEUE, queue);}
-	void setAuto(bool _auto)							{flags.set(CommandProperties::AUTO, _auto);}
-	void setReserveResources(bool reserveResources)		{flags.set(CommandProperties::DONT_RESERVE_RESOURCES, !reserveResources);}
-	void setAutoCommandEnabled(bool enabled)				{flags.set(CommandProperties::MISC_ENABLE, enabled);}
+	void setFlags(CmdFlags flags)					{this->flags = flags;}
+	void setQueue(bool queue)							{flags.set(CmdProps::QUEUE, queue);}
+	void setAuto(bool _auto)							{flags.set(CmdProps::AUTO, _auto);}
+	void setReserveResources(bool reserveResources)		{flags.set(CmdProps::DONT_RESERVE_RESOURCES, !reserveResources);}
+	void setAutoCommandEnabled(bool enabled)				{flags.set(CmdProps::MISC_ENABLE, enabled);}
 	void setPos(const Vec2i &pos)						{this->pos = pos;}
 	void setPos2(const Vec2i &pos2)						{this->pos2 = pos2;}
 
@@ -181,17 +181,17 @@ public:
 
 inline ostream& operator<<(ostream &stream, const Command &command) {
 	stream << "[Command id:" << command.getId() << "|";
-	if (command.getArchetype() == CommandArchetype::CANCEL_COMMAND) {
+	if (command.getArchetype() == CmdDirective::CANCEL_COMMAND) {
 		stream << "Cancel command]";
-	} else if (command.getArchetype() == CommandArchetype::SET_AUTO_REPAIR) {
+	} else if (command.getArchetype() == CmdDirective::SET_AUTO_REPAIR) {
 		stream << "set auto repair(" << 
-			(command.getFlags().get(CommandProperties::MISC_ENABLE) ? "true" : "false") << ")]";
-	} else if (command.getArchetype() == CommandArchetype::SET_AUTO_ATTACK) {
+			(command.getFlags().get(CmdProps::MISC_ENABLE) ? "true" : "false") << ")]";
+	} else if (command.getArchetype() == CmdDirective::SET_AUTO_ATTACK) {
 		stream << "set auto attack(" << 
-			(command.getFlags().get(CommandProperties::MISC_ENABLE) ? "true" : "false") << ")]";
-	} else if (command.getArchetype() == CommandArchetype::SET_AUTO_FLEE) {
+			(command.getFlags().get(CmdProps::MISC_ENABLE) ? "true" : "false") << ")]";
+	} else if (command.getArchetype() == CmdDirective::SET_AUTO_FLEE) {
 		stream << "set auto flee(" << 
-			(command.getFlags().get(CommandProperties::MISC_ENABLE) ? "true" : "false") << ")]";
+			(command.getFlags().get(CmdProps::MISC_ENABLE) ? "true" : "false") << ")]";
 	} else {
 		stream << command.getType()->getName() << "]";
 	}

@@ -75,7 +75,7 @@ public:
 	void unSelectAllNotOfType(const UnitType *type);
 	void clear();
 
-	bool isSharedCommandClass(CommandClass commandClass);
+	bool isSharedCommandClass(CmdClass commandClass);
 	bool isEmpty() const				{return m_empty;}
 	bool isUniform() const				{return m_uniform;}
 	bool isEnemy() const				{return m_enemy;}
@@ -110,7 +110,7 @@ public:
 		return (std::find(m_selectedUnits.begin(), m_selectedUnits.end(), unit) != m_selectedUnits.end());
 	}
 
-	const Texture2D* getCommandImage(CommandClass cc) const;
+	const Texture2D* getCommandImage(CmdClass cc) const;
 	const Texture2D* getCloakImage() const;
 
 	int getCount() const					{return m_selectedUnits.size();}

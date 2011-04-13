@@ -72,37 +72,14 @@ bool CoreData::load() {
 		backgroundTexture = loadTexture(dir + "/menu/textures/back.tga");
 		fireTexture = loadAlphaTexture(dir + "/misc_textures/fire_particle.tga");
 		snowTexture = loadAlphaTexture(dir + "/misc_textures/snow_particle.tga");
-		customTexture = loadTexture(dir + "/menu/textures/custom_texture.tga");
 		logoTexture = loadTexture(dir + "/menu/textures/logo.tga");
 		gplTexture = loadTexture(dir + "/menu/textures/gplv3.tga");
 		gaeSplashTexture = loadTexture(dir + "/menu/textures/gaesplash.tga");
 		waterSplashTexture = loadAlphaTexture(dir + "/misc_textures/water_splash.tga", true);
-		//checkBoxCrossTexture = loadTexture(dir + "/menu/textures/button_small_unchecked.tga");
-		//checkBoxTickTexture = loadTexture(dir + "/menu/textures/button_small_checked.tga");
-		//vertScrollUpTexture = loadTexture(dir + "/menu/textures/button_small_up.tga");
-		//vertScrollDownTexture = loadTexture(dir + "/menu/textures/button_small_down.tga");
-		//vertScrollUpHoverTex = loadTexture(dir + "/menu/textures/button_small_up_hover.tga");
-		//vertScrollDownHoverTex = loadTexture(dir + "/menu/textures/button_small_down_hover.tga");
-		//buttonSmallTexture = loadTexture(dir + "/menu/textures/button_small.tga", true);
-		//buttonBigTexture = loadTexture(dir + "/menu/textures/button_big.tga", true);
-		//textEntryTexture = loadTexture(dir + "/menu/textures/textentry.tga", true);
-		//greenTickOverlay = loadTexture(dir + "/menu/textures/green_tick.png");
-		//orangeQuestionOverlay = loadTexture(dir + "/menu/textures/orange_question.png");
-		//redCrossOverlay = loadTexture(dir + "/menu/textures/red_cross.png");
 	} catch (runtime_error &e) {
 		g_logger.logError(string("Error loading core data.\n") + e.what());
 		return false;
 	}
-	//try {
-	//	mouseTexture = loadTexture(dir + "/misc_textures/mouse.png");
-	//} catch (runtime_error &e) {
-	//	g_logger.logError("mouse.png images not found.\n");
-	//	mouseTexture = 0;
-	//}
-	// fonts
-	//m_menuFont.load(dir + "/menu/fonts/TinDog.ttf", computeFontSize(18));
-	//m_gameFont.load(dir + "/menu/fonts/TinDog.ttf", computeFontSize(10));
-	//m_fancyFont.load(dir + "/menu/fonts/dum1wide.ttf", computeFontSize(28));
 
 	// sounds
 	g_logger.logProgramEvent("\tSounds");

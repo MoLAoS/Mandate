@@ -93,7 +93,7 @@ bool RepairCommandType::repairableInRange(const Unit *unit, Vec2i centre, int ce
 			&& (!rst->isSelfOnly() || candidate == unit)
 			&& candidate->isAlive() && unit->isAlly(candidate)
 			&& (!damagedOnly || candidate->isDamaged())
-			&& (!militaryOnly || candidate->getType()->hasCommandClass(CommandClass::ATTACK))
+			&& (!militaryOnly || candidate->getType()->hasCommandClass(CmdClass::ATTACK))
 			&& rct->canRepair(candidate->getType())) {
 				//record the nearest distance to target (target may be on multiple cells)
 				repairables.record(candidate, distance);
@@ -234,7 +234,7 @@ void RepairCommandType::update(Unit *unit) const {
 
 	Command *autoCmd;
 	if (command->isAuto() && (autoCmd = doAutoCommand(unit))) {
-		if (autoCmd->getType()->getClass() == CommandClass::ATTACK) {
+		if (autoCmd->getType()->getClass() == CmdClass::ATTACK) {
 			unit->giveCommand(autoCmd);
 		}
 	}
@@ -347,7 +347,7 @@ void RepairCommandType::update(Unit *unit) const {
 					ScriptManager::onUnitCreated(repaired);
 					if (unit->getFactionIndex() == g_world.getThisFactionIndex()) {
 						// try to find finish build sound
-						BuildCommandType *bct = (BuildCommandType *)unit->getType()->getFirstCtOfClass(CommandClass::BUILD);
+						BuildCommandType *bct = (BuildCommandType *)unit->getType()->getFirstCtOfClass(CmdClass::BUILD);
 						if (bct) {
 							RUNTIME_CHECK(!unit->isCarried());
 							g_soundRenderer.playFx(bct->getBuiltSound(), 
@@ -379,7 +379,7 @@ Command *RepairCommandType::doAutoRepair(Unit *unit) const {
 		Vec2i pos = Map::getNearestPos(unit->getPos(), sighted, repairSkillType->getMinRange(), repairSkillType->getMaxRange());
 		REPAIR_LOG( unit, "\tMap::getNearestPos(): " << pos );
 
-		newCommand = g_world.newCommand(this, CommandFlags(CommandProperties::QUEUE, CommandProperties::AUTO), pos);
+		newCommand = g_world.newCommand(this, CmdFlags(CmdProps::QUEUE, CmdProps::AUTO), pos);
 		newCommand->setPos2(unit->getPos());
 		return newCommand;
 	}
@@ -558,12 +558,12 @@ bool BuildCommandType::isBlocked(const UnitType *builtUnitType, const Vec2i &pos
 	return blocked;
 }
 
-CommandResult BuildCommandType::check(const Unit *unit, const Command &command) const {
+CmdResult BuildCommandType::check(const Unit *unit, const Command &command) const {
 	const UnitType *builtUnit = static_cast<const UnitType*>(command.getProdType());
 	if (isBlocked(builtUnit, command.getPos(), command.getFacing())) {
-		return CommandResult::FAIL_BLOCKED;
+		return CmdResult::FAIL_BLOCKED;
 	}
-	return CommandResult::SUCCESS;
+	return CmdResult::SUCCESS;
 }
 
 void BuildCommandType::undo(Unit *unit, const Command &command) const {
@@ -667,7 +667,7 @@ void BuildCommandType::acceptBuild(Unit *unit, Command *command, const UnitType 
 	// late resource allocation
 	if (!command->isReserveResources()) {
 		command->setReserveResources(true);
-		if (unit->checkCommand(*command) != CommandResult::SUCCESS) {
+		if (unit->checkCommand(*command) != CmdResult::SUCCESS) {
 			if (unit->getFactionIndex() == g_world.getThisFactionIndex()) {
 				g_console.addStdMessage("BuildingNoRes");
 			}

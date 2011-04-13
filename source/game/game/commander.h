@@ -30,6 +30,9 @@ using Glest::Sim::SimulationInterface;
 namespace Glest { namespace Sim {
 using namespace Gui;
 
+typedef const CommandType*     CmdType;
+typedef const ProducibleType*  ProdType;
+
 // =====================================================
 // 	class Commander
 //
@@ -38,8 +41,8 @@ using namespace Gui;
 
 class Commander {
 private:
-	typedef vector<CommandResult> CommandResultContainer;
-	typedef CommandResultContainer::const_iterator CRIterator;
+	typedef vector<CmdResult> CmdResults;
+	typedef CmdResults::const_iterator CRIterator;
 	World *world;
 	SimulationInterface *iSim;
 
@@ -48,23 +51,42 @@ public:
     void init(World *world)		{this->world = world;}
 	void updateNetwork();
 
-	CommandResult tryUnloadCommand(Unit *unit, CommandFlags flags, const Vec2i &pos, Unit *targetUnit) const;
-	CommandResult tryGiveCommand(const Selection &selection, CommandFlags flags,
-		const CommandType *commandType = NULL, CommandClass commandClass = CommandClass::NULL_COMMAND,
+	CmdResult tryUnloadCommand(Unit *unit, CmdFlags flags, const Vec2i &pos, Unit *targetUnit) const;
+
+	// give command(s) to a target pos (move, attack, patrol, guard, harvest, repair ..?)
+	// CmdResult tryPosition(UnitVector &units, CmdFlags flags, CmdType commandType, const Vec2i &pos);
+	// CmdResult tryPosition(UnitVector &units, CmdFlags flags, CmdClass commandClass, const Vec2i &pos);
+
+	// give command(s) to a target unit (move, attack, patrol, guard, repair, load, ..?)
+	// CmdResult tryTarget(UnitVector &units, CmdFlags flags, CmdType commandType, Unit *target);
+	// CmdResult tryTarget(UnitVector &units, CmdFlags flags, CmdClass commandClass, Unit *target);
+
+	// give command(s) with producible type (produce, morph, upgrade or generate command)
+	// CmdResult tryProduce(UnitVector &units, CmdFlags flags, CmdType commandType, ProdType prodType);
+	// CmdResult tryProduce(UnitVector &units, CmdFlags flags, CmdClass commandClass, ProdType prodType);
+
+	// give command(s) with producible type and position (build or transform command)
+	// CmdResult tryBuild(UnitVector &units, CmdFlags flags, CmdType commandType, ProdType prodType, Vec2i &pos);
+	// CmdResult tryBuild(UnitVector &units, CmdFlags flags, CmdClass commandClass, ProdType prodType, Vec2i &pos);
+
+	//START_DELETE
+	CmdResult tryGiveCommand(const Selection &selection, CmdFlags flags,
+		const CommandType *commandType = NULL, CmdClass commandClass = CmdClass::NULL_COMMAND,
 		const Vec2i &pos = Command::invalidPos, Unit *targetUnit = NULL,
 		const ProducibleType* prodType = NULL, CardinalDir facing = CardinalDir::NORTH) const;
+	//END_DELETE
 
-	CommandResult tryCancelCommand(const Selection *selection) const;
+	CmdResult tryCancelCommand(const Selection *selection) const;
 	void trySetAutoCommandEnabled(const Selection &selection, AutoCmdFlag flag, bool enabled) const;
 	void trySetCloak(const Selection &selection, bool enabled) const;
 
 	void giveCommand(Command *command) const;
 
+	CmdResult pushCommand(Command *command) const;
 private:
-	CommandResult pushCommand(Command *command) const;
     Vec2i computeRefPos(const Selection &selection) const;
     Vec2i computeDestPos(const Vec2i &refUnitPos, const Vec2i &unitPos, const Vec2i &commandPos) const;
-    CommandResult computeResult(const CommandResultContainer &results) const;
+    CmdResult computeResult(const CmdResults &results) const;
 };
 
 }} //end namespace

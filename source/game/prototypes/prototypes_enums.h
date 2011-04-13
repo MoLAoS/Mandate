@@ -53,7 +53,7 @@ STRINGY_ENUM( SkillClass,
 
 /** command classes
   */
-STRINGY_ENUM( CommandClass,
+STRINGY_ENUM( CmdClass,
 	STOP,
 	MOVE,
 	TELEPORT,

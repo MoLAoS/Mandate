@@ -14,22 +14,22 @@ using Shared::Util::EnumNames;
 
 namespace Glest { namespace Entities {
 
-/** upgrade states */
+/** Upgrade states */
 STRINGY_ENUM( UpgradeState,
 	UPGRADING,
 	UPGRADED
 );
 
-/** command properties */
-STRINGY_ENUM( CommandProperties,
+/** Command properties */
+STRINGY_ENUM( CmdProps,
 	QUEUE,
 	AUTO,
 	DONT_RESERVE_RESOURCES,
 	MISC_ENABLE
 );
 
-/** Command Archetypes */
-STRINGY_ENUM( CommandArchetype,
+/** Command Directives */
+STRINGY_ENUM( CmdDirective,
 	GIVE_COMMAND,
 	CANCEL_COMMAND,
 	SET_AUTO_REPAIR,

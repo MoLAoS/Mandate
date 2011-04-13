@@ -95,7 +95,7 @@ Cartographer::Cartographer(World *world)
 			const UnitType *ut = ft->getUnitType(j);
 			for (int k=0; k < ut->getCommandTypeCount(); ++k) {
 				const CommandType *ct = ut->getCommandType(k);
-				if (ct->getClass() == CommandClass::HARVEST) {
+				if (ct->getClass() == CmdClass::HARVEST) {
 					const HarvestCommandType *hct = static_cast<const HarvestCommandType *>(ct);
 					foreach (vector<rt_ptr>, it, harvestResourceTypes) {
 						if (hct->canHarvest(*it)) {

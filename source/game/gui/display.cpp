@@ -326,7 +326,7 @@ void Display::clear() {
 	for (int i=0; i < commandCellCount; ++i) {
 		downLighted[i]= true;
 		commandTypes[i]= NULL;
-		commandClasses[i]= CommandClass::NULL_COMMAND;
+		commandClasses[i]= CmdClass::NULL_COMMAND;
 		setImage(0, selectionCellCount + i);
 	}
 

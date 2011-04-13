@@ -210,23 +210,23 @@ public:
 //  class WorldLogFile
 /// LogFile for debug spam
 // =====================================================
-using ProtoTypes::CommandClass;
+using ProtoTypes::CmdClass;
 
 class WorldLogFile : public LogFile {
 protected:
 	bool         m_factionFlags[GameConstants::maxPlayers];
-	int          m_commandFlags[CommandClass::COUNT];
+	int          m_commandFlags[CmdClass::COUNT];
 
 public:
 	WorldLogFile();
 	virtual ~WorldLogFile() {}
 
 	void setEnabled(int faction, bool v) { m_factionFlags[faction] = v; }
-	void setEnabled(CommandClass cc, int level) { m_commandFlags[cc] = level; }
+	void setEnabled(CmdClass cc, int level) { m_commandFlags[cc] = level; }
 
-	int getLogLevel(int faction, CommandClass cmdClass) const { return m_commandFlags[cmdClass]; }
+	int getLogLevel(int faction, CmdClass cmdClass) const { return m_commandFlags[cmdClass]; }
 
-	bool isEnabled(int faction, CommandClass cmdClass, int level) const {
+	bool isEnabled(int faction, CmdClass cmdClass, int level) const {
 		return m_factionFlags[faction] && level <= m_commandFlags[cmdClass];
 	}
 };
@@ -308,7 +308,7 @@ public:
 
 #	if LOG_WORLD_EVENTS
 
-	bool shouldLogCmdEvent(int faction, CommandClass cc,  int level) const {
+	bool shouldLogCmdEvent(int faction, CmdClass cc,  int level) const {
 		return m_worldLog->isEnabled(faction, cc,  level);
 	}
 
