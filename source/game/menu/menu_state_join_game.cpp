@@ -49,7 +49,7 @@ void ConnectThread::execute() {
 	ClientInterface* clientInterface = g_simInterface.asClientInterface();
 	
 	try {
-		clientInterface->connect(m_server, GameConstants::serverPort);
+		clientInterface->connect(m_server, g_config.getNetServerPort());
 		{
 			MutexLock lock(m_mutex);
 			m_result = ConnectResult::SUCCESS;

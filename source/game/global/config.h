@@ -51,6 +51,7 @@ private:
 	bool miscDebugKeys;
 	bool miscDebugMode;
 	bool miscFirstTime;
+	bool netAnnouceOnLAN;
 	bool netConsistencyChecks;
 	string netPlayerName;
 	string netServerIp;
@@ -135,6 +136,7 @@ public:
 	bool getMiscDebugKeys() const				{return miscDebugKeys;}
 	bool getMiscDebugMode() const				{return miscDebugMode;}
 	bool getMiscFirstTime() const				{return miscFirstTime;}
+	bool getNetAnnouceOnLAN() const				{return netAnnouceOnLAN;}
 	bool getNetConsistencyChecks() const		{return netConsistencyChecks;}
 	string getNetPlayerName() const				{return netPlayerName;}
 	string getNetServerIp() const				{return netServerIp;}
@@ -201,6 +203,7 @@ public:
 	void setMiscDebugKeys(bool val)				{miscDebugKeys = val;}
 	void setMiscDebugMode(bool val)				{miscDebugMode = val;}
 	void setMiscFirstTime(bool val)				{miscFirstTime = val;}
+	void setNetAnnouceOnLAN(bool val)			{netAnnouceOnLAN = val;}
 	void setNetConsistencyChecks(bool val)		{netConsistencyChecks = val;}
 	void setNetPlayerName(string val)			{netPlayerName = val;}
 	void setNetServerIp(string val)				{netServerIp = val;}

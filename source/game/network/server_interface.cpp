@@ -60,7 +60,7 @@ ServerInterface::~ServerInterface() {
 void ServerInterface::bindPort() {
 	try {
 		serverSocket.setBlock(false);
-		serverSocket.bind(GameConstants::serverPort);
+		serverSocket.bind(g_config.getNetServerPort());
 	} catch (runtime_error &e) {
 		LOG_NETWORK(e.what());
 		throw e;

@@ -25,9 +25,10 @@ miscDebugKeys				bool	false
 miscDebugMode				bool	false
 miscFirstTime				bool	true
 netConsistencyChecks		bool	false
+netAnnouceOnLAN				bool	true
 netPlayerName				string	"Player"
 netServerIp					string	"192.168.1.1"
-netServerPort				int		12345			1024	65535
+netServerPort				int		61357			1024	65535
 renderCheckGlCaps			bool	true
 renderColorBits				int		32
 renderDepthBits				int		isWindows()?32:16

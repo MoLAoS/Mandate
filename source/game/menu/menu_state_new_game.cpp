@@ -530,8 +530,7 @@ void MenuStateNewGame::update() {
 		g_coreData.getMenuMusic()->setVolume(vol);
 	}
 
-	bool configAnnounce = true; ///@todo put in config
-	if (configAnnounce) {
+	if (g_config.getNetAnnouceOnLAN()) {
 		m_announcer.doAnnounce(hasUnconnectedSlots());
 	}
 

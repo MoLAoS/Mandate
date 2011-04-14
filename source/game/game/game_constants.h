@@ -107,7 +107,7 @@ namespace GameConstants {
 
 	const int maxPlayers = 8;
 	const int maxColours = 16;
-	const int serverPort = 61357;
+	//const int serverPort = 61357; // in config...
 
 	const int updateFps = 40;
 	const int cameraFps = 100;

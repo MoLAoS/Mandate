@@ -56,10 +56,11 @@ Config::Config(const char* fileName) {
 	miscDebugKeys = p->getBool("MiscDebugKeys", false);
 	miscDebugMode = p->getBool("MiscDebugMode", false);
 	miscFirstTime = p->getBool("MiscFirstTime", true);
+	netAnnouceOnLAN = p->getBool("NetAnnouceOnLAN", true);
 	netConsistencyChecks = p->getBool("NetConsistencyChecks", false);
 	netPlayerName = p->getString("NetPlayerName", "Player");
 	netServerIp = p->getString("NetServerIp", "192.168.1.1");
-	netServerPort = p->getInt("NetServerPort", 12345, 1024, 65535);
+	netServerPort = p->getInt("NetServerPort", 61357, 1024, 65535);
 	renderCheckGlCaps = p->getBool("RenderCheckGlCaps", true);
 	renderColorBits = p->getInt("RenderColorBits", 32);
 	renderDepthBits = p->getInt("RenderDepthBits", isWindows()?32:16);
@@ -132,6 +133,7 @@ void Config::save(const char *path) {
 	p->setBool("MiscDebugKeys", miscDebugKeys);
 	p->setBool("MiscDebugMode", miscDebugMode);
 	p->setBool("MiscFirstTime", miscFirstTime);
+	p->setBool("NetAnnouceOnLAN", netAnnouceOnLAN);
 	p->setBool("NetConsistencyChecks", netConsistencyChecks);
 	p->setString("NetPlayerName", netPlayerName);
 	p->setString("NetServerIp", netServerIp);
