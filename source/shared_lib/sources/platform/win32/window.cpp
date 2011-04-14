@@ -267,10 +267,6 @@ LRESULT CALLBACK Window::eventRouter(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 			RECT windowRect;
 			POINT mousePos;
 
-			if (msg != WM_MOUSEMOVE) {
-				nop();
-			}
-
 			GetWindowRect(eventWindow->getHandle(), &windowRect);
 			mousePos.x = LOWORD(lParam) - windowRect.left;
 			mousePos.y = HIWORD(lParam) - windowRect.top;
@@ -383,8 +379,9 @@ LRESULT CALLBACK Window::eventRouter(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 
 	case WM_KEYDOWN: {
 			Key key(Input::getKeyCode(wParam), static_cast<char>(wParam));
-			// bottom 16 bits is repeat acount, and I only care if it's zero or non-zero
-			bool isRepeat = (lParam << 16);
+			// bottom 16 bits is repeat acount
+			int rCount = (lParam & 0xFFFF);
+			bool isRepeat = rCount != 1;
 			// I don't want repeats of modifier keys posting
 			if(!isRepeat || !key.isModifier()) {
 				eventWindow->input.updateKeyModifiers(key.getCode(), true);
