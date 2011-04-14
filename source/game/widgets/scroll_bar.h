@@ -77,17 +77,31 @@ public:
 class ScrollBarShaft : public Container, public MouseWidget, public sigslot::has_slots {
 private:
 	ScrollBarThumb *m_thumb;
-	int             m_totalRange;
-	int             m_availRange;
-	float           m_availRatio;
-	int             m_maxOffset;
-	int             m_thumbSize;
+	float           m_totalRange; // in 'range' units
+	float           m_availRange; // in 'range' units
+
+	float           m_availRatio;/* m_thumbRatio */ // cache: m_availRange / m_totalRange
+	float           m_shaftRatio;/* m_scaleRatio */ // cache: dominantSize / m_totalRange
+	
+	int             m_maxOffset; // in pixels, cache: dominantSize - m_thumbSize
+	int             m_thumbSize; // in pixels, cache: m_availRatio * dominantSize
+	int             m_pageSize;  // in pixels
 	WidgetType      m_type;
-	int             m_pageSize;
 
 private:
 	void init(bool vert);
 	void recalc();
+
+	bool isVertical() const { return m_type == WidgetType::SCROLLBAR_VERT_SHAFT; }
+	int dominantSize() const {
+		return isVertical() ? getHeight() - getBordersVert() : getWidth() - getBordersHoriz();
+	}
+	int thumbOffset() const {
+		return isVertical() ? m_thumb->getPos().y - getBorderTop() : m_thumb->getPos().x - getBorderLeft();
+	}
+	int borderOffset() const {
+		return isVertical() ? getBorderTop() : getBorderLeft();
+	}
 
 public:
 	ScrollBarShaft(Container *parent, bool vert);
@@ -101,10 +115,7 @@ public:
 	/** sets the total space to scroll over and the available area
 	  * @param total total space the widget we are scrolling requires (constitutes the 'range units')
 	  * @param avail the available space we have to display part of the widget in */
-	void setRanges(int total, int avail);
-
-	int getPageSize() const { return m_pageSize; }
-	void setPageSize(int v) { m_pageSize = v; }
+	void setRanges(float total, float avail);
 
 	/*/* sets just the total range requirement of the widget we are scrolling */
 	//void setTotalRange(int max) { m_totalRange = max; recalc(); }
@@ -112,20 +123,43 @@ public:
 	/*/* sets the available space to show the scrolled widget in */
 	//void setActualRange(int avail) { m_availRange = avail; recalc(); }
 
+	int getPageSize() const { return m_pageSize; }
+	void setPageSize(int v) { m_pageSize = v; }
+
+	/** @returns the offset to the top or left of thumb, in pixels */
+	int getThumbPosPixels() const { return thumbOffset(); }
+	/** @returns the size of the thumb, in pixels */
+	int getThumbSizePixels() const { return m_thumbSize; }
+
+	/** @returns the offset to the top or left of thumb, as a ratio of shaft size */
+	float getThumbPosRatio() const { return thumbOffset() / float(dominantSize()); }
+	/** @returns the size of the thumb, as a ratio of shaft size */
+	float getThumbSizeRatio() const { return m_availRatio; }
+
 	/** @returns the offset to the top or left of thumb, in 'range units' */
-	int getThumbOffset() const;
+	float getThumbPos() const { return getThumbPosRatio() * m_totalRange; }
+	/** @returns the size of the thumb, in 'range units' */
+	float getThumbSize() const { return m_availRange; }
+
+	/** @param v the offset from top or left, in pixels to position the thumb at */
+	void setThumbPosPixels(int v);
+
+	/** @param v the offset from top or left, as a ratio of shaft size to position 
+	  * the thumb at.  Will be clamped to 0.f -> (1.f - thumbRatio) */
+	void setThumbPosRatio(float v) { setThumbPosPixels(round(v * dominantSize())); }
+
+	/** @param v the offset from top or left, in 'range units' to position the thumb at,
+	  * will be clamped to 0 -> (totalRange - thumbSize) */
+	void setThumbPos(float v) { setThumbPosPixels(round(v * m_shaftRatio)); }
+
 	/** @param v the offset from top or left, as a percentage of available space,
 	  * to position the thumb at (taking into account thumb size) */
-	void setOffsetPercent(int v);
-	/*/* @param v the offset from top or left, in 'range units' to position the thumb at */
-	//void setThumbOffset(int v);
-
-	bool isVertical() const { return m_type == WidgetType::SCROLLBAR_VERT_SHAFT; }
+	void setThumbPosPercent(int v) { setThumbPosPixels(round(v / 100.f * m_maxOffset)); }
 
 	void onThumbMoved(int diff);
 	virtual string descType() const override { return "ScrollShaft"; }
 
-	sigslot::signal<int>  ThumbMoved;
+	sigslot::signal<ScrollBarShaft*>  ThumbMoved;
 };
 
 // =====================================================
@@ -144,17 +178,20 @@ private:
 	void init();
 
 	void onScrollBtnFired(Widget*);
-	void onThumbMoved(int diff) { ThumbMoved(diff); }
+	void onThumbMoved(ScrollBarShaft*) { ThumbMoved(this); }
 
 public:
 	ScrollBar(Container *parent, bool vert, int lineSize);
 	ScrollBar(Container *parent, Vec2i pos, Vec2i sz, bool vert, int lineSize);
 
-	int getThumbOffset() const { return m_shaft->getThumbOffset(); }
+	float getThumbPos() const { return m_shaft->getThumbPos(); }
+
+	void setThumbPos(float v) { m_shaft->setThumbPos(float(v)); }
+	void setThumbPosPercent(int v) { m_shaft->setThumbPosPercent(v); }
 
 	void setLineSize(int sz) { m_lineSize = sz; }
-	void setRanges(int total, int avail) { m_shaft->setRanges(total, avail); }
-	void setOffsetPercent(int v) { m_shaft->setOffsetPercent(v); }
+	void setRanges(int total, int avail) { m_shaft->setRanges(float(total), float(avail)); }
+	
 	void scrollLine(bool increase);
 	void scrollPage(bool increase);
 
@@ -167,7 +204,7 @@ public:
 	virtual string descType() const override { return "ScrollBar"; }
 
 	// signals
-	sigslot::signal<int>  ThumbMoved;
+	sigslot::signal<ScrollBar*>  ThumbMoved;
 };
 
 // =====================================================
@@ -219,8 +256,8 @@ private:
 
 	void init();
 	void setOffset(Vec2i offset = Vec2i(0));
-	void onVerticalScroll(int diff);
-	void onHorizontalScroll(int diff);
+	void onVerticalScroll(ScrollBar*);
+	void onHorizontalScroll(ScrollBar*);
 
 public:
 	ScrollPane(Container *parent);

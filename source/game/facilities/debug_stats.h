@@ -94,6 +94,12 @@ public:
 	void exitSection(TimerSection section);
 	void tick(int renderFps, int worldFps);
 
+	bool isEnabled(DebugSection section) const { return m_debugSections[section]; }
+	bool isEnabled(TimerSection section) const { return m_reportFlags[section]; }
+
+	void setEnabled(DebugSection section, bool enable) { m_debugSections[section] = enable; }
+	void setEnabled(TimerSection section, bool enable) { m_reportFlags[section] = enable; }
+
 	void report(ostream &stream);
 };
 

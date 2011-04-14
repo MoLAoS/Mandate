@@ -29,6 +29,7 @@
 #include "battle_end.h"
 #include "compound_widgets.h"
 #include "debug_stats.h"
+#include "debug_widgets.h"
 
 // weather system not yet ready
 //#include "../physics/weather.h"
@@ -91,6 +92,7 @@ protected:
 
 	Frame*			m_modalDialog;
 	ChatDialog*		m_chatDialog;
+	DebugPanel*     m_debugPanel;
 
 	Vec2i lastMousePos;
 
@@ -164,6 +166,8 @@ public:
 
 	void doDefeatedMessage(Faction *f);
 	void doSaveBox();
+
+	void toggleDebug() { m_debugPanel->setVisible(!m_debugPanel->isVisible()); }
 
 protected:
 	// render

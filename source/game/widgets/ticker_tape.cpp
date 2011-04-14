@@ -12,6 +12,142 @@
 
 namespace Glest { namespace Widgets {
 
+ActionBase::ActionBase(const int length)
+		: m_length(length), m_counter(0), m_startPos(0.f), m_destPos(0.f)
+		, m_startAlpha(1.f), m_destAlpha(1.f)
+		, m_transFuncPos(TransitionFunc::LINEAR)
+		, m_transFuncAlpha(TransitionFunc::LINEAR)
+		, m_inverse(false) {
+}
+
+ActionBase& ActionBase::operator=(const ActionBase &that) {
+	memcpy(this, &that, sizeof(ActionBase));
+	return *this;
+}
+
+void ActionBase::setPosTransition(const Vec2f &start, const Vec2f &dest, TransitionFunc tf) {
+	m_startPos = start;
+	m_destPos = dest;
+	m_transFuncPos = tf;
+}
+
+void ActionBase::setAlphaTransition(const float start, const float dest, TransitionFunc tf) {
+	m_startAlpha = start;
+	m_destAlpha = dest;
+	m_transFuncAlpha = tf;
+}
+
+bool ActionBase::update() {
+	++m_counter;
+	if (m_counter < 0) {
+		return false;
+	}
+	Vec2f pos;
+	float alpha;
+	const float two_e = 2.f * 2.71828183f;
+	float tt = float(m_counter) / float(m_length);
+	if (m_inverse) {
+		tt = 1.f - tt;
+	}
+	if (m_startPos != m_destPos) {
+		float t = tt;
+		if (m_transFuncPos == TransitionFunc::SQUARED) {
+			t *= t;
+		} else if (m_transFuncPos == TransitionFunc::EXPONENTIAL) {
+			t = exp(t * two_e - two_e);
+		} else if (m_transFuncPos == TransitionFunc::SQUARE_ROOT) {
+			t = sqrt(t);
+		} else if (m_transFuncPos == TransitionFunc::LOGARITHMIC) {
+			t = (log(t) + two_e) / two_e;
+		}
+		t = clamp(t, 0.f, 1.f);
+		if (m_inverse) {
+			pos = m_destPos.lerp(t, m_startPos);
+		} else {
+			pos = m_startPos.lerp(t, m_destPos);
+		}
+	} else {
+		pos = m_startPos;
+	}
+	if (m_startAlpha != m_destAlpha) {
+		float t = tt;
+		if (m_transFuncAlpha == TransitionFunc::SQUARED) {
+			t *= t;
+		} else if (m_transFuncAlpha == TransitionFunc::EXPONENTIAL) {
+			t = exp(t * two_e - two_e);
+		} else if (m_transFuncPos == TransitionFunc::SQUARE_ROOT) {
+			t = sqrt(t);
+		} else if (m_transFuncAlpha == TransitionFunc::LOGARITHMIC) {
+			t = (log(t) + two_e) / two_e;
+		}
+		t = clamp(t, 0.f, 1.f);
+		if (m_inverse) {
+			alpha = m_destAlpha + (m_startAlpha - m_destAlpha) * t;
+		} else {
+			alpha = m_startAlpha + (m_destAlpha - m_startAlpha) * t;
+		}
+	} else {
+		alpha = m_startAlpha;
+	}
+	updateTarget(pos, alpha);
+	if (m_counter == m_length) {
+		//Finished(this);
+		return true;
+	}
+	return false;
+}
+
+TextAction::TextAction(const int length, int16 number,  TextWidget *textWidget, int index)
+		: ActionBase(length), m_targetWidget(textWidget)
+		, m_actionNumber(number), m_phaseNumber(0), m_targetIndex(index) {
+}
+
+TextAction& TextAction::operator=(const TextAction &that) {
+	memcpy(this, &that, sizeof(TextAction));
+	return *this;
+}
+
+void TextAction::updateTarget(Vec2f pos, float alpha) {
+	Vec2i cPos = m_targetWidget->getTextPos(m_targetIndex);
+	float cAlpha = m_targetWidget->widget()->getFade();
+	Vec2i nPos = Vec2i(pos);
+	if (cPos != nPos) {
+		m_targetWidget->setTextPos(nPos, m_targetIndex);
+	}
+	if (cAlpha != alpha) {
+		m_targetWidget->setTextFade(alpha, m_targetIndex);
+	}
+}
+
+MoveWidgetAction::MoveWidgetAction(const int length, Widget *widget)
+		: ActionBase(length), m_targetWidget(widget) {
+}
+
+void MoveWidgetAction::updateTarget(Vec2f pos, float alpha) {
+	Vec2i cPos = m_targetWidget->getPos();
+	float cAlpha = m_targetWidget->getFade();
+	Vec2i nPos = Vec2i(pos);
+	if (cPos != nPos) {
+		m_targetWidget->setPos(nPos);
+	}
+	if (cAlpha != alpha) {
+		m_targetWidget->setFade(alpha);
+	}
+}
+
+ResizeWidgetAction::ResizeWidgetAction(const int len, Widget *widget)
+		: ActionBase(len), m_targetWidget(widget) {
+}
+
+void ResizeWidgetAction::updateTarget(Vec2f sz, float) {
+	Vec2i cSz = m_targetWidget->getSize();
+	Vec2i nSz = Vec2i(sz);
+	if (cSz != nSz) {
+		m_targetWidget->setSize(nSz);
+	}
+}
+
+
 TickerTape::TickerTape(Container *parent, SizeHint anchor, Alignment alignment)
 		: StaticText(parent)
 		, m_anchor(anchor)

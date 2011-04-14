@@ -36,7 +36,7 @@ using namespace Global;
 using namespace Graphics;
 
 // WidgetWindow event logging...
-#define ENABLE_WIDGET_LOGGING 1
+#define ENABLE_WIDGET_LOGGING 0
 // widget logging still needs to be turned on (in widgets_base.h), this just disables 
 // the logging macros in this file.
 #if !ENABLE_WIDGET_LOGGING
@@ -552,7 +552,9 @@ void WidgetWindow::eventMouseMove(int x, int y, const MouseState &ms) {
 	m_mouseCursor->setPos(mousePos);
 
 	if (lastMouseDownWidget) {
-		lastMouseDownWidget->mouseMove(mousePos);
+		if (isInside(mousePos)) {
+			lastMouseDownWidget->mouseMove(mousePos);
+		}
 		return;
 	}
 	Widget* widget = getWidgetForMouseEvent();

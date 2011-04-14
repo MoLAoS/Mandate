@@ -34,95 +34,16 @@ struct ActionBase {
 	TransitionFunc m_transFuncAlpha;
 	bool           m_inverse;
 
-	ActionBase(const int length)
-			: m_length(length), m_counter(0), m_startPos(0.f), m_destPos(0.f)
-			, m_startAlpha(1.f), m_destAlpha(1.f)
-			, m_transFuncPos(TransitionFunc::LINEAR)
-			, m_transFuncAlpha(TransitionFunc::LINEAR)
-			, m_inverse(false) {
-	}
+	ActionBase(const int length);
+	ActionBase& operator=(const ActionBase &that);
 
-	ActionBase& operator=(const ActionBase &that) {
-		memcpy(this, &that, sizeof(ActionBase));
-	}
-
-	void setPosTransition(const Vec2f &start, const Vec2f &dest, TransitionFunc tf) {
-		m_startPos = start;
-		m_destPos = dest;
-		m_transFuncPos = tf;
-	}
-	
-	void setAlphaTransition(const float start, const float dest, TransitionFunc tf) {
-		m_startAlpha = start;
-		m_destAlpha = dest;
-		m_transFuncAlpha = tf;
-	}
-
+	void setPosTransition(const Vec2f &start, const Vec2f &dest, TransitionFunc tf);
+	void setAlphaTransition(const float start, const float dest, TransitionFunc tf);
 	void reset() { m_counter = 0; }
 
 	virtual void updateTarget(Vec2f pos, float alpha) = 0;
 
-	//sigslot::signal<ActionBase*> Finished;
-
-	bool update() {
-		++m_counter;
-		if (m_counter < 0) {
-			return false;
-		}
-		Vec2f pos;
-		float alpha;
-		const float two_e = 2.f * 2.71828183f;
-		float tt = float(m_counter) / float(m_length);
-		if (m_inverse) {
-			tt = 1.f - tt;
-		}
-		if (m_startPos != m_destPos) {
-			float t = tt;
-			if (m_transFuncPos == TransitionFunc::SQUARED) {
-				t *= t;
-			} else if (m_transFuncPos == TransitionFunc::EXPONENTIAL) {
-				t = exp(t * two_e - two_e);
-			} else if (m_transFuncPos == TransitionFunc::SQUARE_ROOT) {
-				t = sqrt(t);
-			} else if (m_transFuncPos == TransitionFunc::LOGARITHMIC) {
-				t = (log(t) + two_e) / two_e;
-			}
-			t = clamp(t, 0.f, 1.f);
-			if (m_inverse) {
-				pos = m_destPos.lerp(t, m_startPos);
-			} else {
-				pos = m_startPos.lerp(t, m_destPos);
-			}
-		} else {
-			pos = m_startPos;
-		}
-		if (m_startAlpha != m_destAlpha) {
-			float t = tt;
-			if (m_transFuncAlpha == TransitionFunc::SQUARED) {
-				t *= t;
-			} else if (m_transFuncAlpha == TransitionFunc::EXPONENTIAL) {
-				t = exp(t * two_e - two_e);
-			} else if (m_transFuncPos == TransitionFunc::SQUARE_ROOT) {
-				t = sqrt(t);
-			} else if (m_transFuncAlpha == TransitionFunc::LOGARITHMIC) {
-				t = (log(t) + two_e) / two_e;
-			}
-			t = clamp(t, 0.f, 1.f);
-			if (m_inverse) {
-				alpha = m_destAlpha + (m_startAlpha - m_destAlpha) * t;
-			} else {
-				alpha = m_startAlpha + (m_destAlpha - m_startAlpha) * t;
-			}
-		} else {
-			alpha = m_startAlpha;
-		}
-		updateTarget(pos, alpha);
-		if (m_counter == m_length) {
-			//Finished(this);
-			return true;
-		}
-		return false;
-	}
+	bool update();
 };
 
 struct TextAction : public ActionBase {
@@ -131,46 +52,24 @@ struct TextAction : public ActionBase {
 	int16          m_phaseNumber;
 	int            m_targetIndex;
 
-	TextAction(const int length, int16 number,  TextWidget *textWidget, int index)
-			: ActionBase(length), m_targetWidget(textWidget)
-			, m_actionNumber(number), m_phaseNumber(0), m_targetIndex(index) {
-	}
+	TextAction(const int length, int16 number,  TextWidget *textWidget, int index);
+	TextAction& operator=(const TextAction &that);
 
-	TextAction& operator=(const TextAction &that) {
-		memcpy(this, &that, sizeof(TextAction));
-		return *this;
-	}
-
-	virtual void updateTarget(Vec2f pos, float alpha) override {
-		Vec2i cPos = m_targetWidget->getTextPos(m_targetIndex);
-		float cAlpha = m_targetWidget->widget()->getFade();
-		Vec2i nPos = Vec2i(pos);
-		if (cPos != nPos) {
-			m_targetWidget->setTextPos(nPos, m_targetIndex);
-		}
-		if (cAlpha != alpha) {
-			m_targetWidget->setTextFade(alpha, m_targetIndex);
-		}
-	}
+	virtual void updateTarget(Vec2f pos, float alpha) override;
 };
 
-struct WidgetAction : public ActionBase {
+struct MoveWidgetAction : public ActionBase {
 	Widget*        m_targetWidget;
 
-	WidgetAction(const int length, Widget *widget)
-			: ActionBase(length), m_targetWidget(widget) { }
+	MoveWidgetAction(const int length, Widget *widget);
+	virtual void updateTarget(Vec2f pos, float alpha) override;
+};
 
-	virtual void updateTarget(Vec2f pos, float alpha) override {
-		Vec2i cPos = m_targetWidget->getPos();
-		float cAlpha = m_targetWidget->getFade();
-		Vec2i nPos = Vec2i(pos);
-		if (cPos != nPos) {
-			m_targetWidget->setPos(nPos);
-		}
-		if (cAlpha != alpha) {
-			m_targetWidget->setFade(alpha);
-		}
-	}
+struct ResizeWidgetAction : public ActionBase {
+	Widget *m_targetWidget;
+
+	ResizeWidgetAction(const int len, Widget *widget);
+	virtual void updateTarget(Vec2f sz, float) override;
 };
 
 class TickerTape : public StaticText {

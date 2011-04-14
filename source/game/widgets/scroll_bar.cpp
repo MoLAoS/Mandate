@@ -197,6 +197,7 @@ void ScrollBarShaft::init(bool vert) {
 	}
 	m_totalRange = 100;
 	m_availRange = 10;
+	m_availRatio = m_shaftRatio = 1.f;
 	m_thumb = new ScrollBarThumb(this, vert);
 	m_thumb->Moved.connect(this, &ScrollBarShaft::onThumbMoved);
 	setWidgetStyle(m_type);
@@ -210,15 +211,22 @@ void ScrollBarShaft::recalc() {
 	m_availRatio = clamp(m_availRange / float(m_totalRange), 0.05f, 1.f);
 	if (isVertical()) {
 		m_thumbSize = int(m_availRatio * size.h);
+		m_shaftRatio = clamp(size.h / float(m_totalRange), 0.05f, 1.f);
 		m_maxOffset = size.h - m_thumbSize;
 		m_thumb->setPos(Vec2i(getBorderLeft(), getBorderTop()));
 		m_thumb->setSize(Vec2i(size.w, m_thumbSize));
 	} else {
 		m_thumbSize = int(m_availRatio * size.w);
+		m_shaftRatio = clamp(size.w / float(m_totalRange), 0.05f, 1.f);
 		m_maxOffset = size.w - m_thumbSize;
 		m_thumb->setPos(Vec2i(getBorderLeft(), getBorderTop()));
 		m_thumb->setSize(Vec2i(m_thumbSize, size.h));
 	}
+	WIDGET_LOG(
+		"ScrollBarShaft::recalc() : shaftSize: " << dominantSize() 
+		<< ", maxOffset: " << m_maxOffset << ", shaftRatio: " 
+		<< m_shaftRatio << ", availRatio: " << m_availRatio
+	);
 	m_pageSize = m_thumbSize;
 }
 
@@ -247,7 +255,7 @@ bool ScrollBarShaft::mouseDown(MouseButton btn, Vec2i pos) {
 	return true;
 }
 
-void ScrollBarShaft::setRanges(int total, int avail) {
+void ScrollBarShaft::setRanges(float total, float avail) {
 	m_totalRange = total;
 	m_availRange = avail;
 	recalc();
@@ -256,61 +264,38 @@ void ScrollBarShaft::setRanges(int total, int avail) {
 void ScrollBarShaft::onThumbMoved(int diff) {
 	// thumb drag
 	Vec2i size = getSize() - getBordersAll();
-	int thumbOffset, borderOffset, domSize;
-	Vec2i thumbPos, thumbSize;
-	if (isVertical()) {
-		domSize = size.h;
-		thumbOffset = m_thumb->getPos().y - diff;
-		borderOffset = getBorderTop();
-		thumbOffset = clamp(thumbOffset, 0, m_maxOffset);
-		thumbPos = Vec2i(getBorderLeft(), thumbOffset + borderOffset);
-		thumbSize = Vec2i(size.w, m_thumbSize);
-	} else {
-		domSize = size.w;
-		thumbOffset = m_thumb->getPos().x - diff;
-		borderOffset = getBorderLeft();
-		thumbOffset = clamp(thumbOffset, 0, m_maxOffset);
-		thumbPos = Vec2i(thumbOffset + borderOffset, getBorderTop());
-		thumbSize = Vec2i(m_thumbSize, size.h);
-	}
-	if (m_thumb->getPos() != thumbPos || m_thumb->getSize() != thumbSize) {
-		m_thumb->setPos(thumbPos);
-		m_thumb->setSize(thumbSize);		
-		ThumbMoved(int(thumbOffset / float(domSize) * m_totalRange));
-	}
-}
-
-int ScrollBarShaft::getThumbOffset() const {
-	Vec2i size = getSize() - getBordersAll();
-	int thumbOffset, domSize;
-	if (isVertical()) {
-		domSize = size.h;
-		thumbOffset = m_thumb->getPos().y - getBorderTop();
-	} else {
-		domSize = size.w;
-		thumbOffset = m_thumb->getPos().x - getBorderLeft();
-	}
-	return int(thumbOffset / float(domSize) * m_totalRange);
-}
-
-void ScrollBarShaft::setOffsetPercent(int v) {
-	int offset = clamp(int(float(v) / 100.f * m_maxOffset), 0, m_maxOffset);
-	Vec2i size = getSize() - getBordersAll();
-	int borderOffset, domSize;
+	int thumbOffset;
 	Vec2i thumbPos;
 	if (isVertical()) {
-		domSize = size.h;
-		borderOffset = getBorderTop();
-		thumbPos = Vec2i(getBorderLeft(), offset + borderOffset);
+		thumbOffset = clamp(m_thumb->getPos().y - diff, 0, m_maxOffset);
+		thumbPos = Vec2i(getBorderLeft(), getBorderTop() + thumbOffset);
 	} else {
-		domSize = size.w;
-		borderOffset = getBorderLeft();
-		thumbPos = Vec2i(offset + borderOffset, getBorderTop());
+		thumbOffset = clamp(m_thumb->getPos().x - diff, 0, m_maxOffset);
+		thumbPos = Vec2i(getBorderLeft() + thumbOffset, getBorderTop());
 	}
 	if (m_thumb->getPos() != thumbPos) {
 		m_thumb->setPos(thumbPos);
-		ThumbMoved(int(offset / float(domSize) * m_totalRange));
+		ThumbMoved(this);
 	}
+	WIDGET_LOG(
+		"ScrollBarShaft::onThumbMoved() : " 
+		<< " thumbOffset: " << thumbOffset << ", thumbOffset(): " << this->thumbOffset() 
+		<< ", thumbPos (range units): " << getThumbPos()
+	);
+}
+
+void ScrollBarShaft::setThumbPosPixels(int v) {
+	v = clamp(v, 0, m_maxOffset);
+	Vec2i thumbPos(getBorderLeft(), getBorderTop());
+	thumbPos += isVertical() ? Vec2i(0, v) : Vec2i(v, 0);
+	if (m_thumb->getPos() != thumbPos) {
+		m_thumb->setPos(thumbPos);
+		ThumbMoved(this);
+	}
+	WIDGET_LOG( 
+		"ScrollBarShaft::setThumbPosPixels() : " << " thumbOffset: " << thumbOffset() 
+		<< ", thumbPos (range units): " << getThumbPos()
+	);
 }
 
 // =====================================================
@@ -382,7 +367,7 @@ void ScrollBar::scrollLine(bool increase) {
 
 void ScrollCell::addChild(Widget* child) {
 	Container::addChild(child);
-	m_childOffsets[child] = child->getPos();
+	m_childOffsets[child] = Vec2i(0);
 }
 
 void ScrollCell::remChild(Widget* child) {
@@ -465,13 +450,13 @@ void ScrollPane::setOffset(Vec2i offset) {
 	m_scrollCell->setOffset(offset);
 }
 
-void ScrollPane::onVerticalScroll(int diff) {
-	m_offset.y = -diff;
+void ScrollPane::onVerticalScroll(ScrollBar*) {
+	m_offset.y = -round(m_vertBar->getThumbPos());//-diff;
 	m_scrollCell->setOffset(m_offset);
 }
 
-void ScrollPane::onHorizontalScroll(int diff) {
-	m_offset.x = -diff;
+void ScrollPane::onHorizontalScroll(ScrollBar*) {
+	m_offset.x = -round(m_horizBar->getThumbPos());//-diff;
 	m_scrollCell->setOffset(m_offset);
 }
 

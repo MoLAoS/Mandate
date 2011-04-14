@@ -199,11 +199,6 @@ void ModelRendererGl::renderMeshNormalsOnly(const Mesh *mesh) {
 
 // ===================== PRIVATE =======================
 
-float remap(float in, const float oldMin, const float oldMax, const float newMin, const float newMax) {
-	float t = (in - oldMin) / (oldMax - oldMin);
-	return newMin + t * (newMax - newMin);
-}
-
 void ModelRendererGl::renderMesh(const Mesh *mesh, Vec3f *anim, UnitShaderSet *customShaders) {
 
 	//assertions

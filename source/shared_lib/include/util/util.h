@@ -30,7 +30,6 @@
 #include "lang_features.h"
 #include "random.h"
 
-
 using std::list;
 using std::string;
 using std::map;
@@ -352,6 +351,12 @@ inline float saturate(float value) {
 
 inline int round(float f){
      return int(roundf(f));
+}
+
+
+inline float remap(float in, const float oldMin, const float oldMax, const float newMin, const float newMax) {
+	float t = (in - oldMin) / (oldMax - oldMin);
+	return newMin + t * (newMax - newMin);
 }
 
 // delete stuff in std containers

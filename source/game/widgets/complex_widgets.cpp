@@ -122,6 +122,7 @@ void ListBox::addItems(const vector<string> &items) {
 		nItem->setText(items[i]);
 		m_listBoxItems.push_back(nItem);
 		nItem->Clicked.connect(this, &ListBox::onSelected);
+		m_listItems.push_back(items[i]);
 	}
 	layoutCells();
 }
@@ -138,6 +139,7 @@ void ListBox::addItem(const string &item) {
 	nItem->setAnchors(anchors);
 	nItem->setText(item);
 	m_listBoxItems.push_back(nItem);
+	m_listItems.push_back(item);
 	nItem->Clicked.connect(this, &ListBox::onSelected);
 	layoutCells();
 }
@@ -183,14 +185,16 @@ void ListBox::layoutCells() {
 
 void ListBox::clearItems() {
 	m_listItems.clear();
-	CellStrip *strip = static_cast<CellStrip*>(m_children[0]);
-	strip->clear();
+	m_listStrip->clear();
+	m_listBoxItems.clear();
 	m_selectedIndex = -1;
+	layoutCells();
 }
 
-void ListBox::onScroll(int offset) {
+void ListBox::onScroll(ScrollBar *sb) {
 	int ndx = 0;
-	const int x = 0;//m_borderStyle.m_sizes[Border::LEFT];
+	int offset = round(sb->getThumbPos());
+	const int x = 0;
 	for (int i=0; i < m_listStrip->getChildCount(); ++i) {
 		m_listStrip->getChild(i)->setPos(Vec2i(x, m_yPositions[i] - offset));
 	}

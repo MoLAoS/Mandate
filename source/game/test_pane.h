@@ -22,9 +22,10 @@ namespace Glest { namespace Main {
 
 class TestPane: public ProgramState, public sigslot::has_slots {
 private:
-	bool m_done, m_removingDialog;
-	MessageDialog *m_messageDialog;
-	WidgetAction   *m_action;
+	bool              m_done,
+		              m_removingDialog;
+	MessageDialog    *m_messageDialog;
+	MoveWidgetAction *m_action;
 
 public:
 	TestPane(Program &program);

@@ -287,6 +287,11 @@ public:
 		}
 	}
 
+	virtual void clear() override {
+		Container::clear();
+		m_cells2.clear();
+	}
+
 	virtual Rect2i getCellArea(int cell) const override {
 		return Rect2i(m_cells2[cell].m_pos, m_cells2[cell].m_pos + m_cells2[cell].m_size);
 	}

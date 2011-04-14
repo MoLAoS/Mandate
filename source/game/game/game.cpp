@@ -88,6 +88,8 @@ GameState::GameState(Program &program)
 		, exitProgram(false)
 		, scrollSpeed(config.getUiScrollSpeed())
 		, m_modalDialog(0)
+		, m_chatDialog(0)
+		, m_debugPanel(0)
 		, lastMousePos(0)
 		, weatherParticleSystem(0) {
 	assert(!singleton);
@@ -177,6 +179,15 @@ void GameState::init() {
 	m_chatDialog->Escaped.connect(this, &GameState::onChatCancel);
 	m_chatDialog->setVisible(false);
 
+	m_debugPanel = new DebugPanel(static_cast<Container*>(&g_program));
+	m_debugPanel->setSize(Vec2i(300, 500));
+	m_debugPanel->setPos(Vec2i(25, 200));
+	m_debugPanel->setVisible(g_config.getMiscDebugMode());
+	m_debugPanel->setButtonText("");
+	m_debugPanel->setTitleText("Debug");
+	m_debugPanel->setMessageText("");
+
+	///@todo StaticText (?) for script message
 	m_scriptDisplayPos = Vec2i(175, g_metrics.getScreenH() - 64);
 
 	// init world, and place camera
@@ -580,6 +591,9 @@ void GameState::tick() {
 	if (netError) return;
 
 	m_debugStats.tick(lastRenderFps, lastWorldFps);
+	stringstream ss;
+	m_debugStats.report(ss);
+	m_debugPanel->setMessageText(ss.str());
 
 	//Win/lose check
 	GameStatus status = simInterface->checkWinner();
@@ -902,9 +916,6 @@ void GameState::render2d(){
 
 	// debug info
 	if (g_config.getMiscDebugMode()) {
-
-		stringstream str;
-		m_debugStats.report(str);
 
 		///@todo put on widget
 		//g_renderer.renderText(str.str(), g_coreData.getFTDisplayFont(),

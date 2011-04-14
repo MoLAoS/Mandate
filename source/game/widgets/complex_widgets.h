@@ -99,7 +99,7 @@ public:
 	virtual bool mouseWheel(Vec2i pos, int z) override;
 
 	// Slots (event handlers)
-	void onScroll(int);
+	void onScroll(ScrollBar *sb);
 	void onSelected(Widget* item);
 
 	// Signals

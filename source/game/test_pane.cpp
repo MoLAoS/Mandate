@@ -398,7 +398,7 @@ void TestPane::onDoDialog(Widget*) {
 	m_messageDialog->Close.connect(this, &TestPane::onDismissDialog);
 	m_messageDialog->Escaped.connect(this, &TestPane::onDismissDialog);
 
-	m_action = new WidgetAction(60, m_messageDialog);
+	m_action = new MoveWidgetAction(60, m_messageDialog);
 	Vec2f start(pos);
 	start.x -= g_metrics.getScreenW();
 	m_action->setPosTransition(start, Vec2f(pos), TransitionFunc::LOGARITHMIC);
@@ -410,7 +410,7 @@ void TestPane::onDismissDialog(Widget *d) {
 	if (m_action) {
 		m_action->reset();
 	} else {
-		m_action = new WidgetAction(40, m_messageDialog);
+		m_action = new MoveWidgetAction(40, m_messageDialog);
 	}
 	Vec2f startPos(m_messageDialog->getPos());
 	Vec2f endPos(startPos + Vec2f(0.f, 150.f));

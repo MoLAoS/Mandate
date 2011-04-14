@@ -129,9 +129,9 @@ void ScrollText::recalc() {
 	m_scrollBar->setRanges(th, ch);
 }
 
-void ScrollText::onScroll(int offset) {
+void ScrollText::onScroll(ScrollBar*) {
 	int ox = m_staticText->getPos().x;
-	m_staticText->setPos(Vec2i(ox, - offset));
+	m_staticText->setPos(Vec2i(ox, -round(m_scrollBar->getThumbPos())));
 }
 
 void ScrollText::setSize(const Vec2i &sz) {
@@ -148,7 +148,8 @@ void ScrollText::setSize(const Vec2i &sz) {
 }
 
 void ScrollText::setText(const string &txt, bool scrollToBottom) {
-	const FontMetrics *fm = g_widgetConfig.getFont(m_staticText->textStyle().m_fontIndex)->getMetrics();
+	float oldOffset = m_scrollBar->getThumbPos();
+	const FontMetrics *fm = m_staticText->getFont()->getMetrics();
 	int width = getSize().w - m_scrollBar->getSize().w - getBordersHoriz() - m_staticText->getBordersHoriz();
 	m_origString = txt;
 	string text = txt;
@@ -158,7 +159,13 @@ void ScrollText::setText(const string &txt, bool scrollToBottom) {
 	recalc();
 	
 	if (scrollToBottom) {
-		m_scrollBar->setOffsetPercent(100);
+		m_scrollBar->setThumbPosPercent(100);
+	} else {
+		if (oldOffset != 0.f) {
+			DEBUG_HOOK();
+		}
+		WIDGET_LOG( "ScrollText::setText() : Restoring offset: " << oldOffset );
+		m_scrollBar->setThumbPos(oldOffset);
 	}
 }
 
@@ -214,12 +221,13 @@ void TitleBar::init(ButtonFlags flags) {
 		m_rollDownButton->setCell(cell);
 		m_rollDownButton->setAnchors(anchors);
 		m_rollDownButton->Clicked.connect(this, &TitleBar::onButtonClicked);
+		m_rollDownButton->setVisible(false);
 
 		m_rollUpButton = new RollUpButton(this);
 		m_rollUpButton->setCell(cell++);
 		m_rollUpButton->setAnchors(anchors);
 		m_rollUpButton->Clicked.connect(this, &TitleBar::onButtonClicked);
-		m_rollUpButton->setVisible(false);
+		m_rollUpButton->setVisible(true);
 	}
 	if (flags.isSet(ButtonFlags::SHRINK)) {
 		m_shrinkButton = new ShrinkButton(this);
@@ -270,27 +278,28 @@ void TitleBar::setSizeHints() {
 
 Frame::Frame(WidgetWindow *ww, ButtonFlags flags)
 		: CellStrip(ww, Orientation::VERTICAL, Origin::FROM_TOP, 2)
-		, MouseWidget(this)
-		, m_pressed(false) {
+		, MouseWidget(this) {
 	init(flags);
 }
 
 Frame::Frame(Container *parent, ButtonFlags flags)
 		: CellStrip(parent, Orientation::VERTICAL, Origin::FROM_TOP, 2)
-		, MouseWidget(this)
-		, m_pressed(false) {
+		, MouseWidget(this) {
 	init(flags);
 }
 
 Frame::Frame(Container *parent, ButtonFlags flags, Vec2i pos, Vec2i sz)
 		: CellStrip(parent, pos, sz, Orientation::VERTICAL, Origin::FROM_TOP, 2)
-		, MouseWidget(this)
-		, m_pressed(false) {
+		, MouseWidget(this) {
 	init(flags);
 }
 
 void Frame::init(ButtonFlags flags) {
 	setStyle(g_widgetConfig.getWidgetStyle(WidgetType::MESSAGE_BOX));
+
+	m_pressed = m_rollingUp = m_rollingDown = m_rolledUp = false;
+	m_resizerAction = 0;
+
 	Anchors anchors(Anchor(AnchorType::RIGID, 0));
 	m_titleBar = new TitleBar(this, flags);
 	m_titleBar->setCell(0);
@@ -302,6 +311,44 @@ void Frame::init(ButtonFlags flags) {
 	m_titleBar->RollDown.connect(this, &Frame::onRollDown);
 	m_titleBar->Shrink.connect(this, &Frame::onShrink);
 	m_titleBar->Expand.connect(this, &Frame::onExpand);
+}
+
+void Frame::onRollUp(Widget*) {
+	assert(!m_rollingUp && !m_rollingDown && !m_rolledUp && !m_resizerAction);
+	m_origSize = getSize();
+	Vec2i newSize = getBordersAll() + m_titleBar->getSize();
+	m_titleBar->disableRollUpDown();
+	m_resizerAction = new ResizeWidgetAction(120, this);
+	m_resizerAction->setPosTransition(Vec2f(m_origSize), Vec2f(newSize), TransitionFunc::LOGARITHMIC);
+	m_rootWindow->registerUpdate(this);
+	m_rollingUp = true;
+}
+
+void Frame::onRollDown(Widget*) {
+	assert(!m_rollingUp && !m_rollingDown && m_rolledUp && !m_resizerAction);
+	Vec2i startSize = getSize();
+	m_titleBar->disableRollUpDown();
+	m_resizerAction = new ResizeWidgetAction(120, this);
+	m_resizerAction->setPosTransition(Vec2f(startSize), Vec2f(m_origSize), TransitionFunc::LOGARITHMIC);
+	m_rootWindow->registerUpdate(this);
+	m_rollingDown = true;
+}
+
+void Frame::update() {
+	assert(m_resizerAction && (m_rollingUp || m_rollingDown));
+	if (m_resizerAction->update()) {
+		if (m_rollingUp) {
+			m_rolledUp = true;
+			m_rollingUp = false;
+		} else {
+			m_rolledUp = false;
+			m_rollingDown = false;
+		}
+		m_titleBar->swapRollUpDown();
+		delete m_resizerAction;
+		m_resizerAction = 0;
+		m_rootWindow->unregisterUpdate(this);
+	}
 }
 
 void Frame::setTitleText(const string &text) {
@@ -378,6 +425,7 @@ void BasicDialog::init(Vec2i pos, Vec2i size, const string &title,
 }
 
 void BasicDialog::setContent(Widget* content) {
+	assert(content->getParent() == this);
 	m_content = content;
 	m_content->setCell(1);
 	m_content->setAnchors(Anchors(Anchor(AnchorType::RIGID, 0)));
@@ -404,14 +452,14 @@ void BasicDialog::setButtonText(const string &btn1Text, const string &btn2Text) 
 		m_button1->setCell(0);
 		m_button1->setAnchors(anchors);
 		m_button1->setText(btn1Text);
-		m_button1->Clicked.connect(this, &MessageDialog::onButtonClicked);
+		m_button1->Clicked.connect(this, &BasicDialog::onButtonClicked);
 
 		if (m_buttonCount == 2) {
 			m_button2 = new Button(m_btnPnl, pos, size);
 			m_button2->setCell(1);
 			m_button2->setAnchors(anchors);
 			m_button2->setText(btn2Text);
-			m_button2->Clicked.connect(this, &MessageDialog::onButtonClicked);
+			m_button2->Clicked.connect(this, &BasicDialog::onButtonClicked);
 		}
 	} else {
 		setSizeHint(2, SizeHint(-1, 0));
@@ -437,6 +485,12 @@ MessageDialog::MessageDialog(WidgetWindow* window)
 	m_scrollText = new ScrollText(this);
 }
 
+MessageDialog::MessageDialog(Container* parent)
+		: BasicDialog(parent, ButtonFlags::CLOSE | ButtonFlags::ROLL_UPDOWN) {
+	m_scrollText = new ScrollText(this);
+	setContent(m_scrollText);
+}
+
 MessageDialog* MessageDialog::showDialog(Vec2i pos, Vec2i size, const string &title, 
 								const string &msg,  const string &btn1Text, const string &btn2Text) {
 	MessageDialog* msgBox = new MessageDialog(&g_widgetWindow);
@@ -451,9 +505,7 @@ MessageDialog::~MessageDialog(){
 }
 
 void MessageDialog::setMessageText(const string &text) {
-	setContent(m_scrollText);
 	m_scrollText->setText(text);
-	//m_scrollText->init();
 }
 
 // =====================================================

@@ -241,7 +241,7 @@ void StreamXaVoice::stop(int64 fadeOut) {
 void StreamXaVoice::fillBuffer(unsigned buffNdx) {
 	// fill buffer
 	int8 *buffer = reinterpret_cast<int8*>(m_buffers[buffNdx]);
-	cout << "filling buffer " << buffNdx << " @ " << intToHex(int(buffer)) << endl;
+	//cout << "filling buffer " << buffNdx << " @ " << intToHex(int(buffer)) << endl;
 	StrSound *s = getStrSound();
 	uint32 readSize = s->read(buffer, bufferSize);
 	if (readSize < bufferSize) {

@@ -10,6 +10,7 @@
 #define _GLEST_COMPOUND_WIDGETS_INCLUDED_
 
 #include "complex_widgets.h"
+#include "ticker_tape.h" // Actions
 
 namespace Glest { namespace Widgets {
 
@@ -50,7 +51,7 @@ public:
 	ScrollText(Container* parent, Vec2i pos, Vec2i size);
 
 	void recalc();
-	void onScroll(int offset);
+	void onScroll(ScrollBar*);
 	void setText(const string &txt, bool scrollToBottom = false);
 
 	virtual void setSize(const Vec2i &sz) override;
@@ -125,6 +126,23 @@ public:
 	virtual void setSize(const Vec2i &sz) override { CellStrip::setSize(sz); setSizeHints(); }
 	virtual string descType() const override { return "TitleBar"; }
 
+	void swapRollUpDown() {
+		if (m_rollUpButton->isVisible()) {
+			m_rollUpButton->setVisible(false);
+			m_rollDownButton->setVisible(true);
+			m_rollDownButton->setEnabled(true);
+		} else {
+			m_rollUpButton->setVisible(true);
+			m_rollUpButton->setEnabled(true);
+			m_rollDownButton->setVisible(false);
+		}
+	}
+
+	void disableRollUpDown() {
+		m_rollDownButton->setEnabled(false);
+		m_rollUpButton->setEnabled(false);
+	}
+
 	// signals
 	sigslot::signal<Widget*> RollUp;
 	sigslot::signal<Widget*> RollDown;
@@ -136,8 +154,18 @@ public:
 class Frame : public CellStrip, public MouseWidget, public sigslot::has_slots {
 protected:
 	TitleBar*   m_titleBar;
+
+	/// drag inf
 	bool        m_pressed;
 	Vec2i       m_lastPos;
+	
+	// rolling up/down stuff
+	bool        m_rollingUp;
+	bool        m_rollingDown;
+	bool        m_rolledUp;
+	Vec2i       m_origSize;
+
+	ResizeWidgetAction *m_resizerAction;
 
 protected:
 	Frame(WidgetWindow*, ButtonFlags flags);
@@ -150,21 +178,23 @@ public:
 	void setTitleText(const string &text);
 	const string& getTitleText() const { return m_titleBar->getText(); }
 
-	bool mouseDown(MouseButton btn, Vec2i pos) override;
-	bool mouseMove(Vec2i pos) override;
-	bool mouseUp(MouseButton btn, Vec2i pos) override;
+	virtual bool mouseDown(MouseButton btn, Vec2i pos) override;
+	virtual bool mouseMove(Vec2i pos) override;
+	virtual bool mouseUp(MouseButton btn, Vec2i pos) override;
+
+	virtual void update() override;
 
 	// signals
 	sigslot::signal<Widget*>  Close;
-	sigslot::signal<Widget*>  RollUp;
-	sigslot::signal<Widget*>  RollDown;
+	//sigslot::signal<Widget*>  RollUp;
+	//sigslot::signal<Widget*>  RollDown;
 	sigslot::signal<Widget*>  Shrink;
 	sigslot::signal<Widget*>  Expand;
 
 private:
 	void onClose(Widget*)    { Close(this);    }
-	void onRollUp(Widget*)   { RollUp(this);   }
-	void onRollDown(Widget*) { RollDown(this); }
+	void onRollUp(Widget*);//   { RollUp(this);   }
+	void onRollDown(Widget*);// { RollDown(this); }
 	void onShrink(Widget*)   { Shrink(this);   }
 	void onExpand(Widget*)   { Expand(this);   }
 };
@@ -208,13 +238,16 @@ private:
 private:
 	MessageDialog(WidgetWindow*);
 
+protected:
+	MessageDialog(Container*);
+
 public:
 	static MessageDialog* showDialog(Vec2i pos, Vec2i size, const string &title,
 					const string &msg, const string &btn1Text, const string &btn2Text);
 
 	virtual ~MessageDialog();
 
-	void setMessageText(const string &text);
+	virtual void setMessageText(const string &text);
 	const string& getMessageText() const { return m_scrollText->getText(); }
 
 	virtual string descType() const override { return "MessageDialog"; }
