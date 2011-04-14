@@ -41,10 +41,14 @@ private:
 	ConnectionSlot* slots[GameConstants::maxPlayers];
 	ServerSocket serverSocket;
 	vector<LostPlayerInfo> m_lostPlayers;
+	bool m_portBound;
 	bool m_waitingForPlayers;
 	DataSyncMessage *m_dataSync;
 	int m_syncCounter;
 	bool m_dataSyncDone;
+
+private:
+	void bindPort();
 
 public:
 	ServerInterface(Program &prog);

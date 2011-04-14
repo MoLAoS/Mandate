@@ -40,19 +40,13 @@ namespace Glest { namespace Net {
 
 ServerInterface::ServerInterface(Program &prog) 
 		: NetworkInterface(prog)
+		, m_portBound(false)
 		, m_waitingForPlayers(false)
 		, m_dataSync(0)
 		, m_syncCounter(0)
 		, m_dataSyncDone(false){
 	for(int i = 0; i < GameConstants::maxPlayers; ++i) {
-		slots[i] = NULL;
-	}
-	try {
-		serverSocket.setBlock(false);
-		serverSocket.bind(GameConstants::serverPort);
-	} catch (runtime_error &e) {
-		LOG_NETWORK(e.what());
-		throw e;
+		slots[i] = 0;
 	}
 }
 
@@ -63,8 +57,22 @@ ServerInterface::~ServerInterface() {
 	}
 }
 
+void ServerInterface::bindPort() {
+	try {
+		serverSocket.setBlock(false);
+		serverSocket.bind(GameConstants::serverPort);
+	} catch (runtime_error &e) {
+		LOG_NETWORK(e.what());
+		throw e;
+	}
+	m_portBound = true;
+}
+
 void ServerInterface::addSlot(int playerIndex) {
 	assert(playerIndex >= 0 && playerIndex < GameConstants::maxPlayers);
+	if (!m_portBound) {
+		bindPort();
+	}
 	NETWORK_LOG( __FUNCTION__ << " Opening slot " << playerIndex );
 	delete slots[playerIndex];
 	slots[playerIndex] = new ConnectionSlot(this, playerIndex);
@@ -72,6 +80,7 @@ void ServerInterface::addSlot(int playerIndex) {
 }
 
 void ServerInterface::removeSlot(int playerIndex) {
+	assert(m_portBound);
 	NETWORK_LOG( __FUNCTION__ << " Closing slot " << playerIndex );
 	delete slots[playerIndex];
 	slots[playerIndex] = NULL;
@@ -83,6 +92,7 @@ ConnectionSlot* ServerInterface::getSlot(int playerIndex) {
 }
 
 int ServerInterface::getConnectedSlotCount() {
+	assert(m_portBound);
 	int connectedSlotCount = 0;
 	
 	for (int i = 0; i < GameConstants::maxPlayers; ++i) {
@@ -94,6 +104,9 @@ int ServerInterface::getConnectedSlotCount() {
 }
 
 void ServerInterface::update() {
+	if (!m_portBound) {
+		return;
+	}
 	// chat messages
 	while (hasChatMsg()) {
 		Console *c = g_userInterface.getDialogConsole();
