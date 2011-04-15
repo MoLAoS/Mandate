@@ -192,6 +192,7 @@ WidgetWindow::WidgetWindow()
 WidgetWindow::~WidgetWindow() {
 	// delete children
 	clear();
+	delete m_mouseCursor;
 
 	//restore video mode
 	restoreDisplaySettings();
