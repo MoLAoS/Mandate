@@ -116,7 +116,6 @@ private:
 private:
 	void renderProgressBar();
 	int getImageOverlayIndex(AutoCmdFlag f, AutoCmdState s);
-	bool isInBounds(const Vec2i &pos, Vec2i &out_pos);
 
 public:
 	Display(UserInterface *ui, Vec2i pos);
