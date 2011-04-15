@@ -667,7 +667,9 @@ void GameState::mouseMove(int x, int y, const MouseState &ms) {
 				gameCamera.transitionVH((y - lastMousePos.y) * ymult, (lastMousePos.x - x) * xmult);
 			}
 		}
-	} else if (ms.get(MouseButton::RIGHT)) {
+	}/* Disabled for now because people don't like it - hailstone 08April2011
+	 http://glest.org/glest_board/index.php?topic=6757.msg69999#msg69999
+	 else if (ms.get(MouseButton::RIGHT)) {
 		if (!noInput) {
 			Vec2f moveVec = Vec2f(Vec2i(x, y)) - m_cameraDragCenter;
 			if (moveVec.length() > 50) { /// @todo add to config if this is staying - hailstone 11Feb2011
@@ -677,7 +679,7 @@ void GameState::mouseMove(int x, int y, const MouseState &ms) {
 				gameCamera.setMoveX(moveVec.x * scrollSpeed, true);
 			}
 		}
-	} else {
+	}*/ else {
 		if (!noInput) {
 			//main window
 			if (y < 10) {

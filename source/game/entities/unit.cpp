@@ -2224,11 +2224,16 @@ bool Unit::morph(const MorphCommandType *mct, const UnitType *ut, Vec2i offset, 
 		faction->giveRefund(ut, mct->getRefund());
 		faction->applyStaticProduction(ut);
 
-		if (m_cloaked && oldCloakClass != ut->getCloakClass()) {
-			deCloak();
-		}
-		if (ut->getCloakClass() == CloakClass::PERMANENT && faction->reqsOk(type->getCloakType())) {
-			cloak();
+		// make sure the new UnitType has a CloakType before attempting to use it
+		if (type->getCloakType()) {
+			if (m_cloaked && oldCloakClass != ut->getCloakClass()) {
+				deCloak();
+			}
+			if (ut->getCloakClass() == CloakClass::PERMANENT && faction->reqsOk(type->getCloakType())) {
+				cloak();
+			}
+		} else {
+			m_cloaked = false;
 		}
 
 		if (reprocessCommands) {
