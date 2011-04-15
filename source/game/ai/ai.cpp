@@ -247,15 +247,14 @@ void Ai::evaluateEnemies() {
 	const int teamIndex = aiInterface->getFaction()->getTeam();
 	UnitPositions::iterator it = m_knownEnemyLocations.begin();
 	UnitPositions::iterator itEnd = m_knownEnemyLocations.end();
+	vector<Vec2i> remList;
 	while (it != itEnd) {
 		const Vec2i tPos = Map::toTileCoords(it->first);
 		bool canSee = g_map.getTile(tPos)->isVisible(teamIndex);
 		bool dead = it->second == 0;
 		if (canSee) {
 			if (dead || it->second->isDead()) {
-				it = m_knownEnemyLocations.erase(it);
-			} else {
-				++it;
+				remList.push_back(it->first);
 			}
 		} else {
 			if (!dead) {
@@ -263,8 +262,11 @@ void Ai::evaluateEnemies() {
 					it->second = 0;
 				}
 			}
-			++it;
 		}
+		++it;
+	}
+	foreach (vector<Vec2i>, it, remList) {
+		m_knownEnemyLocations.erase(*it);
 	}
 
 	// 2. refresh visibleEnemies and closestEnemy

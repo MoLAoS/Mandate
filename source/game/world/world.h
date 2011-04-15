@@ -157,8 +157,8 @@ private:
 	typedef vector<Faction> Factions;
 	typedef std::map< string,set<string> > UnitTypes;
 
-	typedef map<string, int>   CloakGroupIdMap;
-	typedef map<int, string>   CloakGroupNameMap;
+	typedef std::map<string, int>   CloakGroupIdMap;
+	typedef std::map<int, string>   CloakGroupNameMap;
 
 public:
 	/** max radius to look when placing units */
