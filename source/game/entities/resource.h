@@ -75,8 +75,6 @@ public:
 	void save(XmlNode *n) const;
 
 	bool decrement();
-
-	virtual void setAmount(int v) override { assert(false); }
 };
 
 ostream& operator<<(ostream &stream, const MapResource &res);
