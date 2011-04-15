@@ -57,11 +57,13 @@ bool ScrollBarButton::mouseMove(Vec2i pos) {
 	Button::mouseMove(pos);
 	if (m_down) {
 		if (!isHovered()) {
+			WIDGET_LOG( descId() << " : ScrollBarButton::mouseMove() :: m_down && !isHovered(), unregistering for update()." );
 			m_rootWindow->unregisterUpdate(this);
 			m_down = false;
 		}
 	} else { // !m_down
 		if (isHovered() && isFocused()) {
+			WIDGET_LOG( descId() << " : ScrollBarButton::mouseMove() :: !m_down && isHovered() && isFocused(), registering for update()." );
 			m_rootWindow->registerUpdate(this);
 			m_counter = 0;
 			m_down = true;
@@ -73,7 +75,8 @@ bool ScrollBarButton::mouseMove(Vec2i pos) {
 bool ScrollBarButton::mouseDown(MouseButton btn, Vec2i pos) {
 	WIDGET_LOG( descLong() << " : ScrollBarButton::mouseDown( " << MouseButtonNames[btn] << ", " << pos << " )");
 	Button::mouseDown(btn, pos);
-	if (isFocused() && !m_down) {
+	if (btn == MouseButton::LEFT && isFocused() && !m_down) {
+		WIDGET_LOG( descId() << " : ScrollBarButton::mouseDown() :: registering for update()." );
 		m_rootWindow->registerUpdate(this);
 		m_counter = 0;
 		m_down = true;
@@ -90,6 +93,7 @@ bool ScrollBarButton::mouseUp(MouseButton btn, Vec2i pos) {
 		}
 		setFocus(false);
 		if (m_down) {
+			WIDGET_LOG( descId() << " : ScrollBarButton::mouseUp() :: unregistering for update()." );
 			m_rootWindow->unregisterUpdate(this);
 			m_down = false;
 		}
@@ -100,6 +104,7 @@ bool ScrollBarButton::mouseUp(MouseButton btn, Vec2i pos) {
 void ScrollBarButton::update() {
 	++m_counter;
 	if (m_counter % 20 == 0) {
+		WIDGET_LOG( descId() << " : ScrollBarButton::update() :: Fire(this)" );
 		Fire(this);
 		m_fireOnUp = false;
 	}

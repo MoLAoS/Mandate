@@ -170,7 +170,7 @@ void Button::setSize(const Vec2i &sz) {
 }
 
 bool Button::mouseMove(Vec2i pos) {
-	WIDGET_LOG( descLong() << " : Button::mouseMove( " << pos << " )");
+	//WIDGET_LOG( descLong() << " : Button::mouseMove( " << pos << " )");
 	if (isEnabled()) {
 		if (isHovered() && !isInside(pos)) {
 			mouseOut();
@@ -183,7 +183,7 @@ bool Button::mouseMove(Vec2i pos) {
 }
 
 bool Button::mouseDown(MouseButton btn, Vec2i pos) {
-	WIDGET_LOG( descLong() << " : Button::mouseDown( " << MouseButtonNames[btn] << ", " << pos << " )");
+	//WIDGET_LOG( descLong() << " : Button::mouseDown( " << MouseButtonNames[btn] << ", " << pos << " )");
 	if (isEnabled() && btn == MouseButton::LEFT) {
 		setFocus(true);
 	}
@@ -191,7 +191,7 @@ bool Button::mouseDown(MouseButton btn, Vec2i pos) {
 }
 
 bool Button::mouseUp(MouseButton btn, Vec2i pos) {
-	WIDGET_LOG( descLong() << " : Button::mouseUp( " << MouseButtonNames[btn] << ", " << pos << " )");
+	//WIDGET_LOG( descLong() << " : Button::mouseUp( " << MouseButtonNames[btn] << ", " << pos << " )");
 	if (isEnabled() && btn == MouseButton::LEFT) {
 		if (isFocused() && isHovered()) {
 			Clicked(this);

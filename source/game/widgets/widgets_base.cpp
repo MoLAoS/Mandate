@@ -269,7 +269,7 @@ string Widget::descLong() {
 }
 
 void Widget::setSize(const Vec2i &sz) {
-	WIDGET_LOG( descShort() << " : Widget::setSize( " << sz << " )" );
+	//WIDGET_LOG( descShort() << " : Widget::setSize( " << sz << " )" );
 	m_size = sz;
 	if (m_textWidget) {
 		m_textWidget->widgetReSized();
@@ -280,8 +280,7 @@ void Widget::setSize(const Vec2i &sz) {
 void Widget::setPos(const Vec2i &p) {
 	m_pos = p;
 	m_screenPos = m_parent->getScreenPos() + m_pos;
-	WIDGET_LOG( descShort() << " : Widget::setPos( " << p << " ) => ScreenPos now: " << m_screenPos );
-	//WIDGET_LOG( descLong() );
+	//WIDGET_LOG( descShort() << " : Widget::setPos( " << p << " ) => ScreenPos now: " << m_screenPos );
 }
 
 bool Widget::isInsideBorders(const Vec2i &pos) const {
