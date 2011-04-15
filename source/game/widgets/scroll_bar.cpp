@@ -52,6 +52,10 @@ ScrollBarButton::ScrollBarButton(Container *parent, Vec2i pos, Vec2i size, Direc
 	setWidgetStyle(m_type);
 }
 
+ScrollBarButton::~ScrollBarButton() {
+	m_rootWindow->unregisterUpdate(this);
+}
+
 bool ScrollBarButton::mouseMove(Vec2i pos) {
 	WIDGET_LOG( descLong() << " : ScrollBarButton::mouseMove( " << pos << " )");
 	Button::mouseMove(pos);

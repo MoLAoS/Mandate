@@ -191,7 +191,7 @@ bool Button::mouseDown(MouseButton btn, Vec2i pos) {
 }
 
 bool Button::mouseUp(MouseButton btn, Vec2i pos) {
-	//WIDGET_LOG( descLong() << " : Button::mouseUp( " << MouseButtonNames[btn] << ", " << pos << " )");
+	WIDGET_LOG( descLong() << " : Button::mouseUp( " << MouseButtonNames[btn] << ", " << pos << " )");
 	if (isEnabled() && btn == MouseButton::LEFT) {
 		if (isFocused() && isHovered()) {
 			Clicked(this);

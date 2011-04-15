@@ -33,6 +33,7 @@ private:
 public:
 	ScrollBarButton(Container *parent, Direction dir);
 	ScrollBarButton(Container *parent, Vec2i pos, Vec2i size, Direction dir);
+	~ScrollBarButton();
 
 	virtual void setStyle() override { setWidgetStyle(m_type); }
 	virtual string descType() const override { return "ScrollButton"; }
