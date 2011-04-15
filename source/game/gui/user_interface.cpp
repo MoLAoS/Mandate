@@ -335,6 +335,7 @@ void UserInterface::commandButtonPressed(int posDisplay) {
 	} else { // m_selectingSecond || m_selectingPos
 		// if they clicked on a button again, they must have changed their mind
 		resetState();
+		computeDisplay();
 	}
 }
 
@@ -943,6 +944,7 @@ void UserInterface::onSecondTierSelect(int posDisplay) {
 			}
 		}
 	}
+	computeDisplay();
 }
 
 ///@todo move to Display
