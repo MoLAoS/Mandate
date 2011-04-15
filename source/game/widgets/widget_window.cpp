@@ -364,7 +364,7 @@ void WidgetWindow::doMouseInto(Widget *widget) {
 //}
 
 void WidgetWindow::setFloatingWidget(Widget* floater, bool modal) {
-	WIDGET_LOG( __FUNCTION__ << "(0x" << intToHex(int(floater)) << ", " << (modal ? "true)" : "false)") );
+	//WIDGET_LOG( __FUNCTION__ << "(0x" << intToHex(int(floater)) << ", " << (modal ? "true)" : "false)") );
 	delete floatingWidget;
 	floatingWidget = floater;
 	unwindMouseOverStack(this);
@@ -372,7 +372,7 @@ void WidgetWindow::setFloatingWidget(Widget* floater, bool modal) {
 }
 
 void WidgetWindow::removeFloatingWidget(Widget* floater) {
-	WIDGET_LOG( __FUNCTION__ << "(0x" << intToHex(int(floater)) << ")" );
+	//WIDGET_LOG( __FUNCTION__ << "(0x" << intToHex(int(floater)) << ")" );
 	if (floater != floatingWidget) {
 		throw runtime_error("WidgetWindow::removeFloatingWidget() passed bad argument.");
 	}
@@ -465,7 +465,7 @@ void WidgetWindow::update() {
 }
 
 void WidgetWindow::destroyFloater() {
-	WIDGET_LOG( __FUNCTION__ << "() : floatingWidget is @ 0x" << intToHex(int(floatingWidget)) );
+	//WIDGET_LOG( __FUNCTION__ << "() : floatingWidget is @ 0x" << intToHex(int(floatingWidget)) );
 	// destroy floater
 	delete floatingWidget;
 	floatingWidget = 0;
