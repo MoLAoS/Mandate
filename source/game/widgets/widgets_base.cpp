@@ -1177,13 +1177,13 @@ void MouseCursor::renderTex(const Texture2D *tex) {
 	glBindTexture(GL_TEXTURE_2D, static_cast<const Texture2DGl*>(tex)->getHandle());
 	glColor4f(1.f, 1.f, 1.f, 0.5f);
 	glBegin(GL_TRIANGLE_STRIP);
-		glTexCoord2i(0, 1);
-		glVertex2i(x1, y2);
 		glTexCoord2i(0, 0);
+		glVertex2i(x1, y2);
+		glTexCoord2i(0, 1);
 		glVertex2i(x1, y1);
-		glTexCoord2i(1, 1);
-		glVertex2i(x2, y2);
 		glTexCoord2i(1, 0);
+		glVertex2i(x2, y2);
+		glTexCoord2i(1, 1);
 		glVertex2i(x2, y1);
 	glEnd();
 	glBindTexture(GL_TEXTURE_2D, 0);
