@@ -147,7 +147,7 @@ void ScrollText::setSize(const Vec2i &sz) {
 	recalc();
 }
 
-void ScrollText::setText(const string &txt, bool scrollToBottom) {
+void ScrollText::setText(const string &txt, ScrollAction scroll) {
 	float oldOffset = m_scrollBar->getThumbPos();
 	const FontMetrics *fm = m_staticText->getFont()->getMetrics();
 	int width = getSize().w - m_scrollBar->getSize().w - getBordersHoriz() - m_staticText->getBordersHoriz();
@@ -158,14 +158,13 @@ void ScrollText::setText(const string &txt, bool scrollToBottom) {
 	m_staticText->setText(text);
 	recalc();
 	
-	if (scrollToBottom) {
+	if (scroll == ScrollAction::BOTTOM) {
 		m_scrollBar->setThumbPosPercent(100);
-	} else {
-		if (oldOffset != 0.f) {
-			DEBUG_HOOK();
-		}
-		WIDGET_LOG( "ScrollText::setText() : Restoring offset: " << oldOffset );
+	} else if (scroll == ScrollAction::MAINTAIN) {
+		//WIDGET_LOG( "ScrollText::setText() : Restoring offset: " << oldOffset );
 		m_scrollBar->setThumbPos(oldOffset);
+	} else {
+		m_scrollBar->setThumbPos(0);
 	}
 }
 
@@ -422,6 +421,7 @@ void BasicDialog::init(Vec2i pos, Vec2i size, const string &title,
 	setSize(size);
 	setTitleText(title);
 	setButtonText(btn1Text, btn2Text);
+	layoutCells();
 }
 
 void BasicDialog::setContent(Widget* content) {
@@ -483,6 +483,7 @@ void BasicDialog::onButtonClicked(Widget *source) {
 MessageDialog::MessageDialog(WidgetWindow* window)
 		: BasicDialog(window) {
 	m_scrollText = new ScrollText(this);
+	setContent(m_scrollText);
 }
 
 MessageDialog::MessageDialog(Container* parent)
@@ -496,7 +497,8 @@ MessageDialog* MessageDialog::showDialog(Vec2i pos, Vec2i size, const string &ti
 	MessageDialog* msgBox = new MessageDialog(&g_widgetWindow);
 	g_widgetWindow.setFloatingWidget(msgBox, true);
 	msgBox->init(pos, size, title, btn1Text, btn2Text);
-	msgBox->setMessageText(msg);
+	msgBox->setMessageText(msg, ScrollAction::TOP);
+	
 	return msgBox;
 }
 
@@ -504,8 +506,8 @@ MessageDialog::~MessageDialog(){
 	delete m_scrollText;
 }
 
-void MessageDialog::setMessageText(const string &text) {
-	m_scrollText->setText(text);
+void MessageDialog::setMessageText(const string &text, ScrollAction action) {
+	m_scrollText->setText(text, action);
 }
 
 // =====================================================

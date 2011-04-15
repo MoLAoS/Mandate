@@ -37,6 +37,8 @@ public:
 	virtual string descType() const override { return "OptionBox"; }
 };
 
+WRAPPED_ENUM( ScrollAction, TOP, MAINTAIN, BOTTOM );
+
 class ScrollText : public CellStrip, public TextWidget, public sigslot::has_slots {
 protected:
 	ScrollBar  *m_scrollBar;
@@ -52,7 +54,7 @@ public:
 
 	void recalc();
 	void onScroll(ScrollBar*);
-	void setText(const string &txt, bool scrollToBottom = false);
+	void setText(const string &txt, ScrollAction scroll = ScrollAction::TOP);
 
 	virtual void setSize(const Vec2i &sz) override;
 	virtual void render() override;
@@ -247,7 +249,7 @@ public:
 
 	virtual ~MessageDialog();
 
-	virtual void setMessageText(const string &text);
+	virtual void setMessageText(const string &text, ScrollAction action);
 	const string& getMessageText() const { return m_scrollText->getText(); }
 
 	virtual string descType() const override { return "MessageDialog"; }

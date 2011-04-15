@@ -20,8 +20,8 @@ class DebugPanel : public MessageDialog {
 public:
 	DebugPanel(Container *parent) : MessageDialog(parent) { }
 
-	virtual void setMessageText(const string &text) override {
-		MessageDialog::setMessageText(text);
+	void setDebugText(const string &text) {
+		MessageDialog::setMessageText(text, ScrollAction::MAINTAIN);
 	}
 
 	virtual string descType() const override { return "DebugPanel"; }

@@ -391,7 +391,7 @@ void TestPane::onContinue(Widget*) {
 void TestPane::onDoDialog(Widget*) {
 	Vec2i size(500, 400);
 	Vec2i pos = (g_metrics.getScreenDims() - size) / 2;
-	m_messageDialog = MessageDialog::showDialog(pos,size, "Test MessageBox",
+	m_messageDialog = MessageDialog::showDialog(pos, size, "Test MessageBox",
 		"Message text goes here.\n\nSelect Continue to proceed to game.", "Continue", "Cancel");
 	m_messageDialog->Button1Clicked.connect(this, &TestPane::onContinue);
 	m_messageDialog->Button2Clicked.connect(this, &TestPane::onDismissDialog);

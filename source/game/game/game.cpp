@@ -185,7 +185,7 @@ void GameState::init() {
 	m_debugPanel->setVisible(g_config.getMiscDebugMode());
 	m_debugPanel->setButtonText("");
 	m_debugPanel->setTitleText("Debug");
-	m_debugPanel->setMessageText("");
+	m_debugPanel->setDebugText("");
 
 	///@todo StaticText (?) for script message
 	m_scriptDisplayPos = Vec2i(175, g_metrics.getScreenH() - 64);
@@ -593,7 +593,7 @@ void GameState::tick() {
 	m_debugStats.tick(lastRenderFps, lastWorldFps);
 	stringstream ss;
 	m_debugStats.report(ss);
-	m_debugPanel->setMessageText(ss.str());
+	m_debugPanel->setDebugText(ss.str());
 
 	//Win/lose check
 	GameStatus status = simInterface->checkWinner();

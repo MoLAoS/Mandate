@@ -197,8 +197,10 @@ void ScrollBarShaft::init(bool vert) {
 	}
 	m_totalRange = 100;
 	m_availRange = 10;
-	m_availRatio = m_shaftRatio = 1.f;
+	m_availRatio = m_shaftRatio = 0.f;
+	m_maxOffset = 0;
 	m_thumb = new ScrollBarThumb(this, vert);
+	m_thumb->setPos(Vec2i(getBorderLeft(), getBorderTop()));
 	m_thumb->Moved.connect(this, &ScrollBarShaft::onThumbMoved);
 	setWidgetStyle(m_type);
 }
@@ -222,11 +224,14 @@ void ScrollBarShaft::recalc() {
 		m_thumb->setPos(Vec2i(getBorderLeft(), getBorderTop()));
 		m_thumb->setSize(Vec2i(m_thumbSize, size.h));
 	}
-	WIDGET_LOG(
-		"ScrollBarShaft::recalc() : shaftSize: " << dominantSize() 
-		<< ", maxOffset: " << m_maxOffset << ", shaftRatio: " 
-		<< m_shaftRatio << ", availRatio: " << m_availRatio
-	);
+	if (m_maxOffset < 0) {
+		m_maxOffset = 0;
+	}
+	//WIDGET_LOG(
+	//	"ScrollBarShaft::recalc() : shaftSize: " << dominantSize() 
+	//	<< ", maxOffset: " << m_maxOffset << ", shaftRatio: " 
+	//	<< m_shaftRatio << ", availRatio: " << m_availRatio
+	//);
 	m_pageSize = m_thumbSize;
 }
 
@@ -277,11 +282,11 @@ void ScrollBarShaft::onThumbMoved(int diff) {
 		m_thumb->setPos(thumbPos);
 		ThumbMoved(this);
 	}
-	WIDGET_LOG(
-		"ScrollBarShaft::onThumbMoved() : " 
-		<< " thumbOffset: " << thumbOffset << ", thumbOffset(): " << this->thumbOffset() 
-		<< ", thumbPos (range units): " << getThumbPos()
-	);
+	//WIDGET_LOG(
+	//	"ScrollBarShaft::onThumbMoved() : " 
+	//	<< " thumbOffset: " << thumbOffset << ", thumbOffset(): " << this->thumbOffset() 
+	//	<< ", thumbPos (range units): " << getThumbPos()
+	//);
 }
 
 void ScrollBarShaft::setThumbPosPixels(int v) {
@@ -292,10 +297,10 @@ void ScrollBarShaft::setThumbPosPixels(int v) {
 		m_thumb->setPos(thumbPos);
 		ThumbMoved(this);
 	}
-	WIDGET_LOG( 
-		"ScrollBarShaft::setThumbPosPixels() : " << " thumbOffset: " << thumbOffset() 
-		<< ", thumbPos (range units): " << getThumbPos()
-	);
+	//WIDGET_LOG( 
+	//	"ScrollBarShaft::setThumbPosPixels() : " << " thumbOffset: " << thumbOffset() 
+	//	<< ", thumbPos (range units): " << getThumbPos()
+	//);
 }
 
 // =====================================================

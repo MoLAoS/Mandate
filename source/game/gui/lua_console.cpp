@@ -154,7 +154,7 @@ void LuaConsole::addOutput(const std::string &v) {
 		}
 		ss << *it;
 	}
-	m_outputBox->setText(ss.str(), true);
+	m_outputBox->setText(ss.str(), ScrollAction::BOTTOM);
 }
 
 bool LuaConsole::mouseDown(MouseButton btn, Vec2i pos) {
