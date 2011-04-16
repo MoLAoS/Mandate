@@ -693,7 +693,7 @@ TravelState RoutePlanner::findPathToLocation(Unit *unit, const Vec2i &finalPos) 
 	}
 	if (res == HAAStarResult::FAILURE) {
 		if (unit->getFaction()->isThisFaction()) {
-			g_console.addLine(g_lang.get("DestinationUnreachable."));
+			g_console.addLine(g_lang.get("DestinationUnreachable"));
 		}
 		PF_LOG( "Route not possible." );
 		return TravelState::IMPOSSIBLE;
