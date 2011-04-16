@@ -111,11 +111,11 @@ const AttackSkillType * AttackCommandTypeBase::getAttackSkillType(Field field) c
 /** Update helper for attack based commands that includes a move skill (sub classes of AttackCommandType).
   * @returns true when completed */
 bool AttackCommandType::updateGeneric(Unit *unit, Command *command, const AttackCommandType *act, 
-									  Unit* target, const Vec2i &targetPos) const {
-	
+									  Unit* target, const Vec2i &targetPos) const {	
 	if (target && target->getHp() <= 0) {
 		// the target is dead, finish command so the unit doesn't 
 		// wander to the target pos
+		unit->setCurrSkill(SkillClass::STOP);
 		return true;
 	}
 
@@ -123,6 +123,7 @@ bool AttackCommandType::updateGeneric(Unit *unit, Command *command, const Attack
 
 	if (target && !attackSkillTypes.getZone(target->getCurrZone())) { // if have target but can't attack it
 		unit->finishCommand();
+		return true;
 	}
 	if (attackableInRange(unit, &target, &attackSkillTypes, &ast)) { // found a target in range
 		assert(ast);
@@ -152,7 +153,7 @@ bool AttackCommandType::updateGeneric(Unit *unit, Command *command, const Attack
 		}
 	} else { // if no more targets and on auto command, then turn around
 		if (command->isAuto() && command->hasPos2()) {
-			if (Config::getInstance().getGsAutoReturnEnabled()) {
+			if (g_config.getGsAutoReturnEnabled()) {
 				command->popPos();
 				pos = command->getPos();
 				RUNTIME_CHECK(g_world.getMap()->isInside(pos));
