@@ -146,38 +146,31 @@ Program::~Program() {
 }
 
 bool Program::init() {
+
 	// startup and immediately host a game
 	if(cmdArgs.isServer()) {
 		MainMenu* mainMenu = new MainMenu(*this, false);
 		setState(mainMenu);
 		mainMenu->setState(new MenuStateNewGame(*this, mainMenu, true));
+
 	// startup and immediately connect to server
 	} else if(!cmdArgs.getClientIP().empty()) {
 		MainMenu* mainMenu = new MainMenu(*this, false);
 		setState(mainMenu);
 		mainMenu->setState(new MenuStateJoinGame(*this, mainMenu, true, Ip(cmdArgs.getClientIP())));
+	
 	// load map and tileset without players
 	} else if(!cmdArgs.getLoadmap().empty()) {
 		GameSettings &gs = simulationInterface->getGameSettings();
-		gs.clear();
-		gs.setDefaultResources(false);
-		gs.setDefaultUnits(false);
-		gs.setDefaultVictoryConditions(false);
-		gs.setThisFactionIndex(0);
-		gs.setTeam(0, 0);
+		gs.setPreviewSettings();
 		string map = cmdArgs.getLoadmap();
-		// supporting absolute paths with extension, e.g. showmap in map editor, FIXME: a bit hacky
-		if (map[0]=='/') {
-			gs.setMapPath(map);
+		if (map[0]=='/') {      // supporting absolute paths with extension,
+			gs.setMapPath(map); // e.g. showmap in map editor, FIXME: a bit hacky
 		} else {
 			gs.setMapPath(string("maps/") + map);
 		}
 		gs.setTilesetPath(string("tilesets/") + cmdArgs.getLoadTileset());
 		gs.setTechPath(string("techs/magitech"));
-		gs.setFogOfWar(false);
-		gs.setShroudOfDarkness(false);
-		gs.setFactionCount(0);
-
 		try {
 			setState(new ShowMap(*this));
 		} catch (runtime_error &e) {
@@ -189,6 +182,8 @@ bool Program::init() {
 			g_logger.logError(ss.str());
 			return false;
 		}
+
+	// start scenario
 	} else if(!cmdArgs.getScenario().empty()) {
 		ScenarioInfo scenarioInfo;
 		try {
@@ -203,12 +198,19 @@ bool Program::init() {
 			g_logger.logError(ss.str());
 			return false;
 		}
+
+	// load last game settings
 	} else if (cmdArgs.isLoadLastGame()) {
 		try {
 			Shared::Xml::XmlTree doc("game-settings");
 			doc.load("last_gamesettings.gs");
 			GameSettings &gs = simulationInterface->getGameSettings();
 			gs = GameSettings(doc.getRootNode());
+			if (gs.hasNetworkSlots()) {
+				g_logger.logError("Error: option -lastgame: last game-settings has network slot(s).");
+				cout << "Error: option -lastgame: last game-settings has network slot(s).";
+				return false;
+			}
 		} catch (runtime_error &e) {
 			std::stringstream ss;
 			ss << "Error trying to load last game-settings\nException: " << e.what();

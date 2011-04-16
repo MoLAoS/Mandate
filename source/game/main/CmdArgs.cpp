@@ -15,6 +15,7 @@
 #include <iostream>
 
 #include "projectConfig.h"
+#include "util.h"
 #include "FSFactory.hpp"
 #include "leak_dumper.h"
 
@@ -23,8 +24,9 @@ using Shared::PhysFS::FSFactory;
 using std::cout;
 using std::endl;
 
-
 namespace Glest { namespace Main {
+
+using namespace Shared::Util;
 
 CmdArgs::CmdArgs(){
 	this->server = false;
@@ -42,6 +44,10 @@ CmdArgs::~CmdArgs(){
 
 /** parse command line arguments @return true if program should not proceed. */
 bool CmdArgs::parse(int argc, char **argv){
+	string progName = argv[0];
+#	ifdef WIN32
+		progName = cutLastExt(basename(progName));
+#	endif
 	for(int i=1; i<argc; ++i){
 		string arg(argv[i]);
 		if(arg=="-server"){
@@ -64,13 +70,14 @@ bool CmdArgs::parse(int argc, char **argv){
 			test = true;
 			testType = argv[++i];
 		} else if(arg=="--help" || arg=="-h") {
-			cout << "usage: " << argv[0] << " [options]\n"
+			cout << "usage: " << progName << " [options]\n"
 				<< "  -server                  startup and immediately host a game\n"
 				<< "  -client IP               startup and immediately connect to server IP\n"
 				<< "  -configdir path          set location of configs and logs to path\n"
 				<< "  -datadir path            set location of data\n"
 				<< "  -loadmap map tileset     load maps/map.gbm with tilesets/tileset for map preview\n"
-				<< "  -scenario category name  load immediately scenario/category/name\n";
+				<< "  -scenario category name  load immediately scenario/category/name\n"
+				<< "  -lastgame                immediately start a game with the last used game settings\n";
 			return true;
 		}else if(arg=="-list-tilesets"){  //FIXME: only works with physfs
 				cout << "config: " << configDir << "\ndata: " << dataDir << endl;
@@ -94,7 +101,8 @@ bool CmdArgs::parse(int argc, char **argv){
 		} else if (arg == "-noredir") {
 			m_redirStreams = false;
 		} else {
-			cout << "unknown argument: " << arg << endl;
+			cout << "unknown argument: '" << arg << "'\nUse '" << progName
+				<< " -h' for a list of accepted command line options." << endl;
 			return true;
 		}
 	}

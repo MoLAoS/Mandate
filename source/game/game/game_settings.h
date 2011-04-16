@@ -59,10 +59,13 @@ public:
 	GameSettings() { clear(); }
 	GameSettings(const XmlNode *node);
 
+	void setPreviewSettings();
 	void clear();
 	void compact();
 	// use default copy ctor
 	//GameSettings(const GameSettings &gs);
+
+	bool hasNetworkSlots() const;
 
 	//get
 	const string &getDescription() const			{return description;}

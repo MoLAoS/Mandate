@@ -63,6 +63,15 @@ GameSettings::GameSettings(const XmlNode *node) {
 	}
 }
 
+bool GameSettings::hasNetworkSlots() const {
+	for (int i=0; i < GameConstants::maxPlayers; ++i) {
+		if (factionControls[i] == ControlType::NETWORK) {
+			return true;
+		}
+	}
+	return false;
+}
+
 void GameSettings::clear() {
 	description = "";
 	mapPath = "";
@@ -86,6 +95,18 @@ void GameSettings::clear() {
 	fogOfWar = true;
 	shroudOfDarkness = true;
 	randomStartLocs = false;
+}
+
+void GameSettings::setPreviewSettings() {
+	clear();
+	defaultResources = false;
+	defaultUnits = false;
+	defaultVictoryConditions = false;
+	thisFactionIndex = 0;
+	teams[0] = 0;
+	fogOfWar = false;
+	shroudOfDarkness = false;
+	factionCount = 0;
 }
 
 void GameSettings::compact() {
