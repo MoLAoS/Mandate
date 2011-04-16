@@ -129,7 +129,7 @@ Player=Player
 
 ; Join Game Menu
 Address=Address
-ErrorVersionMismatch=The remote host has a different and incompatible of GAE, you have %s and they have %s.
+ErrorVersionMismatch=The remote host has a different and incompatible version of GAE, you have %s and they have %s.
 Connect=Connect
 Connected=Connected
 ConnectedToServer=Connected to server
@@ -229,7 +229,7 @@ FreeCamera=Free Camera
 GameCamera=Game camera
 
 ; Display panel tips
-PotraitInfo=Click to select only this unit. Shift-click to select only units of this type. Control-click to remove this unit. Constrol+Shift-click to remove all units of this type.
+PotraitInfo=Click to select only this unit. Shift-click to select only units of this type. Control-click to remove this unit. Control+Shift-click to remove all units of this type.
 TransportInfo=Double click to immediately unload this unit.
 
 ; Game strings
@@ -359,7 +359,7 @@ BuildingNoReqs=Building doesn't satisfy requirements
 BuildingNoRes=Not enough resources to produce building
 BuildingNoRes1=Not enough %s to produce building
 BuildingNoRes2=Not enough %s and %s to produce building
-DestinationUnreachable.=Destination is Unreachable
+DestinationUnreachable=Destination is Unreachable
 GenericNoRes1=Not enough %s
 GenericNoRes2=Not enough %s and %s
 InvalidPosition=Position is Invalid
