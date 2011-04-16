@@ -243,7 +243,7 @@ bool UserInterface::isPlacingBuilding() const {
 
 // ==================== reset state ====================
 
-void UserInterface::resetState() {
+void UserInterface::resetState(bool redoDisplay) {
 	m_selectingSecond = false;
 	selectingPos = false;
 	selectingMeetingPoint = false;
@@ -257,6 +257,9 @@ void UserInterface::resetState() {
 	m_minimap->setLeftClickOrder(false);
 	m_minimap->setRightClickOrder(!selection.isEmpty());
 	g_program.getMouseCursor().setAppearance(MouseAppearance::DEFAULT);
+	if (redoDisplay) {
+		computeDisplay();
+	}
 }
 
 static void calculateNearest(UnitVector &units, const Vec3f &pos) {
@@ -326,16 +329,15 @@ void UserInterface::commandButtonPressed(int posDisplay) {
 			} else {
 				onFirstTierSelect(posDisplay);
 			}
+			computeDisplay();
 		} else {
 			resetState();
 		}
 		activePos = posDisplay;
-		computeDisplay();
 		computeCommandInfo(activePos);
 	} else { // m_selectingSecond || m_selectingPos
 		// if they clicked on a button again, they must have changed their mind
 		resetState();
-		computeDisplay();
 	}
 }
 
@@ -394,7 +396,7 @@ void UserInterface::mouseDownLeft(int x, int y) {
 			commander->tryGiveCommand(selection, CmdFlags(), NULL,
 					CmdClass::SET_MEETING_POINT, worldPos);
 		}
-		resetState();
+		resetState(false);
 
 	//begin drag-drop selection & update selection for single-click
 	} else {
@@ -437,7 +439,6 @@ void UserInterface::mouseUpRight(int x, int y) {
 
 		if (selectingPos || selectingMeetingPoint) {
 			resetState();
-			computeDisplay();
 			return;
 		}
 
@@ -508,7 +509,6 @@ void UserInterface::groupKey(int groupIndex){
 		selection.recallGroup(groupIndex);
 		currentGroup = groupIndex;
 		resetState();
-		computeDisplay();
 	}
 }
 
@@ -632,7 +632,6 @@ void UserInterface::hotKey(UserCommand cmd) {
 bool UserInterface::cancelPending() {
 	if (selectingPos || selectingMeetingPoint || m_selectingSecond) {
 		resetState();
-		computeDisplay();
 		return true;
 	}
 	return false;
@@ -688,7 +687,6 @@ void UserInterface::giveDefaultOrders(const Vec2i &targetPos, Unit *targetUnit) 
 	}
 	// reset
 	resetState();
-	computeDisplay();
 }
 
 void UserInterface::giveTwoClickOrders(const Vec2i &targetPos, Unit *targetUnit) {
@@ -832,7 +830,7 @@ void UserInterface::onFirstTierSelect(int posDisplay) {
 	}
 	if (posDisplay == cancelPos) {
 		if (isPlacingBuilding()) {
-			resetState();
+			resetState(false);
 		} else if (selection.isCancelable()) {
 			commander->tryCancelCommand(&selection);
 		} else {
@@ -919,7 +917,7 @@ void UserInterface::onSecondTierSelect(int posDisplay) {
 	int factionIndex = world->getThisFactionIndex();
 
 	if (posDisplay == cancelPos) {
-		resetState();
+		resetState(false);
 	} else {
 		RUNTIME_CHECK(activeCommandType != 0);
 		int ndx = m_display->getIndex(posDisplay);
@@ -940,7 +938,7 @@ void UserInterface::onSecondTierSelect(int posDisplay) {
 				CmdResult result = commander->tryGiveCommand(selection, CmdFlags(),
 					activeCommandType, CmdClass::NULL_COMMAND, Command::invalidPos, 0, pt);
 				addOrdersResultToConsole(activeCommandClass, result);
-				resetState();
+				resetState(false);
 			}
 		}
 	}

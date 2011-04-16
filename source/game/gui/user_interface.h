@@ -240,7 +240,7 @@ public:
 
 	//misc
 	void switchToNextDisplayColor() {m_display->switchColor();}
-	void onSelectionChanged() { resetState(); computeDisplay(); }
+	void onSelectionChanged() { resetState(); }
 	void onSelectionStateChanged() { m_selectionDirty = true; }
 	void invalidateActivePos() { activePos = invalidPos; }
 
@@ -274,7 +274,7 @@ private:
 	bool isSharedCommandClass(CmdClass commandClass);
 
 public:
-	void resetState();
+	void resetState(bool redoDisplay = true);
 	void computeDisplay();
 	void computePortraitInfo(int posDisplay);
 	void computeCommandInfo(int posDisplay);

@@ -338,6 +338,15 @@ void GameState::displayError(std::exception &e) {
 		program.removeFloatingWidget(m_modalDialog);
 		m_modalDialog = 0;
 	}
+	if (m_chatDialog->isVisible()) {
+		m_chatDialog->setVisible(false);
+	}
+	if (m_debugPanel->isVisible()) {
+		toggleDebug();
+	}
+	if (m_gameMenu->isVisible()) {
+		toggleGameMenu();
+	}
 	gui.resetState();
 	Vec2i screenDims = g_metrics.getScreenDims();
 	Vec2i size(screenDims.x - 200, screenDims.y / 2);
@@ -362,9 +371,7 @@ void GameState::doGameMenu() {
 		m_modalDialog = 0;
 		return;
 	}
-
-	//gui.resetState();
-
+	gui.resetState();
 	if (m_chatDialog->isVisible()) {
 		m_chatDialog->setVisible(false);
 	}
@@ -433,6 +440,9 @@ void GameState::doSaveBox() {
 	if (m_chatDialog->isVisible()) {
 		m_chatDialog->setVisible(false);
 	}
+	if (m_gameMenu->isVisible()) {
+		toggleGameMenu();
+	}
 	if (m_modalDialog) {
 		g_widgetWindow.removeFloatingWidget(m_modalDialog);
 		m_modalDialog = 0;
@@ -451,6 +461,11 @@ void GameState::doSaveBox() {
 void GameState::onSaveSelected(Widget*) {
 	InputDialog* in  = static_cast<InputDialog*>(m_modalDialog);
 	string name = in->getInput();
+
+	if (name.empty()) {
+		g_console.addLine(g_lang.get("EnterFilename"));
+		return;
+	}
 	saveGame(name);
 	program.removeFloatingWidget(m_modalDialog);
 	m_modalDialog = 0;
@@ -510,6 +525,10 @@ void GameState::doScriptMessage() {
 }
 
 void GameState::doChatDialog() {
+	if (m_gameMenu->isVisible()) {
+		toggleGameMenu();
+	}
+	gui.resetState();
 	if (m_chatDialog->isVisible()) {
 		m_chatDialog->setVisible(false);
 	} else {
