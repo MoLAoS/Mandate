@@ -30,6 +30,7 @@
 #include "compound_widgets.h"
 #include "debug_stats.h"
 #include "debug_widgets.h"
+#include "game_menu.h"
 
 // weather system not yet ready
 //#include "../physics/weather.h"
@@ -93,6 +94,7 @@ protected:
 	Frame*			m_modalDialog;
 	ChatDialog*		m_chatDialog;
 	DebugPanel*     m_debugPanel;
+	GameMenu*       m_gameMenu;
 
 	Vec2i lastMousePos;
 
@@ -168,6 +170,7 @@ public:
 	void doSaveBox();
 
 	void toggleDebug(Widget* ptr = 0);
+	void toggleGameMenu(Widget* ptr = 0);
 
 protected:
 	// render

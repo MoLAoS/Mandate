@@ -32,7 +32,7 @@ void buildButton(GameMenu *menu, CellStrip *strip, int cell, const string &txt, 
 }
 
 GameMenu::GameMenu(Vec2i pos, Vec2i size)
-		: Frame(&g_widgetWindow, ButtonFlags::CLOSE | ButtonFlags::ROLL_UPDOWN) {
+		: Frame((Container*)(&g_widgetWindow), ButtonFlags::CLOSE | ButtonFlags::ROLL_UPDOWN) {
 	setPos(pos);
 	setSize(size);
 	setTitleText(g_lang.get("GameMenu"));
@@ -53,14 +53,14 @@ GameMenu::GameMenu(Vec2i pos, Vec2i size)
 	Close.connect(this, &GameMenu::onReturnToGame);
 }
 
-GameMenu* GameMenu::showDialog(Vec2i pos, Vec2i size) {
-	GameMenu* menu = new GameMenu(pos, size);
-	g_widgetWindow.setFloatingWidget(menu, true);
-	return menu;
-}
+//GameMenu* GameMenu::showDialog(Vec2i pos, Vec2i size) {
+//	GameMenu* menu = new GameMenu(pos, size);
+//	g_widgetWindow.setFloatingWidget(menu, true);
+//	return menu;
+//}
 
 void GameMenu::onReturnToGame(Widget*) {
-	g_gameState.destroyDialog();
+	g_gameState.toggleGameMenu();
 }
 
 void GameMenu::onDebugToggle(Widget*) {
@@ -73,17 +73,17 @@ void GameMenu::onTogglePhotoMode(Widget*) {
 }
 
 void GameMenu::onSaveGame(Widget*) {
-	g_gameState.destroyDialog();
+	g_gameState.toggleGameMenu();
 	g_gameState.doSaveBox();
 }
 
 void GameMenu::onQuit(Widget*) {
-	g_gameState.destroyDialog();
+	g_gameState.toggleGameMenu();
 	g_gameState.confirmQuitGame();
 }
 
 void GameMenu::onExit(Widget*) {
-	g_gameState.destroyDialog();
+	g_gameState.toggleGameMenu();
 	g_gameState.confirmExitProgram();
 }
 

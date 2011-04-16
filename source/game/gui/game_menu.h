@@ -17,14 +17,7 @@ namespace Glest { namespace Gui {
 using namespace Widgets;
 
 class GameMenu : public Frame {
-public:
-	typedef GameMenu* Ptr;
-
 private:
-
-private:
-	GameMenu(Vec2i pos, Vec2i size);
-
 	void onReturnToGame(Widget*);
 	void onExit(Widget*);
 	void onQuit(Widget*);
@@ -33,7 +26,8 @@ private:
 	void onTogglePhotoMode(Widget*);
 
 public:
-	static GameMenu* showDialog(Vec2i pos, Vec2i size);
+	GameMenu(Vec2i pos, Vec2i size);
+	/*static GameMenu* showDialog(Vec2i pos, Vec2i size);*/
 
 	virtual Vec2i getPrefSize() const override { return Vec2i(-1); }
 	virtual Vec2i getMinSize() const override { return Vec2i(-1); }

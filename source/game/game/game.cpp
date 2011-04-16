@@ -190,6 +190,11 @@ void GameState::init() {
 	m_debugPanel->setDebugText("");
 	m_debugPanel->Close.connect(this, &GameState::toggleDebug);
 
+	int wh = g_widgetConfig.getDefaultItemHeight();
+
+	m_gameMenu = new GameMenu(Vec2i(g_metrics.getScreenDims() - size) / 2, Vec2i(wh * 8, wh * 9)); 
+	m_gameMenu->setVisible(false);
+
 	///@todo StaticText (?) for script message
 	m_scriptDisplayPos = Vec2i(175, g_metrics.getScreenH() - 64);
 
@@ -357,14 +362,13 @@ void GameState::doGameMenu() {
 		m_modalDialog = 0;
 		return;
 	}
-	gui.resetState();
+
+	//gui.resetState();
+
 	if (m_chatDialog->isVisible()) {
 		m_chatDialog->setVisible(false);
 	}
-	int wh = g_widgetConfig.getDefaultItemHeight();
-	Vec2i size(wh * 8, wh * 9);
-	Vec2i pos = (g_metrics.getScreenDims() - size) / 2;
-	m_modalDialog = GameMenu::showDialog(pos, size);
+	toggleGameMenu();
 }
 
 void GameState::doExitMessage(const string &msg) {
@@ -464,6 +468,10 @@ void GameState::toggleDebug(Widget*) {
 	bool v = !m_debugPanel->isVisible();
 	m_debugPanel->setVisible(v);
 	g_config.setMiscDebugMode(v);
+}
+
+void GameState::toggleGameMenu(Widget*) {
+	m_gameMenu->setVisible(!m_gameMenu->isVisible());
 }
 
 void GameState::addScriptMessage(const string &header, const string &msg) {
