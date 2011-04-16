@@ -149,26 +149,28 @@ public:
 // A run-time assert, that can be changed to assert() one day...
 // ... if we ever get to 1.0 maybe ;)
 //
+// Update: is assert() now to 'crash' debug builds and get stack traces...
+//
 #define RUNTIME_CHECK(x)                                                    \
-	assert(x)
-	//if (!(x)) {                                                             \
-	//	std::stringstream ss;                                               \
-	//	ss << "In " << __FUNCTION__ << " () [" << __FILE__ << " : "         \
-	//		<< __LINE__ << "]\nRuntime check fail: "#x;                     \
-	//	g_logger.logError(ss.str());                                        \
-	//	throw runtime_error(ss.str());	                                    \
-	//}	
+	if (!(x)) {                                                             \
+		std::stringstream ss;                                               \
+		ss << "In " << __FUNCTION__ << " () [" << __FILE__ << " : "         \
+			<< __LINE__ << "]\nRuntime check fail: "#x;                     \
+		g_logger.logError(ss.str());                                        \
+		assert(false);                                                      \
+		throw runtime_error(ss.str());	                                    \
+	}	
 
 // and another one, with a custom error message
-#define RUNTIME_CHECK_MSG(x, msg)                                               \
-	assert(x && msg);
-	//if (!(x)) {                                                             \
-	//	std::stringstream ss;                                               \
-	//	ss << "In " << __FUNCTION__ << " () [" << __FILE__ << " : "         \
-	//		<< __LINE__ << "]\nRuntime check fail: "#x << "\n" << msg;      \
-	//	g_logger.logError(ss.str());                                        \
-	//	throw runtime_error(ss.str());	                                    \
-	//}	
+#define RUNTIME_CHECK_MSG(x, msg)                                           \
+	if (!(x)) {                                                             \
+		std::stringstream ss;                                               \
+		ss << "In " << __FUNCTION__ << " () [" << __FILE__ << " : "         \
+			<< __LINE__ << "]\nRuntime check fail: "#x << "\n" << msg;      \
+		g_logger.logError(ss.str());                                        \
+		assert(false);                                                      \
+		throw runtime_error(ss.str());	                                    \
+	}	
 
 
 //
