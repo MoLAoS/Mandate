@@ -53,7 +53,8 @@ CommandType::CommandType(const char* name, Clicks clicks, bool queuable)
 		, clicks(clicks)
 		, queuable(queuable)
 		, unitType(NULL)
-		, energyCost(0) {
+		, energyCost(0)
+		, m_display(true) {
 }
 
 bool CommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft) {
@@ -74,6 +75,10 @@ bool CommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, 
 	const XmlNode *energyNode = n->getOptionalChild("ep-cost");
 	if (energyNode) {
 		energyCost = energyNode->getIntValue();
+	}
+	const XmlNode *displayNode = n->getOptionalChild("display");
+	if (displayNode) {
+		m_display = displayNode->getBoolValue();
 	}
 
 	bool ok = DisplayableType::load(n, dir);
@@ -1180,6 +1185,14 @@ bool TransformCommandType::load(const XmlNode *n, const string &dir, const TechT
 		m_moveSkillType = static_cast<const MoveSkillType*>(unitType->getSkillType(skillName, SkillClass::MOVE));
 		m_position = n->getChildVec2iValue("position");
 		m_rotation = n->getOptionalFloatValue("rotation");
+		string policy = n->getChildRestrictedValue("hp-policy");
+		m_hpPolicy = HpPolicyNames.match(policy);
+		if (m_hpPolicy == HpPolicy::INVALID) {
+			string msg = "invalid value '" + policy + "' for node hp-policy"
+				+ "\n\tMust be one of 'set-to-one', 'reset', or 'maintain'";
+			g_logger.logXmlError(dir, msg.c_str());
+			loadOk = false;
+		}
 	} catch (runtime_error e) {
 		g_logger.logXmlError(dir, e.what());
 		loadOk = false;
@@ -1618,6 +1631,12 @@ bool BuildSelfCommandType::load(const XmlNode *n, const string &dir, const TechT
 		string bsSkillName = n->getChildRestrictedValue("build-self-skill");
 		const SkillType *st = unitType->getSkillType(bsSkillName, SkillClass::BUILD_SELF);
 		m_buildSelfSkill = static_cast<const BuildSelfSkillType*>(st);
+		const XmlNode *repairFlagNode = n->getOptionalChild("allow-repair");
+		if (!repairFlagNode || repairFlagNode->getBoolValue()) {
+			m_allowRepair = true;
+		} else {
+			m_allowRepair = false;
+		}
 	} catch (runtime_error &e) {
 		g_logger.logXmlError(dir, e.what());
 		return false;

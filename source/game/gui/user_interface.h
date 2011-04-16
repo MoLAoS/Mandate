@@ -115,7 +115,8 @@ private:
 	const World *world;
 	GameCamera *gameCamera;
 
-	// Child Widgets
+	// Widgets
+	///@todo claim ChatDialog and GameMenu from GameState?
 	Console *m_console;
 	Console *m_dialogConsole;
 	Minimap *m_minimap;

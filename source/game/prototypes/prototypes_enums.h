@@ -59,9 +59,9 @@ STRINGY_ENUM( CmdClass,
 	TELEPORT,
 	ATTACK,
 	ATTACK_STOPPED,
-	BUILD,
 	HARVEST,
 	REPAIR,
+	BUILD,
 	PRODUCE,
 	GENERATE,
 	UPGRADE,
@@ -76,6 +76,17 @@ STRINGY_ENUM( CmdClass,
 	BE_LOADED,
 	BUILD_SELF,
 	NULL_COMMAND
+);
+
+inline bool isProductionCmdClass(CmdClass cc) {
+	return cc >= CmdClass::BUILD && cc <= CmdClass::TRANSFORM;
+}
+
+/** HpPolicy - for transform command,  */
+STRINGY_ENUM( HpPolicy,
+	SET_TO_ONE,
+	RESET,
+	MAINTAIN
 );
 
 WRAPPED_ENUM ( ProducibleClass,

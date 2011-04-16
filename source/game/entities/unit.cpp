@@ -2278,13 +2278,24 @@ bool Unit::transform(const TransformCommandType *tct, const UnitType *ut, Vec2i 
 	Vec2i offset = pos - this->pos;
 	m_facing = facing; // needs to be set for putUnitCells() [happens in morph()]
 	const UnitType *oldType = type;
+	int oldHp = getHp();
 	if (morph(tct, ut, offset, false)) {
 		rotation = facing * 90.f;
-		hp = 1;
+		HpPolicy policy = tct->getHpPolicy();
+		if (policy == HpPolicy::SET_TO_ONE) {
+			hp = 1;
+		} else if (policy == HpPolicy::RESET) {
+			hp = type->getMaxHp() / 20;
+		} else {
+			if (oldHp < getMaxHp()) {
+				hp = oldHp;
+			} else {
+				hp = getMaxHp();
+			}
+		}
 		commands.clear();
 		giveCommand(g_world.newCommand(type->getFirstCtOfClass(CmdClass::BUILD_SELF), CmdFlags()));
 		setCurrSkill(SkillClass::BUILD_SELF);
-		faction->onUnitMorphed(type, oldType);
 		return true;
 	}
 	return false;

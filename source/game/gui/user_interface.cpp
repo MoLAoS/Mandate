@@ -1162,8 +1162,7 @@ void UserInterface::computeCommandPanel() {
 					for (int i = 0, j = 0; i < ut->getCommandTypeCount(); ++i) {
 						const CommandType *ct = ut->getCommandType(i);
 						int displayPos = ct->getClass() == CmdClass::MORPH ? morphPos++ : j;
-						if (u->getFaction()->isAvailable(ct) 
-						&& ct->getClass() != CmdClass::SET_MEETING_POINT) {
+						if (u->getFaction()->isAvailable(ct) && !ct->isInvisible()) {
 							m_display->setDownImage(displayPos, ct->getImage());
 							m_display->setCommandType(displayPos, ct);
 							m_display->setDownLighted(displayPos, u->getFaction()->reqsOk(ct));
@@ -1174,7 +1173,7 @@ void UserInterface::computeCommandPanel() {
 			} else { // non uniform selection
 				int lastCommand = 0;
 				foreach_enum (CmdClass, cc) {
-					if (selection.isSharedCommandClass(cc) && cc != CmdClass::BUILD) {
+					if (selection.isSharedCommandClass(cc) && !isProductionCmdClass(cc)) {
 						m_display->setDownLighted(lastCommand, true);
 						m_display->setDownImage(lastCommand, ut->getFirstCtOfClass(cc)->getImage());
 						m_display->setCommandClass(lastCommand, cc);
