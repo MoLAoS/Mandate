@@ -417,22 +417,20 @@ void MenuStateNewGame::onChangeControl(Widget *source) {
 		m_playerSlots[m_humanSlot]->setSelectedControl(ControlType::CLOSED);
 		m_playerSlots[ndx]->setSelectedColour(m_playerSlots[m_humanSlot]->getSelectedColourIndex());
 		m_humanSlot = ndx;
+		updateNetworkSlots();
 	} else {
 		// check for humanity
 		if (m_playerSlots[m_humanSlot]->getControlType() != ControlType::HUMAN) {
 			// human tried to go away...
-			if (m_humanSlot != 0) {
-				m_playerSlots[m_humanSlot]->setSelectedControl(ControlType::CLOSED);
-			}
 			m_playerSlots[0]->setSelectedControl(ControlType::HUMAN);
 			m_playerSlots[0]->setSelectedColour(getLowestFreeColourIndex(m_playerSlots));
 			m_humanSlot = 0;
 			noRecurse = false;
+			updateNetworkSlots();
 			return;
 		}
 	}
 	updateControlers();
-	updateNetworkSlots();
 	noRecurse = false;
 }
 
