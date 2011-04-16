@@ -113,6 +113,8 @@ GameState::~GameState() {
 
 	// delete the World
 	gui.getSelection()->clear(); // disconnect 
+	delete m_debugPanel;
+
 	simInterface->destroyGameWorld();
 }
 
