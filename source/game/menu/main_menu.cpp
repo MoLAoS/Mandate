@@ -96,7 +96,7 @@ const string MainMenu::stateNames[] = {
 
 // ===================== PUBLIC ========================
 
-MainMenu::MainMenu(Program &program)
+MainMenu::MainMenu(Program &program, bool setRootMenu)
 		: ProgramState(program)
 		, setCameraOnSetState(true)
 		, totalConversion(false)
@@ -109,7 +109,9 @@ MainMenu::MainMenu(Program &program)
 
 	fps = lastFps = 0;
 
-	setState(new MenuStateRoot(program, this));
+	if (setRootMenu) {
+		setState(new MenuStateRoot(program, this));
+	}
 	g_program.setTechTitle("");
 }
 

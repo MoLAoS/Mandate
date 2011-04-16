@@ -79,7 +79,7 @@ private:
 	void loadXml();
 
 public:
-	MainMenu(Program &program);
+	MainMenu(Program &program, bool setRootMenu = true);
 	~MainMenu();
 
 	MenuBackground *getMenuBackground()	{return &menuBackground;}

@@ -148,12 +148,12 @@ Program::~Program() {
 bool Program::init() {
 	// startup and immediately host a game
 	if(cmdArgs.isServer()) {
-		MainMenu* mainMenu = new MainMenu(*this);
+		MainMenu* mainMenu = new MainMenu(*this, false);
 		setState(mainMenu);
 		mainMenu->setState(new MenuStateNewGame(*this, mainMenu, true));
 	// startup and immediately connect to server
 	} else if(!cmdArgs.getClientIP().empty()) {
-		MainMenu* mainMenu = new MainMenu(*this);
+		MainMenu* mainMenu = new MainMenu(*this, false);
 		setState(mainMenu);
 		mainMenu->setState(new MenuStateJoinGame(*this, mainMenu, true, Ip(cmdArgs.getClientIP())));
 	// load map and tileset without players
@@ -167,9 +167,9 @@ bool Program::init() {
 		gs.setTeam(0, 0);
 		string map = cmdArgs.getLoadmap();
 		// supporting absolute paths with extension, e.g. showmap in map editor, FIXME: a bit hacky
-		if(map[0]=='/'){
+		if (map[0]=='/') {
 			gs.setMapPath(map);
-		}else{
+		} else {
 			gs.setMapPath(string("maps/") + map);
 		}
 		gs.setTilesetPath(string("tilesets/") + cmdArgs.getLoadTileset());
