@@ -150,23 +150,25 @@ public:
 // ... if we ever get to 1.0 maybe ;)
 //
 #define RUNTIME_CHECK(x)                                                    \
-	if (!(x)) {                                                             \
-		std::stringstream ss;                                               \
-		ss << "In " << __FUNCTION__ << " () [" << __FILE__ << " : "         \
-			<< __LINE__ << "]\nRuntime check fail: "#x;                     \
-		g_logger.logError(ss.str());                                        \
-		throw runtime_error(ss.str());	                                    \
-	}	
+	assert(x)
+	//if (!(x)) {                                                             \
+	//	std::stringstream ss;                                               \
+	//	ss << "In " << __FUNCTION__ << " () [" << __FILE__ << " : "         \
+	//		<< __LINE__ << "]\nRuntime check fail: "#x;                     \
+	//	g_logger.logError(ss.str());                                        \
+	//	throw runtime_error(ss.str());	                                    \
+	//}	
 
 // and another one, with a custom error message
 #define RUNTIME_CHECK_MSG(x, msg)                                               \
-	if (!(x)) {                                                             \
-		std::stringstream ss;                                               \
-		ss << "In " << __FUNCTION__ << " () [" << __FILE__ << " : "         \
-			<< __LINE__ << "]\nRuntime check fail: "#x << "\n" << msg;      \
-		g_logger.logError(ss.str());                                        \
-		throw runtime_error(ss.str());	                                    \
-	}	
+	assert(x && msg);
+	//if (!(x)) {                                                             \
+	//	std::stringstream ss;                                               \
+	//	ss << "In " << __FUNCTION__ << " () [" << __FILE__ << " : "         \
+	//		<< __LINE__ << "]\nRuntime check fail: "#x << "\n" << msg;      \
+	//	g_logger.logError(ss.str());                                        \
+	//	throw runtime_error(ss.str());	                                    \
+	//}	
 
 
 //
