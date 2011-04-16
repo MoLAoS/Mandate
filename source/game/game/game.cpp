@@ -179,6 +179,7 @@ void GameState::init() {
 	m_chatDialog->Button1Clicked.connect(this, &GameState::onChatEntered);
 	m_chatDialog->Button2Clicked.connect(this, &GameState::onChatCancel);
 	m_chatDialog->Escaped.connect(this, &GameState::onChatCancel);
+	m_chatDialog->Close.connect(this, &GameState::onChatCancel);
 	m_chatDialog->setVisible(false);
 
 	m_debugPanel = new DebugPanel(static_cast<Container*>(&g_program));
@@ -456,6 +457,7 @@ void GameState::doSaveBox() {
 	dialog->Button1Clicked.connect(this, &GameState::onSaveSelected);
 	dialog->Button2Clicked.connect(this, &GameState::destroyDialog);
 	dialog->Escaped.connect(this, &GameState::destroyDialog);
+	dialog->Close.connect(this, &GameState::destroyDialog);
 }
 
 void GameState::onSaveSelected(Widget*) {
