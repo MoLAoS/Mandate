@@ -549,6 +549,7 @@ void MenuStateNewGame::update() {
 				m_messageDialog = MessageDialog::showDialog(g_metrics.getScreenDims() / 2 - sz / 2,
 					sz, g_lang.get("Error"), g_lang.get("WaitingForConnections"), g_lang.get("Ok"), "");
 				m_messageDialog->Button1Clicked.connect(this, &MenuStateNewGame::onDismissDialog);
+				m_messageDialog->Close.connect(this, &MenuStateNewGame::onDismissDialog);
 				m_transition = false;
 			} else {
 				GameSettings &gs = g_simInterface.getGameSettings();

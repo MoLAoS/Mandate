@@ -233,6 +233,7 @@ void MenuStateJoinGame::onConnect(Widget*) {
 	m_messageBox = MessageDialog::showDialog(pos, size, "Connecting...",
 		"Connecting, Please wait.", g_lang.get("Cancel"), "");
 	m_messageBox->Button1Clicked.connect(this, &MenuStateJoinGame::onCancelConnect);
+	m_messageBox->Close.connect(this, &MenuStateJoinGame::onCancelConnect);
 	{
 		MutexLock lock(m_connectMutex);
 		assert(!m_connectThread);
@@ -259,6 +260,7 @@ void MenuStateJoinGame::connectThreadDone(ConnectResult result) {
 		m_messageBox = MessageDialog::showDialog(pos, size, g_lang.get("Connected"),
 			g_lang.get("Connected") + "\n" + g_lang.get("WaitingHost"), g_lang.get("Disconnect"), "");
 		m_messageBox->Button1Clicked.connect(this, &MenuStateJoinGame::onDisconnect);
+		m_messageBox->Close.connect(this, &MenuStateJoinGame::onDisconnect);
 	} else if (result == ConnectResult::CANCELLED) {
 		m_connectPanel->setVisible(true);
 		m_connectLabel->setText("Not connected. Last attempt cancelled.");///@todo localise
@@ -298,6 +300,7 @@ void MenuStateJoinGame::onSearchForGame(Widget*) {
 	m_messageBox = MessageDialog::showDialog(pos, size,"Searching...",
 		"Searching, Please wait.", g_lang.get("Cancel"), "");
 	m_messageBox->Button1Clicked.connect(this, &MenuStateJoinGame::onCancelSearch);
+	m_messageBox->Close.connect(this, &MenuStateJoinGame::onCancelSearch);
 	{
 		MutexLock lock(m_findServerMutex);
 		assert(!m_findServerThread);
