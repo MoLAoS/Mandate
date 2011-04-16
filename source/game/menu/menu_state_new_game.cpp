@@ -426,6 +426,7 @@ void MenuStateNewGame::onChangeControl(Widget *source) {
 			}
 			m_playerSlots[0]->setSelectedControl(ControlType::HUMAN);
 			m_playerSlots[0]->setSelectedColour(getLowestFreeColourIndex(m_playerSlots));
+			m_humanSlot = 0;
 			noRecurse = false;
 			return;
 		}
@@ -704,7 +705,8 @@ bool MenuStateNewGame::loadGameSettings() {
 void MenuStateNewGame::updateControlers() {
 	GameSettings &gs = g_simInterface.getGameSettings();
 	assert(m_humanSlot >= 0);
-	//assert(m_playerSlots[m_humanSlot]->getControlType() == ControlType::HUMAN);
+
+	// 1. Enable map max players slots & disable the rest
 	for (int i = 0; i < m_mapInfo.players; ++i) {
 		m_playerSlots[i]->setEnabled(true);
 	}
@@ -712,13 +714,19 @@ void MenuStateNewGame::updateControlers() {
 		m_playerSlots[i]->setSelectedControl(ControlType::CLOSED);
 		m_playerSlots[i]->setEnabled(false);
 	}
+
+	// 2. reset human slot if it was just disabled
 	if (m_humanSlot >= m_mapInfo.players) {
 		m_humanSlot = 0;
 		m_playerSlots[m_humanSlot]->setSelectedControl(ControlType::HUMAN);
 		m_playerSlots[m_humanSlot]->setSelectedColour(getLowestFreeColourIndex(m_playerSlots));
 	}
+
+	// 3. for each player slot
 	for (int i=0; i < GameConstants::maxPlayers; ++i) {
 		gs.setFactionControl(i, m_playerSlots[i]->getControlType());
+
+		// 3a. If closed, clear game-settings for this slot & reset slot widget
 		if (m_playerSlots[i]->getControlType() == ControlType::CLOSED) {
 			gs.setFactionTypeName(i, "");
 			gs.setPlayerName(i, "");
@@ -735,7 +743,7 @@ void MenuStateNewGame::updateControlers() {
 			} else {
 				m_playerSlots[i]->setEnabled(false);
 			}
-		} else {
+		} else { // 3b. If not closed, set any missing data and sync with game-settings
 			if (m_playerSlots[i]->getSelectedFactionIndex() == -1) {
 				m_playerSlots[i]->setSelectedFaction(i % m_factionFiles.size());
 			}
@@ -799,6 +807,7 @@ void MenuStateNewGame::updateControlers() {
 			gs.setColourIndex(i, m_playerSlots[i]->getSelectedColourIndex());
 			m_playerSlots[i]->setFree(false);
 		}
+		// if human, set 'this faction' index in game-settings
 		if (m_playerSlots[i]->getControlType() == ControlType::HUMAN) {
 			gs.setThisFactionIndex(i);
 		}
