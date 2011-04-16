@@ -251,9 +251,10 @@ void MenuStateOptions::buildOptionsPanel(CellStrip *container, int cell) {
 	dw = new OptionWidget(col1, lang.get("PlayerName"));
 	dw->setCell(3);
 	TextBox *tb = new TextBox(dw);
-	tb->setText("");
+	tb->setText(g_config.getNetPlayerName());
 	tb->setCell(1);
 	tb->setAnchors(squashAnchors);
+	tb->TextChanged.connect(this, &MenuStateOptions::onPlayerNameChanged);
 
 	// Language
 	dw = new OptionWidget(col1, lang.get("Language"));
@@ -448,6 +449,11 @@ void MenuStateOptions::onSpinnerValueChanged(Widget *source) {
 	} else if (spinner == m_maxRenderDistSpinner) {
 		g_config.setRenderDistanceMax(float(spinner->getValue()));
 	}
+}
+
+void MenuStateOptions::onPlayerNameChanged(Widget *source) {
+	TextBox *tb = static_cast<TextBox*>(source);
+	g_config.setNetPlayerName(tb->getText());
 }
 
 void MenuStateOptions::onDropListSelectionChanged(Widget *source) {

@@ -116,6 +116,7 @@ private:
 	void onSliderValueChanged(Widget *source);
 	void onSpinnerValueChanged(Widget *source);
 	void onDropListSelectionChanged(Widget *source);
+	void onPlayerNameChanged(Widget *source);
 	void onToggleDebugMode(Widget*);
 	void onToggleDebugKeys(Widget*);
 
