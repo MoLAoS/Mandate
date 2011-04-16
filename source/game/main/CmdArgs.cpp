@@ -50,6 +50,9 @@ bool CmdArgs::parse(int argc, char **argv){
 #	endif
 	for(int i=1; i<argc; ++i){
 		string arg(argv[i]);
+		if (arg[0] == '-' && arg[1] == '-') {
+			arg = arg.substr(1);
+		}
 		if(arg=="-server"){
 			this->server = true;
 		}else if(arg=="-client" && (i+1)<argc){
@@ -69,7 +72,10 @@ bool CmdArgs::parse(int argc, char **argv){
 		} else if (arg == "-test" && (i+1) < argc) {
 			test = true;
 			testType = argv[++i];
-		} else if(arg=="--help" || arg=="-h") {
+		} else if (arg == "-version") {
+			cout << "Glest Advanced Engine " << VERSION_STRING << endl;
+			return true;
+		} else if(arg=="-help" || arg=="-h") {
 			cout << "usage: " << progName << " [options]\n"
 				<< "  -server                  startup and immediately host a game\n"
 				<< "  -client IP               startup and immediately connect to server IP\n"
