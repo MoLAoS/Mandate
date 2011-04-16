@@ -167,7 +167,7 @@ public:
 	void doDefeatedMessage(Faction *f);
 	void doSaveBox();
 
-	void toggleDebug() { m_debugPanel->setVisible(!m_debugPanel->isVisible()); }
+	void toggleDebug(Widget* ptr = 0);
 
 protected:
 	// render

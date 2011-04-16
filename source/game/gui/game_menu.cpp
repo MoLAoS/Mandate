@@ -64,7 +64,7 @@ void GameMenu::onReturnToGame(Widget*) {
 }
 
 void GameMenu::onDebugToggle(Widget*) {
-	g_config.setMiscDebugMode(!g_config.getMiscDebugMode());
+	//g_config.setMiscDebugMode(!g_config.getMiscDebugMode());
 	g_gameState.toggleDebug();
 }
 

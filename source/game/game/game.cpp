@@ -180,12 +180,13 @@ void GameState::init() {
 	m_chatDialog->setVisible(false);
 
 	m_debugPanel = new DebugPanel(static_cast<Container*>(&g_program));
-	m_debugPanel->setSize(Vec2i(300, 500));
-	m_debugPanel->setPos(Vec2i(25, 200));
+	m_debugPanel->setSize(Vec2i(300, 400));
+	m_debugPanel->setPos(Vec2i(25, 250));
 	m_debugPanel->setVisible(g_config.getMiscDebugMode());
 	m_debugPanel->setButtonText("");
 	m_debugPanel->setTitleText("Debug");
 	m_debugPanel->setDebugText("");
+	m_debugPanel->Close.connect(this, &GameState::toggleDebug);
 
 	///@todo StaticText (?) for script message
 	m_scriptDisplayPos = Vec2i(175, g_metrics.getScreenH() - 64);
@@ -454,6 +455,13 @@ void GameState::onSaveSelected(Widget*) {
 		msg.replace(pos, 2, name + ".sav");
 	}
 	gui.getRegularConsole()->addLine(msg);
+}
+
+void GameState::toggleDebug(Widget*) {
+	assert(m_debugPanel->isVisible() == g_config.getMiscDebugMode());
+	bool v = !m_debugPanel->isVisible();
+	m_debugPanel->setVisible(v);
+	g_config.setMiscDebugMode(v);
 }
 
 void GameState::addScriptMessage(const string &header, const string &msg) {
