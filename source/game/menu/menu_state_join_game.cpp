@@ -117,6 +117,12 @@ MenuStateJoinGame::MenuStateJoinGame(Program &program, MainMenu *mainMenu, bool 
 	playerIndex = -1;
 
 	buildConnectPanel();
+
+	// connect if ip provided
+	if (serverIp.getString() != "0.0.0.0") {
+		m_serverTextBox->setText(serverIp.getString());
+		onConnect(0);
+	}
 }
 
 void MenuStateJoinGame::buildConnectPanel() {
