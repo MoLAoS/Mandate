@@ -230,7 +230,9 @@ void CommandType::describe(const Unit *unit, CmdDescriptor *callback, ProdTypePt
 		// but the tip in the 'producible' node.
 		assert(getProducedCount() > 0);
 		if (!lang.lookUp(getSubHeader(), factionName, pt->getName(), header)) { // header
-			header = commandName;
+			if (!lang.lookUp(pt->getName(), factionName, header)) {
+				header = formatString(pt->getName());
+			}
 		}
 		if (!lang.lookUp(getTipKey(pt->getName()), factionName, tip)) { // tip
 			tip = "";
