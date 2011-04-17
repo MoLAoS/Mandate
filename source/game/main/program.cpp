@@ -404,7 +404,7 @@ void Program::setSimInterface(SimulationInterface *si) {
 	simulationInterface = si;
 }
 
-void Program::setState(ProgramState *programState) {
+void Program::setState(ProgramState *programState) try {
 	//cout << "setting state to ProgramState object @ 0x" << intToHex(int(programState)) << endl;
 	assert(programState != m_programState);
 	delete m_programState;
@@ -412,6 +412,8 @@ void Program::setState(ProgramState *programState) {
 	m_programState->load();
 	m_programState->init();
 	resetTimers();
+} catch (exception &e) {
+	crash(&e); ///@bug I think this causes a crash in Renderer::swapBuffers() on exit - hailstone 17March2011
 }
 
 void Program::exit() {
