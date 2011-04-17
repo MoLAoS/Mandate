@@ -376,7 +376,14 @@ void UserInterface::mouseDownLeft(int x, int y) {
 	bool validWorldPos = computeTarget(Vec2i(x, y), worldPos, units, true);
 
 	if (!validWorldPos) {
-		m_console->addStdMessage("InvalidPosition");
+		if (!selectingPos && !selectingMeetingPoint) {
+			selectionQuad.setPosDown(Vec2i(x, y));
+			calculateNearest(units, gameCamera->getPos());
+			updateSelection(false, units);
+			computeDisplay();
+		} else {
+			m_console->addStdMessage("InvalidPosition");
+		}
 		return;
 	}
 
@@ -404,7 +411,6 @@ void UserInterface::mouseDownLeft(int x, int y) {
 		calculateNearest(units, gameCamera->getPos());
 		updateSelection(false, units);
 	}
-
 	computeDisplay();
 }
 
