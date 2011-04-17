@@ -132,28 +132,21 @@ void MenuStateJoinGame::buildConnectPanel() {
 	m_connectPanel->setSizeHint(2, SizeHint(-1, defCellHeight)); // def px for connected label
 	m_connectPanel->setSizeHint(3, SizeHint(25));     // 25 % of the rest for button panel
 
-	m_connectPanel->borderStyle().setSolid(g_widgetConfig.getColourIndex(Vec3f(1.f, 0.f, 0.f)));
-	m_connectPanel->borderStyle().setSizes(2);
-
-	int font = g_widgetConfig.getDefaultFontIndex(FontUsage::MENU);
-	int white = g_widgetConfig.getColourIndex(Colour(255u));
-//	Font *font = g_widgetConfig.getMenuFont()[FontSize::NORMAL];
-	
 	Anchors a(Anchor(AnchorType::RIGID, 0)); // fill
 	m_connectPanel->setAnchors(a);
 	Vec2i pad(45, 45);
 	m_connectPanel->setPos(pad);
 	m_connectPanel->setSize(Vec2i(g_config.getDisplayWidth() - pad.w * 2, g_config.getDisplayHeight() - pad.h * 2));
 
+	// anchors for sub panels, fill vertical, set 25 % in from left / right edges
+	a = Anchors(Anchor(AnchorType::SPRINGY, 25), Anchor(AnchorType::RIGID, 0));
+
+	// Panel to contain recent host label/list
 	CellStrip *pnl = new CellStrip(m_connectPanel, Orientation::HORIZONTAL, Origin::CENTRE, 2);
 	pnl->setCell(0);
-	// fill vertical, set 25 % in from left / right edges
-	a = Anchors(Anchor(AnchorType::SPRINGY, 25), Anchor(AnchorType::RIGID, 0));
 	pnl->setAnchors(a);
 
-	pnl->borderStyle().setSolid(g_widgetConfig.getColourIndex(Vec3f(1.f, 0.f, 1.f)));
-	pnl->borderStyle().setSizes(2);
-
+	// anchors for label and list, fill horizontal, 2px in from top and bottom
 	Anchors a2 = Anchors::getFillAnchors();
 	a2.set(Edge::TOP, Anchor(AnchorType::RIGID, 2));
 	a2.set(Edge::BOTTOM, Anchor(AnchorType::RIGID, 2));
@@ -162,41 +155,38 @@ void MenuStateJoinGame::buildConnectPanel() {
 	historyLabel->setCell(0);
 	historyLabel->setText(g_lang.get("RecentHosts"));
 	historyLabel->setAnchors(a2);
-	m_historyList = new DropList(pnl, Vec2i(0), Vec2i(300, 34));
+	m_historyList = new DropList(pnl);
 	m_historyList->setCell(1);
 	m_historyList->setAnchors(a2);
 
+	// Panel to contain server label/textbox
 	pnl = new CellStrip(m_connectPanel, Orientation::HORIZONTAL, Origin::CENTRE, 2);
 	pnl->setCell(1);
 	pnl->setAnchors(a);
-	pnl->borderStyle().setSolid(g_widgetConfig.getColourIndex(Vec3f(1.f, 0.f, 1.f)));
-	pnl->borderStyle().setSizes(2);
 
-	StaticText* serverLabel = new StaticText(pnl, Vec2i(0), Vec2i(6 * defWidgetHeight, defWidgetHeight));
+	StaticText* serverLabel = new StaticText(pnl);
 	serverLabel->setCell(0);
 	serverLabel->setText(g_lang.get("Server") + " Ip: ");
 	serverLabel->setAnchors(a2);
 	
-	m_serverTextBox = new TextBox(pnl, Vec2i(0), Vec2i(10 * defWidgetHeight, defWidgetHeight));
+	m_serverTextBox = new TextBox(pnl);
 	m_serverTextBox->setCell(1);
 	m_serverTextBox->setText("");
 	m_serverTextBox->TextChanged.connect(this, &MenuStateJoinGame::onTextModified);
 	m_serverTextBox->setAnchors(a2);
 
-	m_connectLabel = new StaticText(m_connectPanel, Vec2i(0), Vec2i(16 * defWidgetHeight, defWidgetHeight));
+	m_connectLabel = new StaticText(m_connectPanel);
 	m_connectLabel->setCell(2);
 	m_connectLabel->setText(g_lang.get("NotConnected"));
 	m_connectLabel->setAnchors(a2);
 
-	m_connectLabel->borderStyle().setSolid(g_widgetConfig.getColourIndex(Vec3f(1.f, 0.f, 1.f)));
-	m_connectLabel->borderStyle().setSizes(2);
-
-	a.set(Edge::LEFT, 0, false);
-	a.set(Edge::RIGHT, 0, false);
+	// buttons panel, fill
+	a = Anchors::getFillAnchors();
 	pnl = new CellStrip(m_connectPanel, Orientation::HORIZONTAL, Origin::CENTRE, 3);
 	pnl->setCell(3);
 	pnl->setAnchors(a);
 
+	// buttons will be sized explicitly, set anchors to centre in cell
 	a2.setCentre(true);
 
 	// buttons
@@ -227,10 +217,13 @@ void MenuStateJoinGame::buildConnectPanel() {
 		}
 	}
 	m_historyList->SelectionChanged.connect(this, &MenuStateJoinGame::onServerSelected);
+	program.setFade(0.f);
 }
 
 void MenuStateJoinGame::onReturn(Widget*) {
 	m_targetTansition = Transition::RETURN;
+	g_soundRenderer.playFx(g_coreData.getClickSoundA());
+	mainMenu->setCameraTarget(MenuStates::ROOT);
 	doFadeOut();
 }
 

@@ -150,7 +150,7 @@ void MenuBackground::update(){
 
 	// camera transition?
 	if (targetCamera != 0) {
-		t += ((0.1f + (1.f - t) / 10.f) / 20.f) * (60.f / WORLD_FPS);
+		t += ((0.1f + (1.f - t) / 10.f) / 20.f) * (40.f / WORLD_FPS);
 
 		//interpolate position
 		camera.setPosition(lastCamera.getPosition().lerp(t, targetCamera->getPosition()));

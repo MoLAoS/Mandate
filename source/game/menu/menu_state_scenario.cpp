@@ -60,8 +60,6 @@ MenuStateScenario::MenuStateScenario(Program &program, MainMenu *mainMenu)
 	sPanel->setSizeHint(0, SizeHint(-1, itemHeight * 3 / 2));
 	sPanel->setSizeHint(1, SizeHint(-1, itemHeight * 3 / 2));
 	sPanel->setSizeHint(2, SizeHint());
-	sPanel->borderStyle().setSolid(g_widgetConfig.getColourIndex(Vec3f(0.f, 0.f, 1.f)));
-	sPanel->borderStyle().setSizes(2);
 
 	OptionWidget *ow = new OptionWidget(sPanel, g_lang.get("Category"));
 	ow->setCell(0);
@@ -85,8 +83,6 @@ MenuStateScenario::MenuStateScenario(Program &program, MainMenu *mainMenu)
 	CellStrip *btnPanel = new CellStrip(rootStrip, Orientation::HORIZONTAL, 3);
 	btnPanel->setCell(1);
 	btnPanel->setAnchors(fillAnchors);
-	btnPanel->borderStyle().setSolid(g_widgetConfig.getColourIndex(Vec3f(0.f, 1.f, 0.f)));
-	btnPanel->borderStyle().setSizes(2);
 
 	Vec2i sz(itemHeight * 7, itemHeight);
 
