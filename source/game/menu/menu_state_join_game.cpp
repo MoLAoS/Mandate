@@ -132,6 +132,9 @@ void MenuStateJoinGame::buildConnectPanel() {
 	m_connectPanel->setSizeHint(2, SizeHint(-1, defCellHeight)); // def px for connected label
 	m_connectPanel->setSizeHint(3, SizeHint(25));     // 25 % of the rest for button panel
 
+	m_connectPanel->borderStyle().setSolid(g_widgetConfig.getColourIndex(Vec3f(1.f, 0.f, 0.f)));
+	m_connectPanel->borderStyle().setSizes(2);
+
 	int font = g_widgetConfig.getDefaultFontIndex(FontUsage::MENU);
 	int white = g_widgetConfig.getColourIndex(Colour(255u));
 //	Font *font = g_widgetConfig.getMenuFont()[FontSize::NORMAL];
@@ -148,8 +151,12 @@ void MenuStateJoinGame::buildConnectPanel() {
 	a = Anchors(Anchor(AnchorType::SPRINGY, 25), Anchor(AnchorType::RIGID, 0));
 	pnl->setAnchors(a);
 
-	Anchors a2;
-	a2.setCentre(true);
+	pnl->borderStyle().setSolid(g_widgetConfig.getColourIndex(Vec3f(1.f, 0.f, 1.f)));
+	pnl->borderStyle().setSizes(2);
+
+	Anchors a2 = Anchors::getFillAnchors();
+	a2.set(Edge::TOP, Anchor(AnchorType::RIGID, 2));
+	a2.set(Edge::BOTTOM, Anchor(AnchorType::RIGID, 2));
 
 	StaticText* historyLabel = new StaticText(pnl, Vec2i(0), Vec2i(200, 34));
 	historyLabel->setCell(0);
@@ -162,6 +169,8 @@ void MenuStateJoinGame::buildConnectPanel() {
 	pnl = new CellStrip(m_connectPanel, Orientation::HORIZONTAL, Origin::CENTRE, 2);
 	pnl->setCell(1);
 	pnl->setAnchors(a);
+	pnl->borderStyle().setSolid(g_widgetConfig.getColourIndex(Vec3f(1.f, 0.f, 1.f)));
+	pnl->borderStyle().setSizes(2);
 
 	StaticText* serverLabel = new StaticText(pnl, Vec2i(0), Vec2i(6 * defWidgetHeight, defWidgetHeight));
 	serverLabel->setCell(0);
@@ -179,11 +188,16 @@ void MenuStateJoinGame::buildConnectPanel() {
 	m_connectLabel->setText(g_lang.get("NotConnected"));
 	m_connectLabel->setAnchors(a2);
 
+	m_connectLabel->borderStyle().setSolid(g_widgetConfig.getColourIndex(Vec3f(1.f, 0.f, 1.f)));
+	m_connectLabel->borderStyle().setSizes(2);
+
 	a.set(Edge::LEFT, 0, false);
 	a.set(Edge::RIGHT, 0, false);
 	pnl = new CellStrip(m_connectPanel, Orientation::HORIZONTAL, Origin::CENTRE, 3);
 	pnl->setCell(3);
 	pnl->setAnchors(a);
+
+	a2.setCentre(true);
 
 	// buttons
 	Button* returnButton = new Button(pnl, Vec2i(0), Vec2i(7 * defWidgetHeight, defWidgetHeight));

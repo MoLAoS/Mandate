@@ -121,6 +121,7 @@ void ScrollText::init() {
 	m_staticText->setCell(0);
 	m_staticText->setAnchors(anchors);
 	m_staticText->setAlignment(Alignment::NONE);
+	m_staticText->setText("");
 }
 
 void ScrollText::recalc() {

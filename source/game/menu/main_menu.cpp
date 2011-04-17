@@ -253,6 +253,14 @@ void MenuState::update() {
 	}
 }
 
+//class DebugClass : public sigslot::has_slots {
+//public:
+//	void onWidgetDestoyed(Widget *widget) {
+//		DEBUG_HOOK();
+//	}
+//};
+//DebugClass debugHelper;
+
 // =====================================================
 //  class MenuState
 // =====================================================
@@ -276,6 +284,7 @@ MenuState::MenuState(Program &program, MainMenu *mainMenu)
 	if (!g_config.getMiscDebugMode()) {
 		m_debugText->setVisible(false);
 	}
+	//m_debugText->Destroyed.connect(&debugHelper, &DebugClass::onWidgetDestoyed);
 }
 
 void MenuState::setDebugString(const string &s) {
