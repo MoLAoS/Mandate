@@ -92,12 +92,13 @@ class CommandType : public RequirableType {
 	friend class Glest::Sim::PrototypeFactory;
 
 protected:
-	Clicks clicks;
-	bool queuable;
+	Clicks          clicks;
+	bool            queuable;
 	const UnitType *unitType;
-	string m_tipKey;
-	string m_tipHeaderKey;
-	int energyCost;
+	string          m_tipKey;
+	string          m_tipHeaderKey;
+	int             energyCost;
+	bool            m_display;
 
 	void setId(int v) { m_id = v; }
 	void setUnitType(const UnitType *ut) { unitType = ut; }
@@ -158,6 +159,7 @@ public:
 	//init();
 
 	bool isQueuable() const								{return queuable;}
+	bool isInvisible() const                            {return !m_display;}
 
 	// get
 	const UnitType*       getUnitType() const   { return unitType; }
@@ -703,9 +705,12 @@ protected:
 	const MoveSkillType*	m_moveSkillType;
 	Vec2i                   m_position; // cell offset from 'buildPos' to go to before morphing
 	float                   m_rotation;
+	HpPolicy                m_hpPolicy;
 
 public:
 	TransformCommandType();
+
+	HpPolicy getHpPolicy() const { return m_hpPolicy; }
 
 	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
 	virtual void doChecksum(Checksum &checksum) const;
@@ -901,9 +906,13 @@ public:
 class BuildSelfCommandType : public CommandType {
 private:
 	const BuildSelfSkillType *m_buildSelfSkill;
+	bool                      m_allowRepair;
 
 public:
 	BuildSelfCommandType() : CommandType("build-self", Clicks::TWO), m_buildSelfSkill(0) {}
+
+	bool allowRepair() const { return m_allowRepair; }
+
 	virtual void getDesc(string &str, const Unit *unit) const {}
 	virtual void descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt = 0) const override;
 	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
@@ -918,7 +927,7 @@ public:
 
 class SetMeetingPointCommandType: public CommandType {
 public:
-	SetMeetingPointCommandType() : CommandType("SetMeetingPoint", Clicks::TWO) {}
+	SetMeetingPointCommandType() : CommandType("SetMeetingPoint", Clicks::TWO) { m_display = false; }
 	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft) {return true;}
 	virtual void getDesc(string &str, const Unit *unit) const {}
 	virtual void descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt = 0) const override {}

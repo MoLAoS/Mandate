@@ -204,7 +204,7 @@ private:
 	bool	m_cloaking, m_deCloaking;
 	float	m_cloakAlpha;
 
-	// this should go someone else
+	// this should go somewhere else
 	float highlight;				/**< alpha for selection circle effects */
 
 	Effects effects;				/**< Effects (spells, etc.) currently effecting unit. */
@@ -437,11 +437,11 @@ public:
 	bool isAlive() const				{return hp;}
 	bool isDamaged() const				{return hp < getMaxHp();}
 	bool isOperative() const			{return isAlive() && isBuilt();}
-	bool isBuilt() const				{return !isBeingBuilt();}
 	bool isBeingBuilt() const			{
 		return currSkill->getClass() == SkillClass::BE_BUILT
 			|| currSkill->getClass() == SkillClass::BUILD_SELF;
 	}
+	bool isBuilt() const				{return !isBeingBuilt();}
 
 	// set
 	void setCurrSkill(const SkillType *currSkill);

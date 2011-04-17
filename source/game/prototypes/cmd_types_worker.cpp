@@ -87,11 +87,20 @@ bool RepairCommandType::repairableInRange(const Unit *unit, Vec2i centre, int ce
 		// all zones
 		for (int z = 0; z < Zone::COUNT; z++) {
 			Unit *candidate = map->getCell(pos)->getUnit(enum_cast<Field>(z));
+			if (candidate == 0) {
+				continue;
+			}
+			const Command *cmd = candidate->anyCommand() ? candidate->getCurrCommand() : 0;
+			CmdClass cc = cmd ? cmd->getType()->getClass() : CmdClass::INVALID;
+			const BuildSelfCommandType *bsct = cc == CmdClass::BUILD_SELF 
+				? static_cast<const BuildSelfCommandType*>(cmd->getType()) : 0;
 	
 			//is it a repairable?
-			if (candidate && (allowSelf || candidate != unit)
+			if ((allowSelf || candidate != unit)
 			&& (!rst->isSelfOnly() || candidate == unit)
-			&& candidate->isAlive() && unit->isAlly(candidate)
+			&& candidate->isAlive()
+			&& unit->isAlly(candidate)
+			&& (!bsct || bsct->allowRepair())
 			&& (!damagedOnly || candidate->isDamaged())
 			&& (!militaryOnly || candidate->getType()->hasCommandClass(CmdClass::ATTACK))
 			&& rct->canRepair(candidate->getType())) {

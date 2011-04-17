@@ -16,9 +16,7 @@
 		<multi-selection value="true"/>
 		<cellmap value="false"/>
 		<levels/>
-		<fields>
-			<field value="land"/>
-		</fields>
+		<field value="land"/>
 		<properties/>
 		<light enabled="false"/>
 		<unit-requirements/>
@@ -182,7 +180,7 @@
 			<type value="morph"/>
 			<name value="morph_skill"/>
 			<ep-cost value="0"/>
-			<speed value="20"/>
+			<speed value="40"/>
 			<anim-speed value="100"/>
 			<animation path="models/worker_building.g3d"/>
 			<sound enabled="true" start-time="0.5">
@@ -315,12 +313,13 @@
 				<unit name="farm"/>
 				<unit name="barracks"/>
 				<unit name="castle"/>
+				<unit name="defense_tower"/>
 			</repaired-units>
 		</command>
 		
 		<command>
 			<type value="transform"/>
-			<name value="become_farm" tip="farm_info"/>
+			<name value="become_building" tip="transform_info" sub-header="transform_subheader" />
 			<image path="../../../../../magitech/factions/tech/units/farm/images/farm.bmp"/>
 			<unit-requirements/>
 			<upgrade-requirements/>
@@ -329,9 +328,10 @@
 			<position x="0" y="0"/> <!-- position 'offset' from 'target' pos to go to -->
 			<rotation value="0" /> <!-- rotation to assume (in degrees, 0 == 'north') when in place -->
 			<morph-units>
-				<morph-unit name="farm"/>
-				<morph-unit name="defense_tower"/>
+				<morph-unit name="farm" tip="farm_info"/>
+				<morph-unit name="defense_tower" tip="defense_tower_info"/>
 			</morph-units>
+			<hp-policy value="maintain" />
 		</command>
 
 	</commands>
