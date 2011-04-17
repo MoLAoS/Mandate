@@ -209,9 +209,8 @@ void Window::handleMouseDown(SDL_Event event) {
 	if(input.getLastMouseEvent() - lastMouseDown[button] < DOUBLECLICKTIME
 			&& abs(lastMouse[button].x - event.button.x) < DOUBLECLICKDELTA
 			&& abs(lastMouse[button].y - event.button.y) < DOUBLECLICKDELTA) {
-		eventMouseDown(event.button.x, event.button.y, button);
 		eventMouseDoubleClick(event.button.x, event.button.y, button);
-	} else {	
+	} else {
 		eventMouseDown(event.button.x, event.button.y, button);
 	}
 	lastMouseDown[button] = input.getLastMouseEvent();

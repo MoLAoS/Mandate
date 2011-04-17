@@ -371,7 +371,15 @@ string Socket::getHostName() const{
 string Socket::getIp() const {
 	hostent* info = gethostbyname(getHostName().c_str());
 	if (!info) {
+#ifdef USE_POSIX_SOCKETS
+		std::stringstream msg;
+		msg << "Socket Error in : " << __FUNCTION__ << "() [Error code: " << h_errno << "]\n"
+			<< hstrerror(h_errno);
+		cout << msg.str() << endl;
+		throw SocketException(msg.str());
+#else
 		handleError(__FUNCTION__);
+#endif
 	}
 	unsigned char* address =
 		reinterpret_cast<unsigned char*>(info->h_addr_list[0]);
