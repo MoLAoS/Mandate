@@ -1,0 +1,104 @@
+;
+; Unit names and tips
+;
+archmage=Archmage
+archmage_info=El mago mas avanzado. Débil pero capaz de realizar ataques extremadamente potentes con radio de efecto tanto contra unidades terrestres como aéreas.
+archmage_tower=Archmage Tower
+archmage_tower_info=Necesaria para producir Archmages, mejora Dragon Call.
+battlemage=Battlemage
+battlemage_info=Guerrero versátil. Ataque potente, buena velocidad y armadura aceptable. Débil contra unidades de ataque cercano. Se puede transformar en Archmage.
+behemoth=Behemoth
+behemoth_info=La mejor unidad mágica de combate cercano. Lenta pero resistente y con ataques fuertes, especialmente efectivos contra edificios y otras unidades de madera.
+daemon=Daemon
+daemon_info=Combatiente cercano básico. Barato y débil. Su misión principal es mantener a las unidades enemigas lejos de tus unidades de ataque a distancia por el mayor tiempo posible.
+dragon=Dragon
+dragon_info=Unidad aérea poderosa y versátil. Rapida y capaz de atacar a aire y tierra. Débil contra ataques perforantes.
+drake_rider=Drake Rider
+drake_rider_info=Rápida y mas resistente que la Summoner esta unidad es ideal para explorar o realizar ataques por sorpresa.
+energy_source=Energy Source
+energy_source_info=Genera energía, para permitir la producción de mas unidades.
+ghost_armor=Ghost Armour
+ghost_armor_info=Unidad media de ataque cercano. Lenta pero resistente y con un buen ataque.
+golem=Golem
+golem_info=Unidad defensiva, que necesita energía para andar. Ataque a tierra fuerte y muy buena resistencia.
+initiate=Initiate
+initiate_info=Puede recolectar recursos y construir estructuras. Muy débil pero tiene un ataque básico para emergencias. Se puede transformar en Battlemage.
+library=Library
+library_info=Puede mejorar Energy Compression, Energy Sharpening y Hell Gate.
+mage_tower=Mage Tower
+mage_tower_info=Estructura principal. Almecena recursos y produce Initiates.
+summoner=Summoner
+summoner_info=Puede invocar criaturas para ayudar en la batalla. Lenta y debil, tiene un ataque potente pero que consume energía, util tanto contra unidades terrestres como aereas. Se puede transformar en Drake Rider.
+summoner_guild=Summoner Guild
+summoner_guild_info=Produce Summoners y puede mejorar Ancient Summoning.
+tower_of_souls=Tower Of Souls
+tower_of_souls_info=Estructura defensiva antiaérea.
+wicker_behemoth=Wicker Behemoth
+wicker_behemoth_info=Construcción intermedia sin vida necesaria para producir Behemoths.
+
+;
+; additional command tips
+;
+stop_info=Quedará de brazos cruzados.
+move_info=Hacer algo de ejercicio.
+attack_info=Golpear a algunos enemigos!
+repair_info=Reparar los daños a edificios y construcciones.
+build_info=Construir las estructuras necesarias para capacitar a más magos y las actualizaciones de la investigación.
+ritual_info=Llevar a cabo rituales para dar vida a las construcciones.
+harvest1_info=Cosechar de oro y piedra, la obligación de contratar y construir tu ejército.
+harvest2_info=Cortar leña. Magic no necesita mucho, pero no lo ignore por completo!
+
+;
+; Upgrade names and tips
+;
+ancient_summoning=Ancient Summoning
+ancient_summoning_info=Incrementa la energía de la Summoner y le permite invocar Ghost Armors.
+dragon_call=Dragon Call
+dragon_call_info=Permite a la Summoner invocar Dragons.
+energy_compression=Energy Compression
+energy_compression_info=Incrementa la energía de Battlemage, Summoner y Archmage.
+energy_sharpening=Energy Sharpening
+energy_sharpening_info=Mejora los ataques de Battlemage, Summoner y Archmage.
+hell_gate=Hell Gate
+hell_gate_info=Permite la construcción de Behemoths.
+
+;
+; Custom command names
+;
+ice_nova=Nova de Hielo
+static_fire=Estática Fuego
+hold_position=Mantener Posición
+research_dragon_call=Mejorar Dragon Call
+fire_bolt=Perno de Fuego
+promote_to_archmage=Transformar a Archmage
+breath=Exhalar Fuego
+fire_breath=Aliento de Fuego
+flare=Bengala
+ritual=Ritual
+mine=Minar
+promote_to_battlemage=Transformar a Battlemage
+research_energy_compression=Mejorar Energy Compression
+research_energy_sharpening=Mejorar Energy Sharpening
+research_hell_gate=Mejorar Hell Gate
+produce_initiate=Producir Initiate
+summon_daemon=Invocar Daemon
+summon_ghost_armor=Invocar Ghost Armour
+summon_dragon=Invocar Dragon
+summon_drake=Invocar Drake
+produce_summoner=Producir Summoner
+research_ancient_summoning=Mejorar Ancient Summoning
+attack_off=Ataque Inactivo
+attack_on=Ataque Activo
+promote_to_behemoth=Animar Behemoth
+
+build_specific=Construir %s
+ritual_specific=Construir %s
+
+
+;
+; Level names
+;
+expert=Experto
+master=Maestro
+legendary=Legendario
+ancient=Antiguo

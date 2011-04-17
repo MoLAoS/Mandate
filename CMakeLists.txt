@@ -26,6 +26,11 @@ if(NOT DEFINED GAE_DATA_DIR)
 	set(GAE_DATA_DIR "${CMAKE_INSTALL_PREFIX}/share/glestae/" CACHE PATH "root directory of data")
 endif(NOT DEFINED GAE_DATA_DIR)
 
+# set number of processors to use (currently only Visual Studio)
+if(NOT DEFINED GAE_COMPILE_PROCESSORS)
+	set(GAE_COMPILE_PROCESSORS "1" CACHE STRING "The number of processors to use for compiling. Leave blank to use the number of effective processors on your computer.")
+endif(NOT DEFINED GAE_COMPILE_PROCESSORS)
+
 # help the windows people with their deps folder
 if(DEFINED GAE_WINDEPS AND WIN32)
 	message(STATUS "setting windeps: " ${GAE_WINDEPS})
@@ -108,7 +113,7 @@ endif(NOT WIN32)
 # set compiler flags...
 if (MSVC)
 	set(CMAKE_C_FLAGS "/wd4250 /wd4355 /wd4996 /wd4018")
-	set(CMAKE_CXX_FLAGS "/DWIN32 /W2 /wd4250 /wd4355 /wd4996 /GR- /Ob2 /GF /EHsc /fp:fast /arch:SSE2")
+	set(CMAKE_CXX_FLAGS "/DWIN32 /W2 /wd4250 /wd4355 /wd4996 /GR- /Ob2 /GF /EHsc /fp:fast /arch:SSE2 /MP${GAE_COMPILE_PROCESSORS}")
 	set(CMAKE_CXX_FLAGS_DEBUG  "/MTd /Od /Gy /RTC1 /Zi /DDEBUG")
 	set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "/MT /O2 -g /Zi /DNDEBUG") 
 	set(CMAKE_CXX_FLAGS_RELEASE "/MT /O2 /Ot /Oy /Oi /GL /DNDEBUG /Zi")

@@ -584,6 +584,7 @@ void UserInterface::hotKey(UserCommand cmd) {
 	// Stop
 	case ucStop:
 		clickCommonCommand(CmdClass::STOP);
+		break;
 
  	// Move
 	case ucMove:
