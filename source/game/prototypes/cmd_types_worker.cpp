@@ -91,7 +91,7 @@ bool RepairCommandType::repairableInRange(const Unit *unit, Vec2i centre, int ce
 				continue;
 			}
 			const Command *cmd = candidate->anyCommand() ? candidate->getCurrCommand() : 0;
-			CmdClass cc = cmd ? cmd->getType()->getClass() : CmdClass::INVALID;
+			CmdClass cc = cmd ? (CmdClass::Enum)cmd->getType()->getClass() : CmdClass::INVALID;
 			const BuildSelfCommandType *bsct = cc == CmdClass::BUILD_SELF 
 				? static_cast<const BuildSelfCommandType*>(cmd->getType()) : 0;
 	
