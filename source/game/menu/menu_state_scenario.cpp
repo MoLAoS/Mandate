@@ -60,8 +60,6 @@ MenuStateScenario::MenuStateScenario(Program &program, MainMenu *mainMenu)
 	sPanel->setSizeHint(0, SizeHint(-1, itemHeight * 3 / 2));
 	sPanel->setSizeHint(1, SizeHint(-1, itemHeight * 3 / 2));
 	sPanel->setSizeHint(2, SizeHint());
-	sPanel->borderStyle().setSolid(g_widgetConfig.getColourIndex(Vec3f(0.f, 0.f, 1.f)));
-	sPanel->borderStyle().setSizes(2);
 
 	OptionWidget *ow = new OptionWidget(sPanel, g_lang.get("Category"));
 	ow->setCell(0);
@@ -85,8 +83,6 @@ MenuStateScenario::MenuStateScenario(Program &program, MainMenu *mainMenu)
 	CellStrip *btnPanel = new CellStrip(rootStrip, Orientation::HORIZONTAL, 3);
 	btnPanel->setCell(1);
 	btnPanel->setAnchors(fillAnchors);
-	btnPanel->borderStyle().setSolid(g_widgetConfig.getColourIndex(Vec3f(0.f, 1.f, 0.f)));
-	btnPanel->borderStyle().setSizes(2);
 
 	Vec2i sz(itemHeight * 7, itemHeight);
 
@@ -119,7 +115,7 @@ MenuStateScenario::MenuStateScenario(Program &program, MainMenu *mainMenu)
 	}
 	// fail gracefully
 	if (results.empty()) {
-		program.clear();
+		rootStrip->clear();
 		Vec2i sz(330, 256);
 		m_messageDialog = MessageDialog::showDialog(g_metrics.getScreenDims() / 2 - sz / 2,
 			sz, g_lang.get("Error"), g_lang.get("NoCategoryDirectories"), g_lang.get("Yes"), "");

@@ -133,7 +133,7 @@ MenuStateLoadGame::MenuStateLoadGame(Program &program, MainMenu *mainMenu)
 
 	if (!loadGameList()) {
 		Vec2i sz(330, 256);
-		program.clear();
+		strip->clear();
 		m_messageDialog = MessageDialog::showDialog(g_metrics.getScreenDims() / 2 - sz / 2, sz,
 			g_lang.get("Error"), g_lang.get("NoSavedGames"), g_lang.get("Ok"), "");
 		m_messageDialog->Button1Clicked.connect(this, &MenuStateLoadGame::onConfirmReturn);
