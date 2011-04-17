@@ -264,6 +264,7 @@ Error=Error
 Exit=Exit
 ExitGame?=Exit Game?
 ExitProgram?=Exit Program?
+ExploredTargetOnly=Only within explored areas
 Fields=Fields
 FogOfWar=Fog of War
 Generated=Generates
