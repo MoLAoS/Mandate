@@ -211,6 +211,10 @@ bool Program::init() {
 				cout << "Error: option -lastgame: last game-settings has network slot(s).";
 				return false;
 			}
+			// randomise factions that need it
+			vector<string> factionNames;
+			findAll(gs.getTechPath() + "/factions/*.", factionNames);
+			gs.randomiseFactions(factionNames);
 		} catch (runtime_error &e) {
 			std::stringstream ss;
 			ss << "Error trying to load last game-settings\nException: " << e.what();

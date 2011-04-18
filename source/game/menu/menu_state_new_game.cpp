@@ -561,7 +561,7 @@ void MenuStateNewGame::update() {
 				if (gs.getRandomStartLocs()) {
 					randomiseStartLocs();
 				}
-				randomiseFactions();
+				gs.randomiseFactions(m_factionFiles);
 				if (!hasNetworkSlots()) {
 					GameSettings gs = g_simInterface.getGameSettings();
 					program.getSimulationInterface()->changeRole(GameRole::LOCAL);
@@ -858,17 +858,6 @@ void MenuStateNewGame::randomiseStartLocs() {
 		int sli = freeStartLocs[random.randRange(0, freeStartLocs.size() - 1)];
 		gs.setStartLocationIndex(i, sli);
 		freeStartLocs.erase(std::find(freeStartLocs.begin(), freeStartLocs.end(), sli));
-	}
-}
-
-void MenuStateNewGame::randomiseFactions() {
-	GameSettings &gs = g_simInterface.getGameSettings();
-	Random random(Chrono::getCurMillis());
-	for (int i=0; i < gs.getFactionCount(); ++i) {
-		if (gs.getFactionTypeName(i) == "Random") {
-			int ndx = random.randRange(0, m_factionFiles.size() - 1);
-			gs.setFactionTypeName(i, m_factionFiles[ndx]);
-		}
 	}
 }
 
