@@ -1326,7 +1326,7 @@ void Renderer::renderMenuBackground(const MenuBackground *menuBackground){
 	//main model
 	glEnable(GL_ALPHA_TEST);
 	glAlphaFunc(GL_GREATER, 0.5f);
-	RenderParams params(true, true, true, g_world.getTileset()->getFog());
+	RenderParams params(true, true, true, menuBackground->getFog());
 	modelRenderer->begin(params);
 	modelRenderer->render(menuBackground->getMainModel());
 	modelRenderer->end();
