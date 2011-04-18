@@ -111,7 +111,11 @@ CommandTip::CommandTip(Container *parent)
 void CommandTip::setHeader(const string &header) {
 	m_commandName = header;
 	m_header->setHeaderText(header);
-	m_header->setSize(m_header->getPrefSize());
+	if (header.empty()) {
+		m_header->setSize(Vec2i(0));
+	} else {
+		m_header->setSize(m_header->getPrefSize());
+	}
 	layout();
 }
 

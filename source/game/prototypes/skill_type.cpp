@@ -216,9 +216,9 @@ void SkillType::descRange(string &str, const Unit *unit, const char* rangeDesc) 
 }
 
 void SkillType::descSpeed(string &str, const Unit *unit, const char* speedType) const {
-	//str+= Lang::getInstance().get(speedType) + ": " + intToStr(speed);
-	//EnhancementType::describeModifier(str, unit->getSpeed(this) - speed);
-	//str+="\n";
+	str += g_lang.get(speedType) + ": " + intToStr(speed);
+	EnhancementType::describeModifier(str, unit->getSpeed(this) - speed);
+	str += "\n";
 }
 
 CycleInfo SkillType::calculateCycleTime() const {
@@ -341,7 +341,6 @@ void TargetBasedSkillType::getDesc(string &str, const Unit *unit, const char* ra
 			str += string(lang.get(ZoneNames[z])) + " ";
 		}
 	}
-	str += "\n";
 }
 
 // =====================================================
@@ -405,13 +404,13 @@ void AttackSkillType::getDesc(string &str, const Unit *unit) const {
 	descEpCost(str, unit);
 
 	//attack strength
-	str+= lang.get("AttackStrength")+": ";
-	str+= intToStr(attackStrength - attackVar);
-	str+= "...";
-	str+= intToStr(attackStrength + attackVar);
+	str += lang.get("AttackStrength")+": ";
+	str += intToStr(attackStrength - attackVar);
+	str += "...";
+	str += intToStr(attackStrength + attackVar);
 	EnhancementType::describeModifier(str, unit->getAttackStrength(this) - attackStrength);
-	str+= " ("+ attackType->getName() +")";
-	str+= "\n";
+	str += " ("+ attackType->getName() +")";
+	str += "\n";
 
 	TargetBasedSkillType::getDesc(str, unit, "AttackDistance");
 	descEffects(str, unit);
@@ -529,7 +528,6 @@ void RepairSkillType::getDesc(string &str, const Unit *unit) const {
 	if(maxRange > 1){
 		str+= "\n" + lang.get("Range")+": "+ intToStr(maxRange);
 	}
-	str+= "\n";
 }
 
 fixed RepairSkillType::getSpeed(const Unit *unit) const {
@@ -651,7 +649,6 @@ void AttackSkillTypes::getDesc(string &str, const Unit *unit) const {
 			}
 			str += types[i]->getName();
 		}
-		str += "\n";
 	}
 }
 

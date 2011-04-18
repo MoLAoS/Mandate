@@ -188,8 +188,8 @@ bool AttackCommandType::load(const XmlNode *n, const string &dir, const TechTree
 }
 
 void AttackCommandType::descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const {
-	string msg = "\n" + g_lang.get("WalkSpeed") + ": " + intToStr(unit->getSpeed(m_moveSkillType)) + "\n";
-	attackSkillTypes.getDesc(msg, unit);	
+	string msg = g_lang.get("WalkSpeed") + ": " + intToStr(unit->getSpeed(m_moveSkillType)) + "\n";
+	attackSkillTypes.getDesc(msg, unit);
 	callback->addElement(msg);
 }
 

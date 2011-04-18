@@ -261,7 +261,7 @@ void CommandType::describe(const Unit *unit, CmdDescriptor *callback, ProdTypePt
 		vector<UnitReqResult> &unitReqs = cmdCheckResult.m_unitReqResults;
 		vector<UpgradeReqResult> &upgradeReqs = cmdCheckResult.m_upgradeReqResults;
 		if (!unitReqs.empty() || !upgradeReqs.empty()) {
-			callback->addElement("\n" + g_lang.get("Reqs") + ":");
+			callback->addElement(g_lang.get("Reqs") + ":");
 			if (!unitReqs.empty()) {
 				foreach (vector<UnitReqResult>, it, cmdCheckResult.m_unitReqResults) {
 					string name = g_lang.getTranslatedFactionName(factionName, it->getUnitType()->getName());
@@ -277,7 +277,7 @@ void CommandType::describe(const Unit *unit, CmdDescriptor *callback, ProdTypePt
 		}
 		if (pt) {
 			if (!cmdCheckResult.m_resourceCostResults.empty()) {
-				callback->addElement("\n" + g_lang.get("Costs") + ":");
+				callback->addElement(g_lang.get("Costs") + ":");
 				foreach (ResourceCostResults, it, cmdCheckResult.m_resourceCostResults) {
 					string name = g_lang.getTranslatedTechName(it->getResourceType()->getName());
 					string msg = name + " (" + intToStr(it->getCost()) + ")";
@@ -288,7 +288,7 @@ void CommandType::describe(const Unit *unit, CmdDescriptor *callback, ProdTypePt
 				}
 			}
 			if (!cmdCheckResult.m_resourceMadeResults.empty()) {
-				callback->addElement("\n" + g_lang.get("Generated") + ":");
+				callback->addElement(g_lang.get("Generated") + ":");
 				foreach (ResourceMadeResults, it, cmdCheckResult.m_resourceMadeResults) {
 					string name = g_lang.getTranslatedTechName(it->getResourceType()->getName());
 					string msg = name + " (" + intToStr(it->getAmount()) + ")";
@@ -588,7 +588,7 @@ void ProduceCommandType::descSkills(const Unit *unit, CmdDescriptor *callback, P
 		// do the time-to-produce calc... 
 		int framesPerCycle = int(floorf((1.f / (float(unit->getSpeed(m_produceSkillType)) / 4000.f)) + 1.f));
 		int timeToBuild = pt->getProductionTime() * framesPerCycle / 40;
-		msg = "\n" + g_lang.get("TimeToBuild") + ": " + intToStr(timeToBuild);
+		msg = g_lang.get("TimeToBuild") + ": " + intToStr(timeToBuild);
 	}
 	callback->addElement(msg);
 }
@@ -597,7 +597,7 @@ void ProduceCommandType::subDesc(const Unit *unit, CmdDescriptor *callback, Prod
 	if (!pt) {
 		Lang &lang = g_lang;
 		const string factionName = unit->getFaction()->getType()->getName();
-		callback->addElement("\n" + g_lang.get("Produced") + ":");
+		callback->addElement(g_lang.get("Produced") + ":");
 		foreach_const (vector<const UnitType*>, it, m_producedUnits) {
 			callback->addItem(*it, lang.getTranslatedFactionName(factionName, (*it)->getName()));
 		}
@@ -741,7 +741,7 @@ void GenerateCommandType::subDesc(const Unit *unit, CmdDescriptor *callback, Pro
 	if (!pt) {
 		Lang &lang = g_lang;
 		const string factionName = unit->getFaction()->getType()->getName();
-		callback->addElement("\n" + g_lang.get("Produced") + ":");
+		callback->addElement(g_lang.get("Produced") + ":");
 		foreach_const (vector<const GeneratedType*>, it, m_producibles) {
 			callback->addItem(*it, lang.getTranslatedFactionName(factionName, (*it)->getName()));
 		}
@@ -869,11 +869,8 @@ string UpgradeCommandType::getReqDesc(const Faction *f) const {
 	return res;
 }
 
-
 void UpgradeCommandType::descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const {
 	string msg;
-	m_upgradeSkillType->getDesc(msg, unit);
-	callback->addElement(msg);
 	msg = "";
 	if (!pt) {
 		m_upgradeSkillType->getDesc(msg, unit);
@@ -881,7 +878,7 @@ void UpgradeCommandType::descSkills(const Unit *unit, CmdDescriptor *callback, P
 		// do the time-to-produce calc... 
 		int framesPerCycle = int(floorf((1.f / (float(unit->getSpeed(m_upgradeSkillType)) / 4000.f)) + 1.f));
 		int timeToUpgrade = pt->getProductionTime() * framesPerCycle / 40;
-		msg = "\n" + g_lang.get("TimeToResearch") + ": " + intToStr(timeToUpgrade);
+		msg = g_lang.get("TimeToResearch") + ": " + intToStr(timeToUpgrade);
 	}
 	callback->addElement(msg);
 }
@@ -890,7 +887,7 @@ void UpgradeCommandType::subDesc(const Unit *unit, CmdDescriptor *callback, Prod
 	if (!pt) {
 		Lang &lang = g_lang;
 		const string factionName = unit->getFaction()->getType()->getName();
-		callback->addElement("\n" + g_lang.get("Upgrades") + ":");
+		callback->addElement(g_lang.get("Upgrades") + ":");
 		foreach_const (vector<const UpgradeType*>, it, m_producedUpgrades) {
 			callback->addItem(*it, lang.getTranslatedFactionName(factionName, (*it)->getName()));
 		}
@@ -1087,7 +1084,7 @@ void MorphCommandType::descSkills(const Unit *unit, CmdDescriptor *callback, Pro
 		// do the time-to-produce calc... 
 		int framesPerCycle = int(floorf((1.f / (float(unit->getSpeed(m_morphSkillType)) / 4000.f)) + 1.f));
 		int timeToBuild = pt->getProductionTime() * framesPerCycle / 40;
-		msg = "\n" + g_lang.get("TimeToMorph") + ": " + intToStr(timeToBuild);
+		msg = g_lang.get("TimeToMorph") + ": " + intToStr(timeToBuild);
 		if (m_discount != 0) { // discount
 			msg += "\n" + g_lang.get("Discount") + ": " + intToStr(m_discount) + "%";
 		}
@@ -1102,7 +1099,7 @@ void MorphCommandType::subDesc(const Unit *unit, CmdDescriptor *callback, ProdTy
 	if (!pt) {
 		Lang &lang = g_lang;
 		const string factionName = unit->getFaction()->getType()->getName();
-		callback->addElement("\n" + g_lang.get("MorphUnits") + ":");
+		callback->addElement(g_lang.get("MorphUnits") + ":");
 		foreach_const (vector<const UnitType*>, it, m_morphUnits) {
 			callback->addItem(*it, lang.getTranslatedFactionName(factionName, (*it)->getName()));
 		}
@@ -1359,7 +1356,7 @@ void LoadCommandType::descSkills(const Unit *unit, CmdDescriptor *callback, Prod
 void LoadCommandType::subDesc(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const {
 	Lang &lang = g_lang;
 	const string factionName = unit->getFaction()->getType()->getName();
-	callback->addElement("\n" + g_lang.get("CanLoad") + ":");
+	callback->addElement(g_lang.get("CanLoad") + ":");
 	foreach_const (vector<const UnitType*>, it, m_canLoadList) {
 		callback->addItem(*it, lang.getTranslatedFactionName(factionName, (*it)->getName()));
 	}
