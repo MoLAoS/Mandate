@@ -7,7 +7,14 @@
 #include "graphics_interface.h"
 #include "graphics_factory_gl.h"
 
-namespace Shared { namespace G3dViewer {
+namespace Shared { 
+	
+namespace Graphics {
+	extern LerpMethod meshLerpMethod;
+	extern bool use_vbos;
+}
+	
+namespace G3dViewer {
 
 using namespace Shared::Graphics::Gl;
 
@@ -128,6 +135,9 @@ void Renderer::resetTeamTexture(int i, uint8 red, uint8 green, uint8 blue) {
 }
 
 void Renderer::init(){
+	glewInit();
+	meshLerpMethod = LerpMethod::SIMD;
+	use_vbos = false;
 	assertGl();
 
 	GraphicsFactory *gf= new GraphicsFactoryGl();
@@ -145,6 +155,7 @@ void Renderer::init(){
 
 	glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
 	glEnable(GL_TEXTURE_2D);
+	glActiveTexture(GL_TEXTURE0);
 	glFrontFace(GL_CW);
 	glEnable(GL_CULL_FACE);
 	glEnable(GL_DEPTH_TEST);
