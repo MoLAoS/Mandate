@@ -272,12 +272,8 @@ MenuState::MenuState(Program &program, MainMenu *mainMenu)
 		, m_fadeOut(false)
 		, m_transition(false) {
 	program.setFade(m_fade);
-	int font = g_widgetConfig.getDefaultFontIndex(FontUsage::MENU);
-	int white = g_widgetConfig.getColourIndex(Colour(255u));
-	const Font *fontPtr = g_widgetConfig.getMenuFont();
-
-	Vec2i pos(10, 50);
-	pos.y -= int(fontPtr->getMetrics()->getHeight());
+	//const Font *fontPtr = g_widgetConfig.getMenuFont();
+	Vec2i pos(10, 50);// - int(fontPtr->getMetrics()->getHeight()));
 	m_debugText = new StaticText(&program, pos, Vec2i(0));
 	m_debugText->setText("FPS: ");
 	m_debugText->setAlignment(Alignment::FLUSH_LEFT);

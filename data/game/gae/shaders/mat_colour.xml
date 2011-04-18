@@ -12,6 +12,7 @@
 	<variables>
 		<![CDATA[
 			varying float diffuseIntensity, fogFactor;
+			uniform int isUsingFog;
 			uniform vec3 teamColour;
 			uniform sampler2D baseTexture;
 		]]>
@@ -21,7 +22,7 @@
 		<![CDATA[
 			void main() {
 				// pass-on tex-coord & mesh colour
-				gl_TexCoord[0] = gl_MultiTexCoord0;
+				//gl_TexCoord[0] = gl_MultiTexCoord0;
 				gl_FrontColor = gl_Color;
 
 				// Lighting
@@ -30,11 +31,14 @@
 				diffuseIntensity =	max(dot(lightDir, normal), 0.0);         // calculate diffuse term
 
 				// fog
-				float dist = length(vec3(gl_ModelViewMatrix * gl_Vertex)); // distance from camera
-				const float log_2 = 1.442695;
-				fogFactor = exp2(-gl_Fog.density * gl_Fog.density * dist * dist * log_2);
-				fogFactor = clamp(fogFactor, 0.0, 1.0);	
-
+				if (isUsingFog == 1) {
+					float dist = length(vec3(gl_ModelViewMatrix * gl_Vertex)); // distance from camera
+					const float log_2 = 1.442695;
+					fogFactor = exp2(-gl_Fog.density * gl_Fog.density * dist * dist * log_2);
+					fogFactor = clamp(fogFactor, 0.0, 1.0);	
+				} else {
+					fogFactor = 1.f;
+				}
 				// determine pixel position
 				gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;
 			}

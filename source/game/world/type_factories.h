@@ -105,7 +105,8 @@ public:
 // ===============================
 //  class SingleTypeFactory
 // ===============================
-/** Single Type Factory, for load once (non-transient) ProtoType classes */
+/** Single Type Factory, for load once never write (non-transient) ProtoType classes
+  * that are not part of a class hierarchy requiring a DynamicTypeFactory */
 
 template<typename Type> class SingleTypeFactory {
 private:
@@ -155,7 +156,7 @@ public:
 // ===============================
 //  class DynamicTypeFactory
 // ===============================
-/** Dynamic Type Factory, for load once (non-transient) ProtoType classes,
+/** Dynamic Type Factory, for load once never write (non-transient) ProtoType classes,
   * Enum describes the derived class set, all of which must derive from (or be) 
   * BaseType, derived types must implement a static function 'Enum typeClass()' */
 template<typename Enum, typename BaseType> class DynamicTypeFactory {

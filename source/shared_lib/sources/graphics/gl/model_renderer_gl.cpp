@@ -17,6 +17,7 @@
 #include "gl_wrap.h"
 #include "texture_gl.h"
 #include "interpolation.h"
+#include "opengl.h"
 
 #include "leak_dumper.h"
 
@@ -107,14 +108,11 @@ const string& ModelRendererGl::getShaderName() {
 	return m_shaders[m_shaderIndex]->getName();
 }
 
-void ModelRendererGl::begin(bool renderNormals, bool renderTextures, bool renderColors, MeshCallback *meshCallback) {
+void ModelRendererGl::begin(RenderParams params) {
 	assert(!rendering);
 	assertGl();
 
-	this->renderTextures = renderTextures;
-	this->renderNormals = renderNormals;
-	this->renderColors = renderColors;
-	this->meshCallback = meshCallback;
+	this->renderParams = params;
 
 	rendering = true;
 	m_lastShaderProgram = 0;
@@ -133,11 +131,11 @@ void ModelRendererGl::begin(bool renderNormals, bool renderTextures, bool render
 
 	glEnableClientState(GL_VERTEX_ARRAY);
 
-	if (renderNormals) {
+	if (renderParams.normals) {
 		glEnableClientState(GL_NORMAL_ARRAY);
 	}
 
-	if (renderTextures) {
+	if (renderParams.textures) {
 		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 	}	
 
@@ -211,7 +209,7 @@ void ModelRendererGl::renderMesh(const Mesh *mesh, Vec3f *anim, UnitShaderSet *c
 		glEnable(GL_CULL_FACE);
 	}
 
-	if (renderColors) {
+	if (renderParams.colours) {
 		Vec4f color(mesh->getDiffuseColor(), mesh->getOpacity());
 		glColor4fv(color.ptr());
 	}
@@ -221,7 +219,7 @@ void ModelRendererGl::renderMesh(const Mesh *mesh, Vec3f *anim, UnitShaderSet *c
 	// diffuse texture
 	glActiveTexture(diffuseTextureUnit);
 	texture = static_cast<const Texture2DGl*>(mesh->getTexture(mtDiffuse));
-	if (texture != NULL && renderTextures) {
+	if (texture != NULL && renderParams.textures) {
 		if (lastTexture != texture->getHandle()) {
 			assert(glIsTexture(texture->getHandle()));
 			glBindTexture(GL_TEXTURE_2D, texture->getHandle());
@@ -235,7 +233,7 @@ void ModelRendererGl::renderMesh(const Mesh *mesh, Vec3f *anim, UnitShaderSet *c
 	// bump map
 	textureNormal = static_cast<const Texture2DGl*>(mesh->getTexture(mtNormal));
 	glActiveTexture(normalTextureUnit);
-	if (textureNormal != NULL && renderTextures) {
+	if (textureNormal != NULL && renderParams.textures) {
 		assert(glIsTexture(textureNormal->getHandle()));
 		glBindTexture(GL_TEXTURE_2D, textureNormal->getHandle());
 	} else {
@@ -244,7 +242,7 @@ void ModelRendererGl::renderMesh(const Mesh *mesh, Vec3f *anim, UnitShaderSet *c
 	}
 
 	// custom map
-	if (customShaders && renderTextures) {
+	if (customShaders && renderParams.textures) {
 		textureCustom = static_cast<const Texture2DGl*>(mesh->getTexture(mtCustom1));
 		glActiveTexture(custom1TextureUnit);
 		if (textureCustom) {
@@ -268,11 +266,11 @@ void ModelRendererGl::renderMesh(const Mesh *mesh, Vec3f *anim, UnitShaderSet *c
 	}
 
 	ShaderProgram *shaderProgram;
-	if (m_shaderIndex == -1 || !meshCallback) {
-		// (!meshCallback) == hacky way to not use shaders for tileset objects and in menu... for now
+	if (m_shaderIndex == -1 || !renderParams.meshCallback) {
+		// (!renderParams.meshCallback) == hacky way to not use shaders for tileset objects and in menu... for now
 		shaderProgram = m_fixedFunctionProgram;
-		if (meshCallback) {
-			meshCallback->execute(mesh);
+		if (renderParams.meshCallback) {
+			renderParams.meshCallback->execute(mesh);
 		}
 	} else {
 		if (customShaders) {
@@ -292,6 +290,7 @@ void ModelRendererGl::renderMesh(const Mesh *mesh, Vec3f *anim, UnitShaderSet *c
 			m_lastShaderProgram->end();
 		}
 		shaderProgram->begin();
+		shaderProgram->setUniform("isUsingFog", int(renderParams.useFog));
 		m_lastShaderProgram = shaderProgram;
 	}
 	///@todo would be better to do this once only per faction, set from the game somewhere/somehow
@@ -312,14 +311,14 @@ void ModelRendererGl::renderMesh(const Mesh *mesh, Vec3f *anim, UnitShaderSet *c
 		glBindBuffer(GL_ARRAY_BUFFER, mesh->getVertexBuffer());
 		glVertexPointer(3, GL_FLOAT, stride, OFFSET(0));
 		// normals
-		if (renderNormals) {
+		if (renderParams.normals) {
 			glEnableClientState(GL_NORMAL_ARRAY);
 			glNormalPointer(GL_FLOAT, stride, OFFSET(3));
 		} else {
 			glDisableClientState(GL_NORMAL_ARRAY);
 		}
 		// tex coords
-		if (renderTextures && mesh->getTexture(mtDiffuse) != NULL) {
+		if (renderParams.textures && mesh->getTexture(mtDiffuse) != NULL) {
 			if (duplicateTexCoords) {
 				glActiveTexture(GL_TEXTURE0 + secondaryTexCoordUnit);
 				glEnableClientState(GL_TEXTURE_COORD_ARRAY);
@@ -338,7 +337,7 @@ void ModelRendererGl::renderMesh(const Mesh *mesh, Vec3f *anim, UnitShaderSet *c
 			glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 		}
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->getIndexBuffer());
-		if (renderTextures && textureNormal) {
+		if (renderParams.textures && textureNormal) {
 			shaderProgram->setUniform("hasNormalMap", 1);
 			int loc = shaderProgram->getAttribLoc("tangent");
 			if (loc != -1) {
@@ -356,14 +355,14 @@ void ModelRendererGl::renderMesh(const Mesh *mesh, Vec3f *anim, UnitShaderSet *c
 	} else {
 		glVertexPointer(3, GL_FLOAT, 0, mesh->getInterpolationData()->getVertices());
 		// normals
-		if (renderNormals) {
+		if (renderParams.normals) {
 			glEnableClientState(GL_NORMAL_ARRAY);
 			glNormalPointer(GL_FLOAT, 0, mesh->getInterpolationData()->getNormals());
 		} else {
 			glDisableClientState(GL_NORMAL_ARRAY);
 		}
 		// tex coords
-		if (renderTextures && mesh->getTexture(mtDiffuse) != NULL) {
+		if (renderParams.textures && mesh->getTexture(mtDiffuse) != NULL) {
 			if (duplicateTexCoords) {
 				glActiveTexture(GL_TEXTURE0 + secondaryTexCoordUnit);
 				glEnableClientState(GL_TEXTURE_COORD_ARRAY);
@@ -381,7 +380,7 @@ void ModelRendererGl::renderMesh(const Mesh *mesh, Vec3f *anim, UnitShaderSet *c
 			glActiveTexture(GL_TEXTURE0);
 			glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 		}
-		if (renderTextures && textureNormal) {
+		if (renderParams.textures && textureNormal) {
 			shaderProgram->setUniform("hasNormalMap", 1);
 			int loc = shaderProgram->getAttribLoc("tangent");
 			if (loc != -1) {

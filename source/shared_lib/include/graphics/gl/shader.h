@@ -64,13 +64,22 @@ private:
 	GLuint m_v, m_f, m_p;
 	string m_name;
 
-	static void show_info_log(
-		GLuint object,
-		PFNGLGETSHADERIVPROC glGet__iv,
-		PFNGLGETSHADERINFOLOGPROC glGet__InfoLog);
+	//static void show_info_log(
+	//	GLuint object,
+	//	PFNGLGETSHADERIVPROC glGet__iv,
+	//	PFNGLGETSHADERINFOLOGPROC glGet__InfoLog);
 
-	string getCompileError(const string path, bool vert);
-	string getLinkError(const string path);
+	//string getCompileError(const string path, bool vert);
+	//string getLinkError(const string path);
+
+	bool getCompileInfoLog(GLuint handle, string &out);
+	bool getLinkerInfoLog(GLuint handle, string &out);
+
+	bool compileShader(GLuint handle, const char *src, string &out_log);
+
+	bool compileVertexShader(const char *src);
+	bool compileFragmentShader(const char *src);
+	bool linkShaderProgram();
 
 public:
 	GlslProgram(const string &name);

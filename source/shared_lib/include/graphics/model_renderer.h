@@ -32,27 +32,45 @@ public:
 	virtual void execute(const Mesh *mesh)= 0;
 };
 
+struct RenderParams {
+	bool          textures;
+	bool          normals;
+	bool          colours;
+	bool          useFog;
+	MeshCallback *meshCallback;
+
+	RenderParams() : meshCallback(0) {}
+	RenderParams(bool textures, bool normals, bool colours, bool fog) 
+		: textures(textures)
+		, normals(normals)
+		, colours(colours)
+		, useFog(fog)
+		, meshCallback(0) {
+	}
+
+	void setMeshCallback(MeshCallback *callback) {
+		this->meshCallback = callback;
+	}
+};
+
 // =====================================================
 //	class ModelRenderer
 // =====================================================
 
 class ModelRenderer {
 protected:
-	bool renderNormals;
-	bool renderTextures;
-	bool renderColors;
-	MeshCallback *meshCallback;
-	Vec3f	teamColour;
+	RenderParams renderParams;
+	Vec3f teamColour;
 
 public:
-	ModelRenderer() : teamColour(0.f), meshCallback(NULL) {}
+	ModelRenderer() {}
 
 	virtual ~ModelRenderer(){};
 
 	void setTeamColour(const Vec3f &colour) { teamColour = colour; }
 	const Vec3f& getTeamColour() const {return teamColour; }
 
-	virtual void begin(bool renderNormals, bool renderTextures, bool renderColors, MeshCallback *meshCallback= NULL) = 0;
+	virtual void begin(RenderParams params) = 0;
 	virtual void end() = 0;
 	virtual void render(const Model *model, Vec3f *anim = 0, UnitShaderSet *shaderSet = 0) = 0;
 	virtual void renderNormalsOnly(const Model *model) = 0;

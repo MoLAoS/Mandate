@@ -98,6 +98,7 @@ public:
 class AttackParticleSystem : public GameParticleSystem {
 protected:
 	Vec3f direction;
+	bool fog;
 
 public:
 	AttackParticleSystem(ParticleUse use, bool visible, const ParticleSystemBase &model, int particleCount);
@@ -116,33 +117,33 @@ class Projectile : public AttackParticleSystem {
 	friend class Splash;
 
 private:
-	int m_id;
-	Splash *nextParticleSystem;
+	int m_id;                   // persist
+	Splash *nextParticleSystem; // no-persist
 
-	Vec3f lastPos;
-	Vec3f startPos;
-	Vec3f endPos;
-	Vec3f flatPos;
+	Vec3f lastPos;   // persist (for convenience, could recalc...)
+	Vec3f startPos;  // persist
+	Vec3f endPos;    // persist
+	Vec3f flatPos;   // persist (for convenience, could recalc...)
 
-	int startFrame;
-	int endFrame;
+	int startFrame;  // persist
+	int endFrame;    // persist
 
-	const Unit *target;
+	const Unit *target; // swizzle
 
-	Vec3f xVector;
-	Vec3f yVector;
-	Vec3f zVector;
+	Vec3f xVector; // ???
+	Vec3f yVector; // ???
+	Vec3f zVector; // ???
 
-	TrajectoryType trajectory;
-	float trajectorySpeed;
+	TrajectoryType trajectory; // no-persist (get from type)
+	float trajectorySpeed;     // no-persist (calculate from ???)
 
 	// parabolic
-	float trajectoryScale;
-	float trajectoryFrequency;
+	float trajectoryScale;     // no-persist
+	float trajectoryFrequency; // no-persist
 
-	Random random;
+	Random random;             // no-persist
 
-	Sim::ParticleDamager *damager;
+	Sim::ParticleDamager *damager; // swizzle
 
 public:
 	struct CreateParams {

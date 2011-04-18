@@ -18,6 +18,7 @@
 		<![CDATA[
 			varying vec3 normal, esLightDir, tsLightDir;//, eyeVec;
 			varying float fogFactor;
+			uniform int  isUsingFog;
 			uniform int  hasNormalMap;
 			uniform vec3 teamColour;
 			uniform sampler2D baseTexture;
@@ -53,11 +54,15 @@
 				//eyeVec.y = dot(tmpVec, b);
 				//eyeVec.z = dot(tmpVec, n);
 
-				// Fog
-				float dist = length(vec3(gl_ModelViewMatrix * gl_Vertex)); // distance from camera
-				const float log_2 = 1.442695;
-				fogFactor = exp2(-gl_Fog.density * gl_Fog.density * dist * dist * log_2);
-				fogFactor = clamp(fogFactor, 0.0, 1.0);	
+				// fog
+				if (isUsingFog == 1) {
+					float dist = length(vec3(gl_ModelViewMatrix * gl_Vertex)); // distance from camera
+					const float log_2 = 1.442695;
+					fogFactor = exp2(-gl_Fog.density * gl_Fog.density * dist * dist * log_2);
+					fogFactor = clamp(fogFactor, 0.0, 1.0);	
+				} else {
+					fogFactor = 1.f;
+				}
 				
 				// Transform vert
 				gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;

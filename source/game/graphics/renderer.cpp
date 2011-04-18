@@ -260,7 +260,7 @@ void Renderer::cycleShaders() {
 	}
 }
 
-void Renderer::initGame(GameState *game){
+void Renderer::initGame(GameState *game) {
 	this->game= game;
 
 	// check gl caps
@@ -516,7 +516,6 @@ void Renderer::setupLighting() {
 	///@todo add some spec!
 	glLightfv(GL_LIGHT0, GL_SPECULAR, Vec4f(0.0f, 0.0f, 0.f, 1.f).ptr());
 
-
 	glFogfv(GL_FOG_COLOR, Vec4f(fogColor * lightColour, 1.f).ptr());
 
 	++lightCount;
@@ -633,7 +632,8 @@ void Renderer::renderMouse3d() {
 					color = Vec4f(1.f, 0.f, 0.f, 0.5f);
 				}
 
-				modelRenderer->begin(true, true, false);
+				RenderParams params(true, true, false, g_world.getTileset()->getFog());
+				modelRenderer->begin(params);
 				glColor4fv(color.ptr());
 				glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, color.ptr());
 				const Model *buildingModel = building->getIdleAnimation();
@@ -797,7 +797,8 @@ void Renderer::renderObjects() {
 	glEnable(GL_COLOR_MATERIAL);
 	glAlphaFunc(GL_GREATER, 0.5f);
 
-	modelRenderer->begin(true, true, false);
+	RenderParams params(true, true, false, g_world.getTileset()->getFog());
+	modelRenderer->begin(params);
 	int thisTeamIndex= world->getThisTeamIndex();
 
 	SceneCuller::iterator it = culler.tile_begin();
@@ -1019,7 +1020,9 @@ void Renderer::renderUnits(){
 
 	glActiveTexture(baseTexUnit);
 
-	modelRenderer->begin(true, true, true, &meshCallbackTeamColor);
+	RenderParams params(true, true, true, g_world.getTileset()->getFog());
+	params.setMeshCallback(&meshCallbackTeamColor);
+	modelRenderer->begin(params);
 
 	vector<const Unit*> toRender[GameConstants::maxPlayers + 1];
 
@@ -1323,7 +1326,8 @@ void Renderer::renderMenuBackground(const MenuBackground *menuBackground){
 	//main model
 	glEnable(GL_ALPHA_TEST);
 	glAlphaFunc(GL_GREATER, 0.5f);
-	modelRenderer->begin(true, true, true);
+	RenderParams params(true, true, true, g_world.getTileset()->getFog());
+	modelRenderer->begin(params);
 	modelRenderer->render(menuBackground->getMainModel());
 	modelRenderer->end();
 	glDisable(GL_ALPHA_TEST);
@@ -1334,7 +1338,8 @@ void Renderer::renderMenuBackground(const MenuBackground *menuBackground){
 		glAlphaFunc(GL_GREATER, 0.0f);
 		float alpha= clamp((minDist-dist)/minDist, 0.f, 1.f);
 		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, Vec4f(1.0f, 1.0f, 1.0f, alpha).ptr());
-		modelRenderer->begin(true, true, false);
+		RenderParams params(true, true, false, g_world.getTileset()->getFog());
+		modelRenderer->begin(params);
 		for(int i=0; i<MenuBackground::characterCount; ++i){
 			glMatrixMode(GL_MODELVIEW);
 			glPushMatrix();
@@ -1883,7 +1888,8 @@ void Renderer::renderUnitsFast(bool renderingShadows) {
 		glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
 	}
 
-	modelRenderer->begin(false, renderingShadows, false);
+	RenderParams params(renderingShadows, false, false, false);
+	modelRenderer->begin(params);
 
 	vector<const Unit*> toRender[GameConstants::maxPlayers + 1];
 	set<const Unit*> unitsSeen;
@@ -1995,7 +2001,8 @@ void Renderer::renderObjectsFast(bool renderingShadows) {
 		glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
 	}
 
-	modelRenderer->begin(false, renderingShadows, false);
+	RenderParams params(renderingShadows, false, false, false);
+	modelRenderer->begin(params);
 	int thisTeamIndex = world->getThisTeamIndex();
 
 	SceneCuller::iterator it = culler.tile_begin();

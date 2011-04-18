@@ -207,7 +207,7 @@ void ParticleRendererGl::renderSystemLine(ParticleSystem *ps) {
 	assertGl();
 }
 
-void ParticleRendererGl::renderSingleModel(ParticleSystem *ps, ModelRenderer *mr) {
+void ParticleRendererGl::renderSingleModel(ParticleSystem *ps, ModelRenderer *mr, bool fog) {
 	//render model
 	if (ps->getModel() != NULL) {
 
@@ -233,7 +233,8 @@ void ParticleRendererGl::renderSingleModel(ParticleSystem *ps, ModelRenderer *mr
 		glRotatef(angleH, 0.f, 1.f, 0.f);
 
 		//render
-		mr->begin(true, true, false);
+		RenderParams params(true, true, false, fog);
+		mr->begin(params);
 		mr->render(ps->getModel());
 		mr->end();
 

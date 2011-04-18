@@ -219,6 +219,7 @@ public:
 
 	void onUnitActivated(const UnitType *ut) { ++m_unitCountMap[ut]; }
 	void onUnitMorphed(const UnitType *new_ut, const UnitType *old_ut) {
+		assert(m_unitCountMap[old_ut] > 0);
 		--m_unitCountMap[old_ut];
 		++m_unitCountMap[new_ut];
 	}

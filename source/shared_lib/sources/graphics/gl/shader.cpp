@@ -12,6 +12,8 @@
 // ==============================================================
 
 #include "pch.h"
+
+#include "opengl.h"
 #include "shader.h"
 #include "util.h"
 #include "FSFactory.hpp"
@@ -25,6 +27,8 @@ using namespace std;
 using namespace Shared::PhysFS;
 
 namespace Shared{ namespace Graphics{
+
+using namespace Gl;
 
 // =====================================================
 //	function loadSourceFromFile
@@ -69,77 +73,121 @@ GlslProgram::~GlslProgram() {
 
 static string lastShaderError;
 
-void GlslProgram::show_info_log(
-    GLuint object,
-    PFNGLGETSHADERIVPROC glGet__iv,
-    PFNGLGETSHADERINFOLOGPROC glGet__InfoLog)
-{
+inline void trimTrailingNewlines(string &str) {
+	while (!str.empty() && *(str.end() - 1) == '\n') {
+		str.erase(str.end() - 1);
+	}
+}
+
+bool GlslProgram::compileShader(GLuint handle, const char *src, string &out_log) {
+	glShaderSource(handle, 1, &src, NULL);
+	GLint ok;
+	glCompileShader(handle);
+	glGetShaderiv(handle, GL_COMPILE_STATUS, &ok);
+
+	GLint log_length = 0;
+	glGetShaderiv(handle, GL_INFO_LOG_LENGTH, &log_length);
+	if (log_length) {
+		GLchar *buffer = new GLchar[log_length];
+		glGetShaderInfoLog(handle, log_length, 0, buffer);
+		out_log = buffer;
+		trimTrailingNewlines(out_log);
+	}
+	return ok == GL_TRUE;
+}
+
+bool GlslProgram::compileVertexShader(const char *src) {
+	string log, res;
+	res = "Vertex shader ";
+	bool retVal = compileShader(m_v, src, log);
+	if (retVal) {
+		res += "compiled OK.\n";
+	} else {
+		res += "compile failed.\n";
+		lastShaderError = log;
+	}
+	if (!log.empty()) {
+		res += "Compile log:\n" + log + "\n";
+	} else {
+		res += "\n";
+	}
+	cout << res;
+	return retVal;
+}
+
+bool GlslProgram::compileFragmentShader(const char *src) {
+	string log, res;
+	bool retVal = compileShader(m_f, src, log);
+	res = "Fragment shader ";
+	if (retVal) {
+		res += "compiled OK.\n";
+	} else {
+		res += "compile failed.\n";
+		lastShaderError = log;
+	}
+	if (!log.empty()) {
+		res += "Compile log:\n" + log + "\n";
+	} else {
+		res += "\n";
+	}
+	cout << res;
+	return retVal;
+}
+
+bool GlslProgram::linkShaderProgram() {
+	glAttachShader(m_p, m_f);
+	glAttachShader(m_p, m_v);
+	glLinkProgram(m_p);
+	GLint ok;
+	glGetProgramiv(m_p, GL_LINK_STATUS, &ok);
+	string res = "Program ";
+	res += (ok == GL_TRUE ? "linked Ok.\n" : "link failed.\n");
+
 	GLint log_length;
-	char *log;
-
-	glGet__iv(object, GL_INFO_LOG_LENGTH, &log_length);
-	log = new char[log_length];
-	glGet__InfoLog(object, log_length, NULL, log);
-	cerr << log << endl;
-	lastShaderError = log;
-	delete[] log;
-}
-
-string GlslProgram::getCompileError(const string path, bool vert) {
-	show_info_log(vert ? m_v : m_f, glGetShaderiv, glGetShaderInfoLog);
-	string res = string("Compile error in ") + (vert ? "vertex" : "fragment");
-	res +=  " shader: " + path + "\n" + lastShaderError;
-	return res;
-}
-
-string GlslProgram::getLinkError(const string name) {
-	show_info_log(m_p, glGetProgramiv, glGetProgramInfoLog);
-	string res = string("Link error with shader: ") + name + "\n" + lastShaderError;
-	return res;
+	glGetProgramiv(m_p, GL_INFO_LOG_LENGTH, &log_length);
+	if (log_length) {
+		GLchar *buffer = new GLchar[log_length];
+		glGetProgramInfoLog(m_p, log_length, 0, buffer);
+		string log = buffer;
+		trimTrailingNewlines(log);
+		res += string("Link log:\n") + log + "\n";
+		if (!ok) {
+			lastShaderError = buffer;
+		}
+	} else {
+		res += "\n";
+	}
+	cout << res;
+	return ok == GL_TRUE;
 }
 
 void GlslProgram::compileAndLink(const char *vs, const char *fs) {
+	string header = "GLSL Program: " + m_name;
+	cout << header << endl;
+	for (int i=0; i < header.size(); ++i) {
+		cout << "-";
+	}
+	cout << endl;
+
 	m_v = glCreateShader(GL_VERTEX_SHADER);
 	m_f = glCreateShader(GL_FRAGMENT_SHADER);
 
-	glShaderSource(m_v, 1, &vs,NULL);
-	glShaderSource(m_f, 1, &fs,NULL);
-
-	GLint ok;
-	glCompileShader(m_v);
-	glGetShaderiv(m_v, GL_COMPILE_STATUS, &ok);
-	if (!ok) {
-		string msg = getCompileError(m_name, true);
-		glDeleteShader(m_v);
-		throw runtime_error(msg);
+	if (!compileVertexShader(vs) || !compileFragmentShader(fs)) {
+		throw runtime_error(lastShaderError);
 	}
-
-	glCompileShader(m_f);
-	glGetShaderiv(m_f, GL_COMPILE_STATUS, &ok);
-	if (!ok) {
-		string msg = getCompileError(m_name, false);
-		glDeleteShader(m_f);
-		throw runtime_error(msg);
-	}
-
-	glAttachShader(m_p, m_f);
-	glAttachShader(m_p, m_v);
-
-	glLinkProgram(m_p);
-	glGetProgramiv(m_p, GL_LINK_STATUS, &ok);
-	if (!ok) {
-		string msg = getLinkError(m_name);
-		glDeleteProgram(m_p);
-		throw runtime_error(msg);
+	if (!linkShaderProgram()) {
+		throw runtime_error(lastShaderError);
 	}
 }
 
 void GlslProgram::begin() {
 	glUseProgram(m_p);
+	assertGl();
 }
 
 void GlslProgram::end() {
 	glUseProgram(0);
+	assertGl();
 }
 
 void GlslProgram::setUniform(const string &name, GLuint value) {
@@ -149,6 +197,7 @@ void GlslProgram::setUniform(const string &name, GLuint value) {
 	} else {
 		//cout << "ERROR: uniform '" << name << "' not found." << endl;
 	}
+	assertGl();
 }
 
 void GlslProgram::setUniform(const string &name, const Vec3f &value) {
@@ -158,6 +207,7 @@ void GlslProgram::setUniform(const string &name, const Vec3f &value) {
 	} else {
 		//cout << "ERROR: uniform '" << name << "' not found." << endl;
 	}
+	assertGl();
 }
 
 int GlslProgram::getAttribLoc(const string &name) {
@@ -169,6 +219,7 @@ int GlslProgram::getAttribLoc(const string &name) {
 // =====================================================
 
 void initUnitShader(ShaderProgram *program) {
+	assertGl();
 	program->begin();
 	program->setUniform("baseTexture", 0);
 	//program->setUniform("shadowMap", 1);
@@ -177,6 +228,7 @@ void initUnitShader(ShaderProgram *program) {
 	program->setUniform("customTex", 4);
 	program->setUniform("customTex2", 5);
 	program->end();
+	assertGl();
 }
 
 UnitShaderSet::UnitShaderSet(const string &xmlPath)
@@ -214,6 +266,7 @@ UnitShaderSet::UnitShaderSet(const string &xmlPath)
 		m_teamColour = m_rgbaColour = 0;
 		throw e;
 	}
+	assertGl();
 }
 
 UnitShaderSet::~UnitShaderSet() {

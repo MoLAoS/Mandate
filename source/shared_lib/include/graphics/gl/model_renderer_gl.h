@@ -57,7 +57,7 @@ public:
 	const string& getShaderName();
 	bool isUsingShaders() const { return m_shaderIndex != -1; }
 
-	void begin(bool renderNormals, bool renderTextures, bool renderColors, MeshCallback *meshCallback) override;
+	void begin(RenderParams params) override;
 	void end() override;
 	
 	void render(const Model *model, Vec3f *anim = 0, UnitShaderSet *customShaders = 0) override;

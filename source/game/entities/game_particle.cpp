@@ -119,13 +119,14 @@ void FireParticleSystem::updateParticle(Particle *p) {
 
 AttackParticleSystem::AttackParticleSystem(ParticleUse use, bool visible, const ParticleSystemBase &protoType, int particleCount)
 		: GameParticleSystem(use, visible, protoType, particleCount) 
-		, direction(1.0f, 0.0f, 0.0f) {	
+		, direction(1.0f, 0.0f, 0.0f) {
+	fog = g_world.getTileset()->getFog();
 }
 
 void AttackParticleSystem::render(ParticleRenderer *pr, ModelRenderer *mr) {
 	if (active) {
 		if (model) {
-			pr->renderSingleModel(this, mr);
+			pr->renderSingleModel(this, mr, fog);
 		}
 		switch (primitiveType) {
 			case PrimitiveType::QUAD:
