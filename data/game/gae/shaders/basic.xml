@@ -17,7 +17,7 @@
 	<!-- varying and uniform vars -->
 	<variables>
 		<![CDATA[
-			varying float diffuseIntensity, fogFactor;
+			varying float diffuseIntensity, fogFactor, meshAlpha;
 			uniform int isUsingFog;
 			uniform vec3 teamColour;
 			uniform sampler2D baseTexture;
@@ -30,6 +30,7 @@
 				// pass-on tex-coord & mesh colour
 				gl_TexCoord[0] = gl_MultiTexCoord0;
 				gl_FrontColor = gl_Color;
+				meshAlpha = gl_Color.a;
 
 				// Lighting (diffuse only, everything currently has Material.specular set to (0, 0, 0, 1))
 				vec3 normal = normalize(gl_NormalMatrix * gl_Normal);       // convert normal to eye space
@@ -125,7 +126,7 @@
 				vec3 ambient = gl_FrontLightProduct[0].ambient.rgb + gl_FrontLightModelProduct.sceneColor.rgb;
 
 				// final colour
-				vec4 finalColour = vec4((ambient + diffuse) * baseColour, gl_FrontMaterial.diffuse.a);
+				vec4 finalColour = vec4((ambient + diffuse) * baseColour, meshAlpha);
 				gl_FragColor = mix(gl_Fog.color, finalColour, fogFactor);
 			}
 		]]>
@@ -143,7 +144,7 @@
 				vec3 lightColour = ambient + diffuse;
 
 				// final colour
-				vec4 finalColour = vec4(lightColour * baseColour.rgb, gl_FrontMaterial.diffuse.a * baseColour.a);
+				vec4 finalColour = vec4(lightColour * baseColour.rgb, meshAlpha * baseColour.a);
 				gl_FragColor = mix(gl_Fog.color, finalColour, fogFactor);
 			}
 		]]>

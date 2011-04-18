@@ -17,7 +17,7 @@
 	<variables>
 		<![CDATA[
 			varying vec3 normal, esLightDir, tsLightDir;//, eyeVec;
-			varying float fogFactor;
+			varying float fogFactor, meshAlpha;
 			uniform int  isUsingFog;
 			uniform int  hasNormalMap;
 			uniform vec3 teamColour;
@@ -32,6 +32,7 @@
 			
 			void main() {
 				gl_TexCoord[0] = gl_MultiTexCoord0;
+				meshAlpha = gl_Color.a;
 				
 				normal = normalize(gl_NormalMatrix * gl_Normal); // pass normal to frag shader
 				esLightDir = normalize(gl_LightSource[0].position.xyz); // light dir in eye space
@@ -95,7 +96,7 @@
 				vec3 ambient = gl_FrontLightProduct[0].ambient.rgb + gl_FrontLightModelProduct.sceneColor.rgb;
 				
 				// final colour
-				vec4 finalColour = vec4((diffuse + ambient) * baseColour, gl_FrontMaterial.diffuse.a);
+				vec4 finalColour = vec4((diffuse + ambient) * baseColour, meshAlpha);
 				gl_FragColor = mix(gl_Fog.color, finalColour, fogFactor);
 			}
 		]]>
@@ -123,7 +124,7 @@
 				vec3 ambient = gl_FrontLightProduct[0].ambient.rgb + gl_FrontLightModelProduct.sceneColor.rgb;
 								
 				// final colour
-				vec4 finalColour = vec4((diffuse.rgb + ambient.rgb) * texDiffuseBase.rgb, gl_FrontMaterial.diffuse.a);
+				vec4 finalColour = vec4((diffuse.rgb + ambient.rgb) * texDiffuseBase.rgb, meshAlpha * texDiffuseBase.a);
 				gl_FragColor = mix(gl_Fog.color, finalColour, fogFactor);
 			}
 		]]>
