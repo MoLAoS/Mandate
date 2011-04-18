@@ -109,7 +109,6 @@ private:
 	bool hasNetworkSlots();
 
 	void randomiseStartLocs();
-	void randomiseFactions();
 	//void randomiseMap();
 	//void randomiseTileset();
 

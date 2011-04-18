@@ -116,6 +116,7 @@ public:
 	void setRandomStartLocs(bool v)					{randomStartLocs = v;}
 
 	//misc
+	void randomiseFactions(const vector<string> &possibleFactions);
 	void randomizeLocs(int maxPlayers);
 	void save(XmlNode *node) const;
 };

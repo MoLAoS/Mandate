@@ -177,6 +177,16 @@ void GameSettings::save(XmlNode *node) const {
 	}
 }
 
+void GameSettings::randomiseFactions(const vector<string> &possibleFactions) {
+	Random random(Chrono::getCurMillis());
+	for (int i = 0; i < getFactionCount(); ++i) {
+		if (getFactionTypeName(i) == "Random") {
+			int ndx = random.randRange(0, possibleFactions.size() - 1);
+			setFactionTypeName(i, possibleFactions[ndx]);
+		}
+	}
+}
+
 void GameSettings::randomizeLocs(int maxPlayers) {
 	bool *slotUsed = new bool[maxPlayers];
 	Random rand;
