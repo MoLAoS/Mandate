@@ -7,10 +7,9 @@
 #include "graphics_interface.h"
 #include "graphics_factory_gl.h"
 
-using namespace Shared::Graphics;
-using namespace Shared::Graphics::Gl;
+namespace Shared { namespace G3dViewer {
 
-namespace Shared{ namespace G3dViewer{
+using namespace Shared::Graphics::Gl;
 
 // ===============================================
 // 	class MeshCallbackTeamColor
@@ -246,7 +245,9 @@ void Renderer::loadTheModel(Model *model, string file){
 
 void Renderer::renderTheModel(Model *model, float t){
 	if(model != NULL){
-		modelRenderer->begin(true, true, !wireframe, &meshCallbackTeamColor);	
+		RenderParams params(true, true, !wireframe, false);
+		params.setMeshCallback(&meshCallbackTeamColor);
+		modelRenderer->begin(params);
 		model->updateInterpolationData(t, true);
 
 		if (mesh == -1) {

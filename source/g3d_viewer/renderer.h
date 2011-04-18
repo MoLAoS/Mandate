@@ -6,15 +6,9 @@
 #include "model.h"
 #include "texture.h"
 
-using Shared::Graphics::ModelRenderer;
-using Shared::Graphics::TextureManager;
-using Shared::Graphics::Model;
-using Shared::Graphics::Texture2D;
-using Shared::Graphics::MeshCallback;
-using Shared::Graphics::Mesh;
-using Shared::Graphics::Texture;
+namespace Shared { namespace G3dViewer {
 
-namespace Shared{ namespace G3dViewer{
+using namespace Shared::Graphics;
 
 // ===============================================
 // 	class MeshCallbackTeamColor
