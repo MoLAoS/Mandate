@@ -190,24 +190,31 @@ void GlslProgram::end() {
 	assertGl();
 }
 
-void GlslProgram::setUniform(const string &name, GLuint value) {
+bool GlslProgram::setUniform(const string &name, GLuint value) {
 	int handle = glGetUniformLocation(m_p, name.c_str());
 	if (handle != -1) {
 		glUniform1i(handle, value);
-	} else {
-		//cout << "ERROR: uniform '" << name << "' not found." << endl;
+		return true;
 	}
-	assertGl();
+	return false;
 }
 
-void GlslProgram::setUniform(const string &name, const Vec3f &value) {
+bool GlslProgram::setUniform(const string &name, GLfloat value) {
+	int handle = glGetUniformLocation(m_p, name.c_str());
+	if (handle != -1) {
+		glUniform1f(handle, value);
+		return true;
+	}
+	return false;
+}
+
+bool GlslProgram::setUniform(const string &name, const Vec3f &value) {
 	int handle = glGetUniformLocation(m_p, name.c_str());
 	if (handle != -1) {
 		glUniform3fv(handle, 1, value.ptr());
-	} else {
-		//cout << "ERROR: uniform '" << name << "' not found." << endl;
+		return true;
 	}
-	assertGl();
+	return false;
 }
 
 int GlslProgram::getAttribLoc(const string &name) {
@@ -221,12 +228,11 @@ int GlslProgram::getAttribLoc(const string &name) {
 void initUnitShader(ShaderProgram *program) {
 	assertGl();
 	program->begin();
-	program->setUniform("baseTexture", 0);
-	//program->setUniform("shadowMap", 1);
-	program->setUniform("normalMap", 2);
-	program->setUniform("specMap", 3);
-	program->setUniform("customTex", 4);
-	program->setUniform("customTex2", 5);
+	program->setUniform( "gae_DiffuseTex", 0u );
+	program->setUniform( "gae_NormalMap",  2u );
+	program->setUniform( "gae_SpecMap",    3u );
+	program->setUniform( "gae_LightMap",   4u );
+	program->setUniform( "gae_CustomTex",  5u );
 	program->end();
 	assertGl();
 }

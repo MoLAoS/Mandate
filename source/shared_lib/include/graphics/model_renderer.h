@@ -33,18 +33,31 @@ public:
 };
 
 struct RenderParams {
+	
+	enum { TEXTURES = 1, NORMALS = 2, COLOURS = 4, USE_FOG = 8, FAST = 16 };
+
 	bool          textures;
 	bool          normals;
 	bool          colours;
 	bool          useFog;
+	bool          fast;	// rendering shadows or for selection, disables shaders
 	MeshCallback *meshCallback;
 
 	RenderParams() : meshCallback(0) {}
-	RenderParams(bool textures, bool normals, bool colours, bool fog) 
+	RenderParams(int flags) {
+		textures = flags & TEXTURES;
+		normals  = flags & NORMALS;
+		colours  = flags & COLOURS;
+		useFog   = flags & USE_FOG;
+		fast     = flags & FAST;
+		meshCallback = 0;
+	}
+	RenderParams(bool textures, bool normals, bool colours, bool fog, bool fast = false) 
 		: textures(textures)
 		, normals(normals)
 		, colours(colours)
 		, useFog(fog)
+		, fast(fast)
 		, meshCallback(0) {
 	}
 
@@ -69,6 +82,8 @@ public:
 
 	void setTeamColour(const Vec3f &colour) { teamColour = colour; }
 	const Vec3f& getTeamColour() const {return teamColour; }
+
+	virtual void setAlphaThreshold(float a) = 0;
 
 	virtual void begin(RenderParams params) = 0;
 	virtual void end() = 0;

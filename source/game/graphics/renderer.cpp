@@ -195,7 +195,7 @@ Renderer &Renderer::getInstance(){
 
 // ==================== init ====================
 
-bool Renderer::init(){
+bool Renderer::init() {
 	// config
 	g_logger.logProgramEvent("Initialising renderer.");
 	Config &config= Config::getInstance();
@@ -245,33 +245,8 @@ bool Renderer::init(){
 			MediaErrorLog::ErrorRecord rec = mediaErrorLog.popError();
 			g_logger.logError(rec.path, rec.msg);
 		}
-	}
-	g_logger.logProgramEvent("\tinit 2d display lists.");
-	init2dList();
-
-	return true;
-}
-
-void Renderer::cycleShaders() {
-	if (g_config.getRenderUseShaders()) {
-		ModelRendererGl *mr = static_cast<ModelRendererGl*>(modelRenderer);
-		mr->cycleShaderSet();
-		g_console.addLine("Shader changed: " + mr->getShaderName());
-	}
-}
-
-void Renderer::initGame(GameState *game) {
-	this->game= game;
-
-	// check gl caps
-	checkGlOptionalCaps();
-
-	// vars
-	shadowMapFrame= 0;
-	waterAnim= 0;
-
-	// load model shader
-	if (g_config.getRenderUseShaders() && !g_config.getRenderTestingShaders()) {
+	// load single model shader
+	} else if (g_config.getRenderUseShaders()) {
 		string name = g_config.getRenderModelShader();
 		g_logger.logProgramEvent("Loading model shader: " + name + ".");
 		try {
@@ -284,6 +259,49 @@ void Renderer::initGame(GameState *game) {
 			g_logger.logError(rec.path, rec.msg);
 		}
 	}
+
+	g_logger.logProgramEvent("\tinit 2d display lists.");
+	init2dList();
+
+	return true;
+}
+
+void Renderer::changeShader(const string &name) {
+	if (name.empty()) {
+		g_logger.logProgramEvent("Deleting model shader.");
+	} else {
+		g_logger.logProgramEvent("Loading model shader: " + name + ".");
+	}
+	try {
+		static_cast<ModelRendererGl*>(modelRenderer)->loadShader(name);
+	} catch (runtime_error &e) {
+		g_logger.logError("\tError: shader source load/compile failed:\n\t" + string(e.what()));
+	}
+	while (mediaErrorLog.hasError()) {
+		MediaErrorLog::ErrorRecord rec = mediaErrorLog.popError();
+		g_logger.logError(rec.path, rec.msg);
+	}
+}
+
+void Renderer::cycleShaders() {
+	if (g_config.getRenderUseShaders()) {
+		ModelRendererGl *mr = static_cast<ModelRendererGl*>(modelRenderer);
+		mr->cycleShaderSet();
+		if (World::isConstructed()) {
+			g_console.addLine("Shader changed: " + mr->getShaderName());
+		}
+	}
+}
+
+void Renderer::initGame(GameState *game) {
+	this->game= game;
+
+	// check gl caps
+	checkGlOptionalCaps();
+
+	// vars
+	shadowMapFrame= 0;
+	waterAnim= 0;
 
 	// terrain renderer
 	if (g_program.getCmdArgs().isTest("tr2")) {
@@ -727,47 +745,6 @@ void Renderer::renderSelectionQuad() {
 	}
 }
 
-//Vec2i computeCenteredPos(const string &text, const Font *font, int x, int y) {
-//	Vec2f textDiminsions = font->getMetrics()->getTextDiminsions(text);
-//	return Vec2i(int(x - textDiminsions.x / 2.f), int(y - textDiminsions.y / 2.f));
-//}
-//
-//void Renderer::renderText(const string &text, const Font *font, float alpha, int x, int y, bool centered) {
-//	glColor4fv(Vec4f(1.f, 1.f, 1.f, alpha).ptr());
-//
-//	Vec2i pos = centered ? computeCenteredPos(text, font, x, y) : Vec2i(x, y);
-//	assert(font->getMetrics()->isFreeType());
-//	TextRenderer *tr = textRendererFT;
-//	tr->begin(font);
-//	tr->render(text, pos.x, pos.y);
-//	tr->end();
-//}
-//
-//void Renderer::renderText(const string &text, const Font *font, const Vec3f &color, int x, int y, bool centered){
-//	glColor3fv(color.ptr());
-//
-//	Vec2i pos = centered ? computeCenteredPos(text, font, x, y) : Vec2i(x, y);
-//	assert(font->getMetrics()->isFreeType());
-//	TextRenderer *tr = textRendererFT;
-//	tr->begin(font);
-//	tr->render(text, pos.x, pos.y);
-//	tr->end();
-//	
-//}
-//
-//void Renderer::renderTextShadow(const string &text, const Font *font, int x, int y, bool centered, Vec3f colour) {
-////	glPushAttrib(GL_CURRENT_BIT);
-//	Vec2i pos= centered? computeCenteredPos(text, font, x, y): Vec2i(x, y);
-//	textRenderer->begin(font);
-//	glColor3f(0.0f, 0.0f, 0.0f);
-//	textRenderer->render(text, pos.x - 1, pos.y - 1);
-//	glColor3fv(colour.ptr());
-//	textRenderer->render(text, pos.x, pos.y);
-//	textRenderer->end();
-//	
-////	glPopAttrib();
-//}
-
 // ==================== complex rendering ====================
 
 void Renderer::renderObjects() {
@@ -778,7 +755,10 @@ void Renderer::renderObjects() {
 
 	assertGl();
 	const Texture2D *fowTex= g_userInterface.getMinimap()->getFowTexture();
-	Vec3f baseFogColor= world->getTileset()->getFogColor() * computeLightColor( world->getTimeFlow()->getTime() );
+
+	const Tileset *tileset = g_world.getTileset();
+	Vec3f baseFogColor = tileset->getFog() ? tileset->getFogColor() : Vec3f(1.f);
+	baseFogColor = baseFogColor * computeLightColor(world->getTimeFlow()->getTime());
 
 	glPushAttrib(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT | GL_FOG_BIT | GL_LIGHTING_BIT | GL_TEXTURE_BIT);
 
@@ -795,11 +775,12 @@ void Renderer::renderObjects() {
 	glActiveTexture(baseTexUnit);
 
 	glEnable(GL_COLOR_MATERIAL);
-	glAlphaFunc(GL_GREATER, 0.5f);
 
 	RenderParams params(true, true, false, g_world.getTileset()->getFog());
 	modelRenderer->begin(params);
-	int thisTeamIndex= world->getThisTeamIndex();
+	modelRenderer->setAlphaThreshold(0.5f);
+
+	int thisTeamIndex = world->getThisTeamIndex();
 
 	SceneCuller::iterator it = culler.tile_begin();
 	for ( ; it != culler.tile_end(); ++it ) {
@@ -812,13 +793,13 @@ void Renderer::renderObjects() {
 			const Model *objModel= sc->getObject()->getModel();
 			Vec3f v= o->getPos();
 
-			// ambient and diffuse color is taken from cell colour on FoW tex (ie, shades of grey)
+			// ambient and diffuse color is taken from tile pos on FoW tex (ie, shades of grey)
 			float fowFactor= fowTex->getPixmap()->getPixelf(pos.x, pos.y);
 			Vec4f color= Vec4f(Vec3f(fowFactor), 1.f);
 			glColor4fv(color.ptr());
 			Vec4f matColour = color * ambFactor;
 			glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, matColour.ptr());
-			Vec3f fogColour = baseFogColor * fowFactor;
+			Vec4f fogColour = Vec4f(baseFogColor * fowFactor, 1.f);
 			glFogfv(GL_FOG_COLOR, fogColour.ptr());
 
 			glMatrixMode(GL_MODELVIEW);
@@ -995,7 +976,7 @@ void reportRenderUnits(vector<const Unit*> *unitLists) {
 
 #endif
 
-void Renderer::renderUnits(){
+void Renderer::renderUnits() {
 	SECTION_TIMER(RENDER_UNITS);
 	SECTION_TIMER(RENDER_MODELS);
 	const Unit *unit;
@@ -1092,10 +1073,10 @@ void Renderer::renderUnits(){
 				fadeDiffuseColor.a = alpha;
 				//glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, fadeAmbientColor.ptr());
 				glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, fadeDiffuseColor.ptr());
-				glAlphaFunc(GL_GREATER, 0.f);
+				modelRenderer->setAlphaThreshold(fade * 0.5f);
 			} else {
 				glEnable(GL_COLOR_MATERIAL);
-				glAlphaFunc(GL_GREATER, 0.5f);
+				modelRenderer->setAlphaThreshold(0.5f);
 			}
 
 			//render
@@ -1306,92 +1287,100 @@ void Renderer::renderWaterEffects(){
 
 void Renderer::renderMenuBackground(const MenuBackground *menuBackground){
 	assertGl();
-	Vec3f cameraPosition= menuBackground->getCamera()->getPosition();
+	Vec3f cameraPosition = menuBackground->getCamera()->getPosition();
 	glPushAttrib(GL_LIGHTING_BIT | GL_ENABLE_BIT | GL_CURRENT_BIT | GL_DEPTH_BUFFER_BIT);
-	//clear
-	Vec4f fogColor= Vec4f(0.4f, 0.4f, 0.4f, 1.f) * menuBackground->getFade();
-	glClearColor(fogColor.x, fogColor.y, fogColor.z, 1.f);
+	
+	// clear
+	Vec4f fogColor = Vec4f(0.4f, 0.4f, 0.4f, 1.f) * menuBackground->getFade();
+	glClearColor(fogColor.r, fogColor.g, fogColor.b, 1.f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glFogfv(GL_FOG_COLOR, fogColor.ptr());
-	//light
-	Vec4f lightPos= Vec4f(10.f, 10.f, 10.f, 1.f)* menuBackground->getFade();
-	Vec4f diffLight= Vec4f(0.9f, 0.9f, 0.9f, 1.f)* menuBackground->getFade();
-	Vec4f ambLight= Vec4f(0.3f, 0.3f, 0.3f, 1.f)* menuBackground->getFade();
-	Vec4f specLight= Vec4f(0.1f, 0.1f, 0.1f, 1.f)* menuBackground->getFade();
+	
+	// light
+	Vec4f lightPos  = Vec4f(-1.f, -1.f, -1.f, 0.f)/* * menuBackground->getFade()*/;
+	Vec4f diffLight = Vec4f(0.9f, 0.9f, 0.9f, 1.f) * menuBackground->getFade();
+	Vec4f ambLight  = Vec4f(0.3f, 0.3f, 0.3f, 1.f) * menuBackground->getFade();
+	Vec4f specLight = Vec4f(0.1f, 0.1f, 0.1f, 1.f) * menuBackground->getFade();
 	glEnable(GL_LIGHT0);
 	glLightfv(GL_LIGHT0, GL_POSITION, lightPos.ptr());
-	glLightfv(GL_LIGHT0, GL_DIFFUSE, diffLight.ptr());
-	glLightfv(GL_LIGHT0, GL_AMBIENT, ambLight.ptr());
+	glLightfv(GL_LIGHT0, GL_DIFFUSE,  diffLight.ptr());
+	glLightfv(GL_LIGHT0, GL_AMBIENT,  ambLight.ptr());
 	glLightfv(GL_LIGHT0, GL_SPECULAR, specLight.ptr());
-	//main model
-	glEnable(GL_ALPHA_TEST);
-	glAlphaFunc(GL_GREATER, 0.5f);
-	RenderParams params(true, true, true, menuBackground->getFog());
+	
+	// main model
+	modelRenderer->setAlphaThreshold(0.5f);
+	glColor3f(1.f, 1.f, 1.f);
+	
+	ModelRendererGl *mr = static_cast<ModelRendererGl*>(modelRenderer);
+	RenderParams params(true, true, false, menuBackground->getFog());
 	modelRenderer->begin(params);
 	modelRenderer->render(menuBackground->getMainModel());
 	modelRenderer->end();
 	glDisable(GL_ALPHA_TEST);
-	//characters
-	float dist= menuBackground->getAboutPosition().dist(cameraPosition);
-	float minDist= 3.f;
-	if(dist<minDist){
-		glAlphaFunc(GL_GREATER, 0.0f);
-		float alpha= clamp((minDist-dist)/minDist, 0.f, 1.f);
+	
+	// characters
+	float dist = menuBackground->getAboutPosition().dist(cameraPosition);
+	float minDist = 3.f;
+	if (dist < minDist) {
+		modelRenderer->setAlphaThreshold(0.f);
+		float alpha = clamp((minDist-dist) / minDist, 0.f, 1.f);
 		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, Vec4f(1.0f, 1.0f, 1.0f, alpha).ptr());
-		RenderParams params(true, true, false, g_world.getTileset()->getFog());
+		RenderParams params(true, true, false, menuBackground->getFog());
 		modelRenderer->begin(params);
-		for(int i=0; i<MenuBackground::characterCount; ++i){
+		modelRenderer->setTeamColour(Vec3f(0.f));
+		for (int i=0; i < MenuBackground::characterCount; ++i) {
 			glMatrixMode(GL_MODELVIEW);
 			glPushMatrix();
 			glLoadIdentity();
-			glTranslatef(i*2.f-4.f, -3.f, -6.5f);
+			glTranslatef(i * 2.f - 4.f, -3.f, -6.5f);
 			menuBackground->getCharacterModel(i)->updateInterpolationData(menuBackground->getAnim(), true);
 			modelRenderer->render(menuBackground->getCharacterModel(i));
 			glPopMatrix();
 		}
 		modelRenderer->end();
 	}
-	//water
-	if(menuBackground->getWater()){
-		//water surface
-		const int waterTesselation= 10;
-		const int waterSize= 250;
-		const int waterQuadSize= 2*waterSize/waterTesselation;
-		const float waterHeight= menuBackground->getWaterHeight();
+	// water
+	if (menuBackground->getWater()) {
+		// water surface
+		const int waterTesselation = 10;
+		const int waterSize = 250;
+		const int waterQuadSize = 2 * waterSize / waterTesselation;
+		const float waterHeight = menuBackground->getWaterHeight();
 		glEnable(GL_BLEND);
 		glNormal3f(0.f, 1.f, 0.f);
 		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, Vec4f(1.f, 1.f, 1.f, 1.f).ptr());
 		GLuint waterHandle= static_cast<Texture2DGl*>(menuBackground->getWaterTexture())->getHandle();
 		glBindTexture(GL_TEXTURE_2D, waterHandle);
-		for(int i=1; i<waterTesselation; ++i){
+		for (int i=1; i < waterTesselation; ++i) {
 			glBegin(GL_TRIANGLE_STRIP);
-			for(int j=1; j<waterTesselation; ++j){
+			for (int j=1; j < waterTesselation; ++j) {
 				glTexCoord2i(1, 2 % j);
-				glVertex3f( (float)(-waterSize+i*waterQuadSize), waterHeight, (float)(-waterSize+j*waterQuadSize) );
+				glVertex3f(float(-waterSize + i * waterQuadSize), waterHeight, float(-waterSize + j * waterQuadSize));
 				glTexCoord2i(0, 2 % j);
-				glVertex3f( (float)(-waterSize+(i+1)*waterQuadSize), waterHeight, (float)(-waterSize+j*waterQuadSize) );
+				glVertex3f(float(-waterSize + (i + 1) * waterQuadSize), waterHeight, float(-waterSize + j * waterQuadSize));
 			}
 			glEnd();
 		}
 		glDisable(GL_BLEND);
-		//raindrops
-		if(menuBackground->getRain()){
-			const float maxRaindropAlpha= 0.5f;
+		// raindrops
+		if (menuBackground->getRain()) {
+			const float maxRaindropAlpha = 0.5f;
 			glEnable(GL_BLEND);
 			glDisable(GL_LIGHTING);
 			glDisable(GL_ALPHA_TEST);
 			glDepthMask(GL_FALSE);
-			//splashes
+
+			// splashes
 			CoreData &coreData= CoreData::getInstance();
 			glBindTexture(GL_TEXTURE_2D, static_cast<Texture2DGl*>(coreData.getWaterSplashTexture())->getHandle());
-			for(int i=0; i<MenuBackground::raindropCount; ++i){
-				Vec2f pos= menuBackground->getRaindropPos(i);
-				float scale= menuBackground->getRaindropState(i);
-				float alpha= maxRaindropAlpha-scale*maxRaindropAlpha;
+			for (int i=0; i < MenuBackground::raindropCount; ++i) {
+				Vec2f pos = menuBackground->getRaindropPos(i);
+				float scale = menuBackground->getRaindropState(i);
+				float alpha = maxRaindropAlpha - scale * maxRaindropAlpha;
 				glMatrixMode(GL_MODELVIEW);
 				glPushMatrix();
 				glColor4f(1.f, 1.f, 1.f, alpha);
-				glTranslatef(pos.x, waterHeight+0.01f, pos.y);
+				glTranslatef(pos.x, waterHeight + 0.01f, pos.y);
 				glBegin(GL_TRIANGLE_STRIP);
 					glTexCoord2f(0.f, 1.f);
 					glVertex3f(-scale, 0, scale);
@@ -1873,7 +1862,7 @@ void Renderer::renderUnitsFast(bool renderingShadows) {
 		glDisable(GL_TEXTURE_2D);
 	} else {
 		glEnable(GL_TEXTURE_2D);
-		glAlphaFunc(GL_GREATER, 0.5f);
+		modelRenderer->setAlphaThreshold(0.5f);
 
 		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
 
@@ -1888,7 +1877,7 @@ void Renderer::renderUnitsFast(bool renderingShadows) {
 		glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
 	}
 
-	RenderParams params(renderingShadows, false, false, false);
+	RenderParams params(renderingShadows, false, false, false, true);
 	modelRenderer->begin(params);
 
 	vector<const Unit*> toRender[GameConstants::maxPlayers + 1];
@@ -1986,7 +1975,7 @@ void Renderer::renderObjectsFast(bool renderingShadows) {
 	if (!renderingShadows) {
 		glDisable(GL_TEXTURE_2D);
 	} else {
-		glAlphaFunc(GL_GREATER, 0.5f);
+		modelRenderer->setAlphaThreshold(0.5f);
 
 		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
 
@@ -2001,7 +1990,7 @@ void Renderer::renderObjectsFast(bool renderingShadows) {
 		glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
 	}
 
-	RenderParams params(renderingShadows, false, false, false);
+	RenderParams params(renderingShadows, false, false, false, true);
 	modelRenderer->begin(params);
 	int thisTeamIndex = world->getThisTeamIndex();
 
@@ -2176,55 +2165,54 @@ void Renderer::init3dListGLSL(){
 	glNewList(list3dGLSL, GL_COMPILE_AND_EXECUTE);
 	//need to execute, because if not gluPerspective takes no effect and gluLoadMatrix is wrong
 
-		//misc
+		// misc
 		glViewport(0, 0, metrics.getScreenW(), metrics.getScreenH());
-		glClearColor(fowColor.x, fowColor.y, fowColor.z, fowColor.w);
+		glClearColor(fowColor.r, fowColor.g, fowColor.b, fowColor.a);
 		glFrontFace(GL_CW);
 		glEnable(GL_CULL_FACE);
 
-		//texture state
+		// texture state
 		glActiveTexture(baseTexUnit);
 		glEnable(GL_TEXTURE_2D);
 
-		//material state
+		// material state
 		glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, defSpecularColor.ptr());
 		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, defAmbientColor.ptr());
 		glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, defDiffuseColor.ptr());
 		glColorMaterial(GL_FRONT_AND_BACK, GL_DIFFUSE);
 		glColor4fv(defColor.ptr());
 
-		//alpha test state
+		// alpha test state
 		glEnable(GL_ALPHA_TEST);
 		glAlphaFunc(GL_GREATER, 0.f);
 
-		//depth test state
+		// depth test state
 		glEnable(GL_DEPTH_TEST);
 		glDepthMask(GL_TRUE);
 		glDepthFunc(GL_LESS);
 
-		//lighting state
+		// lighting state
 		glEnable(GL_LIGHTING);
 		glEnable(GL_LIGHT0);
 
-		//matrix mode
+		// matrix mode
 		glMatrixMode(GL_MODELVIEW);
 
-		//stencil test
+		// stencil test
 		glDisable(GL_STENCIL_TEST);
 
-		//fog
-		//const Tileset *tileset= g_world.getTileset();
-		//if(tileset->getFog()){
-		//	glEnable(GL_FOG);
-		//	if(tileset->getFogMode()==fmExp){
-		//		glFogi(GL_FOG_MODE, GL_EXP);
-		//	}
-		//	else{
-		//		glFogi(GL_FOG_MODE, GL_EXP2);
-		//	}
-		//	glFogf(GL_FOG_DENSITY, tileset->getFogDensity());
-		//	glFogfv(GL_FOG_COLOR, tileset->getFogColor().ptr());
-		//}
+		// fog
+		const Tileset *tileset = g_world.getTileset();
+		if (tileset->getFog()) {
+			glEnable(GL_FOG);
+			if (tileset->getFogMode() == fmExp) {
+				glFogi(GL_FOG_MODE, GL_EXP);
+			} else {
+				glFogi(GL_FOG_MODE, GL_EXP2);
+			}
+			glFogf(GL_FOG_DENSITY, tileset->getFogDensity());
+			glFogfv(GL_FOG_COLOR, tileset->getFogColor().ptr());
+		}
 
 	glEndList();
 
@@ -2283,7 +2271,7 @@ void Renderer::init3dListMenu(MainMenu *mm){
 	const MenuBackground *mb= mm->getMenuBackground();
 
 	list3dMenu= glGenLists(1);
-	glNewList(list3dMenu, GL_COMPILE);
+	glNewList(list3dMenu, GL_COMPILE_AND_EXECUTE);
 
 		//misc
 		glViewport(0, 0, metrics.getScreenW(), metrics.getScreenH());
@@ -2320,6 +2308,7 @@ void Renderer::init3dListMenu(MainMenu *mm){
 
 		//lighting state
 		glEnable(GL_LIGHTING);
+		glEnable(GL_LIGHT0);
 
 		//matrix mode
 		glMatrixMode(GL_MODELVIEW);
@@ -2328,7 +2317,7 @@ void Renderer::init3dListMenu(MainMenu *mm){
 		glDisable(GL_STENCIL_TEST);
 
 		//fog
-		if(mb->getFog()){
+		if (mb->getFog()) {
 			glEnable(GL_FOG);
 			glFogi(GL_FOG_MODE, GL_EXP2);
 			glFogf(GL_FOG_DENSITY, mb->getFogDensity());

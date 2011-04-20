@@ -76,6 +76,10 @@ void ModelRendererGl::loadShader(const string &name) {
 		}
 		m_shaders.clear();
 	}
+	if (name.empty()) {
+		m_shaderIndex = -1;
+		return;
+	}
 	if (isGlVersionSupported(2, 0, 0)) {
 		string path = "gae/shaders/" + name + ".xml";
 		UnitShaderSet *shaderSet = 0;
@@ -266,7 +270,7 @@ void ModelRendererGl::renderMesh(const Mesh *mesh, Vec3f *anim, UnitShaderSet *c
 	}
 
 	ShaderProgram *shaderProgram;
-	if (m_shaderIndex == -1 || !renderParams.meshCallback) {
+	if (m_shaderIndex == -1 || renderParams.fast/* || !renderParams.meshCallback*/) {
 		// (!renderParams.meshCallback) == hacky way to not use shaders for tileset objects and in menu... for now
 		shaderProgram = m_fixedFunctionProgram;
 		if (renderParams.meshCallback) {
@@ -290,14 +294,13 @@ void ModelRendererGl::renderMesh(const Mesh *mesh, Vec3f *anim, UnitShaderSet *c
 			m_lastShaderProgram->end();
 		}
 		shaderProgram->begin();
-		shaderProgram->setUniform("isUsingFog", int(renderParams.useFog));
+		shaderProgram->setUniform("gae_IsUsingFog", GLuint(renderParams.useFog));
 		m_lastShaderProgram = shaderProgram;
 	}
 	///@todo would be better to do this once only per faction, set from the game somewhere/somehow
-	shaderProgram->setUniform("teamColour", getTeamColour());
+	shaderProgram->setUniform("gae_TeamColour", getTeamColour());
+	shaderProgram->setUniform("gae_AlphaThreshold", alphaThreshold);
 	if (customShaders && anim) {
-		//shaderProgram->setUniform("baseTexture", 0);
-		//shaderProgram->setUniform("customTex", 4);
 		float anim_r = remap(anim->r, 0.f, 1.f, 0.15f, 1.f);
 		float anim_g = remap(anim->g, 0.f, 1.f, 0.15f, 1.f);
 		float anim_b = remap(anim->b, 0.f, 1.f, 0.15f, 1.f);
@@ -338,15 +341,15 @@ void ModelRendererGl::renderMesh(const Mesh *mesh, Vec3f *anim, UnitShaderSet *c
 		}
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->getIndexBuffer());
 		if (renderParams.textures && textureNormal) {
-			shaderProgram->setUniform("hasNormalMap", 1);
-			int loc = shaderProgram->getAttribLoc("tangent");
+			shaderProgram->setUniform("gae_HasNormalMap", 1u);
+			int loc = shaderProgram->getAttribLoc("gae_Tangent");
 			if (loc != -1) {
 				assert(mesh->getTangents());
 				glEnableVertexAttribArray(loc);
 				glVertexAttribPointer(loc, 3, GL_FLOAT, GL_TRUE, 0, mesh->getTangents());
 			}
 		} else {
-			shaderProgram->setUniform("hasNormalMap", 0);
+			shaderProgram->setUniform("gae_HasNormalMap", 0u);
 		}
 
 		// draw model
@@ -381,19 +384,30 @@ void ModelRendererGl::renderMesh(const Mesh *mesh, Vec3f *anim, UnitShaderSet *c
 			glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 		}
 		if (renderParams.textures && textureNormal) {
-			shaderProgram->setUniform("hasNormalMap", 1);
-			int loc = shaderProgram->getAttribLoc("tangent");
+			shaderProgram->setUniform("gae_HasNormalMap", 1u);
+			int loc = shaderProgram->getAttribLoc("gae_Tangent");
 			if (loc != -1) {
 				glEnableVertexAttribArray(loc);
 				glVertexAttribPointer(loc, 3, GL_FLOAT, GL_TRUE, 0, mesh->getTangents());
 			}
 		} else {
-			shaderProgram->setUniform("hasNormalMap", 0);
+			shaderProgram->setUniform("gae_HasNormalMap", 0u);
 		}
 		// draw model
 		glDrawRangeElements(GL_TRIANGLES, 0, vertexCount-1, indexCount, GL_UNSIGNED_INT, mesh->getIndices());
 	}
 	assertGl();
+}
+
+void ModelRendererGl::setAlphaThreshold(float a) {
+	if (a < 0.01f) {
+		alphaThreshold = 0.f;
+		glDisable(GL_ALPHA_TEST);
+	} else {
+		alphaThreshold = a;
+		glEnable(GL_ALPHA_TEST);
+		glAlphaFunc(GL_GREATER, alphaThreshold);
+	}
 }
 
 void ModelRendererGl::renderMeshNormals(const Mesh *mesh) {

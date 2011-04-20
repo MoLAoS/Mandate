@@ -74,7 +74,8 @@ private:
 	DropList	*m_langList,
 				*m_shadowsList,
 				*m_filterList,
-				*m_lightsList;
+				*m_lightsList,
+				*m_modelShaderList;
 							
 	CheckBox	*m_3dTexCheckBox,
 		        *m_debugModeCheckBox,
@@ -90,7 +91,8 @@ private:
 	Spinner     *m_minRenderDistSpinner,
 		        *m_maxRenderDistSpinner;
 
-	map<string,string> langMap;
+	map<string,string>  langMap;
+	vector<string>      m_modelShaders;
 
 private:
 	MenuStateOptions(const MenuStateOptions &);
@@ -110,6 +112,7 @@ private:
 	void initListBoxes();
 	void setTexts();
 	void buildOptionsPanel(CellStrip *container, int cell);
+	void loadShaderList();
 
 	void onButtonClick(Widget *source);
 	void on3dTexturesToggle(Widget *source);
@@ -119,6 +122,7 @@ private:
 	void onPlayerNameChanged(Widget *source);
 	void onToggleDebugMode(Widget*);
 	void onToggleDebugKeys(Widget*);
+	void onToggleShaders(Widget *source);
 
 };
 

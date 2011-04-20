@@ -17,36 +17,61 @@
 	<!-- varying and uniform vars -->
 	<variables>
 		<![CDATA[
-			varying float diffuseIntensity, fogFactor, meshAlpha;
-			uniform int isUsingFog;
-			uniform vec3 teamColour;
-			uniform sampler2D baseTexture;
+			
+			varying float      fogFactor;
+			varying vec3       lightColour;
+			varying float      meshAlpha;
+			
+			uniform float      gae_AlphaThreshold;
+			uniform int        gae_IsUsingFog;
+			uniform vec3       gae_TeamColour;
+			uniform sampler2D  gae_DiffuseTex;
+			
 		]]>
 	</variables>
 
 	<vertex-shader>
 		<![CDATA[
+			// Light source 0, always directional
+			void doPrimaryLight(in vec3 normal, inout vec3 diffuse, inout vec3 ambient) {
+				vec3 lightDir = normalize(vec3(gl_LightSource[0].position)); // direction of main light source
+				float diffuseIntensity = max(dot(lightDir, normal), 0.0);         // calculate diffuse term
+
+				diffuse += gl_LightSource[0].diffuse.rgb * gl_FrontMaterial.diffuse.rgb * gl_Color.rgb
+								* diffuseIntensity;
+				ambient += gl_LightSource[0].ambient.rgb * gl_FrontMaterial.ambient.rgb;
+			}
+			
+			//void doPointLight(int light, vec3 in normal, vec3 out diffuse, vec3 out ambient) {
+				// TODO: Copy code from the orange book ;)
+			//}
+		
 			void main() {
 				// pass-on tex-coord & mesh colour
 				gl_TexCoord[0] = gl_MultiTexCoord0;
-				gl_FrontColor = gl_Color;
+				//meshColour = gl_Color;
 				meshAlpha = gl_Color.a;
 
 				// Lighting (diffuse only, everything currently has Material.specular set to (0, 0, 0, 1))
-				vec3 normal = normalize(gl_NormalMatrix * gl_Normal);       // convert normal to eye space
-				vec3 lightDir = normalize(gl_LightSource[0].position.xyz);  // direction of main light source
-				diffuseIntensity =	max(dot(lightDir, normal), 0.0);        // calculate diffuse term
-				
+				//vec3 normal = normalize(gl_NormalMatrix * gl_Normal);        // convert normal to eye space
+				vec3 normal = gl_NormalMatrix * gl_Normal;        // convert normal to eye space
+				vec3 diffuse = vec3(0.0);
+				vec3 ambient = vec3(0.0);
+				doPrimaryLight(normal, diffuse, ambient);
+				ambient += gl_FrontLightModelProduct.sceneColor.rgb;
+				lightColour = clamp(ambient + diffuse, 0.0, 1.0);
+
 				// fog
-				if (isUsingFog == 1) {
+				//if (gae_IsUsingFog == 1) {
 					float dist = length(vec3(gl_ModelViewMatrix * gl_Vertex)); // distance from camera
+					dist *= float(gae_IsUsingFog);
 					const float log_2 = 1.442695;
 					fogFactor = exp2(-gl_Fog.density * gl_Fog.density * dist * dist * log_2);
 					fogFactor = clamp(fogFactor, 0.0, 1.0);	
-				} else {
-					fogFactor = 1.f;
-				}
-				
+				//} else {
+				//	fogFactor = 1.f;
+				//}
+
 				// Transform vertex
 				gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;
 			}
@@ -116,17 +141,13 @@
 		<![CDATA[
 			void main() {
 				// sample texture
-				vec4 texDiffuseBase = texture2D(baseTexture, vec2(gl_TexCoord[0].st));
+				vec4 texDiffuseBase = texture2D(gae_DiffuseTex, vec2(gl_TexCoord[0].st));
 				
 				// interpolate the base and team colour according to the base alpha
-				vec3 baseColour = mix(teamColour, texDiffuseBase.rgb, texDiffuseBase.a);
-
-				// light components
-				vec3 diffuse = gl_FrontLightProduct[0].diffuse.rgb * diffuseIntensity;
-				vec3 ambient = gl_FrontLightProduct[0].ambient.rgb + gl_FrontLightModelProduct.sceneColor.rgb;
+				vec3 baseColour = mix(gae_TeamColour, texDiffuseBase.rgb, texDiffuseBase.a);
 
 				// final colour
-				vec4 finalColour = vec4((ambient + diffuse) * baseColour, meshAlpha);
+				vec4 finalColour = vec4(lightColour * baseColour, meshAlpha);
 				gl_FragColor = mix(gl_Fog.color, finalColour, fogFactor);
 			}
 		]]>
@@ -136,15 +157,15 @@
 		<![CDATA[
 			void main() {
 				// sample texture
-				vec4 baseColour = texture2D(baseTexture, vec2(gl_TexCoord[0].st));
-
-				// light components
-				vec3 diffuse = gl_FrontLightProduct[0].diffuse.rgb * diffuseIntensity;
-				vec3 ambient = gl_FrontLightProduct[0].ambient.rgb + gl_FrontLightModelProduct.sceneColor.rgb;
-				vec3 lightColour = ambient + diffuse;
+				vec4 baseColour = texture2D(gae_DiffuseTex, vec2(gl_TexCoord[0].st));
 
 				// final colour
 				vec4 finalColour = vec4(lightColour * baseColour.rgb, meshAlpha * baseColour.a);
+				
+				// below alpha threshold ?
+				if (finalColour.a < gae_AlphaThreshold) {
+					discard;
+				}
 				gl_FragColor = mix(gl_Fog.color, finalColour, fogFactor);
 			}
 		]]>

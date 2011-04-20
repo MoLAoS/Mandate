@@ -386,6 +386,17 @@ void MenuStateOptions::buildOptionsPanel(CellStrip *container, int cell) {
 	// Enable Shaders
 	dw = new OptionWidget(col2, lang.get("UseShaders"));
 	dw->setCell(5);
+	cbh = new CheckBoxHolder(dw);
+	cbh->setCell(1);
+	cbh->setAnchors(fillAnchors);
+	CheckBox *checkBox  = new CheckBox(cbh);
+	checkBox->setCell(1);
+	checkBox->setAnchors(squashAnchors);
+	checkBox->setChecked(config.getRenderUseShaders());
+	checkBox->Clicked.connect(this, &MenuStateOptions::onToggleShaders);
+	if (g_config.getRenderTestingShaders()) {
+		checkBox->setEnabled(false);
+	}
 
 	// Terrain Shader
 	dw = new OptionWidget(col2, lang.get("TerrainShader"));
@@ -398,6 +409,41 @@ void MenuStateOptions::buildOptionsPanel(CellStrip *container, int cell) {
 	// Model Shader
 	dw = new OptionWidget(col2, lang.get("ModelShader"));
 	dw->setCell(8);
+
+	m_modelShaderList = new DropList(dw);
+	m_modelShaderList->setCell(1);
+	m_modelShaderList->setAnchors(squashAnchors);
+	m_modelShaderList->SelectionChanged.connect(this, &MenuStateOptions::onDropListSelectionChanged);
+
+	loadShaderList();
+}
+
+void MenuStateOptions::loadShaderList() {
+	m_modelShaderList->clearItems();
+	if (g_config.getRenderUseShaders() && !g_config.getRenderTestingShaders()) {
+		findAll("/gae/shaders/*.xml", m_modelShaders, true, false);
+		string currentName = g_config.getRenderModelShader();
+		int currentNdx = -1, i = 0;
+		foreach (vector<string>, it, m_modelShaders) {
+			if (currentName == *it) {
+				currentNdx = i;
+			}
+			m_modelShaderList->addItem(formatString(*it));
+			++i;
+		}
+		m_modelShaderList->setSelected(currentNdx);
+		m_modelShaderList->setEnabled(true);
+	} else {
+		m_modelShaderList->setEnabled(false);
+	}
+}
+
+void MenuStateOptions::onToggleShaders(Widget*) {
+	g_config.setRenderUseShaders(!g_config.getRenderUseShaders());
+	loadShaderList();
+	if (!g_config.getRenderUseShaders()) {
+		g_renderer.changeShader("");
+	}
 }
 
 void MenuStateOptions::onToggleDebugMode(Widget*) {
@@ -481,6 +527,10 @@ void MenuStateOptions::onDropListSelectionChanged(Widget *source) {
 	} else if (list == m_lightsList) {
 		config.setRenderLightsMax(list->getSelectedIndex() + 1);
 // 		saveConfig();
+	} else if (list = m_modelShaderList) {
+		string shader = m_modelShaders[list->getSelectedIndex()];
+		g_renderer.changeShader(shader);
+		g_config.setRenderModelShader(shader);
 	}
 }
 

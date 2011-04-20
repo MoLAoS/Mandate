@@ -11,10 +11,15 @@
 	<!-- varying and uniform vars -->
 	<variables>
 		<![CDATA[
-			varying float diffuseIntensity, fogFactor;
-			uniform int isUsingFog;
-			uniform vec3 teamColour;
-			uniform sampler2D baseTexture;
+		
+			varying float      fogFactor, meshAlpha;
+			varying vec3       lightColour;
+
+			uniform float      gae_AlphaThreshold;
+			uniform int        gae_IsUsingFog;			
+			uniform vec3       gae_TeamColour;
+			uniform sampler2D  gae_DiffuseTexture;
+			
 		]]>
 	</variables>
 
@@ -22,16 +27,24 @@
 		<![CDATA[
 			void main() {
 				// pass-on tex-coord & mesh colour
-				//gl_TexCoord[0] = gl_MultiTexCoord0;
+				gl_TexCoord[0] = gl_MultiTexCoord0;
 				gl_FrontColor = gl_Color;
+				meshAlpha = gl_Color.a;
 
 				// Lighting
 				vec3 normal = normalize(gl_NormalMatrix * gl_Normal);        // convert normal to eye space
+				//vec3 lightDir = normalize(gl_NormalMatrix * vec3(10.0, 10.0, 10.0));
 				vec3 lightDir = normalize(vec3(gl_LightSource[0].position)); // direction of main light source
-				diffuseIntensity =	max(dot(lightDir, normal), 0.0);         // calculate diffuse term
+				
+				float diffuseIntensity = max(dot(lightDir, normal), 0.0);         // calculate diffuse term
+
+				vec3 diffuse = gl_FrontLightProduct[0].diffuse.rgb * diffuseIntensity;
+				vec3 ambient = gl_FrontLightProduct[0].ambient.rgb + gl_FrontLightModelProduct.sceneColor.rgb;
+				
+				lightColour = diffuse + ambient;
 
 				// fog
-				if (isUsingFog == 1) {
+				if (gae_IsUsingFog == 1) {
 					float dist = length(vec3(gl_ModelViewMatrix * gl_Vertex)); // distance from camera
 					const float log_2 = 1.442695;
 					fogFactor = exp2(-gl_Fog.density * gl_Fog.density * dist * dist * log_2);
@@ -47,13 +60,9 @@
 
 	<team-fragment-shader>
 		<![CDATA[
-			void main() {
-				// light components
-				vec3 diffuse = gl_FrontLightProduct[0].diffuse.rgb * diffuseIntensity;
-				vec3 ambient = gl_FrontLightProduct[0].ambient.rgb + gl_FrontLightModelProduct.sceneColor.rgb;
-				
+			void main() {				
 				// final colour 
-				vec4 finalColour = vec4((diffuse + ambient), gl_FrontMaterial.diffuse.a);
+				vec4 finalColour = vec4(lightColour, meshAlpha);
 				gl_FragColor = mix(gl_Fog.color, finalColour, fogFactor);
 			}
 		]]>
@@ -62,12 +71,12 @@
 	<rgba-fragment-shader>
 		<![CDATA[
 			void main() {
-				// light components
-				vec3 diffuse = gl_FrontLightProduct[0].diffuse.rgb * diffuseIntensity;
-				vec3 ambient = gl_FrontLightProduct[0].ambient.rgb + gl_FrontLightModelProduct.sceneColor.rgb;
-				
+				vec4 tex = texture2D(gae_DiffuseTexture, vec2(gl_TexCoord[0].st));
+				if (tex.a < 0.5) {
+					discard;
+				}
 				// final colour 
-				vec4 finalColour = vec4((diffuse + ambient), gl_FrontMaterial.diffuse.a);
+				vec4 finalColour = vec4(lightColour, tex.a * meshAlpha);
 				gl_FragColor = mix(gl_Fog.color, finalColour, fogFactor);
 			}
 		]]>

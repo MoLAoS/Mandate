@@ -31,6 +31,7 @@ private:
 	bool shaderOverride;
 	int secondaryTexCoordUnit;
 	GLuint lastTexture;
+	float alphaThreshold;
 
 	UnitShaderSets   m_shaders;
 	int	             m_shaderIndex; // index in m_shaders of UnitShaderSet we a currently using, or -1
@@ -56,6 +57,8 @@ public:
 	void cycleShaderSet();
 	const string& getShaderName();
 	bool isUsingShaders() const { return m_shaderIndex != -1; }
+
+	virtual void setAlphaThreshold(float a) override;
 
 	void begin(RenderParams params) override;
 	void end() override;

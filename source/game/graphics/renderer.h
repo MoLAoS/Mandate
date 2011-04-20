@@ -183,6 +183,7 @@ public:
 	//misc
 	void reloadResources();
 
+	void changeShader(const string &name);
 	void cycleShaders();
 
 	//engine interface

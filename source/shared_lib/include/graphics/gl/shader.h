@@ -35,8 +35,9 @@ public:
 	virtual void end() = 0;
 
 	virtual unsigned int getId() = 0;
-	virtual void setUniform(const string &name, GLuint value) = 0;
-	virtual void setUniform(const string &name, const Vec3f &value) = 0;
+	virtual bool setUniform(const string &name, GLuint value) = 0;
+	virtual bool setUniform(const string &name, GLfloat value) = 0;
+	virtual bool setUniform(const string &name, const Vec3f &value) = 0;
 	virtual int getAttribLoc(const string &name) = 0;
 };
 
@@ -49,10 +50,11 @@ public:
 	virtual void begin() override {}
 	virtual void end() override {}
 
-	unsigned int getId() override { return 0; }
-	void setUniform(const string &name, GLuint value) override {}
-	void setUniform(const string &name, const Vec3f &value) override {}
-	int getAttribLoc(const string &name) override { return -1; }
+	virtual unsigned int getId() override { return 0; }
+	virtual bool setUniform(const string &name, GLuint value) override {return false;}
+	virtual bool setUniform(const string &name, GLfloat value) override {return false;}
+	virtual bool setUniform(const string &name, const Vec3f &value) override {return false;}
+	virtual int  getAttribLoc(const string &name) override { return -1; }
 };
 
 // =====================================================
@@ -87,13 +89,14 @@ public:
 
 	void compileAndLink(const char *vertSource, const char *fragSource);
 
-	void begin() override;
-	void end() override;
+	virtual void begin() override;
+	virtual void end() override;
 
-	GLuint getId() override { return m_p; }
-	void setUniform(const string &name, GLuint value) override;
-	void setUniform(const string &name, const Vec3f &value) override;
-	int getAttribLoc(const string &name) override;
+	virtual unsigned int getId() override { return m_p; }
+	virtual bool setUniform(const string &name, GLuint value) override;
+	virtual bool setUniform(const string &name, GLfloat value) override;
+	virtual bool setUniform(const string &name, const Vec3f &value) override;
+	virtual int  getAttribLoc(const string &name) override;
 };
 
 // =====================================================

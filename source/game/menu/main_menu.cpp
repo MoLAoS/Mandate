@@ -180,6 +180,10 @@ void MainMenu::keyDown(const Key &key) {
 
 void MainMenu::keyPress(char c) {
 	state->keyPress(c);
+	switch (c) {
+		case '\'':
+			g_renderer.cycleShaders();
+	}
 }
 
 void MainMenu::setState(MenuState *state) {
