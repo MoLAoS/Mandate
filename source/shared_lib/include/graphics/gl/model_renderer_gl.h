@@ -40,10 +40,10 @@ private:
 	ShaderProgram	*m_fixedFunctionProgram;
 
 	static const int diffuseTextureUnit = GL_TEXTURE0;
-	static const int normalTextureUnit = GL_TEXTURE2;
-	static const int specularTextureUnt = GL_TEXTURE3;
-	static const int custom1TextureUnit = GL_TEXTURE4;
-	static const int custom2TextureUnit = GL_TEXTURE5;
+	static const int normalTextureUnit  = GL_TEXTURE3;
+	static const int specularTextureUnt = GL_TEXTURE4;
+	static const int custom1TextureUnit = GL_TEXTURE5;
+	static const int custom2TextureUnit = GL_TEXTURE6;
 
 public:
 	ModelRendererGl();

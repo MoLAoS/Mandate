@@ -229,10 +229,10 @@ void initUnitShader(ShaderProgram *program) {
 	assertGl();
 	program->begin();
 	program->setUniform( "gae_DiffuseTex", 0u );
-	program->setUniform( "gae_NormalMap",  2u );
-	program->setUniform( "gae_SpecMap",    3u );
-	program->setUniform( "gae_LightMap",   4u );
-	program->setUniform( "gae_CustomTex",  5u );
+	program->setUniform( "gae_NormalMap",  3u );
+	program->setUniform( "gae_SpecMap",    4u );
+	program->setUniform( "gae_LightMap",   5u );
+	program->setUniform( "gae_CustomTex",  6u );
 	program->end();
 	assertGl();
 }
