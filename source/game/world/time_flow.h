@@ -52,8 +52,10 @@ public:
 	void save(XmlNode *node) const;
 	void load(const XmlNode *node);
 
-private:
-	bool isAproxTime(float time) const;
+	// for debugging only!
+	void setTime(float t) {time = t;}
+//private:
+//	bool isAproxTime(float time) const;
 };
 
 }} //end namespace

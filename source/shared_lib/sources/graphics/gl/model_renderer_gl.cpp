@@ -167,14 +167,14 @@ void ModelRendererGl::end() {
 	assertGl();
 }
 
-void ModelRendererGl::render(const Model *model, Vec3f *anim, UnitShaderSet *customShaders) {
+void ModelRendererGl::render(const Model *model, int frame, int id, UnitShaderSet *customShaders) {
 	//assertions
 	assert(rendering);
 	assertGl();
 
 	//render every mesh
 	for (uint32 i = 0; i < model->getMeshCount(); ++i) {
-		renderMesh(model->getMesh(i), anim, customShaders);
+		renderMesh(model->getMesh(i), frame, id, customShaders);
 	}
 
 	//assertions
@@ -201,7 +201,7 @@ void ModelRendererGl::renderMeshNormalsOnly(const Mesh *mesh) {
 
 // ===================== PRIVATE =======================
 
-void ModelRendererGl::renderMesh(const Mesh *mesh, Vec3f *anim, UnitShaderSet *customShaders) {
+void ModelRendererGl::renderMesh(const Mesh *mesh, int frame, int id, UnitShaderSet *customShaders) {
 
 	//assertions
 	assertGl();
@@ -301,10 +301,12 @@ void ModelRendererGl::renderMesh(const Mesh *mesh, Vec3f *anim, UnitShaderSet *c
 	shaderProgram->setUniform("gae_TeamColour", getTeamColour());
 	shaderProgram->setUniform("gae_AlphaThreshold", alphaThreshold);
 	if (customShaders && anim) {
-		float anim_r = remap(anim->r, 0.f, 1.f, 0.15f, 1.f);
-		float anim_g = remap(anim->g, 0.f, 1.f, 0.15f, 1.f);
-		float anim_b = remap(anim->b, 0.f, 1.f, 0.15f, 1.f);
-		shaderProgram->setUniform("time", Vec3f(anim_r, anim_g, anim_b));///@todo
+		shaderProgram->setUniform("gae_FrameNumber", frame);
+		shaderProgram->setUniform("gae_EntityId", id);
+		//float anim_r = remap(anim->r, 0.f, 1.f, 0.15f, 1.f);
+		//float anim_g = remap(anim->g, 0.f, 1.f, 0.15f, 1.f);
+		//float anim_b = remap(anim->b, 0.f, 1.f, 0.15f, 1.f);
+		//shaderProgram->setUniform("time", Vec3f(anim_r, anim_g, anim_b));///@todo
 	}
 
 	// vertices

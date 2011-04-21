@@ -379,6 +379,14 @@ int LuaArguments::getInt(int ndx) const {
 	return luaL_checkint(luaState, ndx);
 }
 
+float LuaArguments::getFloat(int ndx) const {
+	if (!checkType(LuaType::NUMBER, ndx)) {
+		string emsg = "Argument " + descArgPos(ndx) + " expected Number, got " + getType(ndx) + ".\n";
+		throw LuaError(emsg);
+	}
+	return float(luaL_checknumber(luaState, ndx));
+}
+
 string LuaArguments::getString(int ndx) const {
 	if (!checkType(LuaType::STRING, ndx)) {
 		string emsg = "Argument " + descArgPos(ndx) + " expected String, got " + getType(ndx) + ".\n";

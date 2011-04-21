@@ -93,6 +93,8 @@ int getCellHeight(LuaHandle *luaHandle);
 int getTileHeight(LuaHandle *luaHandle);
 int getWaterLevel(LuaHandle *luaHandle);
 
+int setTime(LuaHandle *luaHandle);
+
 void ScriptManager::initGame() {
 	const Scenario*	scenario = g_world.getScenario();
 
@@ -114,6 +116,7 @@ void ScriptManager::initGame() {
 	LUA_FUNC(getCellType);
 	LUA_FUNC(getTileHeight);
 	LUA_FUNC(getWaterLevel);
+	LUA_FUNC(setTime);
 
 	// AI helpers
 	LUA_FUNC(initSurveyor);
@@ -250,6 +253,18 @@ void ScriptManager::initGame() {
 	} else {
 		addErrorMessage("Warning, no startup script defined", true);
 	}
+}
+
+int setTime(LuaHandle *l) {
+	LuaArguments args(l);
+	float time;
+	if (ScriptManager::extractArgs(args, "setTime", "flt", &time)) {
+		time = clamp(time, 0.f, 23.999f);
+		const_cast<TimeFlow*>(g_world.getTimeFlow())->setTime(time);
+		string timeStr = g_world.getTimeFlow()->describeTime();
+		ScriptManager::luaConsole->addOutput("Time set, time now: " + timeStr);
+	}
+	return args.getReturnCount();
 }
 
 int getSubfaction(LuaHandle *luaHandle) {
@@ -456,6 +471,7 @@ void ScriptManager::addErrorMessage(const char *txt, bool quietly) {
   *  that called this function, used for error reporting.
   * @param arg_desc argument descriptor, a string of the form "[xxx[,xxx[,etc]]]" where xxx can be any of
   * <ul><li>'int' for an integer</li>
+  *		<li>'flt' for a float</li>
   *		<li>'str' for a string</li>
   *		<li>'bln' for a boolean</li>
   *		<li>'v2i' for a Vec2i</li>
@@ -506,6 +522,8 @@ bool ScriptManager::extractArgs(LuaArguments &luaArgs, const char *caller, const
 				*va_arg(vArgs,Vec3i*) = luaArgs.getVec3i(-expected);
 			} else if (strcmp(tok,"v4i") == 0) {
 				*va_arg(vArgs,Vec4i*) = luaArgs.getVec4i(-expected);
+			} else if (strcmp(tok,"flt") == 0) {
+				*va_arg(vArgs,float*) = luaArgs.getFloat(-expected);
 			} else {
 				throw runtime_error("ScriptManager::extractArgs() passed bad arg_desc string");
 			}

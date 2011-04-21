@@ -17,16 +17,25 @@
 	<!-- varying and uniform vars -->
 	<variables>
 		<![CDATA[
+			//struct gae_LightParams {
+			//	vec3 position;
+			//	vec3 diffuse;
+			//	vec3 ambient;
+			//};
+			//
+			//uniform gae_LightParams  gae_PrimaryLight;
+			//uniform gae_LightParams  gae_PointLights[7];
+			//uniform vec3             gae_SceneAmbientLight;
 			
-			varying float      fogFactor;
-			varying vec3       lightColour;
-			varying float      meshAlpha;
+			uniform float            gae_AlphaThreshold;
+			uniform int              gae_IsUsingFog;
+			uniform vec3             gae_TeamColour;
+			uniform sampler2D        gae_DiffuseTex;
+			uniform int              gae_NumLights;
 			
-			uniform float      gae_AlphaThreshold;
-			uniform int        gae_IsUsingFog;
-			uniform vec3       gae_TeamColour;
-			uniform sampler2D  gae_DiffuseTex;
-			
+			varying float            fogFactor;
+			varying vec3             lightColour;
+			varying float            meshAlpha;
 		]]>
 	</variables>
 
@@ -42,35 +51,68 @@
 				ambient += gl_LightSource[0].ambient.rgb * gl_FrontMaterial.ambient.rgb;
 			}
 			
-			//void doPointLight(int light, vec3 in normal, vec3 out diffuse, vec3 out ambient) {
+			void doPointLight(int i, in vec3 ecPos, in vec3 normal, inout vec3 diffuse, inout vec3 ambient) {
 				// TODO: Copy code from the orange book ;)
-			//}
-		
-			void main() {
-				// pass-on tex-coord & mesh colour
-				gl_TexCoord[0] = gl_MultiTexCoord0;
-				//meshColour = gl_Color;
-				meshAlpha = gl_Color.a;
-
-				// Lighting (diffuse only, everything currently has Material.specular set to (0, 0, 0, 1))
-				//vec3 normal = normalize(gl_NormalMatrix * gl_Normal);        // convert normal to eye space
-				vec3 normal = gl_NormalMatrix * gl_Normal;        // convert normal to eye space
-				vec3 diffuse = vec3(0.0);
-				vec3 ambient = vec3(0.0);
-				doPrimaryLight(normal, diffuse, ambient);
-				ambient += gl_FrontLightModelProduct.sceneColor.rgb;
-				lightColour = clamp(ambient + diffuse, 0.0, 1.0);
-
+				float diffuseIntensity;
+				
+				vec3  VP = vec3(gl_LightSource[i].position) - ecPos;
+				float distance = length(VP);
+				VP = normalize(VP);
+				
+				float attenuation = 1.0 / (gl_LightSource[i].constantAttenuation
+						+ gl_LightSource[i].linearAttenuation * d
+						+ gl_LightSource[i].quadraticAttentuation * d * d);
+						
+				float diffuseIntensity = max(dot(normal, VP), 0.0);
+				
+				ambient += gl_LightSource[i].ambient * attenuation;
+				diffuse += gl_LightSource[i].diffuse * diffuseIntensity * attenuation;
+			}
+			
+			float calculateFogFactor() {
 				// fog
 				//if (gae_IsUsingFog == 1) {
 					float dist = length(vec3(gl_ModelViewMatrix * gl_Vertex)); // distance from camera
 					dist *= float(gae_IsUsingFog);
-					const float log_2 = 1.442695;
-					fogFactor = exp2(-gl_Fog.density * gl_Fog.density * dist * dist * log_2);
-					fogFactor = clamp(fogFactor, 0.0, 1.0);	
+					const float one_divide_ln_2 = 1.44269504088896341;
+					float fog = exp2(-gl_Fog.density * gl_Fog.density * dist * dist * one_divide_ln_2);
+					return clamp(fog, 0.0, 1.0);	
 				//} else {
-				//	fogFactor = 1.f;
+				//	return 1.f;
 				//}
+			}
+
+			void main() {
+				// pass-on tex-coord & mesh colour
+				gl_TexCoord[0] = gl_MultiTexCoord0;
+				meshAlpha = gl_Color.a;
+
+				// Lighting (diffuse only, everything currently has Material.specular set to (0, 0, 0, 1))
+				
+				// convert normal to eye space
+				vec3 normal = gl_NormalMatrix * gl_Normal;
+				
+				// diffuse and ambient accumulators
+				vec3 diffuse = vec3(0.0);
+				vec3 ambient = vec3(0.0);
+
+				// Light source 0, sun/moon
+				doPrimaryLight(normal, diffuse, ambient);
+
+				for (int i=1; i < gae_NumLights; ++i) {
+					vec4 ec = gl_ModelViewMatrix gl_Vertex;
+					vec3 ecPos = ec.xyz / ec.w;
+					doPointLight(i, ecPos, normal, diffuse, ambient);
+				}
+
+				// add global ambient
+				ambient += gl_FrontLightModelProduct.sceneColor.rgb;
+				
+				// sum light colour
+				lightColour = clamp(ambient + diffuse, 0.0, 1.0);
+
+				// fog
+				fogFactor = calculateFogFactor();
 
 				// Transform vertex
 				gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;

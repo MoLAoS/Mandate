@@ -63,7 +63,7 @@ public:
 	void begin(RenderParams params) override;
 	void end() override;
 	
-	void render(const Model *model, Vec3f *anim = 0, UnitShaderSet *customShaders = 0) override;
+	void render(const Model *model, int frame = 0, int id = 0, UnitShaderSet *customShaders = 0) override;
 	void renderNormalsOnly(const Model *model) override;
 	void renderMeshNormalsOnly(const Mesh *mesh) override;
 
@@ -71,7 +71,7 @@ public:
 	void setSecondaryTexCoordUnit(int secondaryTexCoordUnit)	{this->secondaryTexCoordUnit= secondaryTexCoordUnit;}
 
 	void renderMeshNormals(const Mesh *mesh);
-	void renderMesh(const Mesh *mesh, Vec3f *anim = 0, UnitShaderSet *customShaders = 0) override;
+	void renderMesh(const Mesh *mesh, int frame = 0, int id = 0, UnitShaderSet *customShaders = 0) override;
 };
 
 }}}//end namespace

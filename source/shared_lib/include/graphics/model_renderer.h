@@ -87,9 +87,9 @@ public:
 
 	virtual void begin(RenderParams params) = 0;
 	virtual void end() = 0;
-	virtual void render(const Model *model, Vec3f *anim = 0, UnitShaderSet *shaderSet = 0) = 0;
+	virtual void render(const Model *model, int frame = 0, int id = 0, UnitShaderSet *shaderSet = 0) = 0;
 	virtual void renderNormalsOnly(const Model *model) = 0;
-	virtual void renderMesh(const Mesh *mesh, Vec3f *anim = 0, UnitShaderSet *shaderSet = 0) = 0;
+	virtual void renderMesh(const Mesh *mesh, int frame = 0, int id = 0, UnitShaderSet *shaderSet = 0) = 0;
 	virtual void renderMeshNormalsOnly(const Mesh *mesh) = 0;
 };
 

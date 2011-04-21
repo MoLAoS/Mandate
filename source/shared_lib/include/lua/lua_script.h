@@ -122,6 +122,7 @@ public:
 
 	bool getBoolean(int ndx) const;
 	int getInt(int argumentIndex) const;
+	float getFloat(int argumentIndex) const;
 	string getString(int argumentIndex) const;
 	Vec2i getVec2i(int argumentIndex) const;
 	Vec3i getVec3i(int argumentIndex) const;

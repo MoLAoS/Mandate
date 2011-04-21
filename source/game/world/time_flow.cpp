@@ -42,7 +42,12 @@ void TimeFlow::init(Tileset *tileset){
 void TimeFlow::update(){
 
 	// update time
-	time += isDay() ? timeInc: timeInc * 2;
+	//if (tileset->getDoubleNightSpeed()) {
+	//	time += isDay() ? timeInc: timeInc * 2;
+	//} else {
+		time += timeInc;
+	//}
+
 	if (time > 24.f) {
 		time -= 24.f;
 	}
@@ -129,8 +134,8 @@ void TimeFlow::load(const XmlNode *node) {
 }
 
 
-bool TimeFlow::isAproxTime(float time) const {
-	return (this->time>=time) && (this->time<time+timeInc);
-}
+//bool TimeFlow::isAproxTime(float time) const {
+//	return (this->time>=time) && (this->time<time+timeInc);
+//}
 
 }}//end namespace
