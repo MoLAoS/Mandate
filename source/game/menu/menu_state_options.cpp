@@ -431,7 +431,9 @@ void MenuStateOptions::loadShaderList() {
 			m_modelShaderList->addItem(formatString(*it));
 			++i;
 		}
+		m_modelShaderList->SelectionChanged.disconnect(this);
 		m_modelShaderList->setSelected(currentNdx);
+		m_modelShaderList->SelectionChanged.connect(this, &MenuStateOptions::onDropListSelectionChanged);
 		m_modelShaderList->setEnabled(true);
 	} else {
 		m_modelShaderList->setEnabled(false);

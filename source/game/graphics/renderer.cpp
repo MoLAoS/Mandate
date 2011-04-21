@@ -1639,23 +1639,28 @@ void Renderer::renderShadowsToTexture() {
 string Renderer::getGlInfo(){
 	string infoStr;
 	Lang &lang= Lang::getInstance();
-	infoStr+= lang.get("OpenGlInfo")+":\n";
-	infoStr+= "   "+lang.get("OpenGlVersion")+": ";
-	infoStr+= string(getGlVersion())+"\n";
-	infoStr+= "   "+lang.get("OpenGlRenderer")+": ";
-	infoStr+= string(getGlRenderer())+"\n";
-	infoStr+= "   "+lang.get("OpenGlVendor")+": ";
-	infoStr+= string(getGlVendor())+"\n";
-	infoStr+= "   "+lang.get("OpenGlMaxLights")+": ";
-	infoStr+= intToStr(getGlMaxLights())+"\n";
-	infoStr+= "   "+lang.get("OpenGlMaxTextureSize")+": ";
-	infoStr+= intToStr(getGlMaxTextureSize())+"\n";
-	infoStr+= "   "+lang.get("OpenGlMaxTextureUnits")+": ";
-	infoStr+= intToStr(getGlMaxTextureUnits())+"\n";
-	infoStr+= "   "+lang.get("OpenGlModelviewStack")+": ";
-	infoStr+= intToStr(getGlModelviewMatrixStackDepth())+"\n";
-	infoStr+= "   "+lang.get("OpenGlProjectionStack")+": ";
-	infoStr+= intToStr(getGlProjectionMatrixStackDepth())+"\n";
+	infoStr += lang.get("OpenGlInfo")+":\n";
+	infoStr += "   "+lang.get("OpenGlVersion")+": ";
+	infoStr += string(getGlVersion())+"\n";
+	infoStr += "   "+lang.get("OpenGlRenderer")+": ";
+	infoStr += string(getGlRenderer())+"\n";
+	infoStr += "   "+lang.get("OpenGlVendor")+": ";
+	infoStr += string(getGlVendor())+"\n";
+	infoStr += "   "+lang.get("OpenGlMaxLights")+": ";
+	infoStr += intToStr(getGlMaxLights())+"\n";
+	infoStr += "   "+lang.get("OpenGlMaxTextureSize")+": ";
+	infoStr += intToStr(getGlMaxTextureSize())+"\n";
+	
+	infoStr += "   "+lang.get("OpenGlMaxConventionalTextureUnits")+": ";
+	infoStr += intToStr(getGlMaxTextureUnits())+"\n";
+
+	infoStr += "   " + lang.get("OpenGlMaxCombinedTextureUnits") + ": ";
+	infoStr += intToStr(getGlMaxShaderTexUnits()) + "\n";
+
+	infoStr += "   "+lang.get("OpenGlModelviewStack")+": ";
+	infoStr += intToStr(getGlModelviewMatrixStackDepth())+"\n";
+	infoStr += "   "+lang.get("OpenGlProjectionStack")+": ";
+	infoStr += intToStr(getGlProjectionMatrixStackDepth())+"\n";
 	return infoStr;
 }
 

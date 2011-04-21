@@ -130,6 +130,12 @@ int getGlMaxTextureUnits(){
 	return i;
 }
 
+int getGlMaxShaderTexUnits() {
+	int i;
+	glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS_ARB, &i);
+	return i;
+}
+
 int getGlModelviewMatrixStackDepth(){
 	int i;
 	glGetIntegerv(GL_MAX_MODELVIEW_STACK_DEPTH, &i);

@@ -43,6 +43,7 @@ const char *getGlPlatformExtensions();
 int getGlMaxLights();
 int getGlMaxTextureSize();
 int getGlMaxTextureUnits();
+int getGlMaxShaderTexUnits();
 int getGlModelviewMatrixStackDepth();
 int getGlProjectionMatrixStackDepth();
 void checkGlExtension(const char *extensionName);
