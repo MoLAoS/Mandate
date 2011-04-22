@@ -28,10 +28,10 @@
 			//uniform vec3             gae_SceneAmbientLight;
 			
 			uniform float            gae_AlphaThreshold;
+			uniform int              gae_LightCount;
 			uniform int              gae_IsUsingFog;
 			uniform vec3             gae_TeamColour;
 			uniform sampler2D        gae_DiffuseTex;
-			uniform int              gae_NumLights;
 			
 			varying float            fogFactor;
 			varying vec3             lightColour;
@@ -41,7 +41,8 @@
 
 	<vertex-shader>
 		<![CDATA[
-			// Light source 0, always directional
+		
+			// calc diffuse and ambient terms from light source 0 (always directional)
 			void doPrimaryLight(in vec3 normal, inout vec3 diffuse, inout vec3 ambient) {
 				vec3 lightDir = normalize(vec3(gl_LightSource[0].position)); // direction of main light source
 				float diffuseIntensity = max(dot(lightDir, normal), 0.0);         // calculate diffuse term
@@ -50,25 +51,48 @@
 								* diffuseIntensity;
 				ambient += gl_LightSource[0].ambient.rgb * gl_FrontMaterial.ambient.rgb;
 			}
-			
-			void doPointLight(int i, in vec3 ecPos, in vec3 normal, inout vec3 diffuse, inout vec3 ambient) {
+
+			// calculate diffuse and ambient terms for the point light at index i
+			void doPointLight(in int i, in vec3 ecPos, in vec3 normal, inout vec3 diffuse, inout vec3 ambient) {
 				// TODO: Copy code from the orange book ;)
-				float diffuseIntensity;
-				
-				vec3  VP = vec3(gl_LightSource[i].position) - ecPos;
+				vec3 VP = gl_LightSource[i].position.xyz - ecPos;
 				float distance = length(VP);
 				VP = normalize(VP);
 				
 				float attenuation = 1.0 / (gl_LightSource[i].constantAttenuation
-						+ gl_LightSource[i].linearAttenuation * d
-						+ gl_LightSource[i].quadraticAttentuation * d * d);
+						+ gl_LightSource[i].linearAttenuation * distance
+						+ gl_LightSource[i].quadraticAttenuation * distance * distance);
 						
 				float diffuseIntensity = max(dot(normal, VP), 0.0);
 				
-				ambient += gl_LightSource[i].ambient * attenuation;
-				diffuse += gl_LightSource[i].diffuse * diffuseIntensity * attenuation;
+				ambient += gl_LightSource[i].ambient.rgb * attenuation;
+				diffuse += gl_LightSource[i].diffuse.rgb * diffuseIntensity * attenuation;
 			}
-			
+
+			// calculate diffuse and ambient light intensity for all active point lights
+			// Warning: Assumes gae_LightCount >= 2
+			void doActivePointLights(in vec3 normal, inout vec3 diffuse, inout vec3 ambient) {
+				vec4 ecVec = gl_ModelViewMatrix * gl_Vertex;
+				vec3 ecPos = ecVec.xyz / ecVec.w;
+				doPointLight(1, ecPos, normal, diffuse, ambient);
+				if (gae_LightCount > 2) {
+					doPointLight(2, ecPos, normal, diffuse, ambient);
+				}
+				if (gae_LightCount > 3) {
+					doPointLight(3, ecPos, normal, diffuse, ambient);
+				}
+				if (gae_LightCount > 4) {
+					doPointLight(4, ecPos, normal, diffuse, ambient);
+				}
+				if (gae_LightCount > 5) {
+					doPointLight(5, ecPos, normal, diffuse, ambient);
+				}					
+				// for loops in GLSL are not well supported...
+				//for (int i=1; i < gae_LightCount; ++i) {
+				//	doPointLight(i, ecPos, normal, diffuse, ambient);
+				//}
+			}
+
 			float calculateFogFactor() {
 				// fog
 				//if (gae_IsUsingFog == 1) {
@@ -99,12 +123,11 @@
 				// Light source 0, sun/moon
 				doPrimaryLight(normal, diffuse, ambient);
 
-				for (int i=1; i < gae_NumLights; ++i) {
-					vec4 ec = gl_ModelViewMatrix gl_Vertex;
-					vec3 ecPos = ec.xyz / ec.w;
-					doPointLight(i, ecPos, normal, diffuse, ambient);
+				// point lights
+				if (gae_LightCount > 1) {
+					doActivePointLights(normal, diffuse, ambient);
 				}
-
+				
 				// add global ambient
 				ambient += gl_FrontLightModelProduct.sceneColor.rgb;
 				
