@@ -300,7 +300,7 @@ void ModelRendererGl::renderMesh(const Mesh *mesh, int frame, int id, UnitShader
 	///@todo would be better to do this once only per faction, set from the game somewhere/somehow
 	shaderProgram->setUniform("gae_TeamColour", getTeamColour());
 	shaderProgram->setUniform("gae_AlphaThreshold", alphaThreshold);
-	if (customShaders && anim) {
+	if (customShaders) {
 		shaderProgram->setUniform("gae_FrameNumber", frame);
 		shaderProgram->setUniform("gae_EntityId", id);
 		//float anim_r = remap(anim->r, 0.f, 1.f, 0.15f, 1.f);

@@ -1094,13 +1094,15 @@ void Renderer::renderUnits() {
 					///@todo remove all this, expose frame and unitId as uniforms, shader should
 					/// then be able to generate whatever timing info it needs internally
 					const int frame = g_world.getFrameCount();
-					float a = float(frame % 150);
-					Vec3f anim;
-					anim.r = a >= 75.f ? (a - 75.f) / 75.f : a / 75.f;
-					anim.g = a <= 75.f ? 0.f : (a - 75.f) / 75.f;
-					anim.b = a / 150.f;
+					const int id = unit->getId();
+					
+					//float a = float(frame % 150);
+					//Vec3f anim;
+					//anim.r = a >= 75.f ? (a - 75.f) / 75.f : a / 75.f;
+					//anim.g = a <= 75.f ? 0.f : (a - 75.f) / 75.f;
+					//anim.b = a / 150.f;
 
-					modelRenderer->render(model, &anim, uss);
+					modelRenderer->render(model, frame, id, uss);
 				} else {
 					modelRenderer->render(model);
 				}

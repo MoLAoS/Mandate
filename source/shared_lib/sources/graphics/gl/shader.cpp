@@ -191,6 +191,10 @@ void GlslProgram::end() {
 }
 
 bool GlslProgram::setUniform(const string &name, GLuint value) {
+	return setUniform(name, GLint(value));
+}
+
+bool GlslProgram::setUniform(const string &name, GLint value) {
 	int handle = glGetUniformLocation(m_p, name.c_str());
 	if (handle != -1) {
 		glUniform1i(handle, value);

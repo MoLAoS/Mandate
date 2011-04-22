@@ -36,6 +36,7 @@ public:
 
 	virtual unsigned int getId() = 0;
 	virtual bool setUniform(const string &name, GLuint value) = 0;
+	virtual bool setUniform(const string &name, GLint value) = 0;
 	virtual bool setUniform(const string &name, GLfloat value) = 0;
 	virtual bool setUniform(const string &name, const Vec3f &value) = 0;
 	virtual int getAttribLoc(const string &name) = 0;
@@ -52,6 +53,7 @@ public:
 
 	virtual unsigned int getId() override { return 0; }
 	virtual bool setUniform(const string &name, GLuint value) override {return false;}
+	virtual bool setUniform(const string &name, GLint value) override {return false;}
 	virtual bool setUniform(const string &name, GLfloat value) override {return false;}
 	virtual bool setUniform(const string &name, const Vec3f &value) override {return false;}
 	virtual int  getAttribLoc(const string &name) override { return -1; }
@@ -94,6 +96,7 @@ public:
 
 	virtual unsigned int getId() override { return m_p; }
 	virtual bool setUniform(const string &name, GLuint value) override;
+	virtual bool setUniform(const string &name, GLint value) override;
 	virtual bool setUniform(const string &name, GLfloat value) override;
 	virtual bool setUniform(const string &name, const Vec3f &value) override;
 	virtual int  getAttribLoc(const string &name) override;
