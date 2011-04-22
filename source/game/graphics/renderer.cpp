@@ -370,6 +370,7 @@ void Renderer::initMenu(MainMenu *mm){
 	textureManager[ResourceScope::MENU]->init();
 	fontManager[ResourceScope::MENU]->init();
 	//modelRenderer->setCustomTexture(CoreData::getInstance().getCustomTexture());
+	modelRenderer->setLightCount(1);
 
 	init3dListMenu(mm);
 }
@@ -573,6 +574,7 @@ void Renderer::setupLighting() {
 			}
 		}
 	}
+	modelRenderer->setLightCount(lightCount);
 	assertGl();
 }
 

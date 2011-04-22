@@ -84,6 +84,7 @@ public:
 	const Vec3f& getTeamColour() const {return teamColour; }
 
 	virtual void setAlphaThreshold(float a) = 0;
+	virtual void setLightCount(int n) = 0;
 
 	virtual void begin(RenderParams params) = 0;
 	virtual void end() = 0;

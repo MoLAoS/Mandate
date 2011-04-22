@@ -38,6 +38,8 @@ ModelRendererGl::ModelRendererGl()
 		, shaderOverride(false)
 		, secondaryTexCoordUnit(1)
 		, lastTexture()
+		, alphaThreshold(0.f)
+		, currentLightCount(1)
 		, m_shaderIndex(-1)
 		, m_lastShaderProgram(0) {
 	m_fixedFunctionProgram = new FixedPipeline();
@@ -300,6 +302,7 @@ void ModelRendererGl::renderMesh(const Mesh *mesh, int frame, int id, UnitShader
 	///@todo would be better to do this once only per faction, set from the game somewhere/somehow
 	shaderProgram->setUniform("gae_TeamColour", getTeamColour());
 	shaderProgram->setUniform("gae_AlphaThreshold", alphaThreshold);
+	shaderProgram->setUniform("gae_LightCount", currentLightCount);
 	if (customShaders) {
 		shaderProgram->setUniform("gae_FrameNumber", frame);
 		shaderProgram->setUniform("gae_EntityId", id);
@@ -410,6 +413,10 @@ void ModelRendererGl::setAlphaThreshold(float a) {
 		glEnable(GL_ALPHA_TEST);
 		glAlphaFunc(GL_GREATER, alphaThreshold);
 	}
+}
+
+void ModelRendererGl::setLightCount(int n) {
+	currentLightCount = n;
 }
 
 void ModelRendererGl::renderMeshNormals(const Mesh *mesh) {

@@ -32,6 +32,7 @@ private:
 	int secondaryTexCoordUnit;
 	GLuint lastTexture;
 	float alphaThreshold;
+	int currentLightCount;
 
 	UnitShaderSets   m_shaders;
 	int	             m_shaderIndex; // index in m_shaders of UnitShaderSet we a currently using, or -1
@@ -59,6 +60,7 @@ public:
 	bool isUsingShaders() const { return m_shaderIndex != -1; }
 
 	virtual void setAlphaThreshold(float a) override;
+	virtual void setLightCount(int n) override;
 
 	void begin(RenderParams params) override;
 	void end() override;
