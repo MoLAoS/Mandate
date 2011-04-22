@@ -92,6 +92,7 @@ bool GlslProgram::compileShader(GLuint handle, const char *src, string &out_log)
 		glGetShaderInfoLog(handle, log_length, 0, buffer);
 		out_log = buffer;
 		trimTrailingNewlines(out_log);
+		delete [] buffer;
 	}
 	return ok == GL_TRUE;
 }
@@ -149,6 +150,7 @@ bool GlslProgram::linkShaderProgram() {
 		GLchar *buffer = new GLchar[log_length];
 		glGetProgramInfoLog(m_p, log_length, 0, buffer);
 		string log = buffer;
+		delete [] buffer;
 		trimTrailingNewlines(log);
 		res += string("Link log:\n") + log + "\n";
 		if (!ok) {
