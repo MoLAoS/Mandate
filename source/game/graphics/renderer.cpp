@@ -1100,7 +1100,7 @@ void Renderer::renderUnits() {
 					anim.g = a <= 75.f ? 0.f : (a - 75.f) / 75.f;
 					anim.b = a / 150.f;
 
-					modelRenderer->render(model, &anim, uss);
+					modelRenderer->render(model, frame, unit->getId(), uss);
 				} else {
 					modelRenderer->render(model);
 				}
