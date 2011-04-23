@@ -330,6 +330,9 @@ bool TextBox::keyDown(Key key) {
 			getRootWindow()->releaseKeyboardFocus(this);
 			InputEntered(this);
 			return true;
+		
+		// need to let ESC 'go through' (return false, so the owning dialog gets it)
+		// maybe should be a flag? (for non-dialog parents)
 		case KeyCode::ESCAPE:
 			//getRootWindow()->releaseKeyboardFocus(this);
 			//return true;
@@ -357,15 +360,15 @@ bool TextBox::keyPress(char c) {
 	if (c >= 32 && c <= 126) { // 'space' -> 'tilde' [printable ascii char]
 		if (!m_inputMask.empty()) {
 			if (m_inputMask.find_first_of(c) == string::npos) {
-				return true;
+				return true; //  consume dis-allowed char
 			}
 		}
 		string s(getText());
 		setText(s + c);
 		TextChanged(this);
-		return true;
+		return true; //  consume key press
 	}
-	return false;
+	return false; // let other stuff through
 }
 
 void TextBox::lostKeyboardFocus() {

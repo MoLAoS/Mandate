@@ -435,6 +435,7 @@ const string allowMask = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01
 
 void GameState::doSaveBox() {
 	if (!simInterface->getGameSettings().getScenarioPath().empty()) {
+		gui.getRegularConsole()->addLine(g_lang.get("CantSaveScenarios"));
 		// msg ?
 		return;
 	}

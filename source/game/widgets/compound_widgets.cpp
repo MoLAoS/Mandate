@@ -556,18 +556,21 @@ bool InputBox::keyDown(Key key) {
 
 InputDialog::InputDialog(WidgetWindow* window)
 		: BasicDialog(window) {
-	Anchors cAnchors;
-	cAnchors.setCentre(true);
+	Anchors anchors = Anchors::getFillAnchors();
+	int h = g_widgetConfig.getDefaultItemHeight() + 4;
+	SizeHint sizeHint(-1, h);
 
 	CellStrip *panel = new CellStrip(this, Orientation::VERTICAL, 2);
+	panel->setSizeHint(0, sizeHint);
+	panel->setSizeHint(1, sizeHint);
 	setContent(panel);
 	m_label = new StaticText(panel);
 	m_label->setCell(0);
-	m_label->setAnchors(cAnchors);
+	m_label->setAnchors(anchors);
 	m_label->setText("");
 	m_inputBox = new InputBox(panel);
 	m_inputBox->setCell(1);
-	m_inputBox->setAnchors(cAnchors);
+	m_inputBox->setAnchors(anchors);
 	m_inputBox->setText("");
 	m_inputBox->InputEntered.connect(this, &InputDialog::onInputEntered);
 	m_inputBox->Escaped.connect(this, &InputDialog::onEscaped);

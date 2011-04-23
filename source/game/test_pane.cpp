@@ -388,35 +388,54 @@ void TestPane::onContinue(Widget*) {
 	m_done = true;
 }
 
-void TestPane::onDoDialog(Widget*) {
-	Vec2i size(500, 400);
-	Vec2i pos = (g_metrics.getScreenDims() - size) / 2;
-	m_messageDialog = MessageDialog::showDialog(pos, size, "Test MessageBox",
-		"Message text goes here.\n\nSelect Continue to proceed to game.", "Continue", "Cancel");
-	m_messageDialog->Button1Clicked.connect(this, &TestPane::onContinue);
-	m_messageDialog->Button2Clicked.connect(this, &TestPane::onDismissDialog);
-	m_messageDialog->Close.connect(this, &TestPane::onDismissDialog);
-	m_messageDialog->Escaped.connect(this, &TestPane::onDismissDialog);
+InputDialog *testDialog = 0;
 
-	m_action = new MoveWidgetAction(60, m_messageDialog);
-	Vec2f start(pos);
-	start.x -= g_metrics.getScreenW();
-	m_action->setPosTransition(start, Vec2f(pos), TransitionFunc::LOGARITHMIC);
-	m_action->setAlphaTransition(0.f, 1.f, TransitionFunc::LINEAR);
-	m_action->update();
+void TestPane::onDoDialog(Widget*) {
+
+	const string allowMask = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_";
+	Vec2i size(320, 200), pos = g_metrics.getScreenDims() / 2 - size / 2;
+	InputDialog* dialog = InputDialog::showDialog(pos, size, g_lang.get("SaveGame"),
+		g_lang.get("SelectSaveGame"), g_lang.get("Save"), g_lang.get("Cancel"));
+	dialog->setInputMask(allowMask);
+	//dialog->Button1Clicked.connect(this, &GameState::onSaveSelected);
+	dialog->Button2Clicked.connect(this, &TestPane::onDismissDialog);
+	dialog->Escaped.connect(this, &TestPane::onDismissDialog);
+	dialog->Close.connect(this, &TestPane::onDismissDialog);
+	testDialog = dialog;
+
+	//Vec2i size(500, 400);
+	//Vec2i pos = (g_metrics.getScreenDims() - size) / 2;
+	//m_messageDialog = MessageDialog::showDialog(pos, size, "Test MessageBox",
+	//	"Message text goes here.\n\nSelect Continue to proceed to game.", "Continue", "Cancel");
+	//m_messageDialog->Button1Clicked.connect(this, &TestPane::onContinue);
+	//m_messageDialog->Button2Clicked.connect(this, &TestPane::onDismissDialog);
+	//m_messageDialog->Close.connect(this, &TestPane::onDismissDialog);
+	//m_messageDialog->Escaped.connect(this, &TestPane::onDismissDialog);
+
+	//m_action = new MoveWidgetAction(60, m_messageDialog);
+	//Vec2f start(pos);
+	//start.x -= g_metrics.getScreenW();
+	//m_action->setPosTransition(start, Vec2f(pos), TransitionFunc::LOGARITHMIC);
+	//m_action->setAlphaTransition(0.f, 1.f, TransitionFunc::LINEAR);
+	//m_action->update();
 }
 
 void TestPane::onDismissDialog(Widget *d) {
-	if (m_action) {
-		m_action->reset();
+	if (m_messageDialog) {
+		if (m_action) {
+			m_action->reset();
+		} else {
+			m_action = new MoveWidgetAction(40, m_messageDialog);
+		}
+		Vec2f startPos(m_messageDialog->getPos());
+		Vec2f endPos(startPos + Vec2f(0.f, 150.f));
+		m_action->setPosTransition(startPos, endPos, TransitionFunc::EXPONENTIAL);
+		m_action->setAlphaTransition(m_messageDialog->getFade(), 0.f, TransitionFunc::LINEAR);
+		m_removingDialog = true;
 	} else {
-		m_action = new MoveWidgetAction(40, m_messageDialog);
+		g_program.removeFloatingWidget(testDialog);
+		testDialog = 0;
 	}
-	Vec2f startPos(m_messageDialog->getPos());
-	Vec2f endPos(startPos + Vec2f(0.f, 150.f));
-	m_action->setPosTransition(startPos, endPos, TransitionFunc::EXPONENTIAL);
-	m_action->setAlphaTransition(m_messageDialog->getFade(), 0.f, TransitionFunc::LINEAR);
-	m_removingDialog = true;
 }
 
 void TestPane::renderBg() {
