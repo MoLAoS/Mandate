@@ -364,10 +364,10 @@ int getSlotIndex(PlayerSlotWidget* psw, PlayerSlotWidget* *slots) {
 }
 
 int getLowestFreeColourIndex(PlayerSlotWidget* *slots) {
-	bool colourUsed[GameConstants::maxColours];
-	for (int i=0; i < GameConstants::maxColours; ++i) {
-		colourUsed[i] = false;
-	}
+	//trivia: using this syntax defaults to false, any true will only make that position true,
+	// brackets can be left blank ie {}
+	bool colourUsed[GameConstants::maxColours] = {false};
+
 	for (int i=0; i < GameConstants::maxPlayers; ++i) {
 		if (slots[i]->getSelectedColourIndex() != -1) {
 			INVARIANT(slots[i]->getControlType() != ControlType::CLOSED, "Closed slot has colour set.");
@@ -414,8 +414,8 @@ void MenuStateNewGame::onChangeControl(Widget *source) {
 	if (m_playerSlots[ndx]->getControlType() == ControlType::HUMAN && ndx != m_humanSlot) {
 		// human moved slots
 		assert(m_humanSlot >= 0);
-		m_playerSlots[m_humanSlot]->setSelectedControl(ControlType::CLOSED);
 		m_playerSlots[ndx]->setSelectedColour(m_playerSlots[m_humanSlot]->getSelectedColourIndex());
+		m_playerSlots[m_humanSlot]->setSelectedControl(ControlType::CLOSED);
 		m_humanSlot = ndx;
 		updateNetworkSlots();
 	} else {
@@ -423,8 +423,12 @@ void MenuStateNewGame::onChangeControl(Widget *source) {
 		if (m_playerSlots[m_humanSlot]->getControlType() != ControlType::HUMAN) {
 			// human tried to go away...
 			m_playerSlots[0]->setSelectedControl(ControlType::HUMAN);
-			m_playerSlots[0]->setSelectedColour(getLowestFreeColourIndex(m_playerSlots));
-			m_humanSlot = 0;
+			// set colour if not already at ndx 0
+			if (m_humanSlot != 0) {
+				m_playerSlots[0]->setSelectedColour(m_playerSlots[m_humanSlot]->getSelectedColourIndex());
+				m_playerSlots[m_humanSlot]->setSelectedColour(-1);
+				m_humanSlot = 0;
+			}
 			noRecurse = false;
 			updateNetworkSlots();
 			return;
