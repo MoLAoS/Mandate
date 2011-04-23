@@ -628,10 +628,10 @@ void WidgetConfig::loadTextStyle(WidgetType widgetType, TextStyle &style, TextSt
 		luaScript.popTable();
 	} else {
 		if (src) {
-			WIDGET_LOG( "\tShadowColour not specified, using Default." );
+			WIDGET_LOG( "\tNo Text table found, using Default." );
 			style = *src;
 		} else {
-			WIDGET_LOG( "\tShadowColour not specified, setting Default (none)." );
+			WIDGET_LOG( "\tNo Text table found, setting Default (none)." );
 			style = TextStyle();
 		}
 	}
@@ -647,8 +647,14 @@ void WidgetConfig::loadOverlayStyle(WidgetType widgetType, OverlayStyle &style, 
 				style.m_tex = ndx;
 				WIDGET_LOG("\t\tOverlay texture: '" << name << "' @ ndx " << ndx);
 			} else {
-				WIDGET_LOG("\t\tError: the texture named '" << name << "' was not found.");
-				g_logger.logError("Error: the texture named '" + name + "' was not found.");
+				style.m_tex = -1;
+				// don't treat "" as error, can be used to turn overlay off in non-default stats
+				if (!name.empty()) {
+					WIDGET_LOG("\t\tError: the texture named '" << name << "' was not found.");
+					g_logger.logError("Error: the texture named '" + name + "' was not found.");
+				} else {
+					WIDGET_LOG("\t\tOverlay texture set to none.");
+				}
 			}
 		} else {
 			WIDGET_LOG("\t\tError, overlay does not specify texture");
@@ -689,6 +695,7 @@ bool WidgetConfig::loadStyles(const char *tableName, WidgetType type, bool glob)
 	WIDGET_LOG( "Loading styles for widget type '" << name << "'" );
 	WIDGET_LOG( "====================================================" );
 	if ((glob && luaScript.getGlobal(tableName)) || (!glob && luaScript.getTable(tableName))) {
+		WIDGET_LOG( "Default state." );
 		if (luaScript.getTable("Default")) { // load default style (must be present)
 			loadBorderStyle(type, m_styles[type][WidgetState::NORMAL].borderStyle());
 			loadBackgroundStyle(type, m_styles[type][WidgetState::NORMAL].backgroundStyle());
@@ -711,6 +718,7 @@ bool WidgetConfig::loadStyles(const char *tableName, WidgetType type, bool glob)
 		if (luaScript.getTable("States")) { // load States if present
 			for (WidgetState state(1); state < WidgetState::COUNT; ++state) {
 				string name = formatString(WidgetStateNames[state]);
+				WIDGET_LOG( "State: " << name );
 				if (luaScript.getTable(name.c_str())) { // load state style, with 'fallbacks'
 					WIDGET_LOG( "\ttable found for widget type '" << tableName << "' in state '"
 						<< name << "'." );
@@ -731,8 +739,8 @@ bool WidgetConfig::loadStyles(const char *tableName, WidgetType type, bool glob)
 				}
 			}
 			luaScript.popTable();
-		} else { // no States specified, just copy default to all others
-			WIDGET_LOG( "\tno table 'States' table found for widget type '" << tableName << "'"
+		} else { // no States specified, just copy default to all others			
+			WIDGET_LOG( "No table 'States' table found for widget type '" << tableName << "'"
 				<< "'. Using 'Default' for all states." );
 			for (WidgetState state(1); state < WidgetState::COUNT; ++state) {
 				m_styles[type][state].borderStyle() = *normBorderStyle;
