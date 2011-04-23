@@ -366,6 +366,7 @@ int getSlotIndex(PlayerSlotWidget* psw, PlayerSlotWidget* *slots) {
 int getLowestFreeColourIndex(PlayerSlotWidget* *slots) {
 	//trivia: using this syntax defaults to false, any true will only make that position true,
 	// brackets can be left blank ie {}
+	// ref: http://www.fredosaurus.com/notes-cpp/arrayptr/array-initialization.html
 	bool colourUsed[GameConstants::maxColours] = {false};
 
 	for (int i=0; i < GameConstants::maxPlayers; ++i) {

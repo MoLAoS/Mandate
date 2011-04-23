@@ -111,15 +111,19 @@ void ScrollText::init() {
 	m_scrollBar->setCell(0);
 	m_scrollBar->setAnchors(anchors);
 	m_scrollBar->setSize(Vec2i(itemSize));
+	m_scrollBar->setVisible(false);
 	m_scrollBar->ThumbMoved.connect(this, &ScrollText::onScroll);
 
-	// Anchors for text widget, stick to left, top & bottom, and 'itemSize' in from right
-	anchors = Anchors(Anchor(AnchorType::RIGID, 0), Anchor(AnchorType::RIGID, 0),
+	// Anchors for text widget...
+	// with scroll-bar stick to left, top & bottom, and 'itemSize' in from right
+	m_anchorWithScroll = Anchors(Anchor(AnchorType::RIGID, 0), Anchor(AnchorType::RIGID, 0),
 		Anchor(AnchorType::RIGID, itemSize), Anchor(AnchorType::RIGID, 0));
+	// with no scroll-bar, fill cell
+	m_anchorNoScroll = Anchors(Anchor(AnchorType::RIGID, 0));
 
 	m_staticText = new StaticText(this);
 	m_staticText->setCell(0);
-	m_staticText->setAnchors(anchors);
+	m_staticText->setAnchors(m_anchorNoScroll);
 	m_staticText->setAlignment(Alignment::NONE);
 	m_staticText->setText("");
 }
@@ -135,30 +139,43 @@ void ScrollText::onScroll(ScrollBar*) {
 	m_staticText->setPos(Vec2i(ox, -round(m_scrollBar->getThumbPos())));
 }
 
+void ScrollText::setAndWrapText(const string &txt) {
+	m_origString = txt;
+	string text = txt;
+	int width = getSize().w - getBordersHoriz() - m_staticText->getBordersHoriz();
+	const FontMetrics *fm = m_staticText->getFont()->getMetrics();
+	fm->wrapText(text, width);
+	// try to fit with no scroll-bar,
+	if (fm->getTextDiminsions(text).h < getHeight() - getBordersVert() - m_staticText->getBordersVert()) {
+		m_scrollBar->setVisible(false);
+		m_staticText->setAnchors(m_anchorNoScroll);
+	} else { // else re-wrap, taking into account scroll-bar width
+		m_scrollBar->setVisible(true);
+		m_staticText->setAnchors(m_anchorWithScroll);
+		width = getSize().w - m_scrollBar->getSize().w - getBordersHoriz() - m_staticText->getBordersHoriz();
+		text = txt;
+		fm->wrapText(text, width);
+	}
+	layoutCells();
+	m_staticText->setText(text);
+}
+
 void ScrollText::setSize(const Vec2i &sz) {
 	const FontMetrics *fm = g_widgetConfig.getFont(m_staticText->textStyle().m_fontIndex)->getMetrics();
 	CellStrip::setSize(sz);
-	layoutCells(); // force
+	layoutCells(); // force layout
 	if (!m_origString.empty()) {
-		string text = m_origString;
-		int width = m_staticText->getSize().w - m_staticText->getBordersHoriz();
-		fm->wrapText(text, width);	
-		m_staticText->setText(text);
+		setAndWrapText(m_origString);
 	}
 	recalc();
 }
 
 void ScrollText::setText(const string &txt, ScrollAction scroll) {
 	float oldOffset = m_scrollBar->getThumbPos();
-	const FontMetrics *fm = m_staticText->getFont()->getMetrics();
-	int width = getSize().w - m_scrollBar->getSize().w - getBordersHoriz() - m_staticText->getBordersHoriz();
-	m_origString = txt;
-	string text = txt;
-	fm->wrapText(text, width);
-	
-	m_staticText->setText(text);
-	recalc();
-	
+
+	setAndWrapText(txt);
+	recalc();	
+
 	if (scroll == ScrollAction::BOTTOM) {
 		m_scrollBar->setThumbPosPercent(100);
 	} else if (scroll == ScrollAction::MAINTAIN) {

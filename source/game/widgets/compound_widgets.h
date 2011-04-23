@@ -44,9 +44,12 @@ protected:
 	ScrollBar  *m_scrollBar;
 	StaticText *m_staticText;
 	string      m_origString;
+	Anchors     m_anchorNoScroll;
+	Anchors     m_anchorWithScroll;
 
 private:
 	void init();
+	void setAndWrapText(const string &txt);
 
 public:
 	ScrollText(Container* parent);
