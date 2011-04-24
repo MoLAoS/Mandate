@@ -26,13 +26,17 @@ namespace Shared{ namespace Graphics{ namespace Gl{
 
 class ModelRendererGl: public ModelRenderer {
 private:
-	bool rendering;
-	bool duplicateTexCoords;
-	bool shaderOverride;
-	int secondaryTexCoordUnit;
-	GLuint lastTexture;
-	float alphaThreshold;
-	int currentLightCount;
+	bool    m_rendering;
+	bool    m_duplicateTexCoords;
+	//bool    m_shaderOverride;
+	int     m_secondaryTexCoordUnit;
+	GLuint  m_lastTexture;
+	float   m_alphaThreshold;
+	int     m_currentLightCount;
+
+	RenderMode    m_renderMode;
+	bool          m_useFog;
+	MeshCallback *m_meshCallback;
 
 	UnitShaderSets   m_shaders;
 	int	             m_shaderIndex; // index in m_shaders of UnitShaderSet we a currently using, or -1
@@ -62,15 +66,15 @@ public:
 	virtual void setAlphaThreshold(float a) override;
 	virtual void setLightCount(int n) override;
 
-	void begin(RenderParams params) override;
+	void begin(RenderMode mode, bool fog, MeshCallback *meshCallback = 0) override;
 	void end() override;
 	
 	void render(const Model *model, int frame = 0, int id = 0, UnitShaderSet *customShaders = 0) override;
 	void renderNormalsOnly(const Model *model) override;
 	void renderMeshNormalsOnly(const Mesh *mesh) override;
 
-	void setDuplicateTexCoords(bool duplicateTexCoords)			{this->duplicateTexCoords= duplicateTexCoords;}
-	void setSecondaryTexCoordUnit(int secondaryTexCoordUnit)	{this->secondaryTexCoordUnit= secondaryTexCoordUnit;}
+	void setDuplicateTexCoords(bool v)      { m_duplicateTexCoords = v;    }
+	void setSecondaryTexCoordUnit(int v)    { m_secondaryTexCoordUnit = v; }
 
 	void renderMeshNormals(const Mesh *mesh);
 	void renderMesh(const Mesh *mesh, int frame = 0, int id = 0, UnitShaderSet *customShaders = 0) override;

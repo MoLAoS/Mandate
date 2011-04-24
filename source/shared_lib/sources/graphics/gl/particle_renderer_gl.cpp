@@ -233,8 +233,7 @@ void ParticleRendererGl::renderSingleModel(ParticleSystem *ps, ModelRenderer *mr
 		glRotatef(angleH, 0.f, 1.f, 0.f);
 
 		//render
-		RenderParams params(true, true, false, fog);
-		mr->begin(params);
+		mr->begin(RenderMode::OBJECTS, fog);
 		mr->render(ps->getModel());
 		mr->end();
 

@@ -202,34 +202,35 @@ void Mesh::fillBuffers() {
 void Mesh::loadAdditionalTextures(const string &diffusePath, TextureManager *textureManager) {
 	string checkPath;
 	// spec map
-	if (!textures[mtSpecular]) {
+	if (!textures[MeshTexture::SPECULAR]) {
 		checkPath = diffusePath; // insert _specular before . in filename
 		checkPath.insert(checkPath.length() - 4, "_specular");
 		if (fileExists(checkPath)) {
-			textures[mtSpecular] = textureManager->getTexture(checkPath);
+			textures[MeshTexture::SPECULAR] = textureManager->getTexture(checkPath);
 		}
 	}
 	// bump map
-	if (!textures[mtNormal]) {
+	if (!textures[MeshTexture::NORMAL]) {
 		checkPath = diffusePath; // insert _normal before . in filename
 		checkPath.insert(checkPath.length() - 4, "_normal");
 		if (fileExists(checkPath)) {
-			textures[mtNormal] = textureManager->getTexture(checkPath);
+			textures[MeshTexture::NORMAL] = textureManager->getTexture(checkPath);
+		}
+	}
+	//  light map
+	if (!textures[MeshTexture::LIGHT]) {
+		checkPath = diffusePath;
+		checkPath.insert(checkPath.length() - 4, "_light");
+		if (fileExists(checkPath)) {
+			textures[MeshTexture::NORMAL] = textureManager->getTexture(checkPath);
 		}
 	}
 	// custom textures
-	if (!textures[mtCustom1]) {
+	if (!textures[MeshTexture::CUSTOM]) {
 		checkPath = diffusePath;
-		checkPath.insert(checkPath.length() - 4, "_custom1");
+		checkPath.insert(checkPath.length() - 4, "_custom");
 		if (fileExists(checkPath)) {
-			textures[mtCustom1] = textureManager->getTexture(checkPath);
-		}
-	}
-	if (!textures[mtCustom2]) {
-		checkPath = diffusePath;
-		checkPath.insert(checkPath.length() - 4, "_custom2");
-		if (fileExists(checkPath)) {
-			textures[mtCustom2] = textureManager->getTexture(checkPath);
+			textures[MeshTexture::CUSTOM] = textureManager->getTexture(checkPath);
 		}
 	}
 }
@@ -270,6 +271,7 @@ void Mesh::loadV3(const string &dir, FileOps *f, TextureManager *textureManager)
 	// misc
 	twoSided = (meshHeader.properties & mp3TwoSided) != 0;
 	customColor = (meshHeader.properties & mp3CustomColor) != 0;
+	noSelect = false;
 
 	// texture
 	if (!(meshHeader.properties & mp3NoTexture) && textureManager != NULL) {
@@ -279,7 +281,7 @@ void Mesh::loadV3(const string &dir, FileOps *f, TextureManager *textureManager)
 		texPath = dir + "/" + texPath;
 		texPath = cleanPath(texPath);
 		MESH_DEBUG( "Loading diffuse texture '" << texPath << "'." );
-		textures[mtDiffuse] = textureManager->getTexture(texPath);
+		textures[MeshTexture::DIFFUSE] = textureManager->getTexture(texPath);
 		loadAdditionalTextures(texPath, textureManager);
 	} else {
 		MESH_DEBUG( "no texture." );
@@ -315,7 +317,7 @@ void Mesh::loadV3(const string &dir, FileOps *f, TextureManager *textureManager)
 		f->read(vertices, sizeof(Vec3f)*vfCount, 1);
 		f->read(normals, sizeof(Vec3f)*vfCount, 1);
 	}
-	if (textures[mtDiffuse] != 0) {
+	if (textures[MeshTexture::DIFFUSE] != 0) {
 		int n = meshHeader.texCoordFrameCount * vertexCount * 2;
 		MESH_DEBUG( "Texture co-ordinate data: Reading " << n << " floats into array(s)." );
 		for (int i=0; i < meshHeader.texCoordFrameCount; ++i) {
@@ -329,7 +331,7 @@ void Mesh::loadV3(const string &dir, FileOps *f, TextureManager *textureManager)
 	f->seek(sizeof(Vec4f)*(meshHeader.colorFrameCount-1), SEEK_CUR);
 	f->read(indices, sizeof(uint32)*indexCount, 1);
 
-	if (textures[mtNormal]) {
+	if (textures[MeshTexture::NORMAL]) {
 		computeTangents();
 	}
 	fillBuffers();
@@ -353,6 +355,7 @@ void Mesh::load(const string &dir, FileOps *f, TextureManager *textureManager){
 	// properties
 	customColor = (meshHeader.properties & mpfCustomColor) != 0;
 	twoSided = (meshHeader.properties & mpfTwoSided) != 0;
+	noSelect = (meshHeader.properties & mpfNoSelect) != 0;
 
 	// material
 	diffuseColor= Vec3f(meshHeader.diffuseColor);
@@ -363,7 +366,7 @@ void Mesh::load(const string &dir, FileOps *f, TextureManager *textureManager){
 	// maps
 	uint32 flag = 1;
 	string diffuseTexPath;
-	for (int i=0; i < meshTextureCount; ++i) {
+	for (int i=0; i < MeshTexture::COUNT; ++i) {
 		if ((meshHeader.textures & flag) && textureManager != NULL) {
 			uint8 cMapPath[mapPathSize];
 			f->read(cMapPath, mapPathSize, 1);
@@ -378,7 +381,7 @@ void Mesh::load(const string &dir, FileOps *f, TextureManager *textureManager){
 		}
 		flag *= 2;
 	}
-	if (textures[mtDiffuse]) {
+	if (textures[MeshTexture::DIFFUSE]) {
 		assert(!diffuseTexPath.empty());
 		loadAdditionalTextures(diffuseTexPath, textureManager);
 	}
@@ -431,7 +434,7 @@ void Mesh::load(const string &dir, FileOps *f, TextureManager *textureManager){
 			throw runtime_error("error reading mesh, insufficient vertex index data.");
 		}
 	}
-	if (textures[mtNormal]) {
+	if (textures[MeshTexture::NORMAL]) {
 		computeTangents();
 	}
 	fillBuffers();
@@ -548,7 +551,7 @@ void Mesh::buildCube(int size, int height, Texture2D *tex) {
 	indices[28] = 18;
 	indices[29] = 19;
 
-	this->textures[mtDiffuse] = tex;
+	this->textures[MeshTexture::DIFFUSE] = tex;
 	this->customColor = false;
 	this->specularColor = this->diffuseColor = Vec3f(0.5f, 0.5f, 0.5f);
 	this->specularPower = 0.5f;

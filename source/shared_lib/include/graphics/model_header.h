@@ -40,19 +40,18 @@ enum ModelType{
 };
 
 enum MeshPropertyFlag{
-	mpfCustomColor= 1,
-	mpfTwoSided= 2
+	mpfCustomColor = 1,
+	mpfTwoSided    = 2,
+	mpfNoSelect    = 4
 };
 
-enum MeshTexture{
-	mtDiffuse,
-	mtSpecular,
-	mtNormal,
-	mtCustom1,
-	mtCustom2,
-
-	meshTextureCount
-};
+WRAPPED_ENUM ( MeshTexture,
+	DIFFUSE,
+	SPECULAR,
+	NORMAL,
+	LIGHT,
+	CUSTOM
+)
 
 const int meshTextureChannelCount[]= {-1, 1, 3, -1, -1};
 

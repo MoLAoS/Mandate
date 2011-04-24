@@ -52,7 +52,7 @@ void free_aligned_vec3_array(Vec3f *ptr);
 class Mesh {
 private:
 	// mesh data
-	Texture2D *textures[meshTextureCount];
+	Texture2D *textures[MeshTexture::COUNT];
 	//string texturePaths[meshTextureCount];
 
 	// vertex data counts
@@ -85,6 +85,7 @@ private:
 	// properties
 	bool twoSided;
 	bool customColor;
+	bool noSelect;
 
 	InterpolationData *interpolationData;
 
@@ -139,8 +140,9 @@ public:
 	float getOpacity() const				{return opacity;}
 
 	// properties
-	bool getTwoSided() const				{return twoSided;}
-	bool getCustomTexture() const			{return customColor;}
+	bool isTwoSided() const                 {return twoSided;}
+	bool usesTeamTexture() const            {return customColor;}
+	bool isNoSelect() const                 {return noSelect;}
 
 	// external data
 	const InterpolationData *getInterpolationData() const {return interpolationData;}

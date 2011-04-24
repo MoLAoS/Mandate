@@ -25,7 +25,7 @@ using namespace Shared::Graphics::Gl;
 void MeshCallbackTeamColor::execute(const Mesh *mesh){
 	
 	//team color
-	if(mesh->getCustomTexture() && teamTexture!=NULL){
+	if(mesh->usesTeamTexture() && teamTexture!=NULL){
 		//texture 0
 		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
 		
@@ -256,9 +256,8 @@ void Renderer::loadTheModel(Model *model, string file){
 
 void Renderer::renderTheModel(Model *model, float t){
 	if(model != NULL){
-		RenderParams params(true, true, !wireframe, false);
-		params.setMeshCallback(&meshCallbackTeamColor);
-		modelRenderer->begin(params);
+		RenderMode mode = (wireframe ? RenderMode::WIREFRAME : RenderMode::UNITS);
+		modelRenderer->begin(mode, false, &meshCallbackTeamColor);
 		model->updateInterpolationData(t, true);
 
 		if (mesh == -1) {

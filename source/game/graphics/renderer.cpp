@@ -60,7 +60,7 @@ public:
 void MeshCallbackTeamColor::execute(const Mesh *mesh){
 
 	//team color
-	if(mesh->getCustomTexture() && teamTexture!=NULL){
+	if(mesh->usesTeamTexture() && teamTexture!=NULL){
 		//texture 0
 		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
 
@@ -634,9 +634,7 @@ void Renderer::renderMouse3d() {
 				glPushMatrix();
 				glPushAttrib(GL_CURRENT_BIT | GL_LIGHTING_BIT | GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT);
 				glEnable(GL_BLEND);
-				glDisable(GL_STENCIL_TEST);
-				glDisable(GL_ALPHA_TEST);
-				glDepthFunc(GL_LESS);
+				modelRenderer->setAlphaThreshold(0.f);
 				glEnable(GL_COLOR_MATERIAL);
 				glDepthMask(GL_FALSE);
 
@@ -651,9 +649,8 @@ void Renderer::renderMouse3d() {
 				} else {
 					color = Vec4f(1.f, 0.f, 0.f, 0.5f);
 				}
-
-				RenderParams params(true, true, false, g_world.getTileset()->getFog());
-				modelRenderer->begin(params);
+				// use of RenderMode::OBJECTS is not an error, we don't want mesh colour being set here.
+				modelRenderer->begin(RenderMode::OBJECTS, g_world.getTileset()->getFog());
 				glColor4fv(color.ptr());
 				glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, color.ptr());
 				const Model *buildingModel = building->getIdleAnimation();
@@ -778,8 +775,7 @@ void Renderer::renderObjects() {
 
 	glEnable(GL_COLOR_MATERIAL);
 
-	RenderParams params(true, true, false, g_world.getTileset()->getFog());
-	modelRenderer->begin(params);
+	modelRenderer->begin(RenderMode::OBJECTS, g_world.getTileset()->getFog());
 	modelRenderer->setAlphaThreshold(0.5f);
 
 	int thisTeamIndex = world->getThisTeamIndex();
@@ -1003,9 +999,7 @@ void Renderer::renderUnits() {
 
 	glActiveTexture(baseTexUnit);
 
-	RenderParams params(true, true, true, g_world.getTileset()->getFog());
-	params.setMeshCallback(&meshCallbackTeamColor);
-	modelRenderer->begin(params);
+	modelRenderer->begin(RenderMode::UNITS, g_world.getTileset()->getFog(), &meshCallbackTeamColor);
 
 	vector<const Unit*> toRender[GameConstants::maxPlayers + 1];
 
@@ -1316,8 +1310,7 @@ void Renderer::renderMenuBackground(const MenuBackground *menuBackground){
 	glColor3f(1.f, 1.f, 1.f);
 	
 	ModelRendererGl *mr = static_cast<ModelRendererGl*>(modelRenderer);
-	RenderParams params(true, true, false, menuBackground->getFog());
-	modelRenderer->begin(params);
+	modelRenderer->begin(RenderMode::OBJECTS, menuBackground->getFog());
 	modelRenderer->render(menuBackground->getMainModel());
 	modelRenderer->end();
 	glDisable(GL_ALPHA_TEST);
@@ -1329,8 +1322,7 @@ void Renderer::renderMenuBackground(const MenuBackground *menuBackground){
 		modelRenderer->setAlphaThreshold(0.f);
 		float alpha = clamp((minDist-dist) / minDist, 0.f, 1.f);
 		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, Vec4f(1.0f, 1.0f, 1.0f, alpha).ptr());
-		RenderParams params(true, true, false, menuBackground->getFog());
-		modelRenderer->begin(params);
+		modelRenderer->begin(RenderMode::OBJECTS, menuBackground->getFog());
 		modelRenderer->setTeamColour(Vec3f(0.f));
 		for (int i=0; i < MenuBackground::characterCount; ++i) {
 			glMatrixMode(GL_MODELVIEW);
@@ -1886,8 +1878,8 @@ void Renderer::renderUnitsFast(bool renderingShadows) {
 		glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
 	}
 
-	RenderParams params(renderingShadows, false, false, false, true);
-	modelRenderer->begin(params);
+	RenderMode mode = renderingShadows ? RenderMode::SHADOWS : RenderMode::SELECTION;
+	modelRenderer->begin(mode, false, 0);
 
 	vector<const Unit*> toRender[GameConstants::maxPlayers + 1];
 	set<const Unit*> unitsSeen;
@@ -1999,8 +1991,9 @@ void Renderer::renderObjectsFast(bool renderingShadows) {
 		glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
 	}
 
-	RenderParams params(renderingShadows, false, false, false, true);
-	modelRenderer->begin(params);
+	RenderMode mode = renderingShadows ? RenderMode::SHADOWS : RenderMode::SELECTION;
+	modelRenderer->begin(mode, false, 0);
+
 	int thisTeamIndex = world->getThisTeamIndex();
 
 	SceneCuller::iterator it = culler.tile_begin();

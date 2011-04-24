@@ -32,39 +32,47 @@ public:
 	virtual void execute(const Mesh *mesh)= 0;
 };
 
-struct RenderParams {
-	
-	enum { TEXTURES = 1, NORMALS = 2, COLOURS = 4, USE_FOG = 8, FAST = 16 };
-
-	bool          textures;
-	bool          normals;
-	bool          colours;
-	bool          useFog;
-	bool          fast;	// rendering shadows or for selection, disables shaders
-	MeshCallback *meshCallback;
-
-	RenderParams() : meshCallback(0) {}
-	RenderParams(int flags) {
-		textures = flags & TEXTURES;
-		normals  = flags & NORMALS;
-		colours  = flags & COLOURS;
-		useFog   = flags & USE_FOG;
-		fast     = flags & FAST;
-		meshCallback = 0;
-	}
-	RenderParams(bool textures, bool normals, bool colours, bool fog, bool fast = false) 
-		: textures(textures)
-		, normals(normals)
-		, colours(colours)
-		, useFog(fog)
-		, fast(fast)
-		, meshCallback(0) {
-	}
-
-	void setMeshCallback(MeshCallback *callback) {
-		this->meshCallback = callback;
-	}
-};
+WRAPPED_ENUM( RenderMode, WIREFRAME, OBJECTS, UNITS, SHADOWS, SELECTION );
+//
+//struct RenderUnitsParams {
+//	bool          useFog;
+//	MeshCallback *meshCallback;
+//}
+//
+//struct RenderObjectsParams {
+//	bool          useFog;
+//}
+//
+//struct RenderParams {
+//	bool          textures;
+//	bool          normals;
+//	bool          colours;
+//	bool          useFog;
+//	bool          shadows;	 // rendering shadows, disables shaders
+//	bool          selection; // rendering for selection, disable shaders and don't render 'no-select' meshes 
+//	MeshCallback *meshCallback;
+//
+//	RenderParams() : meshCallback(0) {}
+//
+//	RenderParams(bool fog, MeshCallback *meshCallback) 
+//		: textures(true), normals(true), colours(true), useFog(fog), 
+//
+//	RenderParams(bool textures, bool normals, bool colours, bool fog, bool fast = false) 
+//		: textures(textures)
+//		, normals(normals)
+//		, colours(colours)
+//		, useFog(fog)
+//		, fast(fast)
+//		, meshCallback(0) {
+//	}
+//
+//	RenderParams(RenderMode mode) {
+//	}
+//
+//	void setMeshCallback(MeshCallback *callback) {
+//		this->meshCallback = callback;
+//	}
+//};
 
 // =====================================================
 //	class ModelRenderer
@@ -72,7 +80,6 @@ struct RenderParams {
 
 class ModelRenderer {
 protected:
-	RenderParams renderParams;
 	Vec3f teamColour;
 
 public:
@@ -86,7 +93,7 @@ public:
 	virtual void setAlphaThreshold(float a) = 0;
 	virtual void setLightCount(int n) = 0;
 
-	virtual void begin(RenderParams params) = 0;
+	virtual void begin(RenderMode mode, bool fog, MeshCallback *meshCallback = 0) = 0;
 	virtual void end() = 0;
 	virtual void render(const Model *model, int frame = 0, int id = 0, UnitShaderSet *shaderSet = 0) = 0;
 	virtual void renderNormalsOnly(const Model *model) = 0;
