@@ -24,7 +24,7 @@ die() {
 
 CONFIG_VARIABLES="$(egrep -v '^$|^#' $input_file | sort -u | awk '{
 	print "\t" $2 " " $1 ";"
-}')" || di3
+}')" || die
 
 CONFIG_GETTERS="$(egrep -v '^$|^#' $input_file | sort -u | awk '{
 	print "\t" $2 " get" toupper(substr($1, 1, 1)) substr($1, 2) \
@@ -45,8 +45,8 @@ CONFIG_INIT="$(egrep -v '^$|^#' $input_file | sort -u | awk '{
 		  "(\"" toupper(substr($1, 1, 1)) substr($1, 2) \
 		  "\"" \
 		  ($3 != "-" ? ", " $3 : "") \
-		  (length($4) > 0 ? ", " $4 : "") \
-		  (length($5) > 0 ? ", " $5 : "") \
+		  ($4 != "-" ? ", " $4 : "") \
+		  ($5 != "-" ? ", " $5 : "") \
 		  ");"
 }')" || die
 

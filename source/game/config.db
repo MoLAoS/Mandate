@@ -1,73 +1,80 @@
 # Config Settings file.
 # This file is processed and used to generate config.cpp and confg.h using
-# config.cpp.template and config.h.template.  NOTE: You may not use the pipe
-# character in this file unless you want to modify the script.
-#
-# variable					type	default			min		max
-aiLoggingEnabled			bool	true
-aiLogLevel					int		1				1		3
-cameraInvertXAxis			bool	true
-cameraInvertYAxis			bool	true
-cameraMaxDistance			float	64.f			32.f	2048.f
-cameraMaxYaw				float	77.50f			0.f		360.f
-cameraMinDistance			float	8.f				0.f		20.f
-cameraMinYaw				float	20.f			0.f		360.f
-displayHeight				int		height
-displayRefreshFrequency		int		60
-displayWidth				int		width
-displayWindowed				bool	false
-gsAutoRepairEnabled			bool	true
-gsAutoReturnEnabled			bool	false
-gsDayTime					float	1000.f
-gsWorldUpdateFps			int		40
-miscCatchExceptions			bool	true
-miscDebugKeys				bool	false
-miscDebugMode				bool	false
-miscFirstTime				bool	true
-netConsistencyChecks		bool	false
-netAnnouceOnLAN				bool	true
-netPlayerName				string	"Player"
-netServerIp					string	"192.168.1.1"
-netServerPort				int		61357			1024	65535
-renderCheckGlCaps			bool	true
-renderColorBits				int		32
-renderDepthBits				int		isWindows()?32:16
-renderDistanceMax			float	64.f			1.f		65536.f
-renderDistanceMin			float	1.f				0.0f	65536.f
-renderFontScaler			float	1.f
-renderFilter				string	"Bilinear"
-renderFilterMaxAnisotropy	int		1
-renderFogOfWarSmoothing		bool	true
-renderFogOfWarSmoothingFrameSkip int 3
-renderFov					float	60.f			0.01f	360.f
-renderFpsMax				int		60				0		1000000
-renderGraphicsFactory		string	"OpenGL"
-renderInterpolationMethod	string	"SIMD"
-renderLightsMax				int		1				0		8
-renderShadowAlpha			float	0.2f			0.f		1.f
-renderShadowFrameSkip		int		2
-renderShadowTextureSize		int		512
-renderShadows				string	"Projected"
-#renderStencilBits			int		0
-renderTextures3D			bool	true
-renderUseShaders			bool	true
-renderUseVBOs				bool	false
-renderTestingShaders		bool	false
-renderModelTestShaders		string	"basic,bump_map"
-renderModelShader			string	"basic"
-renderEnableBumpMapping		bool	true
-renderEnableSpecMapping		bool	true
-soundFactory				string	isWindows()?"DirectSound8":"OpenAL"
-soundStaticBuffers			int		16
-soundStreamingBuffers		int		5
-soundVolumeAmbient			int		80
-soundVolumeFx				int		80
-soundVolumeMusic			int		90
-uiConsoleMaxLines			int		10
-uiConsoleTimeout			int		20
-uiFocusArrows				bool	true
-uiLastScenario				string	"glest_classic\/anarchy"
-uiLastScenarioCatagory		string	"glest_classic"
-uiLocale					string	"en"
-uiPhotoMode					bool	false
-uiScrollSpeed				float	1.5f
+# config.cpp.template and config.h.template. The comments are used to create
+# documentation for the Wikia.
+
+# NOTES:
+# - You may not use the pipe character in this file unless you want to modify the script.
+# - mkinidoc.sh relies on each column (and only columns) being separated by at least one tab.
+# - Use a dash if a column has no value
+# - Each record must be on one line (ie no multiline comments)
+
+# Variable					Type	Default			Min		Max		Comments
+#-----------------------------------------------------------------------------------------------------------
+aiLoggingEnabled			bool	true			-		-		Switch to enable logging.
+aiLogLevel					int		-				1		3		Level of logging for ai. 
+cameraInvertXAxis			bool	true			-		-		Boolean value to decide whether or not to invert movement of the camera when going side to side.
+cameraInvertYAxis			bool	true			-		-		Boolean value to decide whether or not to invert movement of the camera when going up and down.
+cameraMaxDistance			float	64.f			32.f	2048.f	Max distance that the camera can move away from the world when zooming out. If increased, max render distance will also have to be increased in order to see what you zoom out for.
+cameraMaxYaw				float	77.50f			0.f		360.f	Maximum angle the camera can rotate upwards.
+cameraMinDistance			float	8.f				0.f		20.f	Minimum distance the camera must be from the world. Limits zooming in to prevent the camera from going under the ground. 
+cameraMinYaw				float	20.f			0.f		360.f	Minimum angle the camera can turn.
+displayHeight				int		height			-		-		Height of the window, in pixels.
+displayRefreshFrequency		int		60				-		-		The number of times to refresh the display per second (hertz).
+displayWidth				int		width			-		-		Width of the window, in pixels.
+displayWindowed				bool	false			-		-		Whether or not to display the game in windowed mode. If false, the game is fullscreen. 
+gsAutoRepairEnabled			bool	true			-		-		Toggles whether or not auto-repair (idle workers automatically repair damaged structures) is by default on. This can also be turned off in-game on a per-game basis.
+gsAutoReturnEnabled			bool	false			-		-		Toggles whether or not units return after automatically moving to attack a foe.
+gsDayTime					float	1000.f			-		-		Sets the length of the day/night cycle in seconds.
+gsWorldUpdateFps			int		40				-		-		The number of world update frames. It is recommended not to change this as it can break scenarios and other features that would be dependent on world updates as a method of measuring time.
+miscCatchExceptions			bool	true			-		-		Catch errors in mods and stop the game from running them. Unexplained crashes can occur if disabled.
+miscDebugKeys				bool	false			-		-		Displays the keys pressed in the game.
+miscDebugMode				bool	false			-		-		Turns debug mode on or off.
+miscFirstTime				bool	true			-		-		If true, runs auto-config at startup. Don't edit this, this is automatic, and WILL overwrite all other settings.
+netConsistencyChecks		bool	false			-		-		Enables or disables checking if the operating systems of all clients in a multiplayer game are the same.
+netAnnouceOnLAN				bool	true			-		-		Announce the game over LAN.
+netPlayerName				string	"Player"		-		-		Set your nickname for online matches.
+netServerIp					string	"192.168.1.1"	-		-		The last server IP address which connected.
+netServerPort				int		61357			1024	65535	Port to use when acting as a server (eg: hosting a game).
+renderCheckGlCaps			bool	true			-		-		Check for a compatible OpenGL version.
+renderColorBits				int		32				-		-		Number of bits used for the color buffer (also known as the pixel buffer). This determines the number of colors available. 
+renderDepthBits				int		isWindows()?32:16	-	-		Number of bits used for the depth buffer (also known as the Z-buffer). This determines the distances from the camera objects are and influences shadows.
+renderDistanceMax			float	64.f			1.f		65536.f	Maximum distance from the camera objects can be before they are no longer rendered.
+renderDistanceMin			float	1.f				0.0f	65536.f	Minimum distance objects must be from the camera in order to be rendered.
+renderFilter				string	"Bilinear"		-		-		Selects from Bilinear and Trilinear filter. This is the smoothing of a texture when you zoom in or out of its regular size. Trilinear will increase the quality when zoomed more than half or twice the size, as well as perform linear interpolation between mipmaps.
+renderFilterMaxAnisotropy	int		1				-		-		Sets degree of anisotropic filtering, which increases quality from filtered graphics greatly, but is heavy on system resources.
+renderFogOfWarSmoothing		bool	true			-		-		Toggles on or off smoothing of the appearance or disappearance of fog of war.
+renderFogOfWarSmoothingFrameSkip	int	3			-		-		Frame skip for fog of war smoothing. Higher makes fog of war disappear and reappear smoother, but uses more system resources.
+renderFontScaler			float	1.f				-		-		A decimal percentage number which scales font size. 1 is the regular size, 0.5 would be half the size, 2 would be twice the size, etc.
+renderFov					float	60.f			0.01f	360.f	Field of view from the camera in which an area is rendered.
+renderFpsMax				int		60				0		1000000	Frames per second cap.
+renderGraphicsFactory		string	"OpenGL"		-		-		The graphics renderer used to render all graphics. Only OpenGL still supported.
+renderInterpolationMethod	string	"SIMD"			-		-		Allows rendering with a single instruction, multiple data processing.
+renderLightsMax				int		1				0		8		The maximum number of light sources there can be at one time.
+renderShadowAlpha			float	0.2f			0.f		1.f		Transparency of shadow map shadows. This is a percentage in decimal form where 0 is fully transparent and 1 is fully opaque. Ignored if shadows are disabled.
+renderShadowFrameSkip		int		2				-		-		Frameskip for shadows. Lower will get smoother shadow movement, but use more system resources. Ignored if shadows are disabled.
+renderShadowTextureSize		int		512				-		-		Size of shadow maps, must be a power of 2 but always under the screen size, higher values result in more accurate shadows and slower performance. Ignored if shadows are disabled. If larger than the game's resolution, shadows become buggy and stretched.
+renderShadows				string	"Projected"		-		-		The method of projecting the shadows to use, if any. Either None (no shadows), Projected (fast, but can't project onto other objects), or Shadow Mapping (slow and blocky, but can project onto other objects).
+#renderStencilBits			int		0				-		-		The number of stencil buffer bits, which can enhance shadow rendering when combined with Shadow Mapping, though are ignored on Projected shadows. Should be 8 or 16 if using, but can be heavy on system resources.
+renderTextures3D			bool	true			-		-		Allows the usage of 3D textures, required for water textures.
+renderUseShaders			bool	true			-		-		Enable or disable the use of shaders. Opengl 2.0 or higher is required.
+renderUseVBOs				bool	false			-		-		Enable or disable the use of VBOs.
+renderTestingShaders		bool	false			-		-		Use test shaders
+renderModelTestShaders		string	"basic,bump_map"	-	-		Shaders to use if RenderTestingShaders is true. Seprate each shader with a comma.
+renderModelShader			string	"basic"			-		-		Shader to use for rendering models if RenderUseShaders is true.
+renderEnableBumpMapping		bool	true			-		-		Enable or disable bump mapping if RenderUseShaders is true.
+renderEnableSpecMapping		bool	true			-		-		Enable or disable specular mapping if RenderUseShaders is true.
+soundFactory				string	isWindows()?"DirectSound8":"OpenAL"	-	-	The sound renderer to use. Either OpenAL (for Linux and Mac) or DirectSound8 (for Windows).
+soundStaticBuffers			int		16				-		-		Number of buffers for static sounds.
+soundStreamingBuffers		int		5				-		-		Number of steaming buffers.
+soundVolumeAmbient			int		80				-		-		The volume of ambient sounds such as the chirp of birds from 0-100.
+soundVolumeFx				int		80				-		-		The volume of sound effects such as the clash of swords from 0-100.
+soundVolumeMusic			int		90				-		-		The volume of the background music from 0-100.
+uiConsoleMaxLines			int		10				-		-		Maximum number of lines that are displayed at any one time in the in-game console. If more than this appear, the oldest ones disappear immediately.
+uiConsoleTimeout			int		20				-		-		Seconds before a console message disappears.
+uiFocusArrows				bool	true			-		-		Toggles the display of arrows on units showing their target.
+uiLastScenario				string	"glest_classic\/anarchy"	-	-	The name of the last scenario played.
+uiLastScenarioCatagory		string	"glest_classic"	-		-		The category of the last scenario played.
+uiLocale					string	"en"			-		-		Language files that will be used for language strings. Will use the language file of the same name in the lang data folder with the *.lng extension.
+uiPhotoMode					bool	false			-		-		Toggles on or off photo mode, which hides the GUI for images. Note that this can be toggled from the in-game menu.
+uiScrollSpeed				float	1.5f			-		-		Speed of scrolling the mouse wheel.
