@@ -108,6 +108,7 @@ World::~World() {
 void World::save(XmlNode *node) const {
 	node->addChild("frameCount", frameCount);
 	node->addChild("nextUnitId", m_unitFactory.getIdCounter());
+	node->addChild("nextCmdId", m_commandFactory.getIdCounter());
 	m_simInterface->getStats()->save(node->addChild("stats"));
 	timeFlow.save(node->addChild("timeFlow"));
 	XmlNode *factionsNode = node->addChild("factions");
@@ -173,6 +174,7 @@ void World::loadSaved(const XmlNode *worldNode) {
 
 	frameCount = worldNode->getChildIntValue("frameCount");
 	m_unitFactory.setIdCounter(worldNode->getChildIntValue("nextUnitId"));
+	m_commandFactory.setIdCounter(worldNode->getChildIntValue("nextCmdId"));
 
 	m_simInterface->getStats()->load(worldNode->getChild("stats"));
 	timeFlow.load(worldNode->getChild("timeFlow"));
