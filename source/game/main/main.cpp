@@ -61,6 +61,7 @@ public:
 
 		*ofs << "Crash\n"
 			<< "Version: Advanced Engine " << gaeVersionString << endl
+			<< getAboutString(1) << endl // Build time
 			<< "Time: " << timeString;
 		if(description) {
 			*ofs << "Description: " << description << endl;
