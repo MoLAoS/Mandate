@@ -242,8 +242,9 @@ void RepairCommandType::update(Unit *unit) const {
 	bool repairThisFrame = unit->getCurrSkill()->getClass() == SkillClass::REPAIR;
 	Unit *repaired = command->getUnit();
 
-	// If the unit I was supposed to repair died or is already fixed then finish
-	if (repaired && (repaired->isDead() || !repaired->isDamaged())) {
+	// If the unit I was supposed to repair died or is already fixed or not ally then finish
+	if (repaired && (repaired->isDead() || !repaired->isDamaged() 
+			|| !unit->isAlly(repaired))) {
 		unit->setCurrSkill(SkillClass::STOP);
 		unit->finishCommand();
 		return;
