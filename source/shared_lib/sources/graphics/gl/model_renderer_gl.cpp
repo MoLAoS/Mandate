@@ -315,10 +315,6 @@ void ModelRendererGl::renderMesh(const Mesh *mesh, int frame, int id, UnitShader
 	if (customShaders) {
 		shaderProgram->setUniform("gae_FrameNumber", frame);
 		shaderProgram->setUniform("gae_EntityId", id);
-		//float anim_r = remap(anim->r, 0.f, 1.f, 0.15f, 1.f);
-		//float anim_g = remap(anim->g, 0.f, 1.f, 0.15f, 1.f);
-		//float anim_b = remap(anim->b, 0.f, 1.f, 0.15f, 1.f);
-		//shaderProgram->setUniform("time", Vec3f(anim_r, anim_g, anim_b));///@todo
 	}
 
 	// vertices
