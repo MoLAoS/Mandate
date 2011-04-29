@@ -1073,7 +1073,7 @@ void Renderer::renderUnits() {
 				fadeDiffuseColor.a = alpha;
 				//glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, fadeAmbientColor.ptr());
 				glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, fadeDiffuseColor.ptr());
-				modelRenderer->setAlphaThreshold(fade * 0.5f);
+				modelRenderer->setAlphaThreshold(0.f);
 			} else {
 				glEnable(GL_COLOR_MATERIAL);
 				modelRenderer->setAlphaThreshold(0.5f);
