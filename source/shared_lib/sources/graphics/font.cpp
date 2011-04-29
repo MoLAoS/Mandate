@@ -92,7 +92,7 @@ Vec2f FontMetrics::getTextDiminsions(const string &str) const {
 			width = 0.f;
 			dim.y += getHeight();
 		} else {
-			width += widths[str[i]];
+			width += widths[static_cast<const unsigned char>(str[i])];
 		}
 	}
 	if(dim.x < width) {
