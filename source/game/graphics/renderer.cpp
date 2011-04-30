@@ -1063,7 +1063,8 @@ void Renderer::renderUnits() {
 
 			// get model, lerp to animProgess
 			const Model *model = unit->getCurrentModel();
-			model->updateInterpolationData(unit->getAnimProgress(), unit->isAlive());
+			bool cycleAnim = unit->isAlive() && !unit->getCurrSkill()->isStretchyAnim();
+			model->updateInterpolationData(unit->getAnimProgress(), cycleAnim);
 
 			///@todo generalise so custom shaders can be attached to other things
 			/// all controlled with Lua snippets perhaps.

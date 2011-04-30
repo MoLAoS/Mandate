@@ -549,6 +549,9 @@ float Unit::getProgress() const {
 }
 
 float Unit::getAnimProgress() const {
+	if (isBeingBuilt() && currSkill->isStretchyAnim()) {
+		return float(hp) / float(getMaxHp());
+	}
 	return float(g_world.getFrameCount() - lastAnimReset)
 			/	float(nextAnimReset - lastAnimReset);
 }

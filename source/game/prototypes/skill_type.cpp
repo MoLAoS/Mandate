@@ -595,6 +595,24 @@ void LoadSkillType::doChecksum(Checksum &checksum) const {
 }
 
 // =====================================================
+// 	class BeBuiltSkillType
+// =====================================================
+
+void BeBuiltSkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const UnitType *ft) {
+	SkillType::load(sn, dir, tt, ft);
+	m_stretchy = sn->getOptionalBoolValue("anim-stretch", false);
+}
+
+// =====================================================
+// 	class BuildSelfSkillType
+// =====================================================
+
+void BuildSelfSkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const UnitType *ft) {
+	SkillType::load(sn, dir, tt, ft);
+	m_stretchy = sn->getOptionalBoolValue("anim-stretch", false);
+}
+
+// =====================================================
 // 	class ModelFactory
 // =====================================================
 

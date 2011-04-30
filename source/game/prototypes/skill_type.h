@@ -125,6 +125,7 @@ public:
 	int getBaseSpeed() const			{return speed;}
 	virtual fixed getSpeed(const Unit *unit) const	{return speed;}
 	int getAnimSpeed() const			{return animSpeed;}
+	virtual bool isStretchyAnim() const {return false;}
 	const Model *getAnimation() const	{return animations.front();}
 	StaticSound *getSound() const		{return sounds.getRandSound();}
 	float getSoundStartTime() const		{return soundStartTime;}
@@ -143,7 +144,7 @@ public:
 	void setDeCloak(bool v)	{m_deCloak = v;}
 
 	//other
-	virtual string toString() const		{return Lang::getInstance().get(typeName);}
+	virtual string toString() const	{return Lang::getInstance().get(typeName);}
 
 	///REFACTOR: push-down
 	//get proj
@@ -172,12 +173,12 @@ public:
 class StopSkillType: public SkillType {
 public:
 	StopSkillType() : SkillType("Stop"){}
-	virtual void getDesc(string &str, const Unit *unit) const {
+	virtual void getDesc(string &str, const Unit *unit) const override {
 		Lang &lang= Lang::getInstance();
 		str+= lang.get("ReactionSpeed")+": "+ intToStr(speed)+"\n";
 		descEpCost(str, unit);
 	}
-	virtual SkillClass getClass() const { return typeClass(); }
+	virtual SkillClass getClass() const override { return typeClass(); }
 	static SkillClass typeClass() { return SkillClass::STOP; }
 };
 
@@ -193,15 +194,15 @@ private:
 
 public:
 	MoveSkillType() : SkillType("Move"), visibleOnly(false) {}
-	virtual void load(const XmlNode *sn, const string &dir, const TechTree *tt, const UnitType *ft);
-	virtual void getDesc(string &str, const Unit *unit) const {
+	virtual void load(const XmlNode *sn, const string &dir, const TechTree *tt, const UnitType *ft) override;
+	virtual void getDesc(string &str, const Unit *unit) const override {
 		descSpeed(str, unit, "WalkSpeed");
 		descEpCost(str, unit);
 	}
 	//virtual void doChecksum(Checksum &checksum) const;
 	bool getVisibleOnly() const { return visibleOnly; }
-	virtual fixed getSpeed(const Unit *unit) const;
-	virtual SkillClass getClass() const { return typeClass(); }
+	virtual fixed getSpeed(const Unit *unit) const override;
+	virtual SkillClass getClass() const override { return typeClass(); }
 	static SkillClass typeClass() { return SkillClass::MOVE; }
 };
 /*
@@ -231,9 +232,9 @@ protected:
 public:
 	TargetBasedSkillType(const char* typeName);
 	virtual ~TargetBasedSkillType();
-	virtual void load(const XmlNode *sn, const string &dir, const TechTree *tt, const UnitType *ut);
-	virtual void doChecksum(Checksum &checksum) const;
-	virtual void getDesc(string &str, const Unit *unit) const	{getDesc(str, unit, "Range");}
+	virtual void load(const XmlNode *sn, const string &dir, const TechTree *tt, const UnitType *ut) override;
+	virtual void doChecksum(Checksum &checksum) const override;
+	virtual void getDesc(string &str, const Unit *unit) const override {getDesc(str, unit, "Range");}
 	virtual void getDesc(string &str, const Unit *unit, const char* rangeDesc) const;
 
 	Zones getZones () const				{return zones;}
@@ -258,12 +259,12 @@ public:
 		attackVar(0), attackType(0)/*, earthquakeType(NULL)*/ {}
 	virtual ~AttackSkillType();
 
-	virtual void load(const XmlNode *sn, const string &dir, const TechTree *tt, const UnitType *ut);
-	virtual void getDesc(string &str, const Unit *unit) const;
-	virtual void doChecksum(Checksum &checksum) const;
+	virtual void load(const XmlNode *sn, const string &dir, const TechTree *tt, const UnitType *ut) override;
+	virtual void getDesc(string &str, const Unit *unit) const override;
+	virtual void doChecksum(Checksum &checksum) const override;
 
 	//get
-	virtual fixed getSpeed(const Unit *unit) const;
+	virtual fixed getSpeed(const Unit *unit) const override;
 	int getAttackStrength() const				{return attackStrength;}
 	int getAttackVar() const					{return attackVar;}
 	//fixed getAttackPctStolen() const			{return attackPctStolen;}
@@ -271,7 +272,7 @@ public:
 	const AttackType *getAttackType() const		{return attackType;}
 //	const EarthquakeType *getEarthquakeType() const	{return earthquakeType;}
 
-	virtual SkillClass getClass() const { return typeClass(); }
+	virtual SkillClass getClass() const override { return typeClass(); }
 	static SkillClass typeClass() { return SkillClass::ATTACK; }
 };
 
@@ -287,8 +288,8 @@ public:
 		descEpCost(str, unit);
 	}
 
-	virtual fixed getSpeed(const Unit *unit) const;
-	virtual SkillClass getClass() const { return typeClass(); }
+	virtual fixed getSpeed(const Unit *unit) const override;
+	virtual SkillClass getClass() const override { return typeClass(); }
 	static SkillClass typeClass() { return SkillClass::BUILD; }
 };
 
@@ -299,11 +300,11 @@ public:
 class HarvestSkillType: public SkillType{
 public:
 	HarvestSkillType() : SkillType("Harvest") {}
-	virtual void getDesc(string &str, const Unit *unit) const {
+	virtual void getDesc(string &str, const Unit *unit) const override {
 		// command modifies displayed speed, all handled in HarvestCommandType
 	}
-	virtual fixed getSpeed(const Unit *unit) const;
-	virtual SkillClass getClass() const { return typeClass(); }
+	virtual fixed getSpeed(const Unit *unit) const override;
+	virtual SkillClass getClass() const override { return typeClass(); }
 	static SkillClass typeClass() { return SkillClass::HARVEST; }
 };
 
@@ -324,11 +325,11 @@ public:
 	RepairSkillType();
 	virtual ~RepairSkillType(){}// { delete splashParticleSystemType; }
 
-	virtual void load(const XmlNode *sn, const string &dir, const TechTree *tt, const UnitType *ut);
-	virtual void doChecksum(Checksum &checksum) const;
-	virtual void getDesc(string &str, const Unit *unit) const;
+	virtual void load(const XmlNode *sn, const string &dir, const TechTree *tt, const UnitType *ut) override;
+	virtual void doChecksum(Checksum &checksum) const override;
+	virtual void getDesc(string &str, const Unit *unit) const override;
 
-	virtual fixed getSpeed(const Unit *unit) const;
+	virtual fixed getSpeed(const Unit *unit) const override;
 	int getAmount() const		{return amount;}
 	fixed getMultiplier() const	{return multiplier;}
 	SplashType *getSplashParticleSystemType() const	{return splashParticleSystemType;}
@@ -336,7 +337,7 @@ public:
 	bool isSelfOnly() const		{return selfOnly;}
 	bool isSelfAllowed() const	{return selfAllowed;}
 
-	virtual SkillClass getClass() const { return typeClass(); }
+	virtual SkillClass getClass() const override { return typeClass(); }
 	static SkillClass typeClass() { return SkillClass::REPAIR; }
 };
 
@@ -351,19 +352,19 @@ private:
 
 public:
 	ProduceSkillType();
-	virtual void load(const XmlNode *sn, const string &dir, const TechTree *tt, const UnitType *ut);
-	virtual void doChecksum(Checksum &checksum) const;
-	virtual void getDesc(string &str, const Unit *unit) const {
+	virtual void load(const XmlNode *sn, const string &dir, const TechTree *tt, const UnitType *ut) override;
+	virtual void doChecksum(Checksum &checksum) const override;
+	virtual void getDesc(string &str, const Unit *unit) const override {
 		descSpeed(str, unit, "ProductionSpeed");
 		descEpCost(str, unit);
 	}
-	virtual fixed getSpeed(const Unit *unit) const;
+	virtual fixed getSpeed(const Unit *unit) const override;
 
 	bool isPet() const		{return pet;}
 	int getMaxPets() const	{return maxPets;}
 
 
-	virtual SkillClass getClass() const { return typeClass(); }
+	virtual SkillClass getClass() const override { return typeClass(); }
 	static SkillClass typeClass() { return SkillClass::PRODUCE; }
 };
 
@@ -374,13 +375,13 @@ public:
 class UpgradeSkillType: public SkillType{
 public:
 	UpgradeSkillType() : SkillType("Upgrade"){}
-	virtual void getDesc(string &str, const Unit *unit) const {
+	virtual void getDesc(string &str, const Unit *unit) const override {
 		descSpeed(str, unit, "UpgradeSpeed");
 		descEpCost(str, unit);
 	}
-	virtual fixed getSpeed(const Unit *unit) const;
+	virtual fixed getSpeed(const Unit *unit) const override;
 
-	virtual SkillClass getClass() const { return typeClass(); }
+	virtual SkillClass getClass() const override { return typeClass(); }
 	static SkillClass typeClass() { return SkillClass::UPGRADE; }
 };
 
@@ -389,12 +390,16 @@ public:
 // 	class BeBuiltSkillType
 // ===============================
 
-class BeBuiltSkillType: public SkillType{
+class BeBuiltSkillType: public SkillType {
+private:
+	bool  m_stretchy;
+
 public:
 	BeBuiltSkillType() : SkillType("Be built"){}
-	virtual void getDesc(string &str, const Unit *unit) const {}
-
-	virtual SkillClass getClass() const { return typeClass(); }
+	virtual void load(const XmlNode *sn, const string &dir, const TechTree *tt, const UnitType *ut) override;
+	virtual void getDesc(string &str, const Unit *unit) const override {}
+	virtual bool isStretchyAnim() const override {return m_stretchy;}
+	virtual SkillClass getClass() const override { return typeClass(); }
 	static SkillClass typeClass() { return SkillClass::BE_BUILT; }
 };
 
@@ -405,13 +410,13 @@ public:
 class MorphSkillType: public SkillType{
 public:
 	MorphSkillType() : SkillType("Morph"){}
-	virtual void getDesc(string &str, const Unit *unit) const {
+	virtual void getDesc(string &str, const Unit *unit) const override {
 		descSpeed(str, unit, "MorphSpeed");
 		descEpCost(str, unit);
 	}
-	virtual fixed getSpeed(const Unit *unit) const;
+	virtual fixed getSpeed(const Unit *unit) const override;
 
-	virtual SkillClass getClass() const { return typeClass(); }
+	virtual SkillClass getClass() const override { return typeClass(); }
 	static SkillClass typeClass() { return SkillClass::MORPH; }
 };
 
@@ -427,11 +432,11 @@ public:
 	DieSkillType() : SkillType("Die"), fade(0.0f) {}
 	bool getFade() const	{return fade;}
 
-	virtual void load(const XmlNode *sn, const string &dir, const TechTree *tt, const UnitType *ut);
-	virtual void doChecksum(Checksum &checksum) const;
-	virtual void getDesc(string &str, const Unit *unit) const {}
+	virtual void load(const XmlNode *sn, const string &dir, const TechTree *tt, const UnitType *ut) override;
+	virtual void doChecksum(Checksum &checksum) const override;
+	virtual void getDesc(string &str, const Unit *unit) const override {}
 
-	virtual SkillClass getClass() const { return typeClass(); }
+	virtual SkillClass getClass() const override { return typeClass(); }
 	static SkillClass typeClass() { return SkillClass::DIE; }
 };
 
@@ -442,14 +447,14 @@ public:
 class LoadSkillType: public SkillType{
 public:
 	LoadSkillType();
-	virtual void load(const XmlNode *sn, const string &dir, const TechTree *tt, const UnitType *ut);
-	virtual void doChecksum(Checksum &checksum) const;
-	virtual void getDesc(string &str, const Unit *unit) const {
+	virtual void load(const XmlNode *sn, const string &dir, const TechTree *tt, const UnitType *ut) override;
+	virtual void doChecksum(Checksum &checksum) const override;
+	virtual void getDesc(string &str, const Unit *unit) const override {
 		descSpeed(str, unit, "Speed");
 		descEpCost(str, unit);
 	}
 
-	virtual SkillClass getClass() const { return typeClass(); }
+	virtual SkillClass getClass() const override { return typeClass(); }
 	static SkillClass typeClass() { return SkillClass::LOAD; }
 };
 
@@ -460,12 +465,12 @@ public:
 class UnloadSkillType: public SkillType{
 public:
 	UnloadSkillType() : SkillType("Unload"){}
-	virtual void getDesc(string &str, const Unit *unit) const {
+	virtual void getDesc(string &str, const Unit *unit) const override {
 		descSpeed(str, unit, "Speed");
 		descEpCost(str, unit);
 	}
 
-	virtual SkillClass getClass() const { return typeClass(); }
+	virtual SkillClass getClass() const override { return typeClass(); }
 	static SkillClass typeClass() { return SkillClass::UNLOAD; }
 };
 
@@ -477,13 +482,13 @@ class CastSpellSkillType : public SkillType {
 public:
 	CastSpellSkillType() : SkillType("CastSpell") {}
 
-	virtual void getDesc(string &str, const Unit *unit) const {
+	virtual void getDesc(string &str, const Unit *unit) const override {
 		descSpeed(str, unit, "Speed");
 		descEpCost(str, unit);
 		descEffects(str, unit);
 	}
 
-	virtual SkillClass getClass() const { return typeClass(); }
+	virtual SkillClass getClass() const override { return typeClass(); }
 	static SkillClass typeClass() { return SkillClass::CAST_SPELL; }
 
 };
@@ -493,16 +498,20 @@ public:
 // ===============================
 
 class BuildSelfSkillType : public SkillType {
+private:
+	bool  m_stretchy;
+
 public:
 	BuildSelfSkillType() : SkillType("BuildSelf") {}
 
-	virtual void getDesc(string &str, const Unit *unit) const {
+	virtual void load(const XmlNode *sn, const string &dir, const TechTree *tt, const UnitType *ut) override;
+	virtual void getDesc(string &str, const Unit *unit) const override {
 		descSpeed(str, unit, "Speed");
 		descEpCost(str, unit);
 		descEffects(str, unit);
 	}
-
-	virtual SkillClass getClass() const { return typeClass(); }
+	virtual bool isStretchyAnim() const override {return m_stretchy;}
+	virtual SkillClass getClass() const override { return typeClass(); }
 	static SkillClass typeClass() { return SkillClass::BUILD_SELF; }
 
 };
