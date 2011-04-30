@@ -171,14 +171,14 @@ void ModelRendererGl::end() {
 	assertGl();
 }
 
-void ModelRendererGl::render(const Model *model, int frame, int id, UnitShaderSet *customShaders) {
+void ModelRendererGl::render(const Model *model, float fade, int frame, int id, UnitShaderSet *customShaders) {
 	//assertions
 	assert(m_rendering);
 	assertGl();
 
 	//render every mesh
 	for (uint32 i = 0; i < model->getMeshCount(); ++i) {
-		renderMesh(model->getMesh(i), frame, id, customShaders);
+		renderMesh(model->getMesh(i), fade, frame, id, customShaders);
 	}
 
 	//assertions
@@ -205,7 +205,7 @@ void ModelRendererGl::renderMeshNormalsOnly(const Mesh *mesh) {
 
 // ===================== PRIVATE =======================
 
-void ModelRendererGl::renderMesh(const Mesh *mesh, int frame, int id, UnitShaderSet *customShaders) {
+void ModelRendererGl::renderMesh(const Mesh *mesh, float fade, int frame, int id, UnitShaderSet *customShaders) {
 	//assertions
 	assertGl();
 
@@ -226,7 +226,7 @@ void ModelRendererGl::renderMesh(const Mesh *mesh, int frame, int id, UnitShader
 
 	// mesh colour (units only, tileset objects use colour set by engine based on FoW tex)
 	if (m_renderMode == RenderMode::UNITS) {
-		Vec4f color(mesh->getDiffuseColor(), mesh->getOpacity());
+		Vec4f color(mesh->getDiffuseColor(), std::min(mesh->getOpacity(), fade));
 		glColor4fv(color.ptr());
 	}
 

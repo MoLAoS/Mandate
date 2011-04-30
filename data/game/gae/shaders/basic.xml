@@ -93,17 +93,15 @@
 				//}
 			}
 
+			// compute fog factor
 			float calculateFogFactor() {
-				// fog
-				//if (gae_IsUsingFog == 1) {
-					float dist = length(vec3(gl_ModelViewMatrix * gl_Vertex)); // distance from camera
-					dist *= float(gae_IsUsingFog);
-					const float one_divide_ln_2 = 1.44269504088896341;
-					float fog = exp2(-gl_Fog.density * gl_Fog.density * dist * dist * one_divide_ln_2);
-					return clamp(fog, 0.0, 1.0);	
-				//} else {
-				//	return 1.f;
-				//}
+				if (gae_IsUsingFog == 0) {
+					return 1.f;
+				}
+				float dist = length(vec3(gl_ModelViewMatrix * gl_Vertex)); // distance from camera
+				const float one_divide_ln_2 = 1.44269504088896341;
+				float fog = exp2(-gl_Fog.density * gl_Fog.density * dist * dist * one_divide_ln_2);
+				return clamp(fog, 0.0, 1.0);	
 			}
 
 			void main() {

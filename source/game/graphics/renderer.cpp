@@ -1061,39 +1061,35 @@ void Renderer::renderUnits() {
 			float alpha = unit->getRenderAlpha();
 			bool fade = alpha < 1.f;
 
-			if (fade) {
-				glDisable(GL_COLOR_MATERIAL); // ?
-				//Vec4f fadeAmbientColor(defAmbientColor);
-				Vec4f fadeDiffuseColor(defDiffuseColor);
-				//fadeAmbientColor.a = alpha;
-				fadeDiffuseColor.a = alpha;
-				//glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, fadeAmbientColor.ptr());
-				glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, fadeDiffuseColor.ptr());
-				modelRenderer->setAlphaThreshold(0.f);
-			} else {
-				glEnable(GL_COLOR_MATERIAL);
-				modelRenderer->setAlphaThreshold(0.5f);
-			}
-
-			//render
+			// get model, lerp to animProgess
 			const Model *model = unit->getCurrentModel();
 			model->updateInterpolationData(unit->getAnimProgress(), unit->isAlive());
 
-			if (fade && unit->isCloaked()) {
-				UnitShaderSet *uss = 0;
-				if (unit->getFaction()->isAlly(thisFaction)) {
-					uss = unit->getType()->getCloakType()->getAllyShaders();
+			///@todo generalise so custom shaders can be attached to other things
+			/// all controlled with Lua snippets perhaps.
+
+			// render
+			if (fade) {
+				modelRenderer->setAlphaThreshold(0.f);
+				if (unit->isCloaked()) {
+					UnitShaderSet *uss = 0;
+					if (unit->getFaction()->isAlly(thisFaction)) {
+						uss = unit->getType()->getCloakType()->getAllyShaders();
+					} else {
+						uss = unit->getType()->getCloakType()->getEnemyShaders();
+					}
+					if (uss) {
+						const int frame = g_world.getFrameCount();
+						const int id = unit->getId();
+						modelRenderer->render(model, alpha, frame, id, uss);
+					} else {
+						modelRenderer->render(model, alpha);
+					}
 				} else {
-					uss = unit->getType()->getCloakType()->getEnemyShaders();
-				}
-				if (uss) {
-					const int frame = g_world.getFrameCount();
-					const int id = unit->getId();
-					modelRenderer->render(model, frame, id, uss);
-				} else {
-					modelRenderer->render(model);
+					modelRenderer->render(model, alpha);
 				}
 			} else {
+				modelRenderer->setAlphaThreshold(0.5f);
 				modelRenderer->render(model);
 			}
 			triangleCount += model->getTriangleCount();
@@ -1101,7 +1097,7 @@ void Renderer::renderUnits() {
 
 			// restore
 			if (fade) {
-				//glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, defAmbientColor.ptr());
+				glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, defAmbientColor.ptr());
 				glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, defDiffuseColor.ptr());
 			}
 			glPopMatrix();
