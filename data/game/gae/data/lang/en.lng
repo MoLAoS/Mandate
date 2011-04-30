@@ -59,6 +59,7 @@ TechNotFound=The Tech-tree for this scenario could not be found.
 TilesetNotFound=The Tileset for this scenario was not found.
 ScenarioXmlError=There was an error loading the scenario XML
 EnterFilename=You must enter a file name to save your game.
+CantSaveScenarios=Scenarios cannot be saved.
 
 ; Scenario difficulty
 Difficulty=Difficulty
