@@ -40,6 +40,7 @@ Upgrade=Mejorar
 MapNotFound=El mapa de este escenario no se pudo encontrar.
 ScenarioXmlError=Había un error al cargar el XML escenario.
 EnterFilename=Debes introducir un nombre de archivo para guardar la partida.
+CantSaveScenarios=Escenarios no se pueden guardar.
 
 ;Dificultad de escenario
 Difficulty=Dificultad
