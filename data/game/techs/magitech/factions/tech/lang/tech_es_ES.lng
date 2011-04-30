@@ -2,17 +2,17 @@
 ; Unit names and tips
 ;
 aerodrome=Aerodrome
-aerodrome_info=Produce unidades a√©reas. Solo puede ser contruido por un Technician.
+aerodrome_info=Produce unidades aÈreas. Solo puede ser contruido por un Technician.
 air_ballista=Air Ballista
-air_ballista_info=Estructura defensiva antia√©rea.
+air_ballista_info=Estructura defensiva antiaÈrea.
 airship=Airship
-airship_info=Unidad a√©rea pesada. Devastadora contra unidades terrestres. Lenta e incapaz de atacar al aire.
+airship_info=Unidad aÈrea pesada. Devastadora contra unidades terrestres. Lenta e incapaz de atacar al aire.
 archer=Archer
-archer_info=Combatiente b√°sico a distancia. Baja resistencia pero buen ataque a tierra y aire. D√©bil contra unidades con ataque mano a mano.
+archer_info=Combatiente b·sico a distancia. Baja resistencia pero buen ataque a tierra y aire. DÈbil contra unidades con ataque mano a mano.
 barracks=Barracks
 barracks_info=Produce guerreros humanos.
 battle_machine=Battle Machine
-battle_machine_info=La unidad terrestre definitiva. Resistente y con un ataque cercano devastador. Tambi√©n puede atacar al aire usando la ballesta. Lenta.
+battle_machine_info=La unidad terrestre definitiva. Resistente y con un ataque cercano devastador. TambiÈn puede atacar al aire usando la ballesta. Lenta.
 blacksmith=Blacksmith
 blacksmith_info=Mejora armas y escudos. Necesaria para construir el Technodrome.
 castle=Castle
@@ -22,45 +22,45 @@ catapult_info=Lenta pero equipada con un ataque potente especialmente efectivo c
 cow=Cow
 cow_info=Proporciona mas comida, pero es mas cara.
 defense_tower=Defence Tower
-defense_tower_info=Estructura defensiva efectiva contra unidades terrestres y a√©reas.
+defense_tower_info=Estructura defensiva efectiva contra unidades terrestres y aÈreas.
 farm=Farm
 farm_info=Produce comida y unidades de granja.
 guard=Guard
 guard_info=Combatiente pesado mano a mano. Baja velocidad pero alta resistencia y buen ataque contra unidades terrestres.
 horseman=Horseman
-horseman_info=Unidad r√°pida de combate mano a mano. R√°pido y resistente con ataque medio.
+horseman_info=Unidad r·pida de combate mano a mano. R·pido y resistente con ataque medio.
 ornithopter=Ornithopter
-ornithopter_info=Unidad a√©rea especialmente efectiva contra otras unidades a√©reas, pero que tambien puede atacar a tierra.
+ornithopter_info=Unidad aÈrea especialmente efectiva contra otras unidades aÈreas, pero que tambien puede atacar a tierra.
 pig=Pig
 pig_info=Proporciona comida para que los guerreros no se mueran de hambre.
 swordman=Swordsman
-swordman_info=Combatiente b√°sico mano a mano. Resistencia, velocidad y ataque medios. Puede ser mejorado a Guard.
+swordman_info=Combatiente b·sico mano a mano. Resistencia, velocidad y ataque medios. Puede ser mejorado a Guard.
 technician=Technician
 technician_info=Puede construir maquinas de guerra y el Aerodrome. Puede recolectar oro y curar a otras unidades.
 technodrome=Technodrome
 technodrome_info=Produce Technicians.
 worker=Worker
-worker_info=Puede recolectar recursos y construir o reparar la mayor√≠a de edificios. Muy d√©bil. No puede atacar.
+worker_info=Puede recolectar recursos y construir o reparar la mayorÌa de edificios. Muy dÈbil. No puede atacar.
 
 ;
 ; Upgrade names and tips
 ;
 advanced_architecture=Advanced Architecture
-advanced_architecture_info=Permite la construcci√≥n de estructuras defensivas.
+advanced_architecture_info=Permite la construcciÛn de estructuras defensivas.
 blade_weapons=Blade Weapons
 blade_weapons_info=Incrementa los ataques de Swordman y Guard.
 piercing_weapons=Piercing Weapons
 piercing_weapons_info=Incrementa los ataques de Archer y Horseman.
 robotics=Robotics
-robotics_info=Permiten la construcci√≥n de Battle Machines and Airships.
+robotics_info=Permiten la construcciÛn de Battle Machines and Airships.
 shield_level_1=Shield Level 1
 shield_level_1_info=Incrementa la armadura de Swordman, Guard y Horseman.
 shield_level_2=Shield Level 2
 shield_level_2_info=Incrementa la armadura de Swordman, Guard y Horseman.
 stables=Stables
-stables_info=Permiten la producci√≥n de Horsemen.
+stables_info=Permiten la producciÛn de Horsemen.
 training_field=Training Field
-training_field_info=Incrementa la velocidad de producci√≥n de las Barracks y permite mantener la posici√≥n a los guerreros.
+training_field_info=Incrementa la velocidad de producciÛn de las Barracks y permite mantener la posiciÛn a los guerreros.
 
 ;
 ; Custom command names
@@ -70,7 +70,7 @@ produce_airship=Producir Airship
 attack_on=Ataque Activo
 attack_off=Ataque Inactivo
 missile=Proyectil
-hold_position=Mantener Posici√≥n
+hold_position=Mantener PosiciÛn
 produce_swordman=Producir Swordsman
 produce_archer=Producir Archer
 produce_guard=Producir Guard
@@ -85,7 +85,7 @@ research_stables=Research Stables
 molotov=Molotov
 fire_arrow=Flecha de Fuego
 promote_to_guard=Transformar a Guard
-build_ultimate=Construir √öltimo
+build_ultimate=Construir ⁄ltimo
 heal=Curar
 mine_gold=Minar Oro
 build_catapult=Construir Catapult
@@ -94,7 +94,7 @@ build_air_ballista=Construir Air Ballista
 produce_technician=Producir Technician
 research_advanced_architecture=Mejorar Advanced Architecture
 research_robotics=Mejorar Robotics
-build_basic=Construir B√°sicos
+build_basic=Construir B·sicos
 build_advanced=Build Avanzados
 mine=Minar
 harvest_wood=Recolectar madera
@@ -103,4 +103,4 @@ harvest_wood=Recolectar madera
 ;
 ; Levels
 ;
-elite=√âlite
+elite=…lite

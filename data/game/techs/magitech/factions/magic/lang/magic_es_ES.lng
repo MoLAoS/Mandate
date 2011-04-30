@@ -2,72 +2,72 @@
 ; Unit names and tips
 ;
 archmage=Archmage
-archmage_info=El mago mas avanzado. D√©bil pero capaz de realizar ataques extremadamente potentes con radio de efecto tanto contra unidades terrestres como a√©reas.
+archmage_info=El mago mas avanzado. DÈbil pero capaz de realizar ataques extremadamente potentes con radio de efecto tanto contra unidades terrestres como aÈreas.
 archmage_tower=Archmage Tower
 archmage_tower_info=Necesaria para producir Archmages, mejora Dragon Call.
 battlemage=Battlemage
-battlemage_info=Guerrero vers√°til. Ataque potente, buena velocidad y armadura aceptable. D√©bil contra unidades de ataque cercano. Se puede transformar en Archmage.
+battlemage_info=Guerrero vers·til. Ataque potente, buena velocidad y armadura aceptable. DÈbil contra unidades de ataque cercano. Se puede transformar en Archmage.
 behemoth=Behemoth
-behemoth_info=La mejor unidad m√°gica de combate cercano. Lenta pero resistente y con ataques fuertes, especialmente efectivos contra edificios y otras unidades de madera.
+behemoth_info=La mejor unidad m·gica de combate cercano. Lenta pero resistente y con ataques fuertes, especialmente efectivos contra edificios y otras unidades de madera.
 daemon=Daemon
-daemon_info=Combatiente cercano b√°sico. Barato y d√©bil. Su misi√≥n principal es mantener a las unidades enemigas lejos de tus unidades de ataque a distancia por el mayor tiempo posible.
+daemon_info=Combatiente cercano b·sico. Barato y dÈbil. Su misiÛn principal es mantener a las unidades enemigas lejos de tus unidades de ataque a distancia por el mayor tiempo posible.
 dragon=Dragon
-dragon_info=Unidad a√©rea poderosa y vers√°til. Rapida y capaz de atacar a aire y tierra. D√©bil contra ataques perforantes.
+dragon_info=Unidad aÈrea poderosa y vers·til. Rapida y capaz de atacar a aire y tierra. DÈbil contra ataques perforantes.
 drake_rider=Drake Rider
-drake_rider_info=R√°pida y mas resistente que la Summoner esta unidad es ideal para explorar o realizar ataques por sorpresa.
+drake_rider_info=R·pida y mas resistente que la Summoner esta unidad es ideal para explorar o realizar ataques por sorpresa.
 energy_source=Energy Source
-energy_source_info=Genera energ√≠a, para permitir la producci√≥n de mas unidades.
+energy_source_info=Genera energÌa, para permitir la producciÛn de mas unidades.
 ghost_armor=Ghost Armour
 ghost_armor_info=Unidad media de ataque cercano. Lenta pero resistente y con un buen ataque.
 golem=Golem
-golem_info=Unidad defensiva, que necesita energ√≠a para andar. Ataque a tierra fuerte y muy buena resistencia.
+golem_info=Unidad defensiva, que necesita energÌa para andar. Ataque a tierra fuerte y muy buena resistencia.
 initiate=Initiate
-initiate_info=Puede recolectar recursos y construir estructuras. Muy d√©bil pero tiene un ataque b√°sico para emergencias. Se puede transformar en Battlemage.
+initiate_info=Puede recolectar recursos y construir estructuras. Muy dÈbil pero tiene un ataque b·sico para emergencias. Se puede transformar en Battlemage.
 library=Library
 library_info=Puede mejorar Energy Compression, Energy Sharpening y Hell Gate.
 mage_tower=Mage Tower
 mage_tower_info=Estructura principal. Almecena recursos y produce Initiates.
 summoner=Summoner
-summoner_info=Puede invocar criaturas para ayudar en la batalla. Lenta y debil, tiene un ataque potente pero que consume energ√≠a, util tanto contra unidades terrestres como aereas. Se puede transformar en Drake Rider.
+summoner_info=Puede invocar criaturas para ayudar en la batalla. Lenta y debil, tiene un ataque potente pero que consume energÌa, util tanto contra unidades terrestres como aereas. Se puede transformar en Drake Rider.
 summoner_guild=Summoner Guild
 summoner_guild_info=Produce Summoners y puede mejorar Ancient Summoning.
 tower_of_souls=Tower Of Souls
-tower_of_souls_info=Estructura defensiva antia√©rea.
+tower_of_souls_info=Estructura defensiva antiaÈrea.
 wicker_behemoth=Wicker Behemoth
-wicker_behemoth_info=Construcci√≥n intermedia sin vida necesaria para producir Behemoths.
+wicker_behemoth_info=ConstrucciÛn intermedia sin vida necesaria para producir Behemoths.
 
 ;
 ; additional command tips
 ;
-stop_info=Quedar√° de brazos cruzados.
+stop_info=Quedar· de brazos cruzados.
 move_info=Hacer algo de ejercicio.
-attack_info=Golpear a algunos enemigos!
-repair_info=Reparar los da√±os a edificios y construcciones.
-build_info=Construir las estructuras necesarias para capacitar a m√°s magos y las actualizaciones de la investigaci√≥n.
+attack_info=°Golpear a algunos enemigos!
+repair_info=Reparar los daÒos a edificios y construcciones.
+build_info=Construir las estructuras necesarias para capacitar a m·s magos y las actualizaciones de la investigaciÛn.
 ritual_info=Llevar a cabo rituales para dar vida a las construcciones.
-harvest1_info=Cosechar de oro y piedra, la obligaci√≥n de contratar y construir tu ej√©rcito.
-harvest2_info=Cortar le√±a. Magic no necesita mucho, pero no lo ignore por completo!
+harvest1_info=Cosechar de oro y piedra, la obligaciÛn de contratar y construir tu ejÈrcito.
+harvest2_info=Cortar leÒa. Magic no necesita mucho, °pero no lo ignore por completo!
 
 ;
 ; Upgrade names and tips
 ;
 ancient_summoning=Ancient Summoning
-ancient_summoning_info=Incrementa la energ√≠a de la Summoner y le permite invocar Ghost Armors.
+ancient_summoning_info=Incrementa la energÌa de la Summoner y le permite invocar Ghost Armors.
 dragon_call=Dragon Call
 dragon_call_info=Permite a la Summoner invocar Dragons.
 energy_compression=Energy Compression
-energy_compression_info=Incrementa la energ√≠a de Battlemage, Summoner y Archmage.
+energy_compression_info=Incrementa la energÌa de Battlemage, Summoner y Archmage.
 energy_sharpening=Energy Sharpening
 energy_sharpening_info=Mejora los ataques de Battlemage, Summoner y Archmage.
 hell_gate=Hell Gate
-hell_gate_info=Permite la construcci√≥n de Behemoths.
+hell_gate_info=Permite la construcciÛn de Behemoths.
 
 ;
 ; Custom command names
 ;
 ice_nova=Nova de Hielo
-static_fire=Est√°tica Fuego
-hold_position=Mantener Posici√≥n
+static_fire=Est·tica Fuego
+hold_position=Mantener PosiciÛn
 research_dragon_call=Mejorar Dragon Call
 fire_bolt=Perno de Fuego
 promote_to_archmage=Transformar a Archmage
