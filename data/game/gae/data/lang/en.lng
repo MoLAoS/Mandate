@@ -50,6 +50,7 @@ Produce=Produce
 Repair=Repair
 SetMeetingPoint=Set Meeting Point
 Stop=Stop
+Teleport=Teleport
 Unload=Unload
 Upgrade=Upgrade
 
@@ -268,6 +269,7 @@ Exit=Exit
 ExitGame?=Exit Game?
 ExitProgram?=Exit Program?
 ExploredTargetOnly=Only within explored areas
+UnexploredTargetOk=Includes unexplored areas
 Fields=Fields
 FogOfWar=Fog of War
 Generated=Generates
