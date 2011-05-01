@@ -162,6 +162,7 @@ void MenuStateLoadGame::onButtonClick(Widget *source) {
 			g_lang.get("Yes"), g_lang.get("No"));
 		m_messageDialog->Button1Clicked.connect(this, &MenuStateLoadGame::onConfirmDelete);
 		m_messageDialog->Button2Clicked.connect(this, &MenuStateLoadGame::onCancelDelete);
+		m_messageDialog->Close.connect(this, &MenuStateLoadGame::onCancelDelete);
 		program.setFade(0.5f);
 
 	} else if (btn == m_playNowButton) {

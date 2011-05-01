@@ -401,6 +401,7 @@ void GameState::doExitMessage(const string &msg) {
 	dialog->Button1Clicked.connect(this, &GameState::onConfirmQuitGame);
 	dialog->Button2Clicked.connect(this, &GameState::destroyDialog);
 	dialog->Escaped.connect(this, &GameState::destroyDialog);
+	dialog->Close.connect(this, &GameState::destroyDialog);
 	m_modalDialog = dialog;
 }
 
@@ -422,6 +423,7 @@ void GameState::confirmExitProgram() {
 	dialog->Button1Clicked.connect(this, &GameState::onConfirmExitProgram);
 	dialog->Button2Clicked.connect(this, &GameState::destroyDialog);
 	dialog->Escaped.connect(this, &GameState::destroyDialog);
+	dialog->Close.connect(this, &GameState::destroyDialog);
 	m_modalDialog = dialog;
 }
 
