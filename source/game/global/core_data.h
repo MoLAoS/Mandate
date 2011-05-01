@@ -52,7 +52,8 @@ private:
 			backgroundTexture,
 			fireTexture,
 			snowTexture,
-			waterSplashTexture;
+			waterSplashTexture,
+			mouseTexture;
 		
 public:
 	static CoreData &getInstance();
@@ -68,6 +69,7 @@ public:
 	TexPtr getGplTexture() const			{return gplTexture;}
 	TexPtr getGaeSplashTexture() const		{return gaeSplashTexture;}
 	TexPtr getWaterSplashTexture() const	{return waterSplashTexture;}
+	TexPtr getMouseTexture() const			{return mouseTexture;}
 
 	StrSound *getIntroMusic() 				{return &introMusic;}
 	StrSound *getMenuMusic() 				{return &menuMusic;}

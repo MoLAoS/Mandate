@@ -22,30 +22,6 @@ using Shared::Platform::WindowGl;
 namespace Glest { namespace Widgets {
 
 // =====================================================
-// class CodeMouseCursor
-// =====================================================
-
-class CodeMouseCursor : public MouseCursor {
-private:
-	MouseAppearance  m_app;
-	const Texture2D *m_tex;
-
-public:
-	CodeMouseCursor(WidgetWindow *window)
-		: MouseCursor(window)
-		, m_app(MouseAppearance::DEFAULT), m_tex(0) {}
-	virtual ~CodeMouseCursor();
-
-	virtual void setAppearance(MouseAppearance ma, const Texture2D *tex = 0) override;
-
-	virtual Vec2i getPrefSize() const override { return Vec2i(32); }
-	virtual Vec2i getMinSize() const override { return Vec2i(32); }
-
-	virtual void render() override;
-	virtual string descType() const override { return "MouseCursor"; }
-};
-
-// =====================================================
 // class WidgetWindow
 // =====================================================
 /** top level widget container, derives from Shared::Platform::WindowGl & Glest::Widgets::Container,
@@ -124,14 +100,6 @@ public:
 	void releaseKeyboardFocus(KeyboardWidget* widget);
 
 	MouseCursor& getMouseCursor() { return *m_mouseCursor; }
-	//void setMouseCursorIcon(const Texture2D *tex = 0) { 
-	//	mouseIcon = tex; 
-	//	if (!tex) { 
-	//		setMouseAppearance();
-	//	}
-	//}
-	//void setMouseAppearance(MouseAppearance v = MouseAppearance::DEFAULT);
-	//void initMouse();
 
 protected: // Shared::Platform::Window virtual events
 	virtual void eventMouseDown(int x, int y, MouseButton mouseButton) override;

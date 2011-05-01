@@ -75,6 +75,7 @@ bool CoreData::load() {
 		logoTexture = loadTexture(dir + "/menu/textures/logo.tga");
 		gplTexture = loadTexture(dir + "/menu/textures/gplv3.tga");
 		gaeSplashTexture = loadTexture(dir + "/menu/textures/gaesplash.tga");
+		mouseTexture = loadTexture(dir + "/misc_textures/mouse.png");
 		waterSplashTexture = loadAlphaTexture(dir + "/misc_textures/water_splash.tga", true);
 	} catch (runtime_error &e) {
 		g_logger.logError(string("Error loading core data.\n") + e.what());

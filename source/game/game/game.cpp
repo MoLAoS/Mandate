@@ -30,6 +30,7 @@
 #include "sim_interface.h"
 #include "network_interface.h"
 #include "game_menu.h"
+#include "mouse_cursor.h"
 
 #if _GAE_DEBUG_EDITION_
 #	include "debug_renderer.h"
@@ -144,12 +145,16 @@ void GameState::load() {
 		log.useLoadingScreenDefaults();
 	}
 
-	// check for custom mouse (faction then tech)
-	//if (g_widgetWindow.loadMouse(techName + "/factions/" + thisFactionName)) {
-	//} else if (g_widgetWindow.loadMouse(techName)) {
-	//} else {
-	//	// already using default
-	//}
+	// maybe use config option instead - hailstone 01May2011
+	if (g_program.getMouseCursor().descType() == "ImageSetMouseCursor") {
+		ImageSetMouseCursor &mouse = static_cast<ImageSetMouseCursor&>(g_program.getMouseCursor());
+		// check for custom mouse (faction then tech)
+		if (mouse.loadMouse(techName + "/factions/" + thisFactionName)) {
+		} else if (mouse.loadMouse(techName)) {
+		} else {
+			// already using default
+		}
+	}
 
 	g_logger.getProgramLog().setProgressBar(true);
 	g_logger.getProgramLog().setState(Lang::getInstance().get("Loading"));
@@ -286,6 +291,7 @@ void GameState::update() {
 	}
 	if (exitGame) {
 		g_simInterface.doQuitGame(QuitSource::LOCAL);
+		g_program.getMouseCursor().initMouse(); // reset to default cursor images
 	}
 	if (exitProgram) {
 		g_program.exit();

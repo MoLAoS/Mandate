@@ -15,6 +15,7 @@
 #include "widgets_base.h"
 #include "widget_window.h"
 #include "widgets.h"
+#include "mouse_cursor.h"
 
 #include "metrics.h"
 #include "renderer.h"
@@ -43,75 +44,6 @@ using namespace Graphics;
 #	undef WIDGET_LOG
 #	define WIDGET_LOG(x)
 #endif
-
-// =====================================================
-// class CodeMouseCursor
-// =====================================================
-
-CodeMouseCursor::~CodeMouseCursor() {
-	DEBUG_HOOK();
-}
-
-void CodeMouseCursor::setAppearance(MouseAppearance ma, const Texture2D *tex) {
-	if (ma == MouseAppearance::CMD_ICON) {
-		RUNTIME_CHECK(tex != 0);
-		m_tex = tex;
-		m_app = MouseAppearance::CMD_ICON;
-	} else {
-		m_tex = 0;
-		m_app = MouseAppearance::DEFAULT;
-	}
-}
-
-void CodeMouseCursor::render() {
-	float color1, color2;
-	Vec2i points[4];
-	points[0] = getScreenPos();
-	points[1] = points[0] + Vec2i(20, 10);
-	points[2] = points[0] + Vec2i(10, 20);
-
-	int numPoints;
-	if (m_tex) {
-		numPoints = 4;
-		points[3] = points[2];
-		points[2] = points[0] + Vec2i(10, 10);
-	} else {
-		numPoints = 3;
-	}
-
-	int mAnim = int(getRootWindow()->getSlowAnim() * 200) - 100;
-	color2 = float(abs(mAnim)) / 100.f / 2.f + 0.4f;
-	color1 = float(abs(mAnim)) / 100.f / 2.f + 0.8f;
-
-	glPushAttrib(GL_CURRENT_BIT | GL_COLOR_BUFFER_BIT | GL_LINE_BIT);
-	glDisable(GL_TEXTURE_2D);
-	glEnable(GL_BLEND);
-
-	// inside
-	glColor4f(0.4f, 0.2f, 0.2f, 0.5f);
-	glBegin(GL_TRIANGLE_FAN);
-	for (int i=0; i < numPoints; ++i) {
-		glVertex2iv(points[i].ptr());
-	}
-	glEnd();
-
-	// border
-	glLineWidth(2);
-	glBegin(GL_LINE_LOOP);
-		glColor4f(1.f, 0.2f, 0, color1);
-		glVertex2iv(points[0].ptr());
-		glColor4f(1.f, 0.4f, 0, color2);
-		for (int i=1; i < numPoints; ++i) {
-			glVertex2iv(points[i].ptr());
-		}
-	glEnd();
-
-	// command icon ?
-	if (m_tex) {
-		MouseCursor::renderTex(m_tex);
-	}
-	glPopAttrib();
-}
 
 // =====================================================
 // class WidgetWindow
@@ -180,11 +112,13 @@ WidgetWindow::WidgetWindow()
 	keyboardFocused = m_keyboardWidget;
 
 	///@todo ImageSetMouseCursor ... & config option?
-	if (true) {
-		m_mouseCursor = new CodeMouseCursor(this);
-	} else {
-		//m_mouseCursor = new ImageSetMouseCursor(this);
-	}
+	//if (false) {
+	//	m_mouseCursor = new CodeMouseCursor(this);
+	//} else {
+		m_mouseCursor = new ImageSetMouseCursor(this);
+		m_mouseCursor->initMouse();
+		registerUpdate(m_mouseCursor);
+	//}
 
 	textRendererFT = g_renderer.getFreeTypeRenderer();
 } 
@@ -192,6 +126,7 @@ WidgetWindow::WidgetWindow()
 WidgetWindow::~WidgetWindow() {
 	// delete children
 	clear();
+	unregisterUpdate(m_mouseCursor);
 	delete m_mouseCursor;
 
 	//restore video mode
@@ -644,57 +579,5 @@ void WidgetWindow::eventKeyPress(char c) {
 	}
 }
 
-
-//////////////////////
-//////////////////////
-//////////////////////
-
-//REFACTOR: send to class ImageSetMouseCursor : public MouseCursor
-
-/** Load the mouse texture from dir
-  * @return true on success
-  */
-//bool WidgetWindow::loadMouse(const string &dir) {
-//	string path;
-//	string name = "mouse";
-//
-//	// check each file type (there must be a better way?)
-//	if (fileExists(dir + "/" + name + ".png")) {
-//		path = dir + "/" + name + ".png";
-//	} else if (fileExists(dir + "/" + name + ".jpg")) {
-//		path = dir + "/" + name + ".jpg";
-//	} else if (fileExists(dir + "/" + name + ".bmp")) {
-//		path = dir + "/" + name + ".bmp";
-//	} else if (fileExists(dir + "/" + name + ".tga")) {
-//		path = dir + "/" + name + ".tga";
-//	} else {
-//		return false;
-//	}
-//	
-//	Texture2D *tex = g_renderer.newTexture2D(ResourceScope::GLOBAL);
-//	tex->setMipmap(false);
-//	tex->load(path);
-//	tex->init();
-//	
-//	m_mouseTexture = tex;
-//
-//	return true;
-//}
-//
-//void WidgetWindow::initMouse() {
-//	if (!m_mouseTexture) {
-//		m_mouseTexture = g_coreData.getMouseTexture();
-//	}
-//	delete mouseMain;
-//	mouseMain = new Imageset(m_mouseTexture, 32, 32);
-//	mouseMain->setSize(32,32);
-//	mouseMain->setPos(mousePos + Vec2i(0, -32));
-//	m_mouseTexture = 0; // custom mouse is only applied once
-//	//mouseAnimations = new Animset(this, mouseMain, 30);
-//}
-//////////////////////
-//////////////////////
-//////////////////////
-
-}}
+}} // end 
 

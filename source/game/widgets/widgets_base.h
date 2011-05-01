@@ -526,6 +526,8 @@ public:
 	virtual ~MouseCursor() {}
 
 	virtual void setAppearance(MouseAppearance ma, const Texture2D *cmdIcon = 0) = 0;
+	virtual void initMouse() {}
+	virtual void update() override {}
 };
 
 // =====================================================
