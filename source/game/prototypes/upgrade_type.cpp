@@ -141,7 +141,11 @@ bool UpgradeType::loadOldStyle(const XmlNode *node, const string &dir, const Tec
 	e.setMaxHp(node->getOptionalIntValue("max-hp"));
 	e.setMaxEp(node->getOptionalIntValue("max-ep"));
 	e.setSight(node->getOptionalIntValue("sight"));
-	e.setAttackStrength(node->getOptionalIntValue("attack-strength"));
+	if (node->getOptionalChild("attack-strenght")) { // support vanilla-glest typo
+		e.setAttackStrength(node->getOptionalIntValue("attack-strenght"));
+	} else {
+		e.setAttackStrength(node->getOptionalIntValue("attack-strength"));
+	}
 	e.setAttackRange(node->getOptionalIntValue("attack-range"));
 	e.setArmor(node->getOptionalIntValue("armor"));
 	e.setMoveSpeed(node->getOptionalIntValue("move-speed"));
