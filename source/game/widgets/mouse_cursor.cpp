@@ -92,9 +92,17 @@ ImageSetMouseCursor::~ImageSetMouseCursor() {
 }
 
 void ImageSetMouseCursor::setAppearance(MouseAppearance ma, const Texture2D *tex) {
+	RUNTIME_CHECK(ma < MouseAppearance::COUNT);
+
+	if (ma == MouseAppearance::CMD_ICON) {
+		RUNTIME_CHECK(tex != 0);
 		m_icon = tex;
+		m_app = MouseAppearance::CMD_ICON;
+	} else {
+		m_icon = 0;
 		m_app = ma;
-		m_mouseMain->setActive(m_app);
+	}
+	m_mouseMain->setActive(m_app);
 }
 
 void ImageSetMouseCursor::render() {
