@@ -35,8 +35,10 @@ Patrol=Patrullar
 Produce=Produce
 Repair=Reparar
 Stop=Parar
+Teleport=Teleportar
 Unload=Descargar
 Upgrade=Mejorar
+
 MapNotFound=El mapa de este escenario no se pudo encontrar.
 ScenarioXmlError=Había un error al cargar el XML escenario.
 EnterFilename=Debes introducir un nombre de archivo para guardar la partida.
@@ -50,6 +52,7 @@ Difficulty2=Media
 Difficulty3=Difícil
 Difficulty4=Muy Difícil
 Difficulty5=Imposible
+
 Human=Humano
 Closed=Cerrado
 Control=Control
@@ -57,6 +60,7 @@ Cpu_Easy=CPU (Fácil)
 Cpu=CPU
 Cpu_Ultra=CPU (Ultra)
 Cpu_Mega=CPU (Mega)
+
 VeryFast=muy rápido
 VerySlow=muy lenta
 SpeedDec=Disminuir Velocidad
@@ -70,6 +74,7 @@ GameResumed=Juego reanudado
 Fast=rapido
 Fastest=el más rapido
 GameSpeedSet=Velocidad
+
 PlayNow=Jugar ya!
 Network=Red
 MaxPlayers=Jugadores max
@@ -78,12 +83,14 @@ Map=Mapa
 Tileset=Tileset
 TechTree=Arbol de Tec
 Return=Volver
+
 About=Créditos
 JoinGame=Unirse a Partida
 LoadGame=Cargar Partida
 NewGame=Crear Partida
 Scenario=Escenario
 Options=Opciones
+
 Random=Aleatorio
 RandomizeLocations=Ubicaciones aleatorias
 Faction=Facción
@@ -94,6 +101,7 @@ WaitingForConnections=Espera para las conexiónes
 NotConnected=No conectado
 AiPlayer=Jugador IA
 Player=Jugador 
+
 Address=Dirección
 ErrorVersionMismatch=El host remoto tiene una versión diferente e incompatible de GAE. Tienes %s y tiene %s.
 Connect=Conectar
@@ -110,6 +118,7 @@ ServerTypeNew=Nuevo
 ServerTypePrevious=Previo
 Port=Puerto
 Search=Buscar
+
 UnableToJoin=No puede conectarse al servidor
 WaitingHost=Esperando a que el servidor arranque la partida
 Delete=Eliminar
@@ -196,6 +205,7 @@ Exit=Salir
 ExitGame?=¿Salir de la partida?
 ExitProgram?=¿Salir Programa?
 ExploredTargetOnly=Sólo en las zonas exploradas
+UnexploredTargetOk=Incluye zonas inexploradas
 Fields=Campos
 FogOfWar=Niebla de Guerra
 Generated=Se genera
