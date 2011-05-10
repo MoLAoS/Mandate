@@ -458,7 +458,9 @@ public:
 	void setAutoCmdEnable(AutoCmdFlag f, bool v);
 
 	//render related
-	const Model *getCurrentModel() const				{return currSkill->getAnimation();}
+	const Model *getCurrentModel() const;
+	//const Model *getCurrentModel() const				{return currSkill->getAnimation();}
+
 	Vec3f getCurrVector() const							{
 		return getCurrVectorFlat() + Vec3f(0.f, type->getHalfHeight().toFloat(), 0.f);
 	}

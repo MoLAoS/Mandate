@@ -1320,6 +1320,20 @@ const CommandType *Unit::computeCommandType(const Vec2i &pos, const Unit *target
 	return commandType;
 }
 
+const Model* Unit::getCurrentModel() const {
+	if (type->getField() == Field::AIR){
+		return getCurrSkill()->getAnimation();
+	}
+	if (getCurrSkill()->getClass() == SkillClass::MOVE) {
+		SurfaceType from_st = map->getCell(getLastPos())->getType();
+		SurfaceType to_st = map->getCell(getNextPos())->getType();
+		return getCurrSkill()->getAnimation(from_st, to_st);
+	} else {
+		SurfaceType st = map->getCell(getPos())->getType();
+		return getCurrSkill()->getAnimation(st);
+	}
+}
+
 /** wrapper for SimulationInterface */
 void Unit::updateSkillCycle(const SkillCycleTable *skillCycleTable) {
 	if (getCurrSkill()->getClass() == SkillClass::MOVE) {
@@ -1328,6 +1342,8 @@ void Unit::updateSkillCycle(const SkillCycleTable *skillCycleTable) {
 		}
 		updateMoveSkillCycle();
 	} else {
+		SurfaceType st = map->getCell(getPos())->getType();
+
 		updateSkillCycle(skillCycleTable->lookUp(this).getSkillFrames());
 	}
 }

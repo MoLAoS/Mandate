@@ -48,6 +48,8 @@ namespace ProtoTypes {
 
 using namespace Entities;
 
+typedef const XmlNode* XmlNodePtr;
+
 /** modifier pair (static addition and multiplier) */
 struct Modifier {
 	int    m_addition;

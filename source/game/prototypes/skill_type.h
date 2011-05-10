@@ -58,6 +58,9 @@ class SkillType : public NameIdPair {
 
 public:
 	typedef vector<Model *> Animations;
+	typedef map<SurfaceType, Model*>         AnimationBySurface;
+	typedef pair<SurfaceType, SurfaceType>   SurfacePair;
+	typedef map<SurfacePair, Model*>         AnimationBySurfacePair;
 
 	WRAPPED_ENUM( AnimationsStyle,
 		SINGLE,
@@ -73,6 +76,8 @@ protected:
 	int animSpeed;
 	Animations animations;
 	AnimationsStyle animationsStyle;
+	AnimationBySurface     m_animBySurfaceMap;
+	AnimationBySurfacePair m_animBySurfPairMap;
 	SoundContainer sounds;
 	float soundStartTime;
 	const char* typeName;
@@ -126,6 +131,8 @@ public:
 	virtual fixed getSpeed(const Unit *unit) const	{return speed;}
 	int getAnimSpeed() const			{return animSpeed;}
 	virtual bool isStretchyAnim() const {return false;}
+	const Model *getAnimation(SurfaceType from, SurfaceType to) const;
+	const Model *getAnimation(SurfaceType st) const;
 	const Model *getAnimation() const	{return animations.front();}
 	StaticSound *getSound() const		{return sounds.getRandSound();}
 	float getSoundStartTime() const		{return soundStartTime;}

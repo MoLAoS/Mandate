@@ -1037,34 +1037,35 @@ void Renderer::renderUnits() {
 			modelRenderer->setTeamColour(black);
 		}
 
+		glMatrixMode(GL_MODELVIEW);
 		vector<const Unit *>::iterator it = toRender[i].begin();
 		for ( ; it != toRender[i].end(); ++it) {
 			unit = *it;
 			if (unit->isCarried()) {
 				continue;
 			}
+			RUNTIME_CHECK(unit->getPos().x >= 0 && unit->getPos().y >= 0);
+			RUNTIME_CHECK(unit->getPos().x < world->getMap()->getW() && unit->getPos().y < world->getMap()->getH());
 
-			glMatrixMode(GL_MODELVIEW);
+			// push model-view matrix
 			glPushMatrix();
 
-			RUNTIME_CHECK(!unit->isCarried() && unit->getPos().x >= 0 && unit->getPos().y >= 0);
-
-			//translate
+			// translate
 			Vec3f currVec = unit->getCurrVectorSink();
 			glTranslatef(currVec.x, currVec.y, currVec.z);
 
-			//rotate
+			// rotate
 			glRotatef(unit->getRotation(), 0.f, 1.f, 0.f);
 			glRotatef(unit->getVerticalRotation(), 1.f, 0.f, 0.f);
-
-			// dead/cloak alpha
-			float alpha = unit->getRenderAlpha();
-			bool fade = alpha < 1.f;
 
 			// get model, lerp to animProgess
 			const Model *model = unit->getCurrentModel();
 			bool cycleAnim = unit->isAlive() && !unit->getCurrSkill()->isStretchyAnim();
 			model->updateInterpolationData(unit->getAnimProgress(), cycleAnim);
+
+			// dead/cloak alpha
+			float alpha = unit->getRenderAlpha();
+			bool fade = alpha < 1.f;
 
 			///@todo generalise so custom shaders can be attached to other things
 			/// all controlled with Lua snippets perhaps.

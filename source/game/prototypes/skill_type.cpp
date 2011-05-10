@@ -73,22 +73,59 @@ void SkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, c
 	animSpeed = sn->getChildIntValue("anim-speed");
 
 	//model
+	ModelFactory &modelFactory = g_world.getModelFactory();
 	const XmlNode *animNode = sn->getChild("animation");
-	if (animNode->getAttribute("path")) { // single animation, lagacy style
-		string path = dir + "/" + sn->getChild("animation")->getAttribute("path")->getRestrictedValue();
-		animations.push_back(g_world.getModelFactory().getModel(cleanPath(path), ut->getSize(), ut->getHeight()));
+	const XmlAttribute *animPathAttrib = animNode->getAttribute("path", false);
+	if (animPathAttrib) { // single animation, lagacy style
+		string path = dir + "/" + animPathAttrib->getRestrictedValue();
+		animations.push_back(modelFactory.getModel(cleanPath(path), ut->getSize(), ut->getHeight()));
 		animationsStyle = AnimationsStyle::SINGLE;
-	} else { // multi-anim, new style
+	} else { // multi-anim or anim-by-surface-type, new style
 		for (int i=0; i < animNode->getChildCount(); ++i) {
-			string path = animNode->getChild("anim-file", i)->getAttribute("path")->getRestrictedValue();
+			XmlNodePtr node = animNode->getChild(i);
+			string path = node->getAttribute("path")->getRestrictedValue();
 			path = dir + "/" + path;
-			animations.push_back(g_world.getModelFactory().getModel(cleanPath(path), ut->getSize(), ut->getHeight()));
+			Model *model = modelFactory.getModel(cleanPath(path), ut->getSize(), ut->getHeight());
+			if (node->getName() == "anim-file") {
+				animations.push_back(model);
+			} else if (node->getName() == "surface") {
+				string type = node->getAttribute("type")->getRestrictedValue();
+				SurfaceType st = SurfaceTypeNames.match(type);
+				if (st != SurfaceType::INVALID) {
+					m_animBySurfaceMap[st] = model;
+				} else {
+
+					// error
+				}
+			} else if (node->getName() == "surface-change") {
+				string fromType = node->getAttribute("from")->getRestrictedValue();
+				string toType = node->getAttribute("to")->getRestrictedValue();
+				SurfaceType from = SurfaceTypeNames.match(fromType);
+				SurfaceType to = SurfaceTypeNames.match(toType);
+				if (from != SurfaceType::INVALID && to != SurfaceType::INVALID) {
+					m_animBySurfPairMap[make_pair(from, to)] = model;
+				} else {
+
+					// error
+				}
+			} else {
+
+					// error
+			}
 		}
-		animationsStyle = AnimationsStyle::RANDOM;
+		if (animations.size() > 1) {
+			animationsStyle = AnimationsStyle::RANDOM;
+		}
+		if (!m_animBySurfaceMap.empty() || !m_animBySurfPairMap.empty()) {
+			if (m_animBySurfaceMap.size() != SurfaceType::COUNT) {
+
+				// error
+			}
+		}
 	}
 
 	//sound
-	const XmlNode *soundNode= sn->getChild("sound", 0, false);
+	XmlNodePtr soundNode= sn->getChild("sound", 0, false);
 	if(soundNode && soundNode->getBoolAttribute("enabled")) {
 		soundStartTime= soundNode->getAttribute("start-time")->getFloatValue();
 		for(int i=0; i<soundNode->getChildCount(); ++i){
@@ -219,6 +256,22 @@ void SkillType::descSpeed(string &str, const Unit *unit, const char* speedType) 
 	str += g_lang.get(speedType) + ": " + intToStr(speed);
 	EnhancementType::describeModifier(str, unit->getSpeed(this) - speed);
 	str += "\n";
+}
+
+const Model* SkillType::getAnimation(SurfaceType st) const {
+	AnimationBySurface::const_iterator it = m_animBySurfaceMap.find(st);
+	if (it != m_animBySurfaceMap.end()) {
+		return it->second;
+	}
+	return getAnimation();
+}
+
+const Model* SkillType::getAnimation(SurfaceType from, SurfaceType to) const {
+	AnimationBySurfacePair::const_iterator it = m_animBySurfPairMap.find(make_pair(from, to));
+	if (it != m_animBySurfPairMap.end()) {
+		return it->second;
+	}
+	return getAnimation(to);
 }
 
 CycleInfo SkillType::calculateCycleTime() const {
