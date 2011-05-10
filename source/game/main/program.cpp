@@ -240,7 +240,7 @@ bool Program::init() {
 void Program::loop() {
 	size_t sleepTime;
 
-	while (handleEvent()) {
+	while (handleEvent() && !terminating) {
 		{
 			_PROFILE_SCOPE("Program::loop() : Determine sleep time");
 			int64 cameraTime = updateCameraTimer.timeToWait();
@@ -283,19 +283,19 @@ void Program::loop() {
 			WidgetWindow::update();
 		}
 
+		// tick timer
+		while (tickTimer.isTime()) {
+			_PROFILE_SCOPE("Program::loop() : tick");
+			m_programState->tick();
+		}
+
 		// update world
 		while (updateTimer.isTime() && !terminating) {
 			_PROFILE_SCOPE("Program::loop() : Update World/Menu");
-			m_programState->update();
 			if (simulationInterface->isNetworkInterface()) {
 				simulationInterface->asNetworkInterface()->update();
 			}
-		}
-
-		// tick timer
-		while (tickTimer.isTime() && !terminating) {
-			_PROFILE_SCOPE("Program::loop() : tick");
-			m_programState->tick();
+			m_programState->update();
 		}
 	}
 	terminating = true;
@@ -417,7 +417,11 @@ void Program::setState(ProgramState *programState) try {
 	m_programState->init();
 	resetTimers();
 } catch (exception &e) {
-	crash(&e); ///@bug I think this causes a crash in Renderer::swapBuffers() on exit - hailstone 17March2011
+	crash(&e);
+	///@bug I think this causes a crash in Renderer::swapBuffers() on exit - hailstone 17March2011
+	///@todo has been fixed by reworking Program::loop() so ProgramState::update() is the last thing.
+	/// The whole CrashProgramState thing, and ending up with Program::loop on the call stack twice, is 
+	/// not very nice... Should seek alt solution. - silnarm 10May2011
 }
 
 void Program::exit() {
