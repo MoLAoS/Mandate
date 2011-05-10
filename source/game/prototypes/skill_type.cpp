@@ -94,8 +94,7 @@ void SkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, c
 				if (st != SurfaceType::INVALID) {
 					m_animBySurfaceMap[st] = model;
 				} else {
-
-					// error
+					throw runtime_error("SurfaceType '" + type + "' invalid.");
 				}
 			} else if (node->getName() == "surface-change") {
 				string fromType = node->getAttribute("from")->getRestrictedValue();
@@ -105,12 +104,20 @@ void SkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, c
 				if (from != SurfaceType::INVALID && to != SurfaceType::INVALID) {
 					m_animBySurfPairMap[make_pair(from, to)] = model;
 				} else {
-
-					// error
+					string msg;
+					if (from == SurfaceType::INVALID && to == SurfaceType::INVALID) {
+						msg = "SurfaceType '" + fromType + "' and '" + toType + "' both invalid.";
+					} else if (from != SurfaceType::INVALID) {
+						msg = "SurfaceType '" + fromType + "' invalid.";
+					} else {
+						msg = "SurfaceType '" + toType + "' invalid.";
+					}
+					throw runtime_error(msg);
 				}
 			} else {
-
-					// error
+				// error ?
+				g_logger.logXmlError(path, 
+					("Warning: In 'animation' node, child node '" + node->getName() + "' unknown.").c_str());
 			}
 		}
 		if (animations.size() > 1) {
