@@ -51,7 +51,7 @@ void AnnouncerThread::execute() {
 		if (m_freeSlots) {
 			if (counter % 10 == 0) {
 				try {
-					m_socket.sendAnnounce(4950); ///@todo change with game constant port
+					m_socket.sendAnnounce(g_config.getNetServerPort());
 				} catch (SocketException) {
 					// do nothing
 					printf("SocketException while announcing game on LAN.\n");
