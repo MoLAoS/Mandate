@@ -125,8 +125,7 @@ Faction=Faction
 Team=Team
 Colour=Colour
 NotConnected=Not Connected
-WaitingForConnections=Some network slots are still unconnected
-NotConnected=Not connected
+WaitingForConnections=Some network slots are still unconnected. Do you wish to continue without them?
 AiPlayer=AI Player
 Player=Player
 

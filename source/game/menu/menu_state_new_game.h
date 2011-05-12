@@ -125,6 +125,7 @@ private:
 
 	void onButtonClick(Widget*);
 	void onDismissDialog(Widget*);
+	void onCloseUnconnectedSlots(Widget*);
 };
 
 }}//end namespace

@@ -513,10 +513,20 @@ void MenuStateNewGame::onButtonClick(Widget *source) {
 		mainMenu->setCameraTarget(MenuStates::ROOT);
 		g_soundRenderer.playFx(CoreData::getInstance().getClickSoundA());
 	} else {
-		m_targetTransition = Transition::PLAY;
-		g_soundRenderer.playFx(CoreData::getInstance().getClickSoundC());
-		m_origMusicVolume = g_coreData.getMenuMusic()->getVolume();
-		m_fadeMusicOut = true;
+		if (hasUnconnectedSlots()) {
+			Vec2i sz(330, 256);
+			m_messageDialog = MessageDialog::showDialog(g_metrics.getScreenDims() / 2 - sz / 2,
+				sz, g_lang.get("NotConnected"), g_lang.get("WaitingForConnections"), g_lang.get("Yes"), g_lang.get("No"));
+			m_messageDialog->Button1Clicked.connect(this, &MenuStateNewGame::onCloseUnconnectedSlots);
+			m_messageDialog->Button2Clicked.connect(this, &MenuStateNewGame::onDismissDialog);
+			m_messageDialog->Close.connect(this, &MenuStateNewGame::onDismissDialog);
+			return; // prevent any transition
+		} else {
+			m_targetTransition = Transition::PLAY;
+			g_soundRenderer.playFx(CoreData::getInstance().getClickSoundC());
+			m_origMusicVolume = g_coreData.getMenuMusic()->getVolume();
+			m_fadeMusicOut = true;
+		}
 	}
 	doFadeOut();
 }
@@ -524,6 +534,20 @@ void MenuStateNewGame::onButtonClick(Widget *source) {
 void MenuStateNewGame::onDismissDialog(Widget*) {
 	program.removeFloatingWidget(m_messageDialog);
 	doFadeIn();
+}
+
+void MenuStateNewGame::onCloseUnconnectedSlots(Widget*) {
+	// close any unconnected network player slots
+	ServerInterface* serverInterface = g_simInterface.asServerInterface();
+	for (int i = 0; i < m_mapInfo.players; ++i) {
+		if (m_playerSlots[i]->getControlType() == ControlType::NETWORK
+				&& !serverInterface->getSlot(i)->isConnected()) {
+			m_playerSlots[i]->setSelectedControl(ControlType::CLOSED);
+		}
+	}
+
+	// attempt to play again
+	onButtonClick(m_playNow);
 }
 
 void MenuStateNewGame::update() {
@@ -548,36 +572,28 @@ void MenuStateNewGame::update() {
 			program.clear();
 			mainMenu->setState(new MenuStateRoot(program, mainMenu));
 		} else if (m_targetTransition == Transition::PLAY) {
-			if (hasUnconnectedSlots()) {
-				Vec2i sz(330, 256);
-				m_messageDialog = MessageDialog::showDialog(g_metrics.getScreenDims() / 2 - sz / 2,
-					sz, g_lang.get("Error"), g_lang.get("WaitingForConnections"), g_lang.get("Ok"), "");
-				m_messageDialog->Button1Clicked.connect(this, &MenuStateNewGame::onDismissDialog);
-				m_messageDialog->Close.connect(this, &MenuStateNewGame::onDismissDialog);
-				m_transition = false;
+			assert(!hasUnconnectedSlots());
+			GameSettings &gs = g_simInterface.getGameSettings();
+			gs.compact();
+			g_config.save();
+			XmlTree *doc = new XmlTree("game-settings");
+			gs.save(doc->getRootNode());
+			doc->save("last_gamesettings.gs");
+			delete doc;
+			if (gs.getRandomStartLocs()) {
+				randomiseStartLocs();
+			}
+			gs.randomiseFactions(m_factionFiles);
+			if (!hasNetworkSlots()) {
+				GameSettings gs = g_simInterface.getGameSettings();
+				program.getSimulationInterface()->changeRole(GameRole::LOCAL);
+				g_simInterface.getGameSettings() = gs;
+				program.clear();
+				program.setState(new GameState(program));
 			} else {
-				GameSettings &gs = g_simInterface.getGameSettings();
-				gs.compact();
-				g_config.save();
-				XmlTree *doc = new XmlTree("game-settings");
-				gs.save(doc->getRootNode());
-				doc->save("last_gamesettings.gs");
-				delete doc;
-				if (gs.getRandomStartLocs()) {
-					randomiseStartLocs();
-				}
-				gs.randomiseFactions(m_factionFiles);
-				if (!hasNetworkSlots()) {
-					GameSettings gs = g_simInterface.getGameSettings();
-					program.getSimulationInterface()->changeRole(GameRole::LOCAL);
-					g_simInterface.getGameSettings() = gs;
-					program.clear();
-					program.setState(new GameState(program));
-				} else {
-					g_simInterface.asServerInterface()->doLaunchBroadcast();
-					program.clear();
-					program.setState(new GameState(program));
-				}
+				g_simInterface.asServerInterface()->doLaunchBroadcast();
+				program.clear();
+				program.setState(new GameState(program));
 			}
 		}
 	}
