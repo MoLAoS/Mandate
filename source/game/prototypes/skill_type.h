@@ -87,7 +87,6 @@ protected:
 
 	float startTime;
 
-	///REFACTOR: push-down
 	bool projectile;
 	ProjectileType* projectileParticleSystemType;
 	SoundContainer projSounds;
@@ -96,7 +95,6 @@ protected:
 	bool splashDamageAll;
 	int splashRadius;
 	SplashType* splashParticleSystemType;
-	///END REFACTOR
 
 	EffectTypes effectTypes;
 	UnitParticleSystemTypes eyeCandySystems;
@@ -326,7 +324,7 @@ private:
 	bool petOnly;
 	bool selfOnly;
 	bool selfAllowed;
-	SplashType *splashParticleSystemType;
+	//SplashType *splashParticleSystemType;
 
 public:
 	RepairSkillType();
@@ -339,7 +337,7 @@ public:
 	virtual fixed getSpeed(const Unit *unit) const override;
 	int getAmount() const		{return amount;}
 	fixed getMultiplier() const	{return multiplier;}
-	SplashType *getSplashParticleSystemType() const	{return splashParticleSystemType;}
+	//SplashType *getSplashParticleSystemType() const	{return splashParticleSystemType;}
 	bool isPetOnly() const		{return petOnly;}
 	bool isSelfOnly() const		{return selfOnly;}
 	bool isSelfAllowed() const	{return selfAllowed;}

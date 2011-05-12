@@ -877,7 +877,6 @@ class CastSpellCommandType: public CommandType {
 private:
 	const CastSpellSkillType*	m_castSpellSkillType;
 	SpellAffect					m_affects;
-	SpellStart					m_start;
 	bool	m_cycle;
 
 public:
@@ -886,12 +885,15 @@ public:
 		CommandType::doChecksum(checksum);
 		checksum.add(m_castSpellSkillType->getName());
 	}
+	virtual Clicks getClicks() const { return (m_affects == SpellAffect::SELF ? Clicks::ONE : Clicks::TWO); }
 	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
 	virtual void getDesc(string &str, const Unit *unit) const {
 		m_castSpellSkillType->getDesc(str, unit);
 	}
 	virtual void descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt = 0) const override;
 	const CastSpellSkillType *getCastSpellSkillType() const			{return m_castSpellSkillType;}
+
+	SpellAffect	getSpellAffects() const  { return m_affects; }
 
 	virtual void update(Unit *unit) const;
 

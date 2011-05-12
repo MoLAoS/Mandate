@@ -119,7 +119,7 @@ Unit::Unit(CreateParams params)
 		, nextAnimReset(-1)
 		, lastCommandUpdate(0)
 		, nextCommandUpdate(-1)
-		, attackStartFrame(-1)
+		, systemStartFrame(-1)
 		, soundStartFrame(-1)
 		, progress2(0)
 		, kills(0)
@@ -705,6 +705,41 @@ Splash* Unit::createSplash(SplashType *splashType, const Vec3f &pos) {
 	splash->setTeamColour(faction->getColourV3f());
 	g_renderer.manageParticleSystem(splash, ResourceScope::GAME);
 	return splash;
+}
+
+void Unit::startSpellSystems(const CastSpellSkillType *sst) {
+	RUNTIME_CHECK(getCurrCommand()->getType()->getClass() == CmdClass::CAST_SPELL);
+	SpellAffect affect = static_cast<const CastSpellCommandType*>(getCurrCommand()->getType())->getSpellAffects();
+	Projectile *projectile = 0;
+	Splash *splash = 0;
+	Vec3f endPos = getTargetVec();
+
+	// projectile
+	if (sst->getProjParticleType()) {
+		projectile = launchProjectile(sst->getProjParticleType(), endPos);
+		projectile->setCallback(new SpellDeliverer(this, targetRef));
+	} else {
+		Unit *target = 0;
+		if (affect == SpellAffect::SELF) {
+			target = this;
+		} else if (affect == SpellAffect::TARGET) {
+			target = g_world.getUnit(targetRef);
+		}
+		if (sst->getSplashRadius()) {
+			g_world.applyEffects(this, sst->getEffectTypes(), target->getCenteredPos(), 
+				target->getType()->getField(), sst->getSplashRadius());
+		} else {
+			g_world.applyEffects(this, sst->getEffectTypes(), target, 0);
+		}
+	}
+
+	// splash
+	if (sst->getSplashParticleType()) {
+		splash = createSplash(sst->getSplashParticleType(), endPos);
+		if (projectile) {
+			projectile->link(splash);
+		}
+	}
 }
 
 void Unit::startAttackSystems(const AttackSkillType *ast) {
@@ -1477,9 +1512,9 @@ void Unit::updateAnimCycle(int frameOffset, int soundOffset, int attackOffset) {
 		this->soundStartFrame = -1;
 	}
 	if (attackOffset > 0) {
-		this->attackStartFrame = frame + attackOffset;
+		this->systemStartFrame = frame + attackOffset;
 	} else {
-		this->attackStartFrame = -1;
+		this->systemStartFrame = -1;
 	}
 
 }
@@ -1524,12 +1559,6 @@ void Unit::updateMoveSkillCycle() {
 /** wrapper for World::updateUnits */
 void Unit::doUpdate() {
 	if (update()) {
-		if (getCurrSkill()->getClass() == SkillClass::CAST_SPELL
-		&& !getCurrSkill()->getEffectTypes().empty()) {
-			// start spell effects for skill cycle just completed
-			g_world.applyEffects(this, getCurrSkill()->getEffectTypes(), this, 0);
-		}
-
 		g_simInterface.doUpdateUnitCommand(this);
 
 		if (getType()->getCloakClass() != CloakClass::INVALID) {
@@ -1595,9 +1624,15 @@ bool Unit::update() { ///@todo should this be renamed to hasFinishedCycle()?
 		}
 	}
 
-	// start attack systems ?
-	if (currSkill->getClass() == SkillClass::ATTACK && frame == getNextAttackFrame()) {
-		startAttackSystems(static_cast<const AttackSkillType*>(currSkill));
+	// start attack/spell systems ?
+	if (frame == getSystemStartFrame()) {
+		if (currSkill->getClass() == SkillClass::ATTACK) {
+			startAttackSystems(static_cast<const AttackSkillType*>(currSkill));
+		} else if (currSkill->getClass() == SkillClass::CAST_SPELL) {
+			startSpellSystems(static_cast<const CastSpellSkillType*>(currSkill));
+		} else {
+			assert(false);
+		}
 	}
 
 	// update anim cycle ?
@@ -2411,6 +2446,13 @@ CmdResult Unit::checkCommand(const Command &command) const {
 		if (!command.getFlags().get(CmdProps::DONT_RESERVE_RESOURCES)
 		&& !faction->checkCosts(produced)) {
 			return CmdResult::FAIL_RESOURCES;
+		}
+	}
+
+	if (ct->getClass() == CmdClass::CAST_SPELL) {
+		const CastSpellCommandType *csct = static_cast<const CastSpellCommandType*>(ct);
+		if (csct->getSpellAffects() == SpellAffect::TARGET && !command.getUnit()) {
+			return CmdResult::FAIL_UNDEFINED;
 		}
 	}
 

@@ -1291,4 +1291,26 @@ void ParticleDamager::projectileArrived(ParticleSystem *particleSystem) {
 	}
 }
 
+SpellDeliverer::SpellDeliverer(Unit* caster, UnitId target, Vec2i pos)
+		: m_caster(caster->getId())
+		, m_targetUnit(target)
+		, m_targetPos(pos)
+		, m_targetZone(Zone::LAND) {
+	m_castSkill = static_cast<const CastSpellSkillType*>(caster->getCurrSkill());
+}
+
+void SpellDeliverer::projectileArrived(ParticleSystem *particleSystem) {
+	World &world = g_world;
+	Unit *caster = world.getUnit(m_caster);
+	Unit *target = world.getUnit(m_targetUnit);
+
+	if (m_castSkill->getSplashRadius()) {
+		g_world.applyEffects(caster, m_castSkill->getEffectTypes(), target->getCenteredPos(),
+			target->getType()->getField(), m_castSkill->getSplashRadius());
+	} else {
+		g_world.applyEffects(caster, m_castSkill->getEffectTypes(), target, 0);
+	}
+}
+
+
 }}//end namespace

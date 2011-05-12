@@ -344,12 +344,12 @@ void RepairCommandType::update(Unit *unit) const {
 			unit->setTarget(repaired, true, true);
 
 			//shiney
-			if (rst->getSplashParticleSystemType()) {
+			if (rst->getSplashParticleType()) {
 				const Tile *sc = g_world.getMap()->getTile(Map::toTileCoords(repaired->getCenteredPos()));
 				bool visible = sc->isVisible(g_world.getThisTeamIndex()) 
 					&& g_renderer.getCuller().isInside(repaired->getCenteredPos());
 
-				Splash *psSplash = rst->getSplashParticleSystemType()->createSplashParticleSystem(visible);
+				Splash *psSplash = rst->getSplashParticleType()->createSplashParticleSystem(visible);
 				psSplash->setPos(repaired->getCurrVector());
 				g_renderer.manageParticleSystem(psSplash, ResourceScope::GAME);
 			}

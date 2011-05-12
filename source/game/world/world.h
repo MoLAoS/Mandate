@@ -347,13 +347,25 @@ class ParticleDamager : public ProjectileCallback {
 public:
 	UnitId attackerRef;
 	const AttackSkillType* ast;
-	World *world;
 	Vec2i targetPos;
 	Field targetField;
 	UnitId targetRef;
 
 public:
 	ParticleDamager(Unit *attacker, Unit *target);
+	virtual void projectileArrived(ParticleSystem *particleSystem) override;
+};
+
+class SpellDeliverer : public ProjectileCallback {
+public:
+	UnitId  m_caster;
+	UnitId  m_targetUnit;
+	Vec2i   m_targetPos;
+	Zone    m_targetZone;
+	const CastSpellSkillType *m_castSkill;
+
+public:
+	SpellDeliverer(Unit *caster, UnitId targetId, Vec2i pos = invalidPos);
 	virtual void projectileArrived(ParticleSystem *particleSystem) override;
 };
 
