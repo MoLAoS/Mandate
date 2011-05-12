@@ -348,13 +348,12 @@ public:
 	UnitId attackerRef;
 	const AttackSkillType* ast;
 	World *world;
-	const GameCamera *gameCamera;
 	Vec2i targetPos;
 	Field targetField;
 	UnitId targetRef;
 
 public:
-	ParticleDamager(Unit *attacker, Unit *target, World *world, const GameCamera *gameCamera);
+	ParticleDamager(Unit *attacker, Unit *target);
 	virtual void projectileArrived(ParticleSystem *particleSystem) override;
 };
 

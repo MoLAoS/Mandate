@@ -88,6 +88,11 @@ Vec3f getFactionColour(int ndx) {
 	return Vec3f(c.r / 255.f, c.g / 255.f, c.b / 255.f);
 }
 
+Vec3f  Faction::getColourV3f() const {
+	Colour &c = factionColours[colourIndex];
+	return Vec3f(c.r / 255.f, c.g / 255.f, c.b / 255.f);
+}
+
 // =====================================================
 //  class Faction
 // =====================================================

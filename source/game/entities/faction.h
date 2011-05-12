@@ -151,6 +151,7 @@ public:
 	int getStartLocationIndex() const					{return startLocationIndex;}
 	int getColourIndex() const							{return colourIndex;}
 	Colour getColour() const							{return factionColours[colourIndex];}
+	Vec3f  getColourV3f() const;
 	int getSubfaction() const							{return subfaction;}
 	Vec3f getLastEventLoc() const						{return lastEventLoc;}
 	Modifier getCostModifier(const ProducibleType *pt, const ResourceType *rt) const;

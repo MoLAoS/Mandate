@@ -564,6 +564,8 @@ public:
 	bool checkEnergy(const CommandType *ct) const { return ep >= ct->getEnergyCost(); }
 	void applyCommand(const Command &command);
 	void startAttackSystems(const AttackSkillType *ast);
+	Projectile* launchProjectile(ProjectileType *projType, const Vec3f &endPos);
+	Splash* createSplash(SplashType *splashType, const Vec3f &pos);
 
 	int getCarriedCount() const { return m_carriedUnits.size(); }
 

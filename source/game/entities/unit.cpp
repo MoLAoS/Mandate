@@ -638,97 +638,97 @@ void Unit::setModelFacing(CardinalDir value) {
 	lastRotation = targetRotation = rotation = value * 90.f;
 }
 
-//Projectile* Unit::launchProjectile(ProjectileType *projType) {
-//}
+Projectile* Unit::launchProjectile(ProjectileType *projType, const Vec3f &endPos) {
+	Unit *carrier = isCarried() ? g_world.getUnit(getCarrier()) : 0;
+	Vec2i effectivePos = (carrier ? carrier->getCenteredPos() : getCenteredPos());
+	Vec3f startPos;
+	if (carrier) {
+		RUNTIME_CHECK(!carrier->isCarried() && carrier->getPos().x >= 0 && carrier->getPos().y >= 0);
+		startPos = carrier->getCurrVectorFlat();
+		const LoadCommandType *lct = 
+			static_cast<const LoadCommandType *>(carrier->getType()->getFirstCtOfClass(CmdClass::LOAD));
+		assert(lct->areProjectilesAllowed());
+		Vec2f offsets = lct->getProjectileOffset();
+		startPos.y += offsets.y;
+		int seed = int(Chrono::getCurMicros());
+		Random random(seed);
+		float rad = degToRad(float(random.randRange(0, 359)));
+		startPos.x += cosf(rad) * offsets.x;
+		startPos.z += sinf(rad) * offsets.x;
+	} else {
+		startPos = getCurrVector();
+	}
+	//make particle system
+	const Tile *sc = map->getTile(Map::toTileCoords(effectivePos));
+	const Tile *tsc = map->getTile(Map::toTileCoords(getTargetPos()));
+	bool visible = sc->isVisible(g_world.getThisTeamIndex()) || tsc->isVisible(g_world.getThisTeamIndex());
+	visible = visible && g_renderer.getCuller().isInside(effectivePos);
+
+	Projectile *projectile = projType->createProjectileParticleSystem(visible);
+
+	switch (projType->getStart()) {
+		case ProjectileStart::SELF:
+			break;
+
+		case ProjectileStart::TARGET:
+			startPos = this->getTargetVec();
+			break;
+
+		case ProjectileStart::SKY: {
+				Random random(id);
+				float skyAltitude = 30.f;
+				startPos = endPos;
+				startPos.x += random.randRange(-skyAltitude / 8.f, skyAltitude / 8.f);
+				startPos.y += skyAltitude;
+				startPos.z += random.randRange(-skyAltitude / 8.f, skyAltitude / 8.f);
+			}
+			break;
+	}
+
+	g_simInterface.doUpdateProjectile(this, projectile, startPos, endPos);
+
+	if(projType->isTracking() && targetRef != -1) {
+		Unit *target = g_world.getUnit(targetRef);
+		projectile->setTarget(target);
+	}
+	projectile->setTeamColour(faction->getColourV3f());
+	g_renderer.manageParticleSystem(projectile, ResourceScope::GAME);
+	return projectile;
+}
+
+Splash* Unit::createSplash(SplashType *splashType, const Vec3f &pos) {
+	const Tile *tile = map->getTile(Map::toTileCoords(getTargetPos()));		
+	bool visible = tile->isVisible(g_world.getThisTeamIndex())
+				&& g_renderer.getCuller().isInside(getTargetPos());
+	Splash *splash = splashType->createSplashParticleSystem(visible);
+	splash->setPos(pos);
+	splash->setTeamColour(faction->getColourV3f());
+	g_renderer.manageParticleSystem(splash, ResourceScope::GAME);
+	return splash;
+}
 
 void Unit::startAttackSystems(const AttackSkillType *ast) {
-	Renderer &renderer = Renderer::getInstance();
+	Projectile *projectile = 0;
+	Splash *splash = 0;
+	Vec3f endPos = getTargetVec();
 
-	Projectile *psProj = 0;
-	Splash *psSplash;
-
-	ProjectileType *pstProj = ast->getProjParticleType();
-	SplashType *pstSplash = ast->getSplashParticleType();
-	Vec3f endPos = this->getTargetVec();
-
-	Colour c = faction->getColour();
-	Vec3f colour = Vec3f(c.r / 255.f, c.g / 255.f, c.b / 255.f);
-
-	//projectile
-	if (pstProj != NULL) {
-		Unit *carrier = isCarried() ? g_world.getUnit(getCarrier()) : 0;
-		Vec2i effectivePos = (carrier ? carrier->getCenteredPos() : getCenteredPos());
-		Vec3f startPos;
-		if (carrier) {
-			RUNTIME_CHECK(!carrier->isCarried() && carrier->getPos().x >= 0 && carrier->getPos().y >= 0);
-			startPos = carrier->getCurrVectorFlat();
-			const LoadCommandType *lct = 
-				static_cast<const LoadCommandType *>(carrier->getType()->getFirstCtOfClass(CmdClass::LOAD));
-			assert(lct->areProjectilesAllowed());
-			Vec2f offsets = lct->getProjectileOffset();
-			startPos.y += offsets.y;
-			int seed = int(Chrono::getCurMicros());
-			Random random(seed);
-			float rad = degToRad(float(random.randRange(0, 359)));
-			startPos.x += cosf(rad) * offsets.x;
-			startPos.z += sinf(rad) * offsets.x;
+	// projectile
+	if (ast->getProjParticleType()) {
+		projectile = launchProjectile(ast->getProjParticleType(), endPos);
+		if (ast->getProjParticleType()->isTracking() && targetRef != -1) {
+			projectile->setCallback(new ParticleDamager(this, g_world.getUnit(targetRef)));
 		} else {
-			startPos = getCurrVector();
+			projectile->setCallback(new ParticleDamager(this, 0));
 		}
-		//make particle system
-		const Tile *sc = map->getTile(Map::toTileCoords(effectivePos));
-		const Tile *tsc = map->getTile(Map::toTileCoords(getTargetPos()));
-		
-		bool visible = sc->isVisible(g_world.getThisTeamIndex()) || tsc->isVisible(g_world.getThisTeamIndex());
-		visible = visible && g_renderer.getCuller().isInside(effectivePos);
-
-		psProj = pstProj->createProjectileParticleSystem(visible);
-
-		switch (pstProj->getStart()) {
-			case ProjectileStart::SELF:
-				break;
-
-			case ProjectileStart::TARGET:
-				startPos = this->getTargetVec();
-				break;
-
-			case ProjectileStart::SKY: {
-					Random random(id);
-					float skyAltitude = 30.f;
-					startPos = endPos;
-					startPos.x += random.randRange(-skyAltitude / 8.f, skyAltitude / 8.f);
-					startPos.y += skyAltitude;
-					startPos.z += random.randRange(-skyAltitude / 8.f, skyAltitude / 8.f);
-				}
-				break;
-		}
-
-		g_simInterface.doUpdateProjectile(this, psProj, startPos, endPos);
-
-		if(pstProj->isTracking() && targetRef != -1) {
-			Unit *target = g_world.getUnit(targetRef);
-			psProj->setTarget(target);
-			psProj->setCallback(new ParticleDamager(this, target, &g_world, g_gameState.getGameCamera()));
-		} else {
-			psProj->setCallback(new ParticleDamager(this, NULL, &g_world, g_gameState.getGameCamera()));
-		}
-		psProj->setTeamColour(colour);
-		renderer.manageParticleSystem(psProj, ResourceScope::GAME);
 	} else {
 		g_world.hit(this);
 	}
 
-	//splash
-	if (pstSplash != NULL) {
-		const Tile *tile = map->getTile(Map::toTileCoords(getTargetPos()));		
-		bool visible = tile->isVisible(g_world.getThisTeamIndex())
-					&& g_renderer.getCuller().isInside(getTargetPos());
-		psSplash = pstSplash->createSplashParticleSystem(visible);
-		psSplash->setPos(endPos);
-		psSplash->setTeamColour(colour);
-		renderer.manageParticleSystem(psSplash, ResourceScope::GAME);
-		if (pstProj != NULL) {
-			psProj->link(psSplash);
+	// splash
+	if (ast->getSplashParticleType()) {
+		splash = createSplash(ast->getSplashParticleType(), endPos);
+		if (projectile) {
+			projectile->link(splash);
 		}
 	}
 #ifdef EARTHQUAKE_CODE
