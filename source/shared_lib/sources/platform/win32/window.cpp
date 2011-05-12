@@ -187,6 +187,14 @@ void Window::setStyle(WindowStyle windowStyle) {
 	}
 }
 
+void Window::setMouseCapture(bool c) {
+	if (c) {
+		SetCapture(handle);
+	} else {
+		ReleaseCapture();
+	}
+}
+
 void Window::toggleFullscreen() {
 	if (windowStyle == wsFullscreen) {
 		setStyle(wsWindowedFixed);
