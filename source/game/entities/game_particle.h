@@ -24,7 +24,7 @@ using namespace Shared::Graphics;
 
 namespace Glest { 
 
-namespace Sim { class ParticleDamager; }
+//namespace Sim { class ParticleDamager; }
 namespace ProtoTypes { class UnitParticleSystemType; }
 using ProtoTypes::UnitParticleSystemType;
 
@@ -90,29 +90,39 @@ public:
 };
 
 // ===========================================================================
-//  AttackParticleSystem
+//  DirectedParticleSystem
 //
 /// Base class for Projectiles and Splashes
 // ===========================================================================
 
-class AttackParticleSystem : public GameParticleSystem {
+class DirectedParticleSystem : public GameParticleSystem {
 protected:
 	Vec3f direction;
 	bool fog;
 
 public:
-	AttackParticleSystem(ParticleUse use, bool visible, const ParticleSystemBase &model, int particleCount);
-	virtual ~AttackParticleSystem() {}
+	DirectedParticleSystem(ParticleUse use, bool visible, const ParticleSystemBase &model, int particleCount);
+	virtual ~DirectedParticleSystem() {}
 
 	virtual void render(ParticleRenderer *pr, ModelRenderer *mr) override;
-	virtual Vec3f getDirection() const {return direction;}
+	Vec3f getDirection() const {return direction;}
+	void setDirection(const Vec3f &dir) { direction = dir; }
+};
+
+// =====================================================
+//	interface ProjectileCallback
+// =====================================================
+
+class ProjectileCallback {
+public:
+	virtual void projectileArrived(ParticleSystem *system) = 0;
 };
 
 // =====================================================
 //	class Projectile
 // =====================================================
 
-class Projectile : public AttackParticleSystem {
+class Projectile : public DirectedParticleSystem {
 	friend class Sim::EntityFactory<Projectile>;
 	friend class Splash;
 
@@ -130,9 +140,9 @@ private:
 
 	const Unit *target; // swizzle
 
-	Vec3f xVector; // ???
-	Vec3f yVector; // ???
-	Vec3f zVector; // ???
+	Vec3f xVector; // no-persist
+	Vec3f yVector; // no-persist
+	Vec3f zVector; // no-persist
 
 	TrajectoryType trajectory; // no-persist (get from type)
 	float trajectorySpeed;     // no-persist (calculate from ???)
@@ -143,7 +153,8 @@ private:
 
 	Random random;             // no-persist
 
-	Sim::ParticleDamager *damager; // swizzle
+	ProjectileCallback  *callback;
+	//Sim::ParticleDamager *damager; // swizzle
 
 public:
 	struct CreateParams {
@@ -163,7 +174,7 @@ private:
 
 public:
 	void link(Splash *particleSystem);
-	void setDamager(Sim::ParticleDamager *damager);
+	void setCallback(ProjectileCallback *cb);
 
 	int getId() const { return m_id; }
 
@@ -190,7 +201,7 @@ public:
 //	class Splash
 // =====================================================
 
-class Splash : public AttackParticleSystem {
+class Splash : public DirectedParticleSystem {
 public:
 	friend class Projectile;
 

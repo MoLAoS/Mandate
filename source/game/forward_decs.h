@@ -109,7 +109,7 @@ namespace Glest {
 		class Upgrade;
 		class UpgradeManager;
 		class Faction;
-		class AttackParticleSystem;
+		class DirectedParticleSystem;
 		class Projectile;
 		class Splash;
 	}

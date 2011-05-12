@@ -343,7 +343,7 @@ private:
 //	class ParticleDamager
 // =====================================================
 
-class ParticleDamager {
+class ParticleDamager : public ProjectileCallback {
 public:
 	UnitId attackerRef;
 	const AttackSkillType* ast;
@@ -355,7 +355,7 @@ public:
 
 public:
 	ParticleDamager(Unit *attacker, Unit *target, World *world, const GameCamera *gameCamera);
-	void execute(ParticleSystem *particleSystem);
+	virtual void projectileArrived(ParticleSystem *particleSystem) override;
 };
 
 }}//end namespace

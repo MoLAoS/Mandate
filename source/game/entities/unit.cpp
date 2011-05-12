@@ -638,6 +638,9 @@ void Unit::setModelFacing(CardinalDir value) {
 	lastRotation = targetRotation = rotation = value * 90.f;
 }
 
+//Projectile* Unit::launchProjectile(ProjectileType *projType) {
+//}
+
 void Unit::startAttackSystems(const AttackSkillType *ast) {
 	Renderer &renderer = Renderer::getInstance();
 
@@ -705,9 +708,9 @@ void Unit::startAttackSystems(const AttackSkillType *ast) {
 		if(pstProj->isTracking() && targetRef != -1) {
 			Unit *target = g_world.getUnit(targetRef);
 			psProj->setTarget(target);
-			psProj->setDamager(new ParticleDamager(this, target, &g_world, g_gameState.getGameCamera()));
+			psProj->setCallback(new ParticleDamager(this, target, &g_world, g_gameState.getGameCamera()));
 		} else {
-			psProj->setDamager(new ParticleDamager(this, NULL, &g_world, g_gameState.getGameCamera()));
+			psProj->setCallback(new ParticleDamager(this, NULL, &g_world, g_gameState.getGameCamera()));
 		}
 		psProj->setTeamColour(colour);
 		renderer.manageParticleSystem(psProj, ResourceScope::GAME);

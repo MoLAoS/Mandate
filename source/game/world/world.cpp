@@ -1271,7 +1271,7 @@ ParticleDamager::ParticleDamager(Unit *attacker, Unit *target, World *world, con
 	this->world = world;
 }
 
-void ParticleDamager::execute(ParticleSystem *particleSystem) {
+void ParticleDamager::projectileArrived(ParticleSystem *particleSystem) {
 	Unit *attacker = world->getUnit(attackerRef);
 
 	if (attacker) {
