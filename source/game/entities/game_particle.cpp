@@ -114,16 +114,16 @@ void FireParticleSystem::updateParticle(Particle *p) {
 }
 
 // ===========================================================================
-//  AttackParticleSystem
+//  DirectedParticleSystem
 // ===========================================================================
 
-AttackParticleSystem::AttackParticleSystem(ParticleUse use, bool visible, const ParticleSystemBase &protoType, int particleCount)
+DirectedParticleSystem::DirectedParticleSystem(ParticleUse use, bool visible, const ParticleSystemBase &protoType, int particleCount)
 		: GameParticleSystem(use, visible, protoType, particleCount) 
 		, direction(1.0f, 0.0f, 0.0f) {
 	fog = g_world.getTileset()->getFog();
 }
 
-void AttackParticleSystem::render(ParticleRenderer *pr, ModelRenderer *mr) {
+void DirectedParticleSystem::render(ParticleRenderer *pr, ModelRenderer *mr) {
 	if (active) {
 		if (model) {
 			pr->renderSingleModel(this, mr, fog);
@@ -146,7 +146,7 @@ void AttackParticleSystem::render(ParticleRenderer *pr, ModelRenderer *mr) {
 // ===========================================================================
 
 Projectile::Projectile(CreateParams params)
-		: AttackParticleSystem(ParticleUse::PROJECTILE, params.visible, params.model, params.particleCount)
+		: DirectedParticleSystem(ParticleUse::PROJECTILE, params.visible, params.model, params.particleCount)
 		, m_id(-1)
 		, nextParticleSystem(0)
 		, target(0)
@@ -155,21 +155,20 @@ Projectile::Projectile(CreateParams params)
 		, trajectoryScale(1.f)
 		, trajectoryFrequency(1.f)
 		, random(Chrono::getCurMicros())
-		, damager(0) {
+		, callback(0) {
 }
 
 Projectile::~Projectile() {
 	if (nextParticleSystem != NULL) {
 		nextParticleSystem->prevParticleSystem = NULL;
 	}
-	delete damager;
+	delete callback;
 }
 
-void Projectile::setDamager(ParticleDamager *dmgr) {
-	assert(!damager);
-	damager = dmgr;
+void Projectile::setCallback(ProjectileCallback *cb) {
+	assert(!callback);
+	callback = cb;
 }
-
 
 void Projectile::link(Splash *particleSystem) {
 	nextParticleSystem = particleSystem;
@@ -269,12 +268,13 @@ void Projectile::update() {
 		state = sFade;
 		model = NULL;
 
-		assert(damager);
-		damager->execute(this);
+		assert(callback);
+		callback->projectileArrived(this);
 
 		if (nextParticleSystem) {
 			nextParticleSystem->setState(sPlay);
 			nextParticleSystem->setPos(endPos);
+			nextParticleSystem->setDirection(direction);
 			nextParticleSystem->checkVisibilty(ParticleUse::PROJECTILE, true);
 		}
 	}
@@ -308,13 +308,13 @@ void Projectile::updateParticle(Particle *p) {
 }
 
 void Projectile::setPath(Vec3f startPos, Vec3f endPos, int frames) {
-	//compute axis
+	// compute axis
 	zVector = endPos - startPos;
 	zVector.normalize();
 	yVector = Vec3f(0.0f, 1.0f, 0.0f);
 	xVector = zVector.cross(yVector);
 
-	//apply offset
+	// apply offset
 	startPos += xVector * offset.x;
 	startPos += yVector * offset.y;
 	startPos += zVector * offset.z;
@@ -323,11 +323,13 @@ void Projectile::setPath(Vec3f startPos, Vec3f endPos, int frames) {
 	lastPos = startPos;
 	flatPos = startPos;
 
-	//recompute axis
+	// recompute axis
 	zVector = endPos - startPos;
 	zVector.normalize();
 	yVector = Vec3f(0.0f, 1.0f, 0.0f);
 	xVector = zVector.cross(yVector);
+
+	direction = zVector;
 
 	// set members
 	this->startPos = startPos;
@@ -353,7 +355,7 @@ void Projectile::setPath(Vec3f startPos, Vec3f endPos, int frames) {
 // ===========================================================================
 
 Splash::Splash(bool visible, const ParticleSystemBase &model,  int particleCount)
-		: AttackParticleSystem(ParticleUse::SPLASH, visible, model, particleCount)
+		: DirectedParticleSystem(ParticleUse::SPLASH, visible, model, particleCount)
 		, prevParticleSystem(0)
 		, emissionRateFade(1)
 		, verticalSpreadA(1.f)

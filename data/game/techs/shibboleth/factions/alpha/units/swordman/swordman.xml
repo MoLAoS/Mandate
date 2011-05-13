@@ -81,10 +81,11 @@
 			<type value="cast-spell" />
 			<name value="eat_spinach_skill" />
 			<ep-cost value="20" />
-			<speed value="20" />
-			<anim-speed value="200" />
+			<speed value="50" />
+			<anim-speed value="50" />
 			<animation path="models/swordman_standing.g3d" />
 			<sound enabled="false" />
+			<start-time value="1.0"/>
 			<effects>
 				<effect name="popeye_strength" bias="beneficial" stacking="overwrite" duration="30">
 					<multipliers>

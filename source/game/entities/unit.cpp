@@ -119,7 +119,7 @@ Unit::Unit(CreateParams params)
 		, nextAnimReset(-1)
 		, lastCommandUpdate(0)
 		, nextCommandUpdate(-1)
-		, attackStartFrame(-1)
+		, systemStartFrame(-1)
 		, soundStartFrame(-1)
 		, progress2(0)
 		, kills(0)
@@ -638,94 +638,132 @@ void Unit::setModelFacing(CardinalDir value) {
 	lastRotation = targetRotation = rotation = value * 90.f;
 }
 
+Projectile* Unit::launchProjectile(ProjectileType *projType, const Vec3f &endPos) {
+	Unit *carrier = isCarried() ? g_world.getUnit(getCarrier()) : 0;
+	Vec2i effectivePos = (carrier ? carrier->getCenteredPos() : getCenteredPos());
+	Vec3f startPos;
+	if (carrier) {
+		RUNTIME_CHECK(!carrier->isCarried() && carrier->getPos().x >= 0 && carrier->getPos().y >= 0);
+		startPos = carrier->getCurrVectorFlat();
+		const LoadCommandType *lct = 
+			static_cast<const LoadCommandType *>(carrier->getType()->getFirstCtOfClass(CmdClass::LOAD));
+		assert(lct->areProjectilesAllowed());
+		Vec2f offsets = lct->getProjectileOffset();
+		startPos.y += offsets.y;
+		int seed = int(Chrono::getCurMicros());
+		Random random(seed);
+		float rad = degToRad(float(random.randRange(0, 359)));
+		startPos.x += cosf(rad) * offsets.x;
+		startPos.z += sinf(rad) * offsets.x;
+	} else {
+		startPos = getCurrVector();
+	}
+	//make particle system
+	const Tile *sc = map->getTile(Map::toTileCoords(effectivePos));
+	const Tile *tsc = map->getTile(Map::toTileCoords(getTargetPos()));
+	bool visible = sc->isVisible(g_world.getThisTeamIndex()) || tsc->isVisible(g_world.getThisTeamIndex());
+	visible = visible && g_renderer.getCuller().isInside(effectivePos);
+
+	Projectile *projectile = projType->createProjectileParticleSystem(visible);
+
+	switch (projType->getStart()) {
+		case ProjectileStart::SELF:
+			break;
+
+		case ProjectileStart::TARGET:
+			startPos = this->getTargetVec();
+			break;
+
+		case ProjectileStart::SKY: {
+				Random random(id);
+				float skyAltitude = 30.f;
+				startPos = endPos;
+				startPos.x += random.randRange(-skyAltitude / 8.f, skyAltitude / 8.f);
+				startPos.y += skyAltitude;
+				startPos.z += random.randRange(-skyAltitude / 8.f, skyAltitude / 8.f);
+			}
+			break;
+	}
+
+	g_simInterface.doUpdateProjectile(this, projectile, startPos, endPos);
+
+	if(projType->isTracking() && targetRef != -1) {
+		Unit *target = g_world.getUnit(targetRef);
+		projectile->setTarget(target);
+	}
+	projectile->setTeamColour(faction->getColourV3f());
+	g_renderer.manageParticleSystem(projectile, ResourceScope::GAME);
+	return projectile;
+}
+
+Splash* Unit::createSplash(SplashType *splashType, const Vec3f &pos) {
+	const Tile *tile = map->getTile(Map::toTileCoords(getTargetPos()));		
+	bool visible = tile->isVisible(g_world.getThisTeamIndex())
+				&& g_renderer.getCuller().isInside(getTargetPos());
+	Splash *splash = splashType->createSplashParticleSystem(visible);
+	splash->setPos(pos);
+	splash->setTeamColour(faction->getColourV3f());
+	g_renderer.manageParticleSystem(splash, ResourceScope::GAME);
+	return splash;
+}
+
+void Unit::startSpellSystems(const CastSpellSkillType *sst) {
+	RUNTIME_CHECK(getCurrCommand()->getType()->getClass() == CmdClass::CAST_SPELL);
+	SpellAffect affect = static_cast<const CastSpellCommandType*>(getCurrCommand()->getType())->getSpellAffects();
+	Projectile *projectile = 0;
+	Splash *splash = 0;
+	Vec3f endPos = getTargetVec();
+
+	// projectile
+	if (sst->getProjParticleType()) {
+		projectile = launchProjectile(sst->getProjParticleType(), endPos);
+		projectile->setCallback(new SpellDeliverer(this, targetRef));
+	} else {
+		Unit *target = 0;
+		if (affect == SpellAffect::SELF) {
+			target = this;
+		} else if (affect == SpellAffect::TARGET) {
+			target = g_world.getUnit(targetRef);
+		}
+		if (sst->getSplashRadius()) {
+			g_world.applyEffects(this, sst->getEffectTypes(), target->getCenteredPos(), 
+				target->getType()->getField(), sst->getSplashRadius());
+		} else {
+			g_world.applyEffects(this, sst->getEffectTypes(), target, 0);
+		}
+	}
+
+	// splash
+	if (sst->getSplashParticleType()) {
+		splash = createSplash(sst->getSplashParticleType(), endPos);
+		if (projectile) {
+			projectile->link(splash);
+		}
+	}
+}
+
 void Unit::startAttackSystems(const AttackSkillType *ast) {
-	Renderer &renderer = Renderer::getInstance();
+	Projectile *projectile = 0;
+	Splash *splash = 0;
+	Vec3f endPos = getTargetVec();
 
-	Projectile *psProj = 0;
-	Splash *psSplash;
-
-	ProjectileType *pstProj = ast->getProjParticleType();
-	SplashType *pstSplash = ast->getSplashParticleType();
-	Vec3f endPos = this->getTargetVec();
-
-	Colour c = faction->getColour();
-	Vec3f colour = Vec3f(c.r / 255.f, c.g / 255.f, c.b / 255.f);
-
-	//projectile
-	if (pstProj != NULL) {
-		Unit *carrier = isCarried() ? g_world.getUnit(getCarrier()) : 0;
-		Vec2i effectivePos = (carrier ? carrier->getCenteredPos() : getCenteredPos());
-		Vec3f startPos;
-		if (carrier) {
-			RUNTIME_CHECK(!carrier->isCarried() && carrier->getPos().x >= 0 && carrier->getPos().y >= 0);
-			startPos = carrier->getCurrVectorFlat();
-			const LoadCommandType *lct = 
-				static_cast<const LoadCommandType *>(carrier->getType()->getFirstCtOfClass(CmdClass::LOAD));
-			assert(lct->areProjectilesAllowed());
-			Vec2f offsets = lct->getProjectileOffset();
-			startPos.y += offsets.y;
-			int seed = int(Chrono::getCurMicros());
-			Random random(seed);
-			float rad = degToRad(float(random.randRange(0, 359)));
-			startPos.x += cosf(rad) * offsets.x;
-			startPos.z += sinf(rad) * offsets.x;
+	// projectile
+	if (ast->getProjParticleType()) {
+		projectile = launchProjectile(ast->getProjParticleType(), endPos);
+		if (ast->getProjParticleType()->isTracking() && targetRef != -1) {
+			projectile->setCallback(new ParticleDamager(this, g_world.getUnit(targetRef)));
 		} else {
-			startPos = getCurrVector();
+			projectile->setCallback(new ParticleDamager(this, 0));
 		}
-		//make particle system
-		const Tile *sc = map->getTile(Map::toTileCoords(effectivePos));
-		const Tile *tsc = map->getTile(Map::toTileCoords(getTargetPos()));
-		
-		bool visible = sc->isVisible(g_world.getThisTeamIndex()) || tsc->isVisible(g_world.getThisTeamIndex());
-		visible = visible && g_renderer.getCuller().isInside(effectivePos);
-
-		psProj = pstProj->createProjectileParticleSystem(visible);
-
-		switch (pstProj->getStart()) {
-			case ProjectileStart::SELF:
-				break;
-
-			case ProjectileStart::TARGET:
-				startPos = this->getTargetVec();
-				break;
-
-			case ProjectileStart::SKY: {
-					Random random(id);
-					float skyAltitude = 30.f;
-					startPos = endPos;
-					startPos.x += random.randRange(-skyAltitude / 8.f, skyAltitude / 8.f);
-					startPos.y += skyAltitude;
-					startPos.z += random.randRange(-skyAltitude / 8.f, skyAltitude / 8.f);
-				}
-				break;
-		}
-
-		g_simInterface.doUpdateProjectile(this, psProj, startPos, endPos);
-
-		if(pstProj->isTracking() && targetRef != -1) {
-			Unit *target = g_world.getUnit(targetRef);
-			psProj->setTarget(target);
-			psProj->setDamager(new ParticleDamager(this, target, &g_world, g_gameState.getGameCamera()));
-		} else {
-			psProj->setDamager(new ParticleDamager(this, NULL, &g_world, g_gameState.getGameCamera()));
-		}
-		psProj->setTeamColour(colour);
-		renderer.manageParticleSystem(psProj, ResourceScope::GAME);
 	} else {
 		g_world.hit(this);
 	}
 
-	//splash
-	if (pstSplash != NULL) {
-		const Tile *tile = map->getTile(Map::toTileCoords(getTargetPos()));		
-		bool visible = tile->isVisible(g_world.getThisTeamIndex())
-					&& g_renderer.getCuller().isInside(getTargetPos());
-		psSplash = pstSplash->createSplashParticleSystem(visible);
-		psSplash->setPos(endPos);
-		psSplash->setTeamColour(colour);
-		renderer.manageParticleSystem(psSplash, ResourceScope::GAME);
-		if (pstProj != NULL) {
-			psProj->link(psSplash);
+	// splash
+	if (ast->getSplashParticleType()) {
+		splash = createSplash(ast->getSplashParticleType(), endPos);
+		if (projectile) {
+			projectile->link(splash);
 		}
 	}
 #ifdef EARTHQUAKE_CODE
@@ -1474,9 +1512,9 @@ void Unit::updateAnimCycle(int frameOffset, int soundOffset, int attackOffset) {
 		this->soundStartFrame = -1;
 	}
 	if (attackOffset > 0) {
-		this->attackStartFrame = frame + attackOffset;
+		this->systemStartFrame = frame + attackOffset;
 	} else {
-		this->attackStartFrame = -1;
+		this->systemStartFrame = -1;
 	}
 
 }
@@ -1521,12 +1559,6 @@ void Unit::updateMoveSkillCycle() {
 /** wrapper for World::updateUnits */
 void Unit::doUpdate() {
 	if (update()) {
-		if (getCurrSkill()->getClass() == SkillClass::CAST_SPELL
-		&& !getCurrSkill()->getEffectTypes().empty()) {
-			// start spell effects for skill cycle just completed
-			g_world.applyEffects(this, getCurrSkill()->getEffectTypes(), this, 0);
-		}
-
 		g_simInterface.doUpdateUnitCommand(this);
 
 		if (getType()->getCloakClass() != CloakClass::INVALID) {
@@ -1592,9 +1624,15 @@ bool Unit::update() { ///@todo should this be renamed to hasFinishedCycle()?
 		}
 	}
 
-	// start attack systems ?
-	if (currSkill->getClass() == SkillClass::ATTACK && frame == getNextAttackFrame()) {
-		startAttackSystems(static_cast<const AttackSkillType*>(currSkill));
+	// start attack/spell systems ?
+	if (frame == getSystemStartFrame()) {
+		if (currSkill->getClass() == SkillClass::ATTACK) {
+			startAttackSystems(static_cast<const AttackSkillType*>(currSkill));
+		} else if (currSkill->getClass() == SkillClass::CAST_SPELL) {
+			startSpellSystems(static_cast<const CastSpellSkillType*>(currSkill));
+		} else {
+			assert(false);
+		}
 	}
 
 	// update anim cycle ?
@@ -2408,6 +2446,13 @@ CmdResult Unit::checkCommand(const Command &command) const {
 		if (!command.getFlags().get(CmdProps::DONT_RESERVE_RESOURCES)
 		&& !faction->checkCosts(produced)) {
 			return CmdResult::FAIL_RESOURCES;
+		}
+	}
+
+	if (ct->getClass() == CmdClass::CAST_SPELL) {
+		const CastSpellCommandType *csct = static_cast<const CastSpellCommandType*>(ct);
+		if (csct->getSpellAffects() == SpellAffect::TARGET && !command.getUnit()) {
+			return CmdResult::FAIL_UNDEFINED;
 		}
 	}
 

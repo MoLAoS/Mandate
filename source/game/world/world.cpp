@@ -1261,36 +1261,56 @@ void World::computeFow() {
 //	class ParticleDamager
 // =====================================================
 
-ParticleDamager::ParticleDamager(Unit *attacker, Unit *target, World *world, const GameCamera *gameCamera) {
-	this->gameCamera = gameCamera;
+ParticleDamager::ParticleDamager(Unit *attacker, Unit *target) {
 	this->attackerRef = attacker->getId();
 	this->targetRef = target ? target->getId() : -1;
 	this->ast = static_cast<const AttackSkillType*>(attacker->getCurrSkill());
 	this->targetPos = attacker->getTargetPos();
 	this->targetField = attacker->getTargetField();
-	this->world = world;
 }
 
-void ParticleDamager::execute(ParticleSystem *particleSystem) {
-	Unit *attacker = world->getUnit(attackerRef);
-
+void ParticleDamager::projectileArrived(ParticleSystem *particleSystem) {
+	World &world = g_world;
+	Unit *attacker = world.getUnit(attackerRef);
 	if (attacker) {
-		Unit *target = world->getUnit(targetRef);
+		Unit *target = world.getUnit(targetRef);
 		if (target) {
 			targetPos = target->getCenteredPos();
 			// manually feed the attacked unit here to avoid problems with cell maps and such
-			world->hit(attacker, ast, targetPos, targetField, target);
+			world.hit(attacker, ast, targetPos, targetField, target);
 		} else {
-			world->hit(attacker, ast, targetPos, targetField, NULL);
+			world.hit(attacker, ast, targetPos, targetField, NULL);
 		}
 
-		//play sound
+		// sound
 		StaticSound *projSound = ast->getProjSound();
 		if (particleSystem->getVisible() && projSound) {
-			SoundRenderer::getInstance().playFx(
-				projSound, Vec3f(float(targetPos.x), 0.f, float(targetPos.y)), gameCamera->getPos());
+			g_soundRenderer.playFx(projSound, Vec3f(float(targetPos.x), 0.f, float(targetPos.y)),
+				g_gameState.getGameCamera()->getPos());
 		}
 	}
 }
+
+SpellDeliverer::SpellDeliverer(Unit* caster, UnitId target, Vec2i pos)
+		: m_caster(caster->getId())
+		, m_targetUnit(target)
+		, m_targetPos(pos)
+		, m_targetZone(Zone::LAND) {
+	m_castSkill = static_cast<const CastSpellSkillType*>(caster->getCurrSkill());
+}
+
+void SpellDeliverer::projectileArrived(ParticleSystem *particleSystem) {
+	World &world = g_world;
+	Unit *caster = world.getUnit(m_caster);
+	Unit *target = world.getUnit(m_targetUnit);
+
+	if (m_castSkill->getSplashRadius()) {
+		g_world.applyEffects(caster, m_castSkill->getEffectTypes(), target->getCenteredPos(),
+			target->getType()->getField(), m_castSkill->getSplashRadius());
+	} else {
+		g_world.applyEffects(caster, m_castSkill->getEffectTypes(), target, 0);
+	}
+}
+
 
 }}//end namespace

@@ -57,6 +57,7 @@ WidgetWindow::WidgetWindow()
 		, KeyboardWidget(this)
 		, floatingWidget(0)
 		, anim(0.f), slowAnim(0.f)
+		, awaitingMouseUp(false)
 		/*, mouseIcon(0)
 		, mouseMain(0)
 		, mouseAnimations(0) */{
@@ -364,7 +365,7 @@ void WidgetWindow::update() {
 
 	// updateList: adding widgets to the update list, and removing them, is a delayed
 	// action. If in response to an update() some other widget was added to the list, or
-	// the one update()ing removed itself, the loop iterator wiould go bad, hence
+	// the one update()ing removed itself, the loop iterator would go bad, hence
 	// the addUpdateQueue and remUpdateQueue
 
 	// clean updateList
@@ -385,10 +386,6 @@ void WidgetWindow::update() {
 		updateList.push_back(*it);
 	}
 	addUpdateQueue.clear();
-
-	//if (mouseAnimations) {
-	//	mouseAnimations->update(); // shouldn't this be handled by the above? - hailstone 2Jan2011. Yes?
-	//}
 
 	// check mouse over stack 10 times a second, to handle movement
 	// of widgets in response to updates
@@ -460,6 +457,10 @@ void WidgetWindow::eventMouseDown(int x, int y, MouseButton msBtn) {
 			}
 			mouseDownWidgets[msBtn] = lastMouseDownWidget = mw;
 			lastMouseDownButton = msBtn;
+			if (!awaitingMouseUp) {
+				awaitingMouseUp = true;
+				setMouseCapture(true);
+			}
 			return;
 		}
 		widget = widget->getParent();
@@ -478,6 +479,19 @@ void WidgetWindow::eventMouseUp(int x, int y, MouseButton msBtn) {
 	if (lastMouseDownWidget == downWidget) {
 		lastMouseDownWidget = 0;
 		doMouseInto(getWidgetForMouseEvent());
+	}
+	if (awaitingMouseUp) {
+		bool capOff = true;
+		foreach_enum (MouseButton, btn) {
+			if (mouseDownWidgets[btn] != 0) {
+				capOff = false;
+				break;
+			}
+		}
+		if (capOff) {
+			awaitingMouseUp = false;
+			setMouseCapture(false);
+		}
 	}
 }
 

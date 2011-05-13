@@ -157,23 +157,6 @@ void ParticleSystemType::load(const XmlNode *particleSystemNode, const string &d
 
 }
 
-/*
-void ParticleSystemType::setValues(AttackParticleSystem *ats){
-	ats->setTexture(texture);
-	ats->setPrimitive(AttackParticleSystem::strToPrimitive(primitive));
-	ats->setOffset(offset);
-	ats->setColor(color);
-	ats->setColorNoEnergy(colorNoEnergy);
-	ats->setSpeed(speed);
-	ats->setGravity(gravity);
-	ats->setParticleSize(size);
-	ats->setSizeNoEnergy(sizeNoEnergy);
-	ats->setEmissionRate(emissionRate);
-	ats->setMaxParticleEnergy(energyMax);
-	ats->setVarParticleEnergy(energyVar);
-	ats->setModel(model);
-}*/
-
 // ===========================================================
 //	class ProjectileType
 // ===========================================================

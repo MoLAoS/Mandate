@@ -77,6 +77,10 @@ protected:
 		DWORD style;
 		DWORD exStyle;
 		bool ownDc;
+
+		void setMouseCapture(bool c);
+#	else
+		void setMouseCapture(bool c) __attribute__((unused)) {}
 #	endif
 
 public:

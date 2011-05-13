@@ -1579,22 +1579,9 @@ bool CastSpellCommandType::load(const XmlNode *n, const string &dir, const TechT
 		if (m_affects == SpellAffect::INVALID) {
 			throw runtime_error("Invalid cast-spell affect '" + str + "'");
 		}
-		if (m_affects != SpellAffect::SELF) {
-			throw runtime_error("In 0.3.2 cast-spell affect must be 'self'");
+		if (m_affects == SpellAffect::AREA) {
+			throw runtime_error("In 0.4 cast-spell affect may not be 'area'");
 		}
-		XmlAttribute *attrib = n->getChild("affect")->getAttribute("start", false);
-		if (attrib) {
-			str = attrib->getRestrictedValue();
-			m_start = SpellStartNames.match(str.c_str());
-			if (m_start == SpellStart::INVALID) {
-				throw runtime_error("Invlaid spell start '" + str + "'");
-			}
-			if (m_start != SpellStart::INSTANT) {
-				throw runtime_error("In 0.3.2 spell start must be 'instant'");
-			}
-		} else {
-			m_start = SpellStart::INSTANT;
-		}	
 	} catch (runtime_error e) {
 		g_logger.logXmlError(dir, e.what());
 		loadOk = false;
@@ -1609,7 +1596,19 @@ void CastSpellCommandType::descSkills(const Unit *unit, CmdDescriptor *callback,
 }
 
 void CastSpellCommandType::update(Unit *unit) const {
+	Command *command = unit->getCurrCommand();
+	assert(command->getType() == this);
+
 	if (unit->getCurrSkill() != m_castSpellSkillType) {
+		if (!command->getUnit()) {
+			if (unit->getFaction()->isThisFaction()) {
+				g_console.addLine(g_lang.get("InvalidTarget"));
+				unit->finishCommand();
+				unit->setCurrSkill(SkillClass::STOP);
+				return;
+			}
+		}
+		unit->setTarget(command->getUnit());
 		unit->setCurrSkill(m_castSpellSkillType);
 		return;
 	}

@@ -818,7 +818,7 @@ void UserInterface::selectInterestingUnit(InterestingUnitType iut){
 		}
 	}
 }
-///@todo move to Display
+
 void UserInterface::clickCommonCommand(CmdClass commandClass) {
 	for(int i=0; i < Display::commandCellCount; ++i) {
 		const CommandType* ct = m_display->getCommandType(i);
@@ -829,7 +829,7 @@ void UserInterface::clickCommonCommand(CmdClass commandClass) {
 		}
 	}
 }
-///@todo move to Display
+
 void UserInterface::onFirstTierSelect(int posDisplay) {
 	WIDGET_LOG( __FUNCTION__ << "( " << posDisplay << " )");
 	if (selection.isEmpty()) {

@@ -57,6 +57,7 @@ private:
 	float anim, slowAnim;
 	Vec2i mousePos;
 	bool modalFloater;
+	bool awaitingMouseUp;
 	//const Texture2D *mouseIcon;
 
 	MouseCursor *m_mouseCursor;

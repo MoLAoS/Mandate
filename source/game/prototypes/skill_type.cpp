@@ -47,9 +47,11 @@ SkillType::SkillType(const char* typeName)
 		, m_deCloak(false)
 		, startTime(0.f)
 		, projectile(false)
+		, projectileParticleSystemType(0)
 		, splash(false)
 		, splashDamageAll(false)
 		, splashRadius(0)
+		, splashParticleSystemType(0)
 		, animationsStyle(AnimationsStyle::SINGLE)
 		, soundStartTime(0.f)
 		, typeName(typeName)
@@ -292,20 +294,18 @@ CycleInfo SkillType::calculateCycleTime() const {
 	int skillFrames = int(1.0000001f / progressSpeed);
 	int animFrames = 1;
 	int soundOffset = -1;
-	int attackOffset = -1;
+	int systemOffset = -1;
 
 	if (getAnimSpeed() != 0) {
 		float animProgressSpeed = getAnimSpeed() * speedModifier;
 		animFrames = int(1.0000001f / animProgressSpeed);
 	
-		if (skillClass == SkillClass::ATTACK) {
-			attackOffset = int(startTime / animProgressSpeed);
-			if (!attackOffset) attackOffset = 1;
-			assert(attackOffset > 0 && attackOffset < 256);
+		if (skillClass == SkillClass::ATTACK || skillClass == SkillClass::CAST_SPELL) {
+			systemOffset = clamp(int(startTime / animProgressSpeed), 1, animFrames - 1);
+			assert(systemOffset > 0 && systemOffset < 256);
 		}
 		if (!sounds.getSounds().empty()) {
-			soundOffset = int(soundStartTime / animProgressSpeed);
-			if (soundOffset < 1) ++soundOffset;
+			soundOffset = clamp(int(soundStartTime / animProgressSpeed), 1, animFrames - 1);
 			assert(soundOffset > 0);
 		}
 	}
@@ -317,7 +317,7 @@ CycleInfo SkillType::calculateCycleTime() const {
 		skillFrames = 1;
 	}
 	assert(animFrames > 0);
-	return CycleInfo(skillFrames, animFrames, soundOffset, attackOffset);
+	return CycleInfo(skillFrames, animFrames, soundOffset, systemOffset);
 }
 
 // =====================================================
@@ -515,7 +515,7 @@ void DieSkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt
 // 	class RepairSkillType
 // ===============================
 
-RepairSkillType::RepairSkillType() : SkillType("Repair"), splashParticleSystemType(NULL) {
+RepairSkillType::RepairSkillType() : SkillType("Repair") {
 	amount = 0;
 	multiplier = 1;
 	petOnly = false;

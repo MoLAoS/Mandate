@@ -161,7 +161,7 @@ private:
 	int nextAnimReset;			/**< the frame the next animation cycle will begin */
 	int lastCommandUpdate;		/**< the frame this unit last updated its command */
 	int nextCommandUpdate;		/**< the frame next command update will occur */
-	int attackStartFrame;		/**< the frame the unit will start an attack system */
+	int systemStartFrame;		/**< the frame the unit will start an attack or spell system */
 	int soundStartFrame;		/**< the frame the sound for the current skill should be started */
 
 	// target info
@@ -302,7 +302,7 @@ public:
 	int getNextCommandUpdate() const			{ return nextCommandUpdate; }
 	int getLastCommandUpdate() const			{ return lastCommandUpdate; }
 	int getNextAnimReset() const				{ return nextAnimReset; }
-	int getNextAttackFrame() const				{ return attackStartFrame; }
+	int getSystemStartFrame() const				{ return systemStartFrame; }
 	int getSoundStartFrame() const				{ return soundStartFrame; }
 
 	int getFactionIndex() const					{return faction->getIndex();}
@@ -564,6 +564,9 @@ public:
 	bool checkEnergy(const CommandType *ct) const { return ep >= ct->getEnergyCost(); }
 	void applyCommand(const Command &command);
 	void startAttackSystems(const AttackSkillType *ast);
+	void startSpellSystems(const CastSpellSkillType *sst);
+	Projectile* launchProjectile(ProjectileType *projType, const Vec3f &endPos);
+	Splash* createSplash(SplashType *splashType, const Vec3f &pos);
 
 	int getCarriedCount() const { return m_carriedUnits.size(); }
 

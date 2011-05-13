@@ -163,7 +163,7 @@ Command *NetworkCommand::toCommand() const {
 			command = g_world.newCommand(ct, cmdFlags, Vec2i(positionX, positionY), prodType, facing, unit);
 		} else {
 			command = g_world.newCommand(ct, cmdFlags, Vec2i(positionX, positionY), unit);
-	}
+		}
 	}
 	return command;
 }

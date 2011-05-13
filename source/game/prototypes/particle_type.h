@@ -39,9 +39,6 @@ public:
 	ParticleSystemType();
 	void load(const XmlNode *particleSystemNode, const string &dir);
 	virtual ParticleSystem *create(bool vis) = 0;
-
-//protected:
-//	void setValues(AttackParticleSystem *ats);
 };
 
 // ===========================================================
