@@ -171,6 +171,7 @@ private:
 		int8 defaultUnits;
 		int8 defaultVictoryConditions;
 		int8 fogOfWar;
+		int8 shroudOfDarkness;
 	} data;
 
 public:

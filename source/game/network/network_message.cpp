@@ -207,6 +207,7 @@ LaunchMessage::LaunchMessage(const GameSettings *gameSettings){
 	data.defaultUnits= gameSettings->getDefaultUnits();
 	data.defaultVictoryConditions= gameSettings->getDefaultVictoryConditions();
 	data.fogOfWar = gameSettings->getFogOfWar();
+	data.shroudOfDarkness = gameSettings->getShroudOfDarkness();
 
 	for(int i= 0; i<data.factionCount; ++i){
 		data.factionTypeNames[i]= gameSettings->getFactionTypeName(i);
@@ -237,6 +238,7 @@ void LaunchMessage::buildGameSettings(GameSettings *gameSettings) const{
 	gameSettings->setDefaultUnits(data.defaultUnits);
 	gameSettings->setDefaultVictoryConditions(data.defaultVictoryConditions);
 	gameSettings->setFogOfWar(data.fogOfWar);
+	gameSettings->setShroudOfDarkness(data.shroudOfDarkness);
 
 	for(int i= 0; i<data.factionCount; ++i){
 		gameSettings->setFactionTypeName(i, data.factionTypeNames[i].getString());
