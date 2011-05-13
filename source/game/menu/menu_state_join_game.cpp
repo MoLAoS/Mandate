@@ -87,7 +87,7 @@ void FindServerThread::execute() {
 	char msg[MSG_SIZE];
 
 	try {
-		Ip serverIp = m_socket.receiveAnnounce(4950, msg, MSG_SIZE); // blocking call @todo fix port
+		Ip serverIp = m_socket.receiveAnnounce(g_config.getNetAnnouncePort(), msg, MSG_SIZE); // blocking call
 		m_menu.foundServer(serverIp);
 	} catch(SocketException &e) {
 		// do nothing

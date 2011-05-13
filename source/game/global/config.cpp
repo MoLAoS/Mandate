@@ -57,6 +57,7 @@ Config::Config(const char* fileName) {
 	miscDebugMode = p->getBool("MiscDebugMode", false);
 	miscFirstTime = p->getBool("MiscFirstTime", true);
 	netAnnouceOnLAN = p->getBool("NetAnnouceOnLAN", true);
+	netAnnouncePort = p->getInt("NetAnnouncePort", 4950, 1024, 65535);
 	netConsistencyChecks = p->getBool("NetConsistencyChecks", false);
 	netPlayerName = p->getString("NetPlayerName", "Player");
 	netServerIp = p->getString("NetServerIp", "192.168.1.1");
@@ -134,6 +135,7 @@ void Config::save(const char *path) {
 	p->setBool("MiscDebugMode", miscDebugMode);
 	p->setBool("MiscFirstTime", miscFirstTime);
 	p->setBool("NetAnnouceOnLAN", netAnnouceOnLAN);
+	p->setInt("NetAnnouncePort", netAnnouncePort);
 	p->setBool("NetConsistencyChecks", netConsistencyChecks);
 	p->setString("NetPlayerName", netPlayerName);
 	p->setString("NetServerIp", netServerIp);

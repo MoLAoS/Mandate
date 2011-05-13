@@ -1,7 +1,8 @@
 # Config Settings file.
 # This file is processed and used to generate config.cpp and confg.h using
 # config.cpp.template and config.h.template. The comments are used to create
-# documentation for the Wikia.
+# documentation for http://glest.wikia.com/wiki/GAE/INI .
+# Original comments by Omega.
 
 # NOTES:
 # - You may not use the pipe character in this file unless you want to modify the script.
@@ -12,7 +13,7 @@
 # Variable					Type	Default			Min		Max		Comments
 #-----------------------------------------------------------------------------------------------------------
 aiLoggingEnabled			bool	true			-		-		Switch to enable logging.
-aiLogLevel					int		-				1		3		Level of logging for ai. 
+aiLogLevel					int		1				1		3		Level of logging for ai. 
 cameraInvertXAxis			bool	true			-		-		Boolean value to decide whether or not to invert movement of the camera when going side to side.
 cameraInvertYAxis			bool	true			-		-		Boolean value to decide whether or not to invert movement of the camera when going up and down.
 cameraMaxDistance			float	64.f			32.f	2048.f	Max distance that the camera can move away from the world when zooming out. If increased, max render distance will also have to be increased in order to see what you zoom out for.
@@ -33,6 +34,7 @@ miscDebugMode				bool	false			-		-		Turns debug mode on or off.
 miscFirstTime				bool	true			-		-		If true, runs auto-config at startup. Don't edit this, this is automatic, and WILL overwrite all other settings.
 netConsistencyChecks		bool	false			-		-		Enables or disables checking if the operating systems of all clients in a multiplayer game are the same.
 netAnnouceOnLAN				bool	true			-		-		Announce the game over LAN.
+netAnnouncePort				int		4950			1024	65535	Port to use when announcing over LAN.
 netPlayerName				string	"Player"		-		-		Set your nickname for online matches.
 netServerIp					string	"192.168.1.1"	-		-		The last server IP address which connected.
 netServerPort				int		61357			1024	65535	Port to use when acting as a server (eg: hosting a game).
