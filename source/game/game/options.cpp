@@ -161,7 +161,26 @@ Options::Options(CellStrip *parent, MenuStateOptions *optionsMenu)
 }
 
 void Options::disableWidgets() {
-	m_langList->setEnabled(false); // not ready for use, see todo - hailstone 14May2011
+	// disable all the widgets until they're known to be ready for ingame - hailstone 14May2011
+	m_langList->setEnabled(false);
+	m_shadowsList->setEnabled(false);
+	m_filterList->setEnabled(false);
+	m_lightsList->setEnabled(false);
+	m_modelShaderList->setEnabled(false);
+							
+	m_3dTexCheckBox->setEnabled(false);
+	m_debugModeCheckBox->setEnabled(false);
+	m_debugKeysCheckBox->setEnabled(false);
+	
+	m_volFxSlider->setEnabled(false);
+	m_volAmbientSlider->setEnabled(false);
+	m_volMusicSlider->setEnabled(false);
+
+	m_minCamAltitudeSpinner->setEnabled(false);
+	m_maxCamAltitudeSpinner->setEnabled(false);
+
+	m_minRenderDistSpinner->setEnabled(false);
+	m_maxRenderDistSpinner->setEnabled(false);
 }
 
 void Options::buildOptionsPanel(CellStrip *container, int cell) {
@@ -588,21 +607,14 @@ OptionsFrame::OptionsFrame(Container* parent)
 
 void OptionsFrame::init() {
 
-	// save button
+	// apply/cancel buttons
 
 	// options panel
-	addCells(1);
-
 	setSizeHint(1, SizeHint());
 	m_optionsPanel = new CellStrip(this, Orientation::HORIZONTAL, 1);
 	m_optionsPanel->setCell(1);
 	Anchors anchors(Anchor(AnchorType::RIGID, 0));
 	m_optionsPanel->setAnchors(anchors);
-
-	// not sure this works - hailstone 14May2011
-	Vec2i pad(15, 25);
-	m_optionsPanel->setPos(pad);
-	m_optionsPanel->setSize(Vec2i(g_config.getDisplayWidth() - pad.w * 2, g_config.getDisplayHeight() - pad.h * 2));
 
 	m_options = new Options(m_optionsPanel, 0);
 	m_options->setCell(0);
