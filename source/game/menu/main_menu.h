@@ -133,6 +133,7 @@ public:
 	virtual void keyDown(const Key &key){}
 	virtual void keyPress(char c){}
 	
+	void showDebugText(bool visible) { m_debugText->setVisible(visible); }
 	void setDebugString(const string &s);
 
 	virtual MenuStates getIndex() const = 0;

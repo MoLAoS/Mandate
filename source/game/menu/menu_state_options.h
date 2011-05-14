@@ -14,47 +14,12 @@
 #define _GLEST_GAME_MENUSTATEOPTIONS_H_
 
 #include "main_menu.h"
-#include "compound_widgets.h"
-#include "slider.h"
+
+namespace Glest { namespace Gui {
+	class Options;
+}}
 
 namespace Glest { namespace Menu {
-using namespace Widgets;
-
-class SpinnerValueBox : public StaticText {
-public:
-	SpinnerValueBox(Container *parent) : StaticText(parent) {
-		setWidgetStyle(WidgetType::TEXT_BOX);
-	}
-	virtual void setStyle() override { setWidgetStyle(WidgetType::TOOLTIP); }
-};
-
-class Spinner : public CellStrip,  public sigslot::has_slots {
-private:
-	SpinnerValueBox  *m_valueBox;
-	ScrollBarButton  *m_upButton;
-	ScrollBarButton  *m_downButton;
-	int               m_minValue;
-	int               m_maxValue;
-	int               m_increment;
-	int               m_value;
-
-	void onButtonFired(Widget *btn);
-
-public:
-	Spinner(Container *parent);
-
-	void setRanges(int min, int max) { m_minValue = min; m_maxValue = max; }
-	void setIncrement(int inc) { m_increment = inc; }
-	void setValue(int val) { 
-		m_value = clamp(val, m_minValue, m_maxValue);
-		m_valueBox->setText(intToStr(m_value));
-	}
-
-	int getValue() const { return m_value; }
-
-	sigslot::signal<Widget*> ValueChanged;
-};
-
 
 // ===============================
 // 	class MenuStateOptions  
@@ -71,28 +36,7 @@ private:
 				*m_autoConfigButton,
 				*m_openGlInfoButton;
 
-	DropList	*m_langList,
-				*m_shadowsList,
-				*m_filterList,
-				*m_lightsList,
-				*m_modelShaderList;
-							
-	CheckBox	*m_3dTexCheckBox,
-		        *m_debugModeCheckBox,
-				*m_debugKeysCheckBox;
-	
-	Slider2		*m_volFxSlider,
-				*m_volAmbientSlider,
-				*m_volMusicSlider;
-
-	Spinner     *m_minCamAltitudeSpinner,
-		        *m_maxCamAltitudeSpinner;
-
-	Spinner     *m_minRenderDistSpinner,
-		        *m_maxRenderDistSpinner;
-
-	map<string,string>  langMap;
-	vector<string>      m_modelShaders;
+	Options		*m_options;
 
 private:
 	MenuStateOptions(const MenuStateOptions &);
@@ -100,30 +44,16 @@ private:
 
 public:
 	MenuStateOptions(Program &program, MainMenu *mainMenu);
+	virtual ~MenuStateOptions();
 
 	void update();
 
 	MenuStates getIndex() const { return MenuStates::OPTIONS; }
+	void reload();
 
 private:
 	void saveConfig();
-	void setupListBoxLang();
-	void initLabels();
-	void initListBoxes();
-	void setTexts();
-	void buildOptionsPanel(CellStrip *container, int cell);
-	void loadShaderList();
-
 	void onButtonClick(Widget *source);
-	void on3dTexturesToggle(Widget *source);
-	void onSliderValueChanged(Widget *source);
-	void onSpinnerValueChanged(Widget *source);
-	void onDropListSelectionChanged(Widget *source);
-	void onPlayerNameChanged(Widget *source);
-	void onToggleDebugMode(Widget*);
-	void onToggleDebugKeys(Widget*);
-	void onToggleShaders(Widget *source);
-
 };
 
 }}//end namespace
