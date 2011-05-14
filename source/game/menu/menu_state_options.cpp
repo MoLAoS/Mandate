@@ -83,10 +83,6 @@ MenuStateOptions::MenuStateOptions(Program &program, MainMenu *mainMenu)
 	m_openGlInfoButton->Clicked.connect(this, &MenuStateOptions::onButtonClick);
 }
 
-MenuStateOptions::~MenuStateOptions() {
-	delete m_options;
-}
-
 void MenuStateOptions::onButtonClick(Widget *source) {
 	CoreData &coreData= CoreData::getInstance();
 	SoundRenderer &soundRenderer= SoundRenderer::getInstance();

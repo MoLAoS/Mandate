@@ -44,7 +44,6 @@ private:
 
 public:
 	MenuStateOptions(Program &program, MainMenu *mainMenu);
-	virtual ~MenuStateOptions();
 
 	void update();
 
