@@ -45,6 +45,8 @@ using namespace Main;
 using namespace Debug;
 using Widgets::MessageDialog;
 
+class OptionsFrame;
+
 struct ScriptMessage {
 	string header;
 	string text;
@@ -95,6 +97,7 @@ protected:
 	ChatDialog*		m_chatDialog;
 	DebugPanel*     m_debugPanel;
 	GameMenu*       m_gameMenu;
+	OptionsFrame*   m_options;
 
 	Vec2i lastMousePos;
 
@@ -171,6 +174,7 @@ public:
 
 	void toggleDebug(Widget* ptr = 0);
 	void toggleGameMenu(Widget* ptr = 0);
+	void toggleOptions(Widget* ptr = 0);
 
 protected:
 	// render

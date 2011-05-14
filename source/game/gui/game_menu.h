@@ -19,6 +19,7 @@ using namespace Widgets;
 class GameMenu : public Frame {
 private:
 	void onReturnToGame(Widget*);
+	void onOptions(Widget*);
 	void onExit(Widget*);
 	void onQuit(Widget*);
 	void onSaveGame(Widget*);

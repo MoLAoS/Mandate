@@ -31,6 +31,7 @@
 #include "network_interface.h"
 #include "game_menu.h"
 #include "mouse_cursor.h"
+#include "options.h"
 
 #if _GAE_DEBUG_EDITION_
 #	include "debug_renderer.h"
@@ -92,7 +93,8 @@ GameState::GameState(Program &program)
 		, m_chatDialog(0)
 		, m_debugPanel(0)
 		, lastMousePos(0)
-		, weatherParticleSystem(0) {
+		, weatherParticleSystem(0)
+		, m_options(0) {
 	assert(!singleton);
 	singleton = this;
 	simInterface->constructGameWorld(this);
@@ -498,6 +500,24 @@ void GameState::toggleDebug(Widget*) {
 
 void GameState::toggleGameMenu(Widget*) {
 	m_gameMenu->setVisible(!m_gameMenu->isVisible());
+}
+
+void GameState::toggleOptions(Widget*) {
+	if (!m_options) {
+		// just-in-time instantiation
+		m_options = new OptionsFrame(static_cast<Container*>(&g_program));
+
+		// init
+		Vec2i screenDims = g_metrics.getScreenDims();
+		Vec2i size(screenDims.x - 200, screenDims.y / 2);
+		Vec2i pos = screenDims / 2 - size / 2;
+		m_options->init(pos, size, g_lang.get("Options"));
+
+		m_options->setVisible(true);
+		m_options->Close.connect(this, &GameState::toggleOptions);
+	} else {
+		m_options->setVisible(!m_options->isVisible());
+	}
 }
 
 void GameState::addScriptMessage(const string &header, const string &msg) {

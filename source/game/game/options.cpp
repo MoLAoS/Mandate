@@ -141,7 +141,8 @@ void Spinner::onButtonFired(Widget *source) {
 // =====================================================
 
 Options::Options(CellStrip *parent, MenuStateOptions *optionsMenu)
-		: m_optionsMenu(optionsMenu) {
+		: Widget(parent)
+		, m_optionsMenu(optionsMenu) {
 
 	// add each tab
 	//addTab(Button*, CellStrip*)
@@ -565,6 +566,65 @@ void Options::setupListBoxLang() {
 	} else {
 		m_langList->setSelected(loc);
 	}
+}
+
+// =====================================================
+// 	class OptionsFrame
+// =====================================================
+
+OptionsFrame::OptionsFrame(WidgetWindow* window)
+		: Frame(window, ButtonFlags::CLOSE)
+		, m_saveButton(0)
+		, m_options(0) {
+	init();
+}
+
+OptionsFrame::OptionsFrame(Container* parent)
+		: Frame(parent, ButtonFlags::CLOSE)
+		, m_saveButton(0)
+		, m_options(0) {
+	init();
+}
+
+void OptionsFrame::init() {
+
+	// save button
+
+	// options panel
+	addCells(1);
+
+	setSizeHint(1, SizeHint());
+	m_optionsPanel = new CellStrip(this, Orientation::HORIZONTAL, 1);
+	m_optionsPanel->setCell(1);
+	Anchors anchors(Anchor(AnchorType::RIGID, 0));
+	m_optionsPanel->setAnchors(anchors);
+
+	// not sure this works - hailstone 14May2011
+	Vec2i pad(15, 25);
+	m_optionsPanel->setPos(pad);
+	m_optionsPanel->setSize(Vec2i(g_config.getDisplayWidth() - pad.w * 2, g_config.getDisplayHeight() - pad.h * 2));
+
+	m_options = new Options(m_optionsPanel, 0);
+	m_options->setCell(0);
+	m_options->setAnchors(anchors);
+
+	setDirty();
+}
+
+void OptionsFrame::init(Vec2i pos, Vec2i size, const string &title) {
+	setPos(pos);
+	setSize(size);
+	setTitleText(title);
+	layoutCells();
+}
+
+void OptionsFrame::onButtonClicked(Widget *source) {
+	/*Button *btn = static_cast<Button*>(source);
+	if (btn == m_button1) {
+		Button1Clicked(this);
+	} else {
+		Button2Clicked(this);
+	}*/
 }
 
 }}//end namespace

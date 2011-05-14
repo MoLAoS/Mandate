@@ -74,7 +74,7 @@ public:
 //	Gui for changing options in the menu and game
 // =====================================================
 
-class Options : public sigslot::has_slots /*, public TabWidget */ {
+class Options : public sigslot::has_slots, public Widget /*, public TabWidget */ {
 private:
 	DropList	*m_langList,
 				*m_shadowsList,
@@ -106,6 +106,7 @@ public:
 	Options(CellStrip *parent, Glest::Menu::MenuStateOptions *optionsMenu);
 
 	void save();
+	virtual string descType() const override { return "Options"; }
 
 private:
 	void disableWidgets();
@@ -125,6 +126,30 @@ private:
 	void onToggleDebugMode(Widget*);
 	void onToggleDebugKeys(Widget*);
 	void onToggleShaders(Widget *source);
+};
+
+// =====================================================
+// 	class OptionsFrame
+//
+//	Window for in-game options
+// =====================================================
+
+class OptionsFrame : public Frame {
+private:
+	Button		*m_saveButton;
+	Options		*m_options;
+	CellStrip	*m_optionsPanel;
+
+protected:
+	void init();
+	void onButtonClicked(Widget*);
+
+public:
+	OptionsFrame(WidgetWindow* window);
+	OptionsFrame(Container* parent);
+	void init(Vec2i pos, Vec2i size, const string &title);
+
+	virtual string descType() const override { return "OptionsFrame"; }
 };
 
 }}//end namespace

@@ -38,17 +38,18 @@ GameMenu::GameMenu(Vec2i pos, Vec2i size)
 	setTitleText(g_lang.get("GameMenu"));
 
 	int dh = g_widgetConfig.getDefaultItemHeight();
-	CellStrip *strip = new CellStrip(this, Orientation::VERTICAL, 6);
+	CellStrip *strip = new CellStrip(this, Orientation::VERTICAL, 7);
 	strip->setCell(1);
 	strip->setAnchors(Anchors::getFillAnchors());
 
 	Vec2i btnSize(dh * 5, dh);
 
-	buildButton(this, strip, 5, g_lang.get("ExitProgram"), &GameMenu::onExit);
-	buildButton(this, strip, 4, g_lang.get("QuitGame"), &GameMenu::onQuit);
-	buildButton(this, strip, 3, g_lang.get("SaveGame"), &GameMenu::onSaveGame);
-	buildButton(this, strip, 2, g_lang.get("TogglePhotoMode"), &GameMenu::onTogglePhotoMode);
-	buildButton(this, strip, 1, g_lang.get("ToggleDebug"), &GameMenu::onDebugToggle);
+	buildButton(this, strip, 6, g_lang.get("ExitProgram"), &GameMenu::onExit);
+	buildButton(this, strip, 5, g_lang.get("QuitGame"), &GameMenu::onQuit);
+	buildButton(this, strip, 4, g_lang.get("SaveGame"), &GameMenu::onSaveGame);
+	buildButton(this, strip, 3, g_lang.get("TogglePhotoMode"), &GameMenu::onTogglePhotoMode);
+	buildButton(this, strip, 2, g_lang.get("ToggleDebug"), &GameMenu::onDebugToggle);
+	buildButton(this, strip, 1, g_lang.get("Options"), &GameMenu::onOptions);
 	buildButton(this, strip, 0, g_lang.get("ReturnToGame"), &GameMenu::onReturnToGame);
 	Close.connect(this, &GameMenu::onReturnToGame);
 }
@@ -61,6 +62,10 @@ GameMenu::GameMenu(Vec2i pos, Vec2i size)
 
 void GameMenu::onReturnToGame(Widget*) {
 	g_gameState.toggleGameMenu();
+}
+
+void GameMenu::onOptions(Widget*) {
+	g_gameState.toggleOptions();
 }
 
 void GameMenu::onDebugToggle(Widget*) {
