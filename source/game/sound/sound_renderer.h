@@ -42,6 +42,10 @@ private:
 	float musicVolume;
 	float ambientVolume;
 
+
+	StrSound *musicStream;
+	std::set<StrSound*> ambientStreams;
+
 private:
 	SoundRenderer();
 
@@ -66,6 +70,15 @@ public:
 	void playAmbient(StrSound *strSound);
 	void stopAmbient(StrSound *strSound);
 	
+	//volume
+	float getFxVolume() const { return fxVolume; }
+	float getMusicVolume() const { return musicVolume; }
+	float getAmbientVolume() const { return ambientVolume; }
+
+	void setFxVolume(float v);
+	void setMusicVolume(float v);
+	void setAmbientVolume(float v);
+
 	//misc
 	void stopAllSounds();
 	void loadConfig();

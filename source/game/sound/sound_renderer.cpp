@@ -36,6 +36,7 @@ const float SoundRenderer::audibleDist= 50.f;
 
 SoundRenderer::SoundRenderer(){
 	loadConfig();
+	musicStream = 0;
 }
 
 void SoundRenderer::init(Window *window) {
@@ -75,10 +76,19 @@ void SoundRenderer::playMusic(StrSound *strSound){
 	strSound->setVolume(musicVolume);
 	strSound->restart();
 	soundPlayer->play(strSound);
+	musicStream = strSound;
 }
 
 void SoundRenderer::stopMusic(StrSound *strSound){
 	soundPlayer->stop(strSound);
+	musicStream = 0;
+}
+
+void SoundRenderer::setMusicVolume(float v) {
+	musicVolume = v;
+	if (musicStream) {
+		musicStream->setVolume(v);
+	}
 }
 
 // ======================= Fx ============================
@@ -103,15 +113,28 @@ void SoundRenderer::playFx(StaticSound *staticSound){
 	}
 }
 
+void SoundRenderer::setFxVolume(float v) {
+	fxVolume = v;
+}
+
 // ======================= Ambient ============================
 
 void SoundRenderer::playAmbient(StrSound *strSound){
 	strSound->setVolume(ambientVolume);
 	soundPlayer->play(strSound, ambientFade);
+	ambientStreams.insert(strSound);
 }
 
 void SoundRenderer::stopAmbient(StrSound *strSound){
 	soundPlayer->stop(strSound, ambientFade);
+	ambientStreams.erase(strSound);
+}
+
+void SoundRenderer::setAmbientVolume(float v) {
+	ambientVolume = v;
+	foreach (std::set<StrSound*>, it, ambientStreams) {
+		(*it)->setVolume(v);
+	}
 }
 
 // ======================= Misc ============================

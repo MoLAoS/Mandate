@@ -167,14 +167,14 @@ void Options::disableWidgets() {
 	m_filterList->setEnabled(false);
 	m_lightsList->setEnabled(false);
 	m_modelShaderList->setEnabled(false);
-							
+
 	m_3dTexCheckBox->setEnabled(false);
 	m_debugModeCheckBox->setEnabled(false);
 	m_debugKeysCheckBox->setEnabled(false);
 	
-	m_volFxSlider->setEnabled(false);
-	m_volAmbientSlider->setEnabled(false);
-	m_volMusicSlider->setEnabled(false);
+	//m_volFxSlider->setEnabled(false);
+	//m_volAmbientSlider->setEnabled(false);
+	//m_volMusicSlider->setEnabled(false);
 
 	m_minCamAltitudeSpinner->setEnabled(false);
 	m_maxCamAltitudeSpinner->setEnabled(false);
@@ -518,11 +518,13 @@ void Options::onSliderValueChanged(Widget *source) {
 	Slider2 *slider = static_cast<Slider2*>(source);
 	if (slider == m_volFxSlider) {
 		g_config.setSoundVolumeFx(slider->getValue());
+		g_soundRenderer.setFxVolume(slider->getValue() / 100.f);
 	} else if (slider == m_volAmbientSlider) {
 		g_config.setSoundVolumeAmbient(slider->getValue());
+		g_soundRenderer.setAmbientVolume(slider->getValue() / 100.f);
 	} else if (slider == m_volMusicSlider) {
 		g_config.setSoundVolumeMusic(slider->getValue());
-		g_coreData.getMenuMusic()->setVolume(slider->getValue() / 100.f);
+		g_soundRenderer.setMusicVolume(slider->getValue() / 100.f);
 	}
 }
 
