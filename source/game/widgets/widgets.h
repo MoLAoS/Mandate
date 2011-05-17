@@ -390,6 +390,36 @@ public:
 	void setCustomSplit(bool first, int label);
 };
 
+// =====================================================
+//  class TabWidget
+// =====================================================
+
+/** A widget that has a cell for buttons and an associated cell that appears when
+  * the button is pressed.
+  */
+class TabWidget : public CellStrip, public sigslot::has_slots {
+protected:
+	// Item order is important.
+	// Pointers owned elsewhere, don't delete here.
+	typedef vector<Button*> Buttons;
+	typedef vector<CellStrip*> Pages;
+private:
+	Buttons m_buttons;
+	Pages m_pages;
+	int m_active;
+	CellStrip *m_btnPnl;
+	Anchors m_anchors;
+protected:
+	void onButtonClicked(Widget *widget);
+	int getButtonPos(Button *button);
+	Button* createButton(const string &text);
+public:
+	TabWidget(Container *parent);
+
+	void add(const string &text, CellStrip *cellStrip);
+
+};
+
 
 }}
 

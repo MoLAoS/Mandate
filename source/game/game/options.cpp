@@ -141,7 +141,7 @@ void Spinner::onButtonFired(Widget *source) {
 // =====================================================
 
 Options::Options(CellStrip *parent, MenuStateOptions *optionsMenu)
-		: Widget(parent)
+		: TabWidget(parent)
 		, m_optionsMenu(optionsMenu) {
 
 	// add each tab
@@ -196,6 +196,7 @@ void Options::buildOptionsPanel(CellStrip *container, int cell) {
 	pnl->setAnchors(fillAnchors);
 	//pnl->borderStyle().setSolid(g_widgetConfig.getColourIndex(Vec3f(1.f, 0.f, 1.f)));
 	//pnl->borderStyle().setSizes(2);
+	//TabWidget::add("Main", pnl);
 
 	const int rows = 10;
 

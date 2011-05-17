@@ -912,6 +912,81 @@ void DoubleOption::setCustomSplit(bool first, int label) {
 	setSizeHint(i, SizeHint(content));
 }
 
+// =====================================================
+//  class TabWidget
+// =====================================================
+
+TabWidget::TabWidget(Container *parent)
+		: CellStrip(parent, Orientation::VERTICAL, 2)
+		, m_active(0)
+		, m_anchors(Anchor(AnchorType::RIGID, 0)) {
+	m_btnPnl = new CellStrip(this, Orientation::HORIZONTAL);
+	m_btnPnl->setCell(0);
+	m_btnPnl->setAnchors(m_anchors);
+	m_anchors.setCentre(true, true);
+	createButton("Main");
+}
+
+int TabWidget::getButtonPos(Button *button) {
+	for (int i = 0; i < m_pages.size(); ++i) {
+		if (m_buttons[i] == button) {
+			return i; // button found
+		}
+	}
+	return -1; // button not found
+}
+
+void TabWidget::onButtonClicked(Widget* widget) {
+	// find the index of the button to get the associated page
+	int index = getButtonPos(static_cast<Button*>(widget));
+
+	// otherwise callback was connected to wrong widget
+	assert(index >= 0);
+
+	if (m_active != index) {
+		// hide the previous page and show the current one
+		m_pages[m_active]->setVisible(false);
+		m_pages[index]->setVisible(true);
+		m_active = index;
+	}
+}
+
+Button* TabWidget::createButton(const string &text) {
+	int s = g_widgetConfig.getDefaultItemHeight();
+	setSizeHint(0, SizeHint(-1, 100));
+	m_btnPnl->addCells(1);
+	Vec2i pos(0,0);
+	Vec2i size(g_widgetConfig.getDefaultItemHeight() * 5, g_widgetConfig.getDefaultItemHeight());
+	Button *btn = new Button(m_btnPnl, pos, size);
+	btn->setText(text);
+	btn->setCell(m_buttons.size());
+	btn->setAnchors(m_anchors);
+	btn->Clicked.connect(this, &TabWidget::onButtonClicked);
+	return btn;
+}
+
+void TabWidget::add(const string &text, CellStrip *cellStrip) {
+	assert(cellStrip);
+	int index = m_buttons.size();
+
+	// only add unique buttons since only the first one would
+	// be used.
+	//if (index == 0 || getButtonPos(button) == -1) {
+	cellStrip->setCell(1);
+		m_buttons.push_back(createButton(text));
+		m_pages.push_back(cellStrip);
+		
+		// show the first page
+		if (index == 0) {
+			cellStrip->setVisible(true);
+		} else {
+			cellStrip->setVisible(false);
+		}
+
+		assert(m_buttons.size() == index + 1);
+		assert(m_pages.size() == index + 1);
+	//}
+}
 
 }}
 

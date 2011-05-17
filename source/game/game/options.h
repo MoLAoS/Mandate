@@ -74,7 +74,7 @@ public:
 //	Gui for changing options in the menu and game
 // =====================================================
 
-class Options : public sigslot::has_slots, public Widget /*, public TabWidget */ {
+class Options : public TabWidget {
 private:
 	DropList	*m_langList,
 				*m_shadowsList,
