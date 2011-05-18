@@ -143,8 +143,12 @@ void Spinner::onButtonFired(Widget *source) {
 Options::Options(CellStrip *parent, MenuStateOptions *optionsMenu)
 		: TabWidget(parent)
 		, m_optionsMenu(optionsMenu) {
-
 	// add each tab
+	buildGameTab();
+	buildVideoTab();
+	buildAudioTab();
+	buildControlsTab();
+	buildDebugTab();
 	//addTab(Button*, CellStrip*)
 	//Game
 	//Video
@@ -158,6 +162,26 @@ Options::Options(CellStrip *parent, MenuStateOptions *optionsMenu)
 	if (!m_optionsMenu) {
 		disableWidgets();
 	}
+}
+
+void Options::buildGameTab() {
+
+}
+
+void Options::buildVideoTab() {
+
+}
+
+void Options::buildAudioTab() {
+
+}
+
+void Options::buildControlsTab() {
+
+}
+
+void Options::buildDebugTab() {
+
 }
 
 void Options::disableWidgets() {
@@ -191,12 +215,19 @@ void Options::buildOptionsPanel(CellStrip *container, int cell) {
 	Anchors padAnchors(Anchor(AnchorType::RIGID, 10), Anchor(AnchorType::RIGID, 0),
 		Anchor(AnchorType::RIGID, 10), Anchor(AnchorType::RIGID, 0));
 
-	CellStrip *pnl = new CellStrip(container, Orientation::HORIZONTAL, 2);
-	pnl->setCell(cell);
-	pnl->setAnchors(fillAnchors);
-	//pnl->borderStyle().setSolid(g_widgetConfig.getColourIndex(Vec3f(1.f, 0.f, 1.f)));
-	//pnl->borderStyle().setSizes(2);
-	//TabWidget::add("Main", pnl);
+	CellStrip *pnl = new CellStrip(this, Orientation::HORIZONTAL, 2);
+	pnl->setCell(1);
+	pnl->setAnchors(padAnchors);
+	pnl->setPos(Vec2i(0,0));
+	pnl->anchor();
+	pnl->setSize(Vec2i(g_config.getDisplayWidth(), g_widgetConfig.getDefaultItemHeight()));
+	pnl->borderStyle().setSolid(g_widgetConfig.getColourIndex(Vec3f(1.f, 0.f, 1.f)));
+	pnl->borderStyle().setSizes(2);
+	TabWidget::add("Main", pnl);
+	CellStrip *pnl2 = new CellStrip(this, Orientation::HORIZONTAL, 2);
+	TabWidget::add("Game", pnl2);
+	borderStyle().setSolid(g_widgetConfig.getColourIndex(Vec3f(1.f, 0.f, 1.f)));
+	borderStyle().setSizes(2);
 
 	const int rows = 10;
 

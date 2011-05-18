@@ -117,6 +117,13 @@ private:
 	void buildOptionsPanel(CellStrip *container, int cell);
 	void loadShaderList();
 
+	// Build tabs
+	void buildGameTab();
+	void buildVideoTab();
+	void buildAudioTab();
+	void buildControlsTab();
+	void buildDebugTab();
+
 	// Event callbacks
 	void on3dTexturesToggle(Widget *source);
 	void onSliderValueChanged(Widget *source);

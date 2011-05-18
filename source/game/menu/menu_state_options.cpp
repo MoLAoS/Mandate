@@ -51,6 +51,11 @@ MenuStateOptions::MenuStateOptions(Program &program, MainMenu *mainMenu)
 	rootStrip->setSizeHint(0, SizeHint());
 	// need to keep Options instance alive to use callbacks
 	m_options = new Options(rootStrip, this);
+	m_options->setCell(0);
+	m_options->setPos(pad);
+	m_options->setSize(Vec2i(g_config.getDisplayWidth() - pad.w * 2, g_config.getDisplayHeight()));
+	m_options->setSizeHint(0, SizeHint(10,-1));
+	//m_options->setSizeHint(1, SizeHint(-1, 1000));
 
 	Anchors anchors(Anchor(AnchorType::RIGID, 0));
 
