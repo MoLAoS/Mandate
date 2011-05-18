@@ -122,6 +122,7 @@ private:
 	void buildVideoTab();
 	void buildAudioTab();
 	void buildControlsTab();
+	void buildNetworkTab();
 	void buildDebugTab();
 
 	// Event callbacks

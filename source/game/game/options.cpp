@@ -143,45 +143,50 @@ void Spinner::onButtonFired(Widget *source) {
 Options::Options(CellStrip *parent, MenuStateOptions *optionsMenu)
 		: TabWidget(parent)
 		, m_optionsMenu(optionsMenu) {
+	
+	buildOptionsPanel(parent, 0);
 	// add each tab
 	buildGameTab();
 	buildVideoTab();
 	buildAudioTab();
 	buildControlsTab();
+	buildNetworkTab();
 	buildDebugTab();
-	//addTab(Button*, CellStrip*)
-	//Game
-	//Video
-	//Audio
-	//Network
-	//Controls
-	//Debug
-
-	buildOptionsPanel(parent, 0);
 
 	if (!m_optionsMenu) {
 		disableWidgets();
 	}
 }
 
+///@todo replace texts with lang - hailstone 18May2011
 void Options::buildGameTab() {
-
+	CellStrip *panel = new CellStrip(this, Orientation::HORIZONTAL, 2);
+	TabWidget::add("Game", panel);
 }
 
 void Options::buildVideoTab() {
-
+	CellStrip *panel = new CellStrip(this, Orientation::HORIZONTAL, 2);
+	TabWidget::add("Video", panel);
 }
 
 void Options::buildAudioTab() {
-
+	CellStrip *panel = new CellStrip(this, Orientation::HORIZONTAL, 2);
+	TabWidget::add("Audio", panel);
 }
 
 void Options::buildControlsTab() {
+	CellStrip *panel = new CellStrip(this, Orientation::HORIZONTAL, 2);
+	TabWidget::add("Control", panel);
+}
 
+void Options::buildNetworkTab() {
+	CellStrip *panel = new CellStrip(this, Orientation::HORIZONTAL, 2);
+	TabWidget::add("Network", panel);
 }
 
 void Options::buildDebugTab() {
-
+	CellStrip *panel = new CellStrip(this, Orientation::HORIZONTAL, 2);
+	TabWidget::add("Debug", panel);
 }
 
 void Options::disableWidgets() {
@@ -217,15 +222,13 @@ void Options::buildOptionsPanel(CellStrip *container, int cell) {
 
 	CellStrip *pnl = new CellStrip(this, Orientation::HORIZONTAL, 2);
 	pnl->setCell(1);
-	pnl->setAnchors(padAnchors);
+	pnl->setAnchors(fillAnchors);
 	pnl->setPos(Vec2i(0,0));
 	pnl->anchor();
 	pnl->setSize(Vec2i(g_config.getDisplayWidth(), g_widgetConfig.getDefaultItemHeight()));
 	pnl->borderStyle().setSolid(g_widgetConfig.getColourIndex(Vec3f(1.f, 0.f, 1.f)));
 	pnl->borderStyle().setSizes(2);
-	TabWidget::add("Main", pnl);
-	CellStrip *pnl2 = new CellStrip(this, Orientation::HORIZONTAL, 2);
-	TabWidget::add("Game", pnl2);
+	TabWidget::add("Temp", pnl);
 	borderStyle().setSolid(g_widgetConfig.getColourIndex(Vec3f(1.f, 0.f, 1.f)));
 	borderStyle().setSizes(2);
 
