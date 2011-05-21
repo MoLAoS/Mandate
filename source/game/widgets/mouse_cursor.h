@@ -43,7 +43,6 @@ public:
 // class ImageSetMouseCursor
 // =====================================================
 
-class Glest::Graphics::Imageset;
 using namespace Glest::Graphics;
 
 class ImageSetMouseCursor : public MouseCursor {
