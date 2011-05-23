@@ -168,6 +168,11 @@ void Texture1DGl::init(Filter filter, int maxAnisotropy){
 	assertGl();
 }
 
+void Texture1DGl::deletePixmap() {
+	pixmap.dispose();
+	this->pixmapInit = false;
+}
+
 void Texture1DGl::end(){
 	if(inited){
 		assertGl();
@@ -252,6 +257,11 @@ void Texture2DGl::init(Filter filter, int maxAnisotropy){
 	assertGl();
 }
 
+void Texture2DGl::deletePixmap() {
+	pixmap.dispose();
+	this->pixmapInit = false;
+}
+
 void Texture2DGl::end(){
 	if(inited){
 		assertGl();
@@ -309,6 +319,11 @@ void Texture3DGl::init(Filter filter, int maxAnisotropy){
 	}
 
 	assertGl();
+}
+
+void Texture3DGl::deletePixmap() {
+	pixmap.dispose();
+	this->pixmapInit = false;
 }
 
 void Texture3DGl::end(){
@@ -393,6 +408,11 @@ void TextureCubeGl::init(Filter filter, int maxAnisotropy) {
 	}
 
 	assertGl();
+}
+
+void TextureCubeGl::deletePixmap() {
+	pixmap.dispose();
+	this->pixmapInit = false;
 }
 
 void TextureCubeGl::end(){

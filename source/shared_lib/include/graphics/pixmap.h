@@ -173,6 +173,7 @@ public:
 	Pixmap1D(int w, int components);
 	void init(int components);
 	void init(int w, int components);
+	void dispose();
 	~Pixmap1D();
 
 	//load & save
@@ -204,6 +205,8 @@ public:
 	Pixmap2D(int w, int h, int components);
 	void init(int components);
 	void init(int w, int h, int components);
+	void dispose();
+
 	~Pixmap2D();
 
 	//load & save
@@ -293,6 +296,7 @@ public:
 	Pixmap3D(int d, int components);
 	void init(int w, int h, int d, int components);
 	void init(int d, int components);
+	void dispose();
 	~Pixmap3D();
 
 	//load & save
@@ -329,6 +333,7 @@ protected:
 public:
 	//init
 	void init(int w, int h, int components);
+	void dispose();
 
 	//load & save
 	void loadFace(const string &path, int face);

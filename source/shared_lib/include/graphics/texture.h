@@ -75,8 +75,9 @@ public:
 	void setPixmapInit(bool pixmapInit)	{this->pixmapInit= pixmapInit;}
 	void setFormat(Format format)		{this->format= format;}
 
-	virtual void init(Filter filter= fBilinear, int maxAnisotropy= 1)=0;
-	virtual void end()=0;
+	virtual void init(Filter filter = fBilinear, int maxAnisotropy = 1) = 0;
+	virtual void deletePixmap() = 0;
+	virtual void end() = 0;
 };
 
 // =====================================================

@@ -36,8 +36,11 @@ void MapObjectType::loadModel(const string &path){
 	Model *model = g_world.getModelFactory().getModel(path, GameConstants::cellScale, 2);
 	color = Vec3f(0.f);
 	if (model->getMeshCount() > 0 && model->getMesh(0)->getTexture(0) != NULL) {
-		const Pixmap2D *p = model->getMesh(0)->getTexture(0)->getPixmap();
+		const Texture2D *tex = model->getMesh(0)->getTexture(0);
+		Pixmap2D *p = new Pixmap2D();
+		p->load(tex->getPath());
 		color = p->getPixel3f(p->getW()/2, p->getH()/2);
+		delete p;
 	}
 	models.push_back(model);
 }

@@ -74,6 +74,8 @@ Texture2D *TextureManager::getTexture(const string &path) {
 	Texture2D *tex = GraphicsInterface::getInstance().getFactory()->newTexture2D();
 	try {
 		tex->load(cleanedPath);
+		tex->init(textureFilter, maxAnisotropy);
+		tex->deletePixmap();
 	} catch (runtime_error &e) {
 		delete tex;
 		mediaErrorLog.add(e.what(), path);

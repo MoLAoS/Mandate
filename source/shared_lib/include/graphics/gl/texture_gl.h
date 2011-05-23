@@ -35,8 +35,9 @@ public:
 
 class Texture1DGl: public Texture1D, public TextureGl{
 public:
-	virtual void init(Filter filter, int maxAnisotropy= 1);
-	virtual void end();
+	virtual void init(Filter filter, int maxAnisotropy= 1) override;
+	virtual void deletePixmap() override;
+	virtual void end() override;
 };
 
 // =====================================================
@@ -45,8 +46,9 @@ public:
 
 class Texture2DGl: public Texture2D, public TextureGl{
 public:
-	virtual void init(Filter filter, int maxAnisotropy= 1);
-	virtual void end();
+	virtual void init(Filter filter, int maxAnisotropy= 1) override;
+	virtual void deletePixmap() override;
+	virtual void end() override;
 	GLuint getHandle() const {
 		// ensure call init before use
 		assert(inited);
@@ -60,8 +62,9 @@ public:
 
 class Texture3DGl: public Texture3D, public TextureGl{
 public:
-	virtual void init(Filter filter, int maxAnisotropy= 1);
-	virtual void end();
+	virtual void init(Filter filter, int maxAnisotropy= 1) override;
+	virtual void deletePixmap() override;
+	virtual void end() override;
 };
 
 // =====================================================
@@ -70,8 +73,9 @@ public:
 
 class TextureCubeGl: public TextureCube, public TextureGl{
 public:
-	virtual void init(Filter filter, int maxAnisotropy= 1);
-	virtual void end();
+	virtual void init(Filter filter, int maxAnisotropy= 1) override;
+	virtual void deletePixmap() override;
+	virtual void end() override;
 };
 
 }}}//end namespace
