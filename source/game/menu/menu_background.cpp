@@ -65,13 +65,13 @@ MenuBackground::MenuBackground(){
 		fogDensity= fogNode->getAttribute("density")->getFloatValue();
 	}
 
-	//rain
-	rain= menuNode->getChild("rain")->getAttribute("value")->getBoolValue();
+	// rain
+	rain = menuNode->getChild("rain")->getAttribute("value")->getBoolValue();
 	if(rain){
 		RainParticleSystem *rps= new RainParticleSystem();
-		rps->setSpeed(12.f/Config::getInstance().getGsWorldUpdateFps());
+		rps->setSpeed(12.f / WORLD_FPS);
 		rps->setEmissionRate(25);
-		rps->setWindSpeed2(-90.f, 4.f/Config::getInstance().getGsWorldUpdateFps());
+		rps->setWindSpeed2(-90.f, 4.f / WORLD_FPS);
 		rps->setPos(Vec3f(0.f, 25.f, 0.f));
 		rps->setColor(Vec4f(1.f, 1.f, 1.f, 0.2f));
 		rps->setRadius(30.f);
@@ -81,6 +81,15 @@ MenuBackground::MenuBackground(){
 			raindropStates[i]= random.randRange(0.f, 1.f);
 			raindropPos[i]= computeRaindropPos();
 		}
+	} else if (menuNode->getOptionalBoolValue("snow")) {
+		SnowParticleSystem *sps = new SnowParticleSystem(1200);
+		sps->setSpeed(1.5f / WORLD_FPS);
+		sps->setEmissionRate(2);
+		sps->setWindSpeed2(-90.f, 0.5f / WORLD_FPS);
+		sps->setPos(Vec3f(0.f, 25.f, 0.f));
+		sps->setRadius(30.f);
+		sps->setTexture(g_coreData.getSnowTexture());
+		renderer.manageParticleSystem(sps, ResourceScope::MENU);
 	}
 
 	//camera
