@@ -38,7 +38,7 @@ MEMORY_CHECK_IMPLEMENTATION(Effect)
 Effect::Effect(CreateParams params) 
 		: m_id(-1) {
 	this->type = params.type;
-	this->source = params.source->getId();
+	this->source = params.source ? params.source->getId() : -1;
 	this->root = params.root;
 	this->strength = params.strength;
 	this->duration = type->getDuration();
