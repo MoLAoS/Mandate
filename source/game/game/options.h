@@ -74,7 +74,7 @@ public:
 //	Gui for changing options in the menu and game
 // =====================================================
 
-class Options : public sigslot::has_slots, public Widget /*, public TabWidget */ {
+class Options : public TabWidget {
 private:
 	DropList	*m_langList,
 				*m_shadowsList,
@@ -116,6 +116,14 @@ private:
 	void setTexts();
 	void buildOptionsPanel(CellStrip *container, int cell);
 	void loadShaderList();
+
+	// Build tabs
+	void buildGameTab();
+	void buildVideoTab();
+	void buildAudioTab();
+	void buildControlsTab();
+	void buildNetworkTab();
+	void buildDebugTab();
 
 	// Event callbacks
 	void on3dTexturesToggle(Widget *source);

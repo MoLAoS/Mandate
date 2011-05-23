@@ -1,8 +1,11 @@
 ; Archivo lang para español
+
+; Zones, translate 'Land' as 'surface'
 Air=Aire
 Land=Superficie
-GlestTeam=El Equipo de Glest
 
+; Team member roles
+GlestTeam=El Equipo de Glest
 2dArtAndWeb=Arte 2D y Web
 3dAnd2dArt=Arte 3D y 2D
 3dArt=Arte 3D
@@ -13,15 +16,21 @@ Programming=Programación
 GaeTeam=El Equipo de GAE
 AdvEng1=Motor
 AdvEng2=Avanzado
+
+; Chat related
 ChatMode=Modo de mensajes
 ChatMsg=Mensaje de Chat
 All=Todos
 TeamOnly=Sólo Equipo
+
+; Game end dialog headers and messages
 BattleOver=Fin de la batalla
 Victory=Victoria
 Defeat=Derrota
 YouLose=¡Has perdido!
 YouWin=¡Has ganado!
+
+; Command classes
 Attack=Atacar
 Attack-Stopped=Ataque detenido
 Guard=Guardar
@@ -39,8 +48,10 @@ Teleport=Teleportar
 Unload=Descargar
 Upgrade=Mejorar
 
+; Missing/erroneous data
 MapNotFound=El mapa de este escenario no se pudo encontrar.
-ScenarioXmlError=Había un error al cargar el XML escenario.
+TechNotFound=El árbol de tech de este escenario no se pudo encontrar.
+ScenarioXmlError=Había un error al cargar el XML del escenario.
 EnterFilename=Debes introducir un nombre de archivo para guardar la partida.
 CantSaveScenarios=Escenarios no se pueden guardar.
 
@@ -53,6 +64,7 @@ Difficulty3=Difícil
 Difficulty4=Muy Difícil
 Difficulty5=Imposible
 
+; Control types
 Human=Humano
 Closed=Cerrado
 Control=Control
@@ -61,6 +73,7 @@ Cpu=CPU
 Cpu_Ultra=CPU (Ultra)
 Cpu_Mega=CPU (Mega)
 
+; Game speed
 VeryFast=muy rápido
 VerySlow=muy lenta
 SpeedDec=Disminuir Velocidad
@@ -68,6 +81,8 @@ SpeedInc=Aumentar Velocidad
 SpeedReset=Restablecer Velocidad
 Slow=despacio
 Slowest=el más lento
+PauseOff=Pausa desactivado
+PauseOn=Pausa activado
 Normal=normal
 GamePaused=Juego en pausa
 GameResumed=Juego reanudado
@@ -75,6 +90,9 @@ Fast=rapido
 Fastest=el más rapido
 GameSpeedSet=Velocidad
 
+; Menu strings
+
+; Shared menu strings
 PlayNow=Jugar ya!
 Network=Red
 MaxPlayers=Jugadores max
@@ -84,6 +102,7 @@ Tileset=Tileset
 TechTree=Arbol de Tec
 Return=Volver
 
+; Root menu
 About=Créditos
 JoinGame=Unirse a Partida
 LoadGame=Cargar Partida
@@ -91,6 +110,7 @@ NewGame=Crear Partida
 Scenario=Escenario
 Options=Opciones
 
+; New game menu
 Random=Aleatorio
 RandomizeLocations=Ubicaciones aleatorias
 Faction=Facción
@@ -98,10 +118,10 @@ Team=Equipo
 Colour=Color
 NotConnected=No conectado
 WaitingForConnections=Espera para las conexiónes
-NotConnected=No conectado
 AiPlayer=Jugador IA
 Player=Jugador 
 
+; Join game menu
 Address=Dirección
 ErrorVersionMismatch=El host remoto tiene una versión diferente e incompatible de GAE. Tienes %s y tiene %s.
 Connect=Conectar
@@ -117,10 +137,13 @@ ServerType=Tipo de servidor
 ServerTypeNew=Nuevo
 ServerTypePrevious=Previo
 Port=Puerto
+RecentHosts=Hosts recientes
 Search=Buscar
 
+; Load game menu
 UnableToJoin=No puede conectarse al servidor
 WaitingHost=Esperando a que el servidor arranque la partida
+ElapsedTime=Tiempo Transcurrido
 Delete=Eliminar
 Confirm=Confirmar
 Category=Categoría
@@ -134,6 +157,9 @@ Textures3D=Texturas 3D
 OpenGlExtensions=Complementos
 OpenGlInfo=OpenGL Info
 OpenGlMaxLights=Max luces
+OpenGlMaxTextureSize=Tamaño max de texturas
+OpenGlMaxConventionalTextureUnits=Max unidades de textura (convencionales)
+OpenGlMaxCombinedTextureUnits=Max unidades de textura (combinado)
 OpenGlRenderer=Renderizador
 OpenGlVendor=Vendedor
 OpenGlVersion=Versión
@@ -142,6 +168,9 @@ Projected=Proyectadas
 ShadowMapping=Shadow Mapping
 Disabled=Desactivadas
 MaxLights=Luces
+TextureFilter=Filtro de texturas
+DebugMode=Modo de depuración
+DebugKeys=Teclas de depuración
 PlayerName=Nombre de Jugador
 CameraAltitude=Altitud de cámara
 Min=Min
@@ -151,6 +180,11 @@ UseShaders=Usar shaders
 TerrainShader=Shader de terreno
 WaterShader=Shader de agua
 ModelShader=Shader de modelos
+Audio=Audio
+Video=Video
+Debug=Depuración
+
+; Misc
 Name=Nombre
 No=No
 None=Ninguna
@@ -163,28 +197,40 @@ Disconnect=Desconectar
 Disconnected=desconectado
 Loading=Cargando
 Initializing=Inicializando
+
+; Camera
 CameraAngleReset=Restablecer ángulo
+CameraGotoLastEvent=Ir al evento anterior
 CameraGotoSelection=Ir al selección
 CameraModeSet=Modo de cámara establecido  
 CameraPosDown=Mover cámara abajo
 CameraPosLeft=Mover cámara a la izquierda
 CameraPosRight=Move cámera a la derecha
 CameraPosUp=Move cámera arriba
+CameraRotateLeft=Girar a la izquierda
+CameraRotateRight=Girar a la derecha
+CameraZoomAndAngleReset=Restablecer Zoom y Ángulo
 CameraZoomReset=Restablecer zoom
 FreeCamera=Cámara libre
 GameCamera=Cámara de juego
+
+; Display panel tips
 PotraitInfo=Haga clic para seleccionar sólo la unidad. Mayúsculas + clic para seleccionar sólo las unidades de este tipo. Control y haga clic para quitar esta unidad. Control + Mayúsculas + clic para quitar todas las unidades de este tipo.
 TransportInfo=Haga doble clic para descargar de inmediato esta unidad.
+
+; Game strings
 Affects=Afecta
 AlreadyUpgraded=Mejora ya realizada
 Amount=Cantidad
 Armor=Armadura
 AttackDistance=Dist. ataque
+AttackPctStolen=% Daño Robado de Ataque
 AttackSpeed=Vel. ataque
 AttackStrength=Daño
 Attacks=Ataques
 AutoRepair=Reparación automática
 AutoAttack=Ataque automático
+AutoFlee=Huida automática
 Buildings=Edificios
 BuildSpeed=Vel. construcción
 CanLoad=Puede cargar
@@ -224,11 +270,11 @@ Lost=Perdidos
 MaxLoad=Max carga
 MaxRange=Max distancia
 MorphUnits=Puede transformarse a
-MorphSpeed=Velocidad de transformación
+MorphSpeed=Vel. de transformación
 OrdersOnQueue=Ordenes en cola
 Produced=Producidas
 Producing=Produciendo
-ProductionSpeed=Vel de producción
+ProductionSpeed=Vel. de producción
 Range=Distancia
 ReactionSpeed=Vel. de reacción
 Refund=Reembolso
@@ -240,15 +286,19 @@ Costs=Cuesta
 Resources=Recursos
 Result=Resultado
 Save=Guardar
-SaveGame=Guardar partida
+SaveGame=Guardar Partida
 Score=Puntuación
 SelectSaveGame=Ingrese nombre de archivo
 Send=Enviar
+ShroudOfDarkness=Velo de Oscuridad
 Sight=Visión
 Size=Tamaño
 Speed=Velocidad
 SplashRadius=Radio splash
 Store=Almacena
+TimeToBuild=Tiempo para construir
+TimeToMorph=Tiempo para transformar
+TimeToResearch=Tiempo para mejorar
 Transported=Unidades de Transporte
 Unavailable=No información disponible.
 Units=Unidades
@@ -258,6 +308,8 @@ Upgrading=Mejorando
 WalkSpeed=Velocidad
 YourGameWasSaved=Tu partida se he guardado en %s
 Zones=Zonas
+
+; Effect stuff
 Effect=Efecto
 AllyOnly=sólo aliados
 SelfOnly=sólo uno mismo
@@ -267,6 +319,8 @@ Chance=Probabilidad
 Duration=Duración
 Permenant=permanente
 DamageType=Tipo de daño
+
+; Time of day
 MidNight=Medianoche
 Dawn=Orto
 Morning=Mañana
@@ -274,11 +328,17 @@ MidDay=Mediodía
 Afternoon=Tarde
 Dusk=Anochecer
 Night=Noche
+
+; Game menu
 GameMenu=Menú de Juego
 ReturnToGame=Volver al Juego
+ToggleDebug=Alternar Info de Depuracíon
+TogglePhotoMode=Alternar Modo de Foto
 SaveGame=Guardar Partida
 QuitGame=Salir Partida
 ExitProgram=Salir Programa
+
+; Command errors
 BuildingNoPlace=El edificio no puede ser construido ahí
 BuildingNoReqs=No se cumplen los requisitos del edificio
 BuildingNoRes=No hay recursos para producir el edificio
@@ -299,6 +359,7 @@ UpgradeNoRes=No hay suficiente recursos para producir la mejora
 UpgradeNoRes1=No hay suficiente %s para producir la mejora
 UpgradeNoRes2=No hay suficiente %s o %s para producir la mejora
 InvalidOrder=Orden invalida
+LoadLimitReached=Capacidad alcanzado.
 PetLimitReached=La unidad no puede tener más mascotas de este tipo.
 CanNotLoadUnit=No puede cargar este tipo de unidad.
 NotAvailable=Funcción no disponible en partidos en red

@@ -141,23 +141,87 @@ void Spinner::onButtonFired(Widget *source) {
 // =====================================================
 
 Options::Options(CellStrip *parent, MenuStateOptions *optionsMenu)
-		: Widget(parent)
+		: TabWidget(parent)
 		, m_optionsMenu(optionsMenu) {
-
-	// add each tab
-	//addTab(Button*, CellStrip*)
-	//Game
-	//Video
-	//Audio
-	//Network
-	//Controls
-	//Debug
-
+	setSizeHint(0, SizeHint(-1, g_widgetConfig.getDefaultItemHeight()));
 	buildOptionsPanel(parent, 0);
+	// add each tab
+	buildGameTab();
+	buildVideoTab();
+	buildAudioTab();
+	buildControlsTab();
+	buildNetworkTab();
+	buildDebugTab();
 
 	if (!m_optionsMenu) {
 		disableWidgets();
 	}
+}
+
+void Options::buildGameTab() {
+	//CellStrip *panel = new CellStrip(this, Orientation::HORIZONTAL, 2);
+	//TabWidget::add(g_lang.get("Game"), panel);
+}
+
+void Options::buildVideoTab() {
+	CellStrip *panel = new CellStrip(this, Orientation::HORIZONTAL, 2);
+	TabWidget::add(g_lang.get("Video"), panel);
+}
+
+void Options::buildAudioTab() {
+	CellStrip *panel = new CellStrip(this, Orientation::HORIZONTAL, 2);
+	TabWidget::add(g_lang.get("Audio"), panel);
+}
+
+void Options::buildControlsTab() {
+	CellStrip *panel = new CellStrip(this, Orientation::HORIZONTAL, 2);
+	TabWidget::add(g_lang.get("Controls"), panel);
+}
+
+void Options::buildNetworkTab() {
+	CellStrip *panel = new CellStrip(this, Orientation::HORIZONTAL, 2);
+	TabWidget::add(g_lang.get("Network"), panel);
+}
+
+void Options::buildDebugTab() {
+	CellStrip *panel = new CellStrip(this, Orientation::HORIZONTAL, Origin::FROM_TOP, 2);
+	TabWidget::add(g_lang.get("Debug"), panel);
+
+	Anchors fillAnchors(Anchor(AnchorType::RIGID, 0));
+	Anchors squashAnchors(Anchor(AnchorType::RIGID, 0), Anchor(AnchorType::SPRINGY, 15));
+	Lang &lang= Lang::getInstance();
+	Config &config= Config::getInstance();
+
+	// Debug mode/keys container
+	DoubleOption *qw = new DoubleOption(panel, lang.get("DebugMode"), lang.get("DebugKeys"));
+	qw->setCell(0);
+
+	// Debug mode
+	CheckBoxHolder *cbh = new CheckBoxHolder(qw);
+	cbh->setCell(1);
+	cbh->setAnchors(fillAnchors);
+	m_debugModeCheckBox = new CheckBox(cbh);
+	m_debugModeCheckBox->setCell(1);
+	m_debugModeCheckBox->setAnchors(squashAnchors);
+	m_debugModeCheckBox->setChecked(config.getMiscDebugMode());
+	m_debugModeCheckBox->Clicked.connect(this, &Options::onToggleDebugMode);
+
+	// Debug keys
+	cbh = new CheckBoxHolder(qw);
+	cbh->setCell(3);
+	cbh->setAnchors(fillAnchors);
+	m_debugKeysCheckBox = new CheckBox(cbh);
+	m_debugKeysCheckBox->setCell(1);
+	m_debugKeysCheckBox->setAnchors(squashAnchors);
+	m_debugKeysCheckBox->setChecked(config.getMiscDebugKeys());
+	m_debugKeysCheckBox->Clicked.connect(this, &Options::onToggleDebugKeys);
+
+	panel->setPos(Vec2i(0,0));
+	panel->anchor();
+	panel->setSize(Vec2i(g_config.getDisplayWidth(), int(g_widgetConfig.getDefaultItemHeight() * 1.5f)));
+	//panel->borderStyle().setSolid(g_widgetConfig.getColourIndex(Vec3f(1.f, 0.f, 1.f)));
+	//panel->borderStyle().setSizes(2);
+	panel->layoutCells();
 }
 
 void Options::disableWidgets() {
@@ -191,11 +255,16 @@ void Options::buildOptionsPanel(CellStrip *container, int cell) {
 	Anchors padAnchors(Anchor(AnchorType::RIGID, 10), Anchor(AnchorType::RIGID, 0),
 		Anchor(AnchorType::RIGID, 10), Anchor(AnchorType::RIGID, 0));
 
-	CellStrip *pnl = new CellStrip(container, Orientation::HORIZONTAL, 2);
-	pnl->setCell(cell);
+	CellStrip *pnl = new CellStrip(this, Orientation::HORIZONTAL, 2);
 	pnl->setAnchors(fillAnchors);
+	pnl->setPos(Vec2i(0,0));
+	pnl->anchor();
+	pnl->setSize(Vec2i(g_config.getDisplayWidth(), g_widgetConfig.getDefaultItemHeight()));
 	//pnl->borderStyle().setSolid(g_widgetConfig.getColourIndex(Vec3f(1.f, 0.f, 1.f)));
 	//pnl->borderStyle().setSizes(2);
+	TabWidget::add(g_lang.get("Game"), pnl);
+	//borderStyle().setSolid(g_widgetConfig.getColourIndex(Vec3f(1.f, 0.f, 1.f)));
+	//borderStyle().setSizes(2);
 
 	const int rows = 10;
 
@@ -261,6 +330,7 @@ void Options::buildOptionsPanel(CellStrip *container, int cell) {
 	m_langList->SelectionChanged.connect(this, &Options::onDropListSelectionChanged);
 	m_langList->setDropBoxHeight(200);
 
+	/*
 	// Debug mode/keys container
 	DoubleOption *qw = new DoubleOption(col1, lang.get("DebugMode"), lang.get("DebugKeys"));
 	qw->setCell(5);
@@ -284,6 +354,7 @@ void Options::buildOptionsPanel(CellStrip *container, int cell) {
 	m_debugKeysCheckBox->setAnchors(squashAnchors);
 	m_debugKeysCheckBox->setChecked(config.getMiscDebugKeys());
 	m_debugKeysCheckBox->Clicked.connect(this, &Options::onToggleDebugKeys);
+	*/
 
 	// Camera min / max altitude
 	RelatedDoubleOption *rdo = new RelatedDoubleOption(col1,
@@ -331,7 +402,7 @@ void Options::buildOptionsPanel(CellStrip *container, int cell) {
 	m_filterList->SelectionChanged.connect(this, &Options::onDropListSelectionChanged);
 
 	// lights
-	qw = new DoubleOption(col2, lang.get("MaxLights"), lang.get("Textures3D"));
+	DoubleOption *qw = new DoubleOption(col2, lang.get("MaxLights"), lang.get("Textures3D"));
 	qw->setCustomSplit(true, 35);
 	qw->setCell(2);
 	m_lightsList = new DropList(qw);
@@ -345,7 +416,7 @@ void Options::buildOptionsPanel(CellStrip *container, int cell) {
 	m_lightsList->setDropBoxHeight(200);
 
 	// 3D Textures
-	cbh = new CheckBoxHolder(qw);
+	CheckBoxHolder *cbh = new CheckBoxHolder(qw);
 	cbh->setCell(3);
 	m_3dTexCheckBox = new CheckBox(cbh);
 	m_3dTexCheckBox->setCell(1);

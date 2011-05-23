@@ -96,7 +96,7 @@
 			// compute fog factor
 			float calculateFogFactor() {
 				if (gae_IsUsingFog == 0) {
-					return 1.f;
+					return 1.0;
 				}
 				float dist = length(vec3(gl_ModelViewMatrix * gl_Vertex)); // distance from camera
 				const float one_divide_ln_2 = 1.44269504088896341;

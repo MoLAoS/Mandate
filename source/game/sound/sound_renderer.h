@@ -17,6 +17,8 @@
 #include "window.h"
 #include "vec.h"
 
+#include <set>
+
 namespace Glest { namespace Sound {
 
 using Shared::Sound::StrSound;

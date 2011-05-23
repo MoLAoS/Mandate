@@ -195,6 +195,11 @@ UseShaders=Use Shaders
 TerrainShader=Terrain Shader
 WaterShader=Water Shader
 ModelShader=Model Shader
+Game=Game
+Audio=Audio
+Video=Video
+Debug=Debug
+Controls=Controls
 
 ; Misc
 Name=Name
