@@ -25,9 +25,10 @@ private:
 	void onSaveGame(Widget*);
 	void onDebugToggle(Widget*);
 	void onTogglePhotoMode(Widget*);
+	void onPinWidgets(Widget*);
 
 public:
-	GameMenu(Vec2i pos, Vec2i size);
+	GameMenu();
 	/*static GameMenu* showDialog(Vec2i pos, Vec2i size);*/
 
 	virtual Vec2i getPrefSize() const override { return Vec2i(-1); }

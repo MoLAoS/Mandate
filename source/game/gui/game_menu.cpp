@@ -31,22 +31,25 @@ void buildButton(GameMenu *menu, CellStrip *strip, int cell, const string &txt, 
 	btn->Clicked.connect(menu, func);
 }
 
-GameMenu::GameMenu(Vec2i pos, Vec2i size)
+GameMenu::GameMenu()
 		: Frame((Container*)(&g_widgetWindow), ButtonFlags::CLOSE | ButtonFlags::ROLL_UPDOWN) {
+	int dh = g_widgetConfig.getDefaultItemHeight();
+	Vec2i size = Vec2i(dh * 8, dh * 11);
+	Vec2i pos = Vec2i(g_metrics.getScreenDims() - size) / 2;
 	setPos(pos);
 	setSize(size);
 	setTitleText(g_lang.get("GameMenu"));
 
-	int dh = g_widgetConfig.getDefaultItemHeight();
-	CellStrip *strip = new CellStrip(this, Orientation::VERTICAL, 7);
+	CellStrip *strip = new CellStrip(this, Orientation::VERTICAL, 8); // 8 buttons
 	strip->setCell(1);
 	strip->setAnchors(Anchors::getFillAnchors());
 
-	Vec2i btnSize(dh * 5, dh);
+	//Vec2i btnSize(dh * 5, dh);
 
-	buildButton(this, strip, 6, g_lang.get("ExitProgram"), &GameMenu::onExit);
-	buildButton(this, strip, 5, g_lang.get("QuitGame"), &GameMenu::onQuit);
-	buildButton(this, strip, 4, g_lang.get("SaveGame"), &GameMenu::onSaveGame);
+	buildButton(this, strip, 7, g_lang.get("ExitProgram"), &GameMenu::onExit);
+	buildButton(this, strip, 6, g_lang.get("QuitGame"), &GameMenu::onQuit);
+	buildButton(this, strip, 5, g_lang.get("SaveGame"), &GameMenu::onSaveGame);
+	buildButton(this, strip, 4, g_lang.get("PinWidgets"), &GameMenu::onPinWidgets);
 	buildButton(this, strip, 3, g_lang.get("TogglePhotoMode"), &GameMenu::onTogglePhotoMode);
 	buildButton(this, strip, 2, g_lang.get("ToggleDebug"), &GameMenu::onDebugToggle);
 	buildButton(this, strip, 1, g_lang.get("Options"), &GameMenu::onOptions);
@@ -59,6 +62,10 @@ GameMenu::GameMenu(Vec2i pos, Vec2i size)
 //	g_widgetWindow.setFloatingWidget(menu, true);
 //	return menu;
 //}
+
+void GameMenu::onPinWidgets(Widget*) {
+
+}
 
 void GameMenu::onReturnToGame(Widget*) {
 	g_gameState.toggleGameMenu();

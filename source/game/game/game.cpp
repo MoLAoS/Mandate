@@ -200,7 +200,7 @@ void GameState::init() {
 
 	int wh = g_widgetConfig.getDefaultItemHeight();
 
-	m_gameMenu = new GameMenu(Vec2i(g_metrics.getScreenDims() - size) / 2, Vec2i(wh * 8, wh * 9)); 
+	m_gameMenu = new GameMenu(); 
 	m_gameMenu->setVisible(false);
 
 	///@todo StaticText (?) for script message
