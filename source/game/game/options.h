@@ -34,7 +34,7 @@ public:
 	SpinnerValueBox(Container *parent) : StaticText(parent) {
 		setWidgetStyle(WidgetType::TEXT_BOX);
 	}
-	virtual void setStyle() override { setWidgetStyle(WidgetType::TOOLTIP); }
+	virtual void setStyle() override { setWidgetStyle(WidgetType::TEXT_BOX); }
 };
 
 // =====================================================

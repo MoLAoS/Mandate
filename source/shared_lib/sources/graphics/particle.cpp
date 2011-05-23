@@ -29,17 +29,6 @@ using namespace Shared::Util;
 
 namespace Shared{ namespace Graphics{
 
-static __cold __noreturn void puke(const char*options[], size_t optionCount,
-		const string &badValue, const string &typeDesc) {
-	stringstream str;
-	str << "\"" << badValue << "\" is not a valid " << typeDesc << ".  Valid values are: ";
-	for(size_t i = 0; i < optionCount; ++i) {
-		str << (i ? ", " : "") << options[i];
-	}
-	str << ".";
-	throw range_error(str.str());
-}
-
 // =====================================================
 //	class Particle
 // =====================================================
@@ -278,7 +267,7 @@ RainParticleSystem::RainParticleSystem(int particleCount)
 	initArray(ParticleUse::WEATHER);
 }
 
-void RainParticleSystem::initParticle(Particle *p, int particleIndex){
+void RainParticleSystem::initParticle(Particle *p, int particleIndex) {
 	ParticleSystem::initParticle(p, particleIndex);
 
 	float x = random.randRange(-radius, radius);

@@ -186,12 +186,8 @@ void Projectile::update() {
 			endPos = target->getCurrVector();
 		}
 		lastPos = pos;
-
 		assert(startFrame >= 0 && endFrame >= 0 && startFrame < endFrame);
-
 		float t = clamp((g_world.getFrameCount() - startFrame) / float(endFrame - startFrame), 0.f, 1.f);
-
-		Vec3f flatVector;
 
 		if (trajectory == TrajectoryType::RANDOM) {
 			Vec3f currentTargetVector = endPos - pos;
@@ -211,9 +207,8 @@ void Projectile::update() {
 
 			float lengthVariance = 1.f;//random.randRange(0.125f, 1.f);
 			//currentEmissionRate = (int)roundf(emissionRate * lengthVariance);
-			flatVector = newVector * (trajectorySpeed * lengthVariance);
+			Vec3f flatVector = newVector * (trajectorySpeed * lengthVariance);
 			flatPos = startPos + (endPos - startPos) * t + flatVector;
-			//flatPos += flatVector;
 		} else {
 			flatPos = startPos + (endPos - startPos) * t;
 		}

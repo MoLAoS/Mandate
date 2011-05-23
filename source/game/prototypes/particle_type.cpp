@@ -180,7 +180,7 @@ void ProjectileType::load(const string &dir, const string &path){
 		}
 
 		//trajectory speed
-		trajectorySpeed = trajectoryNode->getChildFloatValue("speed") / Config::getInstance().getGsWorldUpdateFps();
+		trajectorySpeed = trajectoryNode->getChildFloatValue("speed") / float(WORLD_FPS);
 
 		if (trajectory == TrajectoryType::PARABOLIC || trajectory == TrajectoryType::SPIRAL
 		|| trajectory == TrajectoryType::RANDOM) {

@@ -260,7 +260,7 @@ void Program::loop() {
 		// render
 		if (renderTimer.isTime()) {
 			{
-				_PROFILE_SCOPE("Program::loop() : Update Sound & Gui");
+				_PROFILE_SCOPE("Program::loop() : Update Sound");
 				SoundRenderer::getInstance().update();
 			}
 			if (visible) {
@@ -274,12 +274,13 @@ void Program::loop() {
 
 		// update camera
 		while (updateCameraTimer.isTime()) {
-			_PROFILE_SCOPE("Program::loop() : update camera");
+			_PROFILE_SCOPE("Program::loop() : Update Camera");
 			m_programState->updateCamera();
 		}
 
 		// update gui
 		while (guiUpdateTimer.isTime()) {
+			_PROFILE_SCOPE("Program::loop() : Update Gui");
 			WidgetWindow::update();
 		}
 

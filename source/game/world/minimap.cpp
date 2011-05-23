@@ -443,8 +443,7 @@ void Minimap::updateUnitTex() {
 	//	0, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8_REV, m_unitsTex->getPixmap()->getPixels());
 }
 
-void Minimap::computeTexture(const World *world){
-
+void Minimap::computeTexture(const World *world) {
 	Vec3f color;
 	const Map *map= world->getMap();
 
