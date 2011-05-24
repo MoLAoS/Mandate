@@ -53,7 +53,7 @@ void SliderThumb::setSize(const Vec2i &sz) {
 
 bool SliderThumb::mouseMove(Vec2i pos) {
 	Button::mouseMove(pos);
-	if (isFocused()) {
+	if (isEnabled() && isFocused()) {
 		int diff;
 		if (m_type == WidgetType::SLIDER_VERT_THUMB) {
 			diff = m_downPos.y - pos.y;
@@ -67,16 +67,20 @@ bool SliderThumb::mouseMove(Vec2i pos) {
 
 bool SliderThumb::mouseDown(MouseButton btn, Vec2i pos) {
 	Button::mouseDown(btn, pos);
-	if (btn == MouseButton::LEFT) {
-		m_downPos = pos;
+	if (isEnabled()) {
+		if (btn == MouseButton::LEFT) {
+			m_downPos = pos;
+		}
 	}
 	return true;
 }
 
 bool SliderThumb::mouseUp(MouseButton btn, Vec2i pos) {
 	Button::mouseUp(btn, pos);
-	if (btn == MouseButton::LEFT) {
-		m_downPos = Vec2i(-1);
+	if (isEnabled()) {
+		if (btn == MouseButton::LEFT) {
+			m_downPos = Vec2i(-1);
+		}
 	}
 	return true;
 }
@@ -168,27 +172,29 @@ void SliderShaft::setValue(int value) {
 }
 
 bool SliderShaft::mouseDown(MouseButton btn, Vec2i pos) {
-	Vec2i p = pos - getScreenPos();
-	if (btn == MouseButton::LEFT) {
-		if (p.x >= getBorderLeft() && p.x < getWidth() - getBorderRight()
-		&& p.y >= getBorderTop() && p.y < getHeight() - getBorderBottom()) {
-			Vec2i thumbPos = m_thumb->getScreenPos();
-			int diff;
-			if (m_type == WidgetType::SLIDER_VERT_SHAFT) {
-				diff = pos.y - (thumbPos.y + thumbSize / 2);
-			} else {
-				diff = pos.x - (thumbPos.x + thumbSize / 2);
+	if (isEnabled()) {
+		Vec2i p = pos - getScreenPos();
+		if (btn == MouseButton::LEFT) {
+			if (p.x >= getBorderLeft() && p.x < getWidth() - getBorderRight()
+			&& p.y >= getBorderTop() && p.y < getHeight() - getBorderBottom()) {
+				Vec2i thumbPos = m_thumb->getScreenPos();
+				int diff;
+				if (m_type == WidgetType::SLIDER_VERT_SHAFT) {
+					diff = pos.y - (thumbPos.y + thumbSize / 2);
+				} else {
+					diff = pos.x - (thumbPos.x + thumbSize / 2);
+				}
+				onThumbDragged(-diff);
+				m_dragPos = pos;
+				m_dragging = true;
 			}
-			onThumbDragged(-diff);
-			m_dragPos = pos;
-			m_dragging = true;
 		}
 	}
 	return true;
 }
 
 bool SliderShaft::mouseMove(Vec2i pos) {
-	if (m_dragging) {
+	if (isEnabled() && m_dragging) {
 		int diff;
 		if (m_type == WidgetType::SLIDER_VERT_SHAFT) {
 			diff = pos.y - m_dragPos.y;
