@@ -175,14 +175,18 @@ PlayerName=Nombre de Jugador
 CameraAltitude=Altitud de cámara
 Min=Min
 Max=Max
+RenderDistance=Dist. de Renderizado
+RenderFoV=Campo de visión
 MaxRenderFPS=Máximo FPS
 UseShaders=Usar shaders
 TerrainShader=Shader de terreno
 WaterShader=Shader de agua
 ModelShader=Shader de modelos
+Game=Juego
 Audio=Audio
 Video=Video
 Debug=Depuración
+Controls=Controles
 
 ; Misc
 Name=Nombre
@@ -332,8 +336,9 @@ Night=Noche
 ; Game menu
 GameMenu=Menú de Juego
 ReturnToGame=Volver al Juego
-ToggleDebug=Alternar Info de Depuracíon
+ToggleDebug=Alternar Depuración
 TogglePhotoMode=Alternar Modo de Foto
+PinWidgets=Echar Widgets
 SaveGame=Guardar Partida
 QuitGame=Salir Partida
 ExitProgram=Salir Programa
