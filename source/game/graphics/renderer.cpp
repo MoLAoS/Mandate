@@ -2039,6 +2039,8 @@ void Renderer::checkGlCaps(){
 	if(!isGlVersionSupported(1, 4, 0)){
 		checkExtension("GL_ARB_texture_env_crossbar", "Glest");
 	}
+
+	checkExtension("GL_ARB_imaging", "Blending");
 }
 
 void Renderer::checkGlOptionalCaps(){
