@@ -359,6 +359,7 @@ GameMenu=Game Menu
 ReturnToGame=Return to Game
 ToggleDebug=Toggle Debug Info
 TogglePhotoMode=Toggle Photo Mode
+PinWidgets=Pin Widgets
 SaveGame=Save Game
 QuitGame=Quit Game
 ExitProgram=Exit Program
