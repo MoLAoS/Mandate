@@ -1380,8 +1380,6 @@ void Unit::updateSkillCycle(const SkillCycleTable *skillCycleTable) {
 		}
 		updateMoveSkillCycle();
 	} else {
-		SurfaceType st = map->getCell(getPos())->getType();
-
 		updateSkillCycle(skillCycleTable->lookUp(this).getSkillFrames());
 	}
 }
