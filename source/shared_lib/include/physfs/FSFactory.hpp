@@ -36,6 +36,7 @@ using std::string;
 class FSFactory{
 	private:
 		static FSFactory *instance;
+		string m_configDir, m_dataDir;
 		
 		FSFactory();
 		static void shutdown();
@@ -54,6 +55,9 @@ class FSFactory{
 		ostream *getOStream(const char *fname);
 		
 		FileOps *getFileOps();
+
+		string getConfigDir() { return m_configDir; }
+		string getDataDir() { return m_dataDir; }
 
 		static vector<string> findAll(const string &path, bool cutExtension);
 		static bool fileExists(const string &path);

@@ -123,6 +123,9 @@ bool FSFactory::initPhysFS(const char *argv0, const string &configDir, string &d
 		}
 	}
 
+	m_configDir = configDir;
+	m_dataDir = dataDir;
+
 	// post search path
 	list = PHYSFS_getSearchPath();
 	for(char **i=list; *i; i++){
