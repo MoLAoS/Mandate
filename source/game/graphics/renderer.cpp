@@ -2040,7 +2040,7 @@ void Renderer::checkGlCaps(){
 		checkExtension("GL_ARB_texture_env_crossbar", "Glest");
 	}
 
-	checkExtension("GL_ARB_imaging", "Blending");
+	//checkExtension("GL_ARB_imaging", "Blending");
 }
 
 void Renderer::checkGlOptionalCaps(){
