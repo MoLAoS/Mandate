@@ -1941,7 +1941,7 @@ void Renderer::renderUnitsFast(bool renderingShadows) {
 
 			//render
 			const Model *model = unit->getCurrentModel();
-			model->updateInterpolationVertices(unit->getAnimProgress(), unit->isAlive());
+			model->updateInterpolationData(unit->getAnimProgress(), unit->isAlive());
 			modelRenderer->render(model);
 
 			glPopMatrix();

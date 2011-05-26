@@ -35,6 +35,7 @@ using namespace Util;
 
 LerpMethod meshLerpMethod;
 bool use_vbos;
+bool use_tangents;
 
 Vec3f* allocate_aligned_vec3_array(unsigned n) {
 	int numFloat = n * 3;
@@ -64,34 +65,17 @@ Mesh::Mesh() {
 
 /** delete VBOs and any remaining data in system RAM */
 Mesh::~Mesh() {
-	if (m_vertexBuffer) {
-		glDeleteBuffers(1, &m_vertexBuffer);
-	}
-	if (m_indexBuffer) {
-		glDeleteBuffers(1, &m_indexBuffer);
-	}
-	if (vertArrays) {
-		assert(normArrays);
-		for (int i=0; i < frameCount; ++i) {
-			free_aligned_vec3_array(vertArrays[i]);
-			free_aligned_vec3_array(normArrays[i]);
-		}
-		delete [] vertArrays;
-		delete [] normArrays;
-	}
-	delete [] vertices;
-	delete [] normals;
-	delete [] texCoords;
-	delete [] tangents;
-	delete [] indices;
 	delete interpolationData;
+	if (frameCount > 1) {
+		delete [] m_vertices_anim;
+	}
 }
 
-#define OUTPUT_MODEL_INFO(x)
-//#define OUTPUT_MODEL_INFO(x) cout << x
+//#define OUTPUT_MODEL_INFO(x)
+#define OUTPUT_MODEL_INFO(x) cout << x
 
-#define MESH_DEBUG(x)
-//#define MESH_DEBUG(x) cout << "\t\t\t" << x << endl
+//#define MESH_DEBUG(x)
+#define MESH_DEBUG(x) cout << "\t\t\t" << x << endl
 
 /** Allocate memory to read in mesh data, and generate VBO handles */
 void Mesh::initMemory() {
@@ -107,95 +91,138 @@ void Mesh::initMemory() {
 	MESH_DEBUG( "Mesh::initMemory() : vertexCount = " << vertexCount << ", indexCount = " <<  indexCount 
 				<< ", frameCount = " << frameCount );
 
-	if (use_vbos && frameCount == 1) {
-		glGenBuffers(1, &m_vertexBuffer);
-		glGenBuffers(1, &m_indexBuffer);
-		MESH_DEBUG( "Using VBOs, handles generated: vertexBuffer = " << m_vertexBuffer << ", indexBuffer = " << m_indexBuffer );
-	}
-	if ((use_vbos && frameCount == 1) || meshLerpMethod == LerpMethod::x87) {
-		if (meshLerpMethod == LerpMethod::x87) {
-			MESH_DEBUG( "Lerp method == x87, creating single vert and norm array." );
+	// generate buffer handles
+	if (use_vbos) {
+		if (frameCount == 1) {
+			glGenBuffers(1, &m_vertices_frame0.vbo_handle);
 		} else {
-			MESH_DEBUG( "Single frame, creating single vert and norm array." );
+			glGenBuffers(1, &m_texCoordData.vbo_handle);
+			// seperate tex-coords
 		}
-		vertices = new Vec3f[frameCount * vertexCount];
-		normals = new Vec3f[frameCount * vertexCount];
-	} else {
-		MESH_DEBUG( "Lerp method == SIMD, creating " << frameCount << " aligned vert and norm arrays." );
-		vertArrays = new Vec3f*[frameCount];
-		normArrays = new Vec3f*[frameCount];
-		for (int i=0; i < frameCount; ++i) {
-			vertArrays[i] = allocate_aligned_vec3_array(vertexCount);
-		}
-		for (int i=0; i < frameCount; ++i) {
-			normArrays[i] = allocate_aligned_vec3_array(vertexCount);
-		}
+		glGenBuffers(1, &m_indices.vbo_handle);
+		//MESH_DEBUG( "Using VBOs, handles generated: vertexBuffer = " << m_vertexBuffer << ", indexBuffer = " << m_indexBuffer );
 	}
-	texCoords = new Vec2f[vertexCount];
-	indices = new uint32[indexCount];
 }
 
-/** vert structure for "regular" meshes */
-struct ModelVertex {
-	Vec3f   m_position;
-	Vec3f   m_normal;
-	Vec2f   m_texCoord;
-};
-
-/** vert structure for meshes with bump mapping */
-struct ModelVertex_bump {
-	Vec3f   m_position;
-	Vec3f   m_normal;
-	Vec3f   m_tangent;
-	Vec2f   m_texCoord;
-};
-
-/** vert structure for 'next frame' info (when lerping on GPU) */
-struct ExtraVertex {
-	Vec3f   m_position;
-	Vec3f   m_normal;
-};
-
-/** vert structure for 'next frame' info with bump mapping */
-struct ExtraVertex_bump {
-	Vec3f   m_position;
-	Vec3f   m_normal;
-	Vec3f   m_tangent;
-};
-
 /** Fill vertex and index VBOs and delete system RAM copies */
-void Mesh::fillBuffers() {
-	if (!m_vertexBuffer) {
-		assert(!m_indexBuffer);
-		return;
+void Mesh::fillBuffers(Vec3f *vertices, Vec3f *normals, Vec3f *tangents, Vec2f *texCoords, uint32 *indices) {
+
+	if (use_tangents && tangents) {
+
+		if (frameCount > 1) {
+			// fill tex-coord buffer
+			m_texCoordData.init(MeshVertexBlock::UV, vertexCount);
+			for (int i=0; i < vertexCount; ++i) {
+				m_texCoordData.m_texOnly[i].uv = texCoords[i];
+			}
+			if (use_vbos) {
+				glBindBuffer(GL_ARRAY_BUFFER, m_texCoordData.vbo_handle);
+				int buffSize = sizeof(Vertex_U) * vertexCount;
+				glBufferData(GL_ARRAY_BUFFER, buffSize, m_texCoordData.m_arrayPtr, GL_STATIC_DRAW);
+				glBindBuffer(GL_ARRAY_BUFFER, 0);
+				m_texCoordData.freeMemory();
+			}
+			// fill interleaved arrays (Vertex_PNT)
+			m_vertices_anim = new MeshVertexBlock[frameCount];
+			for (int i=0; i < frameCount; ++i) {
+				m_vertices_anim[i].init(MeshVertexBlock::POS_NORM_TAN, vertexCount);
+				Vertex_PNT *vertData = m_vertices_anim[i].m_posNormTan;
+				for (int j=0; j < vertexCount; ++j) {
+					vertData[j].pos = vertices[i * vertexCount + j];
+					vertData[j].norm = normals[i * vertexCount + j];
+					vertData[j].tan = tangents[i * vertexCount + j];
+				}
+			}
+		} else {
+			// fill interleaved array (Vertex_PNTU)
+			m_vertices_frame0.init(MeshVertexBlock::POS_NORM_TAN_UV, vertexCount);
+			Vertex_PNTU *vertData = m_vertices_frame0.m_posNormTanTex;
+			for (int i=0; i < vertexCount; ++i) {
+				vertData[i].pos = vertices[i];
+				vertData[i].norm = normals[i];
+				vertData[i].uv = texCoords[i];
+				vertData[i].tan = tangents[i];
+			}
+			if (use_vbos) {
+				glBindBuffer(GL_ARRAY_BUFFER, m_vertices_frame0.vbo_handle);
+				int buffSize = sizeof(Vertex_PNTU) * vertexCount;
+				glBufferData(GL_ARRAY_BUFFER, buffSize, (void*)vertData, GL_STATIC_DRAW);
+				glBindBuffer(GL_ARRAY_BUFFER, 0);
+				m_vertices_frame0.freeMemory();
+			}
+		}
+
+	} else {
+
+		if (frameCount > 1) {
+			// fill tex-coord buffer
+			m_texCoordData.init(MeshVertexBlock::UV, vertexCount);
+			for (int i=0; i < vertexCount; ++i) {
+				m_texCoordData.m_texOnly[i].uv = texCoords[i];
+			}
+			if (use_vbos) {
+				glBindBuffer(GL_ARRAY_BUFFER, m_texCoordData.vbo_handle);
+				int buffSize = sizeof(Vertex_U) * vertexCount;
+				glBufferData(GL_ARRAY_BUFFER, buffSize, m_texCoordData.m_arrayPtr, GL_STATIC_DRAW);
+				glBindBuffer(GL_ARRAY_BUFFER, 0);
+				m_texCoordData.freeMemory();
+			}
+
+			// fill interleaved arrays (Vertex_PN)
+			m_vertices_anim = new MeshVertexBlock[frameCount];
+			for (int i=0; i < frameCount; ++i) {
+				m_vertices_anim[i].init(MeshVertexBlock::POS_NORM, vertexCount);
+				Vertex_PN *vertData = m_vertices_anim[i].m_posNorm;
+				for (int j=0; j < vertexCount; ++j) {
+					vertData[j].pos = vertices[i * vertexCount + j];
+					vertData[j].norm = normals[i * vertexCount + j];
+				}
+			}
+		} else {
+			// fill interleaved array (Vertex_PNU)
+			m_vertices_frame0.init(MeshVertexBlock::POS_NORM_UV, vertexCount);
+			Vertex_PNU *vertData = m_vertices_frame0.m_posNormTex;
+			for (int i=0; i < vertexCount; ++i) {
+				vertData[i].pos = vertices[i];
+				vertData[i].norm = normals[i];
+				vertData[i].uv = texCoords[i];
+			}
+			if (use_vbos) {
+				glBindBuffer(GL_ARRAY_BUFFER, m_vertices_frame0.vbo_handle);
+				int buffSize = sizeof(Vertex_PNU) * vertexCount;
+				glBufferData(GL_ARRAY_BUFFER, buffSize, (void*)vertData, GL_STATIC_DRAW);
+				glBindBuffer(GL_ARRAY_BUFFER, 0);
+				m_vertices_frame0.freeMemory();
+			}
+		}
 	}
-	assert(m_indexBuffer && vertices && normals && !vertArrays && !normArrays);
 
-	ModelVertex *vertData = new ModelVertex[vertexCount];
-	for (int i=0; i < vertexCount; ++i) {
-		vertData[i].m_position = vertices[i];
-		vertData[i].m_normal = normals[i];
-		vertData[i].m_texCoord = texCoords[i];
+	if (vertexCount < 65536) {
+		m_indices.init(MeshIndexBlock::UNSIGNED_16, indexCount);
+		for (int i=0; i < indexCount; ++i) {
+			m_indices.m_16bit_indices[i] = (uint16)indices[i];
+		}
+		if (use_vbos) {
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_indices.vbo_handle);
+			glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint16) * indexCount, m_indices.m_indices, GL_STATIC_DRAW);
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+		}
+	} else {
+		m_indices.init(MeshIndexBlock::UNSIGNED_32, m_indices.vbo_handle);
+		for (int i=0; i < indexCount; ++i) {
+			m_indices.m_32bit_indices[i] = (uint32)indices[i];
+		}
+		if (use_vbos) {
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_indices.vbo_handle);
+			glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint32) * indexCount, m_indices.m_indices, GL_STATIC_DRAW);
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+		}
 	}
-	glBindBuffer(GL_ARRAY_BUFFER, m_vertexBuffer);
-	int buffSize = sizeof(ModelVertex) * vertexCount;
-	glBufferData(GL_ARRAY_BUFFER, buffSize, (void*)vertData, GL_STATIC_DRAW);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	delete [] vertData;
-
-	///@todo probably wont ever actually need 32 bit uints for this, 16 should be sufficient
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_indexBuffer);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint32) * indexCount, (void*)indices, GL_STATIC_DRAW);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
 	delete [] vertices;
-	vertices = 0;
 	delete [] normals;
-	normals = 0;
+	delete [] tangents;
 	delete [] texCoords;
-	texCoords = 0;
 	delete [] indices;
-	indices = 0;
 }
 
 /** somewhat hacky way to load textures into the specular, normal and 2 custom slots */
@@ -238,20 +265,30 @@ void Mesh::loadAdditionalTextures(const string &diffusePath, TextureManager *tex
 // ========================== shadows & interpolation =========================
 
 void Mesh::buildInterpolationData() {
-	interpolationData = new InterpolationData(this);
+	if (frameCount > 1) {
+		interpolationData = new InterpolationData(this);
+	}
 }
 
 void Mesh::updateInterpolationData(float t, bool cycle) const {
-	interpolationData->update(t, cycle);
+	if (frameCount > 1) {
+		interpolationData->update(t, cycle);
+	}
 }
 
-void Mesh::updateInterpolationVertices(float t, bool cycle) const {
-	interpolationData->updateVertices(t, cycle);
-}
+//void Mesh::updateInterpolationVertices(float t, bool cycle) const {
+//	interpolationData->updateVertices(t, cycle);
+//}
 
 // ==================== load ====================
 
 void Mesh::loadV3(const string &dir, FileOps *f, TextureManager *textureManager) {
+	Vec3f *vertices = 0;
+	Vec3f *normals = 0;
+	Vec2f *texCoords = 0;
+	Vec3f *tangents = 0;
+	uint32 *indices = 0;
+
 	// read header
 	MeshHeaderV3 meshHeader;
 	f->read(&meshHeader, sizeof(MeshHeaderV3), 1);
@@ -265,6 +302,10 @@ void Mesh::loadV3(const string &dir, FileOps *f, TextureManager *textureManager)
 	indexCount = meshHeader.indexCount;
 
 	initMemory();
+	vertices = new Vec3f[frameCount * vertexCount];
+	normals = new Vec3f[frameCount * vertexCount];
+	texCoords = new Vec2f[vertexCount];
+	indices = new uint32[indexCount];
 
 	MESH_DEBUG( "Reading flags." );
 
@@ -288,35 +329,10 @@ void Mesh::loadV3(const string &dir, FileOps *f, TextureManager *textureManager)
 	}
 
 	// read data
-	if (meshLerpMethod == LerpMethod::SIMD && vertArrays) {
-		assert(sizeof(Vec3f) == 12);
-		int frameRead = sizeof(Vec3f) * vertexCount;
-		int nFloats = vertexCount * 3;
-		int framePad = nFloats % 4 == 0 ? 0 : 4 - (nFloats % 4);
-		MESH_DEBUG( "Reading data into aligned arrays." );
-		MESH_DEBUG( "Vertex position data: Reading " << nFloats << " floats per array, padding arrays with " << framePad << " 'zero' floats." );
-		for (int i=0; i < frameCount; ++i) {
-			f->read(vertArrays[i], frameRead, 1);
-			float *ptr = vertArrays[i][vertexCount].raw;
-			for (int j=0; j < framePad; ++j) {
-				*ptr++ = 0.f;
-			}
-		}
-		MESH_DEBUG( "Vertex normal data: Reading " << nFloats << " floats per array, padding arrays with " << framePad << " 'zero' floats." );
-		for (int i=0; i < frameCount; ++i) {
-			f->read(normArrays[i], frameRead, 1);
-			float *ptr = normArrays[i][vertexCount].raw;
-			for (int j=0; j < framePad; ++j) {
-				*ptr++ = 0.f;
-			}
-		}
-	} else {
-		size_t vfCount = frameCount * vertexCount;
-		MESH_DEBUG( "Reading data into arrays." );
-		MESH_DEBUG( "Vertex position and normal data: Reading " << (vfCount * 6) << " floats into arrays." );
-		f->read(vertices, sizeof(Vec3f)*vfCount, 1);
-		f->read(normals, sizeof(Vec3f)*vfCount, 1);
-	}
+	size_t vfCount = frameCount * vertexCount;
+	MESH_DEBUG( "Vertex position and normal data: Reading " << (vfCount * 6) << " floats into arrays." );
+	f->read(vertices, sizeof(Vec3f)*vfCount, 1);
+	f->read(normals, sizeof(Vec3f)*vfCount, 1);
 	if (textures[MeshTexture::DIFFUSE] != 0) {
 		int n = meshHeader.texCoordFrameCount * vertexCount * 2;
 		MESH_DEBUG( "Texture co-ordinate data: Reading " << n << " floats into array(s)." );
@@ -332,13 +348,19 @@ void Mesh::loadV3(const string &dir, FileOps *f, TextureManager *textureManager)
 	f->read(indices, sizeof(uint32)*indexCount, 1);
 
 	if (textures[MeshTexture::NORMAL]) {
-		computeTangents();
+		computeTangents(vertices, texCoords, indices, tangents);
 	}
-	fillBuffers();
+	fillBuffers(vertices, normals, tangents, texCoords, indices);
 }
 
 // G3D V4
 void Mesh::load(const string &dir, FileOps *f, TextureManager *textureManager){
+	Vec3f *vertices = 0;
+	Vec3f *normals = 0;
+	Vec2f *texCoords = 0;
+	Vec3f *tangents = 0;
+	uint32 *indices = 0;
+
 	// read header
 	MeshHeader meshHeader;
 	if (f->read(&meshHeader, sizeof(MeshHeader), 1) != 1) {
@@ -351,6 +373,10 @@ void Mesh::load(const string &dir, FileOps *f, TextureManager *textureManager){
 	indexCount = meshHeader.indexCount;
 
 	initMemory();
+	vertices = new Vec3f[frameCount * vertexCount];
+	normals = new Vec3f[frameCount * vertexCount];
+	texCoords = new Vec2f[vertexCount];
+	indices = new uint32[indexCount];
 
 	// properties
 	customColor = (meshHeader.properties & mpfCustomColor) != 0;
@@ -387,42 +413,14 @@ void Mesh::load(const string &dir, FileOps *f, TextureManager *textureManager){
 	}
 
 	// read data. (Assume packed vectors)
-	if (meshLerpMethod == LerpMethod::SIMD && vertArrays) {
-		assert(sizeof(Vec3f) == 12);
-		int frameRead = sizeof(Vec3f) * vertexCount;
-		int nFloats = vertexCount * 3;
-		int framePad = nFloats % 4 == 0 ? 0 : 4 - (nFloats % 4);
-
-		for (int i=0; i < frameCount; ++i) {
-			if (f->read(vertArrays[i], frameRead, 1) != 1) {
-				throw runtime_error("error reading mesh, insufficient vertex data.");
-				//cout << "read() Failed! getLastError() == " << f->getLastError() << endl;
-			}
-			float *ptr = vertArrays[i][vertexCount].raw;
-			for (int j=0; j < framePad; ++j) {
-				*ptr++ = 0.f;
-			}
+	size_t vfCount = frameCount * vertexCount;
+	if (vfCount) {
+		if (f->read(vertices, 12 * vfCount, 1) != 1) {
+			throw runtime_error("error reading mesh, insufficient vertex data.");
 		}
-		for (int i=0; i < frameCount; ++i) {
-			if (f->read(normArrays[i], frameRead, 1) != 1) {
-				throw runtime_error("error reading mesh, insufficient normal vector data.");
-				//cout << "read() Failed! getLastError() == " << f->getLastError() << endl;
-			}
-			float *ptr = normArrays[i][vertexCount].raw;
-			for (int j=0; j < framePad; ++j) {
-				*ptr++ = 0.f;
-			}
-		}
-	} else {
-		size_t vfCount = frameCount * vertexCount;
-		if (vfCount) {
-			if (f->read(vertices, 12 * vfCount, 1) != 1) {
-				throw runtime_error("error reading mesh, insufficient vertex data.");
-			}
-			//cout << "reading " << (vfCount * 12) << " bytes of normal data.\n";
-			if (f->read(normals, 12 * vfCount, 1) != 1) {
-				throw runtime_error("error reading mesh, insufficient normal vector data.");
-			}
+		//cout << "reading " << (vfCount * 12) << " bytes of normal data.\n";
+		if (f->read(normals, 12 * vfCount, 1) != 1) {
+			throw runtime_error("error reading mesh, insufficient normal vector data.");
 		}
 	}
 
@@ -435,9 +433,9 @@ void Mesh::load(const string &dir, FileOps *f, TextureManager *textureManager){
 		}
 	}
 	if (textures[MeshTexture::NORMAL]) {
-		computeTangents();
+		computeTangents(vertices, texCoords, indices, tangents);
 	}
-	fillBuffers();
+	fillBuffers(vertices, normals, tangents, texCoords, indices);
 }
 
 void Mesh::buildCube(int size, int height, Texture2D *tex) {
@@ -445,12 +443,11 @@ void Mesh::buildCube(int size, int height, Texture2D *tex) {
 	vertexCount = 5 * 4;
 	indexCount = 5 * 6;
 
-	vertArrays = new Vec3f*[frameCount];
-	normArrays = new Vec3f*[frameCount];
-	vertArrays[0] = allocate_aligned_vec3_array(vertexCount);
-	normArrays[0] = allocate_aligned_vec3_array(vertexCount);
-	texCoords = new Vec2f[vertexCount];
-	indices = new uint32[indexCount];
+	Vec3f *vertArray = allocate_aligned_vec3_array(vertexCount);
+	Vec3f *normArray = allocate_aligned_vec3_array(vertexCount);
+
+	Vec2f *texCoords = new Vec2f[vertexCount];
+	uint32 *indices = new uint32[indexCount];
 
 	// normals
 	Vec3f	up(0.f, 1.f, 0.f),
@@ -472,12 +469,12 @@ void Mesh::buildCube(int size, int height, Texture2D *tex) {
 	int i = 0;
 
 	// top face
-	vertArrays[0][0] = Vec3f(-xzDist, yDist, -xzDist);
-	vertArrays[0][1] = Vec3f(xzDist,  yDist, -xzDist);
-	vertArrays[0][2] = Vec3f(-xzDist, yDist, xzDist);
-	vertArrays[0][3] = Vec3f(xzDist,  yDist, xzDist);
+	vertArray[0] = Vec3f(-xzDist, yDist, -xzDist);
+	vertArray[1] = Vec3f(xzDist,  yDist, -xzDist);
+	vertArray[2] = Vec3f(-xzDist, yDist, xzDist);
+	vertArray[3] = Vec3f(xzDist,  yDist, xzDist);
 	for (; n < 4; ++n) {
-		normArrays[0][n] = up;
+		normArray[n] = up;
 		texCoords[n] = tCoord[n % 4];
 	}
 	indices[0] = 2;
@@ -488,12 +485,12 @@ void Mesh::buildCube(int size, int height, Texture2D *tex) {
 	indices[5] = 3;
 
 	// 'north' face
-	vertArrays[0][4] = Vec3f(-xzDist,	0.f, xzDist);
-	vertArrays[0][5] = Vec3f(-xzDist, yDist, xzDist);
-	vertArrays[0][6] = Vec3f(xzDist,	0.f, xzDist);
-	vertArrays[0][7] = Vec3f(xzDist,  yDist, xzDist);
+	vertArray[4] = Vec3f(-xzDist,	0.f, xzDist);
+	vertArray[5] = Vec3f(-xzDist, yDist, xzDist);
+	vertArray[6] = Vec3f(xzDist,	0.f, xzDist);
+	vertArray[7] = Vec3f(xzDist,  yDist, xzDist);
 	for (; n < 8; ++n) {
-		normArrays[0][n] = north;
+		normArray[n] = north;
 		texCoords[n] = tCoord[n % 4];
 	}
 	indices[6]  = 6;
@@ -504,12 +501,12 @@ void Mesh::buildCube(int size, int height, Texture2D *tex) {
 	indices[11] = 7;
 
 	// 'east' face
-	vertArrays[0][8] = Vec3f(xzDist,    0.f, xzDist);
-	vertArrays[0][9] = Vec3f(xzDist,  yDist, xzDist);
-	vertArrays[0][10] = Vec3f(xzDist,   0.f, -xzDist);
-	vertArrays[0][11] = Vec3f(xzDist, yDist, -xzDist);
+	vertArray[8] = Vec3f(xzDist,    0.f, xzDist);
+	vertArray[9] = Vec3f(xzDist,  yDist, xzDist);
+	vertArray[10] = Vec3f(xzDist,   0.f, -xzDist);
+	vertArray[11] = Vec3f(xzDist, yDist, -xzDist);
 	for (; n < 12; ++n) {
-		normArrays[0][n] = east;
+		normArray[n] = east;
 		texCoords[n] = tCoord[n % 4];
 	}
 	indices[12] = 10;
@@ -520,12 +517,12 @@ void Mesh::buildCube(int size, int height, Texture2D *tex) {
 	indices[17] = 11;
 
 	// south
-	vertArrays[0][12] = Vec3f(xzDist,	 0.f, -xzDist);
-	vertArrays[0][13] = Vec3f(xzDist, yDist, -xzDist);
-	vertArrays[0][14] = Vec3f(-xzDist,	 0.f, -xzDist);
-	vertArrays[0][15] = Vec3f(-xzDist,  yDist, -xzDist);
+	vertArray[12] = Vec3f(xzDist,	 0.f, -xzDist);
+	vertArray[13] = Vec3f(xzDist, yDist, -xzDist);
+	vertArray[14] = Vec3f(-xzDist,	 0.f, -xzDist);
+	vertArray[15] = Vec3f(-xzDist,  yDist, -xzDist);
 	for (; n < 16; ++n) {
-		normArrays[0][n] = south;
+		normArray[n] = south;
 		texCoords[n] = tCoord[n % 4];
 	}
 	indices[18] = 14;
@@ -536,12 +533,12 @@ void Mesh::buildCube(int size, int height, Texture2D *tex) {
 	indices[23] = 15;
 
 	// west
-	vertArrays[0][16] = Vec3f(-xzDist,    0.f, -xzDist);
-	vertArrays[0][17] = Vec3f(-xzDist,  yDist, -xzDist);
-	vertArrays[0][18] = Vec3f(-xzDist,    0.f, xzDist);
-	vertArrays[0][19] = Vec3f(-xzDist,  yDist, xzDist);
+	vertArray[16] = Vec3f(-xzDist,    0.f, -xzDist);
+	vertArray[17] = Vec3f(-xzDist,  yDist, -xzDist);
+	vertArray[18] = Vec3f(-xzDist,    0.f, xzDist);
+	vertArray[19] = Vec3f(-xzDist,  yDist, xzDist);
 	for (; n < 20; ++n) {
-		normArrays[0][n] = west;
+		normArray[n] = west;
 		texCoords[n] = tCoord[n % 4];
 	}
 	indices[24] = 18;
@@ -557,42 +554,43 @@ void Mesh::buildCube(int size, int height, Texture2D *tex) {
 	this->specularPower = 0.5f;
 	this->opacity = 1.f;
 	this->twoSided = false;
+
+	fillBuffers(vertArray, normArray, 0, texCoords, indices);
 }
 
-void Mesh::computeTangents() {
-	delete [] tangents;
-	tangents= new Vec3f[vertexCount];
-	for(unsigned int i=0; i<vertexCount; ++i){
-		tangents[i]= Vec3f(0.f);
+void Mesh::computeTangents(Vec3f *verts, Vec2f *texCoords, uint32 *indices, Vec3f *&tangents) {
+	tangents = new Vec3f[vertexCount * frameCount];
+	for (unsigned int i=0; i < vertexCount * frameCount; ++i) {
+		tangents[i] = Vec3f(0.f);
 	}
+	for (int frame = 0; frame < frameCount; ++frame) {
+		unsigned int indexBase = frame * vertexCount;
+		for (unsigned int i=0; i < indexCount; i += 3) {
+			for (int j=0; j < 3; ++j) {
+				uint32 i0= indices[i+j];
+				uint32 i1= indices[i+(j+1)%3];
+				uint32 i2= indices[i+(j+2)%3];
 
-	Vec3f *verts = vertices ? vertices : vertArrays[0];
+				Vec3f p0 = verts[indexBase + i0];
+				Vec3f p1 = verts[indexBase + i1];
+				Vec3f p2 = verts[indexBase + i2];
 
-	for(unsigned int i=0; i<indexCount; i+=3){
-		for(int j=0; j<3; ++j){
-			uint32 i0= indices[i+j];
-			uint32 i1= indices[i+(j+1)%3];
-			uint32 i2= indices[i+(j+2)%3];
+				float u0= texCoords[i0].x;
+				float u1= texCoords[i1].x;
+				float u2= texCoords[i2].x;
 
-			Vec3f p0 = verts[i0];
-			Vec3f p1 = verts[i1];
-			Vec3f p2 = verts[i2];
+				float v0= texCoords[i0].y;
+				float v1= texCoords[i1].y;
+				float v2= texCoords[i2].y;
 
-			float u0= texCoords[i0].x;
-			float u1= texCoords[i1].x;
-			float u2= texCoords[i2].x;
-
-			float v0= texCoords[i0].y;
-			float v1= texCoords[i1].y;
-			float v2= texCoords[i2].y;
-
-			tangents[i0]+=
-				((p2-p0)*(v1-v0)-(p1-p0)*(v2-v0))/
-				((u2-u0)*(v1-v0)-(u1-u0)*(v2-v0));
+				tangents[indexBase + i0]+=
+					((p2-p0)*(v1-v0)-(p1-p0)*(v2-v0))/
+					((u2-u0)*(v1-v0)-(u1-u0)*(v2-v0));
+			}
 		}
 	}
 
-	for(unsigned int i=0; i<vertexCount; ++i){
+	for (unsigned int i=0; i < vertexCount * frameCount; ++i) {
 		/*Vec3f binormal= normals[i].cross(tangents[i]);
 		tangents[i]+= binormal.cross(normals[i]);*/
 		tangents[i].normalize();

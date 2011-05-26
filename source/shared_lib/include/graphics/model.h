@@ -39,9 +39,155 @@ WRAPPED_ENUM( LerpMethod, x87, SIMD, GLSL );
 extern LerpMethod meshLerpMethod;
 
 extern bool use_vbos;
+extern bool use_tangents;
 
 Vec3f* allocate_aligned_vec3_array(unsigned n);
 void free_aligned_vec3_array(Vec3f *ptr);
+
+struct Vertex_U {
+	Vec2f uv;
+};
+
+struct Vertex_PN {
+	Vec3f pos;
+	Vec3f norm;
+};
+
+struct Vertex_PNU {
+	Vec3f pos;
+	Vec3f norm;
+	Vec2f uv;
+};
+
+struct Vertex_PNT {
+	Vec3f pos;
+	Vec3f norm;
+	Vec3f tan;
+};
+
+struct Vertex_PNTU {
+	Vec3f pos;
+	Vec3f norm;
+	Vec3f tan;
+	Vec2f uv;
+};
+
+static const int uvOffsets[6] = { -1, 0, -1, 6, -1, 9 };
+
+struct MeshVertexBlock {
+	enum Type { NONE, UV, POS_NORM, POS_NORM_UV, POS_NORM_TAN, POS_NORM_TAN_UV };
+	Type type;
+	int  count;
+	GLuint vbo_handle;
+	union {
+		void        *m_arrayPtr;
+		Vertex_U    *m_texOnly;
+		Vertex_PN   *m_posNorm;
+		Vertex_PNU  *m_posNormTex;
+		Vertex_PNT  *m_posNormTan;
+		Vertex_PNTU *m_posNormTanTex;
+	};
+
+	MeshVertexBlock() : type(NONE), count(0), m_texOnly(0), vbo_handle(0) {}
+
+	~MeshVertexBlock() {
+		freeMemory();
+		if (vbo_handle != 0) {
+			glDeleteBuffers(1, &vbo_handle);
+		}
+	}
+
+	int getStride() const {
+		switch (type) {
+			case UV:
+				return sizeof(Vertex_U);
+			case POS_NORM:
+				return sizeof(Vertex_PN);
+			case POS_NORM_UV:
+				return sizeof(Vertex_PNU);
+			case POS_NORM_TAN:
+				return sizeof(Vertex_PNT);
+			case POS_NORM_TAN_UV:
+				return sizeof(Vertex_PNTU);
+		}		
+	}
+
+	int getUvOffset() const { return uvOffsets[type]; }
+
+	void init(Type type, unsigned count) {
+		this->type = type;
+		this->count = count;
+		Vec3f *p;
+		switch (type) {
+			case UV:
+				m_texOnly = new Vertex_U[count]; break;
+			case POS_NORM:
+				p = allocate_aligned_vec3_array(count * 2);
+				m_posNorm = reinterpret_cast<Vertex_PN*>(p); break;
+			case POS_NORM_UV:
+				m_posNormTex = new Vertex_PNU[count]; break;
+			case POS_NORM_TAN:
+				p = allocate_aligned_vec3_array(count * 3);
+				m_posNormTan = reinterpret_cast<Vertex_PNT*>(p); break;
+			case POS_NORM_TAN_UV:
+				m_posNormTanTex = new Vertex_PNTU[count]; break;
+		}
+	}
+
+	void freeMemory() {
+		switch (type) {
+			case UV:
+				delete [] m_texOnly; break;
+			case POS_NORM_UV:
+				delete [] m_posNormTex; break;
+			case POS_NORM_TAN_UV:
+				delete [] m_posNormTanTex; break;
+			case POS_NORM:
+				free_aligned_vec3_array((Vec3f*)m_arrayPtr); break;
+			case POS_NORM_TAN:
+				free_aligned_vec3_array((Vec3f*)m_arrayPtr); break;
+		}
+		m_arrayPtr = 0;
+	}
+};
+
+struct MeshIndexBlock {
+	enum IndexType { UNSIGNED_16, UNSIGNED_32 };
+	IndexType type;
+	unsigned count;
+	GLuint vbo_handle;
+	union {
+		void    *m_indices;
+		uint16  *m_16bit_indices;
+		uint32  *m_32bit_indices;
+	};
+
+	MeshIndexBlock() : type(UNSIGNED_16), count(0), m_indices(0), vbo_handle(0) { }
+
+	~MeshIndexBlock() {
+		delete [] m_indices;
+		m_indices = 0;
+		if (vbo_handle != 0) {
+			glDeleteBuffers(1, &vbo_handle);
+		}
+	}
+
+	void init(IndexType type, unsigned count) {
+		this->type = type;
+		this->count = count;
+		switch (type) {
+			case UNSIGNED_16:
+				m_16bit_indices = new uint16[count]; break;
+			case UNSIGNED_32:
+				m_32bit_indices = new uint32[count]; break;
+		}
+	}
+
+	void freeMemory() {
+		delete [] m_indices;
+		m_indices = 0;
+	}
+};
 
 // =====================================================
 // class Mesh
@@ -61,20 +207,25 @@ private:
 	uint32 indexCount;
 
 	// vertex data
-	Vec3f **vertArrays; // if using SIMD interpolation
-	Vec3f **normArrays;
+	MeshVertexBlock m_vertices_frame0;
+	MeshVertexBlock *m_vertices_anim;
+	MeshVertexBlock m_texCoordData;
+	MeshIndexBlock  m_indices;
 
-	Vec3f *vertices;	// if using x87 interpolation
-	Vec3f *normals;
+	//Vec3f **vertArrays; // if using SIMD interpolation
+	//Vec3f **normArrays;
 
-	GLuint *m_vertBuffers;  // if using GLSL interpolation (VBO handles for each frame)
+	//Vec3f *vertices;	// if using x87 interpolation
+	//Vec3f *normals;
 
-	GLuint	m_vertexBuffer; // vertex buffer handle if static mesh (single frame)
-	GLuint  m_indexBuffer;  // index buffer handle if static mesh (single frame)
+	//GLuint *m_vertBuffers;  // if using GLSL interpolation (VBO handles for each frame)
 
-	Vec2f *texCoords;
-	Vec3f *tangents;
-	uint32 *indices;
+	//GLuint	m_vertexBuffer; // vertex buffer handle if static mesh (single frame)
+	//GLuint  m_indexBuffer;  // index buffer handle
+
+	//Vec2f *texCoords;
+	//Vec3f *tangents;
+	//uint32 *indices;
 
 	// material data
 	Vec3f diffuseColor;
@@ -91,9 +242,9 @@ private:
 
 private:
 	void initMemory();
-	void fillBuffers();
+	void fillBuffers(Vec3f *pos, Vec3f *norm, Vec3f *tan, Vec2f *uv, uint32 *indices);
 	void loadAdditionalTextures(const string &dtPath, TextureManager *textureManager);
-	void computeTangents();
+	void computeTangents(Vec3f *verts, Vec2f *uvs, uint32 *indices, Vec3f *&tangents);
 
 public:
 	// init & end
@@ -111,27 +262,37 @@ public:
 	uint32 getTriangleCount() const;
 
 	// data
-	// simd interpolated mesh
-	const Vec3f *getVertArray(int n) const	{return vertArrays[n]; }
-	const Vec3f *getNormArray(int n) const	{return normArrays[n]; }
+	MeshVertexBlock& getStaticVertData() { return m_vertices_frame0; }
+	MeshVertexBlock& getAnimVertBlock(int i) { return m_vertices_anim[i]; }
+	MeshVertexBlock& getTecCoordBlock() { return m_texCoordData; }
+	MeshIndexBlock&  getIndices() { return m_indices; }
 
-	// x87 interpolated mesh
-	const Vec3f *getVertices() const 		{return vertices;}
-	const Vec3f *getNormals() const 		{return normals;}
+	const MeshVertexBlock& getStaticVertData() const { return m_vertices_frame0; }
+	const MeshVertexBlock& getAnimVertBlock(int i) const { return m_vertices_anim[i]; }
+	const MeshVertexBlock& getTecCoordBlock() const { return m_texCoordData; }
+	const MeshIndexBlock&  getIndices() const { return m_indices; }
 
-	// simd or x87 versions
-	const Vec2f *getTexCoords() const		{return texCoords;}
-	const Vec3f *getTangents() const		{return tangents;}
-	const uint32 *getIndices() const 		{return indices;}
-	
-	// VBO handles, for static meshes only atm
-	GLuint getVertexBuffer() const       { return m_vertexBuffer; }
-	GLuint getIndexBuffer() const        { return m_indexBuffer; }
+	//// simd interpolated mesh
+	//const Vec3f *getVertArray(int n) const	{return vertArrays[n]; }
+	//const Vec3f *getNormArray(int n) const	{return normArrays[n]; }
 
-	GLuint getVertBuffer(unsigned i) const {
-		assert(m_vertBuffers && i < frameCount);
-		return m_vertBuffers[i];
-	}
+	//// x87 interpolated mesh
+	//const Vec3f *getVertices() const 		{return vertices;}
+	//const Vec3f *getNormals() const 		{return normals;}
+
+	//// simd or x87 versions
+	//const Vec2f *getTexCoords() const		{return texCoords;}
+	//const Vec3f *getTangents() const		{return tangents;}
+	//const uint32 *getIndices() const 		{return indices;}
+	//
+	//// VBO handles, for static meshes only atm
+	//GLuint getVertexBuffer() const       { return m_vertexBuffer; }
+	//GLuint getIndexBuffer() const        { return m_indexBuffer; }
+
+	//GLuint getVertBuffer(unsigned i) const {
+	//	assert(m_vertBuffers && i < frameCount);
+	//	return m_vertBuffers[i];
+	//}
 
 	// material
 	const Vec3f &getDiffuseColor() const	{return diffuseColor;}
@@ -150,7 +311,7 @@ public:
 	// interpolation
 	void buildInterpolationData();
 	void updateInterpolationData(float t, bool cycle) const;
-	void updateInterpolationVertices(float t, bool cycle) const;
+	//void updateInterpolationVertices(float t, bool cycle) const;
 
 	// load
 	void loadV3(const string &dir, FileOps *f, TextureManager *textureManager);
@@ -189,11 +350,11 @@ public:
 			meshes[i].updateInterpolationData(t, cycle);
 		}
 	}
-	void updateInterpolationVertices(float t, bool cycle) const {
-		for (int i = 0; i < meshCount; ++i) {
-			meshes[i].updateInterpolationVertices(t, cycle);
-		}
-	}
+	//void updateInterpolationVertices(float t, bool cycle) const {
+	//	for (int i = 0; i < meshCount; ++i) {
+	//		meshes[i].updateInterpolationVertices(t, cycle);
+	//	}
+	//}
 
 	// get
 	uint8 getFileVersion() const  {return fileVersion;}

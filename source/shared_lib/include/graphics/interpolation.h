@@ -25,45 +25,21 @@ void test_interpolate();
 
 class InterpolationData {
 private:
-	const Mesh *mesh;
+	Mesh *mesh;
 
-	Vec3f *vertices;
-	Vec3f *normals;
+	MeshVertexBlock data;
 
 public:
-	InterpolationData(const Mesh *mesh);
+	InterpolationData(Mesh *mesh);
 	~InterpolationData();
 
-	const Vec3f *getVertices() const {
-		if (vertices) {
-			return vertices;
-		}
-		if (meshLerpMethod == LerpMethod::x87) {
-			return mesh->getVertices();
-		} else if (meshLerpMethod == LerpMethod::SIMD) {
-			return mesh->getVertArray(0);
-		} else {
-			assert(false); // programmer error.
-			return 0;
-		}
-	}
-	const Vec3f *getNormals() const {
-		if (normals) {
-			return normals;
-		}
-		if (meshLerpMethod == LerpMethod::x87) {
-			return mesh->getNormals();
-		} else if (meshLerpMethod == LerpMethod::SIMD) {
-			return mesh->getNormArray(0);
-		} else {
-			assert(false); // programmer error.
-			return 0;
-		}
+	const MeshVertexBlock& getVertexBlock() const {
+		return data;
 	}
 	
 	void update(float t, bool cycle);
-	void updateVertices(float t, bool cycle);
-	void updateNormals(float t, bool cycle);
+	//void updateVertices(float t, bool cycle);
+	//void updateNormals(float t, bool cycle);
 };
 
 }}//end namespace

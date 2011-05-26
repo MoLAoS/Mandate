@@ -86,6 +86,7 @@ WidgetWindow::WidgetWindow()
 		Shared::Graphics::meshLerpMethod = LerpMethod::SIMD;
 	}
 	Shared::Graphics::use_vbos = g_config.getRenderUseVBOs();
+	Shared::Graphics::use_tangents = g_config.getRenderEnableBumpMapping();
 	
 	// render
 	g_logger.logProgramEvent("Initialising OpenGL");
