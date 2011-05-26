@@ -842,10 +842,12 @@ void GameState::keyDown(const Key &key) {
 		gameCamera.setMoveY(1);
 	} else if ( cmd == ucCameraPitchDown) { // camera pitch down
 		gameCamera.setMoveY(-1);
-	} else if (cmd == ucCycleDisplayColor) { // switch display color
-		gui.switchToNextDisplayColor();
-	} else if (cmd == ucCameraCycleMode) { // reset camera pos & angle
-		gameCamera.switchState();
+	} else if (cmd == ucCameraZoomAndAngleReset) { // reset camera height & angle
+		gameCamera.reset();
+	} else if (cmd == ucCameraZoomReset) { // reset camera height
+		gameCamera.reset(false, true);
+	} else if (cmd == ucCameraAngleReset) { // reset camera angle
+		gameCamera.reset(true, false);
 	} else if (speedChangesAllowed) {
 		GameSpeed curSpeed = simInterface->getSpeed();
 		GameSpeed newSpeed = curSpeed;
@@ -1060,16 +1062,12 @@ void ShowMap::keyDown(const Key &key) {
 	} else if (cmd == ucCameraPosDown) {
 		gameCamera.setMoveZ(-scrollSpeed, false);
 
-	//switch display color
-	} else if (cmd == ucCycleDisplayColor) {
-		gui.switchToNextDisplayColor();
-
-	//change camera mode
-	} else if (cmd == ucCameraCycleMode) {
-		gameCamera.switchState();
-		string stateString = gameCamera.getState() == GameCamera::sGame
-			? g_lang.get("GameCamera") : g_lang.get("FreeCamera");
-		gui.getRegularConsole()->addLine(g_lang.get("CameraModeSet") + " " + stateString);
+	} else if (cmd == ucCameraZoomAndAngleReset) { // reset camera height & angle
+		gameCamera.reset();
+	} else if (cmd == ucCameraZoomReset) { // reset camera height
+		gameCamera.reset(false, true);
+	} else if (cmd == ucCameraAngleReset) { // reset camera angle
+		gameCamera.reset(true, false);
 
 	//exit
 	} else if (cmd == ucMenuQuit) {
