@@ -15,6 +15,7 @@
 #include <stdexcept>
 
 #include "opengl.h"
+#include "math_util.h"
 
 #include "leak_dumper.h"
 
@@ -181,8 +182,11 @@ void Texture1DGl::end(){
 //	class Texture2DGl
 // =====================================================
 
-void Texture2DGl::init(Filter filter, int maxAnisotropy){
+void Texture2DGl::init(Filter filter, int maxAnisotropy) {
 	if (!inited) {
+		if (!isPowerOfTwo(pixmap->getW()) || !isPowerOfTwo(pixmap->getH())) {
+			throw runtime_error("Texture dimensions are not both a power of two.");
+		}
 		//params
 		GLint wrap = toWrapModeGl(wrapMode);
 		GLint glFormat = toFormatGl(format, pixmap->getComponents());

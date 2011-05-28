@@ -185,9 +185,11 @@ bool ImageSetMouseCursor::loadMouse(const string &dir) {
 	Texture2D *tex = g_renderer.newTexture2D(ResourceScope::GLOBAL);
 	tex->setMipmap(false);
 	tex->load(path);
-	tex->init();
-	
-	m_mouseTexture = tex;
+	try{
+		tex->init();
+		m_mouseTexture = tex;
+	} catch (...) {
+	}
 
 	initMouse();
 

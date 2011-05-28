@@ -175,7 +175,11 @@ bool ProgramLog::setupLoadingScreen(const string &dir) {
 			m_backgroundTexture->setMipmap(false);
 			m_backgroundTexture->getPixmap()->load(dir + "/" + 
 				backgroundImageNode->getAttribute("path")->getValue());
-			m_backgroundTexture->init(Texture::fBilinear);
+			try {
+				m_backgroundTexture->init(Texture::fBilinear);
+			} catch (...) {
+				m_backgroundTexture = Texture2D::defaultTexture;
+			}
 		}
 
 		// faction tips
