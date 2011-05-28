@@ -36,6 +36,7 @@ void Selection::init(UserInterface *m_gui, int m_factionIndex) {
 	m_empty = true;
 	m_uniform = false;
 	m_commandable = false;
+	m_tranported = false;
 	m_cancelable = false;
 	m_meetable = false;
 	m_canRepair = false;
@@ -203,6 +204,7 @@ void Selection::update() {
 		m_enemy = false;
 		m_uniform = false;
 		m_commandable = false;
+		m_tranported = false;
 		m_cancelable = false;
 		m_meetable = false;
 		m_canRepair = false;
@@ -214,6 +216,7 @@ void Selection::update() {
 		m_enemy = true;
 		m_uniform = true;
 		m_commandable = false;
+		m_tranported = false;
 		m_cancelable = false;
 		m_meetable = false;
 		m_canRepair = false;
@@ -226,6 +229,7 @@ void Selection::update() {
 		m_enemy = false;
 		m_uniform = true;
 		m_commandable = false;
+		m_tranported = false;
 		m_cancelable = false;
 		m_canAttack = true;
 		m_canMove = true;
@@ -266,6 +270,9 @@ void Selection::update() {
 			const UnitType *ut = (*i)->getType();
 			if (ut != frontUT) {
 				m_uniform = false;
+			}
+			if ((*i)->getCarriedCount()) {
+				m_tranported = true;
 			}
 			if (ut->hasCommandClass(CmdClass::REPAIR)) {
 				if (((*i)->isAutoCmdEnabled(AutoCmdFlag::REPAIR))) {

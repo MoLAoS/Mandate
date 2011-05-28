@@ -1407,6 +1407,7 @@ void LoadCommandType::update(Unit *unit) const {
 			}
 			unitsToCarry.clear();
 		}
+		unit->StateChanged(unit);
 		return;
 	}
 	if (!moveSkillType) {
@@ -1523,6 +1524,7 @@ void UnloadCommandType::update(Unit *unit) const {
 				targetUnit->setCarried(0);
 				unit->getUnitsToUnload().pop_front();
 				unit->getCarriedUnits().erase(std::find(unit->getCarriedUnits().begin(), unit->getCarriedUnits().end(), targetUnit->getId()));
+				unit->StateChanged(unit);
 				// keep unloading, curr skill is ok
 			} else {
 				// must be crowded, stop unloading

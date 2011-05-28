@@ -56,6 +56,9 @@ Display::Display(UserInterface *ui, Vec2i pos)
 		addImageX(0, Vec2i(x,y), Vec2i(m_imageSize));
 		x += m_imageSize;
 	}
+	y += m_imageSize;
+	m_sizes.portraitSize = Vec2i(x + getBorderRight(), y + getBorderBottom());
+
 	setAlignment(Alignment::NONE);
 	setText(""); // (0) unit title
 	addText(""); // (1) unit text
@@ -86,9 +89,11 @@ Display::Display(UserInterface *ui, Vec2i pos)
 		}
 		x += m_imageSize;
 	}
+	y += m_imageSize;
+	m_sizes.commandSize = Vec2i(x + getBorderRight(), y + getBorderBottom());
 
 	x = getBorderLeft();
-	y += (m_imageSize * cellHeightCount + int(fm->getHeight() + 1.f));
+	y += int(m_imageSize * 0.5f);
 	addText(""); // (4) 'Transported' label
 	setTextPos(Vec2i(x, y), 4);
 	y += int(fm->getHeight() + 1.f);
@@ -101,6 +106,8 @@ Display::Display(UserInterface *ui, Vec2i pos)
 		addImageX(0, Vec2i(x,y), Vec2i(m_imageSize));
 		x += m_imageSize;
 	}
+	y += m_imageSize;
+	m_sizes.transportSize = Vec2i(x + getBorderRight(), y + getBorderBottom());
 
 	const Texture2D* overlayImages[3] = {
 		g_widgetConfig.getTickTexture(),
@@ -135,27 +142,32 @@ Display::Display(UserInterface *ui, Vec2i pos)
 }
 
 void Display::setSize() {
-	const int width = 192 + getBordersHoriz();
-	const int bigHeight = 500;
-	const int smallHeight = 192 + getBordersVert();
-	Vec2i sz(width, bigHeight);
+	//const int width = 192 + getBordersHoriz();
+	//const int bigHeight = 400;
+	//const int smallHeight = 192 + getBordersVert();
+	//Vec2i sz(width, bigHeight);
+	Vec2i sz = m_sizes.commandSize;
 	if (m_ui->getSelection()->isEmpty()) {
 		if (m_ui->getSelectedObject()) {
-			sz = Vec2i(width, smallHeight);
+			sz = m_sizes.portraitSize;//Vec2i(width, smallHeight);
 		} else {
 			// -loadmap doesn't have any faction
 			if (g_world.getThisFaction() && g_world.getThisFaction()->getLogoTex()) {
-				sz = Vec2i(width, smallHeight);
+				sz = m_sizes.portraitSize;//Vec2i(width, smallHeight);
 			} else {
-			setVisible(false);
-			return;
-		}
+				setVisible(false);
+				return;
+			}
 		}
 	} else {
 		if (!m_ui->getSelection()->isComandable()) {
-			sz = Vec2i(width, smallHeight);
+			sz = m_sizes.portraitSize;//Vec2i(width, smallHeight);
+		} else {
+			if (m_ui->getSelection()->hasTransported()) {
+				sz = m_sizes.transportSize;
+			}
 		}
-	}
+	} 
 	setVisible(true);
 	Vec2i size = getSize();
 	if (size != sz) {
@@ -210,8 +222,8 @@ void Display::setPortraitTitle(const string title) {
 	if (TextWidget::getText(0).empty() && title.empty()) {
 		return;
 	}
-	string str = formatString(title);	
-	TextWidget::setText(str, 0);
+	//string str = formatString(title);	
+	TextWidget::setText(title, 0);
 }
 
 void Display::setPortraitText(const string &text) {

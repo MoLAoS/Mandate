@@ -103,11 +103,19 @@ private:
 	bool m_draggingWidget;
 	Vec2i m_moveOffset;
 
+	struct SizeCollection {
+		Vec2i portraitSize;
+		Vec2i commandSize;
+		Vec2i transportSize;
+	};
+
+	SizeCollection m_sizes;
+
 	Vec2i	m_upImageOffset,	// x,y offset for selected unit portrait(s)
 			m_downImageOffset,	// x,y offset for command buttons
 			m_carryImageOffset, // x,y offset for loaded unit portrait(s)
 			m_progressPos;		// x,y offset for progress bar
-	int m_progPrecentPos;		// progress bar percentage (and -1 when no progress bar)
+	int m_progPrecentPos;		// x offset to draw progress bar percentage text (and -1 when no progress bar)
 
 	DisplayButton	m_hoverBtn,		// section/index of button mouse is over
 					m_pressedBtn;	// section/index of button that received a mouse down event

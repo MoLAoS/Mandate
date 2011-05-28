@@ -45,6 +45,7 @@ private:
 	bool			m_enemy;
 	bool			m_uniform;
 	bool			m_commandable;
+	bool            m_tranported;
 	bool			m_cancelable;
 	bool			m_meetable;
 	bool			m_canRepair;
@@ -80,6 +81,7 @@ public:
 	bool isUniform() const				{return m_uniform;}
 	bool isEnemy() const				{return m_enemy;}
 	bool isComandable() const			{return m_commandable;}
+	bool hasTransported() const         {return m_tranported;}
 	bool isCancelable() const			{return m_cancelable;}
 	bool isMeetable() const				{return m_meetable;}
 	bool canRepair() const				{return m_canRepair;}
