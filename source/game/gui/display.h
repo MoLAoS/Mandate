@@ -105,6 +105,7 @@ private:
 
 	struct SizeCollection {
 		Vec2i portraitSize;
+		Vec2i logoSize;
 		Vec2i commandSize;
 		Vec2i transportSize;
 	};

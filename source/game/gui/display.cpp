@@ -47,6 +47,7 @@ Display::Display(UserInterface *ui, Vec2i pos)
 	setWidgetStyle(WidgetType::DISPLAY);
 	int x = getBorderLeft();
 	int y = getBorderTop();
+	m_sizes.logoSize = Vec2i(getBordersHoriz() + 192, getBordersVert() + 192);
 	m_upImageOffset = Vec2i(x, y);
 	for (int i = 0; i < selectionCellCount; ++i) { // selection potraits
 		if (i && i % cellWidthCount == 0) {
@@ -153,7 +154,7 @@ void Display::setSize() {
 		} else {
 			// -loadmap doesn't have any faction
 			if (g_world.getThisFaction() && g_world.getThisFaction()->getLogoTex()) {
-				sz = m_sizes.portraitSize;//Vec2i(width, smallHeight);
+				sz = m_sizes.logoSize;//Vec2i(width, smallHeight);
 			} else {
 				setVisible(false);
 				return;
