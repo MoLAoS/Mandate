@@ -1165,14 +1165,12 @@ void World::computeFow() {
 	for (int i = 0; i < getFactionCount(); ++i) {
 		for (int j = 0; j < getFaction(i)->getUnitCount(); ++j) {
 			Unit *unit = getFaction(i)->getUnit(j);
-	
-			//exploration
-			if (unit->isOperative()) {
+			if (unit->isOperative() && !unit->isCarried()) {
 				exploreCells(unit->getCenteredPos(), unit->getSight(), unit->getTeam());
 			}
 		}
 	}
-	// turn fires on/off (redundant ? all particle-system now subjected to visibilty checks)
+	// turn fires on/off (redundant ? all particle-systems now subjected to visibilty checks)
 	for (int i = 0; i < getFactionCount(); ++i) {
 		for (int j = 0; j < getFaction(i)->getUnitCount(); ++j) {
 			Unit *unit = getFaction(i)->getUnit(j);
@@ -1198,7 +1196,7 @@ void World::computeFow() {
 		}
 		for (int j = 0; j < faction->getUnitCount(); ++j) {
 			const Unit *unit = faction->getUnit(j);
-			if (unit->isOperative()) {
+			if (unit->isOperative() && !unit->isCarried()) {
 				int sightRange = unit->getSight();
 				Vec2i pos;
 				float distance;
