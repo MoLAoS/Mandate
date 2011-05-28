@@ -71,11 +71,11 @@ Mesh::~Mesh() {
 	}
 }
 
-//#define OUTPUT_MODEL_INFO(x)
-#define OUTPUT_MODEL_INFO(x) cout << x
+#define OUTPUT_MODEL_INFO(x)
+//#define OUTPUT_MODEL_INFO(x) cout << x
 
-//#define MESH_DEBUG(x)
-#define MESH_DEBUG(x) cout << "\t\t\t" << x << endl
+#define MESH_DEBUG(x)
+//#define MESH_DEBUG(x) cout << "\t\t\t" << x << endl
 
 /** Allocate memory to read in mesh data, and generate VBO handles */
 void Mesh::initMemory() {
@@ -443,8 +443,8 @@ void Mesh::buildCube(int size, int height, Texture2D *tex) {
 	vertexCount = 5 * 4;
 	indexCount = 5 * 6;
 
-	Vec3f *vertArray = allocate_aligned_vec3_array(vertexCount);
-	Vec3f *normArray = allocate_aligned_vec3_array(vertexCount);
+	Vec3f *vertArray = new Vec3f[vertexCount];//allocate_aligned_vec3_array(vertexCount);
+	Vec3f *normArray = new Vec3f[vertexCount];//allocate_aligned_vec3_array(vertexCount);
 
 	Vec2f *texCoords = new Vec2f[vertexCount];
 	uint32 *indices = new uint32[indexCount];
@@ -555,6 +555,7 @@ void Mesh::buildCube(int size, int height, Texture2D *tex) {
 	this->opacity = 1.f;
 	this->twoSided = false;
 
+	initMemory();
 	fillBuffers(vertArray, normArray, 0, texCoords, indices);
 }
 
