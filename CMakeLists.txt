@@ -108,6 +108,12 @@ if(NOT WIN32)
 	if(NOT HAVE_SSE2)
 		message(FATAL_ERROR "SSE2 support is needed, sorry")
 	endif(NOT HAVE_SSE2)
+
+	try_compile(HAVE_PHYSFS_2 ${CMAKE_BINARY_DIR}/test_physfs ${CMAKE_SOURCE_DIR}/cmake/tests/physfs.cpp
+				CMAKE_FLAGS "-DINCLUDE_DIRECTORIES=${PHYSFS_INCLUDE_DIR}" "-DLINK_LIBRARIES=${PHYSFS_LIBRARY}")
+	if(NOT HAVE_PHYSFS_2)
+		message(FATAL_ERROR "physfs 2.0 or later is required")
+	endif(NOT HAVE_PHYSFS_2)
 endif(NOT WIN32)
 
 # set compiler flags...
