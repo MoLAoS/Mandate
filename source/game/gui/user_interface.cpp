@@ -909,7 +909,11 @@ void UserInterface::onFirstTierSelect(int posDisplay) {
 				m_selectingSecond = true;
 			} else {
 				selectingPos = true;
-				g_program.getMouseCursor().setAppearance(MouseAppearance::CMD_ICON, ct->getImage());
+				if (activeCommandType) {
+					g_program.getMouseCursor().setAppearance(MouseAppearance::CMD_ICON, activeCommandType->getImage());
+				} else {
+					g_program.getMouseCursor().setAppearance(MouseAppearance::CMD_ICON, ct->getImage());
+				}
 				m_minimap->setLeftClickOrder(true);
 				activePos = posDisplay;
 			}
