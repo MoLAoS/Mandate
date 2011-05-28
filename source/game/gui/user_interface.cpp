@@ -1059,6 +1059,8 @@ void UserInterface::computeSelectionPanel() {
 		bool friendly = unit->getFaction()->getTeam() == thisTeam;
 
 		string name = unit->getFullName(); ///@todo tricksy Lang use... will need a %s
+		name = g_lang.getTranslatedFactionName(unit->getFaction()->getType()->getName(), name);
+
 		IF_DEBUG_EDITION(
 			name += ": " + intToStr(unit->getId());
 		)
