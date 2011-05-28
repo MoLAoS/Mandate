@@ -165,8 +165,7 @@ struct MeshIndexBlock {
 	MeshIndexBlock() : type(UNSIGNED_16), count(0), m_indices(0), vbo_handle(0) { }
 
 	~MeshIndexBlock() {
-		delete [] m_indices;
-		m_indices = 0;
+		freeMemory();
 		if (vbo_handle != 0) {
 			glDeleteBuffers(1, &vbo_handle);
 		}
@@ -184,7 +183,12 @@ struct MeshIndexBlock {
 	}
 
 	void freeMemory() {
-		delete [] m_indices;
+		switch (type) {
+			case UNSIGNED_16:
+				delete[] m_16bit_indices; break;
+			case UNSIGNED_32:
+				delete[] m_32bit_indices; break;
+		}
 		m_indices = 0;
 	}
 };
