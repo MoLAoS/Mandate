@@ -304,15 +304,15 @@ void Renderer::initGame(GameState *game) {
 	waterAnim= 0;
 
 	// terrain renderer
-	if (g_program.getCmdArgs().isTest("tr2")) {
-		try {
+	if (g_config.getRenderTerrainRenderer() == 2) {
+		//try {
 			m_terrainRenderer = new TerrainRenderer2();
 			m_terrainRenderer->init(g_world.getMap(), g_world.getTileset());
-		} catch (runtime_error &e) {
-			g_logger.logError(string(e.what()) + "\nTerrainRenderer2 disabled.");
-			m_terrainRenderer = new TerrainRendererGlest();
-			m_terrainRenderer->init(g_world.getMap(), g_world.getTileset());
-		}
+		//} catch (runtime_error &e) {
+		//	g_logger.logError(string(e.what()) + "\nTerrainRenderer2 disabled.");
+		//	m_terrainRenderer = new TerrainRendererGlest();
+		//	m_terrainRenderer->init(g_world.getMap(), g_world.getTileset());
+		//}
 	} else {
 		m_terrainRenderer = new TerrainRendererGlest();
 		m_terrainRenderer->init(g_world.getMap(), g_world.getTileset());
@@ -1754,9 +1754,9 @@ void Renderer::loadConfig(){
 		shadowAlpha= config.getRenderShadowAlpha();
 	}
 
-	//load filter settings
-	Texture2D::Filter textureFilter= strToTextureFilter(config.getRenderFilter());
-	int maxAnisotropy= config.getRenderFilterMaxAnisotropy();
+	// set filter settings
+	Texture2D::Filter textureFilter = strToTextureFilter(config.getRenderFilter());
+	int maxAnisotropy = config.getRenderFilterMaxAnisotropy();
 	for(int i=0; i<ResourceScope::COUNT; ++i){
 		textureManager[i]->setFilter(textureFilter);
 		textureManager[i]->setMaxAnisotropy(maxAnisotropy);

@@ -77,7 +77,7 @@ protected:
 	Tileset			*m_tileset;
 	SurfaceAtlas	*m_surfaceAtlas;
 
-	const Texture2D* addSurfTex(int tl, int tr, int bl, int br);
+	const Pixmap2D* addSurfTex(int tl, int tr, int bl, int br);
 	void splatTextures();
 
 public:
@@ -97,10 +97,13 @@ public:
 
 class TerrainRenderer2 : public TerrainRendererGlest {
 protected:
-	GLuint			m_vertexBuffer;
-	vector<uint32>	m_indexArray;
+	GLuint             m_vertexBuffer;
+	vector<uint32>     *m_indexArrays;
+	//map<Vec2i, SurfaceInfo*>  m_surfInfoMap;
+	//vector<int>        m_masterTextures; // => SurfaceAtlas2 ?
 
 	void updateVertexData(Rect2i area = Rect2i(-1, -1, -1, -1));
+	void splatTextures();
 
 public:
 	TerrainRenderer2();

@@ -23,12 +23,11 @@ namespace Shared{ namespace Graphics{
 const int Texture::defaultSize= 256;
 
 Texture::Texture(){
-	mipmap= true;
-	pixmapInit= true;
-	wrapMode= wmRepeat;
-	format= fAuto;
-
-	inited= false;
+	mipmap = true;
+	//pixmapInit = true;
+	wrapMode = wmRepeat;
+	format = fAuto;
+	inited = false;
 }
 
 // =====================================================
@@ -36,8 +35,8 @@ Texture::Texture(){
 // =====================================================
 
 void Texture1D::load(const string &path){
-	this->path= path;
-	pixmap.load(path);
+	this->path = path;
+	pixmap->load(path);
 }
 
 // =====================================================
@@ -48,7 +47,12 @@ Texture2D* Texture2D::defaultTexture = 0;
 
 void Texture2D::load(const string &path){
 	this->path= path;
-	pixmap.load(path);
+	pixmap->load(path);
+}
+
+void Texture2D::setPixmap(Pixmap2D *pm) {
+	delete pixmap;
+	pixmap = pm;
 }
 
 // =====================================================
@@ -57,7 +61,7 @@ void Texture2D::load(const string &path){
 
 void Texture3D::loadSlice(const string &path, int slice){
 	this->path= path;
-	pixmap.loadSlice(path, slice);
+	pixmap->loadSlice(path, slice);
 }
 
 // =====================================================
@@ -66,7 +70,7 @@ void Texture3D::loadSlice(const string &path, int slice){
 
 void TextureCube::loadFace(const string &path, int face){
 	this->path= path;
-	pixmap.loadFace(path, face);
+	pixmap->loadFace(path, face);
 }
 
 }}//end namespace

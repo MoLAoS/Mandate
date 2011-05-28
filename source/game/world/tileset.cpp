@@ -259,6 +259,7 @@ const Pixmap2D *Tileset::getSurfPixmap(int type) const {
 }
 
 const Pixmap2D *Tileset::getSurfPixmap(int type, int var) const{
+	ASSERT_RANGE(type, 5);
 	int vars= surfPixmaps[type].size();
 	return &surfPixmaps[type][var % vars];
 }
