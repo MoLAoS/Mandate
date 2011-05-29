@@ -80,23 +80,24 @@ public:
 	static const int transportCellCount = cellWidthCount * cellHeightCount / 2;
 
 	static const int colorCount = 4;
-	static const int imageSize = 32;
+	//static const int imageSize = 32;
 	static const int invalidPos = -1;
 
 private:
-	UserInterface *m_ui;
-	bool downLighted[commandCellCount];
-	int index[commandCellCount];
-	const CommandType *commandTypes[commandCellCount];
-	CmdClass commandClasses[commandCellCount];
-	Vec3f colors[colorCount];
-	int m_progress;
-	int currentColor;
-	int m_selectedCommandIndex;//downSelectedPos;
-	int m_logo;
+	UserInterface *m_ui; // 'conceptual' owner, but not a widget, so not our 'parent'
+	bool downLighted[commandCellCount]; // flag per command cell, false to draw 'disabled' (darkened)
+	int index[commandCellCount];        // index per command cell, identifies producibles in two tier selections
+	const CommandType *commandTypes[commandCellCount]; // CommandType per command cell, only valid if selection.isUniform()
+	CmdClass commandClasses[commandCellCount];         // CommandClass per command cell, use when !selection.isUniform()
+	int m_progress;    // 0-100 to show progress bar at that percentage, -1 == no progress bar.
+	int m_selectedCommandIndex; // index of command (in commnadTypes and/or commandClasses) used to identify original command in two-tier selects
+	int m_logo;                 // index of logo image (in ImageWidget::textures)
+	// image indices (in ImageWidget::textures) for auto command flag icons
 	int m_autoRepairOn, m_autoRepairOff, m_autoRepairMixed;
 	int m_autoAttackOn, m_autoAttackOff, m_autoAttackMixed;
 	int m_autoFleeOn, m_autoFleeOff, m_autoFleeMixed;
+
+	int m_imageSize;
 
 	// some stuff that should be in a superclass ... (Widgets::Frame ?)
 	bool m_draggingWidget;
@@ -129,7 +130,6 @@ public:
 	bool getDownLighted(int index) const			{return downLighted[index];}
 	const CommandType *getCommandType(int i)		{return commandTypes[i];}
 	CmdClass getCommandClass(int i)				{return commandClasses[i];}
-	Vec3f getColor() const							{return colors[currentColor];}
 	int getProgressBar() const						{return m_progress;}
 	int getSelectedCommandIndex() const				{return m_selectedCommandIndex;}
 	CommandTip* getCommandTip()                     {return m_toolTip;}
@@ -161,8 +161,6 @@ public:
 	void resetTipPos() {resetTipPos(m_downImageOffset);}
 	DisplayButton computeIndex(Vec2i pos, bool screenPos = false);
 	DisplayButton getHoverButton() const { return m_hoverBtn; }
-
-	void switchColor() {currentColor = (currentColor + 1) % colorCount;}
 
 	virtual void render() override;
 	virtual string descType() const override { return "DisplayPanel"; }

@@ -86,13 +86,15 @@ public:
 
 class Texture1D: public Texture{
 protected:
-	Pixmap1D pixmap;
+	Pixmap1D *pixmap;
 
 public:
+	Texture1D() : pixmap(new Pixmap1D()) {}
+	~Texture1D() { delete pixmap; }
 	void load(const string &path);
 
-	Pixmap1D *getPixmap()				{return &pixmap;}
-	const Pixmap1D *getPixmap() const	{return &pixmap;}
+	Pixmap1D *getPixmap()				{return pixmap;}
+	const Pixmap1D *getPixmap() const	{return pixmap;}
 };
 
 // =====================================================
@@ -101,16 +103,20 @@ public:
 
 class Texture2D: public Texture{
 protected:
-	Pixmap2D pixmap;
+	Pixmap2D *pixmap;
 
 public:
 	static Texture2D *defaultTexture;
 
 public:
+	Texture2D() : pixmap(new Pixmap2D()) { }
+	~Texture2D() { delete pixmap; }
 	void load(const string &path);
 
-	Pixmap2D *getPixmap()				{return &pixmap;}
-	const Pixmap2D *getPixmap() const	{return &pixmap;}
+	Pixmap2D *getPixmap()				{return pixmap;}
+	void setPixmap(Pixmap2D *pm);
+	void setPixmap(const Pixmap2D *pm) { setPixmap(const_cast<Pixmap2D*>(pm)); }
+	const Pixmap2D *getPixmap() const	{return pixmap;}
 };
 
 // =====================================================
@@ -119,13 +125,15 @@ public:
 
 class Texture3D: public Texture{
 protected:
-	Pixmap3D pixmap;
+	Pixmap3D *pixmap;
 
 public:
+	Texture3D() : pixmap(new Pixmap3D()) { }
+	~Texture3D() { delete pixmap; }
 	void loadSlice(const string &path, int slice);
 
-	Pixmap3D *getPixmap()				{return &pixmap;}
-	const Pixmap3D *getPixmap() const	{return &pixmap;}
+	Pixmap3D *getPixmap()				{return pixmap;}
+	const Pixmap3D *getPixmap() const	{return pixmap;}
 };
 
 // =====================================================
@@ -134,13 +142,15 @@ public:
 
 class TextureCube: public Texture{
 protected:
-	PixmapCube pixmap;
+	PixmapCube *pixmap;
 
 public:
+	TextureCube() : pixmap(new PixmapCube()) { }
+	~TextureCube() { delete pixmap; }
 	void loadFace(const string &path, int face);
 
-	PixmapCube *getPixmap()				{return &pixmap;}
-	const PixmapCube *getPixmap() const	{return &pixmap;}
+	PixmapCube *getPixmap()				{return pixmap;}
+	const PixmapCube *getPixmap() const	{return pixmap;}
 };
 
 }}//end namespace

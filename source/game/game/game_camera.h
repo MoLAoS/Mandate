@@ -51,7 +51,6 @@ public:
 public:
 	enum State{
 		sGame,
-		sFree,
 		sScenario
 	};
 
@@ -145,7 +144,8 @@ public:
 
 	//other
 	void update();
-	void switchState(State s = sFree);
+	void reset(bool angle = true, bool height = true);
+	void resetScenario();
 
 	void centerXZ(float x, float z);
 	void rotateHV(float h, float v);

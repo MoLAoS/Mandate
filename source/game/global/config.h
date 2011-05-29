@@ -80,6 +80,7 @@ private:
 	int renderShadowFrameSkip;
 	int renderShadowTextureSize;
 	string renderShadows;
+	int renderTerrainRenderer;
 	bool renderTestingShaders;
 	bool renderTextures3D;
 	bool renderUseShaders;
@@ -166,6 +167,7 @@ public:
 	int getRenderShadowFrameSkip() const		{return renderShadowFrameSkip;}
 	int getRenderShadowTextureSize() const		{return renderShadowTextureSize;}
 	string getRenderShadows() const				{return renderShadows;}
+	int getRenderTerrainRenderer() const		{return renderTerrainRenderer;}
 	bool getRenderTestingShaders() const		{return renderTestingShaders;}
 	bool getRenderTextures3D() const			{return renderTextures3D;}
 	bool getRenderUseShaders() const			{return renderUseShaders;}
@@ -234,6 +236,7 @@ public:
 	void setRenderShadowFrameSkip(int val)		{renderShadowFrameSkip = val;}
 	void setRenderShadowTextureSize(int val)	{renderShadowTextureSize = val;}
 	void setRenderShadows(string val)			{renderShadows = val;}
+	void setRenderTerrainRenderer(int val)		{renderTerrainRenderer = val;}
 	void setRenderTestingShaders(bool val)		{renderTestingShaders = val;}
 	void setRenderTextures3D(bool val)			{renderTextures3D = val;}
 	void setRenderUseShaders(bool val)			{renderUseShaders = val;}

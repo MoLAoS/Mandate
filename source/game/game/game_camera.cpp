@@ -48,7 +48,7 @@ GameCamera::GameCamera()
 		: pos(0.f, defaultHeight, 0.f)
 		, destPos(0.f, defaultHeight, 0.f)
 		, destAng(startingVAng, startingHAng) {
-	state = sFree;
+	state = sGame;
 
 	// config
 	speed = 15.f / GameConstants::cameraFps;
@@ -116,7 +116,7 @@ void GameCamera::setDest(const Vec2i &pos, int height, float hAngle, float vAngl
 void GameCamera::setCameraMotion(const Vec2i &posit, const Vec2i &angle,
 		int linearFrameCount, int angularFrameCount,
 		int linearFrameDelay, int angularFrameDelay) {
-	switchState(sScenario);
+	resetScenario();
 	destPos.x = float(posit.x);
 	destPos.y = pos.y;
 	destPos.z = float(posit.y);
@@ -154,7 +154,7 @@ void GameCamera::update() {
 		moveSideH(speed * move.x, 0.9f);
 	}
 
-	if (state == sScenario) {
+	if (state == sScenario) { // scenario doing something tricky,
 		if (currLinearFrame < totalLinearFrames) {
 			if (linearDelay == 0) {
 				pos += linearVelocity;
@@ -173,50 +173,45 @@ void GameCamera::update() {
 			}
 		}
 		if (currAngularFrame == totalAngularFrames && currLinearFrame == totalLinearFrames) {
-			state = sFree;
+			state = sGame;
 		}
-	} else {
-		//free state
-		//if(state==sFree){
-			if(fabs(rotate) == 1.f){
-				rotateHV(speed*5*rotate, 0);
-			}
-			if (move.y > 0.f) {
-				moveUp(speed * move.y);
-				if (clampBounds && pos.y < maxHeight) {
-					rotateHV(0.f, -speed * 1.7f * move.y);
-				}
-			}
-			if (move.y < 0.f) {
-				moveUp(speed * move.y);
-				if (clampBounds && pos.y > minHeight) {
-					rotateHV(0.f, -speed * 1.7f * move.y);
-				}
-			}
-		//}
-
-		//game state
-		if(abs(destAng.x - vAng) > 0.01f) {
-			vAng+= (destAng.x - vAng) / hTransitionMult;
+	} else { // else game state
+		if(fabs(rotate) == 1.f){
+			rotateHV(speed*5*rotate, 0);
 		}
-		if(abs(destAng.y - hAng) > 0.01f) {
-			if(abs(destAng.y - hAng) > 180) {
-				if(destAng.y > hAng) {
-					hAng+= (destAng.y - hAng - 360) / vTransitionMult;
+		if (move.y > 0.f) {
+			moveUp(speed * move.y);
+			if (clampBounds && pos.y < maxHeight) {
+				rotateHV(0.f, -speed * 1.7f * move.y);
+			}
+		}
+		if (move.y < 0.f) {
+			moveUp(speed * move.y);
+			if (clampBounds && pos.y > minHeight) {
+				rotateHV(0.f, -speed * 1.7f * move.y);
+			}
+		}
+		if (abs(destAng.x - vAng) > 0.01f) {
+			vAng += (destAng.x - vAng) / hTransitionMult;
+		}
+		if (abs(destAng.y - hAng) > 0.01f) {
+			if (abs(destAng.y - hAng) > 180) {
+				if (destAng.y > hAng) {
+					hAng += (destAng.y - hAng - 360) / vTransitionMult;
 				} else {
-					hAng+= (destAng.y - hAng + 360) / vTransitionMult;
+					hAng += (destAng.y - hAng + 360) / vTransitionMult;
 				}
 			} else {
-				hAng+= (destAng.y - hAng) / vTransitionMult;
+				hAng += (destAng.y - hAng) / vTransitionMult;
 			}
 		}
-		if(abs(destPos.x - pos.x) > 0.01f) {
+		if (abs(destPos.x - pos.x) > 0.01f) {
 			pos.x += (destPos.x - pos.x) / moveScale;
 		}
-		if(abs(destPos.y - pos.y) > 0.01f) {
+		if (abs(destPos.y - pos.y) > 0.01f) {
 			pos.y += (destPos.y - pos.y) / moveScale;
 		}
-		if(abs(destPos.z - pos.z) > 0.01f) {
+		if (abs(destPos.z - pos.z) > 0.01f) {
 			pos.z += (destPos.z - pos.z) / moveScale;
 		}
 	}
@@ -227,23 +222,26 @@ void GameCamera::update() {
 	}
 }
 
-// is just a reset pos & angle now... should rename it, & ucCameraCycleMode & the keymap string, etc
-void GameCamera::switchState(State s){
-	if (s == sScenario) {
-		linearVelocity = Vec3f(0.f);
-		angularVelocity = Vec2f(0.f);
-		linearDelay = 0;
-		angularDelay = 0;
-		currAngularFrame = 0;
-		currLinearFrame = 0;
-		totalAngularFrames = 0;
-		totalLinearFrames = 0;
-		state = sScenario;
-		return;
+void GameCamera::resetScenario() {
+	linearVelocity = Vec3f(0.f);
+	angularVelocity = Vec2f(0.f);
+	linearDelay = 0;
+	angularDelay = 0;
+	currAngularFrame = 0;
+	currLinearFrame = 0;
+	totalAngularFrames = 0;
+	totalLinearFrames = 0;
+	state = sScenario;
+}
+
+void GameCamera::reset(bool angle, bool height) {
+	if (angle) {
+		destAng.x = startingVAng;
+		destAng.y = startingHAng;
 	}
-	destAng.x = startingVAng;
-	destAng.y = startingHAng;
-	destPos.y = defaultHeight;
+	if (height) {
+		destPos.y = defaultHeight;
+	}
 }
 
 void GameCamera::centerXZ(float x, float z){

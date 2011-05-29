@@ -80,6 +80,7 @@ private:
 				*m_shadowsList,
 				*m_filterList,
 				*m_lightsList,
+				*m_terrainRendererList,
 				*m_modelShaderList;
 							
 	CheckBox	*m_3dTexCheckBox,

@@ -240,7 +240,6 @@ public:
 	void onUnitDied(Unit *unit);
 
 	//misc
-	void switchToNextDisplayColor() {m_display->switchColor();}
 	void onSelectionChanged() { resetState(); }
 	void onSelectionStateChanged() { m_selectionDirty = true; }
 	void invalidateActivePos() { activePos = invalidPos; }

@@ -114,111 +114,70 @@ void test_interpolate() {
 // class InterpolationData
 // =====================================================
 
-InterpolationData::InterpolationData(const Mesh *mesh) {
-	vertices = NULL;
-	normals = NULL;
-
+InterpolationData::InterpolationData(Mesh *mesh) {
 	this->mesh = mesh;
-
-	if(mesh->getFrameCount() > 1) {
-		if (meshLerpMethod == LerpMethod::SIMD) {
-			vertices = allocate_aligned_vec3_array(mesh->getVertexCount());
-			normals = allocate_aligned_vec3_array(mesh->getVertexCount());
-		} else {
-			vertices = new Vec3f[mesh->getVertexCount()];
-			normals = new Vec3f[mesh->getVertexCount()];
-		}
+	if (mesh->getFrameCount() > 1) {
+		data.init(mesh->getAnimVertBlock(0).type, mesh->getVertexCount());
 	}
 }
 
-InterpolationData::~InterpolationData() {
-	if (meshLerpMethod == LerpMethod::SIMD) {
-		if (vertices) {
-			free_aligned_vec3_array(vertices);
-			free_aligned_vec3_array(normals);
-		}
-	} else {
-		delete [] vertices;
-		delete [] normals;
-	}
-}
+InterpolationData::~InterpolationData() { }
 
 void InterpolationData::update(float t, bool cycle) {
-	updateVertices(t, cycle);
-	updateNormals(t, cycle);
-}
+    // this shouldn't be needed...
+	t = clamp(t, 0.f, 1.f);
 
-void InterpolationData::updateVertices(float t, bool cycle) {
-    t = clamp(t, 0.f, 1.f);
+	// sanity check, part 1
+	uint32 frameCount = mesh->getFrameCount();
+	uint32 vertexCount = mesh->getVertexCount();
+	assert(frameCount > 1 && vertexCount > 0);
 	assert(t >= 0.0f && t <= 1.0f);
-	uint32 frameCount = mesh->getFrameCount();
-	uint32 vertexCount = mesh->getVertexCount();
 
-	if (frameCount > 1 && vertexCount) {
-		// calculate key-frames to use
-		uint32 prevFrame = min<uint32>(static_cast<uint32>(t * frameCount), frameCount - 1);
-		uint32 nextFrame = cycle ? (prevFrame + 1) % frameCount : min(prevFrame + 1, frameCount - 1);
+	// calculate key-frames to use
 
-		// TODO:
-		// The above calculations are faulty, this assert should not fail.
-		// does though, with nextFrame == prevFrame
-		//assert((nextFrame > prevFrame && nextFrame == prevFrame + 1)
-		//	|| (nextFrame == 0 && prevFrame == frameCount - 1));
+	// 'expand' t from [0.0, 1.0] to [0.0, FrameCount] (or FrameCount - 1 if !cycle)
+	float frames = cycle ? (float)mesh->getFrameCount() : (float)mesh->getFrameCount() - 1;
+	float mt = t * frames;
 
-		// assert sanity
-		assert(prevFrame >= 0 && prevFrame < frameCount);
-		assert(nextFrame >= 0 && nextFrame < frameCount);
-
-		// convert 'global' t (0-1 for entire anim) to local t (0-1 between two frames)
-		float localT = t * frameCount - prevFrame;
-		assert(localT >= 0.f && localT <= 1.f);
-
-		//interpolate vertices
-		if (meshLerpMethod == LerpMethod::SIMD) {
-			const Vec3f *srcA = mesh->getVertArray(prevFrame);
-			const Vec3f *srcB = mesh->getVertArray(nextFrame);
-			interpolate(vertices, srcA, srcB, localT, vertexCount);
-		} else {
-			uint32 prevFrameBase = prevFrame * vertexCount;
-			uint32 nextFrameBase = nextFrame * vertexCount;
-			const Vec3f *srcA = &mesh->getVertices()[prevFrameBase];
-			const Vec3f *srcB = &mesh->getVertices()[nextFrameBase];
-			Vec3f::lerpArray(vertices, srcA, srcB, localT, vertexCount);
-		}
+	// select 'base' and 'next' key-frames
+	uint32 prevFrame = (uint32)floorf(mt);
+	if (prevFrame == mesh->getFrameCount()) {
+		prevFrame = 0;
 	}
-}
+	uint32 nextFrame = prevFrame + 1;
+	if (nextFrame == mesh->getFrameCount()) {
+		nextFrame = 0;
+	}
+	assert((nextFrame > prevFrame && nextFrame == prevFrame + 1)
+		|| (nextFrame == 0 && prevFrame == frameCount - 1));
 
-void InterpolationData::updateNormals(float t, bool cycle) {
-    t = clamp(t, 0.f, 1.f);
-    assert(t >= 0.0f && t <= 1.0f);
+	// sanity check, part 2
+	assert(prevFrame >= 0 && prevFrame < frameCount);
+	assert(nextFrame >= 0 && nextFrame < frameCount);
 
-	uint32 frameCount = mesh->getFrameCount();
-	uint32 vertexCount = mesh->getVertexCount();
+	MeshVertexBlock &srcPrev = mesh->getAnimVertBlock(prevFrame);
+	MeshVertexBlock &srcNext = mesh->getAnimVertBlock(nextFrame);
 
-	if (frameCount > 1 && vertexCount) {
-		//misc vars
-		uint32 prevFrame = min<uint32>(static_cast<uint32>(t * frameCount), frameCount - 1);
-		uint32 nextFrame = cycle ? (prevFrame + 1) % frameCount : min(prevFrame + 1, frameCount - 1);
+	// convert 'global' t (0-1 for entire anim) to local t (0-1 between two frames)
+	float localT = mt - (float)prevFrame;
+	assert(localT >= 0.f && localT <= 1.f);
 
-		//assertions
-		assert(prevFrame >= 0 && prevFrame < frameCount);
-		assert(nextFrame >= 0 && nextFrame < frameCount);
+	uint32 vec3Count = mesh->getVertexCount();
+	if (srcPrev.type == MeshVertexBlock::POS_NORM_TAN) {
+		vec3Count *= 3;
+	} else if (srcPrev.type == MeshVertexBlock::POS_NORM) {
+		vec3Count *= 2;
+	} else {
+		assert(false);
+	}
 
-		float localT = t * frameCount - prevFrame;
-		assert(localT >= 0.f && localT <= 1.f);
-
-		//interpolate vertices
-		if (meshLerpMethod == LerpMethod::SIMD) {
-			const Vec3f *srcA = mesh->getNormArray(prevFrame);
-			const Vec3f *srcB = mesh->getNormArray(nextFrame);
-			interpolate(normals, srcA, srcB, localT, vertexCount);
-		} else {
-			uint32 prevFrameBase = prevFrame * vertexCount;
-			uint32 nextFrameBase = nextFrame * vertexCount;
-			const Vec3f *srcA = &mesh->getNormals()[prevFrameBase];
-			const Vec3f *srcB = &mesh->getNormals()[nextFrameBase];
-			Vec3f::lerpArray(normals, srcA, srcB, localT, vertexCount);
-		}
+	//interpolate vertices
+	const Vec3f *srcA = (const Vec3f *)srcPrev.m_arrayPtr;
+	const Vec3f *srcB = (const Vec3f *)srcNext.m_arrayPtr;
+	if (meshLerpMethod == LerpMethod::SIMD) {
+		interpolate((Vec3f*)data.m_arrayPtr, srcA, srcB, localT, vec3Count);
+	} else {
+		Vec3f::lerpArray((Vec3f*)data.m_arrayPtr, srcA, srcB, localT, vec3Count);
 	}
 }
 

@@ -85,6 +85,7 @@ Config::Config(const char* fileName) {
 	renderShadowFrameSkip = p->getInt("RenderShadowFrameSkip", 2);
 	renderShadowTextureSize = p->getInt("RenderShadowTextureSize", 512);
 	renderShadows = p->getString("RenderShadows", "Projected");
+	renderTerrainRenderer = p->getInt("RenderTerrainRenderer", 2, 1, 2);
 	renderTestingShaders = p->getBool("RenderTestingShaders", false);
 	renderTextures3D = p->getBool("RenderTextures3D", true);
 	renderUseShaders = p->getBool("RenderUseShaders", true);
@@ -163,6 +164,7 @@ void Config::save(const char *path) {
 	p->setInt("RenderShadowFrameSkip", renderShadowFrameSkip);
 	p->setInt("RenderShadowTextureSize", renderShadowTextureSize);
 	p->setString("RenderShadows", renderShadows);
+	p->setInt("RenderTerrainRenderer", renderTerrainRenderer);
 	p->setBool("RenderTestingShaders", renderTestingShaders);
 	p->setBool("RenderTextures3D", renderTextures3D);
 	p->setBool("RenderUseShaders", renderUseShaders);

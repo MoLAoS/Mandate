@@ -318,73 +318,57 @@ void ModelRendererGl::renderMesh(const Mesh *mesh, float fade, int frame, int id
 	}
 
 	// vertices
-	if (mesh->getVertexBuffer()) {
-#		define OFFSET(x) ((void*)(x * sizeof(float)))
-		const int stride = 32;
-		glBindBuffer(GL_ARRAY_BUFFER, mesh->getVertexBuffer());
-		glVertexPointer(3, GL_FLOAT, stride, OFFSET(0));
-		// normals
-		if (sendNormals) {
-			glEnableClientState(GL_NORMAL_ARRAY);
-			glNormalPointer(GL_FLOAT, stride, OFFSET(3));
-		} else {
-			glDisableClientState(GL_NORMAL_ARRAY);
-		}
-		// tex coords
-		if (renderTextures && mesh->getTexture(MeshTexture::DIFFUSE) != NULL) {
-			if (m_duplicateTexCoords) {
-				glActiveTexture(GL_TEXTURE0 + m_secondaryTexCoordUnit);
-				glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-				glTexCoordPointer(2, GL_FLOAT, stride, OFFSET(6));
-			}
-
-			glActiveTexture(GL_TEXTURE0);
-			glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-			glTexCoordPointer(2, GL_FLOAT, stride, OFFSET(6));
-		} else {
-			if (m_duplicateTexCoords) {
-				glActiveTexture(GL_TEXTURE0 + m_secondaryTexCoordUnit);
-				glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-			}
-			glActiveTexture(GL_TEXTURE0);
-			glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-		}
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->getIndexBuffer());
-		if (sendNormals && textureNormal) {
-			shaderProgram->setUniform("gae_HasNormalMap", 1u);
-			int loc = shaderProgram->getAttribLoc("gae_Tangent");
-			if (loc != -1) {
-				assert(mesh->getTangents());
-				glEnableVertexAttribArray(loc);
-				glVertexAttribPointer(loc, 3, GL_FLOAT, GL_TRUE, 0, mesh->getTangents());
-			}
-		} else {
-			shaderProgram->setUniform("gae_HasNormalMap", 0u);
-		}
-
-		// draw model
-		glDrawRangeElements(GL_TRIANGLES, 0, vertexCount-1, indexCount, GL_UNSIGNED_INT, OFFSET(0));
-#		undef OFFSET
+	const MeshVertexBlock *mainBlock = 0;
+	const MeshVertexBlock &staticBlock = mesh->getStaticVertData();
+	if (staticBlock.count != 0) {
+		mainBlock = &staticBlock;
 	} else {
-		glVertexPointer(3, GL_FLOAT, 0, mesh->getInterpolationData()->getVertices());
-		// normals
+		mainBlock = &mesh->getInterpolationData()->getVertexBlock();
+	}
+	const int stride = mainBlock->getStride();
+	if (mainBlock->vbo_handle) {
+#		define VBO_OFFSET(x) ((void*)(x * sizeof(float)))
+		glBindBuffer(GL_ARRAY_BUFFER, mainBlock->vbo_handle);
+		glVertexPointer(3, GL_FLOAT, stride, VBO_OFFSET(0));
 		if (sendNormals) {
-			glEnableClientState(GL_NORMAL_ARRAY);
-			glNormalPointer(GL_FLOAT, 0, mesh->getInterpolationData()->getNormals());
-		} else {
-			glDisableClientState(GL_NORMAL_ARRAY);
+			glNormalPointer(GL_FLOAT, stride, VBO_OFFSET(3));
 		}
-		// tex coords
-		if (renderTextures && mesh->getTexture(MeshTexture::DIFFUSE) != NULL) {
-			if (m_duplicateTexCoords) {
-				glActiveTexture(GL_TEXTURE0 + m_secondaryTexCoordUnit);
-				glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-				glTexCoordPointer(2, GL_FLOAT, 0, mesh->getTexCoords());
+		if (sendNormals && textureNormal
+		&& (mainBlock->type == MeshVertexBlock::POS_NORM_TAN 
+		|| mainBlock->type == MeshVertexBlock::POS_NORM_TAN_UV)) {
+			shaderProgram->setUniform("gae_HasNormalMap", 1u);
+			int loc = shaderProgram->getAttribLoc("gae_Tangent");
+			if (loc != -1) {
+				glEnableVertexAttribArray(loc);
+				glVertexAttribPointer(loc, 3, GL_FLOAT, GL_TRUE, stride, VBO_OFFSET(6));
 			}
-
-			glActiveTexture(GL_TEXTURE0);
-			glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-			glTexCoordPointer(2, GL_FLOAT, 0, mesh->getTexCoords());
+		} else {
+			shaderProgram->setUniform("gae_HasNormalMap", 0u);
+		}
+		if (renderTextures && mesh->getTexture(MeshTexture::DIFFUSE)) {
+			int uvOffset = mainBlock->getUvOffset();
+			if (uvOffset != -1) {
+				if (m_duplicateTexCoords) {
+					glActiveTexture(GL_TEXTURE0 + m_secondaryTexCoordUnit);
+					glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+					glTexCoordPointer(2, GL_FLOAT, stride, VBO_OFFSET(uvOffset));
+				}
+				glActiveTexture(GL_TEXTURE0);
+				glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+				glTexCoordPointer(2, GL_FLOAT, stride, VBO_OFFSET(uvOffset));
+			} else {
+				const MeshVertexBlock &uvBlock = mesh->getTecCoordBlock();
+				assert(uvBlock.count != 0);
+				glBindBuffer(GL_ARRAY_BUFFER, uvBlock.vbo_handle);
+				if (m_duplicateTexCoords) {
+					glActiveTexture(GL_TEXTURE0 + m_secondaryTexCoordUnit);
+					glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+					glTexCoordPointer(2, GL_FLOAT, 0, VBO_OFFSET(0));
+				}
+				glActiveTexture(GL_TEXTURE0);
+				glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+				glTexCoordPointer(2, GL_FLOAT, 0, VBO_OFFSET(0));
+			} 
 		} else {
 			if (m_duplicateTexCoords) {
 				glActiveTexture(GL_TEXTURE0 + m_secondaryTexCoordUnit);
@@ -393,19 +377,88 @@ void ModelRendererGl::renderMesh(const Mesh *mesh, float fade, int frame, int id
 			glActiveTexture(GL_TEXTURE0);
 			glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 		}
-		if (sendNormals && textureNormal) {
+		assertGl();
+		// draw model
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->getIndices().vbo_handle);
+		int indexType = mesh->getIndices().type == MeshIndexBlock::UNSIGNED_16 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT;
+		glDrawRangeElements(GL_TRIANGLES, 0, vertexCount-1, indexCount, indexType, VBO_OFFSET(0));
+
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+		assertGl();
+
+	} else { // Non static mesh or VBOs disabled
+		glVertexPointer(3, GL_FLOAT, stride, mainBlock->m_arrayPtr);
+		if (sendNormals) {
+			glNormalPointer(GL_FLOAT, stride, &mainBlock->m_posNorm[0].norm);
+		}
+		if (sendNormals && textureNormal
+		&& (mainBlock->type == MeshVertexBlock::POS_NORM_TAN 
+		|| mainBlock->type == MeshVertexBlock::POS_NORM_TAN_UV)) {
 			shaderProgram->setUniform("gae_HasNormalMap", 1u);
 			int loc = shaderProgram->getAttribLoc("gae_Tangent");
 			if (loc != -1) {
 				glEnableVertexAttribArray(loc);
-				glVertexAttribPointer(loc, 3, GL_FLOAT, GL_TRUE, 0, mesh->getTangents());
+				glVertexAttribPointer(loc, 3, GL_FLOAT, GL_TRUE, stride, &mainBlock->m_posNormTan[0].tan);
 			}
 		} else {
 			shaderProgram->setUniform("gae_HasNormalMap", 0u);
 		}
-		// draw model
-		glDrawRangeElements(GL_TRIANGLES, 0, vertexCount-1, indexCount, GL_UNSIGNED_INT, mesh->getIndices());
+		if (renderTextures && mesh->getTexture(MeshTexture::DIFFUSE)) {
+			int uvOffset = mainBlock->getUvOffset();
+			if (uvOffset != -1) {
+				if (m_duplicateTexCoords) {
+					glActiveTexture(GL_TEXTURE0 + m_secondaryTexCoordUnit);
+					glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+					glTexCoordPointer(2, GL_FLOAT, stride, &((float*)mainBlock->m_arrayPtr)[uvOffset]);
+				}
+				glActiveTexture(GL_TEXTURE0);
+				glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+				glTexCoordPointer(2, GL_FLOAT, stride, &((float*)mainBlock->m_arrayPtr)[uvOffset]);
+			} else {
+				const MeshVertexBlock &uvBlock = mesh->getTecCoordBlock();
+				assert(uvBlock.count != 0);
+				if (uvBlock.vbo_handle) {
+					glBindBuffer(GL_ARRAY_BUFFER, uvBlock.vbo_handle);
+				}
+				if (m_duplicateTexCoords) {
+					glActiveTexture(GL_TEXTURE0 + m_secondaryTexCoordUnit);
+					glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+					if (uvBlock.vbo_handle) {
+						glTexCoordPointer(2, GL_FLOAT, 0, VBO_OFFSET(0));
+					} else {
+						glTexCoordPointer(2, GL_FLOAT, 0, uvBlock.m_arrayPtr);
+					}
+				}
+				glActiveTexture(GL_TEXTURE0);
+				glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+				if (uvBlock.vbo_handle) {
+					glTexCoordPointer(2, GL_FLOAT, 0, VBO_OFFSET(0));
+				} else {
+					glTexCoordPointer(2, GL_FLOAT, 0, uvBlock.m_arrayPtr);
+				}
+			} 
+		} else {
+			if (m_duplicateTexCoords) {
+				glActiveTexture(GL_TEXTURE0 + m_secondaryTexCoordUnit);
+				glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+			}
+			glActiveTexture(GL_TEXTURE0);
+			glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+		}
+		int indexType = mesh->getIndices().type == MeshIndexBlock::UNSIGNED_16 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT;
+
+		if (use_vbos) {
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->getIndices().vbo_handle);
+			glDrawRangeElements(GL_TRIANGLES, 0, vertexCount-1, indexCount, indexType, VBO_OFFSET(0));
+			glBindBuffer(GL_ARRAY_BUFFER, 0);
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+		} else {
+			glDrawRangeElements(GL_TRIANGLES, 0, vertexCount-1, indexCount, indexType, mesh->getIndices().m_indices);
+		}
 	}
+
 	assertGl();
 }
 
@@ -425,15 +478,15 @@ void ModelRendererGl::setLightCount(int n) {
 }
 
 void ModelRendererGl::renderMeshNormals(const Mesh *mesh) {
-	glBegin(GL_LINES);
-	for (int i = 0; i < mesh->getIndexCount(); ++i) {
-		Vec3f vertex = mesh->getInterpolationData()->getVertices()[mesh->getIndices()[i]];
-		Vec3f normal = vertex + mesh->getInterpolationData()->getNormals()[mesh->getIndices()[i]];
+	//glBegin(GL_LINES);
+	//for (int i = 0; i < mesh->getIndexCount(); ++i) {
+	//	Vec3f vertex = mesh->getInterpolationData()->getVertices()[mesh->getIndices()[i]];
+	//	Vec3f normal = vertex + mesh->getInterpolationData()->getNormals()[mesh->getIndices()[i]];
 
-		glVertex3fv(vertex.ptr());
-		glVertex3fv(normal.ptr());
-	}
-	glEnd();
+	//	glVertex3fv(vertex.ptr());
+	//	glVertex3fv(normal.ptr());
+	//}
+	//glEnd();
 }
 
 }}}//end namespace

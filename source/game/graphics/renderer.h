@@ -292,6 +292,7 @@ private:
 	void renderTile(const Vec2i &pos);
 	void renderQuad(int x, int y, int w, int h, const Texture2D *texture);
 
+public:
 	//static
     static Texture2D::Filter strToTextureFilter(const string &s);
 };

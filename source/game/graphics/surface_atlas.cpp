@@ -34,23 +34,25 @@ using Shared::Graphics::Gl::getGlMaxTextureSize;
 // =====================================================
 
 SurfaceInfo::SurfaceInfo(const Pixmap2D *lu, const Pixmap2D *ru, const Pixmap2D *ld, const Pixmap2D *rd)
-		: center(NULL)
+		: center(0)
 		, leftUp(lu)
 		, rightUp(ru) 
 		, leftDown(ld)
 		, rightDown(rd)
 		, coord(Vec2f(0.f))
-		, texture(0) {
+		, texId(0)
+		, pixmap(0) {
 }
 
 SurfaceInfo::SurfaceInfo(const Pixmap2D *center)
 		: center(center)
-		, leftUp(NULL)
-		, rightUp(NULL) 
-		, leftDown(NULL)
-		, rightDown(NULL)
+		, leftUp(0)
+		, rightUp(0) 
+		, leftDown(0)
+		, rightDown(0)
 		, coord(Vec2f(0.f))
-		, texture(0) {
+		, texId(0)
+		, pixmap(0) {
 }
 
 bool SurfaceInfo::operator==(const SurfaceInfo &si) const {
@@ -65,14 +67,18 @@ bool SurfaceInfo::operator==(const SurfaceInfo &si) const {
 // 	class SurfaceAtlas
 // ===============================
 
-SurfaceAtlas::SurfaceAtlas() : m_coordStep(1.f) {
+SurfaceAtlas::SurfaceAtlas(Vec2i size) 
+		: m_coordStep(1.f)
+		, size(size) {
 	surfaceSize = -1;
 }
 
-void SurfaceAtlas::addSurface(SurfaceInfo *si) {
+SurfaceAtlas::~SurfaceAtlas() {
+}
 
+int SurfaceAtlas::addSurface(SurfaceInfo *si) {
 	// check dimensions
-	if (si->getCenter() != NULL) {
+	if (si->getCenter()) {
 		checkDimensions(si->getCenter());
 	} else {
 		checkDimensions(si->getLeftUp());
@@ -82,27 +88,33 @@ void SurfaceAtlas::addSurface(SurfaceInfo *si) {
 	}
 
 	// add info
-	SurfaceInfos::iterator it = find(surfaceInfos.begin(), surfaceInfos.end(), *si);
-	if (it == surfaceInfos.end()) {
+	int ndx = -1;
+	for (int i=0; i < surfaceInfos.size(); ++i) {
+		if (surfaceInfos[i] == *si) {
+			ndx = i;
+			break;
+		}
+	}
+	if (ndx == -1) {
 		// add new texture
-		Texture2D *t = Renderer::getInstance().newTexture2D(ResourceScope::GAME);
-		t->setWrapMode(Texture::wmClampToEdge);
-		t->getPixmap()->init(surfaceSize, surfaceSize, 3);
+		Pixmap2D *pixmap = new Pixmap2D();
+		pixmap->init(surfaceSize, surfaceSize, 3);
 
 		si->setCoord(Vec2f(0.f, 0.f));
-		si->setTexture(t);
+		si->setPixmap(pixmap);
 		surfaceInfos.push_back(*si);
 
 		// copy texture to pixmap
 		if (si->getCenter() != NULL) {
-			t->getPixmap()->copy(si->getCenter());
-			//t->getPixmap()->splat(si->getCenter(), si->getCenter(), si->getCenter(), si->getCenter());
+			pixmap->copy(si->getCenter());
 		} else {
-			t->getPixmap()->splat(si->getLeftUp(), si->getRightUp(), si->getLeftDown(), si->getRightDown());
+			pixmap->splat(si->getLeftUp(), si->getRightUp(), si->getLeftDown(), si->getRightDown());
 		}
+		return surfaceInfos.size() - 1;
 	} else {
-		si->setCoord(it->getCoord());
-		si->setTexture(it->getTexture());
+		si->setCoord(surfaceInfos[ndx].getCoord());
+		si->setPixmap(surfaceInfos[ndx].getPixmap());
+		return ndx;
 	}
 }
 
@@ -118,27 +130,72 @@ void SurfaceAtlas::checkDimensions(const Pixmap2D *p) {
 	}
 }
 
+void SurfaceAtlas::deletePixmaps() {
+	foreach (SurfaceInfos, it, surfaceInfos) {
+		delete it->getPixmap();
+		it->setPixmap(0);
+	}
+}
+
+void SurfaceAtlas::disposePixmaps() {
+	foreach (SurfaceInfos, it, surfaceInfos) {
+		const_cast<Pixmap2D*>(it->getPixmap())->dispose();
+	}
+}
+
+SurfaceAtlas2::SurfaceAtlas2(Vec2i size)
+		: SurfaceAtlas(size)
+		, m_infosByPos(0) {
+	m_infosByPos = new uint32[size.w * size.h];
+}
+
+SurfaceAtlas2::~SurfaceAtlas2() {
+	delete [] m_infosByPos;
+}
+
+int SurfaceAtlas2::addSurface(Vec2i pos, SurfaceInfo *si) {
+	int res = SurfaceAtlas::addSurface(si);
+	m_infosByPos[pos.y * size.w + pos.x] = res;
+	return res;
+}
+
 void SurfaceAtlas2::buildTexture() {
 	int numTex = surfaceInfos.size();
 	int sideLength = int(sqrtf(float(numTex))) + 1;
-
 	///@todo fix, no need to be square, this is wasting lots of tex mem
-	m_width = m_height = nextPowerOf2(sideLength * surfaceSize);
+	int texSize = nextPowerOf2(sideLength * surfaceSize);
 
 	int maxTex = getGlMaxTextureSize();
-	if (m_width > maxTex) {
-		throw runtime_error("Terrain texture dimensions exceed max texture size.");
+	if (texSize > maxTex) {
+		sideLength = maxTex / surfaceSize;
+		assert(maxTex % surfaceSize == 0);
+		int texesPerPage = sideLength * sideLength;
+		assert(numTex > texesPerPage);
+		int pagesRequired = numTex / texesPerPage + 1;
+		assert(pagesRequired > 1);
+
+		// texture 0, max dims
+		Texture2D *tex = g_renderer.newTexture2D(ResourceScope::GAME);
+		tex->setWrapMode(Texture::wmClampToEdge);
+		tex->getPixmap()->init(maxTex, maxTex, 3);
+		m_textures.push_back(tex);
+
+		int nTex = numTex - texesPerPage;
+		for (int i=1; i < pagesRequired; ++i) {
+			tex = g_renderer.newTexture2D(ResourceScope::GAME);
+			tex->setWrapMode(Texture::wmClampToEdge);
+			tex->getPixmap()->init(maxTex, maxTex, 3);
+			m_textures.push_back(tex);
+			nTex -= texesPerPage;
+		}
+		texSize = maxTex;
+	} else {
+		assert(texSize <= maxTex);
+		Texture2D *tex = g_renderer.newTexture2D(ResourceScope::GAME);
+		tex->setWrapMode(Texture::wmClampToEdge);
+		tex->getPixmap()->init(texSize, texSize, 3);
+		m_textures.push_back(tex);
 	}
-
-	sideLength = m_width / surfaceSize;
-	RUNTIME_CHECK(m_width % surfaceSize == 0);
-	Texture2D *tex = g_renderer.newTexture2D(ResourceScope::GAME);
-	tex->setWrapMode(Texture::wmClampToEdge);
-	m_texture = tex;
-	
-	Pixmap2D *pixmap = tex->getPixmap();
-	pixmap->init(m_width, m_height, 3);
-
 	//Vec3f debugColour(1.f, 0.f, 0.f);
 	//for (int y=0; y < m_height; ++y) {
 	//	for (int x=0; x < m_width; ++x) {
@@ -146,27 +203,43 @@ void SurfaceAtlas2::buildTexture() {
 	//	}
 	//}
 
-	int x = 0, y = 0;
-	int tx = 0, ty = 0;
+	sideLength = texSize / surfaceSize;
 	float stepSize = 1.f / float(sideLength);
-	float pixelSize = 1.f / float(m_width);
+	float pixelSize = 1.f / float(texSize);
 	m_coordStep = stepSize - 2.f * pixelSize;
 
-	foreach (SurfaceInfos, it, surfaceInfos) {
-		pixmap->subCopy(x, y, it->getTexture()->getPixmap());
-		float s = tx * stepSize + pixelSize;
-		float t = ty * stepSize + pixelSize;
-		it->setCoord(Vec2f(s, t));
-		x += surfaceSize;
-		++tx;
-		if (x + surfaceSize > m_width) {
-			x = 0;
-			y += surfaceSize;
-			++ty;
-			tx = 0;
+	int texIndex = 0;
+	int siIndex = 0;
+	do {
+		Pixmap2D *pixmap = const_cast<Pixmap2D*>(m_textures[texIndex]->getPixmap());
+		int x = 0, y = 0;   // pixel position (to copy to)
+		int tx = 0, ty = 0; // 'slot' in texture, to calc tex coords
+
+		for ( ; siIndex < surfaceInfos.size(); ++siIndex) {
+			pixmap->subCopy(x, y, surfaceInfos[siIndex].getPixmap());
+
+			float s = tx * stepSize + pixelSize;
+			float t = ty * stepSize + pixelSize;
+			if (s < 0.f || s > 1.f || t < 0.f || t > 1.f) {
+				DEBUG_HOOK();
+			}
+			surfaceInfos[siIndex].setCoord(Vec2f(s, t));
+			surfaceInfos[siIndex].setTexId(texIndex);
+			x += surfaceSize;
+			++tx;
+			if (x + surfaceSize > texSize) {
+				x = 0;
+				y += surfaceSize;
+				++ty;
+				tx = 0;
+				if (y == texSize) {
+					break;
+				}
+			}
 		}
-	}
-	//pixmap->savePng("terrain_tex.png");
+		pixmap->savePng("terrain_tex" + intToStr(texIndex) + ".png");
+		++texIndex;
+	} while (siIndex < surfaceInfos.size());
 }
 
 }} // end namespace

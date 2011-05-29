@@ -72,12 +72,12 @@ bool TerrainRendererGlest::checkCaps() {
 	return isGlVersionSupported(1, 3, 0);
 }
 
-const Texture2D* TerrainRendererGlest::addSurfTex(int tl, int tr, int bl, int br) {
+const Pixmap2D* TerrainRendererGlest::addSurfTex(int tl, int tr, int bl, int br) {
 	// center textures
 	if (tl == tr && tl == bl && tl == br) {
 		SurfaceInfo si(m_tileset->getSurfPixmap(tl));
 		m_surfaceAtlas->addSurface(&si);
-		return si.getTexture();
+		return si.getPixmap();
 	}
 
 	// else splat
@@ -87,22 +87,31 @@ const Texture2D* TerrainRendererGlest::addSurfTex(int tl, int tr, int bl, int br
 		m_tileset->getSurfPixmap(bl),
 		m_tileset->getSurfPixmap(br));
 	m_surfaceAtlas->addSurface(&si);
-	return si.getTexture();
+	return si.getPixmap();
 }
 
 void TerrainRendererGlest::splatTextures() {
+	map<const Pixmap2D*, Texture2D*> texMap;
+	Texture2D::Filter textureFilter = Renderer::strToTextureFilter(g_config.getRenderFilter());
+	int maxAnisotropy = g_config.getRenderFilterMaxAnisotropy();
 	for (int i = 0; i < m_map->getTileW() - 1; ++i) {
 		for (int j = 0; j < m_map->getTileH() - 1; ++j) {
 			Vec2f coord;
-			const Texture2D *texture;
 			Tile *sctl = m_map->getTile(i, j);
 			Tile *sctr = m_map->getTile(i + 1, j);
 			Tile *scbl = m_map->getTile(i, j + 1);
 			Tile *scbr = m_map->getTile(i + 1, j + 1);
 
-			const Texture2D *tex;
-			tex = addSurfTex(sctl->getTileType(), sctr->getTileType(), scbl->getTileType(), scbr->getTileType());
-			sctl->setTileTexture(tex);
+			const Pixmap2D *pixmap = addSurfTex(sctl->getTileType(), sctr->getTileType(), scbl->getTileType(), scbr->getTileType());
+			Texture2D *tex = texMap[pixmap];
+			if (!tex) {
+				tex = g_renderer.newTexture2D(ResourceScope::GAME);				
+				tex->setWrapMode(Texture::wmClampToEdge);
+				tex->setPixmap(pixmap);
+				tex->init(textureFilter, maxAnisotropy);
+				texMap[pixmap] = tex;
+			}
+			sctl->setTexId(static_cast<Texture2DGl*>(tex)->getHandle());
 		}
 	}
 }
@@ -113,9 +122,10 @@ void TerrainRendererGlest::init(Map *map, Tileset *tileset) {
 	TerrainRenderer::initMapData(size, map->getVertexData());
 
 	m_tileset = tileset;
-	m_surfaceAtlas = new SurfaceAtlas();
+	m_surfaceAtlas = new SurfaceAtlas(size);
 
 	splatTextures();
+	m_surfaceAtlas->disposePixmaps();
 }
 
 void TerrainRendererGlest::render(SceneCuller &culler) {
@@ -177,7 +187,7 @@ void TerrainRendererGlest::render(SceneCuller &culler) {
 			renderer.incPointCount(4);
 
 			// set texture
-			currTex= static_cast<const Texture2DGl*>(tile->getTileTexture())->getHandle();
+			currTex = tile->getTexId();
 			if (currTex != lastTex) {
 				lastTex = currTex;
 				glBindTexture(GL_TEXTURE_2D, lastTex);
@@ -260,8 +270,10 @@ void TerrainRenderer2::updateVertexData(Rect2i area) {
 		TileVertex &br = m_mapData->get(pos + diag);
 		TileVertex &bl = m_mapData->get(pos + down);
 
-		const Texture2D *tileTex = m_map->getTile(pos)->getTileTexture();
-		Vec2f ttCoord = static_cast<SurfaceAtlas2*>(m_surfaceAtlas)->getTexCoords(tileTex);
+		Vec2f ttCoord = static_cast<SurfaceAtlas2*>(m_surfaceAtlas)->getSurfaceInfo(pos)->getCoord();
+		if (ttCoord.u < 0.f || ttCoord.u > 1.f || ttCoord.v < 0.f || ttCoord.v > 1.f) {
+			DEBUG_HOOK();
+		}
 
 		myData[ndx + 0] = tl;
 		myData[ndx + 0].tileTexCoord() = ttCoord + Vec2f(0.f, 0.f);
@@ -285,17 +297,32 @@ void TerrainRenderer2::updateVertexData(Rect2i area) {
 void TerrainRenderer2::init(Map *map, Tileset *tileset) {
 	m_map = map;
 	Vec2i size(map->getTileW(), map->getTileH());
+
+	g_logger.logProgramEvent("init tr2");
+
 	TerrainRenderer::initMapData(size, map->getVertexData());
 
 	m_tileset = tileset;
-	m_surfaceAtlas = new SurfaceAtlas2();
+	SurfaceAtlas2 *atlas = new SurfaceAtlas2(size);
+	m_surfaceAtlas = atlas;
 	splatTextures();
 	try {
-		static_cast<SurfaceAtlas2*>(m_surfaceAtlas)->buildTexture();
+		atlas->buildTexture();
 	} catch (...) {
 		delete m_surfaceAtlas;
 		throw;
 	}
+
+	for (int y=0; y < size.h - 1; ++y) {
+		for (int x=0; x < size.w - 1; ++x) {
+			int id = atlas->getSurfaceInfo(Vec2i(x, y))->getTexId();
+			map->getTile(x, y)->setTexId(id);
+		}
+	}
+	m_indexArrays = new vector<uint32>[atlas->getTextureCount()];
+
+	// delete pixmap data...
+	m_surfaceAtlas->deletePixmaps();
 
 	glGenBuffers(1, &m_vertexBuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, m_vertexBuffer);
@@ -307,6 +334,34 @@ void TerrainRenderer2::init(Map *map, Tileset *tileset) {
 	updateVertexData();
 }
 
+void TerrainRenderer2::splatTextures() {
+	SurfaceAtlas2 *atlas = static_cast<SurfaceAtlas2*>(m_surfaceAtlas);
+	for (int i = 0; i < m_map->getTileW() - 1; ++i) {
+		for (int j = 0; j < m_map->getTileH() - 1; ++j) {
+			Vec2f coord;
+			int tl = m_map->getTile(i, j)->getTileType();
+			int tr = m_map->getTile(i + 1, j)->getTileType();
+			int bl = m_map->getTile(i, j + 1)->getTileType();
+			int br = m_map->getTile(i + 1, j + 1)->getTileType();
+
+			// center textures
+			if (tl == tr && tl == bl && tl == br) {
+				SurfaceInfo si(m_tileset->getSurfPixmap(tl));
+				atlas->addSurface(Vec2i(i, j), &si);
+			} else {
+				// else splat
+				SurfaceInfo si(
+					m_tileset->getSurfPixmap(tl),
+					m_tileset->getSurfPixmap(tr),
+					m_tileset->getSurfPixmap(bl),
+					m_tileset->getSurfPixmap(br));
+				atlas->addSurface(Vec2i(i, j), &si);
+			}
+//			sctl->setTexId(0);
+		}
+	}
+}
+
 void TerrainRenderer2::render(SceneCuller &culler) {
 	SECTION_TIMER(RENDER_SURFACE);
 
@@ -315,9 +370,13 @@ void TerrainRenderer2::render(SceneCuller &culler) {
 
 	assertGl();
 
-	// build index array
-	m_indexArray.clear();
-	int tileCount = 0;
+	// build index arrays (one per texture)
+	int texCount = static_cast<SurfaceAtlas2*>(m_surfaceAtlas)->getTextureCount();
+	int *tileCounts = new int[texCount];
+	for (int i=0; i < texCount; ++i) {
+		m_indexArrays[i].clear();
+		tileCounts[i] = 0;
+	}
 	SceneCuller::iterator it = culler.tile_begin();
 	for ( ; it != culler.tile_end(); ++it) {
 		const Vec2i pos = *it;
@@ -325,11 +384,13 @@ void TerrainRenderer2::render(SceneCuller &culler) {
 			continue;
 		}
 		const int ndx = 4 * pos.y * (m_size.w - 1) + 4 * pos.x;
-		m_indexArray.push_back(ndx + 0);
-		m_indexArray.push_back(ndx + 1);
-		m_indexArray.push_back(ndx + 2);
-		m_indexArray.push_back(ndx + 3);
-		++tileCount;
+		const int tex = m_map->getTile(pos)->getTexId();
+		ASSERT_RANGE(tex, texCount);
+		m_indexArrays[tex].push_back(ndx + 0);
+		m_indexArrays[tex].push_back(ndx + 1);
+		m_indexArrays[tex].push_back(ndx + 2);
+		m_indexArrays[tex].push_back(ndx + 3);
+		++tileCounts[tex];
 	}
 
 	// set up gl state
@@ -341,12 +402,14 @@ void TerrainRenderer2::render(SceneCuller &culler) {
 
 	const int stride = sizeof(TileVertex);
 
+#	define VBO_OFFSET(x) ((void*)(x * sizeof(float)))
+
 	// bind vbo, enable arrays & set vert and normal offsets
 	glBindBuffer(GL_ARRAY_BUFFER, m_vertexBuffer);
 	glEnableClientState(GL_VERTEX_ARRAY);
-	glVertexPointer(3, GL_FLOAT, stride, 0);
+	glVertexPointer(3, GL_FLOAT, stride, VBO_OFFSET(0));
 	glEnableClientState(GL_NORMAL_ARRAY);
-	glNormalPointer(GL_FLOAT, stride, (void*)(3 * sizeof(float)));
+	glNormalPointer(GL_FLOAT, stride, VBO_OFFSET(3));
 
 	// fog of war texture
 	glActiveTexture(Renderer::fowTexUnit);
@@ -358,8 +421,8 @@ void TerrainRenderer2::render(SceneCuller &culler) {
 	///@todo don't do this here, update after 'unitTex' is updated (every fifth call to Minimap::update())
 	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, fowTex->getPixmap()->getW(), fowTex->getPixmap()->getH(),
 		GL_ALPHA, GL_UNSIGNED_BYTE, fowTex->getPixmap()->getPixels());
-	glTexCoordPointer(2, GL_FLOAT, stride, (void*)(8 * sizeof(float)));
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+	glTexCoordPointer(2, GL_FLOAT, stride, VBO_OFFSET(8));
 
 	// shadow texture
 	ShadowMode shadows = renderer.getShadowMode();
@@ -371,19 +434,31 @@ void TerrainRenderer2::render(SceneCuller &culler) {
 	}
 	assertGl();
 
-	// base texture
+	// activate base texture
 	glActiveTexture(Renderer::baseTexUnit);
 	glClientActiveTexture(Renderer::baseTexUnit);
-	const Texture2D *baseTex = static_cast<SurfaceAtlas2*>(m_surfaceAtlas)->getMasterTexture();
-	GLuint texHandle = static_cast<const Texture2DGl*>(baseTex)->getHandle();
-	glBindTexture(GL_TEXTURE_2D, texHandle);
-	glTexCoordPointer(2, GL_FLOAT, stride, (void*)(6 * sizeof(float)));
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+	glTexCoordPointer(2, GL_FLOAT, stride, VBO_OFFSET(6));
 	assertGl();
-	assert(tileCount * 4 == m_indexArray.size());
 
-	// zap
-	glDrawElements(GL_QUADS, tileCount * 4, GL_UNSIGNED_INT, &m_indexArray[0]);
+	// for each texture
+	for (int i=0; i < texCount; ++i) {
+		if (m_indexArrays[i].empty()) {
+			continue;
+		}
+		// set texture
+		const Texture2D *baseTex = static_cast<SurfaceAtlas2*>(m_surfaceAtlas)->getTexture(i);
+		GLuint texHandle = static_cast<const Texture2DGl*>(baseTex)->getHandle();
+		glBindTexture(GL_TEXTURE_2D, texHandle);
+
+		// assert
+		assertGl();
+		assert(tileCounts[i] * 4 == m_indexArrays[i].size());
+
+		// zap
+		glDrawElements(GL_QUADS, tileCounts[i] * 4, GL_UNSIGNED_INT, &m_indexArrays[i][0]);
+	}
+	delete [] tileCounts;
 
 	// disable arrays/buffers & restore state
 	glDisableClientState(GL_VERTEX_ARRAY);

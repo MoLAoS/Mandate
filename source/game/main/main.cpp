@@ -122,13 +122,6 @@ int glestMain(int argc, char** argv) {
 		return 0;
 	}
 
-	IF_WINDOZE (
-		if (args.redirStreams()) {
-			freopen("stdout.txt", "w", stdout);
-			freopen("stderr.txt", "w", stderr);
-		}
-	)
-
 	string configDir = args.getConfigDir();
 	string dataDir = args.getDataDir();
 
@@ -145,6 +138,12 @@ int glestMain(int argc, char** argv) {
 	if (dataDir.empty()) {
 		dataDir = ".";
 	}
+	IF_WINDOZE (
+		if (args.redirStreams()) {
+			string path = configDir + "/stdout.txt";
+			freopen(path.c_str(), "w", stdout);
+		}
+	)
 
 	mkdir(configDir, true);
 	mkdir(configDir + "/addons/", true);

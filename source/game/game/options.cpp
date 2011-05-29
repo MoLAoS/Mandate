@@ -467,6 +467,13 @@ void Options::buildOptionsPanel(CellStrip *container, int cell) {
 	// Terrain Shader
 	dw = new OptionWidget(col2, lang.get("TerrainShader"));
 	dw->setCell(6);
+	m_terrainRendererList = new DropList(dw);
+	m_terrainRendererList->setCell(1);
+	m_terrainRendererList->setAnchors(squashAnchors);
+	m_terrainRendererList->addItem("Original Terrain Renderer");
+	m_terrainRendererList->addItem("Terrain Renderer 2");
+	m_terrainRendererList->setSelected(config.getRenderTerrainRenderer() - 1);
+	m_terrainRendererList->SelectionChanged.connect(this, &Options::onDropListSelectionChanged);
 	
 	// Water Shader
 	dw = new OptionWidget(col2, lang.get("WaterShader"));
@@ -582,6 +589,8 @@ void Options::onDropListSelectionChanged(Widget *source) {
 		string shader = m_modelShaders[list->getSelectedIndex()];
 		g_renderer.changeShader(shader);
 		g_config.setRenderModelShader(shader);
+	} else if (list == m_terrainRendererList) {
+		g_config.setRenderTerrainRenderer(list->getSelectedIndex() + 1);
 	}
 }
 

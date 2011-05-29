@@ -27,20 +27,6 @@ namespace Glest { namespace Gui {
 
 using Global::CoreData;
 
-void setFancyBorder(BorderStyle &style) {
-	style.setSizes(0);
-	style.m_sizes[Border::TOP] = 15;
-	style.m_sizes[Border::LEFT] = 3;
-	
-	style.m_type = BorderType::CUSTOM_CORNERS;
-	int opaqueIndex = g_widgetConfig.getColourIndex(Colour(255, 255, 255, 127));
-	int transparantIndex = g_widgetConfig.getColourIndex(Colour(255, 255, 255, 0));
-	style.m_colourIndices[Corner::TOP_LEFT]		= opaqueIndex;
-	style.m_colourIndices[Corner::TOP_RIGHT]	= transparantIndex;
-	style.m_colourIndices[Corner::BOTTOM_RIGHT] = transparantIndex;
-	style.m_colourIndices[Corner::BOTTOM_LEFT]	= transparantIndex;
-}
-
 // =====================================================
 // 	class Display
 // =====================================================
@@ -52,31 +38,23 @@ Display::Display(UserInterface *ui, Vec2i pos)
 		, TextWidget(this)
 		, m_ui(ui)
 		, m_logo(-1)
+		, m_imageSize(32)
 		, m_draggingWidget(false)
 		, m_moveOffset(Vec2i(0))
 		, m_hoverBtn(DisplaySection::INVALID, invalidPos)
 		, m_pressedBtn(DisplaySection::INVALID, invalidPos)
 		, m_toolTip(0) {
 	setWidgetStyle(WidgetType::DISPLAY);
-
-
-	colors[0] = Vec3f(1.f, 1.f, 1.f);
-	colors[1] = Vec3f(1.f, 0.5f, 0.5f);
-	colors[2] = Vec3f(0.f, 1.f, 0.f);
-	colors[3] = Vec3f(0.7f, 0.7f, 0.7f);
-
-	currentColor = 0;
-	int iconSize = 32;
 	int x = getBorderLeft();
 	int y = getBorderTop();
 	m_upImageOffset = Vec2i(x, y);
 	for (int i = 0; i < selectionCellCount; ++i) { // selection potraits
 		if (i && i % cellWidthCount == 0) {
-			y += iconSize;
+			y += m_imageSize;
 			x = getBorderLeft();
 		}
-		addImageX(0, Vec2i(x,y), Vec2i(iconSize));
-		x += iconSize;
+		addImageX(0, Vec2i(x,y), Vec2i(m_imageSize));
+		x += m_imageSize;
 	}
 	setAlignment(Alignment::NONE);
 	setText(""); // (0) unit title
@@ -87,18 +65,18 @@ Display::Display(UserInterface *ui, Vec2i pos)
 	const FontMetrics *fm = getFont()->getMetrics();
 
 	///@todo fix: centre text with image
-	setTextPos(Vec2i(getBorderLeft() + 40, getBorderTop() + iconSize / 4), 0);
+	setTextPos(Vec2i(getBorderLeft() + 40, getBorderTop() + m_imageSize / 4), 0);
 
 	Vec2i arPos, aaPos, afPos;
 	x = getBorderLeft();
-	y = getBorderTop() + iconSize + iconSize / 4 + int(fm->getHeight()) * 6;
+	y = getBorderTop() + m_imageSize + m_imageSize / 4 + int(fm->getHeight()) * 6;
 	m_downImageOffset = Vec2i(x, y);
 	for (int i = 0; i < commandCellCount; ++i) { // command buttons
 		if (i && i % cellWidthCount == 0) {
-			y += iconSize;
+			y += m_imageSize;
 			x = getBorderLeft();
 		}
-		addImageX(0, Vec2i(x,y), Vec2i(iconSize));
+		addImageX(0, Vec2i(x,y), Vec2i(m_imageSize));
 		if (i == UserInterface::autoRepairPos) {
 			arPos = Vec2i(x, y);
 		} else if (i == UserInterface::autoAttackPos) {
@@ -106,22 +84,22 @@ Display::Display(UserInterface *ui, Vec2i pos)
 		} else if (i == UserInterface::autoFleePos) {
 			afPos = Vec2i(x, y);
 		}
-		x += iconSize;
+		x += m_imageSize;
 	}
 
 	x = getBorderLeft();
-	y += (iconSize * cellHeightCount + int(fm->getHeight() + 1.f));
+	y += (m_imageSize * cellHeightCount + int(fm->getHeight() + 1.f));
 	addText(""); // (4) 'Transported' label
 	setTextPos(Vec2i(x, y), 4);
 	y += int(fm->getHeight() + 1.f);
 	m_carryImageOffset = Vec2i(x, y);
 	for (int i = 0; i < transportCellCount; ++i) { // loaded unit portraits
 		if (i && i % cellWidthCount == 0) {
-			y += iconSize;
+			y += m_imageSize;
 			x = getBorderLeft();
 		}
-		addImageX(0, Vec2i(x,y), Vec2i(iconSize));
-		x += iconSize;
+		addImageX(0, Vec2i(x,y), Vec2i(m_imageSize));
+		x += m_imageSize;
 	}
 
 	const Texture2D* overlayImages[3] = {
@@ -129,17 +107,17 @@ Display::Display(UserInterface *ui, Vec2i pos)
 		g_widgetConfig.getCrossTexture(),
 		g_widgetConfig.getQuestionTexture()
 	};
-	m_autoRepairOn = addImageX(overlayImages[0], arPos, Vec2i(iconSize));
-	m_autoRepairOff = addImageX(overlayImages[1], arPos, Vec2i(iconSize));
-	m_autoRepairMixed = addImageX(overlayImages[2], arPos, Vec2i(iconSize));
+	m_autoRepairOn = addImageX(overlayImages[0], arPos, Vec2i(m_imageSize));
+	m_autoRepairOff = addImageX(overlayImages[1], arPos, Vec2i(m_imageSize));
+	m_autoRepairMixed = addImageX(overlayImages[2], arPos, Vec2i(m_imageSize));
 
-	m_autoAttackOn = addImageX(overlayImages[0], aaPos, Vec2i(iconSize));
-	m_autoAttackOff = addImageX(overlayImages[1], aaPos, Vec2i(iconSize));
-	m_autoAttackMixed = addImageX(overlayImages[2], aaPos, Vec2i(iconSize));
+	m_autoAttackOn = addImageX(overlayImages[0], aaPos, Vec2i(m_imageSize));
+	m_autoAttackOff = addImageX(overlayImages[1], aaPos, Vec2i(m_imageSize));
+	m_autoAttackMixed = addImageX(overlayImages[2], aaPos, Vec2i(m_imageSize));
 
-	m_autoFleeOn =  addImageX(overlayImages[0], afPos, Vec2i(iconSize));
-	m_autoFleeOff = addImageX(overlayImages[1], afPos, Vec2i(iconSize));
-	m_autoFleeMixed = addImageX(overlayImages[2], afPos, Vec2i(iconSize));
+	m_autoFleeOn =  addImageX(overlayImages[0], afPos, Vec2i(m_imageSize));
+	m_autoFleeOff = addImageX(overlayImages[1], afPos, Vec2i(m_imageSize));
+	m_autoFleeMixed = addImageX(overlayImages[2], afPos, Vec2i(m_imageSize));
 
 	// -loadmap doesn't have any faction
 	const Texture2D *logoTex = (g_world.getThisFaction()) ? g_world.getThisFaction()->getLogoTex() : 0;
@@ -508,9 +486,9 @@ DisplayButton Display::computeIndex(Vec2i i_pos, bool screenPos) {
 	for (int i=0; i < 3; ++i) {	
 		pos = i_pos - offsets[i];
 
-		if (pos.y >= 0 && pos.y < imageSize * cellHeightCount) {
-			int cellX = pos.x / imageSize;
-			int cellY = (pos.y / imageSize) % cellHeightCount;
+		if (pos.y >= 0 && pos.y < m_imageSize * cellHeightCount) {
+			int cellX = pos.x / m_imageSize;
+			int cellY = (pos.y / m_imageSize) % cellHeightCount;
 			int index = cellY * cellWidthCount + cellX;
 			if (index >= 0 && index < counts[i]) {
 				if (getImage(i * cellHeightCount * cellWidthCount + index)) {

@@ -27,7 +27,7 @@ displayWindowed				bool	false			-		-		Whether or not to display the game in wind
 gsAutoRepairEnabled			bool	true			-		-		Toggles whether or not auto-repair (idle workers automatically repair damaged structures) is by default on. This can also be turned off in-game on a per-game basis.
 gsAutoReturnEnabled			bool	false			-		-		Toggles whether or not units return after automatically moving to attack a foe.
 gsDayTime					float	1000.f			-		-		Sets the length of the day/night cycle in seconds.
-gsWorldUpdateFps			int		40				-		-		The number of world update frames. It is recommended not to change this as it can break scenarios and other features that would be dependent on world updates as a method of measuring time.
+gsWorldUpdateFps			int		40				-		-		(Unused) The number of world update frames. It is recommended not to change this as it can break scenarios and other features that would be dependent on world updates as a method of measuring time.
 miscCatchExceptions			bool	true			-		-		Catch errors in mods and stop the game from running them. Unexplained crashes can occur if disabled.
 miscDebugKeys				bool	false			-		-		Displays the keys pressed in the game.
 miscDebugMode				bool	false			-		-		Turns debug mode on or off.
@@ -58,6 +58,7 @@ renderShadowFrameSkip		int		2				-		-		Frameskip for shadows. Lower will get smo
 renderShadowTextureSize		int		512				-		-		Size of shadow maps, must be a power of 2 but always under the screen size, higher values result in more accurate shadows and slower performance. Ignored if shadows are disabled. If larger than the game's resolution, shadows become buggy and stretched.
 renderShadows				string	"Projected"		-		-		The method of projecting the shadows to use, if any. Either None (no shadows), Projected (fast, but can't project onto other objects), or Shadow Mapping (slow and blocky, but can project onto other objects).
 #renderStencilBits			int		0				-		-		The number of stencil buffer bits, which can enhance shadow rendering when combined with Shadow Mapping, though are ignored on Projected shadows. Should be 8 or 16 if using, but can be heavy on system resources.
+renderTerrainRenderer		int		2				1		2		Terrain renderer to use, 1 for original, 2 for tr2 (requires GL 1.5+).
 renderTextures3D			bool	true			-		-		Allows the usage of 3D textures, required for water textures.
 renderUseShaders			bool	true			-		-		Enable or disable the use of shaders. Opengl 2.0 or higher is required.
 renderUseVBOs				bool	false			-		-		Enable or disable the use of VBOs.

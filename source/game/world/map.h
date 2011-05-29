@@ -92,54 +92,52 @@ class Tile {
 private:
 	Vec3f color; // leave here, only needed by minimap
 
-	//surface
+	// surface
 	int tileType;
-    const Texture2D *tileTexture;
+	int texId;
+	//const Texture2D *tileTexture;
 
-	//object & resource
+	// object & resource
 	MapObject *object;
 
-	//visibility
+	// visibility
 	bool visible[GameConstants::maxPlayers];
-    bool explored[GameConstants::maxPlayers];
+	bool explored[GameConstants::maxPlayers];
 
-	//cache
+	// cache
 	bool nearSubmerged;
 
 public:
-	Tile() : tileType(-1), tileTexture(0), object(0), nearSubmerged(false) { }
+	Tile() : tileType(-1), texId(0), object(0), nearSubmerged(false) { }
 	~Tile() { }
 
-	//get
-	const Vec3f &getColor() const				{return color;		}
-	int getTileType() const						{return tileType;	}
-	const Texture2D *getTileTexture() const		{return tileTexture;}
-	MapObject *getObject() const					{return object;		}
-	MapResource *getResource() const				{return object==NULL? NULL: object->getResource();}
-	bool getNearSubmerged() const				{return nearSubmerged;	}
-
+	// get/is
+	const Vec3f &getColor() const               { return color;                              }
+	int getTileType() const                     { return tileType;                           }
+	int getTexId() const                        { return texId;                              }
+	MapObject *getObject() const                { return object;                             }
+	MapResource *getResource() const            { return object ? object->getResource() : 0; }
+	bool getNearSubmerged() const               { return nearSubmerged;                      }
 	bool isVisible(int teamIndex) const			{
-		assert(teamIndex >= 0 && teamIndex < GameConstants::maxPlayers && "invalid team index");
+		ASSERT_RANGE(teamIndex, GameConstants::maxPlayers);
 		return visible[teamIndex];
 	}
 	bool isExplored(int teamIndex) const		{
-		assert(teamIndex >= 0 && teamIndex < GameConstants::maxPlayers && "invalid team index");
+		ASSERT_RANGE(teamIndex, GameConstants::maxPlayers);
 		return explored[teamIndex];
 	}
 
 	//set
-	void setColor(const Vec3f &color)				{this->color= color;				 }
-	void setTileType(int tileType)					{this->tileType= tileType;			}
-	void setTileTexture(const Texture2D *st)		{this->tileTexture= st;			   }
-	void setObject(MapObject *object)					{this->object= object;			   }
-	
+	void setColor(const Vec3f &color)               { this->color= color;        }
+	void setTileType(int tileType)                  { this->tileType= tileType;  }
+	void setTexId(int id)                           { this->texId = id;          }
+	void setObject(MapObject *object)               { this->object= object;      }	
 	void setExplored(int teamIndex, bool explored)	{
-		assert(teamIndex >= 0 && teamIndex < GameConstants::maxPlayers && "invalid team index");
+		ASSERT_RANGE(teamIndex, GameConstants::maxPlayers);
 		this->explored[teamIndex]= explored;
 	}
-
 	void setVisible(int teamIndex, bool visible)	{
-		assert(teamIndex >= 0 && teamIndex < GameConstants::maxPlayers && "invalid team index");
+		ASSERT_RANGE(teamIndex, GameConstants::maxPlayers);
 		this->visible[teamIndex]= visible;
 	}
 
@@ -154,8 +152,8 @@ public:
 struct TileVertex {
 private:
 	Vec3f m_position;		// 12
-	Vec3f m_normal;			// 12
-	Vec2f m_tileTLTexCoord;	//  8
+	Vec3f m_normal;			// 12 // 24
+	Vec2f m_tileTLTexCoord;	//  8 => 32 == great
 	Vec2f m_fowTexCoord;	//  8 => 40 != good
 
 	//Vec2f m_tileTRTexCoord;	//  8
