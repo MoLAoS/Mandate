@@ -244,6 +244,7 @@ TerrainRenderer2::~TerrainRenderer2() {
 	if (m_vertexBuffer) {
 		glDeleteBuffers(1, &m_vertexBuffer);
 	}
+	delete [] m_indexArrays;
 }
 
 bool TerrainRenderer2::checkCaps() {
