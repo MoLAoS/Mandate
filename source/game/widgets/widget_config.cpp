@@ -105,7 +105,10 @@ int addColour(LuaHandle *lh) {
 int loadTexture(LuaHandle *lh) {
 	LuaArguments args(lh);
 	string name, path;
-	if (Script::ScriptManager::extractArgs(args, "loadTexture", "str,str", &name, &path)) {
+	bool mipmap;
+	if (Script::ScriptManager::extractArgs(args, 0, "str,str,bln", &name, &path, &mipmap)) {
+		WidgetConfig::getInstance().loadTexture(name, path, mipmap);
+	} else if (Script::ScriptManager::extractArgs(args, "loadTexture", "str,str", &name, &path)) {
 		WidgetConfig::getInstance().loadTexture(name, path);
 	} else {
 	}
@@ -203,14 +206,14 @@ void WidgetConfig::loadFont(const string &name, const string &path, int size) {
 	WIDGET_LOG( "adding font named '" << name << "' from path '" << path << "' @ size: " << size );
 }
 
-int WidgetConfig::loadTexture(const string &name, const string &path) {
+int WidgetConfig::loadTexture(const string &name, const string &path, bool mipmap) {
 	int n = getTextureIndex(path);
 	if (n != -1) {
 		return n;
 	}
 	Texture2D *tex = g_renderer.newTexture2D(ResourceScope::GLOBAL);
 	try {
-		tex->setMipmap(false);
+		tex->setMipmap(mipmap);
 		tex->load(path);
 		tex->init();
 		addGlestTexture(name, tex);

@@ -120,7 +120,7 @@ public:
 	void load();
 
 public:
-	int loadTexture(const string &name, const string &path);
+	int loadTexture(const string &name, const string &path, bool mipmap = true);
 	void loadFont(const string &name, const string &path, int size);
 
 	void setDefaultFont(const string &type, const string &name);
