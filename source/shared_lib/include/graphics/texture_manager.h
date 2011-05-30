@@ -52,6 +52,8 @@ public:
 	Texture2D *newTexture2D();
 	Texture3D *newTexture3D();
 	TextureCube *newTextureCube();
+
+	bool deleteTexture2D(Texture2D *tex);
 };
 
 

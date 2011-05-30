@@ -485,6 +485,11 @@ Font* Renderer::newFreeTypeFont(ResourceScope rs) {
 	return fontManager[rs]->newFreeTypeFont();
 }
 
+void Renderer::deleteTexture2D(Texture2D *tex, ResourceScope rs) {
+	bool res = textureManager[rs]->deleteTexture2D(tex);
+	assert(res);
+}
+
 void Renderer::manageParticleSystem(ParticleSystem *particleSystem, ResourceScope rs){
 	particleManager[rs]->manage(particleSystem);
 }

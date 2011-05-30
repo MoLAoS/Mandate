@@ -191,6 +191,9 @@ public:
 	Texture2D *getTexture2D(ResourceScope rs, const string &path);
 	Texture2D *newTexture2D(ResourceScope rs);
 	Texture3D *newTexture3D(ResourceScope rs);
+
+	void deleteTexture2D(Texture2D *tex, ResourceScope rs);
+
 	//Font *newFont(ResourceScope rs);
 	Font *newFreeTypeFont(ResourceScope rs);
 	

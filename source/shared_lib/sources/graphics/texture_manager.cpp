@@ -106,12 +106,23 @@ Texture3D *TextureManager::newTexture3D(){
 	return texture3D;
 }
 
-
 TextureCube *TextureManager::newTextureCube(){
 	TextureCube *textureCube= GraphicsInterface::getInstance().getFactory()->newTextureCube();
 	textures[TextureType::CUBE_MAP].push_back(textureCube);
 
 	return textureCube;
+}
+
+bool TextureManager::deleteTexture2D(Texture2D *tex) {
+	foreach (TextureContainer, it, textures[TextureType::TWO_D]) {
+		if (*it == tex) {
+			tex->end();
+			delete tex;
+			textures[TextureType::TWO_D].erase(it);
+			return true;
+		}
+	}
+	return false;
 }
 
 }}//end namespace
