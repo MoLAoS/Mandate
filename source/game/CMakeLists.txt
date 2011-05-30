@@ -35,12 +35,31 @@ if(WIN32)
 	source_group("." FILES "resources.rc")
 endif(WIN32)
 
+# create version file
+if(WIN32)
+	add_custom_command(
+		OUTPUT version.cpp
+		COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/version.bat
+		DEPENDS glestadv
+	)
+else(WIN32)
+	add_custom_command(
+		OUTPUT version.cpp
+		COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/version.sh
+		DEPENDS glestadv
+	)
+endif(WIN32)
+
+list(APPEND game_incs "version.h")
+list(APPEND game_srcs "version.cpp")
+
 # ugly, but otherwise not the updated stuff
 set(game_incs ${game_incs} PARENT_SCOPE)
 
 include_directories(${game_incs} ${glestshared_incs}) # order important because different pch.h in both
 
 add_executable(glestadv ${game_srcs})
+
 target_link_libraries(glestadv shared_lib ${OPENGL_gl_LIBRARY} ${OPENGL_glu_LIBRARY})
 if(WIN32)
 	target_link_libraries(glestadv ${DXGUID_LIBRARY} ${DSOUND_LIBRARY} wsock32)

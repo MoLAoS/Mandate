@@ -27,6 +27,7 @@
 #include "FSFactory.hpp"
 #include "CmdArgs.h"
 #include "core_data.h"
+#include "version.h"
 
 using namespace Shared::Platform;
 using namespace Shared::Util;
@@ -60,7 +61,7 @@ public:
 		char *timeString = asctime(localtime(&t));
 
 		*ofs << "Crash\n"
-			<< "Version: Advanced Engine " << gaeVersionString << endl
+			<< "Version: Advanced Engine " << gaeVersionString << " " << string(build_git_sha) << endl
 			<< getAboutString(1) << endl // Build time
 			<< "Time: " << timeString;
 		if(description) {

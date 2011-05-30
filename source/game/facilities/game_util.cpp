@@ -17,6 +17,7 @@
 #include "lang.h"
 #include "game_constants.h"
 #include "config.h"
+#include "version.h"
 
 #include "leak_dumper.h"
 
@@ -53,7 +54,7 @@ int getAboutStringCount() { return 7; }
 string getAboutString(int i){
 	switch(i){
 		case 0: return "Glest Advanced Engine " + gaeVersionString;
-		case 1: return "Built: " + string(__DATE__);
+		case 1: return "Built: " + string(build_date);
 		case 2: return "Copyright 2001-2008 The Glest Team";
 		case 3: return "Copyright 2008-2011 The GAE Team";
 		case 4: return "Web: http://glestae.sf.net/";
