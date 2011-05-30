@@ -97,6 +97,77 @@ void AttackNoticeCircle::render(Vec2i mmPos, int, fixed ratio) {
 	glEnd();
 }
 
+//
+//  class MinimapFrame
+//
+
+MinimapFrame::MinimapFrame(Container *parent, Vec2i pos, bool FoW, bool SoD)
+		: Frame(parent, ButtonFlags::SHRINK | ButtonFlags::EXPAND) {
+	Frame::setTitleBarSize(20);
+	m_minimap = new Minimap(FoW, SoD, this, Vec2i(getBorderLeft(), getBorderTop() + 20));
+	CellStrip::addCells(1);
+	m_minimap->setCell(1);
+	Anchors a(Anchor(AnchorType::RIGID, 0), Anchor(AnchorType::RIGID, 0),
+		Anchor(AnchorType::NONE, 0), Anchor(AnchorType::NONE, 0));
+	m_minimap->setAnchors(a);
+	setPos(pos);
+}
+
+void MinimapFrame::initMinimp(int w, int h, const World *world, bool resumingGame) {
+	m_minimap->init(w, h, world, resumingGame);
+	Vec2i sz = m_minimap->getSize() + getBordersAll() + Vec2i(0, 20);
+	setSize(sz);
+	Expand.connect(this, &MinimapFrame::onExpand);
+	Shrink.connect(this, &MinimapFrame::onShrink);
+}
+
+void MinimapFrame::onExpand(Widget*) {
+	assert(m_minimap->getMinimapSize() != MinimapSize::LARGE);
+	MinimapSize sz = m_minimap->getMinimapSize();
+	cout << "MinimapFrame::onExpand() : current size: " << sz << ", new size ";
+	++sz;
+	cout << sz << endl;
+
+	m_minimap->setMinimapSize(sz);
+	switch (sz) {
+		case MinimapSize::LARGE:
+			enableShrinkExpand(true, false);
+			break;
+		case MinimapSize::MEDIUM:
+			enableShrinkExpand(true, true);
+			break;
+		case MinimapSize::SMALL:
+			enableShrinkExpand(false, true);
+			break;
+		default: assert(false);
+	}
+	Vec2i size = m_minimap->getSize() + getBordersAll() + Vec2i(0, 20);
+	setSize(size);
+}
+
+void MinimapFrame::onShrink(Widget*) {
+	assert(m_minimap->getMinimapSize() != MinimapSize::SMALL);
+	MinimapSize sz = m_minimap->getMinimapSize();
+	cout << "MinimapFrame::onShrink() : current size: " << sz << ", new size ";
+	--sz;
+	cout << sz << endl;
+	m_minimap->setMinimapSize(sz);
+	switch (sz) {
+		case MinimapSize::LARGE:
+			enableShrinkExpand(true, false);
+			break;
+		case MinimapSize::MEDIUM:
+			enableShrinkExpand(true, true);
+			break;
+		case MinimapSize::SMALL:
+			enableShrinkExpand(false, true);
+			break;
+		default: assert(false);
+	}
+	Vec2i size = m_minimap->getSize() + getBordersAll() + Vec2i(0, 20);
+	setSize(size);
+}
+
 // =====================================================
 // 	class Minimap
 // =====================================================
@@ -104,8 +175,8 @@ void AttackNoticeCircle::render(Vec2i mmPos, int, fixed ratio) {
 const float Minimap::exploredAlpha = 0.5f;
 const Vec2i Minimap::textureSize = Vec2i(128, 128);
 
-Minimap::Minimap(bool FoW, bool SoD, Container* parent, Vec2i pos, Vec2i size)
-		: Widget(parent, pos, size)
+Minimap::Minimap(bool FoW, bool SoD, Container* parent, Vec2i pos)
+		: Widget(parent, pos, Vec2i(0))
 		, MouseWidget(this)
 		, m_fowPixmap0(0)
 		, m_fowPixmap1(0)
@@ -123,61 +194,78 @@ Minimap::Minimap(bool FoW, bool SoD, Container* parent, Vec2i pos, Vec2i size)
 		, m_fogOfWar(FoW)
 		, m_shroudOfDarkness(SoD)
 		, m_draggingCamera(false)
-		, m_draggingWidget(false)
+		/*, m_draggingWidget(false)*/
 		, m_leftClickOrder(false)
 		, m_rightClickOrder(false)
-		, m_moveOffset(0) {
-	setWidgetStyle(WidgetType::MINIMAP);
+		/*, m_moveOffset(0) */{
+
+	/*setWidgetStyle(WidgetType::MINIMAP);*/
+
 }
 
 void Minimap::init(int w, int h, const World *world, bool resumingGame) {
-	int scaledW = w / GameConstants::cellScale;
-	int scaledH = h / GameConstants::cellScale;
+	#pragma region set size, determine aspect ratio, zoom level, min & max zoom
+
 	m_w = w;
 	m_h = h;
-
 	m_ratio = fixed(w) / h;
-	m_minZoom = m_currZoom = fixed(128) / std::max(w, h);
-	m_maxZoom = std::max(w, h) / fixed(128);
+	Vec2i size;
+	if (m_ratio == 1) {
+		size = Vec2i(128);
+	} else if (m_ratio < 1) {
+		size = Vec2i((m_ratio * 128).intp(), 128);
+	} else { // (ratio > 1) {
+		size = Vec2i(128, (128 / m_ratio).intp());
+	}
+	Widget::setSize(size);
 
-	// fow pixmaps
+	fixed maxDim = std::max(w, h);
+	m_currZoom = fixed(128) / maxDim;
+
+	m_minZoom = fixed(128) / maxDim;
+	m_maxZoom = maxDim / fixed(128);
+	#pragma endregion
+
+	#pragma region FoW pixmaps & texture
+
+	int tileW = w / GameConstants::cellScale;
+	int tileH = h / GameConstants::cellScale;
 	float f= 0.f;
-	m_fowPixmap0 = new Pixmap2D(nextPowerOf2(scaledW), nextPowerOf2(scaledH), 1);
-	m_fowPixmap1 = new Pixmap2D(nextPowerOf2(scaledW), nextPowerOf2(scaledH), 1);
+	m_fowPixmap0 = new Pixmap2D(nextPowerOf2(tileW), nextPowerOf2(tileH), 1);
+	m_fowPixmap1 = new Pixmap2D(nextPowerOf2(tileW), nextPowerOf2(tileH), 1);
 	m_fowPixmap0->setPixels(&f);
 	if (!m_shroudOfDarkness) {
 		f = 0.f;
 		m_fowPixmap1->setPixels(&f);
 		f = 0.5f;
-		for (int y=1; y < scaledH - 1; ++y) {
-			for (int x=1; x < scaledW - 1; ++x) {
+		for (int y=1; y < tileH - 1; ++y) {
+			for (int x=1; x < tileW - 1; ++x) {
 				m_fowPixmap1->setPixel(x, y, &f);
 			}
 		}
 	} else {
 		m_fowPixmap1->setPixels(&f);
 	}
-
 	if (resumingGame) {
 		setExploredState(world);
 	}
 
 	f = 0.f;
-
-	// fow texture
 	m_fowTex = g_renderer.newTexture2D(ResourceScope::GAME);
 	m_fowTex->setMipmap(false);
 	m_fowTex->setPixmapInit(false);
 	m_fowTex->setFormat(Texture::fAlpha);
-	m_fowTex->getPixmap()->init(nextPowerOf2(scaledW), nextPowerOf2(scaledH), 1);
+	m_fowTex->getPixmap()->init(nextPowerOf2(tileW), nextPowerOf2(tileH), 1);
 	m_fowTex->getPixmap()->setPixels(&f);
+	#pragma endregion
 
-	// terrain texture
+	#pragma region terrain tex + units overlay texture & patch map
+
 	m_terrainTex = g_renderer.newTexture2D(ResourceScope::GAME);
-	m_terrainTex->getPixmap()->init(scaledW, scaledH, 3);
+	m_terrainTex->getPixmap()->init(tileW, tileH, 3);
 	m_terrainTex->setMipmap(false);
+	computeTerrainTexture(world);
 
-	// units overlay texture
 	m_unitsTex = g_renderer.newTexture2D(ResourceScope::GAME);
 	m_unitsTex->setMipmap(false);
 	int tw = m_ratio < 1 ? (m_ratio * 128).intp() : 128;
@@ -187,11 +275,10 @@ void Minimap::init(int w, int h, const World *world, bool resumingGame) {
 	Colour blank((uint8)0u);
 	m_unitsTex->getPixmap()->setPixels(blank.ptr());
 
-	m_unitsPMap = new TypeMap<int8>(Rectangle(0, 0, w, h), -1);
+	m_unitsPMap = new TypeMap<int8>(Rectangle(0, 0, m_w, m_h), -1);
 	m_unitsPMap->clearMap(-1);
+	#pragma endregion
 	
-	computeTexture(world);
-
 	m_attackNoticeTex = g_renderer.newTexture2D(ResourceScope::GAME);
 	m_attackNoticeTex->getPixmap()->load("data/core/misc_textures/attack_notice.png");
 }
@@ -218,9 +305,7 @@ void Minimap::update(int frameCount) {
 
 void Minimap::addAttackNotice(Vec2i pos) {
 	// translate from cell coords to minimap coords
-	Vec2f ratio = Vec2f(float(getSize().w - getBordersHoriz()) / g_map.getW(),
-						float(getSize().h - getBordersVert()) / g_map.getH());
-	pos = Vec2i(Vec2f(pos) * ratio);
+	//pos = toMiniMapPos(pos);
 
 	// prevent overlapping notices
 	foreach (AttackNotices, it, m_attackNotices) {
@@ -242,7 +327,7 @@ void Minimap::resetFowTex() {
 	const int height = m_fowTex->getPixmap()->getH();
 	for (int i=0; i < width; ++i) {
 		for (int j=0; j < height; ++j) {
-			if (!m_fogOfWar && m_shroudOfDarkness) {
+			if (!m_fogOfWar && m_shroudOfDarkness) { // shroud, but no fog
 				float p0 = m_fowPixmap0->getPixelf(i, j);
 				float p1 = m_fowPixmap1->getPixelf(i, j);
 				if (p0 > p1) {
@@ -250,7 +335,7 @@ void Minimap::resetFowTex() {
 				} else {
 					m_fowPixmap1->setPixel(i, j, p1);
 				}
-			} else if (m_fogOfWar || m_shroudOfDarkness) {
+			} else if (m_fogOfWar || m_shroudOfDarkness) { // else if either,
 				float p0 = m_fowPixmap0->getPixelf(i, j);
 				float p1 = m_fowPixmap1->getPixelf(i, j);
 
@@ -260,7 +345,7 @@ void Minimap::resetFowTex() {
 				if (p0 > p1) { // if new value is greater than old, copy new
 					m_fowPixmap1->setPixel(i, j, p0);
 				}
-			} else {
+			} else { // else no shroud or fog
 				if (i == 0 || j == 0 || i == width - 1 || j == height - 1) {
 					m_fowPixmap1->setPixel(i, j, 0.f);
 				} else {
@@ -282,6 +367,43 @@ void Minimap::updateFowTex(float t) {
 			}
 		}
 	}
+}
+
+int minimapSizes[3] = { 64, 128, 256 };
+
+void Minimap::setMinimapSize(MinimapSize ms) {
+	fixed sz = minimapSizes[ms];
+	fixed md = std::max(m_w, m_h);
+	fixed zoom = sz / md;
+	if (zoom == m_currZoom) {
+		return;
+	}
+	m_currZoom = zoom;
+	Vec2i size((zoom * m_w).intp(), (zoom * m_h).intp());
+
+	// re-create untis tex
+	g_renderer.deleteTexture2D(m_unitsTex, ResourceScope::GAME);
+	m_unitsTex = g_renderer.newTexture2D(ResourceScope::GAME);
+	m_unitsTex->setMipmap(false);
+	m_unitsTex->getPixmap()->init(size.w, size.h, 4);
+	m_unitsTex->setFormat(Texture::fRgba);
+	Colour blank((uint8)0u);
+	m_unitsTex->getPixmap()->setPixels(blank.ptr());
+	m_unitsTex->init();
+	
+	Widget::setSize(size);
+	updateUnitTex();
+}
+
+MinimapSize Minimap::getMinimapSize() const {
+	int md = std::max(getWidth(), getHeight());
+	if (md == minimapSizes[MinimapSize::LARGE]) {
+		return MinimapSize::LARGE;
+	} else if (md == minimapSizes[MinimapSize::SMALL]) {
+		return MinimapSize::SMALL;
+	}
+	assert(md == minimapSizes[MinimapSize::MEDIUM]);
+	return MinimapSize::MEDIUM;
 }
 
 // ==================== PRIVATE ====================
@@ -349,9 +471,9 @@ void Minimap::updateUnitTex() {
 	}
 
 	buildUnitOverlay(m_unitsPMap);
-	Pixmap2D *pm = m_unitsTex->getPixmap();
 
 	Colour blank((uint8)0u);
+	Pixmap2D* pm = m_unitsTex->getPixmap();
 	pm->setPixels(blank.ptr());
 
 	Vec2i sPos, pos;
@@ -381,17 +503,17 @@ void Minimap::updateUnitTex() {
 			sPos = iter.next();
 			ndx = m_unitsPMap->getInfluence(sPos);
 			if (ndx >= 0) {
-				RectIterator iter2(sPos * 2, sPos * 2 + Vec2i(ppc - 1));
+				RectIterator iter2(sPos * ppc, sPos * ppc + Vec2i(ppc - 1));
 				while (iter2.more()) {
 					pm->setPixel(iter2.next(), factionColours[ndx]);
 				}
 			} else {
 				// scan surrounds
-				PerimeterIterator iter3(sPos * 2 - Vec2i(1), sPos * 2 + Vec2i(ppc));
+				PerimeterIterator iter3(sPos - Vec2i(1), sPos + Vec2i(1));
 				while (iter3.more()) {
 					ndx = m_unitsPMap->getInfluence(iter3.next());
 					if (ndx >= 0) {
-						RectIterator iter2(sPos * 2, sPos * 2 + Vec2i(ppc - 1));
+						RectIterator iter2(sPos * ppc, sPos * ppc + Vec2i(ppc - 1));
 						while (iter2.more()) {
 							pm->setPixel(iter2.next(), factionColoursOutline[ndx]);
 						}
@@ -432,6 +554,7 @@ void Minimap::updateUnitTex() {
 			}
 		}
 	}
+	assertGl();
 
 	glActiveTexture(Renderer::baseTexUnit);
 	glEnable(GL_TEXTURE_2D);
@@ -441,9 +564,10 @@ void Minimap::updateUnitTex() {
 		GL_RGBA, GL_UNSIGNED_INT_8_8_8_8_REV, m_unitsTex->getPixmap()->getPixels());
 	//glTexImage2D(GL_TEXTURE_2D, 0, 4, m_unitsTex->getPixmap()->getW(), m_unitsTex->getPixmap()->getH(),
 	//	0, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8_REV, m_unitsTex->getPixmap()->getPixels());
+	assertGl();
 }
 
-void Minimap::computeTexture(const World *world) {
+void Minimap::computeTerrainTexture(const World *world) {
 	Vec3f color;
 	const Map *map= world->getMap();
 
@@ -493,9 +617,8 @@ void Minimap::render() {
 	const GameCamera *gameCamera = g_gameState.getGameCamera();
 	const Pixmap2D *pixmap = m_terrainTex->getPixmap();
 
-	// what are the extra bits for? - hailstone 28Feb2011 -- they were hard coded borders.
-	Vec2i pos = getScreenPos() + Vec2i(getBorderLeft(), getBorderTop());
-	Vec2i size = getSize() - getBordersAll();
+	Vec2i pos = getScreenPos();
+	Vec2i size = getSize();
 
 	Vec2f zoom = Vec2f(float(size.x)/ pixmap->getW(), float(size.y)/ pixmap->getH());
 
@@ -560,7 +683,7 @@ void Minimap::render() {
 
 	glBindTexture(GL_TEXTURE_2D, static_cast<const Texture2DGl*>(m_attackNoticeTex)->getHandle());
 	foreach (AttackNotices, it, m_attackNotices) {
-		it->render(pos, size.h, m_ratio);
+		it->render(pos, size.h, m_currZoom);
 	}
 
 	glBindTexture(GL_TEXTURE_2D, 0);
@@ -582,44 +705,29 @@ void Minimap::render() {
 		glVertex2iv(cPos2.ptr());
 	glEnd();
 
-//	glPopAttrib();
-
 	assertGl();
 }
 
-Vec2i Minimap::toCellPos(Vec2i pos) const {
-	pos -= (getScreenPos() + Vec2i(getBorderLeft(), getBorderTop()));
-	Vec2i size = getSize() - getBordersAll();
-	float xratio = float(pos.x) / size.w;
-	float yratio = float(pos.y) / size.y;
-	return Vec2i(int(xratio * m_w), int(yratio * m_h));
+Vec2i Minimap::toCellPos(Vec2i mmPos) const { 
+	return Vec2i((mmPos.x / m_currZoom).intp(), (mmPos.y / m_currZoom).intp());
+}
+Vec2i Minimap::toMiniMapPos(Vec2i cellPos) const {
+	return Vec2i((cellPos.x * m_currZoom).intp(), (cellPos.y * m_currZoom).intp());
 }
 
 bool Minimap::mouseDown(MouseButton btn, Vec2i pos) {
-	Vec2i myPos = getScreenPos();
-	Vec2i mySize = getSize();
-
-	if (pos.y < myPos.y + getBorderTop()) {
-		if (btn == MouseButton::LEFT) {
-			m_draggingWidget = true;
-			m_moveOffset = myPos - pos;
-			return true;
+	pos -= getScreenPos();
+	Vec2i cellPos = toCellPos(pos);
+	if (btn == MouseButton::LEFT) {
+		if (m_leftClickOrder) {
+			LeftClickOrder(cellPos);
+		} else {
+			g_gameState.getGameCamera()->setPos(Vec2f(cellPos));
+			m_draggingCamera = true;
 		}
-	}
-	// on map?
-	if (isInsideBorders(pos)) {
-		Vec2i cellPos = toCellPos(pos);
-		if (btn == MouseButton::LEFT) {
-			if (m_leftClickOrder) {
-				LeftClickOrder(cellPos);
-			} else {
-				g_gameState.getGameCamera()->setPos(Vec2f(cellPos));
-				m_draggingCamera = true;
-			}
-		} else if (btn == MouseButton::RIGHT) {
-			if (m_rightClickOrder) {
-				RightClickOrder(cellPos);
-			}
+	} else if (btn == MouseButton::RIGHT) {
+		if (m_rightClickOrder) {
+			RightClickOrder(cellPos);
 		}
 	}
 	return true;
@@ -627,23 +735,15 @@ bool Minimap::mouseDown(MouseButton btn, Vec2i pos) {
 
 bool Minimap::mouseUp(MouseButton btn, Vec2i pos) {
 	if (btn == MouseButton::LEFT) {
-		m_draggingCamera = m_draggingWidget = false;
+		m_draggingCamera = false;
 	}
 	return true;
 }
 
 bool Minimap::mouseMove(Vec2i pos) {
-	Vec2i myPos = getScreenPos();
-	Vec2i mySize = getSize();
-
+	pos -= getScreenPos();
 	if (m_draggingCamera) {
-		// on map?
-		if (isInsideBorders(pos)) {
-			Vec2i cellPos = toCellPos(pos);
-			g_gameState.getGameCamera()->setPos(Vec2f(cellPos));
-		}
-	} else if (m_draggingWidget) {
-		setPos(pos + m_moveOffset);
+		g_gameState.getGameCamera()->setPos(Vec2f(toCellPos(pos)));
 	}
 	return true;
 }

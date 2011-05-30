@@ -15,7 +15,7 @@
 
 #include <cassert>
 
-#include "widgets.h"
+#include "compound_widgets.h"
 #include "influence_map.h"
 
 using namespace Shared::Math;
@@ -45,6 +45,8 @@ struct AttackNoticeCircle {
 	bool update();
 	void render(Vec2i mmPos, int mmHeight, fixed ratio);
 };
+
+WRAPPED_ENUM( MinimapSize, SMALL, MEDIUM, LARGE );
 
 // =====================================================
 // 	class Minimap
@@ -77,22 +79,27 @@ private:
 			m_shroudOfDarkness,
 
 			m_draggingCamera,
-			m_draggingWidget,
+			//m_draggingWidget,
 			m_leftClickOrder,
 			m_rightClickOrder;
 
-	Vec2i	m_moveOffset;
+	//Vec2i	m_moveOffset;
 
 private:
 	static const float exploredAlpha;
 	static const Vec2i textureSize;
 
 private:
-	Vec2i toCellPos(Vec2i pos) const;
+	Vec2i toCellPos(Vec2i mmPos) const;/* { 
+		return Vec2i((mmPos.x / m_currZoom).intp(), (mmPos.y / m_currZoom).intp());
+	}*/
+	Vec2i toMiniMapPos(Vec2i cellPos) const;/* {
+		return Vec2i((cellPos.x * m_currZoom).intp(), (cellPos.y * m_currZoom).intp());
+	}*/
 
 public:
 	void init(int x, int y, const World *world, bool resuming);
-	Minimap(bool FoW, bool SoD, Container* parent, Vec2i pos, Vec2i size);
+	Minimap(bool FoW, bool SoD, Container* parent, Vec2i pos);
 	~Minimap();
 
 	const Texture2D *getFowTexture() const	{return m_fowTex;}
@@ -102,14 +109,17 @@ public:
 
 	void update(int frameCount);
 
-	void resetFowTex();
-	void updateFowTex(float t);
+	void setMinimapSize(MinimapSize size);
+	MinimapSize getMinimapSize() const;
+
+	void resetFowTex();          // swap FoW pixmaps, resetting values on the now 'old' one
+	void updateFowTex(float t);  // update FoW tex, interpolating between pixmaps (according to 't')
 	void updateUnitTex();
 
 	// heavy use function
 	void incFowTextureAlphaSurface(const Vec2i &sPos, float alpha) {
 		assert(sPos.x < m_fowPixmap1->getW() && sPos.y < m_fowPixmap1->getH());
-		if(m_fowPixmap1->getPixelf(sPos.x, sPos.y) < alpha) {
+		if (m_fowPixmap1->getPixelf(sPos.x, sPos.y) < alpha) {
 			m_fowPixmap1->setPixel(sPos.x, sPos.y, alpha);
 		}
 	}
@@ -128,8 +138,22 @@ public:
 	void setRightClickOrder(bool enable) { m_rightClickOrder = enable; }
 
 private:
-	void computeTexture(const World *world);
-	void setExploredState(const World *world);
+	void computeTerrainTexture(const World *world);  // init terrain tex
+	void setExploredState(const World *world);       // init FoW pixmaps
+};
+
+class MinimapFrame : public Frame {
+private:
+	Minimap  *m_minimap;
+
+	void onExpand(Widget*);
+	void onShrink(Widget*);
+
+public:
+	MinimapFrame(Container *parent, Vec2i pos, bool FoW, bool SoD);
+	void initMinimp(int w, int h, const World *world, bool resumingGame);
+
+	Minimap* getMinimap() {return m_minimap;}
 };
 
 }}//end namespace

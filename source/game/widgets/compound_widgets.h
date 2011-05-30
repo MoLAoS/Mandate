@@ -131,6 +131,11 @@ public:
 	virtual void setSize(const Vec2i &sz) override { CellStrip::setSize(sz); setSizeHints(); }
 	virtual string descType() const override { return "TitleBar"; }
 
+	void enableShrinkExpand(bool shrink, bool expand) {
+		m_shrinkButton->setEnabled(shrink);
+		m_expandButton->setEnabled(expand);
+	}
+
 	void swapRollUpDown() {
 		if (m_rollUpButton->isVisible()) {
 			m_rollUpButton->setVisible(false);
@@ -188,6 +193,9 @@ public:
 	virtual bool mouseUp(MouseButton btn, Vec2i pos) override;
 
 	virtual void update() override;
+
+	void setTitleBarSize(int sz) { CellStrip::setSizeHint(0, SizeHint(-1, sz)); }
+	void enableShrinkExpand(bool shrink, bool expand) { m_titleBar->enableShrinkExpand(shrink, expand); }
 
 	// signals
 	sigslot::signal<Widget*>  Close;

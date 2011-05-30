@@ -87,19 +87,19 @@ Vec2i OptionContainer::getMinSize() const {
 ScrollText::ScrollText(Container* parent)
 		: CellStrip(parent, Orientation::HORIZONTAL, 1)
 		, TextWidget(this) {
+	setStyle(g_widgetConfig.getWidgetStyle(WidgetType::TEXT_BOX));
 	init();
 }
 
 ScrollText::ScrollText(Container* parent, Vec2i pos, Vec2i size)
 		: CellStrip(parent, pos, size, Orientation::HORIZONTAL, Origin::CENTRE, 1)
 		, TextWidget(this) {
+	setStyle(g_widgetConfig.getWidgetStyle(WidgetType::TEXT_BOX));
 	init();
 	recalc();
 }
 
 void ScrollText::init() {
-	setStyle(g_widgetConfig.getWidgetStyle(WidgetType::TEXT_BOX));
-
 	int itemSize = m_rootWindow->getConfig()->getDefaultItemHeight();
 
 	// Anchors for scroll-bar, stick to the top, right & bottom sides.
@@ -231,6 +231,7 @@ void TitleBar::init(ButtonFlags flags) {
 	m_titleText = new StaticText(this);
 	m_titleText->setCell(0);
 	m_titleText->setAnchors(anchors);
+	m_titleText->setText("");
 
 	int cell = 1;
 	if (flags.isSet(ButtonFlags::ROLL_UPDOWN)) {
@@ -321,6 +322,7 @@ void Frame::init(ButtonFlags flags) {
 	m_titleBar = new TitleBar(this, flags);
 	m_titleBar->setCell(0);
 	m_titleBar->setAnchors(anchors);
+
 	setSizeHint(0, SizeHint(-1, g_widgetConfig.getDefaultItemHeight() + 4));
 
 	m_titleBar->Close.connect(this, &Frame::onClose);

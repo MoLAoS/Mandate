@@ -202,24 +202,13 @@ void UserInterface::initMinimap(bool fow, bool sod, bool resuming) {
 	const int &mapW = g_map.getW();
 	const int &mapH = g_map.getH();
 
-	fixed ratio = fixed(mapW) / mapH;
-	//cout << "Map aspect ratio : " << ratio.toFloat();
-
-	Vec2i size;
-	if (ratio == 1) {
-		size = Vec2i(128);
-	} else if (ratio < 1) {
-		size = Vec2i((ratio * 128).intp(), 128);
-	} else { // (ratio > 1) {
-		size = Vec2i(128, (128 / ratio).intp());
-	}
-	BorderStyle style = g_widgetConfig.getBorderStyle(WidgetType::MINIMAP);
-	size += style.getBorderDims();
-
 	int mx = 10;
 	int my = 50;
-	m_minimap = new Minimap(fow, sod, WidgetWindow::getInstance(), Vec2i(mx, my), size);
-	m_minimap->init(g_map.getW(), g_map.getH(), &g_world, resuming);
+	MinimapFrame *frame = new MinimapFrame(WidgetWindow::getInstance(), Vec2i(mx, my), fow, sod);
+	//m_minimap = new Minimap(fow, sod, WidgetWindow::getInstance(), Vec2i(mx, my));
+	frame->initMinimp(g_map.getW(), g_map.getH(), &g_world, resuming);
+	//m_minimap->init(g_map.getW(), g_map.getH(), &g_world, resuming);
+	m_minimap = frame->getMinimap();
 	m_minimap->LeftClickOrder.connect(this, &UserInterface::onLeftClickOrder);
 	m_minimap->RightClickOrder.connect(this, &UserInterface::onRightClickOrder);
 }
