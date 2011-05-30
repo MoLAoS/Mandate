@@ -46,8 +46,9 @@ else(WIN32)
 	add_custom_command(
 		OUTPUT version.cpp
 		COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/version.sh
-		DEPENDS glestadv
+		#DEPENDS glestadv
 	)
+	add_custom_target(version ALL DEPENDS version.cpp)
 endif(WIN32)
 
 #list(APPEND game_incs "version.h")
