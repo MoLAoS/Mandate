@@ -100,7 +100,7 @@ WidgetWindow::WidgetWindow()
 	g_logger.logProgramEvent("Loading Widget config.");
 	g_widgetConfig.load();
 	if (!g_coreData.load() || !g_renderer.init()) {
-		throw runtime_error("An error occurred loading core data.\nPlease see glestadv-error.log");
+		throw runtime_error("An error occurred loading core data.\nPlease see " + g_fileFactory.getConfigDir() + "glestadv-error.log");
 	}
 	m_config = &g_widgetConfig;
 

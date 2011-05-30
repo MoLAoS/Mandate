@@ -727,7 +727,7 @@ void panic(Vec2i currPos, Unit *unit, Unit *other) {
 		<< other->getType()->getName() << " [id:" << other->getId() << "] {"
 		<< ZoneNames[o_zone] << "}";
 	g_logger.logError(ss.str());
-	throw runtime_error ( "Ooops... see glestadv-error.log" );
+	throw runtime_error ( "Ooops... see " + g_fileFactory.getConfigDir() + "glestadv-error.log" );
 }
 
 // ==================== unit placement ====================

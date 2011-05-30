@@ -156,11 +156,11 @@ void SimulationInterface::loadWorld() {
 	world->preload();
 	//tech, load before map because of resources
 	if (!world->loadTech()) {
-		throw runtime_error("The techtree could not be loaded. See glestadv-error.log");
+		throw runtime_error("The techtree could not be loaded. See " + g_fileFactory.getConfigDir() + "glestadv-error.log");
 	}
 	//tileset
 	if (!world->loadTileset()) {
-		throw runtime_error("The tileset could not be loaded. See glestadv-error.log");
+		throw runtime_error("The tileset could not be loaded. See " + g_fileFactory.getConfigDir() + "glestadv-error.log");
 	}
 	//map
 	world->loadMap();
