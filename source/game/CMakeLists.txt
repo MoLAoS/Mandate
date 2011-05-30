@@ -50,7 +50,7 @@ else(WIN32)
 	)
 endif(WIN32)
 
-list(APPEND game_incs "version.h")
+#list(APPEND game_incs "version.h")
 list(APPEND game_srcs "version.cpp")
 
 # ugly, but otherwise not the updated stuff
