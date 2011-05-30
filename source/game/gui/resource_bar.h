@@ -43,7 +43,7 @@ private:
 	Vec2i m_moveOffset;
 
 public:
-	ResourceBar();
+	ResourceBar(Container *parent); ///@todo (ResourceBarFrame *parent)
 	~ResourceBar();
 
 	void init(const Faction *faction, std::set<const ResourceType*> &types);

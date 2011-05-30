@@ -97,12 +97,14 @@ void AttackNoticeCircle::render(Vec2i mmPos, int, fixed ratio) {
 	glEnd();
 }
 
-//
+// =====================================================
 //  class MinimapFrame
-//
+// =====================================================
+
 
 MinimapFrame::MinimapFrame(Container *parent, Vec2i pos, bool FoW, bool SoD)
 		: Frame(parent, ButtonFlags::SHRINK | ButtonFlags::EXPAND) {
+	setWidgetStyle(WidgetType::GAME_WIDGET_FRAME);
 	Frame::setTitleBarSize(20);
 	m_minimap = new Minimap(FoW, SoD, this, Vec2i(getBorderLeft(), getBorderTop() + 20));
 	CellStrip::addCells(1);

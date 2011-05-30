@@ -28,37 +28,131 @@ namespace Glest { namespace Gui {
 using Global::CoreData;
 
 // =====================================================
+//  class DisplayFrame
+// =====================================================
+
+class DisplayFrame : public Frame {
+private:
+	Display *m_display;
+
+	void onExpand(Widget*);
+	void onShrink(Widget*);
+
+public:
+	DisplayFrame(UserInterface *ui, Vec2i pos);
+	Display* getDisplay() {return m_display;}
+
+	void resetSize();
+
+	virtual void render() override;
+};
+
+void DisplayFrame::render() {
+	Frame::render();
+}
+
+DisplayFrame::DisplayFrame(UserInterface *ui, Vec2i pos)
+		: Frame((Container*)WidgetWindow::getInstance(), ButtonFlags::SHRINK | ButtonFlags::EXPAND) {
+	setWidgetStyle(WidgetType::GAME_WIDGET_FRAME);
+	Frame::setTitleBarSize(20);
+	m_display = new Display(this, ui, Vec2i(0,0));
+	CellStrip::addCells(1);
+	m_display->setCell(1);
+	Anchors a(Anchor(AnchorType::RIGID, 0), Anchor(AnchorType::RIGID, 0),
+		Anchor(AnchorType::NONE, 0), Anchor(AnchorType::NONE, 0));
+	m_display->setAnchors(a);
+	setPos(pos);
+
+	m_titleBar->enableShrinkExpand(false, false);
+	Expand.connect(this, &DisplayFrame::onExpand);
+	Shrink.connect(this, &DisplayFrame::onShrink);
+}
+
+void DisplayFrame::resetSize() {
+	if (m_display->isVisible()) {
+		if (!isVisible()) {
+			setVisible(true);
+		}
+		Vec2i size = m_display->getSize() + getBordersAll() + Vec2i(0, 20);
+		if (size != getSize()){
+			setSize(size);
+		}
+	} else {
+		setVisible(false);
+	}
+}
+
+void DisplayFrame::onExpand(Widget*) {
+	assert(m_display->getFuzzySize() != FuzzySize::LARGE);
+	FuzzySize sz = m_display->getFuzzySize();
+	++sz;
+
+	m_display->setFuzzySize(sz);
+	//switch (sz) {
+	//	case MinimapSize::LARGE:
+	//		enableShrinkExpand(true, false);
+	//		break;
+	//	case MinimapSize::MEDIUM:
+	//		enableShrinkExpand(true, true);
+	//		break;
+	//	case MinimapSize::SMALL:
+	//		enableShrinkExpand(false, true);
+	//		break;
+	//	default: assert(false);
+	//}
+	resetSize();
+}
+
+void DisplayFrame::onShrink(Widget*) {
+	assert(m_display->getFuzzySize() != FuzzySize::SMALL);
+	FuzzySize sz = m_display->getFuzzySize();
+	--sz;
+	m_display->setFuzzySize(sz);
+	//switch (sz) {
+	//	case MinimapSize::LARGE:
+	//		enableShrinkExpand(true, false);
+	//		break;
+	//	case MinimapSize::MEDIUM:
+	//		enableShrinkExpand(true, true);
+	//		break;
+	//	case MinimapSize::SMALL:
+	//		enableShrinkExpand(false, true);
+	//		break;
+	//	default: assert(false);
+	//}
+	resetSize();
+}
+
+// =====================================================
 // 	class Display
 // =====================================================
 
-Display::Display(UserInterface *ui, Vec2i pos)
-		: Widget(WidgetWindow::getInstance(), pos, Vec2i(195, 500))
+Display::Display(Container *parent, UserInterface *ui, Vec2i pos)
+		: Widget(parent, pos, Vec2i(192, 500))
 		, MouseWidget(this)
 		, ImageWidget(this)
 		, TextWidget(this)
 		, m_ui(ui)
 		, m_logo(-1)
 		, m_imageSize(32)
-		, m_draggingWidget(false)
-		, m_moveOffset(Vec2i(0))
 		, m_hoverBtn(DisplaySection::INVALID, invalidPos)
 		, m_pressedBtn(DisplaySection::INVALID, invalidPos)
 		, m_toolTip(0) {
-	Widget::setWidgetStyle(WidgetType::DISPLAY);
-	int x = getBorderLeft();
-	int y = getBorderTop();
-	m_sizes.logoSize = Vec2i(getBordersHoriz() + 192, getBordersVert() + 192);
-	m_upImageOffset = Vec2i(x, y);
+	setWidgetStyle(WidgetType::DISPLAY);
+	int x = 0;
+	int y = 0;
+	m_sizes.logoSize = Vec2i(192, 192);
+	m_portraitOffset = Vec2i(x, y);
 	for (int i = 0; i < selectionCellCount; ++i) { // selection potraits
 		if (i && i % cellWidthCount == 0) {
 			y += m_imageSize;
-			x = getBorderLeft();
+			x = 0;
 		}
 		ImageWidget::addImageX(0, Vec2i(x,y), Vec2i(m_imageSize));
 		x += m_imageSize;
 	}
 	y += m_imageSize;
-	m_sizes.portraitSize = Vec2i(x + getBorderRight(), y + getBorderBottom());
+	m_sizes.portraitSize = Vec2i(x, y);
 
 	TextWidget::setAlignment(Alignment::NONE);
 	TextWidget::setText(""); // (0) unit title
@@ -69,16 +163,16 @@ Display::Display(UserInterface *ui, Vec2i pos)
 	const FontMetrics *fm = getFont()->getMetrics();
 
 	///@todo fix: centre text with image
-	TextWidget::setTextPos(Vec2i(getBorderLeft() + 40, getBorderTop() + m_imageSize / 4), 0);
+	TextWidget::setTextPos(Vec2i(40, m_imageSize / 4), 0);
 
 	Vec2i arPos, aaPos, afPos;
-	x = getBorderLeft();
-	y = getBorderTop() + m_imageSize + m_imageSize / 4 + int(fm->getHeight()) * 6;
-	m_downImageOffset = Vec2i(x, y);
+	x = 0;
+	y = m_imageSize + m_imageSize / 4 + int(fm->getHeight()) * 6;
+	m_commandOffset = Vec2i(x, y);
 	for (int i = 0; i < commandCellCount; ++i) { // command buttons
 		if (i && i % cellWidthCount == 0) {
 			y += m_imageSize;
-			x = getBorderLeft();
+			x = 0;
 		}
 		ImageWidget::addImageX(0, Vec2i(x,y), Vec2i(m_imageSize));
 		if (i == UserInterface::autoRepairPos) {
@@ -91,9 +185,9 @@ Display::Display(UserInterface *ui, Vec2i pos)
 		x += m_imageSize;
 	}
 	y += m_imageSize;
-	m_sizes.commandSize = Vec2i(x + getBorderRight(), y + getBorderBottom());
+	m_sizes.commandSize = Vec2i(x, y);
 
-	x = getBorderLeft();
+	x = 0;
 	y += int(m_imageSize * 0.5f);
 	TextWidget::addText(""); // (4) 'Transported' label
 	TextWidget::setTextPos(Vec2i(x, y), 4);
@@ -102,13 +196,13 @@ Display::Display(UserInterface *ui, Vec2i pos)
 	for (int i = 0; i < transportCellCount; ++i) { // loaded unit portraits
 		if (i && i % cellWidthCount == 0) {
 			y += m_imageSize;
-			x = getBorderLeft();
+			x = 0;
 		}
 		ImageWidget::addImageX(0, Vec2i(x,y), Vec2i(m_imageSize));
 		x += m_imageSize;
 	}
 	y += m_imageSize;
-	m_sizes.transportSize = Vec2i(x + getBorderRight(), y + getBorderBottom());
+	m_sizes.transportSize = Vec2i(x, y);
 
 	const Texture2D* overlayImages[3] = {
 		g_widgetConfig.getTickTexture(),
@@ -130,16 +224,20 @@ Display::Display(UserInterface *ui, Vec2i pos)
 	// -loadmap doesn't have any faction
 	const Texture2D *logoTex = (g_world.getThisFaction()) ? g_world.getThisFaction()->getLogoTex() : 0;
 	if (logoTex) {
-		m_logo = ImageWidget::addImageX(logoTex, Vec2i(getBorderLeft(), getBorderTop()), Vec2i(192,192));
+		m_logo = ImageWidget::addImageX(logoTex, Vec2i(0, 0), Vec2i(192,192));
 	}
 
 	m_selectedCommandIndex = invalidPos;
 	setProgressBar(-1);
 	clear();
-	setSize();
+	//setSize();
 
 	m_toolTip = new CommandTip(WidgetWindow::getInstance());
 	m_toolTip->setVisible(false);
+}
+
+void Display::setFuzzySize(FuzzySize fuzzySize) {
+	
 }
 
 void Display::setSize() {
@@ -153,6 +251,7 @@ void Display::setSize() {
 				sz = m_sizes.logoSize;
 			} else {
 				setVisible(false);
+				static_cast<DisplayFrame*>(m_parent)->resetSize();
 				return;
 			}
 		}
@@ -169,6 +268,7 @@ void Display::setSize() {
 	Vec2i size = getSize();
 	if (size != sz) {
 		Widget::setSize(sz);
+		static_cast<DisplayFrame*>(m_parent)->resetSize(); ///@todo construct with DisplayFrame as parent
 	}
 }
 
@@ -177,13 +277,13 @@ void Display::setProgressBar(int i) {
 	if (i >= 0) {
 		TextWidget::setText(intToStr(i) + "%", 3);
 		Vec2i sz = getTextDimensions(3);
-		m_progPrecentPos = 50 - sz.x / 2;
+		m_progPrecentPos = (getWidth() - 2 * m_imageSize) / 2 - (sz.x / 2);
 	} else {
 		TextWidget::setText("", 3);
 	}
 }
 
-void Display::setDownSelectedPos(int i) {
+void Display::setSelectedCommandPos(int i) {
 	if (m_selectedCommandIndex == i) {
 		return;
 	}
@@ -219,7 +319,6 @@ void Display::setPortraitTitle(const string title) {
 	if (TextWidget::getText(0).empty() && title.empty()) {
 		return;
 	}
-	//string str = formatString(title);	
 	TextWidget::setText(title, 0);
 }
 
@@ -234,10 +333,11 @@ void Display::setPortraitText(const string &text) {
 	foreach_const (string, it, str) {
 		if (*it == '\n') ++lines;
 	}
-	int yPos = getBorderTop() + 40;
+	int yPos = 40;
 	TextWidget::setTextPos(Vec2i(5, yPos), 1);
 	TextWidget::setText(str, 1);
-	m_progressPos = Vec2i(14, yPos + lines * int(getFont()->getMetrics()->getHeight() + 1.f));
+
+	m_progressPos = Vec2i(m_imageSize, yPos + lines * int(getFont()->getMetrics()->getHeight() + 1.f));
 }
 
 void Display::setOrderQueueText(const string &i_text) {
@@ -266,11 +366,11 @@ void Display::setToolTipText2(const string &hdr, const string &tip, DisplaySecti
 	m_toolTip->setVisible(true);
 	Vec2i a_offset;
 	if (i_section == DisplaySection::SELECTION) {
-		a_offset = m_upImageOffset;
+		a_offset = m_portraitOffset;
 	} else if (i_section == DisplaySection::TRANSPORTED) {
 		a_offset = m_carryImageOffset;
 	} else {
-		a_offset = m_downImageOffset;
+		a_offset = m_commandOffset;
 	}
 	resetTipPos(a_offset);
 }
@@ -302,7 +402,7 @@ void Display::clear() {
 		ImageWidget::setImage(0, selectionCellCount + commandCellCount + i);
 	}
 
-	setDownSelectedPos(invalidPos);
+	setSelectedCommandPos(invalidPos);
 	setPortraitTitle("");
 	setPortraitText("");
 	setProgressBar(-1);
@@ -315,11 +415,11 @@ const Vec3f progressBarFg1 = Vec3f(0.f, 0.5f, 0.f);
 const Vec3f progressBarFg2 = Vec3f(0.f, 0.1f, 0.f);
 
 void Display::renderProgressBar() {
-	const int h = 15;
-	const int w = 100;
+	const int h = int(getFont()->getMetrics()->getHeight() + 2);
+	int w = getWidth() - 2 * m_imageSize;
 
 	int bw = m_progress;
-	Vec2i pos = getPos() + m_progressPos;
+	Vec2i pos = getScreenPos() + m_progressPos;
 
 	// bar (green bit)
 	glBegin(GL_QUADS);
@@ -349,6 +449,7 @@ int Display::getImageOverlayIndex(AutoCmdFlag f, AutoCmdState s) {
 	if (s == AutoCmdState::INVALID || s == AutoCmdState::NONE) {
 		return -1;
 	}
+	///@todo put in array...
 	switch (f) {
 		case AutoCmdFlag::REPAIR:
 			if (s == AutoCmdState::ALL_ON) {
@@ -405,6 +506,7 @@ void Display::render() {
 	}
 	
 	Widget::render();
+
 	ImageWidget::startBatch();
 	if (m_ui->getSelection()->isEmpty() && !m_ui->getSelectedObject() && m_logo != -1) {
 		// faction logo
@@ -470,7 +572,7 @@ DisplayButton Display::computeIndex(Vec2i i_pos, bool screenPos) {
 		i_pos = i_pos - getScreenPos();
 	}
 	Vec2i pos = i_pos;
-	Vec2i offsets[3] = { m_upImageOffset, m_downImageOffset, m_carryImageOffset };
+	Vec2i offsets[3] = { m_portraitOffset, m_commandOffset, m_carryImageOffset };
 	int counts[3] = { selectionCellCount, commandCellCount, transportCellCount };
 	
 	for (int i=0; i < 3; ++i) {	
@@ -497,11 +599,6 @@ bool Display::mouseDown(MouseButton btn, Vec2i pos) {
 	Vec2i mySize = getSize();
 
 	if (btn == MouseButton::LEFT) {
-		if (pos.y < myPos.y + getBorderTop()) {
-			m_moveOffset = myPos - pos;
-			m_draggingWidget = true;
-			return true;
-		}
 		if (Widget::isInsideBorders(pos)) {
 			m_hoverBtn = computeIndex(pos, true);
 			if (m_hoverBtn.m_section == DisplaySection::COMMANDS) {
@@ -546,10 +643,6 @@ bool Display::mouseUp(MouseButton btn, Vec2i pos) {
 	Vec2i myPos = getScreenPos();
 	Vec2i mySize = getSize();
 
-	if (m_draggingWidget) {
-		m_draggingWidget = false;
-		return true;
-	}
 	if (btn == MouseButton::LEFT) {
 		if (m_pressedBtn.m_section != DisplaySection::INVALID) {
 			if (Widget::isInsideBorders(pos)) {
@@ -612,11 +705,6 @@ bool Display::mouseMove(Vec2i pos) {
 	WIDGET_LOG( __FUNCTION__ << "( " << pos << " )");
 	Vec2i myPos = getScreenPos();
 	Vec2i mySize = getSize();
-
-	if (m_draggingWidget) {
-		setPos(pos + m_moveOffset);
-		return true;
-	}
 
 	if (Widget::isInsideBorders(pos)) {
 		DisplayButton currBtn = computeIndex(pos, true);

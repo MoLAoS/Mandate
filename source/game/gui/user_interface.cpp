@@ -134,12 +134,37 @@ UserInterface::UserInterface(GameState &game)
 
 UserInterface::~UserInterface() {
 	currentGui = 0;
-	delete m_minimap;
-	delete m_display;
-	delete m_resourceBar;
-	delete m_console;
-	delete m_dialogConsole;
+	// widgets deleted by program.clear(), called in GameState::update()
 }
+
+class DisplayFrame : public Frame {
+private:
+	Display *m_display;
+
+	void onExpand(Widget*);
+	void onShrink(Widget*);
+
+public:
+	DisplayFrame(UserInterface *ui, Vec2i pos);
+	Display* getDisplay() {return m_display;}
+
+	void resetSize();
+
+	virtual void render() override;
+};
+
+class ResourceBarFrame : public Frame {
+private:
+	ResourceBar *m_resourceBar;
+
+	void onExpand(Widget*);
+	void onShrink(Widget*);
+
+public:
+	ResourceBarFrame();
+	ResourceBar * getResourceBar() {return m_resourceBar;}
+};
+
 
 void UserInterface::init() {
 	// refs
@@ -161,7 +186,9 @@ void UserInterface::init() {
 	int y = (g_metrics.getScreenH() - 500) / 2;
 
 	// Display Panel
-	m_display = new Display(this, Vec2i(x,y));
+	DisplayFrame *displayFrame = new DisplayFrame(this, Vec2i(x,y));
+	m_display = displayFrame->getDisplay();
+	m_display->setSize();
 
 	// get 'this' FactionType, discover what resources need to be displayed
 	const Faction *fac = g_world.getThisFaction();
@@ -184,7 +211,8 @@ void UserInterface::init() {
 			}
 		}
 		// create ResourceBar, connect thisFactions Resources to it...
-		m_resourceBar = new ResourceBar();
+		ResourceBarFrame *barFrame = new ResourceBarFrame();
+		m_resourceBar = barFrame->getResourceBar();
 		m_resourceBar->init(fac, displayResources);
 
 		m_luaConsole = new LuaConsole(this, &g_program);
@@ -1114,7 +1142,7 @@ void UserInterface::computeHousedUnitsPanel() {
 void UserInterface::computeCommandPanel() {
 	if (selectingPos || selectingMeetingPoint) {
 		assert(!selection.isEmpty());
-		m_display->setDownSelectedPos(activePos);
+		m_display->setSelectedCommandPos(activePos);
 	}
 
 	if (selection.isComandable()) {

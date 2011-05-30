@@ -22,6 +22,7 @@
 #include "widgets.h"
 #include "forward_decs.h"
 #include "selection.h"
+#include "compound_widgets.h"
 #include "tool_tips.h"
 
 using std::string;
@@ -70,17 +71,15 @@ struct DisplayButton {
 
 class Display : public Widget, public MouseWidget, public ImageWidget, public TextWidget {
 public:
-	//static const int cellSideCount = 4;
+	// portrait and command sub-panel width and height, in 'cells'
 	static const int cellWidthCount = 6;
 	static const int cellHeightCount = 4;
-
+	// transported sub-panel is cellWidthCount * (cellHeightCount / 2)
 
 	static const int selectionCellCount = cellWidthCount * cellHeightCount;
 	static const int commandCellCount = cellWidthCount * cellHeightCount;
 	static const int transportCellCount = cellWidthCount * cellHeightCount / 2;
 
-	static const int colorCount = 4;
-	//static const int imageSize = 32;
 	static const int invalidPos = -1;
 
 private:
@@ -99,21 +98,18 @@ private:
 
 	int m_imageSize;
 
-	// some stuff that should be in a superclass ... (Widgets::Frame ?)
-	bool m_draggingWidget;
-	Vec2i m_moveOffset;
-
 	struct SizeCollection {
 		Vec2i portraitSize;
 		Vec2i logoSize;
 		Vec2i commandSize;
 		Vec2i transportSize;
 	};
+	SizeCollection m_sizes;//[3];
 
-	SizeCollection m_sizes;
+	FuzzySize m_fuzzySize;
 
-	Vec2i	m_upImageOffset,	// x,y offset for selected unit portrait(s)
-			m_downImageOffset,	// x,y offset for command buttons
+	Vec2i	m_portraitOffset,	// x,y offset for selected unit portrait(s)
+			m_commandOffset,	// x,y offset for command buttons
 			m_carryImageOffset, // x,y offset for loaded unit portrait(s)
 			m_progressPos;		// x,y offset for progress bar
 	int m_progPrecentPos;		// x offset to draw progress bar percentage text (and -1 when no progress bar)
@@ -128,23 +124,25 @@ private:
 	int getImageOverlayIndex(AutoCmdFlag f, AutoCmdState s);
 
 public:
-	Display(UserInterface *ui, Vec2i pos);
+	Display(Container *parent, UserInterface *ui, Vec2i pos);
 
 	//get
+	FuzzySize getFuzzySize() const                  {return m_fuzzySize;}
 	string getPortraitTitle() const					{return TextWidget::getText(0);}
 	string getPortraitText() const					{return TextWidget::getText(1);}
 	string getOrderQueueText() const				{return TextWidget::getText(2);}
 	string getTransportedLabel() const				{return TextWidget::getText(4);}
 	int getIndex(int i)								{return index[i];}
 	bool getDownLighted(int index) const			{return downLighted[index];}
-	const CommandType *getCommandType(int i)		{return commandTypes[i];}
-	CmdClass getCommandClass(int i)				{return commandClasses[i];}
-	int getProgressBar() const						{return m_progress;}
-	int getSelectedCommandIndex() const				{return m_selectedCommandIndex;}
+	const CommandType *getCommandType(int i)        {return commandTypes[i];}
+	CmdClass getCommandClass(int i)                 {return commandClasses[i];}
+	int getProgressBar() const                      {return m_progress;}
+	int getSelectedCommandIndex() const             {return m_selectedCommandIndex;}
 	CommandTip* getCommandTip()                     {return m_toolTip;}
 
 	//set
 	void setSize();
+	void setFuzzySize(FuzzySize fSize);
 	void setPortraitTitle(const string title);
 	void setPortraitText(const string &text);
 	void setOrderQueueText(const string &text);
@@ -162,12 +160,12 @@ public:
 	void setIndex(int i, int value)						{index[i] = value;}
 	void setProgressBar(int i);
 	void setLoadInfo(const string &txt);
-	void setDownSelectedPos(int i);
+	void setSelectedCommandPos(int i);
 
 	//misc
 	void clear();
 	void resetTipPos(Vec2i i_offset);
-	void resetTipPos() {resetTipPos(m_downImageOffset);}
+	void resetTipPos() {resetTipPos(m_commandOffset);}
 	DisplayButton computeIndex(Vec2i pos, bool screenPos = false);
 	DisplayButton getHoverButton() const { return m_hoverBtn; }
 

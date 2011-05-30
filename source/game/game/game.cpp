@@ -101,6 +101,7 @@ GameState::GameState(Program &program)
 }
 
 GameState::~GameState() {
+	gui.getSelection()->clear();
 	g_logger.getProgramLog().setState(g_lang.get("Deleting"));
 	g_logger.logProgramEvent("~GameState", !program.isTerminating());
 
@@ -115,9 +116,6 @@ GameState::~GameState() {
 	program.setMaxUpdateBacklog(2);
 
 	// delete the World
-	gui.getSelection()->clear(); // disconnect 
-	delete m_debugPanel;
-
 	simInterface->destroyGameWorld();
 }
 
@@ -287,6 +285,8 @@ void GameState::update() {
 			g_widgetWindow.removeFloatingWidget(m_modalDialog);
 			m_modalDialog = 0;
 		}
+		gui.getSelection()->clear();
+		program.clear();
 		program.setState(new BattleEnd(program));
 		//program.setState(new MainMenu(program));
 		return;
@@ -296,6 +296,8 @@ void GameState::update() {
 		g_program.getMouseCursor().initMouse(); // reset to default cursor images
 	}
 	if (exitProgram) {
+		gui.getSelection()->clear();
+		program.clear();
 		g_program.exit();
 		return;
 	}

@@ -15,6 +15,7 @@
 
 #include "metrics.h"
 #include "widget_window.h"
+#include "compound_widgets.h"
 #include "core_data.h"
 #include "resource_type.h"
 #include "math_util.h"
@@ -30,14 +31,54 @@ namespace Glest { namespace Gui {
 
 using namespace Global;
 
-extern void setFancyBorder(BorderStyle &style); // in display.cpp
+class ResourceBarFrame : public Frame {
+private:
+	ResourceBar *m_resourceBar;
+
+	void onExpand(Widget*);
+	void onShrink(Widget*);
+
+public:
+	ResourceBarFrame();
+	ResourceBar * getResourceBar() {return m_resourceBar;}
+
+	virtual void render() override;
+};
+
+void ResourceBarFrame::render() {
+	Frame::render();
+}
+
+ResourceBarFrame::ResourceBarFrame()
+		: Frame((Container*)WidgetWindow::getInstance(), ButtonFlags::SHRINK | ButtonFlags::EXPAND)  {
+	setWidgetStyle(WidgetType::GAME_WIDGET_FRAME);
+	Frame::setTitleBarSize(20);
+	m_resourceBar = new ResourceBar(this);
+	CellStrip::addCells(1);
+	m_resourceBar ->setCell(1);
+	Anchors a(Anchor(AnchorType::RIGID, 0), Anchor(AnchorType::RIGID, 0),
+		Anchor(AnchorType::NONE, 0), Anchor(AnchorType::NONE, 0));
+	m_resourceBar ->setAnchors(a);
+
+//	setPos(pos);
+
+	m_titleBar->enableShrinkExpand(false, false);
+	Expand.connect(this, &ResourceBarFrame::onExpand);
+	Shrink.connect(this, &ResourceBarFrame::onShrink);
+}
+
+void ResourceBarFrame::onExpand(Widget*) {
+}
+
+void ResourceBarFrame::onShrink(Widget*) {
+}
 
 // =====================================================
 // 	class ResourceBar
 // =====================================================
 
-ResourceBar::ResourceBar()
-		: Widget(static_cast<Container*>(WidgetWindow::getInstance()))
+ResourceBar::ResourceBar(Container *parent)
+		: Widget(parent)
 		, MouseWidget(this)
 		, ImageWidget(this)
 		, TextWidget(this)
@@ -73,21 +114,22 @@ void ResourceBar::init(const Faction *faction, std::set<const ResourceType*> &ty
 		addText(m_headerStrings.back());
 		int w;
 		if ((*it)->getClass() == ResourceClass::CONSUMABLE) {
-			w = 20 + int(fm->getTextDiminsions(m_headerStrings.back() + "8000/80000 (8000)").x);
+			w = 16 + 4 + int(fm->getTextDiminsions(m_headerStrings.back() + "8000/80000 (8000)").w);
 		} else if ((*it)->getClass() == ResourceClass::STATIC) {
-			w = 20 + int(fm->getTextDiminsions(m_headerStrings.back() + "80000").x);
+			w = 16 + 4 + int(fm->getTextDiminsions(m_headerStrings.back() + "80000").w);
 		} else {
-			w = 20 + int(fm->getTextDiminsions(m_headerStrings.back() + "80000/800000").x);
+			w = 16 + 4 + int(fm->getTextDiminsions(m_headerStrings.back() + "80000/800000").w);
 		}
 		total_req += w;
 		reqWidths.push_back(w);
 	}
-	int max_width = g_metrics.getScreenW() - 20 - getBordersHoriz();
+	int max_width = g_metrics.getScreenW() - 20 - m_parent->getBordersHoriz();
 	if (total_req < max_width) {
 		// single row
-		setSize(Vec2i(total_req + getBordersHoriz(), 20 + getBordersVert()));
-		setPos(Vec2i(g_metrics.getScreenW() / 2 - getWidth() / 2, 5));
-		int x_pos = getBorderLeft() + 5, y_pos = getBorderTop() + 2;
+		setSize(Vec2i(total_req, 20));
+		m_parent->setSize(Vec2i(total_req + m_parent->getBordersHoriz(), 40 + m_parent->getBordersVert()));
+
+		int x_pos = 5, y_pos = 2;
 		for (int i=0; i < m_resourceTypes.size(); ++i) {
 			setImageX(0, i, Vec2i(x_pos, y_pos), Vec2i(16, 16));
 			setTextPos(Vec2i(x_pos + 20, y_pos), i);
@@ -104,8 +146,10 @@ void ResourceBar::init(const Faction *faction, std::set<const ResourceType*> &ty
 		for (int i=stopAt; i < reqWidths.size(); ++i) {
 			width2 += reqWidths[i];
 		}
-		setSize(Vec2i(std::max(width1, width2) + getBorderLeft(), 40 + getBorderTop()));
-		setPos(Vec2i(g_metrics.getScreenW() / 2 - getWidth() / 2, 5));
+		setSize(Vec2i(std::max(width1, width2), 40));
+		Vec2i pSize(std::max(width1, width2) + m_parent->getBordersHoriz(), 60 + m_parent->getBordersVert());
+		m_parent->setSize(pSize);
+
 		int x_pos = 5, y_pos = 22;
 		for (int i=0; i < stopAt; ++i) {
 			setImageX(0, i, Vec2i(x_pos, y_pos), Vec2i(16, 16));
@@ -119,6 +163,7 @@ void ResourceBar::init(const Faction *faction, std::set<const ResourceType*> &ty
 			x_pos += reqWidths[i];			
 		}
 	}
+	m_parent->setPos(Vec2i(g_metrics.getScreenW() / 2 - m_parent->getWidth() / 2, 5));
 }
 
 ResourceBar::~ResourceBar() {
@@ -136,6 +181,7 @@ void ResourceBar::render() {
 	}
 }
 
+///@todo fix... this is called 120 times per second
 void ResourceBar::update() {
 	for (int i=0; i < m_resourceTypes.size(); ++i) {
 		stringstream ss;
@@ -152,34 +198,14 @@ void ResourceBar::update() {
 }
 
 bool ResourceBar::mouseDown(MouseButton btn, Vec2i pos) {
-	Vec2i myPos = getScreenPos();
-	Vec2i mySize = getSize();
-
-	if (pos.y < myPos.y + getBorderTop()) {
-		m_moveOffset = myPos - pos;
-		m_draggingWidget = true;
-		return true;
-	}
-	// nothing 'tangible' clicked, let event through
 	return false;
 }
 
 bool ResourceBar::mouseUp(MouseButton btn, Vec2i pos) {
-	if (m_draggingWidget) {
-		m_draggingWidget = false;
-		return true;
-	}
 	return false;
 }
 
 bool ResourceBar::mouseMove(Vec2i pos) {
-	Vec2i myPos = getScreenPos();
-
-	if (m_draggingWidget) {
-		setPos(pos + m_moveOffset);
-		return true;
-	}
-	// let event through
 	return false;
 }
 

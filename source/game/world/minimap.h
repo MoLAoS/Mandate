@@ -142,6 +142,10 @@ private:
 	void setExploredState(const World *world);       // init FoW pixmaps
 };
 
+// =====================================================
+//  class MinimapFrame
+// =====================================================
+
 class MinimapFrame : public Frame {
 private:
 	Minimap  *m_minimap;

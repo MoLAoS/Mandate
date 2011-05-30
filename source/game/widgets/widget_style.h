@@ -106,6 +106,8 @@ struct BackgroundStyle {
 
 struct TextStyle {
 	int		 m_fontIndex;
+	int      m_smallFontIndex;
+	int      m_largeFontIndex;
 	int		 m_colourIndex;
 	int		 m_shadowColourIndex;
 	bool	 m_shadow;

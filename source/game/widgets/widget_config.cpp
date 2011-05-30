@@ -569,20 +569,44 @@ void WidgetConfig::loadTextStyle(WidgetType widgetType, TextStyle &style, TextSt
 	if (luaScript.getTable("Text")) {
 		WIDGET_LOG( "\tLoading TextStyle.");
 		string name, size, colour, shadowColour;
-		if (luaScript.getStringField("Font", name)) {
-			style.m_fontIndex = getFontIndex(name);
+		StringSet fontSet;
+
+		// font(s)
+		if (luaScript.getStringSet("Font", fontSet)) { 
+			style.m_smallFontIndex = getFontIndex(fontSet[0]);
+			if (style.m_smallFontIndex == -1) {
+				WIDGET_LOG( "\t\tError: font named '" << fontSet[0] << "' not found" );
+			} else {
+				WIDGET_LOG( "\t\tSmall Font: '" << fontSet[0] << "' @ ndx " << style.m_smallFontIndex );
+			}
+			style.m_fontIndex = getFontIndex(fontSet[1]);
+			if (style.m_fontIndex == -1) {
+				WIDGET_LOG( "\t\tError: font named '" << fontSet[1] << "' not found" );
+			} else {
+				WIDGET_LOG( "\t\tMedium Font: '" << fontSet[1] << "' @ ndx " << style.m_fontIndex );
+			}
+			style.m_largeFontIndex = getFontIndex(fontSet[2]);
+			if (style.m_largeFontIndex == -1) {
+				WIDGET_LOG( "\t\tError: font named '" << fontSet[2] << "' not found" );
+			} else {
+				WIDGET_LOG( "\t\tLarge Font: '" << fontSet[2] << "' @ ndx " << style.m_largeFontIndex );
+			}
+		} else if (luaScript.getStringField("Font", name)) {
+			style.m_fontIndex = style.m_smallFontIndex = style.m_largeFontIndex = getFontIndex(name);
 			if (style.m_fontIndex == -1) {
 				WIDGET_LOG( "\t\tError: font named '" << name << "' not found" );
 			} else {
-				WIDGET_LOG( "\t\tFont: '" << name << "' @ ndx " << style.m_fontIndex );				
+				WIDGET_LOG( "\t\tFont: '" << name << "' @ ndx " << style.m_fontIndex );
 			}
 		} else {
 			if (src) {
 				WIDGET_LOG( "\t\tFont not specified, using Default." );
 				style.m_fontIndex = src->m_fontIndex;
+				style.m_smallFontIndex = src->m_smallFontIndex;
+				style.m_largeFontIndex = src->m_largeFontIndex;
 			} else {
 				WIDGET_LOG( "\t\tError: font named '" << name << "' not found" );
-				style.m_fontIndex = -1;
+				style.m_fontIndex = style.m_smallFontIndex = style.m_largeFontIndex = -1;
 			}
 		}
 		if (luaScript.getStringField("Colour", colour)) {
@@ -743,8 +767,8 @@ bool WidgetConfig::loadStyles(const char *tableName, WidgetType type, bool glob)
 			}
 			luaScript.popTable();
 		} else { // no States specified, just copy default to all others			
-			WIDGET_LOG( "No table 'States' table found for widget type '" << tableName << "'"
-				<< "'. Using 'Default' for all states." );
+			WIDGET_LOG( "No 'States' table found for widget type '" << tableName << "'."
+				<< " Using 'Default' for all states." );
 			for (WidgetState state(1); state < WidgetState::COUNT; ++state) {
 				m_styles[type][state].borderStyle() = *normBorderStyle;
 				m_styles[type][state].backgroundStyle() = *normBackgroundStyle;
@@ -766,11 +790,17 @@ WidgetConfig::WidgetConfig() {
 }
 
 void WidgetConfig::load() {
+	if (!fileExists("data/core/widget.cfg")) {
+		string msg = "Oh noes! widget.cfg was not found, that's a fatal error :-(";
+		cout << "\n" << msg << "\n\n";
+		g_logger.logError(msg);
+		throw runtime_error(msg);
+	}
+
 	luaScript.startUp();
 	luaScript.atPanic(ScriptManager::panicFunc);
 	
 #	define GUI_FUNC(x) luaScript.registerFunction(GuiScript::x, #x)
-
 	GUI_FUNC(setDefaultFont);
 	GUI_FUNC(setOverlayTexture);
 	GUI_FUNC(setMouseTexture);
@@ -794,15 +824,18 @@ void WidgetConfig::load() {
 		ok = false;
 		g_logger.logError(errMsg);
 	}
-	f = g_fileFactory.getFileOps();
-	f->openWrite("widget_cfg.txt");
-	f->write(someLua, size, 1);
-	f->close();
-	delete f;
+	//f = g_fileFactory.getFileOps();
+	//f->openWrite("widget_cfg.txt");
+	//f->write(someLua, size, 1);
+	//f->close();
+	//delete f;
 	delete [] someLua;
 
 	if (!ok) {
-		throw runtime_error("Error loading widget.cfg");
+		string msg = "Oh noes! Error loading widget.cfg, that's a fatal error :-(";
+		cout << "\n" << msg << "\n\n";
+		g_logger.logError(msg);
+		throw runtime_error(msg);
 	}
 
 	loadStyles("StaticWidget", WidgetType::STATIC_WIDGET);
@@ -820,6 +853,7 @@ void WidgetConfig::load() {
 	loadStyles("ScrollBar", WidgetType::SCROLL_BAR);
 	loadStyles("Slider", WidgetType::SLIDER);
 	loadStyles("TitleBar", WidgetType::TITLE_BAR);
+	loadStyles("GameWidgetFrame", WidgetType::GAME_WIDGET_FRAME);
 	loadStyles("MessageBox", WidgetType::MESSAGE_BOX);
 	//loadStyles("ToolTip", WidgetType::TOOL_TIP);
 	loadStyles("ToolTip", WidgetType::TOOLTIP);
