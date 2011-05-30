@@ -474,7 +474,7 @@ public:
 	}
 	void setTextShadowOffset(const Vec2i &offset, int ndx = 0);
 	void setTextPos(const Vec2i &pos, int ndx=0);
-//	void setTextFont(int ndx) { m_defaultFont = ndx; }
+	void setTextFont(int fontIndex, int ndx= 0) { m_texts[ndx].m_font = fontIndex; }
 	void setTextFade(float alpha, int ndx=0);// { m_texts[ndx].m_fade = alpha; }
 
 	void alignText(int ndx = 0);

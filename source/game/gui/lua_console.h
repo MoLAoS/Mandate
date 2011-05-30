@@ -67,7 +67,7 @@ private:
 	public:
 		CodeBox(Container *parent) : ScrollText(parent) {
 			setWidgetStyle(WidgetType::CODE_VIEW);
-			m_staticText->textStyle() = textStyle();
+			m_staticText->setTextFont(textStyle().m_fontIndex);
 		}
 		virtual void setStyle() override { setWidgetStyle(WidgetType::CODE_VIEW); }
 	};
