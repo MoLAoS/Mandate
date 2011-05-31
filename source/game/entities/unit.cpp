@@ -1449,7 +1449,8 @@ void Unit::doUpdateCommand() {
 	g_simInterface.updateSkillCycle(this);
 
 	if (getCurrSkill() != old_st) {	// if starting new skill
-		resetAnim(g_world.getFrameCount() + 1); // reset animation cycle for next frame
+		//resetAnim(g_world.getFrameCount() + 1); // reset animation cycle for next frame
+		g_simInterface.doUpdateAnim(this);
 	}
 }
 
@@ -1530,7 +1531,8 @@ void Unit::updateSkillCycle(int frameOffset) {
 	}
 	// else move skill, server has already modified speed for us
 	lastCommandUpdate = g_world.getFrameCount();
-	nextCommandUpdate = g_world.getFrameCount() + clamp(frameOffset, 1, 4095);;
+	nextCommandUpdate = g_world.getFrameCount() + clamp(frameOffset, 1, 4095);
+
 }
 
 /** called by the server only, updates a skill cycle for the move skill */
