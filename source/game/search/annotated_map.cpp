@@ -49,6 +49,8 @@ AnnotatedMap::AnnotatedMap(World *world, ExplorationMap *eMap)
 				if (unitType->getSize() > maxClearance[unitType->getField()]) {
 					maxClearance[unitType->getField()] = unitType->getSize();
 				}
+			} else if (maxClearance[unitType->getField()] == 0) {
+				maxClearance[unitType->getField()] = 1;
 			}
 		}
 	}
