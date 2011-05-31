@@ -268,8 +268,8 @@ void Display::setSize() {
 	Vec2i size = getSize();
 	if (size != sz) {
 		Widget::setSize(sz);
-		static_cast<DisplayFrame*>(m_parent)->resetSize(); ///@todo construct with DisplayFrame as parent
 	}
+	static_cast<DisplayFrame*>(m_parent)->resetSize(); ///@todo construct with DisplayFrame as parent
 }
 
 void Display::setProgressBar(int i) {
