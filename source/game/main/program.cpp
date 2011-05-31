@@ -139,6 +139,9 @@ Program::Program(CmdArgs &args)
 }
 
 Program::~Program() {
+	if (World::isConstructed()) {
+		g_gameState.getGui()->getSelection()->clear();
+	}
 	Renderer::getInstance().end();
 	delete m_programState;
 	delete simulationInterface;
