@@ -101,7 +101,6 @@ GameState::GameState(Program &program)
 }
 
 GameState::~GameState() {
-	gui.getSelection()->clear();
 	g_logger.getProgramLog().setState(g_lang.get("Deleting"));
 	g_logger.logProgramEvent("~GameState", !program.isTerminating());
 
