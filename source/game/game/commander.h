@@ -70,21 +70,21 @@ public:
 	// CmdResult tryBuild(UnitVector &units, CmdFlags flags, CmdClass commandClass, ProdType prodType, Vec2i &pos);
 
 	//START_DELETE
-	CmdResult tryGiveCommand(const Selection &selection, CmdFlags flags,
+	CmdResult tryGiveCommand(const Selection *selection, CmdFlags flags,
 		const CommandType *commandType = NULL, CmdClass commandClass = CmdClass::NULL_COMMAND,
 		const Vec2i &pos = Command::invalidPos, Unit *targetUnit = NULL,
 		const ProducibleType* prodType = NULL, CardinalDir facing = CardinalDir::NORTH) const;
 	//END_DELETE
 
 	CmdResult tryCancelCommand(const Selection *selection) const;
-	void trySetAutoCommandEnabled(const Selection &selection, AutoCmdFlag flag, bool enabled) const;
-	void trySetCloak(const Selection &selection, bool enabled) const;
+	void trySetAutoCommandEnabled(const Selection *selection, AutoCmdFlag flag, bool enabled) const;
+	void trySetCloak(const Selection *selection, bool enabled) const;
 
 	void giveCommand(Command *command) const;
 
 	CmdResult pushCommand(Command *command) const;
 private:
-    Vec2i computeRefPos(const Selection &selection) const;
+    Vec2i computeRefPos(const Selection *selection) const;
     Vec2i computeDestPos(const Vec2i &refUnitPos, const Vec2i &unitPos, const Vec2i &commandPos) const;
     CmdResult computeResult(const CmdResults &results) const;
 };

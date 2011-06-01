@@ -112,6 +112,7 @@ UserInterface::UserInterface(GameState &game)
 		, m_display(0)
 		, m_resourceBar(0)
 		, m_luaConsole(0)
+		, selection(0)
 		, m_selectingSecond(false)
 		, m_selectedFacing(CardinalDir::NORTH)
 		, m_selectionDirty(false) {
@@ -133,6 +134,7 @@ UserInterface::UserInterface(GameState &game)
 }
 
 UserInterface::~UserInterface() {
+	delete selection;
 	currentGui = 0;
 	// widgets deleted by program.clear(), called in GameState::update()
 }
@@ -165,7 +167,6 @@ public:
 	ResourceBar * getResourceBar() {return m_resourceBar;}
 };
 
-
 void UserInterface::init() {
 	// refs
 	this->commander= g_simInterface.getCommander();
@@ -173,7 +174,8 @@ void UserInterface::init() {
 	this->world= &g_world;
 
 	buildPositions.reserve(max(world->getMap()->getH(), world->getMap()->getW()));
-	selection.init(this, world->getThisFactionIndex());
+	selection = new Selection();
+	selection->init(this, world->getThisFactionIndex());
 
 	// Create Consoles...
 	m_console = new Console(&g_widgetWindow);
@@ -272,7 +274,7 @@ void UserInterface::resetState(bool redoDisplay) {
 	choosenBuildingType = 0;
 	buildPositions.clear();
 	m_minimap->setLeftClickOrder(false);
-	m_minimap->setRightClickOrder(!selection.isEmpty());
+	m_minimap->setRightClickOrder(!selection->isEmpty());
 	g_program.getMouseCursor().setAppearance(MouseAppearance::DEFAULT);
 	if (redoDisplay) {
 		computeDisplay();
@@ -317,7 +319,7 @@ void UserInterface::update() {
 	//WIDGET_LOG( __FUNCTION__ << "()");
 	setComputeSelectionFlag();
 	mouse3d.update();
-	selection.clearDeadUnits();
+	selection->clearDeadUnits();
 
 	if (m_selectionDirty) {
 		tick();
@@ -330,7 +332,7 @@ void UserInterface::tick() {
 	if (btn.m_section == DisplaySection::COMMANDS) {
 		computeCommandInfo(btn.m_index);
 	} else if (btn.m_section == DisplaySection::SELECTION) {
-		if (selection.getCount() == 1) {
+		if (selection->getCount() == 1) {
 			computePortraitInfo(btn.m_index);
 		}
 	}
@@ -340,7 +342,7 @@ void UserInterface::tick() {
 void UserInterface::commandButtonPressed(int posDisplay) {
 	WIDGET_LOG( __FUNCTION__ << "( " << posDisplay << " )");
 	if (!selectingPos && !selectingMeetingPoint) {
-		if (selection.isComandable()) {
+		if (selection->isComandable()) {
 			if (m_selectingSecond) {
 				onSecondTierSelect(posDisplay);
 			} else {
@@ -362,9 +364,9 @@ void UserInterface::unloadRequest(int carryIndex) {
 	WIDGET_LOG( __FUNCTION__ << "( " << carryIndex << " )");
 	int i=0;
 	Unit *transportUnit = 0, *unloadUnit = 0;
-	for (int ndx = 0; !unloadUnit && ndx < selection.getCount(); ++ndx) {
-		if (selection.getUnit(ndx)->getType()->isOfClass(UnitClass::CARRIER)) {
-			const Unit *unit = selection.getUnit(ndx);
+	for (int ndx = 0; !unloadUnit && ndx < selection->getCount(); ++ndx) {
+		if (selection->getUnit(ndx)->getType()->isOfClass(UnitClass::CARRIER)) {
+			const Unit *unit = selection->getUnit(ndx);
 			UnitIdList carriedUnits = unit->getCarriedUnits();
 			foreach (UnitIdList, it, carriedUnits) {
 				if (carryIndex == i) {
@@ -416,7 +418,7 @@ void UserInterface::mouseDownLeft(int x, int y) {
 
 	// set meeting point
 	} else if (selectingMeetingPoint) {
-		if (selection.isComandable()) {
+		if (selection->isComandable()) {
 			commander->tryGiveCommand(selection, CmdFlags(), NULL,
 					CmdClass::SET_MEETING_POINT, worldPos);
 		}
@@ -439,9 +441,9 @@ void UserInterface::mouseUpLeft(int x, int y) {
 	WIDGET_LOG( __FUNCTION__ << "( " << x << ", " << y << " )");	
 	if (!selectingPos && !selectingMeetingPoint && selectionQuad.isEnabled()) {
 		selectionQuad.setPosUp(Vec2i(x, y));
-		if (selection.isComandable() && random.randRange(0, 1)) {
-			g_soundRenderer.playFx(selection.getFrontUnit()->getType()->getSelectionSound(),
-				selection.getFrontUnit()->getCurrVector(), gameCamera->getPos());
+		if (selection->isComandable() && random.randRange(0, 1)) {
+			g_soundRenderer.playFx(selection->getFrontUnit()->getType()->getSelectionSound(),
+				selection->getFrontUnit()->getCurrVector(), gameCamera->getPos());
 		}
 		selectionQuad.disable();
 	} else if (isPlacingBuilding() && dragging) {
@@ -465,7 +467,7 @@ void UserInterface::mouseUpRight(int x, int y) {
 			return;
 		}
 
-		if (selection.isComandable()) {
+		if (selection->isComandable()) {
 			UnitVector units;
 			if (computeTarget(Vec2i(x, y), worldPos, units, false)) {
 				Unit *targetUnit = units.size() ? units.front() : NULL;
@@ -523,13 +525,13 @@ void UserInterface::mouseMove(int x, int y) {
 
 void UserInterface::groupKey(int groupIndex){
 	if (input.isCtrlDown()) {
-		selection.assignGroup(groupIndex);
+		selection->assignGroup(groupIndex);
 	} else {
 		if (currentGroup == groupIndex) {
 			centerCameraOnSelection();
 		}
 
-		selection.recallGroup(groupIndex);
+		selection->recallGroup(groupIndex);
 		currentGroup = groupIndex;
 		resetState();
 	}
@@ -662,12 +664,12 @@ bool UserInterface::cancelPending() {
 }
 
 void UserInterface::load(const XmlNode *node) {
-	selection.load(node->getChild("selection"));
+	selection->load(node->getChild("selection"));
 	gameCamera->load(node->getChild("camera"));
 }
 
 void UserInterface::save(XmlNode *node) const {
-	selection.save(node->addChild("selection"));
+	selection->save(node->addChild("selection"));
 	gameCamera->save(node->addChild("camera"));
 }
 
@@ -677,7 +679,7 @@ void UserInterface::save(XmlNode *node) const {
 void UserInterface::giveOneClickOrders() {
 	CmdResult result;
 	CmdFlags flags(CmdProps::QUEUE, input.isShiftDown());
-	if (selection.isUniform()) {
+	if (selection->isUniform()) {
 		if (activeCommandType->getProducedCount()) {
 			result = commander->tryGiveCommand(selection, flags, activeCommandType,
 				CmdClass::NULL_COMMAND, Command::invalidPos, 0, activeCommandType->getProduced(0));
@@ -705,8 +707,8 @@ void UserInterface::giveDefaultOrders(const Vec2i &targetPos, Unit *targetUnit) 
 			mouse3d.show(targetPos);
 		}
 		if (random.randRange(0, 1) == 0) {
-			SoundRenderer::getInstance().playFx(selection.getFrontUnit()->getType()->getCommandSound(),
-				selection.getFrontUnit()->getCurrVector(), gameCamera->getPos());
+			SoundRenderer::getInstance().playFx(selection->getFrontUnit()->getType()->getCommandSound(),
+				selection->getFrontUnit()->getCurrVector(), gameCamera->getPos());
 		}
 	}
 	// reset
@@ -719,7 +721,7 @@ void UserInterface::giveTwoClickOrders(const Vec2i &targetPos, Unit *targetUnit)
 
 	// give orders to the units of this faction
 	if (!m_selectingSecond) {
-		if (selection.isUniform()) {
+		if (selection->isUniform()) {
 			if (choosenBuildingType) {
 				result = commander->tryGiveCommand(selection, flags, activeCommandType,
 					CmdClass::NULL_COMMAND, targetPos, 0, choosenBuildingType, m_selectedFacing);
@@ -752,7 +754,7 @@ void UserInterface::giveTwoClickOrders(const Vec2i &targetPos, Unit *targetUnit)
 				// queue if not shift down or first build pos
 				flags.set(CmdProps::QUEUE, input.isShiftDown() || !first);
 				// don't reserve any resources if multiple builders or if not first build pos
-				flags.set(CmdProps::DONT_RESERVE_RESOURCES, selection.getCount() > 1 || !first);
+				flags.set(CmdProps::DONT_RESERVE_RESOURCES, selection->getCount() > 1 || !first);
 				result = commander->tryGiveCommand(selection, flags, activeCommandType,
 					CmdClass::NULL_COMMAND, *i, NULL, choosenBuildingType, m_selectedFacing);
 			}
@@ -767,7 +769,7 @@ void UserInterface::giveTwoClickOrders(const Vec2i &targetPos, Unit *targetUnit)
 			mouse3d.show(targetPos);
 		}
 		if (random.randRange(0, 1) == 0) {
-			const Unit *unit = selection.getFrontUnit();
+			const Unit *unit = selection->getFrontUnit();
 			g_soundRenderer.playFx(unit->getType()->getCommandSound(),
 				unit->getCurrVector(), gameCamera->getPos());
 		}
@@ -780,8 +782,8 @@ void UserInterface::giveTwoClickOrders(const Vec2i &targetPos, Unit *targetUnit)
 }
 
 void UserInterface::centerCameraOnSelection(){
-	if (!selection.isEmpty()) {
-		Vec3f refPos = selection.getRefPos();
+	if (!selection->isEmpty()) {
+		Vec3f refPos = selection->getRefPos();
 		gameCamera->centerXZ(refPos.x, refPos.z);
 	}
 }
@@ -799,8 +801,8 @@ void UserInterface::selectInterestingUnit(InterestingUnitType iut){
 	bool previousFound = true;
 
 	//start at the next harvester
-	if (selection.getCount() == 1) {
-		const Unit* refUnit = selection.getFrontUnit();
+	if (selection->getCount() == 1) {
+		const Unit* refUnit = selection->getFrontUnit();
 		if (refUnit->isInteresting(iut)) {
 			previousUnit = refUnit;
 			previousFound = false;
@@ -808,14 +810,14 @@ void UserInterface::selectInterestingUnit(InterestingUnitType iut){
 	}
 
 	//clear selection
-	selection.clear();
+	selection->clear();
 
 	//search
 	for(int i=0; i < thisFaction->getUnitCount(); ++i) {
 		Unit* unit = thisFaction->getUnit(i);
 		if (previousFound) {
 			if (unit->isInteresting(iut)) {
-				selection.select(unit);
+				selection->select(unit);
 				break;
 			}
 		} else {
@@ -825,11 +827,11 @@ void UserInterface::selectInterestingUnit(InterestingUnitType iut){
 		}
 	}
 	// search again if we have a previous
-	if (selection.isEmpty() && previousUnit != NULL && previousFound == true) {
+	if (selection->isEmpty() && previousUnit != NULL && previousFound == true) {
 		for (int i=0; i < thisFaction->getUnitCount(); ++i) {
 			Unit* unit = thisFaction->getUnit(i);
 			if (unit->isInteresting(iut)) {
-				selection.select(unit);
+				selection->select(unit);
 				break;
 			}
 		}
@@ -849,35 +851,35 @@ void UserInterface::clickCommonCommand(CmdClass commandClass) {
 
 void UserInterface::onFirstTierSelect(int posDisplay) {
 	WIDGET_LOG( __FUNCTION__ << "( " << posDisplay << " )");
-	if (selection.isEmpty()) {
+	if (selection->isEmpty()) {
 		return;
 	}
 	if (posDisplay == cancelPos) {
 		if (isPlacingBuilding()) {
 			resetState(false);
-		} else if (selection.isCancelable()) {
-			commander->tryCancelCommand(&selection);
+		} else if (selection->isCancelable()) {
+			commander->tryCancelCommand(selection);
 		} else {
 			// not our click
 		}
 
 	// Auto-Command toggles, if selection is not all-on, turn on, else turn off
 	} else if (posDisplay == autoRepairPos) {
-		AutoCmdState state = selection.getAutoCmdState(AutoCmdFlag::REPAIR);
+		AutoCmdState state = selection->getAutoCmdState(AutoCmdFlag::REPAIR);
 		bool action = (state != AutoCmdState::ALL_ON);
 		commander->trySetAutoCommandEnabled(selection, AutoCmdFlag::REPAIR, action);
 	} else if (posDisplay == autoAttackPos) {
-		AutoCmdState state = selection.getAutoCmdState(AutoCmdFlag::ATTACK);
+		AutoCmdState state = selection->getAutoCmdState(AutoCmdFlag::ATTACK);
 		bool action = (state != AutoCmdState::ALL_ON);
 		commander->trySetAutoCommandEnabled(selection, AutoCmdFlag::ATTACK, action);
 	} else if (posDisplay == autoFleePos) {
-		AutoCmdState state = selection.getAutoCmdState(AutoCmdFlag::FLEE);
+		AutoCmdState state = selection->getAutoCmdState(AutoCmdFlag::FLEE);
 		bool action = (state != AutoCmdState::ALL_ON);
 		commander->trySetAutoCommandEnabled(selection, AutoCmdFlag::FLEE, action);
 
 	// Cloak toggle, if selection has any units cloaked, then de-cloak, else cloak
 	} else if (posDisplay == cloakTogglePos) {
-		bool action = !selection.anyCloaked();
+		bool action = !selection->anyCloaked();
 		commander->trySetCloak(selection, action);
 
 	} else if (posDisplay == meetingPointPos) {
@@ -885,9 +887,9 @@ void UserInterface::onFirstTierSelect(int posDisplay) {
 		selectingMeetingPoint= true;
 	} else {
 		// posDisplay is for a real command...
-		const Unit *unit= selection.getFrontUnit();
+		const Unit *unit= selection->getFrontUnit();
 
-		if (selection.isUniform()) { // uniform selection, use activeCommandType
+		if (selection->isUniform()) { // uniform selection, use activeCommandType
 			if (unit->getFaction()->reqsOk(m_display->getCommandType(posDisplay))) {
 				activeCommandType = m_display->getCommandType(posDisplay);
 				activeCommandClass = activeCommandType->getClass();
@@ -903,9 +905,9 @@ void UserInterface::onFirstTierSelect(int posDisplay) {
 		}
 
 		// give orders depending on command type
-		const CommandType *ct = selection.getUnit(0)->getFirstAvailableCt(activeCommandClass);
+		const CommandType *ct = selection->getUnit(0)->getFirstAvailableCt(activeCommandClass);
 		if (activeCommandType && activeCommandType->getClass() == CmdClass::BUILD) {
-			assert(selection.isUniform());
+			assert(selection->isUniform());
 			m_selectedFacing = CardinalDir::NORTH;
 			m_selectingSecond = true;
 		} else if (activeCommandType && activeCommandType->getClass() == CmdClass::TRANSFORM
@@ -922,7 +924,7 @@ void UserInterface::onFirstTierSelect(int posDisplay) {
 			giveOneClickOrders();
 		} else {
 			if (activeCommandType && activeCommandType->getProducedCount() > 0) {
-				assert(selection.isUniform());
+				assert(selection->isUniform());
 				m_selectingSecond = true;
 			} else {
 				selectingPos = true;
@@ -975,14 +977,14 @@ void UserInterface::onSecondTierSelect(int posDisplay) {
 
 ///@todo move to Display
 void UserInterface::computePortraitInfo(int posDisplay) {
-	if (selection.getCount() < posDisplay) {
+	if (selection->getCount() < posDisplay) {
 		m_display->setToolTipText2("", "");
 	} else {
-		if (selection.getCount() == 1 && !selection.isEnemy()) {
-			const Unit *unit = selection.getFrontUnit();
+		if (selection->getCount() == 1 && !selection->isEnemy()) {
+			const Unit *unit = selection->getFrontUnit();
 			string name = g_lang.getTranslatedFactionName(unit->getFaction()->getType()->getName(), unit->getType()->getName());
 			m_display->setToolTipText2(name, unit->getLongDesc(), DisplaySection::SELECTION);
-		} else if (selection.isComandable()) {
+		} else if (selection->isComandable()) {
 			m_display->setToolTipText2("", g_lang.get("PotraitInfo"), DisplaySection::SELECTION);
 		}
 	}
@@ -1002,14 +1004,14 @@ inline string describeAutoCommandState(AutoCmdState state) {
 
 void UserInterface::computeCommandTip(const CommandType *ct, const ProducibleType *pt) {
 	m_display->getCommandTip()->clearItems();
-	ct->describe(selection.getFrontUnit(), m_display->getCommandTip(), pt);
+	ct->describe(selection->getFrontUnit(), m_display->getCommandTip(), pt);
 	m_display->resetTipPos();
 }
 
 ///@todo move to Display
 void UserInterface::computeCommandInfo(int posDisplay) {
 	WIDGET_LOG( __FUNCTION__ << "( " << posDisplay << " )");
-	if (!selection.isComandable() || posDisplay == invalidPos
+	if (!selection->isComandable() || posDisplay == invalidPos
 	|| (m_selectingSecond && posDisplay >= activeCommandType->getProducedCount())) {
 		m_display->setToolTipText2("", "");
 		return;
@@ -1021,20 +1023,20 @@ void UserInterface::computeCommandInfo(int posDisplay) {
 			m_display->setToolTipText2("", g_lang.get("SetMeetingPoint"));
 		} else if (posDisplay == autoRepairPos) {
 			string str = g_lang.get("AutoRepair") + " ";
-			str += describeAutoCommandState(selection.getAutoRepairState());
+			str += describeAutoCommandState(selection->getAutoRepairState());
 			m_display->setToolTipText2("", str);
 		} else if (posDisplay == autoAttackPos) {
 			string str = g_lang.get("AutoAttack") + " ";
-			str += describeAutoCommandState(selection.getAutoCmdState(AutoCmdFlag::ATTACK));
+			str += describeAutoCommandState(selection->getAutoCmdState(AutoCmdFlag::ATTACK));
 			m_display->setToolTipText2("", str);
 		} else if (posDisplay == autoFleePos) {
 			string str = g_lang.get("AutoFlee") + " ";
-			str += describeAutoCommandState(selection.getAutoCmdState(AutoCmdFlag::FLEE));
+			str += describeAutoCommandState(selection->getAutoCmdState(AutoCmdFlag::FLEE));
 			m_display->setToolTipText2("", str);
 		} else if (posDisplay == cloakTogglePos) {
 			m_display->setToolTipText2("", g_lang.get("ToggleCloak"));
 		} else {
-			if (selection.isUniform()) { // uniform selection
+			if (selection->isUniform()) { // uniform selection
 				const CommandType *ct = m_display->getCommandType(posDisplay);
 				if (ct != NULL) {
 					computeCommandTip(ct);
@@ -1063,7 +1065,7 @@ void UserInterface::computeSelectionPanel() {
 	int thisTeam = g_world.getThisTeamIndex();
 
 	// resource selected ?
-	if (selection.isEmpty() && selectedObject) {
+	if (selection->isEmpty() && selectedObject) {
 		MapResource *r = selectedObject->getResource();
 		if (r) {
 			string name = g_lang.getTranslatedTechName(r->getType()->getName());
@@ -1075,8 +1077,8 @@ void UserInterface::computeSelectionPanel() {
 	}
 
 	// title, text and progress bar (for single unit selected)
-	if (selection.getCount() == 1) {
-		const Unit *unit = selection.getFrontUnit();
+	if (selection->getCount() == 1) {
+		const Unit *unit = selection->getFrontUnit();
 		bool friendly = unit->getFaction()->getTeam() == thisTeam;
 
 		string name = unit->getFullName(); ///@todo tricksy Lang use... will need a %s
@@ -1113,17 +1115,17 @@ void UserInterface::computeSelectionPanel() {
 	}
 
 	// selection portraits
-	for (int i = 0; i < selection.getCount(); ++i) {
-		m_display->setUpImage(i, selection.getUnit(i)->getType()->getImage());
+	for (int i = 0; i < selection->getCount(); ++i) {
+		m_display->setUpImage(i, selection->getUnit(i)->getType()->getImage());
 	}
 }
 
 void UserInterface::computeHousedUnitsPanel() {
 	bool transported = false;
 	int i=0;
-	for (int ndx = 0; ndx < selection.getCount(); ++ndx) {
-		if (selection.getUnit(ndx)->getType()->isOfClass(UnitClass::CARRIER)) {
-			const Unit *unit = selection.getUnit(ndx);
+	for (int ndx = 0; ndx < selection->getCount(); ++ndx) {
+		if (selection->getUnit(ndx)->getType()->isOfClass(UnitClass::CARRIER)) {
+			const Unit *unit = selection->getUnit(ndx);
 			UnitIdList carriedUnits = unit->getCarriedUnits();
 			if (!carriedUnits.empty()) {
 				transported = true;
@@ -1141,52 +1143,52 @@ void UserInterface::computeHousedUnitsPanel() {
 
 void UserInterface::computeCommandPanel() {
 	if (selectingPos || selectingMeetingPoint) {
-		assert(!selection.isEmpty());
+		assert(!selection->isEmpty());
 		m_display->setSelectedCommandPos(activePos);
 	}
 
-	if (selection.isComandable()) {
+	if (selection->isComandable()) {
 		if (!m_selectingSecond) {
-			const Unit *u = selection.getFrontUnit();
+			const Unit *u = selection->getFrontUnit();
 			const UnitType *ut = u->getType();
 
-			if (selection.canRepair()) { // auto-repair toggle
-				m_display->setDownImage(autoRepairPos, selection.getCommandImage(CmdClass::REPAIR));
+			if (selection->canRepair()) { // auto-repair toggle
+				m_display->setDownImage(autoRepairPos, selection->getCommandImage(CmdClass::REPAIR));
 			}
 
-			if (selection.canAttack()) {
-				m_display->setDownImage(autoAttackPos, selection.getCommandImage(CmdClass::ATTACK));
-				AutoCmdState attackState = selection.getAutoCmdState(AutoCmdFlag::ATTACK);
+			if (selection->canAttack()) {
+				m_display->setDownImage(autoAttackPos, selection->getCommandImage(CmdClass::ATTACK));
+				AutoCmdState attackState = selection->getAutoCmdState(AutoCmdFlag::ATTACK);
 				if (attackState == AutoCmdState::NONE || attackState == AutoCmdState::ALL_OFF) {
-					if (selection.canMove()) {
-						m_display->setDownImage(autoFleePos, selection.getCommandImage(CmdClass::MOVE));
+					if (selection->canMove()) {
+						m_display->setDownImage(autoFleePos, selection->getCommandImage(CmdClass::MOVE));
 					}
 				}
 			} else {
-				if (selection.canMove()) {
-					m_display->setDownImage(autoFleePos, selection.getCommandImage(CmdClass::MOVE));
+				if (selection->canMove()) {
+					m_display->setDownImage(autoFleePos, selection->getCommandImage(CmdClass::MOVE));
 				}
 			}
 
-			if (selection.canCloak()) { // cloak toggle
-				m_display->setDownImage(cloakTogglePos, selection.getCloakImage());
-				if (selection.cloakAvailable()) {
+			if (selection->canCloak()) { // cloak toggle
+				m_display->setDownImage(cloakTogglePos, selection->getCloakImage());
+				if (selection->cloakAvailable()) {
 					m_display->setDownLighted(cloakTogglePos, true);
 				} else {
 					m_display->setDownLighted(cloakTogglePos, false);
 				}
 			}
 
-			if (selection.isMeetable()) { // meeting point
+			if (selection->isMeetable()) { // meeting point
 				m_display->setDownImage(meetingPointPos, ut->getMeetingPointImage());
 				m_display->setDownLighted(meetingPointPos, true);
 			}
-			if (selection.isCancelable()) { // cancel button
+			if (selection->isCancelable()) { // cancel button
 				m_display->setDownImage(cancelPos, ut->getCancelImage());
 				m_display->setDownLighted(cancelPos, true);
 			}
 
-			if (selection.isUniform()) { // uniform selection
+			if (selection->isUniform()) { // uniform selection
 				if (u->isBuilt()) {
 					int morphPos = cellWidthCount * 2;
 					for (int i = 0, j = 0; i < ut->getCommandTypeCount(); ++i) {
@@ -1203,7 +1205,7 @@ void UserInterface::computeCommandPanel() {
 			} else { // non uniform selection
 				int lastCommand = 0;
 				foreach_enum (CmdClass, cc) {
-					if (selection.isSharedCommandClass(cc) && !isProductionCmdClass(cc)) {
+					if (selection->isSharedCommandClass(cc) && !isProductionCmdClass(cc)) {
 						m_display->setDownLighted(lastCommand, true);
 						m_display->setDownImage(lastCommand, ut->getFirstCtOfClass(cc)->getImage());
 						m_display->setCommandClass(lastCommand, cc);
@@ -1213,8 +1215,8 @@ void UserInterface::computeCommandPanel() {
 			}
 		} else { // two-tier select
 			RUNTIME_CHECK(activeCommandType != 0 && activeCommandType->getProducedCount() > 0);
-			const Unit *unit = selection.getFrontUnit();
-			m_display->setDownImage(cancelPos, selection.getFrontUnit()->getType()->getCancelImage());
+			const Unit *unit = selection->getFrontUnit();
+			m_display->setDownImage(cancelPos, selection->getFrontUnit()->getType()->getCancelImage());
 			m_display->setDownLighted(cancelPos, true);
 			for (int i=0, j=0; i < activeCommandType->getProducedCount(); ++i) {
 				const ProducibleType *pt = activeCommandType->getProduced(i);
@@ -1229,11 +1231,11 @@ void UserInterface::computeCommandPanel() {
 					activePos = invalidPos;
 				}
 			}
-	} // end if (selection.isComandable())
+	} // end if (selection->isComandable())
 }
 
 void UserInterface::computeDisplay() {
-	if (selectedObject && !selection.isEmpty()) {
+	if (selectedObject && !selection->isEmpty()) {
 		selectedObject = 0;
 	}
 
@@ -1369,7 +1371,7 @@ void UserInterface::updateSelection(bool doubleClick, UnitVector &units) {
 	activeCommandType = 0;
 	needSelectionUpdate = false;
 
-	bool wasEmpty = selection.isEmpty();
+	bool wasEmpty = selection->isEmpty();
 
 	// select all units of the same type if double click
 	if (doubleClick && units.size()) {
@@ -1380,18 +1382,18 @@ void UserInterface::updateSelection(bool doubleClick, UnitVector &units) {
 	bool controlDown = input.isCtrlDown();
 
 	if (!shiftDown && !controlDown) {
-		selection.clear();
+		selection->clear();
 	}
 
 	if (!controlDown) {
-		selection.select(units);
+		selection->select(units);
 	} else {
-		selection.unSelect(units);
+		selection->unSelect(units);
 	}
-	if (wasEmpty != selection.isEmpty()) {
-		m_minimap->setRightClickOrder(!selection.isEmpty());
+	if (wasEmpty != selection->isEmpty()) {
+		m_minimap->setRightClickOrder(!selection->isEmpty());
 	}
-	if (!selection.isEmpty() && selectedObject) {
+	if (!selection->isEmpty() && selectedObject) {
 		selectedObject = 0;
 	}
 	computeDisplay();

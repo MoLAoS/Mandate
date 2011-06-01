@@ -144,7 +144,7 @@ private:
 
 	// composite
 	Mouse3d mouse3d;
-	Selection selection;
+	Selection *selection;
 	SelectionQuad selectionQuad;
 	const MapObject *selectedObject;
 
@@ -186,15 +186,15 @@ public:
 	Console* getRegularConsole()					{return m_console;}
 	Console* getDialogConsole()						{return m_dialogConsole;}
 	const Display *getDisplay()	const				{return m_display;}
-	const Selection *getSelection()	const			{return &selection;}
-	Selection *getSelection()						{return &selection;}
+	const Selection *getSelection()	const			{return selection;}
+	Selection *getSelection()						{return selection;}
 	const SelectionQuad *getSelectionQuad() const	{return &selectionQuad;}
 	const MapObject* getSelectedObject() const			{ return selectedObject; }
 
 	bool isValidPosObjWorld() const			{return validPosObjWorld;}
 	bool isSelecting() const				{return selectionQuad.isEnabled();}
 	bool isSelectingPos() const				{return selectingPos;}
-	bool isSelected(const Unit *unit) const	{return selection.hasUnit(unit);}
+	bool isSelected(const Unit *unit) const	{return selection->hasUnit(unit);}
 	bool isPlacingBuilding() const;
 	bool isDragging() const					{return dragging;}
 	bool isNeedSelectionUpdate() const		{return needSelectionUpdate;}

@@ -47,11 +47,11 @@ CmdResult Commander::tryUnloadCommand(Unit *unit, CmdFlags flags, const Vec2i &p
 }
 
 
-CmdResult Commander::tryGiveCommand(const Selection &selection, CmdFlags flags,
+CmdResult Commander::tryGiveCommand(const Selection *selection, CmdFlags flags,
 		const CommandType *ct, CmdClass cc, const Vec2i &pos, Unit *targetUnit,
 		const ProducibleType* prodType, CardinalDir facing) const {
 	//COMMAND_LOG(__FUNCTION__ << "() " << selection.getUnits().size() << " units selected.");
-	if (selection.isEmpty()) {
+	if (selection->isEmpty()) {
 		//COMMAND_LOG(__FUNCTION__ << "() No units selected!");
 		return CmdResult::FAIL_UNDEFINED;
 	}
@@ -61,7 +61,7 @@ CmdResult Commander::tryGiveCommand(const Selection &selection, CmdFlags flags,
 	CmdResults results;
 
 	// give orders to all selected units
-	const UnitVector &units = selection.getUnits();
+	const UnitVector &units = selection->getUnits();
 	CmdResult result;
 
 	foreach_const (UnitVector, i, units) {
@@ -142,7 +142,7 @@ CmdResult Commander::tryCancelCommand(const Selection *selection) const{
 	return CmdResult::SUCCESS;
 }
 
-void Commander::trySetAutoCommandEnabled(const Selection &selection, AutoCmdFlag flag, bool enabled) const {
+void Commander::trySetAutoCommandEnabled(const Selection *selection, AutoCmdFlag flag, bool enabled) const {
 	CmdDirective archetype;
 	CmdFlags cmdFlags = CmdFlags(CmdProps::MISC_ENABLE, enabled);
 	switch (flag) {
@@ -159,7 +159,7 @@ void Commander::trySetAutoCommandEnabled(const Selection &selection, AutoCmdFlag
 	if (iSim->isNetworkInterface()) {
 		g_console.addLine(g_lang.get("NotAvailable"));
 	} else {
-		const UnitVector &units = selection.getUnits();
+		const UnitVector &units = selection->getUnits();
 		foreach_const (UnitVector, i, units) {
 			Command *c = g_world.newCommand(archetype, cmdFlags, Command::invalidPos, *i);
 			pushCommand(c);
@@ -167,9 +167,9 @@ void Commander::trySetAutoCommandEnabled(const Selection &selection, AutoCmdFlag
 	}
 }
 
-void Commander::trySetCloak(const Selection &selection, bool enabled) const {
+void Commander::trySetCloak(const Selection *selection, bool enabled) const {
 	CmdFlags flags(CmdProps::MISC_ENABLE, enabled);
-	foreach_const (UnitVector, it, selection.getUnits()) {
+	foreach_const (UnitVector, it, selection->getUnits()) {
 		if ((*it)->getType()->getCloakClass() == CloakClass::ENERGY) {
 			Command *c = g_world.newCommand(CmdDirective::SET_CLOAK, flags, Command::invalidPos, *it);
 			pushCommand(c);
@@ -179,13 +179,13 @@ void Commander::trySetCloak(const Selection &selection, bool enabled) const {
 
 // ==================== PRIVATE ====================
 
-Vec2i Commander::computeRefPos(const Selection &selection) const{
+Vec2i Commander::computeRefPos(const Selection *selection) const{
 	Vec2i total = Vec2i(0);
-	for (int i = 0; i < selection.getCount(); ++i) {
-		total = total + selection.getUnit(i)->getPos();
+	for (int i = 0; i < selection->getCount(); ++i) {
+		total = total + selection->getUnit(i)->getPos();
 	}
 
-	return Vec2i(total.x / selection.getCount(), total.y / selection.getCount());
+	return Vec2i(total.x / selection->getCount(), total.y / selection->getCount());
 }
 
 Vec2i Commander::computeDestPos(const Vec2i &refPos, const Vec2i &unitPos, const Vec2i &cmdPos) const {
