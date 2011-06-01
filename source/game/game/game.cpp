@@ -281,23 +281,20 @@ void GameState::init() {
 void GameState::update() {
 	if (gotoMenu) {
 		if (m_modalDialog) {
-			g_widgetWindow.removeFloatingWidget(m_modalDialog);
+			program.removeFloatingWidget(m_modalDialog);
 			m_modalDialog = 0;
 		}
-		gui.getSelection()->clear();
 		program.clear();
 		program.setState(new BattleEnd(program));
-		//program.setState(new MainMenu(program));
 		return;
 	}
 	if (exitGame) {
 		g_simInterface.doQuitGame(QuitSource::LOCAL);
-		g_program.getMouseCursor().initMouse(); // reset to default cursor images
+		program.getMouseCursor().initMouse(); // reset to default cursor images
 	}
 	if (exitProgram) {
-		gui.getSelection()->clear();
 		program.clear();
-		g_program.exit();
+		program.exit();
 		return;
 	}
 	if (netError) {
