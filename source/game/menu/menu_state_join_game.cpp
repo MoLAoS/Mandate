@@ -365,8 +365,8 @@ void MenuStateJoinGame::update() {
 
 	if (connected && !clientInterface->isConnected()) {
 		connected = false;
-		program.removeFloatingWidget(m_messageBox);
-		m_messageBox = 0;
+		//program.removeFloatingWidget(m_messageBox);
+		//m_messageBox = 0;
 		m_connectPanel->setVisible(true);
 		m_connectLabel->setText("Not connected. Last connection was severed."); ///@todo localise
 	}
