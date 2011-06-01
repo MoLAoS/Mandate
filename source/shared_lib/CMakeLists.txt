@@ -58,11 +58,8 @@ target_link_libraries(shared_lib
 	${FREETYPE_LIBRARIES}
 	${PNG_LIBRARY}
 	${JPEG_LIBRARY}
-	${GLEW_LIBRARY})
-
-if (GAE_USE_PHYSFS)
-	target_link_libraries(shared_lib ${PHYSFS_LIBRARY})
-endif (GAE_USE_PHYSFS)
+	${GLEW_LIBRARY}
+	${PHYSFS_LIBRARY})
 
 if(WIN32)
 	# FIXME: VC project needs static vorbis/ogg libs
