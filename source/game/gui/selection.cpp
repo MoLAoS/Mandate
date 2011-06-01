@@ -46,11 +46,13 @@ void Selection::init(UserInterface *m_gui, int m_factionIndex) {
 }
 
 Selection::~Selection(){
-	// clear list
-	foreach (UnitVector, it, m_selectedUnits) {
-		(*it)->StateChanged.disconnect(this);
+	if (!m_selectedUnits.empty()) {
+		// clear list
+		foreach (UnitVector, it, m_selectedUnits) {
+			(*it)->StateChanged.disconnect(this);
+		}
+		m_selectedUnits.clear();
 	}
-	m_selectedUnits.clear();
 }
 
 void Selection::select(Unit *unit){
@@ -129,6 +131,9 @@ void Selection::unSelect(UnitVector::iterator it) {
 }
 
 void Selection::clear(){
+	if (m_selectedUnits.empty()) {
+		return;
+	}
 	// clear list
 	foreach (UnitVector, it, m_selectedUnits) {
 		(*it)->StateChanged.disconnect(this);
