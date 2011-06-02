@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of Glest (www.glest.org)
 //
-//	Copyright (C) 2001-2005 Martiño Figueroa
+//	Copyright (C) 2001-2005 Martiï¿½o Figueroa
 //				  2010 James McCulloch <silnarm at gmail>
 //
 //	You can redistribute this code and/or modify it under
@@ -81,6 +81,8 @@ MenuStateGraphicInfo::MenuStateGraphicInfo(Program &program, MainMenu *mainMenu)
 	l_button->setAnchors(centreAnchors);
 	l_button->setText(lang.get("Return"));
 	l_button->Clicked.connect(this, &MenuStateGraphicInfo::onButtonClick);
+
+	program.setFade(0.f);
 }
 
 void MenuStateGraphicInfo::onButtonClick(Widget*) {

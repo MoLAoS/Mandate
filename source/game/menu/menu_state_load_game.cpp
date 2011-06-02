@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of Glest (www.glest.org)
 //
-//	Copyright (C) 2008 Jaagup Repän <jrepan@gmail.com>
+//	Copyright (C) 2008 Jaagup Repï¿½n <jrepan@gmail.com>
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published
@@ -139,6 +139,7 @@ MenuStateLoadGame::MenuStateLoadGame(Program &program, MainMenu *mainMenu)
 		m_messageDialog->Button1Clicked.connect(this, &MenuStateLoadGame::onConfirmReturn);
 		m_messageDialog->Close.connect(this, &MenuStateLoadGame::onConfirmReturn);
 	}
+	program.setFade(0.f);
 }
 
 MenuStateLoadGame::~MenuStateLoadGame() {

@@ -134,6 +134,7 @@ MenuStateScenario::MenuStateScenario(Program &program, MainMenu *mainMenu)
 	m_categoryList->addItems(results);
 	m_categoryList->SelectionChanged.connect(this, &MenuStateScenario::onCategoryChanged);
 	m_categoryList->setSelected(match);
+	program.setFade(0.f);
 }
 
 void MenuStateScenario::onConfirmReturn(Widget*) {
