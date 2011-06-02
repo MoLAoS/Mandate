@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of Glest (www.glest.org)
 //
-//	Copyright (C) 2001-2008 Martiño Figueroa
+//	Copyright (C) 2001-2008 Martiï¿½o Figueroa
 //				  2010 James McCulloch
 //
 //	You can redistribute this code and/or modify it under
@@ -46,6 +46,9 @@ public:
 };
 
 void ResourceBarFrame::render() {
+	if (g_config.getUiPhotoMode()) {
+		return;
+	}
 	Frame::render();
 }
 
@@ -171,9 +174,6 @@ ResourceBar::~ResourceBar() {
 }
 
 void ResourceBar::render() {
-	if (g_config.getUiPhotoMode()) {
-		return;
-	}
 	Widget::render();
 	for (int i=0; i < m_resourceTypes.size(); ++i) {
 		renderImage(i);
