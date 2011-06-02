@@ -15,8 +15,6 @@
 //  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "pch.h"
-#include "projectConfig.h"
-#if USE_PHYSFS
 
 #include "ofile_streambuf.hpp"
 
@@ -77,5 +75,4 @@ OFileStreambuf::sync()
 
 }} // namespace Shared::PhysFS
 
-#endif
 /* EOF */

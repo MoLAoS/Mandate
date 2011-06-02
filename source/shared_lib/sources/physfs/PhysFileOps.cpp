@@ -10,8 +10,6 @@
 // ==============================================================
 
 #include "pch.h"
-#include "projectConfig.h"
-#if USE_PHYSFS
 
 #include "PhysFileOps.hpp"
 
@@ -109,5 +107,3 @@ const char * PhysFileOps::getLastError() {
 }
 
 }} // namespace Shared::PhysFS
-
-#endif

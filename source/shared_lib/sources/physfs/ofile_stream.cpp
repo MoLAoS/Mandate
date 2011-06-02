@@ -18,8 +18,6 @@
 //#define HEADER_SUPERTUX_PHYSFS_OFILE_STREAM_CPP
 
 #include "pch.h"
-#include "projectConfig.h"
-#if USE_PHYSFS
 
 #include "ofile_stream.hpp"
 #include "ofile_streambuf.hpp"
@@ -38,8 +36,6 @@ OFileStream::~OFileStream()
 }
 
 }} // namespace Shared::PhysFS
-
-#endif
 
 //#endif
 /* EOF */
