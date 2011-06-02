@@ -18,13 +18,10 @@
 #include <iostream>
 //#include <physfs.h> //already in PhysFileOps.hpp
 
-#include "projectConfig.h"
-#if USE_PHYSFS
-#	include "ifile_stream.hpp"
-#	include "ofile_stream.hpp"
+#include "ifile_stream.hpp"
+#include "ofile_stream.hpp"
 
-#	include "PhysFileOps.hpp"
-#endif
+#include "PhysFileOps.hpp"
 #include "StdFileOps.hpp"
 #include "util.h"
 
@@ -44,11 +41,9 @@ FSFactory::FSFactory(){
 }
 
 FSFactory::~FSFactory(){
-#if USE_PHYSFS
 	if(PHYSFS_isInit()){
 		PHYSFS_deinit();
 	}
-#endif
 	instance = NULL;
 }
 
@@ -65,7 +60,6 @@ void FSFactory::shutdown() {
 }
 
 bool FSFactory::initPhysFS(const char *argv0, const string &configDir, string &dataDir){
-#if USE_PHYSFS
 	if (!PHYSFS_init(argv0)) {
 		throw runtime_error(string("Couldn't init PhysFS with ")+argv0+"; "+PHYSFS_getLastError());
 	}
@@ -132,57 +126,49 @@ bool FSFactory::initPhysFS(const char *argv0, const string &configDir, string &d
 		std::cout << "[" << *i << "] is in the search path.\n";
 	}
 	PHYSFS_freeList(list);
-#endif
 	return true;
 }
 
 bool FSFactory::mountSystemDir(const string &systemPath, const string &mapToPath) {
-#if USE_PHYSFS
 	if (!PHYSFS_mount(systemPath.c_str(), mapToPath.c_str(), 1)) {
 		return false;
 	}
 	return true;
-#endif
-	return false;
 }
 
 
 istream *FSFactory::getIStream(const char *fname){
-#if USE_PHYSFS
 	if(this->usePhysFS){
 		string str(fname);
 		str = cleanPath(str);  // get rid of .. and .
 		return new IFileStream(str);
-	}else
-#endif
+	}else{
 		return new ifstream(fname, ios::in | ios::binary);
+	}
 }
 
 ostream *FSFactory::getOStream(const char *fname){
-#if USE_PHYSFS
 	if(this->usePhysFS){
 		string str(fname);
 		str = cleanPath(str);  // get rid of ../ and ./
 		return new OFileStream(str);
-	}else
-#endif
+	}else{
 		return new ofstream(fname, ios::out | ios::binary);
+	}
 }
 
 FileOps *FSFactory::getFileOps(){
-#if USE_PHYSFS
 	if(this->usePhysFS){
 		return new PhysFileOps();
-	}else
-#endif
+	}else{
 		return new StdFileOps();
+	}
 }
 
 // FIXME: quick & dirty
 vector<string> FSFactory::findAll(const string &path, bool cutExtension){
 	vector<string> res;
-	
-#if USE_PHYSFS
+
 	// FIXME: currently assumes there's always a dir before wildcard
 	const string dir = dirname(path);
 	const string basestr = basename(path);
@@ -210,32 +196,19 @@ vector<string> FSFactory::findAll(const string &path, bool cutExtension){
 		}
 	}
 	PHYSFS_freeList(list);
-#endif
 	return res;
 }
 
 bool FSFactory::fileExists(const string &path){
-#if USE_PHYSFS
 	return PHYSFS_exists(path.c_str());
-#else
-	return false;
-#endif
 }
 
 bool FSFactory::dirExists(const string &path) {
-#if USE_PHYSFS
 	return PHYSFS_isDirectory(path.c_str());
-#else
-	return false;
-#endif
 }
 
 bool FSFactory::removeFile(const string &path) {
-#if USE_PHYSFS
 	return PHYSFS_delete(path.c_str());
-#else
-	return remove(path.c_str());
-#endif
 }
 
 

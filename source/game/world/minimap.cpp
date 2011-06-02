@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of Glest (www.glest.org)
 //
-//	Copyright (C) 2001-2008 Martiño Figueroa
+//	Copyright (C) 2001-2008 Martiï¿½o Figueroa
 //				  2010      James McCulloch
 //
 //	You can redistribute this code and/or modify it under
@@ -168,6 +168,13 @@ void MinimapFrame::onShrink(Widget*) {
 	}
 	Vec2i size = m_minimap->getSize() + getBordersAll() + Vec2i(0, 20);
 	setSize(size);
+}
+
+void MinimapFrame::render() {
+	if (g_config.getUiPhotoMode()) {
+		return;
+	}
+	Frame::render();
 }
 
 // =====================================================
@@ -611,10 +618,6 @@ void Minimap::setExploredState(const World *world) {
 }
 
 void Minimap::render() {
-	if (g_config.getUiPhotoMode()) {
-		return;
-	}
-
 	Widget::render();
 	const GameCamera *gameCamera = g_gameState.getGameCamera();
 	const Pixmap2D *pixmap = m_terrainTex->getPixmap();

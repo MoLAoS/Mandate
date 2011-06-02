@@ -77,15 +77,7 @@ find_package(Freetype REQUIRED)
 find_package(PNG REQUIRED)
 find_package(JPEG REQUIRED)
 find_package(GLEW REQUIRED)
-
-# PhysFS
-option(GAE_USE_PHYSFS "Enable PhysicsFS support" ON)
-
-if(GAE_USE_PHYSFS)
-	find_package(PhysFS REQUIRED)
-else(GAE_USE_PHYSFS)
-	message("Warning: compiling without PhysFS is no longer supported.")
-endif(GAE_USE_PHYSFS)
+find_package(PhysFS REQUIRED)
 
 # Option: debug edition
 option(GAE_DEBUG_EDITION "Enable debug edition extensions.")

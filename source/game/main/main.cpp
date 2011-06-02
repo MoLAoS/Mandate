@@ -151,15 +151,13 @@ int glestMain(int argc, char** argv) {
 	mkdir(configDir + "/screens/", true);
 	mkdir(configDir + "/savegames/", true);
 
-#	if USE_PHYSFS
-		try {
-			g_fileFactory.initPhysFS(argv[0], configDir, dataDir);
-			g_fileFactory.usePhysFS = true;
-		} catch (runtime_error &e) {
-			exceptionMessage(e);
-			return 0;
-		}
-#	endif
+	try {
+		g_fileFactory.initPhysFS(argv[0], configDir, dataDir);
+		g_fileFactory.usePhysFS = true;
+	} catch (runtime_error &e) {
+		exceptionMessage(e);
+		return 0;
+	}
 
 	cout << "config-dir: " << configDir << "\ndata-dir: " << dataDir << endl << endl;
 

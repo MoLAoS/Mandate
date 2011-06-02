@@ -327,6 +327,7 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 		m_playerSlots[i]->TeamChanged.connect(this, &MenuStateNewGame::onChangeTeam);
 		m_playerSlots[i]->ColourChanged.connect(this, &MenuStateNewGame::onChangeColour);
 	}
+	program.setFade(0.f);
 }
 
 //  === util ===

@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of Glest (www.glest.org)
 //
-//	Copyright (C) 2001-2008 Martiño Figueroa
+//	Copyright (C) 2001-2008 Martiï¿½o Figueroa
 //				  2010      James McCulloch
 //
 //	You can redistribute this code and/or modify it under
@@ -158,6 +158,8 @@ public:
 	void initMinimp(int w, int h, const World *world, bool resumingGame);
 
 	Minimap* getMinimap() {return m_minimap;}
+
+	virtual void render() override;
 };
 
 }}//end namespace

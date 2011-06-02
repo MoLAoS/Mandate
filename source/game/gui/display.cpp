@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of Glest (www.glest.org)
 //
-//	Copyright (C) 2001-2008 Martiño Figueroa
+//	Copyright (C) 2001-2008 Martiï¿½o Figueroa
 //				  2010 James McCulloch
 //
 //	You can redistribute this code and/or modify it under
@@ -34,6 +34,7 @@ using Global::CoreData;
 class DisplayFrame : public Frame {
 private:
 	Display *m_display;
+	UserInterface *m_ui;
 
 	void onExpand(Widget*);
 	void onShrink(Widget*);
@@ -47,13 +48,10 @@ public:
 	virtual void render() override;
 };
 
-void DisplayFrame::render() {
-	Frame::render();
-}
-
 DisplayFrame::DisplayFrame(UserInterface *ui, Vec2i pos)
 		: Frame((Container*)WidgetWindow::getInstance(), ButtonFlags::SHRINK | ButtonFlags::EXPAND) {
 	setWidgetStyle(WidgetType::GAME_WIDGET_FRAME);
+	m_ui = ui;
 	Frame::setTitleBarSize(20);
 	m_display = new Display(this, ui, Vec2i(0,0));
 	CellStrip::addCells(1);
@@ -121,6 +119,13 @@ void DisplayFrame::onShrink(Widget*) {
 	//	default: assert(false);
 	//}
 	resetSize();
+}
+
+void DisplayFrame::render() {
+	if (m_ui->getSelection()->isEmpty() && !m_ui->getSelectedObject() && g_config.getUiPhotoMode()) {
+		return;
+	}
+	Frame::render();
 }
 
 // =====================================================

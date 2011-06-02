@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of Glest (www.glest.org)
 //
-//	Copyright (C) 2001-2005 Martiño Figueroa
+//	Copyright (C) 2001-2005 Martiï¿½o Figueroa
 //
 //	You can redistribute this code and/or modify it under
 //	the terms of the GNU General Public License as published
@@ -288,6 +288,7 @@ MenuStateAbout::MenuStateAbout(Program &program, MainMenu *mainMenu)
 	m_returnButton = new Button(&program, btnPos, btnSize);
 	m_returnButton->setText(g_lang.get("Return"));
 	m_returnButton->Clicked.connect(this, &MenuStateAbout::onReturn);
+	program.setFade(0.f);
 }
 
 void MenuStateAbout::onReturn(Widget*) {

@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of Glest (www.glest.org)
 //
-//	Copyright (C) 2001-2005 Martiño Figueroa
+//	Copyright (C) 2001-2005 Martiï¿½o Figueroa
 //				  2010 James McCulloch <silnarm at gmail>
 //
 //	You can redistribute this code and/or modify it under
@@ -123,6 +123,7 @@ MenuStateJoinGame::MenuStateJoinGame(Program &program, MainMenu *mainMenu, bool 
 		m_serverTextBox->setText(serverIp.getString());
 		onConnect(0);
 	}
+	program.setFade(0.f);
 }
 
 void MenuStateJoinGame::buildConnectPanel() {

@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of Glest (www.glest.org)
 //
-//	Copyright (C) 2001-2005 Martiño Figueroa
+//	Copyright (C) 2001-2005 Martiï¿½o Figueroa
 //				  2010 James McCulloch <silnarm at gmail>
 //
 //	You can redistribute this code and/or modify it under
@@ -86,6 +86,8 @@ MenuStateOptions::MenuStateOptions(Program &program, MainMenu *mainMenu)
 	m_openGlInfoButton->setAnchors(anchors);
 	m_openGlInfoButton->setText(lang.get("GraphicInfo"));
 	m_openGlInfoButton->Clicked.connect(this, &MenuStateOptions::onButtonClick);
+
+	program.setFade(0.f);
 }
 
 void MenuStateOptions::onButtonClick(Widget *source) {

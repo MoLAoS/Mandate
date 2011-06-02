@@ -21,7 +21,6 @@
 #define ON 1
 #define OFF 0
 
-#define USE_PHYSFS          @GAE_USE_PHYSFS@
 #define _GAE_DEBUG_EDITION_ @GAE_DEBUG_EDITION@
 #define _GAE_LEAK_DUMP_     @GAE_LEAK_DUMP@
 #define _GAE_USE_XAUDIO2_   @GAE_USE_XAUDIO2@
