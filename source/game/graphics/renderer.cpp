@@ -1298,8 +1298,10 @@ void Renderer::renderMenuBackground(const MenuBackground *menuBackground){
 	glLightfv(GL_LIGHT0, GL_DIFFUSE,  diffLight.ptr());
 	glLightfv(GL_LIGHT0, GL_AMBIENT,  ambLight.ptr());
 	glLightfv(GL_LIGHT0, GL_SPECULAR, specLight.ptr());
+	modelRenderer->setLightCount(1);
 	
 	// main model
+	modelRenderer->setTeamColour(Vec3f(0.f));
 	modelRenderer->setAlphaThreshold(0.5f);
 	glColor3f(1.f, 1.f, 1.f);
 	
@@ -1317,7 +1319,6 @@ void Renderer::renderMenuBackground(const MenuBackground *menuBackground){
 		float alpha = clamp((minDist-dist) / minDist, 0.f, 1.f);
 		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, Vec4f(1.0f, 1.0f, 1.0f, alpha).ptr());
 		modelRenderer->begin(RenderMode::OBJECTS, menuBackground->getFog());
-		modelRenderer->setTeamColour(Vec3f(0.f));
 		for (int i=0; i < MenuBackground::characterCount; ++i) {
 			glMatrixMode(GL_MODELVIEW);
 			glPushMatrix();
