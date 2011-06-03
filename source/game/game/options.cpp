@@ -169,8 +169,48 @@ void Options::buildVideoTab() {
 }
 
 void Options::buildAudioTab() {
-	CellStrip *panel = new CellStrip(this, Orientation::HORIZONTAL, 2);
-	TabWidget::add(g_lang.get("Audio"), panel);
+	Lang &lang = g_lang;
+	Config &config= g_config;
+
+	CellStrip *panel = new CellStrip(this, Orientation::VERTICAL, Origin::FROM_TOP, 3);
+	TabWidget::add(lang.get("Audio"), panel);
+	SizeHint hint(-1, int(g_widgetConfig.getDefaultItemHeight() * 1.5f));
+	panel->setSizeHint(0, hint);
+	panel->setSizeHint(1, hint);
+	panel->setSizeHint(2, hint);
+
+	Anchors squashAnchors(Anchor(AnchorType::SPRINGY, 10), Anchor(AnchorType::SPRINGY, 15));
+
+	OptionWidget *ow = new OptionWidget(panel, lang.get("FxVolume"));
+	ow->setCell(0);
+	ow->setAbsoluteSplit(200, true); // OptionWidget was 'geared' to live in a two column layout...
+	m_volFxSlider = new Slider2(ow, false);
+	m_volFxSlider->setCell(1);
+	m_volFxSlider->setAnchors(squashAnchors);
+	m_volFxSlider->setRange(100);
+	m_volFxSlider->setValue(clamp(config.getSoundVolumeFx(), 0, 100));
+	m_volFxSlider->ValueChanged.connect(this, &Options::onSliderValueChanged);
+
+	ow = new OptionWidget(panel, lang.get("AmbientVolume"));
+	ow->setCell(1);
+	ow->setAbsoluteSplit(200, true);
+	m_volAmbientSlider = new Slider2(ow, false);
+	m_volAmbientSlider->setCell(1);
+	m_volAmbientSlider->setAnchors(squashAnchors);
+	m_volAmbientSlider->setRange(100);
+	m_volAmbientSlider->setValue(clamp(config.getSoundVolumeAmbient(), 0, 100));
+	m_volAmbientSlider->ValueChanged.connect(this, &Options::onSliderValueChanged);
+
+	ow = new OptionWidget(panel, lang.get("MusicVolume"));
+	ow->setCell(2);
+	ow->setAbsoluteSplit(200, true);
+	m_volMusicSlider = new Slider2(ow, false);
+	m_volMusicSlider->setCell(1);
+	m_volMusicSlider->setAnchors(squashAnchors);
+	m_volMusicSlider->setRange(100);
+	m_volMusicSlider->setValue(clamp(config.getSoundVolumeMusic(), 0, 100));
+	m_volMusicSlider->ValueChanged.connect(this, &Options::onSliderValueChanged);
+
 }
 
 void Options::buildControlsTab() {
@@ -184,44 +224,45 @@ void Options::buildNetworkTab() {
 }
 
 void Options::buildDebugTab() {
-	CellStrip *panel = new CellStrip(this, Orientation::HORIZONTAL, Origin::FROM_TOP, 2);
+	CellStrip *panel = new CellStrip(this, Orientation::VERTICAL, Origin::FROM_TOP, 1);
 	TabWidget::add(g_lang.get("Debug"), panel);
+	SizeHint hint(-1, int(g_widgetConfig.getDefaultItemHeight() * 1.5f));
+	panel->setSizeHint(0, hint);
 
-	Anchors fillAnchors(Anchor(AnchorType::RIGID, 0));
-	Anchors squashAnchors(Anchor(AnchorType::RIGID, 0), Anchor(AnchorType::SPRINGY, 15));
+	// centre check-boxes vetically in cell
+	Anchors centreAnchors;
+	centreAnchors.setCentre(true, false);
+
+	// using centering anchors, must size widgets ourselves
+	Vec2i cbSize(g_widgetConfig.getDefaultItemHeight());
+
 	Lang &lang= Lang::getInstance();
 	Config &config= Config::getInstance();
 
 	// Debug mode/keys container
 	DoubleOption *qw = new DoubleOption(panel, lang.get("DebugMode"), lang.get("DebugKeys"));
 	qw->setCell(0);
+	qw->setCustomSplit(true, 30);  // DoubleOption was 'geared' to live in a two column layout...
+	qw->setCustomSplit(false, 30);
 
 	// Debug mode
-	CheckBoxHolder *cbh = new CheckBoxHolder(qw);
-	cbh->setCell(1);
-	cbh->setAnchors(fillAnchors);
-	m_debugModeCheckBox = new CheckBox(cbh);
+	m_debugModeCheckBox = new CheckBox(qw);
 	m_debugModeCheckBox->setCell(1);
-	m_debugModeCheckBox->setAnchors(squashAnchors);
+	m_debugModeCheckBox->setSize(cbSize);
+	m_debugModeCheckBox->setAnchors(centreAnchors);
 	m_debugModeCheckBox->setChecked(config.getMiscDebugMode());
 	m_debugModeCheckBox->Clicked.connect(this, &Options::onToggleDebugMode);
 
 	// Debug keys
-	cbh = new CheckBoxHolder(qw);
-	cbh->setCell(3);
-	cbh->setAnchors(fillAnchors);
-	m_debugKeysCheckBox = new CheckBox(cbh);
-	m_debugKeysCheckBox->setCell(1);
-	m_debugKeysCheckBox->setAnchors(squashAnchors);
+	m_debugKeysCheckBox = new CheckBox(qw);
+	m_debugKeysCheckBox->setCell(3);
+	m_debugKeysCheckBox->setSize(cbSize);
+	m_debugKeysCheckBox->setAnchors(centreAnchors);
 	m_debugKeysCheckBox->setChecked(config.getMiscDebugKeys());
 	m_debugKeysCheckBox->Clicked.connect(this, &Options::onToggleDebugKeys);
 
-	panel->setPos(Vec2i(0,0));
-	panel->anchor();
-	panel->setSize(Vec2i(g_config.getDisplayWidth(), int(g_widgetConfig.getDefaultItemHeight() * 1.5f)));
 	//panel->borderStyle().setSolid(g_widgetConfig.getColourIndex(Vec3f(1.f, 0.f, 1.f)));
 	//panel->borderStyle().setSizes(2);
-	panel->layoutCells();
 }
 
 void Options::disableWidgets() {
@@ -284,35 +325,35 @@ void Options::buildOptionsPanel(CellStrip *container, int cell) {
 
 	Anchors squashAnchors(Anchor(AnchorType::RIGID, 0), Anchor(AnchorType::SPRINGY, 15));
 
-	OptionWidget *dw = new OptionWidget(col1, lang.get("FxVolume"));
-	dw->setCell(0);
-	m_volFxSlider = new Slider2(dw, false);
-	m_volFxSlider->setCell(1);
-	m_volFxSlider->setAnchors(squashAnchors);
-	m_volFxSlider->setRange(100);
-	m_volFxSlider->setValue(clamp(config.getSoundVolumeFx(), 0, 100));
-	m_volFxSlider->ValueChanged.connect(this, &Options::onSliderValueChanged);
+	//OptionWidget *dw = new OptionWidget(col1, lang.get("FxVolume"));
+	//dw->setCell(0);
+	//m_volFxSlider = new Slider2(dw, false);
+	//m_volFxSlider->setCell(1);
+	//m_volFxSlider->setAnchors(squashAnchors);
+	//m_volFxSlider->setRange(100);
+	//m_volFxSlider->setValue(clamp(config.getSoundVolumeFx(), 0, 100));
+	//m_volFxSlider->ValueChanged.connect(this, &Options::onSliderValueChanged);
 
-	dw = new OptionWidget(col1, lang.get("AmbientVolume"));
-	dw->setCell(1);
-	m_volAmbientSlider = new Slider2(dw, false);
-	m_volAmbientSlider->setCell(1);
-	m_volAmbientSlider->setAnchors(squashAnchors);
-	m_volAmbientSlider->setRange(100);
-	m_volAmbientSlider->setValue(clamp(config.getSoundVolumeAmbient(), 0, 100));
-	m_volAmbientSlider->ValueChanged.connect(this, &Options::onSliderValueChanged);
+	//dw = new OptionWidget(col1, lang.get("AmbientVolume"));
+	//dw->setCell(1);
+	//m_volAmbientSlider = new Slider2(dw, false);
+	//m_volAmbientSlider->setCell(1);
+	//m_volAmbientSlider->setAnchors(squashAnchors);
+	//m_volAmbientSlider->setRange(100);
+	//m_volAmbientSlider->setValue(clamp(config.getSoundVolumeAmbient(), 0, 100));
+	//m_volAmbientSlider->ValueChanged.connect(this, &Options::onSliderValueChanged);
 
-	dw = new OptionWidget(col1, lang.get("MusicVolume"));
-	dw->setCell(2);
-	m_volMusicSlider = new Slider2(dw, false);
-	m_volMusicSlider->setCell(1);
-	m_volMusicSlider->setAnchors(squashAnchors);
-	m_volMusicSlider->setRange(100);
-	m_volMusicSlider->setValue(clamp(config.getSoundVolumeMusic(), 0, 100));
-	m_volMusicSlider->ValueChanged.connect(this, &Options::onSliderValueChanged);
+	//dw = new OptionWidget(col1, lang.get("MusicVolume"));
+	//dw->setCell(2);
+	//m_volMusicSlider = new Slider2(dw, false);
+	//m_volMusicSlider->setCell(1);
+	//m_volMusicSlider->setAnchors(squashAnchors);
+	//m_volMusicSlider->setRange(100);
+	//m_volMusicSlider->setValue(clamp(config.getSoundVolumeMusic(), 0, 100));
+	//m_volMusicSlider->ValueChanged.connect(this, &Options::onSliderValueChanged);
 
 	// Player Name
-	dw = new OptionWidget(col1, lang.get("PlayerName"));
+	OptionWidget *dw = new OptionWidget(col1, lang.get("PlayerName"));
 	dw->setCell(3);
 	TextBox *tb = new TextBox(dw);
 	tb->setText(g_config.getNetPlayerName());
