@@ -962,6 +962,7 @@ Button* TabWidget::createButton(const string &text) {
 	Button *btn = new Button(m_btnPnl, pos, size);
 	btn->setText(text);
 	btn->setCell(m_buttons.size());
+	btn->setAnchors(Anchors::getFillAnchors());
 	btn->Clicked.connect(this, &TabWidget::onButtonClicked);
 	return btn;
 }
@@ -974,6 +975,7 @@ void TabWidget::add(const string &text, CellStrip *cellStrip) {
 	// be used.
 	//if (index == 0 || getButtonPos(button) == -1) {
 		cellStrip->setCell(1);
+		cellStrip->setAnchors(Anchors::getFillAnchors());
 	//cellStrip->layoutCells();
 		m_buttons.push_back(createButton(text));
 		m_pages.push_back(cellStrip);
