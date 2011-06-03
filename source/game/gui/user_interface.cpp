@@ -139,35 +139,9 @@ UserInterface::~UserInterface() {
 	// widgets deleted by program.clear(), called in GameState::update()
 }
 
-class DisplayFrame : public Frame {
-private:
-	Display *m_display;
-
-	void onExpand(Widget*);
-	void onShrink(Widget*);
-
-public:
-	DisplayFrame(UserInterface *ui, Vec2i pos);
-	Display* getDisplay() {return m_display;}
-
-	void resetSize();
-
-	virtual void render() override;
-};
-
-class ResourceBarFrame : public Frame {
-private:
-	ResourceBar *m_resourceBar;
-
-	void onExpand(Widget*);
-	void onShrink(Widget*);
-
-public:
-	ResourceBarFrame();
-	ResourceBar * getResourceBar() {return m_resourceBar;}
-};
-
 void UserInterface::init() {
+	CHECK_HEAP();
+
 	// refs
 	this->commander= g_simInterface.getCommander();
 	this->gameCamera= game.getGameCamera();
@@ -178,11 +152,17 @@ void UserInterface::init() {
 	selection->init(this, world->getThisFactionIndex());
 
 	// Create Consoles...
+	CHECK_HEAP();
+
 	m_console = new Console(&g_widgetWindow);
 	m_console->setPos(Vec2i(20, g_metrics.getScreenH() - (m_console->getReqHeight() + 20)));
 
+	CHECK_HEAP();
+
 	m_dialogConsole = new Console(&g_widgetWindow, 10, true);
 	m_dialogConsole->setPos(Vec2i(20, 196));
+
+	CHECK_HEAP();
 
 	int x = g_metrics.getScreenW() - 20 - 195;
 	int y = (g_metrics.getScreenH() - 500) / 2;

@@ -31,28 +31,16 @@ using Global::CoreData;
 //  class DisplayFrame
 // =====================================================
 
-class DisplayFrame : public Frame {
-private:
-	Display *m_display;
-	UserInterface *m_ui;
-
-	void onExpand(Widget*);
-	void onShrink(Widget*);
-
-public:
-	DisplayFrame(UserInterface *ui, Vec2i pos);
-	Display* getDisplay() {return m_display;}
-
-	void resetSize();
-
-	virtual void render() override;
-};
-
 DisplayFrame::DisplayFrame(UserInterface *ui, Vec2i pos)
-		: Frame((Container*)WidgetWindow::getInstance(), ButtonFlags::SHRINK | ButtonFlags::EXPAND) {
-	setWidgetStyle(WidgetType::GAME_WIDGET_FRAME);
+		: Frame((Container*)WidgetWindow::getInstance(), ButtonFlags::SHRINK | ButtonFlags::EXPAND)
+		, m_display(0)
+		, m_ui(ui) {
 	m_ui = ui;
+	CHECK_HEAP();
+	setWidgetStyle(WidgetType::GAME_WIDGET_FRAME);
+	CHECK_HEAP();
 	Frame::setTitleBarSize(20);
+	CHECK_HEAP();
 	m_display = new Display(this, ui, Vec2i(0,0));
 	CellStrip::addCells(1);
 	m_display->setCell(1);
@@ -64,6 +52,7 @@ DisplayFrame::DisplayFrame(UserInterface *ui, Vec2i pos)
 	m_titleBar->enableShrinkExpand(false, false);
 	Expand.connect(this, &DisplayFrame::onExpand);
 	Shrink.connect(this, &DisplayFrame::onShrink);
+	CHECK_HEAP();
 }
 
 void DisplayFrame::resetSize() {
@@ -143,6 +132,7 @@ Display::Display(Container *parent, UserInterface *ui, Vec2i pos)
 		, m_hoverBtn(DisplaySection::INVALID, invalidPos)
 		, m_pressedBtn(DisplaySection::INVALID, invalidPos)
 		, m_toolTip(0) {
+	CHECK_HEAP();
 	setWidgetStyle(WidgetType::DISPLAY);
 	int x = 0;
 	int y = 0;
@@ -239,6 +229,8 @@ Display::Display(Container *parent, UserInterface *ui, Vec2i pos)
 
 	m_toolTip = new CommandTip(WidgetWindow::getInstance());
 	m_toolTip->setVisible(false);
+
+	CHECK_HEAP();
 }
 
 void Display::setFuzzySize(FuzzySize fuzzySize) {

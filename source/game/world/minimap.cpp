@@ -213,6 +213,8 @@ Minimap::Minimap(bool FoW, bool SoD, Container* parent, Vec2i pos)
 }
 
 void Minimap::init(int w, int h, const World *world, bool resumingGame) {
+	CHECK_HEAP();
+	
 	#pragma region set size, determine aspect ratio, zoom level, min & max zoom
 
 	m_w = w;
@@ -290,6 +292,8 @@ void Minimap::init(int w, int h, const World *world, bool resumingGame) {
 	
 	m_attackNoticeTex = g_renderer.newTexture2D(ResourceScope::GAME);
 	m_attackNoticeTex->getPixmap()->load("data/core/misc_textures/attack_notice.png");
+
+	CHECK_HEAP();
 }
 
 Minimap::~Minimap(){

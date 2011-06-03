@@ -15,7 +15,7 @@
 
 #include <string>
 
-#include "widgets.h"
+#include "compound_widgets.h"
 #include "forward_decs.h"
 
 using std::string;
@@ -55,6 +55,24 @@ public:
 	virtual bool mouseDown(MouseButton btn, Vec2i pos) override;
 	virtual bool mouseUp(MouseButton btn, Vec2i pos) override;
 	virtual bool mouseMove(Vec2i pos) override;
+};
+
+// =====================================================
+// 	class ResourceBarFrame
+// =====================================================
+
+class ResourceBarFrame : public Frame {
+private:
+	ResourceBar *m_resourceBar;
+
+	void onExpand(Widget*);
+	void onShrink(Widget*);
+
+public:
+	ResourceBarFrame();
+	ResourceBar * getResourceBar() {return m_resourceBar;}
+
+	virtual void render() override;
 };
 
 }}//end namespace

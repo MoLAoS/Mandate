@@ -23,6 +23,11 @@
 #endif
 
 #define INVARIANT(condition, message) assert((condition) && message)
+#ifdef WIN32
+#	define CHECK_HEAP() assert(_CrtCheckMemory())
+#else
+#	define CHECK_HEAP()
+#endif
 
 #if USE_PCH
 

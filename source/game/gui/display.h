@@ -179,6 +179,28 @@ public:
 	virtual void mouseOut() override;
 };
 
+// =====================================================
+//  class DisplayFrame
+// =====================================================
+
+class DisplayFrame : public Frame {
+private:
+	Display *m_display;
+	UserInterface *m_ui;
+
+	void onExpand(Widget*);
+	void onShrink(Widget*);
+
+public:
+	DisplayFrame(UserInterface *ui, Vec2i pos);
+	Display* getDisplay() {return m_display;}
+
+	void resetSize();
+
+	virtual void render() override;
+};
+
+
 }}//end namespace
 
 #endif

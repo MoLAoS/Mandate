@@ -31,20 +31,6 @@ namespace Glest { namespace Gui {
 
 using namespace Global;
 
-class ResourceBarFrame : public Frame {
-private:
-	ResourceBar *m_resourceBar;
-
-	void onExpand(Widget*);
-	void onShrink(Widget*);
-
-public:
-	ResourceBarFrame();
-	ResourceBar * getResourceBar() {return m_resourceBar;}
-
-	virtual void render() override;
-};
-
 void ResourceBarFrame::render() {
 	if (g_config.getUiPhotoMode()) {
 		return;
@@ -92,6 +78,7 @@ ResourceBar::ResourceBar(Container *parent)
 }
 
 void ResourceBar::init(const Faction *faction, std::set<const ResourceType*> &types) {
+	CHECK_HEAP();
 	m_faction = faction;
 
 	TextWidget::setAlignment(Alignment::NONE);
@@ -167,6 +154,7 @@ void ResourceBar::init(const Faction *faction, std::set<const ResourceType*> &ty
 		}
 	}
 	m_parent->setPos(Vec2i(g_metrics.getScreenW() / 2 - m_parent->getWidth() / 2, 5));
+	CHECK_HEAP();
 }
 
 ResourceBar::~ResourceBar() {
