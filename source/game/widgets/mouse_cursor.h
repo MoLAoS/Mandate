@@ -25,9 +25,7 @@ private:
 	const Texture2D *m_tex;
 
 public:
-	CodeMouseCursor(WidgetWindow *window)
-		: MouseCursor(window)
-		, m_app(MouseAppearance::DEFAULT), m_tex(0) {}
+	CodeMouseCursor(WidgetWindow *window);
 	virtual ~CodeMouseCursor();
 
 	virtual void setAppearance(MouseAppearance ma, const Texture2D *tex = 0) override;
@@ -53,10 +51,7 @@ private:
 	Texture2D *m_mouseTexture;
 
 public:
-	ImageSetMouseCursor(WidgetWindow *window)
-		: MouseCursor(window)
-		, m_app(MouseAppearance::DEFAULT)
-		, m_icon(0), m_mouseMain(0), m_mouseTexture(0) {}
+	ImageSetMouseCursor(WidgetWindow *window);
 	virtual ~ImageSetMouseCursor();
 
 	virtual void setAppearance(MouseAppearance ma, const Texture2D *tex = 0) override;

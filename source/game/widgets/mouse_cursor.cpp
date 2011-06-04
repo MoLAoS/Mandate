@@ -19,6 +19,12 @@ namespace Glest { namespace Widgets {
 // class CodeMouseCursor
 // =====================================================
 
+CodeMouseCursor::CodeMouseCursor(WidgetWindow *window)
+		: MouseCursor(window)
+		, m_app(MouseAppearance::DEFAULT), m_tex(0) {
+	DEBUG_HOOK();
+}
+
 CodeMouseCursor::~CodeMouseCursor() {
 	DEBUG_HOOK();
 }
@@ -87,8 +93,17 @@ void CodeMouseCursor::render() {
 // =====================================================
 // class ImageSetMouseCursor
 // =====================================================
+
+ImageSetMouseCursor::ImageSetMouseCursor(WidgetWindow *window)
+		: MouseCursor(window)
+		, m_app(MouseAppearance::DEFAULT)
+		, m_icon(0), m_mouseMain(0), m_mouseTexture(0) {
+	DEBUG_HOOK();
+}
+
 ImageSetMouseCursor::~ImageSetMouseCursor() {
 	DEBUG_HOOK();
+	delete m_mouseMain;
 }
 
 void ImageSetMouseCursor::setAppearance(MouseAppearance ma, const Texture2D *tex) {
