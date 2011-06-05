@@ -1610,8 +1610,11 @@ void Unit::doKill(Unit *killed) {
 }
 
 /** @return true when the current skill has completed a cycle */
-bool Unit::update() { ///@todo should this be renamed to hasFinishedCycle()?
-//	_PROFILE_FUNCTION();
+bool Unit::update() { 
+	///@todo should this be renamed to hasFinishedCycle()?
+	// silnarm's vote: No. Too "query like", fails to indicate that it actually does stuff...
+
+	//_PROFILE_FUNCTION();
 	const int &frame = g_world.getFrameCount();
 
 	// start skill sound ?
@@ -2384,20 +2387,57 @@ float Unit::computeHeight(const Vec2i &pos) const {
 	}
 }
 
+
+bool Unit::unitInRange(const Unit *target, int range) {
+	Vec2i effectivePos;
+	fixedVec2 fixedCentre;
+	fixed halfSize;
+	if (this->isCarried()) {
+		Unit *carrier = g_world.getUnit(this->getCarrier());
+		effectivePos = carrier->getCenteredPos();
+		fixedCentre = carrier->getFixedCenteredPos();
+		halfSize = carrier->getType()->getHalfSize();
+	} else {
+		effectivePos = this->getCenteredPos();
+		fixedCentre = this->getFixedCenteredPos();
+		halfSize = this->getType()->getHalfSize();
+	}
+	
+	if (target->isDead() || range == 0) { // target dead or this unit blind
+		return false;
+	}
+	if (target->isCloaked()) { // target cloaked ?
+		Vec2i tpos = Map::toTileCoords(target->getCenteredPos());
+		int cloakGroup = target->getType()->getCloakType()->getCloakGroup();
+		if (!g_cartographer.canDetect(this->getTeam(), cloakGroup, tpos)) {
+			return false;
+		}
+	}
+
+	const fixed &targetHalfSize = target->getType()->getHalfSize();
+	fixed distance = fixedCentre.dist(target->getFixedCenteredPos()) - targetHalfSize - halfSize;
+	return distance <= range;
+}
+
 /** updates target information, (targetPos, targetField & tagetVec) and resets targetRotation
   * @param target the unit we are tracking */
 void Unit::updateTarget(const Unit *target) {
 	if (!target) {
 		target = g_world.getUnit(targetRef);
 	}
-
 	if (target) {
+		if (currSkill->getClass() == SkillClass::ATTACK) {
+			const AttackSkillType *ast = static_cast<const AttackSkillType *>(currSkill);
+			int range = std::min(getMaxRange(ast), getSight());
+			if (!unitInRange(target, range)) {
+				return;
+			}
+		}
 		if (target->isCarried()) {
 			target = g_world.getUnit(target->getCarrier());
 		}
-		targetPos = useNearestOccupiedCell
-				? target->getNearestOccupiedCell(pos)
-				: targetPos = target->getCenteredPos();
+		Vec2i tPos = useNearestOccupiedCell ? target->getNearestOccupiedCell(pos) : target->getCenteredPos();
+		targetPos = tPos;
 		targetField = target->getCurrField();
 		targetVec = target->getCurrVector();
 
@@ -2414,7 +2454,7 @@ void Unit::clearCommands() {
 		g_world.deleteCommand(commands.back());
 		commands.pop_back();
 	}
-}												
+}
 
 /** Check if a command can be executed
   * @param command the command to check

@@ -112,7 +112,7 @@ const AttackSkillType * AttackCommandTypeBase::getAttackSkillType(Field field) c
   * @returns true when completed */
 bool AttackCommandType::updateGeneric(Unit *unit, Command *command, const AttackCommandType *act, 
 									  Unit* target, const Vec2i &targetPos) const {	
-	if (target && target->getHp() <= 0) {
+	if (target && target->isDead()) {
 		// the target is dead, finish command so the unit doesn't 
 		// wander to the target pos
 		unit->setCurrSkill(SkillClass::STOP);
