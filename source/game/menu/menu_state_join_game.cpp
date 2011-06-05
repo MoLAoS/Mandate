@@ -264,6 +264,18 @@ void MenuStateJoinGame::onCancelConnect(Widget*) {
 
 void MenuStateJoinGame::connectThreadDone(ConnectResult result) {
 	MutexLock lock(m_connectMutex);
+
+	//TODO Fix this
+
+	///@todo Fix this
+
+	//FIXME
+
+	/*** *** CONCURRENCY ERROR *** ***/
+	/*** *** CONCURRENCY ERROR *** ***/
+	/*
+	 *  This is called from the ConnectThread, can't mess with widgets here...
+	 */
 	program.removeFloatingWidget(m_messageBox);
 	m_messageBox = 0;
 
@@ -288,6 +300,10 @@ void MenuStateJoinGame::connectThreadDone(ConnectResult result) {
 		// recreate Dialog with error msg, 
 		// on dismiss show m_connectPanel
 	}
+	/*** *** CONCURRENCY ERROR *** ***/
+	/*** *** CONCURRENCY ERROR *** ***/
+
+
 	delete m_connectThread;
 	m_connectThread = 0;
 }
@@ -311,7 +327,7 @@ void MenuStateJoinGame::onSearchForGame(Widget*) {
 	Vec2i pos, size(300, 200);
 	pos = g_metrics.getScreenDims() / 2 - size / 2;
 	assert(!m_messageBox);
-	m_messageBox = MessageDialog::showDialog(pos, size,"Searching...",
+	m_messageBox = MessageDialog::showDialog(pos, size, "Searching...",
 		"Searching, Please wait.", g_lang.get("Cancel"), "");
 	m_messageBox->Button1Clicked.connect(this, &MenuStateJoinGame::onCancelSearch);
 	m_messageBox->Close.connect(this, &MenuStateJoinGame::onCancelSearch);
@@ -329,10 +345,23 @@ void MenuStateJoinGame::onCancelSearch(Widget*) {
 		delete m_findServerThread;
 		m_findServerThread = 0;
 		assert(m_messageBox);
+
+		//TODO Fix this
+
+		///@todo Fix this
+
+		/*** *** CONCURRENCY ERROR *** ***/
+		/*** *** CONCURRENCY ERROR *** ***/
+		/*
+		 *  This is called from the FindServerThread, can't mess with widgets here...
+		 */
 		program.removeFloatingWidget(m_messageBox);
 		m_messageBox = 0;
 		m_connectPanel->setVisible(true);
 		m_connectLabel->setText("Not connected. Last search cancelled.");///@todo localise
+		/*** *** CONCURRENCY ERROR *** ***/
+		/*** *** CONCURRENCY ERROR *** ***/
+
 	} // else it had finished already
 }
 
