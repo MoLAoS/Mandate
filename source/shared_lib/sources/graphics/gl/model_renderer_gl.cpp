@@ -260,7 +260,7 @@ void ModelRendererGl::renderMesh(const Mesh *mesh, float fade, int frame, int id
 	// custom map
 	if (customShaders && renderTextures) {
 		textureCustom = static_cast<const Texture2DGl*>(mesh->getTexture(MeshTexture::CUSTOM));
-		glActiveTexture(custom1TextureUnit);
+		glActiveTexture(customTextureUnit);
 		if (textureCustom) {
 			glEnable(GL_TEXTURE_2D);
 			glBindTexture(GL_TEXTURE_2D, textureCustom->getHandle());

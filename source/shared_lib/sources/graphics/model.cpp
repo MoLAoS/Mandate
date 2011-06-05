@@ -397,8 +397,8 @@ void Mesh::load(const string &dir, FileOps *f, TextureManager *textureManager){
 			uint8 cMapPath[mapPathSize];
 			f->read(cMapPath, mapPathSize, 1);
 			string mapPath = toLower(reinterpret_cast<char*>(cMapPath));
+			assert(mapPath != "");
 			string mapFullPath = dir + "/" + mapPath;
-			assert(mapFullPath != "");
 			if (flag == 1) {
 				diffuseTexPath = mapFullPath;
 			}
