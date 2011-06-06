@@ -349,10 +349,11 @@ public:
 	const AttackSkillType* ast;
 	Vec2i targetPos;
 	Field targetField;
+	UnitId targetRef;
 
 public:
-	ParticleDamager(Unit *attacker);
-	virtual void projectileArrived(Projectile *proj) override;
+	ParticleDamager(Unit *attacker, Unit *target);
+	virtual void projectileArrived(ParticleSystem *particleSystem) override;
 };
 
 class SpellDeliverer : public ProjectileCallback {
@@ -365,7 +366,7 @@ public:
 
 public:
 	SpellDeliverer(Unit *caster, UnitId targetId, Vec2i pos = invalidPos);
-	virtual void projectileArrived(Projectile *proj) override;
+	virtual void projectileArrived(ParticleSystem *particleSystem) override;
 };
 
 }}//end namespace
