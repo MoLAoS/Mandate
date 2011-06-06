@@ -684,13 +684,7 @@ Projectile* Unit::launchProjectile(ProjectileType *projType, const Vec3f &endPos
 			}
 			break;
 	}
-
 	g_simInterface.doUpdateProjectile(this, projectile, startPos, endPos);
-
-	if(projType->isTracking() && targetRef != -1) {
-		Unit *target = g_world.getUnit(targetRef);
-		projectile->setTarget(target);
-	}
 	projectile->setTeamColour(faction->getColourV3f());
 	g_renderer.manageParticleSystem(projectile, ResourceScope::GAME);
 	return projectile;
@@ -750,11 +744,11 @@ void Unit::startAttackSystems(const AttackSkillType *ast) {
 	// projectile
 	if (ast->getProjParticleType()) {
 		projectile = launchProjectile(ast->getProjParticleType(), endPos);
-		if (ast->getProjParticleType()->isTracking() && targetRef != -1) {
-			projectile->setCallback(new ParticleDamager(this, g_world.getUnit(targetRef)));
-		} else {
-			projectile->setCallback(new ParticleDamager(this, 0));
+		if (projectile->getTarget()) {
+			float range = float(getMaxRange(ast));
+			projectile->setMaxRange(range);
 		}
+		projectile->setCallback(new ParticleDamager(this));
 	} else {
 		g_world.hit(this);
 	}

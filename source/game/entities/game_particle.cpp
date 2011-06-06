@@ -150,6 +150,7 @@ Projectile::Projectile(CreateParams params)
 		, m_id(-1)
 		, nextParticleSystem(0)
 		, target(0)
+		, maxRange(params.maxRange)
 		, trajectory(TrajectoryType::LINEAR)
 		, trajectorySpeed(1.f)
 		, trajectoryScale(1.f)
@@ -259,6 +260,11 @@ void Projectile::update() {
 	direction = pos - lastPos;
 	direction.normalize();
 
+	if (target && pos.dist(startPos) > maxRange) {
+		endPos = pos;
+		endFrame = g_world.getFrameCount();
+		setTarget(0);
+	}
 	if (g_world.getFrameCount() == endFrame) {
 		state = sFade;
 		model = NULL;

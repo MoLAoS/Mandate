@@ -14,6 +14,7 @@
 #ifndef _GAME_PARTICLE_INCLUDED_
 #define _GAME_PARTICLE_INCLUDED_
 
+#include <limits>
 #include "particle.h"
 #include "timer.h"
 #include "forward_decs.h"
@@ -109,13 +110,16 @@ public:
 	void setDirection(const Vec3f &dir) { direction = dir; }
 };
 
+
+class Projectile;
+
 // =====================================================
 //	interface ProjectileCallback
 // =====================================================
 
 class ProjectileCallback {
 public:
-	virtual void projectileArrived(ParticleSystem *system) = 0;
+	virtual void projectileArrived(Projectile *proj) = 0;
 };
 
 // =====================================================
@@ -138,7 +142,8 @@ private:
 	int startFrame;  // persist
 	int endFrame;    // persist
 
-	const Unit *target; // swizzle
+	Unit *target; // swizzle
+	float maxRange;
 
 	Vec3f xVector; // no-persist
 	Vec3f yVector; // no-persist
@@ -154,16 +159,18 @@ private:
 	Random random;             // no-persist
 
 	ProjectileCallback  *callback;
-	//Sim::ParticleDamager *damager; // swizzle
 
 public:
 	struct CreateParams {
 		bool visible;
 		const ParticleSystemBase &model;
 		int particleCount;
+		float maxRange;
 
 		CreateParams(bool visible, const ParticleSystemBase &model, int particleCount)
-			: visible(visible), model(model), particleCount(particleCount) {}
+				: visible(visible), model(model), particleCount(particleCount) {
+			maxRange = std::numeric_limits<float>::infinity();
+		}
 	};
 
 private:
@@ -175,6 +182,7 @@ private:
 public:
 	void link(Splash *particleSystem);
 	void setCallback(ProjectileCallback *cb);
+	void setMaxRange(float range) {maxRange = range;}
 
 	int getId() const { return m_id; }
 
@@ -189,8 +197,8 @@ public:
 	
 	void setPath(Vec3f startPos, Vec3f endPos, int endFrameOffset = -1);
 
-	void setTarget(const Unit *target)						{this->target = target;}
-	const Unit* getTarget() const							{return this->target; }
+	void setTarget(Unit *target)				{this->target = target;}
+	Unit* getTarget() 							{return this->target; }
 
 	virtual bool isProjectile() const override				{ return true; }
 

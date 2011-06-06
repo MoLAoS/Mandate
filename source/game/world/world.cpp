@@ -1259,30 +1259,29 @@ void World::computeFow() {
 //	class ParticleDamager
 // =====================================================
 
-ParticleDamager::ParticleDamager(Unit *attacker, Unit *target) {
+ParticleDamager::ParticleDamager(Unit *attacker) {
 	this->attackerRef = attacker->getId();
-	this->targetRef = target ? target->getId() : -1;
 	this->ast = static_cast<const AttackSkillType*>(attacker->getCurrSkill());
 	this->targetPos = attacker->getTargetPos();
 	this->targetField = attacker->getTargetField();
 }
 
-void ParticleDamager::projectileArrived(ParticleSystem *particleSystem) {
+void ParticleDamager::projectileArrived(Projectile *proj) {
 	World &world = g_world;
 	Unit *attacker = world.getUnit(attackerRef);
 	if (attacker) {
-		Unit *target = world.getUnit(targetRef);
-		if (target) {
-			targetPos = target->getCenteredPos();
+		if (proj->getTarget()) {
+			targetPos = proj->getTarget()->getCenteredPos();
 			// manually feed the attacked unit here to avoid problems with cell maps and such
-			world.hit(attacker, ast, targetPos, targetField, target);
+			world.hit(attacker, ast, targetPos, targetField, proj->getTarget());
 		} else {
-			world.hit(attacker, ast, targetPos, targetField, NULL);
+			Vec3f p = proj->getPos();
+			targetPos = Vec2i(int(p.x), int(p.z));
+			world.hit(attacker, ast, targetPos, targetField, 0);
 		}
-
 		// sound
 		StaticSound *projSound = ast->getProjSound();
-		if (particleSystem->getVisible() && projSound) {
+		if (proj->getVisible() && projSound) {
 			g_soundRenderer.playFx(projSound, Vec3f(float(targetPos.x), 0.f, float(targetPos.y)),
 				g_gameState.getGameCamera()->getPos());
 		}
@@ -1297,7 +1296,7 @@ SpellDeliverer::SpellDeliverer(Unit* caster, UnitId target, Vec2i pos)
 	m_castSkill = static_cast<const CastSpellSkillType*>(caster->getCurrSkill());
 }
 
-void SpellDeliverer::projectileArrived(ParticleSystem *particleSystem) {
+void SpellDeliverer::projectileArrived(Projectile *proj) {
 	World &world = g_world;
 	Unit *caster = world.getUnit(m_caster);
 	Unit *target = world.getUnit(m_targetUnit);
