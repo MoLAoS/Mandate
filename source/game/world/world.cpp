@@ -387,7 +387,7 @@ void World::hit(Unit *attacker, const AttackSkillType* ast, const Vec2i &targetP
 		if (!attacked) {
 			attacked = map.getCell(targetPos)->getUnit(targetField);
 		}
-		if (attacked) {
+		if (attacked && attacked->isAlive()) {
 			damage(attacker, ast, attacked, 0);
 			if (ast->hasEffects()) {
 				applyEffects(attacker, ast->getEffectTypes(), attacked, 0);
