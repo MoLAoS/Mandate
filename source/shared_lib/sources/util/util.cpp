@@ -85,7 +85,6 @@ EnumNamesBase::~EnumNamesBase() {
 	}
 }
 
-
 int EnumNamesBase::_match(const char *value) const {
 	if (!names) {
 		const_cast<EnumNamesBase*>(this)->init();
@@ -100,6 +99,11 @@ int EnumNamesBase::_match(const char *value) const {
 		while (*ptr1 && *ptr2) {
 			if (isalpha(*ptr1) && isalpha(*ptr2)) {
 				if (tolower(*ptr1) != tolower(*ptr2)) {
+					same = false;
+					break;
+				}
+			} else if (isdigit(*ptr1)) {
+				if (*ptr1 != *ptr2) {
 					same = false;
 					break;
 				}
