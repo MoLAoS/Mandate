@@ -59,9 +59,14 @@ SkillType::SkillType(const char* typeName)
 }
 
 SkillType::~SkillType(){
-	deleteValues(effectTypes.begin(), effectTypes.end());
-	deleteValues(sounds.getSounds().begin(), sounds.getSounds().end());
+	deleteValues(effectTypes);
+	deleteValues(sounds.getSounds());
 	deleteValues(eyeCandySystems);
+	deleteValues(projSounds.getSounds());
+
+	///@todo these should have a factory...
+	delete projectileParticleSystemType;
+	delete splashParticleSystemType;
 }
 
 void SkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const UnitType *ut){
@@ -194,7 +199,7 @@ void SkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, c
 		const XmlNode *particleNode= projectileNode->getChild("particle", 0, false);
 		if(particleNode && particleNode->getAttribute("value")->getBoolValue()){
 			string path= particleNode->getAttribute("path")->getRestrictedValue();
-			projectileParticleSystemType= new ProjectileType();
+			projectileParticleSystemType = new ProjectileType();
 			projectileParticleSystemType->load(dir,  dir + "/" + path);
 			projectile = true;
 		}
@@ -344,23 +349,9 @@ fixed MoveSkillType::getSpeed(const Unit *unit) const {
 TargetBasedSkillType::TargetBasedSkillType(const char* typeName)
 		: SkillType(typeName) {
 	startTime = 0.0f;
-
-    projectile= false;
-	projectileParticleSystemType = NULL;
-
-	splash = false;
-    splashRadius = 0;
-	splashParticleSystemType= NULL;
 }
 
 TargetBasedSkillType::~TargetBasedSkillType(){
-	if(projectileParticleSystemType) {
-		delete projectileParticleSystemType;
-	}
-	if(splashParticleSystemType) {
-		delete splashParticleSystemType;
-	}
-	deleteValues(projSounds.getSounds().begin(), projSounds.getSounds().end());
 }
 
 void TargetBasedSkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const UnitType *ut){
