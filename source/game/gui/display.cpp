@@ -306,12 +306,6 @@ void Display::setSelectedCommandPos(int i) {
 	}
 }
 
-void trimTrailingNewlines(string &str) {
-	while (!str.empty() && *(str.end() - 1) == '\n') {
-		str.erase(str.end() - 1);
-	}
-}
-
 void Display::setPortraitTitle(const string title) {
 	if (TextWidget::getText(0).empty() && title.empty()) {
 		return;

@@ -42,6 +42,7 @@ private:
 
 public:
 	ConnectThread(MenuStateJoinGame &menu, Ip serverIp);
+	~ConnectThread();
 	void execute();
 	void cancel();
 	string getErrorMsg();
@@ -80,7 +81,6 @@ private:
 
 private:
 	CellStrip        *m_connectPanel;
-	//Panel            *m_gameSetupPanel;
 	MessageDialog    *m_messageBox;
 
 	DropList         *m_historyList;
@@ -89,6 +89,13 @@ private:
 
 	ConnectThread    *m_connectThread;
 	FindServerThread *m_findServerThread;
+	ConnectResult     m_connectResult;
+	bool              m_connecting;
+	bool              m_searching;
+
+	bool              m_connected;
+	int               m_playerIndex;
+	Properties        m_servers;
 
 	Transition        m_targetTansition;
 
@@ -109,10 +116,6 @@ private:
 	void onCancelConnect(Widget*);
 	void onDisconnect(Widget*);
 	void onCancelSearch(Widget*);
-
-	bool connected;
-	int playerIndex;
-	Properties servers;
 
 public:
 	MenuStateJoinGame(Program &program, MainMenu *mainMenu, bool connect = false, Ip serverIp = Ip());

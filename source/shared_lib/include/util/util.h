@@ -341,6 +341,13 @@ inline void trimString(string &str) {
 	}
 }
 
+
+inline void trimTrailingNewlines(string &str) {
+	while (!str.empty() && *(str.end() - 1) == '\n') {
+		str.erase(str.end() - 1);
+	}
+}
+
 // numeric util functions
 
 template <typename T> inline T clamp(const T &val, const T &min, const T &max) {
