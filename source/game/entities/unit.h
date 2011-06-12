@@ -406,9 +406,6 @@ public:
 		return (asts->getMaxRange() * attackRangeMult + attackRange).intp();
 	}
 
-	// range checker
-	bool unitInRange(const Unit *target, int range);
-
 	// pos
 	Vec2i getPos() const				{return pos;}//carried ? carrier->getPos() : pos;}
 	Vec2i getLastPos() const			{return lastPos;}
