@@ -43,6 +43,11 @@ ConnectThread::ConnectThread(MenuStateJoinGame &menu, Ip serverIp)
 		, m_connecting(true)
 		, m_result(ConnectResult::INVALID) {
 	start();
+	cout << "ConnectThread::ConnectThread()\n";
+}
+
+ConnectThread::~ConnectThread() {
+	cout << "ConnectThread::~ConnectThread()\n";
 }
 
 void ConnectThread::execute() {
@@ -57,20 +62,24 @@ void ConnectThread::execute() {
 		}
 	} catch (exception &e) {
 		MutexLock lock(m_mutex);
-		m_connecting = false;
 		if (m_result == ConnectResult::INVALID) {
 			m_result = ConnectResult::FAILED;
 		}
 		m_errorMsg = e.what();
+		m_connecting = false;
 	}
 	m_menu.connectThreadDone(m_result); // will delete 'this', no more code beyond here!
 }
 
 void ConnectThread::cancel() {
+	cout << "ConnectThread::cancel()\n";
 	MutexLock lock(m_mutex);
 	if (m_connecting) {
-		g_simInterface.asClientInterface()->reset();
+		cout << "Was connecting, forcing socket exception.\n";
 		m_result = ConnectResult::CANCELLED;
+		g_simInterface.asClientInterface()->reset();
+	} else {
+		cout << "Was not connecting.\n";
 	}
 }
 
@@ -105,16 +114,19 @@ MenuStateJoinGame::MenuStateJoinGame(Program &program, MainMenu *mainMenu, bool 
 		: MenuState(program, mainMenu)
 		, m_messageBox(0) 
 		, m_connectThread(0)
-		, m_findServerThread(0) {
+		, m_findServerThread(0)
+		, m_connectResult(ConnectResult::INVALID)
+		, m_connecting(false)
+		, m_searching(false) {
 	if (fileExists(serverFileName)) {
-		servers.load(serverFileName);
+		m_servers.load(serverFileName);
 	} else {
-		servers.save(serverFileName);
+		m_servers.save(serverFileName);
 	}
 
 	program.getSimulationInterface()->changeRole(GameRole::CLIENT);
-	connected = false;
-	playerIndex = -1;
+	m_connected = false;
+	m_playerIndex = -1;
 
 	buildConnectPanel();
 
@@ -215,7 +227,7 @@ void MenuStateJoinGame::buildConnectPanel() {
 	searchButton->Clicked.connect(this, &MenuStateJoinGame::onSearchForGame);
 	searchButton->setAnchors(a2);
 
-	const Properties::PropertyMap &pm = servers.getPropertyMap();
+	const Properties::PropertyMap &pm = m_servers.getPropertyMap();
 	if (pm.empty()) {
 		m_historyList->setEnabled(false);
 	} else {
@@ -235,6 +247,7 @@ void MenuStateJoinGame::onReturn(Widget*) {
 }
 
 void MenuStateJoinGame::onConnect(Widget*) {
+	cout << "MenuStateJoinGame::onConnect()\n";
 	g_config.setNetServerIp(m_serverTextBox->getText());
 	g_config.save();
 
@@ -250,70 +263,78 @@ void MenuStateJoinGame::onConnect(Widget*) {
 	m_messageBox->Close.connect(this, &MenuStateJoinGame::onCancelConnect);
 	{
 		MutexLock lock(m_connectMutex);
-		assert(!m_connectThread);
+		assert(!m_connectThread && !m_searching && !m_connecting);
 		m_connectThread = new ConnectThread(*this, Ip(m_serverTextBox->getText()));
+		m_connecting = true;
 	}
+	cout << "connect panel hidden, message box up, connect thread started, connecting flag set.\n";
 }
 
 void MenuStateJoinGame::onCancelConnect(Widget*) {
+	cout << "MenuStateJoinGame::onCancelConnect()\n";
 	MutexLock lock(m_connectMutex);
 	if (m_connectThread) {
+		// remove message box, but do not show connect panel yet
+		assert(m_messageBox);
+		g_widgetWindow.removeFloatingWidget(m_messageBox);
+		m_messageBox = 0;
+		cout << "message box removed, cancelling connect thread.\n";
 		m_connectThread->cancel();
 	} // else it had finished already
+	else {
+		cout << "connect thread was finished already.\n";
+	}
 }
 
 void MenuStateJoinGame::connectThreadDone(ConnectResult result) {
+	cout << "MenuStateJoinGame::connectThreadDone()\n";
 	MutexLock lock(m_connectMutex);
-
-	//TODO Fix this
-
-	///@todo Fix this
-
-	//FIXME
-
-	/*** *** CONCURRENCY ERROR *** ***/
-	/*** *** CONCURRENCY ERROR *** ***/
-	/*
-	 *  This is called from the ConnectThread, can't mess with widgets here...
-	 */
-	program.removeFloatingWidget(m_messageBox);
-	m_messageBox = 0;
-
-	if (result == ConnectResult::SUCCESS) {
-		connected = true;
-		Vec2i pos, size(300, 200);
-		pos = g_metrics.getScreenDims() / 2 - size / 2;
-		m_messageBox = MessageDialog::showDialog(pos, size, g_lang.get("Connected"),
-			g_lang.get("Connected") + "\n" + g_lang.get("WaitingHost"), g_lang.get("Disconnect"), "");
-		m_messageBox->Button1Clicked.connect(this, &MenuStateJoinGame::onDisconnect);
-		m_messageBox->Close.connect(this, &MenuStateJoinGame::onDisconnect);
-	} else if (result == ConnectResult::CANCELLED) {
-		m_connectPanel->setVisible(true);
-		m_connectLabel->setText("Not connected. Last attempt cancelled.");///@todo localise
-	} else {
-		m_connectPanel->setVisible(true);
-		m_connectLabel->setText("Not connected. Last attempt failed.");///@todo localise
-		///@todo show a message...
-		//string err = m_connectThread->getErrorMsg();
-		//
-		// don't set m_connectPanel visible, 
-		// recreate Dialog with error msg, 
-		// on dismiss show m_connectPanel
-	}
-	/*** *** CONCURRENCY ERROR *** ***/
-	/*** *** CONCURRENCY ERROR *** ***/
-
-
+	m_connectResult = result;
 	delete m_connectThread;
 	m_connectThread = 0;
+	cout << "Result = " << result << ", connect thread deleted.\n";
 }
 
+//	program.removeFloatingWidget(m_messageBox);
+//	m_messageBox = 0;
+//
+//	if (result == ConnectResult::SUCCESS) {
+//		connected = true;
+//		Vec2i pos, size(300, 200);
+//		pos = g_metrics.getScreenDims() / 2 - size / 2;
+//		m_messageBox = MessageDialog::showDialog(pos, size, g_lang.get("Connected"),
+//			g_lang.get("Connected") + "\n" + g_lang.get("WaitingHost"), g_lang.get("Disconnect"), "");
+//		m_messageBox->Button1Clicked.connect(this, &MenuStateJoinGame::onDisconnect);
+//		m_messageBox->Close.connect(this, &MenuStateJoinGame::onDisconnect);
+//	} else if (result == ConnectResult::CANCELLED) {
+//		m_connectPanel->setVisible(true);
+//		m_connectLabel->setText("Not connected. Last attempt cancelled.");///@todo localise
+//	} else {
+//		m_connectPanel->setVisible(true);
+//		m_connectLabel->setText("Not connected. Last attempt failed.");///@todo localise
+//		///@todo show a message...
+//		//string err = m_connectThread->getErrorMsg();
+//		//
+//		// don't set m_connectPanel visible, 
+//		// recreate Dialog with error msg, 
+//		// on dismiss show m_connectPanel
+//	}
+//	/*** *** CONCURRENCY ERROR *** ***/
+//	/*** *** CONCURRENCY ERROR *** ***/
+//
+//
+//	delete m_connectThread;
+//	m_connectThread = 0;
+//}
+
 void MenuStateJoinGame::onDisconnect(Widget*) {
+	cout << "MenuStateJoinGame::onDisconnect()\n";
 	program.removeFloatingWidget(m_messageBox);
 	m_messageBox = 0;
 	g_simInterface.asClientInterface()->reset();
 	m_connectPanel->setVisible(true);
 	m_connectLabel->setText("Not connected. Last connection terminated.");///@todo localise
+	cout << "message box removed, client interface reset, connect panel shown.\n";
 }
 
 void MenuStateJoinGame::onTextModified(Widget*) {
@@ -333,8 +354,9 @@ void MenuStateJoinGame::onSearchForGame(Widget*) {
 	m_messageBox->Close.connect(this, &MenuStateJoinGame::onCancelSearch);
 	{
 		MutexLock lock(m_findServerMutex);
-		assert(!m_findServerThread);
+		assert(!m_findServerThread && !m_searching && !m_connecting);
 		m_findServerThread = new FindServerThread(*this);
+		m_searching = true;
 	}
 }
 
@@ -367,19 +389,19 @@ void MenuStateJoinGame::onCancelSearch(Widget*) {
 
 void MenuStateJoinGame::foundServer(Ip ip) {
 	MutexLock lock(m_findServerMutex);
-	program.removeFloatingWidget(m_messageBox);
+	program.removeFloatingWidget(m_messageBox); /*** *** CONCURRENCY ERROR *** ***/
 	m_messageBox = 0;
-	m_serverTextBox->setText(ip.getString());
+	m_serverTextBox->setText(ip.getString()); /*** *** CONCURRENCY ERROR *** ***/
 	delete m_findServerThread;
 	m_findServerThread = 0;
-	onConnect(0);
+	onConnect(0); /*** *** CONCURRENCY ERROR *** ***/
 }
 
 void MenuStateJoinGame::onServerSelected(Widget* source) {
 	DropList* historyList = static_cast<DropList*>(source);
 	if (historyList->getSelectedIndex() != -1) {
 		string selected = historyList->getSelectedItem()->getText();
-		string ipString = servers.getString(selected);
+		string ipString = m_servers.getString(selected);
 		m_serverTextBox->setText(ipString);
 	}
 }
@@ -390,13 +412,43 @@ void MenuStateJoinGame::update() {
 	if (m_connectThread) { // don't touch ClientInterface if ConnectThread is alive
 		return;
 	}
+	if (m_connecting) { // connecting flag set, but thread null => finished, check results
+		cout << "MenuStateJoinGame::update() ... connect thread finsihed.\n";
+		if (m_messageBox) {
+			program.removeFloatingWidget(m_messageBox);
+			m_messageBox = 0;
+			cout << "message box was up, has been removed.\n";
+		}
+		if (m_connectResult == ConnectResult::SUCCESS) {
+			m_connected = true;
+			Vec2i pos, size(300, 200);
+			pos = g_metrics.getScreenDims() / 2 - size / 2;
+			m_messageBox = MessageDialog::showDialog(pos, size, g_lang.get("Connected"),
+				g_lang.get("Connected") + "\n" + g_lang.get("WaitingHost"), g_lang.get("Disconnect"), "");
+			m_messageBox->Button1Clicked.connect(this, &MenuStateJoinGame::onDisconnect);
+			m_messageBox->Close.connect(this, &MenuStateJoinGame::onDisconnect);
+			cout << "Connected to server, connected message box shown, connected flag set.\n";
+		} else if (m_connectResult == ConnectResult::CANCELLED) {
+			m_connectPanel->setVisible(true);
+			m_connectLabel->setText("Not connected. Last attempt cancelled.");///@todo localise
+			cout << "Connect cancelled, connect panel shown.\n";
+		} else {
+			m_connectPanel->setVisible(true);
+			m_connectLabel->setText("Not connected. Last attempt failed.");///@todo localise
+			cout << "Connect failed, connect panel shown.\n";
+		}
+		m_connecting = false;
+		cout << "connecting flag unset.\n";
+	}
 
 	ClientInterface* clientInterface = g_simInterface.asClientInterface();
 
-	if (connected && !clientInterface->isConnected()) {
-		connected = false;
-		//program.removeFloatingWidget(m_messageBox);
-		//m_messageBox = 0;
+	if (m_connected && !clientInterface->isConnected()) {
+		m_connected = false;
+		if (m_messageBox) {
+			program.removeFloatingWidget(m_messageBox);
+			m_messageBox = 0;
+		}
 		m_connectPanel->setVisible(true);
 		m_connectLabel->setText("Not connected. Last connection was severed."); ///@todo localise
 	}
@@ -408,12 +460,12 @@ void MenuStateJoinGame::update() {
 
 		// intro
 		if (clientInterface->getIntroDone()) {
-			servers.setString(clientInterface->getDescription(), m_serverTextBox->getText());
+			m_servers.setString(clientInterface->getDescription(), m_serverTextBox->getText());
 		}
 
 		// launch
 		if (clientInterface->getLaunchGame()) {
-			servers.save(serverFileName);
+			m_servers.save(serverFileName);
 			m_targetTansition = Transition::PLAY;
 			program.clear();
 			program.setState(new GameState(program));
