@@ -83,20 +83,33 @@ string getGlestTeamMemberField(int i, TeamMemberField field) {
 }
 
 int getGAETeamMemberCount() {
-	return 7;
+	return 4;
 }
 
 string getGAETeamMemberField(int i, TeamMemberField field) {
 	Lang &l= Lang::getInstance();
 	switch (i) {
-		case 0: return field == TeamMemberField::NAME ? "Daniel Santos"    : l.get("Programming");
-		case 1: return field == TeamMemberField::NAME ? "Nathan Turner"    : l.get("Programming");
-		case 2: return field == TeamMemberField::NAME ? "James McCulloch"  : l.get("Programming");
-		case 3: return field == TeamMemberField::NAME ? "Frank Tetzel"     : l.get("Programming");
-		case 4: return field == TeamMemberField::NAME ? "Jaagup Repän"     : l.get("Programming");
-		case 5: return field == TeamMemberField::NAME ? "Titus Tscharntke" : l.get("Programming");
-		case 6: return field == TeamMemberField::NAME ? "Eric Wilson"      : l.get("Programming");
+		case 0: return field == TeamMemberField::NAME ? "Nathan Turner"    : l.get("Programming");
+		case 1: return field == TeamMemberField::NAME ? "James McCulloch"  : l.get("Programming");
+		case 2: return field == TeamMemberField::NAME ? "Frank Tetzel"     : l.get("Programming");
+		case 3: return field == TeamMemberField::NAME ? "John Harvey"      : l.get("Translator");
 		default: throw runtime_error("GAE Team Memeber " + intToStr(i) + " does not exist!");
+	}
+}
+
+int getContributorCount() {
+	return 5;
+}
+
+string getContributorField(int i, TeamMemberField field) {
+	Lang &l= Lang::getInstance();
+	switch (i) {
+		case 0: return field == TeamMemberField::NAME ? "Daniel Santos"    : l.get("Programming");
+		case 1: return field == TeamMemberField::NAME ? "Jaagup Repän"     : l.get("Programming");
+		case 2: return field == TeamMemberField::NAME ? "Titus Tscharntke" : l.get("Programming");
+		case 3: return field == TeamMemberField::NAME ? "Eric Wilson"      : l.get("Programming");
+		case 4: return field == TeamMemberField::NAME ? "(Perpleso)"       : l.get("Translator");
+		default: throw runtime_error("Contributor " + intToStr(i) + " does not exist!");
 	}
 }
 

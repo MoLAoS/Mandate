@@ -50,7 +50,7 @@ STRINGY_ENUM( WidgetType,
 	TEST_WIDGET, TEST_WIDGET_HEADER, TEST_WIDGET_MAINBIT, TEST_WIDGET_CODEBIT
 );
 
-STRINGY_ENUM( FontUsage, MENU, GAME, LUA, FANCY );
+STRINGY_ENUM( FontUsage, MENU, GAME, TITLE, VERSION );
 STRINGY_ENUM( OverlayUsage, TICK, CROSS, QUESTION );
 
 STRINGY_ENUM( FuzzySize, SMALL, MEDIUM, LARGE );
@@ -144,10 +144,12 @@ public:
 
 	int getDefaultFontIndex(FontUsage fu) const { return m_defaultFonts[fu]; }
 
-	int getTitleFontNdx() const { return m_defaultFonts[FontUsage::FANCY]; }
+	int getTitleFontNdx() const { return m_defaultFonts[FontUsage::TITLE]; }
+	int getVersionFontNdx() const { return m_defaultFonts[FontUsage::VERSION]; }
 
 	FontPtr getMenuFont() const { return m_fonts[m_defaultFonts[FontUsage::MENU]]; }
-	FontPtr getTitleFont() const { return m_fonts[m_defaultFonts[FontUsage::FANCY]]; }
+	FontPtr getTitleFont() const { return m_fonts[m_defaultFonts[FontUsage::TITLE]]; }
+	FontPtr getVersionFont() const { return m_fonts[m_defaultFonts[FontUsage::VERSION]]; }
 	FontPtr getGameFont() const { return m_fonts[m_defaultFonts[FontUsage::GAME]]; }
 
 	TexPtr getTickTexture() { return m_textures[m_defaultOverlays[OverlayUsage::TICK]]; }

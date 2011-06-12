@@ -91,7 +91,7 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 
 		// Version label
 		label = new Widgets::StaticText(pp);
-		label->textStyle().m_fontIndex = g_widgetConfig.getTitleFontNdx();
+		label->textStyle().m_fontIndex = g_widgetConfig.getVersionFontNdx();
 		label->setText(gaeVersionString);
 		sz = label->getTextDimensions() + Vec2i(10,5);
 		Vec2i pos = Vec2i(tx + advEng2Len + 5, logoHeight - ty - sz.h);

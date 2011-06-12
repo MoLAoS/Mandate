@@ -120,7 +120,7 @@ void Intro::update(){
 		const Metrics &metrics= Metrics::getInstance();
 		program.clear();
 		lblWebsite = new Widgets::StaticText(&program);
-		int font = g_widgetConfig.getDefaultFontIndex(FontUsage::FANCY);
+		int font = g_widgetConfig.getDefaultFontIndex(FontUsage::TITLE);
 		int white = g_widgetConfig.getColourIndex(Colour(255u));
 		lblWebsite->setText("www.glest.org");
 		lblWebsite->setSize(lblWebsite->getTextDimensions() + Vec2i(10, 5));

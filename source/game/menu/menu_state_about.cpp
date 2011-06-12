@@ -220,7 +220,7 @@ TeamInfoWidget::TeamInfoWidget(Container *parent)
 	m_nameTicker->setTransitionInterval(120 * 2);
 	m_nameTicker->setDisplayInterval(120 * 2);
 
-	m_roleTicker = new TickerTape(this, SizeHint(50), Alignment::FLUSH_LEFT);
+	m_roleTicker = new TickerTape(this, SizeHint(75), Alignment::FLUSH_RIGHT);
 	m_roleTicker->setCell(2);
 	m_roleTicker->setAnchors(anchors);
 //	m_roleTicker->setOverlapTransitions(true);

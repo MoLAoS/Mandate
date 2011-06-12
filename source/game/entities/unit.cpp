@@ -577,7 +577,6 @@ void Unit::startSkillParticleSystems() {
 		UnitParticleSystem *ups = currSkill->getEyeCandySystem(i)->createUnitParticleSystem(visible);
 		ups->setPos(getCurrVector());
 		ups->setRotation(getRotation());
-		//ups->setFactionColor(getFaction()->getTexture()->getPixmap()->getPixel3f(0,0));
 		skillParticleSystems.push_back(ups);
 		Colour c = faction->getColour();
 		Vec3f colour = Vec3f(c.r / 255.f, c.g / 255.f, c.b / 255.f);

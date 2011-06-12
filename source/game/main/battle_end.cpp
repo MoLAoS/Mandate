@@ -83,7 +83,7 @@ GameStatsWidget::GameStatsWidget(Container* parent, Vec2i pos, Vec2i size)
 	string header = gs.getDescription() + " - " + (stats.getVictory(gs.getThisFactionIndex())
 													? g_lang.get("Victory") : g_lang.get("Defeat"));
 	StaticText* label = buildLabel(row, 0, header, font, textColour);
-	label->textStyle().m_fontIndex = g_widgetConfig.getDefaultFontIndex(FontUsage::FANCY);
+	label->textStyle().m_fontIndex = g_widgetConfig.getDefaultFontIndex(FontUsage::TITLE);
 	label->setAlignment(Alignment::FLUSH_LEFT);
 
 	row = buildRow(this, 2);
