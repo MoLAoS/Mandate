@@ -429,7 +429,8 @@ int Unit::getProductionPercent() const {
 		///@todo CommandRefactoring - hailstone 12Dec2010
 		/*
 		ProducerBaseCommandType *ct = commands.front()->getType();
-		if (ct->isProducer()) {
+		if (ct->getProducedCount()) {
+			// prod count can be > 1, need command & progress2 (just pass 'this'?) -silnarm 12-Jun-2011
 			ct->getProductionPercent(progress2);
 		}
 		*/
@@ -439,26 +440,36 @@ int Unit::getProductionPercent() const {
 
 /** query next available level @return next level, or NULL */
 const Level *Unit::getNextLevel() const{
-	if(level==NULL && type->getLevelCount()>0){
+	if (!level && type->getLevelCount()) {
 		return type->getLevel(0);
-	}
-	else{
-		for(int i=1; i<type->getLevelCount(); ++i){
-			if(type->getLevel(i-1)==level){
+	} else {
+		for(int i=1; i < type->getLevelCount(); ++i) {
+			if (type->getLevel(i - 1) == level) {
 				return type->getLevel(i);
 			}
 		}
 	}
-	return NULL;
+	return 0;
 }
 
 /** retrieve name description, levelName + unitTypeName */
 string Unit::getFullName() const{
 	string str;
-	if(level!=NULL){
-		str+= level->getName() + " ";
+	if (level) {
+		string lvl;
+		if (g_lang.lookUp(level->getName(), getFaction()->getType()->getName(), lvl)) {
+			str += lvl;
+		} else {
+			str += formatString(level->getName());
+		}
+		str.push_back(' ');
 	}
-	str+= type->getName();
+	string name;
+	if (g_lang.lookUp(type->getName(), getFaction()->getType()->getName(), name)) {
+		str += name;
+	} else {
+		str += formatString(type->getName());
+	}
 	return str;
 }
 
@@ -487,28 +498,29 @@ float Unit::getRenderAlpha() const {
   * @return true if this unit is interesting in the way you're interested in
   */
 bool Unit::isInteresting(InterestingUnitType iut) const{
-	switch(iut){
-	case InterestingUnitType::IDLE_HARVESTER:
-		if(type->hasCommandClass(CmdClass::HARVEST)) {
-			if(!commands.empty()) {
-				const CommandType *ct = commands.front()->getType();
-				if(ct) {
-					return ct->getClass() == CmdClass::STOP;
+	switch (iut) {
+		case InterestingUnitType::IDLE_HARVESTER:
+			if (type->hasCommandClass(CmdClass::HARVEST)) {
+				if (!commands.empty()) {
+					const CommandType *ct = commands.front()->getType();
+					if (ct) {
+						return ct->getClass() == CmdClass::STOP;
+					}
 				}
 			}
-		}
-		return false;
+			return false;
 
-	case InterestingUnitType::BUILT_BUILDING:
-		return type->hasSkillClass(SkillClass::BE_BUILT) && isBuilt();
-	case InterestingUnitType::PRODUCER:
-		return type->hasSkillClass(SkillClass::PRODUCE);
-	case InterestingUnitType::DAMAGED:
-		return isDamaged();
-	case InterestingUnitType::STORE:
-		return type->getStoredResourceCount() > 0;
-	default:
-		return false;
+		case InterestingUnitType::BUILT_BUILDING:
+			return isBuilt() &&
+				(type->hasSkillClass(SkillClass::BE_BUILT) || type->hasSkillClass(SkillClass::BUILD_SELF));
+		case InterestingUnitType::PRODUCER:
+			return type->hasSkillClass(SkillClass::PRODUCE);
+		case InterestingUnitType::DAMAGED:
+			return isDamaged();
+		case InterestingUnitType::STORE:
+			return type->getStoredResourceCount() > 0;
+		default:
+			return false;
 	}
 }
 
@@ -522,7 +534,7 @@ bool Unit::isActive() const {
 }
 
 bool Unit::isBuilding() const {
-	return (getType()->hasSkillClass(SkillClass::BE_BUILT)
+	return ((getType()->hasSkillClass(SkillClass::BE_BUILT) || getType()->hasSkillClass(SkillClass::BUILD_SELF))
 		&& isAlive() && !getType()->getProperty(Property::WALL));
 }
 
@@ -531,10 +543,10 @@ bool Unit::isBuilding() const {
   * @return a RepairCommandType that can repair u, or NULL
   */
 const RepairCommandType * Unit::getRepairCommandType(const Unit *u) const {
-	for(int i = 0; i < type->getCommandTypeCount<RepairCommandType>(); i++) {
+	for (int i = 0; i < type->getCommandTypeCount<RepairCommandType>(); i++) {
 		const RepairCommandType *rct = type->getCommandType<RepairCommandType>(i);
 		const RepairSkillType *rst = rct->getRepairSkillType();
-		if( (!rst->isSelfOnly() || this == u)
+		if ((!rst->isSelfOnly() || this == u)
 		&& (rst->isSelfAllowed() || this != u)
 		&& (rct->canRepair(u->type))) {
 			return rct;
@@ -550,7 +562,7 @@ float Unit::getProgress() const {
 
 float Unit::getAnimProgress() const {
 	if (isBeingBuilt() && currSkill->isStretchyAnim()) {
-		return float(hp) / float(getMaxHp());
+		return float(getProgress2()) / float(getMaxHp());
 	}
 	return float(g_world.getFrameCount() - lastAnimReset)
 			/	float(nextAnimReset - lastAnimReset);
@@ -1865,7 +1877,11 @@ bool Unit::repair(int amount, fixed multiplier) {
 		}
 		return true;
 	}
-
+	if (!isBuilt() && getCurrSkill()->isStretchyAnim()) {
+		if (hp > getProgress2()) {
+			setProgress2(hp);
+		}
+	}
 	//stop fire
 	if (hp > type->getMaxHp() / 2 && fire != NULL) {
 		fire->fade();
@@ -1982,27 +1998,37 @@ string Unit::getLongDesc() const {
 	if (sightBonus) {
 		ss << (sightBonus > 0 ? " +" : " ") << sightBonus;
 	}
-	// permanent cloak ?
-	if (type->getCloakClass() == CloakClass::PERMANENT) {
-		string res;
+	// cloaked ?
+	if (isCloaked()) {
+		string gRes, res;
 		string group = world.getCloakGroupName(type->getCloakType()->getCloakGroup());
-		g_lang.lookUp("Cloak", factionName, group, res);
+		if (!lang.lookUp(group, factionName, gRes)) {
+			gRes = formatString(group);
+		}
+		lang.lookUp("Cloak", factionName, gRes, res);
 		ss << endl << res;
 	}
 	// detector ?
 	if (type->isDetector()) {
-		string res;
+		string gRes, res;
 		const DetectorType *dt = type->getDetectorType();
 		if (dt->getGroupCount() == 1) {
 			int id = dt->getGroup(0);
 			string group = world.getCloakGroupName(id);
-			g_lang.lookUp("SingleDetector", factionName, group, res);
+			if (!lang.lookUp(group, factionName, gRes)) {
+				gRes = formatString(group);
+			}
+			lang.lookUp("SingleDetector", factionName, gRes, res);
 		} else {
 			vector<string> list;
 			for (int i=0; i < dt->getGroupCount(); ++i) {
-				list.push_back(world.getCloakGroupName(dt->getGroup(i)));
+				string gName = world.getCloakGroupName(dt->getGroup(i));
+				if (!lang.lookUp(gName, factionName, gRes)) {
+					gRes = formatString(gName);
+				}
+				list.push_back(gRes);
 			}
-			g_lang.lookUp("MultiDetector", factionName, list, res);
+			lang.lookUp("MultiDetector", factionName, list, res);
 		}		
 		ss << endl << res;
 	}
@@ -2085,7 +2111,6 @@ void Unit::computeTotalUpgrade() {
 	}
 	recalculateStats();
 }
-
 
 /**
  * Recalculate the unit's stats (contained in base class
