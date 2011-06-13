@@ -198,18 +198,21 @@ if(WIN32)
 		Delete \\\"$SMPROGRAMS\\\\$MUI_TEMP\\\\Addons Folder.lnk\\\"
 	")
 
+	message( "Bin dir is: ${CMAKE_BINARY_DIR}")
+
 	if(DEFINED GAE_WINDEPS)
 		# freetype, zlib & libpng are linked dynamically, install them next to the binary
 		install(FILES 
 			${GAE_WINDEPS}/bin/freetype6.dll
 			${GAE_WINDEPS}/bin/zlib1.dll
 			${GAE_WINDEPS}/bin/libpng12-0.dll
+			${GAE_WINDEPS}/bin/glew32.dll
 			DESTINATION bin
 		)
 		# dbghelp.dll to get nice crash reports, install program db for debugging symbols
 		install(FILES
-			${CMAKE_BUILD_DIR}/source/game/release/glestadv.pdb
-			${CMAKE_BUILD_DIR}/source/game/release/glestadv.map
+			${CMAKE_BINARY_DIR}/source/game/Release/glestadv.pdb
+			${CMAKE_BINARY_DIR}/source/game/Release/glestadv.map
 			${GAE_WINDEPS}/bin/dbghelp.dll
 			DESTINATION bin
 		)

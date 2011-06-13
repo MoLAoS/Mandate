@@ -1318,6 +1318,7 @@ void Renderer::renderMenuBackground(const MenuBackground *menuBackground){
 		modelRenderer->setAlphaThreshold(0.f);
 		float alpha = clamp((minDist-dist) / minDist, 0.f, 1.f);
 		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, Vec4f(1.0f, 1.0f, 1.0f, alpha).ptr());
+		glColor4f(1.f, 1.f, 1.f, alpha);
 		modelRenderer->begin(RenderMode::OBJECTS, menuBackground->getFog());
 		for (int i=0; i < MenuBackground::characterCount; ++i) {
 			glMatrixMode(GL_MODELVIEW);
@@ -1339,6 +1340,7 @@ void Renderer::renderMenuBackground(const MenuBackground *menuBackground){
 		const float waterHeight = menuBackground->getWaterHeight();
 		glEnable(GL_BLEND);
 		glNormal3f(0.f, 1.f, 0.f);
+		glColor3f(1.f, 1.f, 1.f);
 		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, Vec4f(1.f, 1.f, 1.f, 1.f).ptr());
 		GLuint waterHandle= static_cast<Texture2DGl*>(menuBackground->getWaterTexture())->getHandle();
 		glBindTexture(GL_TEXTURE_2D, waterHandle);
