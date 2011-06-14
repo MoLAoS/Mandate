@@ -1792,7 +1792,7 @@ Unit* Unit::tick() {
 	Unit *killer = NULL;
 	
 	// tick command types
-	for (Commands::iterator i = commands.begin(); i != commands.end(); i++) {
+	for (Commands::iterator i = commands.begin(); i != commands.end(); ++i) {
 		(*i)->getType()->tick(this, (**i));
 	}
 	if (isAlive()) {
@@ -2123,13 +2123,13 @@ void Unit::recalculateStats() {
 	// add up all multipliers first and then apply (multiply) once.
 	// See EnhancementType::addMultipliers() for the 'adding' strategy
 	EnhancementType::addMultipliers(totalUpgrade);
-	for (Effects::const_iterator i = effects.begin(); i != effects.end(); i++) {
+	for (Effects::const_iterator i = effects.begin(); i != effects.end(); ++i) {
 		EnhancementType::addMultipliers(*(*i)->getType(), (*i)->getStrength());
 	}
 	EnhancementType::clampMultipliers();
 	UnitStats::applyMultipliers(*this);
 	UnitStats::addStatic(totalUpgrade);
-	for (Effects::const_iterator i = effects.begin(); i != effects.end(); i++) {
+	for (Effects::const_iterator i = effects.begin(); i != effects.end(); ++i) {
 		UnitStats::addStatic(*(*i)->getType(), (*i)->getStrength());
 
 		// take care of effect damage type

@@ -472,7 +472,7 @@ void World::applyEffects(Unit *source, const EffectTypes &effectTypes,
 void World::applyEffects(Unit *source, const EffectTypes &effectTypes, Unit *target, fixed distance) {
 	//apply effects
 	for (EffectTypes::const_iterator i = effectTypes.begin();
-			i != effectTypes.end(); i++) {
+			i != effectTypes.end(); ++i) {
 		const EffectType * const &e = *i;
 
 		// lots of tests, roughly in order of speed of evaluation.
