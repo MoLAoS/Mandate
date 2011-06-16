@@ -167,11 +167,6 @@ Unit::Unit(CreateParams params)
 	computeTotalUpgrade();
 	hp = type->getMaxHp() / 20;
 
-	// => born() ??
-	if (type->getCloakClass() == CloakClass::PERMANENT && faction->reqsOk(type->getCloakType())) {
-		cloak();
-	}
-
 	setModelFacing(m_facing);
 }
 
@@ -281,8 +276,6 @@ Unit::Unit(LoadParams params) //const XmlNode *node, Faction *faction, Map *map,
 
 	faction->add(this);
 	if (hp) {
-		recalculateStats();
-		hp = node->getChildIntValue("hp"); // HP will be at max due to recalculateStats
 		if (!carried) {
 			map->putUnitCells(this, pos);
 			meetingPos = node->getChildVec2iValue("meetingPos"); // putUnitCells sets this, so we reset it here
@@ -296,7 +289,7 @@ Unit::Unit(LoadParams params) //const XmlNode *node, Faction *faction, Map *map,
 		// was previously in World::initUnits but seems to work fine here
 		g_cartographer.updateMapMetrics(getPos(), getSize());
 	}
-	if(node->getChildBoolValue("fire")) {
+	if (node->getChildBoolValue("fire")) {
 		decHp(0); // trigger logic to start fire system
 	}
 }
@@ -1106,6 +1099,12 @@ void Unit::born(bool reborn) {
 	if (reborn && (!isAlive() || !isBuilt())) {
 		return;
 	}
+	if (type->getCloakClass() == CloakClass::PERMANENT && faction->reqsOk(type->getCloakType())) {
+		cloak();
+	}
+	if (type->isDetector()) {
+		g_world.getCartographer()->detectorActivated(this);
+	}
 	ULC_UNIT_LOG( this, "born." );
 	faction->applyStaticProduction(type);
 	computeTotalUpgrade();
@@ -1127,9 +1126,6 @@ void Unit::born(bool reborn) {
 		}
 	}
 	StateChanged(this);
-	if (type->isDetector()) {
-		g_world.getCartographer()->detectorActivated(this);
-	}
 	faction->onUnitActivated(type);
 }
 
