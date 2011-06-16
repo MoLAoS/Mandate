@@ -1124,6 +1124,9 @@ void Unit::born(bool reborn) {
 			Command *cmd = g_world.newCommand(CmdDirective::SET_AUTO_REPAIR, cmdFlags, invalidPos, this);
 			g_simInterface.getCommander()->pushCommand(cmd);
 		}
+		if (!isCarried()) {
+			startSkillParticleSystems();
+		}
 	}
 	StateChanged(this);
 	faction->onUnitActivated(type);
