@@ -13,7 +13,10 @@ Animation=Animation
 LinuxPort=Linux port
 SoundAndMusic=Sound and music
 Programming=Programming
+Translator=Translator
+QualityAssurance=Quality assurance
 GaeTeam=The GAE Team
+Contributors=GAE Contributors
 
 ; 'Advanced Engine' Strings, placed under the Glest logo in the intro & on the new game menu
 AdvEng1=Advanced

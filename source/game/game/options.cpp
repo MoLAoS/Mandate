@@ -210,7 +210,6 @@ void Options::buildAudioTab() {
 	m_volMusicSlider->setRange(100);
 	m_volMusicSlider->setValue(clamp(config.getSoundVolumeMusic(), 0, 100));
 	m_volMusicSlider->ValueChanged.connect(this, &Options::onSliderValueChanged);
-
 }
 
 void Options::buildControlsTab() {
@@ -325,36 +324,9 @@ void Options::buildOptionsPanel(CellStrip *container, int cell) {
 
 	Anchors squashAnchors(Anchor(AnchorType::RIGID, 0), Anchor(AnchorType::SPRINGY, 15));
 
-	//OptionWidget *dw = new OptionWidget(col1, lang.get("FxVolume"));
-	//dw->setCell(0);
-	//m_volFxSlider = new Slider2(dw, false);
-	//m_volFxSlider->setCell(1);
-	//m_volFxSlider->setAnchors(squashAnchors);
-	//m_volFxSlider->setRange(100);
-	//m_volFxSlider->setValue(clamp(config.getSoundVolumeFx(), 0, 100));
-	//m_volFxSlider->ValueChanged.connect(this, &Options::onSliderValueChanged);
-
-	//dw = new OptionWidget(col1, lang.get("AmbientVolume"));
-	//dw->setCell(1);
-	//m_volAmbientSlider = new Slider2(dw, false);
-	//m_volAmbientSlider->setCell(1);
-	//m_volAmbientSlider->setAnchors(squashAnchors);
-	//m_volAmbientSlider->setRange(100);
-	//m_volAmbientSlider->setValue(clamp(config.getSoundVolumeAmbient(), 0, 100));
-	//m_volAmbientSlider->ValueChanged.connect(this, &Options::onSliderValueChanged);
-
-	//dw = new OptionWidget(col1, lang.get("MusicVolume"));
-	//dw->setCell(2);
-	//m_volMusicSlider = new Slider2(dw, false);
-	//m_volMusicSlider->setCell(1);
-	//m_volMusicSlider->setAnchors(squashAnchors);
-	//m_volMusicSlider->setRange(100);
-	//m_volMusicSlider->setValue(clamp(config.getSoundVolumeMusic(), 0, 100));
-	//m_volMusicSlider->ValueChanged.connect(this, &Options::onSliderValueChanged);
-
 	// Player Name
 	OptionWidget *dw = new OptionWidget(col1, lang.get("PlayerName"));
-	dw->setCell(3);
+	dw->setCell(0);
 	TextBox *tb = new TextBox(dw);
 	tb->setText(g_config.getNetPlayerName());
 	tb->setCell(1);
@@ -363,7 +335,7 @@ void Options::buildOptionsPanel(CellStrip *container, int cell) {
 
 	// Language
 	dw = new OptionWidget(col1, lang.get("Language"));
-	dw->setCell(4);
+	dw->setCell(1);
 	m_langList = new DropList(dw);
 	m_langList->setCell(1);
 	m_langList->setAnchors(squashAnchors);
@@ -371,36 +343,10 @@ void Options::buildOptionsPanel(CellStrip *container, int cell) {
 	m_langList->SelectionChanged.connect(this, &Options::onDropListSelectionChanged);
 	m_langList->setDropBoxHeight(200);
 
-	/*
-	// Debug mode/keys container
-	DoubleOption *qw = new DoubleOption(col1, lang.get("DebugMode"), lang.get("DebugKeys"));
-	qw->setCell(5);
-
-	// Debug mode
-	CheckBoxHolder *cbh = new CheckBoxHolder(qw);
-	cbh->setCell(1);
-	cbh->setAnchors(fillAnchors);
-	m_debugModeCheckBox = new CheckBox(cbh);
-	m_debugModeCheckBox->setCell(1);
-	m_debugModeCheckBox->setAnchors(squashAnchors);
-	m_debugModeCheckBox->setChecked(config.getMiscDebugMode());
-	m_debugModeCheckBox->Clicked.connect(this, &Options::onToggleDebugMode);
-
-	// Debug keys
-	cbh = new CheckBoxHolder(qw);
-	cbh->setCell(3);
-	cbh->setAnchors(fillAnchors);
-	m_debugKeysCheckBox = new CheckBox(cbh);
-	m_debugKeysCheckBox->setCell(1);
-	m_debugKeysCheckBox->setAnchors(squashAnchors);
-	m_debugKeysCheckBox->setChecked(config.getMiscDebugKeys());
-	m_debugKeysCheckBox->Clicked.connect(this, &Options::onToggleDebugKeys);
-	*/
-
 	// Camera min / max altitude
 	RelatedDoubleOption *rdo = new RelatedDoubleOption(col1,
 		lang.get("CameraAltitude"), lang.get("Min"), lang.get("Max"));
-	rdo->setCell(6);
+	rdo->setCell(2);
 	rdo->setCustomSplits(13, 14, 20);
 	m_minCamAltitudeSpinner = new Spinner(rdo);
 	m_minCamAltitudeSpinner->setCell(2);
@@ -465,7 +411,7 @@ void Options::buildOptionsPanel(CellStrip *container, int cell) {
 	m_3dTexCheckBox->setChecked(config.getRenderTextures3D());
 	m_3dTexCheckBox->Clicked.connect(this, &Options::on3dTexturesToggle);
 
-	// Camera min / max altitude
+	// render min / max distance
 	rdo = new RelatedDoubleOption(col2,
 		lang.get("RenderDistance"), lang.get("Min"), lang.get("Max"));
 	rdo->setCell(3);
@@ -487,12 +433,12 @@ void Options::buildOptionsPanel(CellStrip *container, int cell) {
 	m_maxRenderDistSpinner->ValueChanged.connect(this, &Options::onSpinnerValueChanged);
 
 	// Field of View
-	dw = new OptionWidget(col2, lang.get("RenderFoV"));
-	dw->setCell(4);
+	//dw = new OptionWidget(col2, lang.get("RenderFoV"));
+	//dw->setCell(4);
 
 	// Enable Shaders
 	dw = new OptionWidget(col2, lang.get("UseShaders"));
-	dw->setCell(5);
+	dw->setCell(4);
 	cbh = new CheckBoxHolder(dw);
 	cbh->setCell(1);
 	cbh->setAnchors(fillAnchors);
@@ -507,7 +453,7 @@ void Options::buildOptionsPanel(CellStrip *container, int cell) {
 
 	// Terrain Shader
 	dw = new OptionWidget(col2, lang.get("TerrainShader"));
-	dw->setCell(6);
+	dw->setCell(5);
 	m_terrainRendererList = new DropList(dw);
 	m_terrainRendererList->setCell(1);
 	m_terrainRendererList->setAnchors(squashAnchors);
@@ -517,12 +463,12 @@ void Options::buildOptionsPanel(CellStrip *container, int cell) {
 	m_terrainRendererList->SelectionChanged.connect(this, &Options::onDropListSelectionChanged);
 	
 	// Water Shader
-	dw = new OptionWidget(col2, lang.get("WaterShader"));
-	dw->setCell(7);
+	//dw = new OptionWidget(col2, lang.get("WaterShader"));
+	//dw->setCell(7);
 
 	// Model Shader
 	dw = new OptionWidget(col2, lang.get("ModelShader"));
-	dw->setCell(8);
+	dw->setCell(6);
 
 	m_modelShaderList = new DropList(dw);
 	m_modelShaderList->setCell(1);

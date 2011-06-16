@@ -256,7 +256,7 @@ MenuStateAbout::MenuStateAbout(Program &program, MainMenu *mainMenu)
 	infoWidget->setCell(0);
 	infoWidget->setAnchors(Anchors(Anchor(AnchorType::RIGID, 0)));
 
-	CellStrip *strip = new CellStrip(rootStrip, Orientation::HORIZONTAL, 2);
+	CellStrip *strip = new CellStrip(rootStrip, Orientation::HORIZONTAL, 3);
 	strip->setCell(1);
 	Anchors a(Anchor(AnchorType::RIGID, 0));
 	strip->setAnchors(a);
@@ -267,17 +267,17 @@ MenuStateAbout::MenuStateAbout(Program &program, MainMenu *mainMenu)
 	teamWidget->setTeam(g_lang.get("GlestTeam"));
 	teamWidget->setMembers(getGlestTeamMemberCount(), &getGlestTeamMemberField);
 
-	//teamWidget = new TeamInfoWidget(strip);
-	//teamWidget->setCell(1);
-	//teamWidget->setAnchors(sidePad);
-	//teamWidget->setTeam("Mod Team (place-holder)");
-	//teamWidget->setMembers(glestTeamCount, glestTeamNames, glestTeamRoles);
-
 	teamWidget = new TeamInfoWidget(strip);
-	teamWidget->setCell(1);//2);
+	teamWidget->setCell(1);
 	teamWidget->setAnchors(a);
 	teamWidget->setTeam(g_lang.get("GaeTeam"));
 	teamWidget->setMembers(getGAETeamMemberCount(), &getGAETeamMemberField);
+
+	teamWidget = new TeamInfoWidget(strip);
+	teamWidget->setCell(2);
+	teamWidget->setAnchors(a);
+	teamWidget->setTeam(g_lang.get("Contributors"));
+	teamWidget->setMembers(getContributorCount(), &getContributorField);
 
 	rootStrip->layoutCells();
 	infoWidget->start();
