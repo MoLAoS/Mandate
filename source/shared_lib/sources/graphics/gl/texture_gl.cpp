@@ -71,27 +71,27 @@ GLint toInternalFormatGl(Texture::Format format, int components){
 	case Texture::fAuto:
 		switch(components){
 		case 1:
-			return GL_LUMINANCE8;
+			return GL_COMPRESSED_LUMINANCE;
 		case 3:
-			return GL_RGB8;
+			return GL_COMPRESSED_RGB;
 		case 4:
-			return GL_RGBA8;
+			return GL_COMPRESSED_RGBA;
 		default:
 			assert(false);
-			return GL_RGBA8;
+			return GL_COMPRESSED_RGBA;
 		}
 		break;
 	case Texture::fLuminance:
-		return GL_LUMINANCE8;
+		return GL_COMPRESSED_LUMINANCE;
 	case Texture::fAlpha:
-		return GL_ALPHA8;
+		return GL_COMPRESSED_ALPHA;
 	case Texture::fRgb:
-		return GL_RGB8;
+		return GL_COMPRESSED_RGB;
 	case Texture::fRgba:
-		return GL_RGBA8;
+		return GL_COMPRESSED_RGBA;
 	default:
 		assert(false);
-		return GL_RGB8;
+		return GL_COMPRESSED_RGB;
 	}
 }
 

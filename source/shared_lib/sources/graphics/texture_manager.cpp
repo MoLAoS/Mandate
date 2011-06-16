@@ -17,11 +17,12 @@
 #include "graphics_interface.h"
 #include "graphics_factory.h"
 #include "util.h"
-
+#include "opengl.h"
 #include "leak_dumper.h"
 
 namespace Shared{ namespace Graphics{
 
+using Gl::_assertGl;
 using Util::cleanPath;
 using Util::mediaErrorLog;
 
@@ -75,6 +76,7 @@ Texture2D *TextureManager::getTexture(const string &path) {
 	try {
 		tex->load(cleanedPath);
 		tex->init(textureFilter, maxAnisotropy);
+		assertGl();
 		tex->deletePixmap();
 	} catch (runtime_error &e) {
 		delete tex;
