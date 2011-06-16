@@ -19,6 +19,9 @@ using Script::ScriptManager;
 using Global::CoreData;
 using namespace Graphics;
 
+#undef WIDGET_LOG
+#define WIDGET_LOG(x) {stringstream _ss; _ss << x; g_logger.logProgramEvent(_ss.str()); }
+
 // =====================================================
 // 	scripting helpers & callbacks
 // =====================================================
