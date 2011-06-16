@@ -140,8 +140,6 @@ UserInterface::~UserInterface() {
 }
 
 void UserInterface::init() {
-	CHECK_HEAP();
-
 	// refs
 	this->commander= g_simInterface.getCommander();
 	this->gameCamera= game.getGameCamera();
@@ -152,17 +150,11 @@ void UserInterface::init() {
 	selection->init(this, world->getThisFactionIndex());
 
 	// Create Consoles...
-	CHECK_HEAP();
-
 	m_console = new Console(&g_widgetWindow);
 	m_console->setPos(Vec2i(20, g_metrics.getScreenH() - (m_console->getReqHeight() + 20)));
 
-	CHECK_HEAP();
-
 	m_dialogConsole = new Console(&g_widgetWindow, 10, true);
 	m_dialogConsole->setPos(Vec2i(20, 196));
-
-	CHECK_HEAP();
 
 	int x = g_metrics.getScreenW() - 20 - 195;
 	int y = (g_metrics.getScreenH() - 500) / 2;
@@ -203,8 +195,6 @@ void UserInterface::init() {
 		m_luaConsole->setVisible(false);
 		m_luaConsole->Button1Clicked.connect(this, &UserInterface::onCloseLuaConsole);
 		m_luaConsole->Close.connect(this, &UserInterface::onCloseLuaConsole);
-		//m_luaConsole->RollUp.connect(this, &UserInterface::onRollUpLuaConsole);
-		//m_luaConsole->RollDown.connect(this, &UserInterface::onRollDownLuaConsole);
 	}
 }
 
@@ -215,9 +205,7 @@ void UserInterface::initMinimap(bool fow, bool sod, bool resuming) {
 	int mx = 10;
 	int my = 50;
 	MinimapFrame *frame = new MinimapFrame(WidgetWindow::getInstance(), Vec2i(mx, my), fow, sod);
-	//m_minimap = new Minimap(fow, sod, WidgetWindow::getInstance(), Vec2i(mx, my));
 	frame->initMinimp(g_map.getW(), g_map.getH(), &g_world, resuming);
-	//m_minimap->init(g_map.getW(), g_map.getH(), &g_world, resuming);
 	m_minimap = frame->getMinimap();
 	m_minimap->LeftClickOrder.connect(this, &UserInterface::onLeftClickOrder);
 	m_minimap->RightClickOrder.connect(this, &UserInterface::onRightClickOrder);
@@ -372,7 +360,7 @@ void UserInterface::mouseDownLeft(int x, int y) {
 
 	UnitVector units;
 	Vec2i worldPos;
-	bool validWorldPos = computeTarget(Vec2i(x, y), worldPos, units, true);
+	bool validWorldPos = computeTarget(Vec2i(x, y), worldPos, units, selectedObject);
 
 	if (!validWorldPos) {
 		if (!selectingPos && !selectingMeetingPoint) {
@@ -449,9 +437,12 @@ void UserInterface::mouseUpRight(int x, int y) {
 
 		if (selection->isComandable()) {
 			UnitVector units;
-			if (computeTarget(Vec2i(x, y), worldPos, units, false)) {
-				Unit *targetUnit = units.size() ? units.front() : NULL;
-				giveDefaultOrders(targetUnit ? targetUnit->getPos() : worldPos, targetUnit);
+			const MapObject *obj = 0;
+			if (computeTarget(Vec2i(x, y), worldPos, units, obj)) {
+				Unit *targetUnit = units.empty() ? 0 : units.front();
+				Vec2i pos = targetUnit ? targetUnit->getPos() 
+					: obj ? obj->getResource()->getPos() : worldPos;
+				giveDefaultOrders(pos, targetUnit);
 			} else {
 				m_console->addStdMessage("InvalidPosition");
 			}
@@ -1383,11 +1374,11 @@ void UserInterface::updateSelection(bool doubleClick, UnitVector &units) {
  * @return true if the position is a valid world position, false if the position is outside of the
  * world.
  */
-bool UserInterface::computeTarget(const Vec2i &screenPos, Vec2i &worldPos, UnitVector &units, bool setObj) {
+bool UserInterface::computeTarget(const Vec2i &screenPos, Vec2i &worldPos, UnitVector &units, const MapObject *&obj) {
 	units.clear();
 	validPosObjWorld = g_renderer.computePosition(screenPos, worldPos);
-	const MapObject *junk = 0;
-	g_renderer.computeSelected(units, setObj ? selectedObject : junk, screenPos, screenPos);
+	//const MapObject *junk = 0;
+	g_renderer.computeSelected(units, obj, screenPos, screenPos);
 	//g_gameState.lastPick(units, selectedObject);
 
 	if (!units.empty()) {

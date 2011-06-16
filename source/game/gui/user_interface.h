@@ -281,7 +281,7 @@ public:
 	void updateSelection(bool doubleClick, UnitVector &units);
 
 private:
-	bool computeTarget(const Vec2i &screenPos, Vec2i &worldPos, UnitVector &units, bool setObj);
+	bool computeTarget(const Vec2i &screenPos, Vec2i &worldPos, UnitVector &units, const MapObject *&obj);
 	void computeBuildPositions(const Vec2i &end);
 	void computeSelectionPanel();
 	void computeHousedUnitsPanel();
