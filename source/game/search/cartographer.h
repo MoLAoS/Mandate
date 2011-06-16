@@ -275,6 +275,7 @@ public:
 	void detectorActivated(Unit *unit);
 	void detectorMoved(Unit *unit, Vec2i oldPos);
 	void detectorDeactivated(Unit *unit);
+	void detectorSightModified(Unit *unit, int oldSight);
 
 	ClusterMap* getClusterMap() const { return clusterMap; }
 

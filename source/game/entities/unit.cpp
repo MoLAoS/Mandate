@@ -167,6 +167,7 @@ Unit::Unit(CreateParams params)
 	computeTotalUpgrade();
 	hp = type->getMaxHp() / 20;
 
+	// => born() ??
 	if (type->getCloakClass() == CloakClass::PERMANENT && faction->reqsOk(type->getCloakType())) {
 		cloak();
 	}
@@ -2116,6 +2117,7 @@ void Unit::computeTotalUpgrade() {
 void Unit::recalculateStats() {
 	int oldMaxHp = getMaxHp();
 	int oldHp = hp;
+	int oldSight = getSight();
 
 	EnhancementType::reset();
 	UnitStats::setValues(*type);
@@ -2146,6 +2148,10 @@ void Unit::recalculateStats() {
 		hp += getMaxHp() - oldMaxHp;
 	} else if (hp > getMaxHp()) {
 		hp = getMaxHp();
+	}
+
+	if (oldSight != getSight() && type->getDetectorType()) {
+		g_cartographer.detectorSightModified(this, oldSight);
 	}
 	
 	// If this guy is dead, make sure they stay dead
