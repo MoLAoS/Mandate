@@ -130,6 +130,7 @@ void Texture1DGl::init(Filter filter, int maxAnisotropy){
 			glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, glFilter);
 			glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
+			glHint(GL_TEXTURE_COMPRESSION_HINT, GL_FASTEST);
 			int error = gluBuild1DMipmaps(GL_TEXTURE_1D, glInternalFormat, 
 						pixmap->getW(), glFormat, GL_UNSIGNED_BYTE, pixels);
 
@@ -215,6 +216,7 @@ void Texture2DGl::init(Filter filter, int maxAnisotropy) {
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, glFilter);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
+			glHint(GL_TEXTURE_COMPRESSION_HINT, GL_FASTEST);
 			int error = gluBuild2DMipmaps(GL_TEXTURE_2D, glInternalFormat,
 				pixmap->getW(), pixmap->getH(), glFormat, GL_UNSIGNED_BYTE, pixels);
 
@@ -292,6 +294,7 @@ void Texture3DGl::init(Filter filter, int maxAnisotropy){
 		glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
+		glHint(GL_TEXTURE_COMPRESSION_HINT, GL_FASTEST);
 		glTexImage3D(GL_TEXTURE_3D, 0, glInternalFormat, 
 			pixmap->getW(), pixmap->getH(), pixmap->getD(), 0, glFormat, GL_UNSIGNED_BYTE, pixels);
 
@@ -363,6 +366,7 @@ void TextureCubeGl::init(Filter filter, int maxAnisotropy) {
 			GLenum target= GL_TEXTURE_CUBE_MAP_POSITIVE_X + i;
 
 			if (mipmap) {
+				glHint(GL_TEXTURE_COMPRESSION_HINT, GL_FASTEST);
 				int error = gluBuild2DMipmaps(target, glInternalFormat,
 					currentPixmap->getW(), currentPixmap->getH(), glFormat, GL_UNSIGNED_BYTE, pixels);
 
