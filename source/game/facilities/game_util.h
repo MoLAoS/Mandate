@@ -28,6 +28,7 @@ extern const string glestVersionString;
 extern const string gaeVersionString;
 
 string getNetworkVersionString();
+string getGitHash();
 
 int getAboutStringCount();
 string getAboutString(int i);

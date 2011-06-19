@@ -38,11 +38,27 @@ const string glestVersionString= "v3.2.2";
 #elif MAD_SYNC_CHECKING
 	const string gaeVersionString = string(VERSION_STRING) + "_sync_test";
 #else
-	const string gaeVersionString = VERSION_STRING;
+	const string gaeVersionString = string(VERSION_STRING) + " (" + getGitHash() + ")";
 #endif
 
 string getCrashDumpFileName(){
 	return "gae" + gaeVersionString + ".dmp";
+}
+
+string getGitHash() {
+	const string desc(build_git_sha);
+	string hash;
+	if (desc.size() > 7) {
+		hash = desc.substr(desc.size() - 7);
+		foreach (string, c, hash) {
+			if (islower(*c)) {
+				*c = toupper(*c);
+			}
+		}
+	} else {
+		hash = "???";
+	}
+	return hash;
 }
 
 string getNetworkVersionString(){
@@ -98,7 +114,7 @@ string getGAETeamMemberField(int i, TeamMemberField field) {
 }
 
 int getContributorCount() {
-	return 5;
+	return 4;
 }
 
 string getContributorField(int i, TeamMemberField field) {
@@ -108,7 +124,6 @@ string getContributorField(int i, TeamMemberField field) {
 		case 1: return field == TeamMemberField::NAME ? "Jaagup Repän"     : l.get("Programming");
 		case 2: return field == TeamMemberField::NAME ? "Titus Tscharntke" : l.get("Programming");
 		case 3: return field == TeamMemberField::NAME ? "Eric Wilson"      : l.get("Programming");
-		case 4: return field == TeamMemberField::NAME ? "(Perpleso)"       : l.get("Translator");
 		default: throw runtime_error("Contributor " + intToStr(i) + " does not exist!");
 	}
 }
