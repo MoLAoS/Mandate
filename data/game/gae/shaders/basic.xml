@@ -95,12 +95,14 @@
 
 			// compute fog factor
 			float calculateFogFactor() {
+				float fog;
 				if (gae_IsUsingFog == 0) {
-					return 1.0;
+					fog = 1.0;
+				} else {
+					float dist = length(vec3(gl_ModelViewMatrix * gl_Vertex)); // distance from camera
+					const float one_divide_ln_2 = 1.44269504088896341;
+					fog = exp2(-gl_Fog.density * gl_Fog.density * dist * dist * one_divide_ln_2);
 				}
-				float dist = length(vec3(gl_ModelViewMatrix * gl_Vertex)); // distance from camera
-				const float one_divide_ln_2 = 1.44269504088896341;
-				float fog = exp2(-gl_Fog.density * gl_Fog.density * dist * dist * one_divide_ln_2);
 				return clamp(fog, 0.0, 1.0);	
 			}
 
@@ -141,65 +143,6 @@
 		]]>
 	</vertex-shader>
 	
-	<base-vertex-shader>
-		<![CDATA[
-			void main() {
-				// pass-on tex-coord & mesh alpha
-				gl_TexCoord[0] = gl_MultiTexCoord0;
-				meshAlpha = gl_Color.a;
-
-				// direction of main light source
-				vec3 lightDir = normalize(vec3(gl_LightSource[0].position));
-				vec3 normal = normalize(gl_NormalMatrix * gl_Normal);
-				
-				// diffuse shading
-				diffuseIntensity = max(dot(lightDir, normal), 0.0);
-				
-				// fog
-				float dist = length(vec3(gl_ModelViewMatrix * gl_Vertex)); // distance from camera
-				const float log_2 = 1.442695;
-				fogFactor = exp2(-gl_Fog.density * gl_Fog.density * dist * dist * log_2);
-				fogFactor = clamp(fogFactor, 0.0, 1.0);	
-				
-				// determine pixel position
-				gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;
-			}
-		]]>
-	</base-vertex-shader>
-
-	<lerp-vertex-shader>
-		<![CDATA[
-			attribute vec3 nextVertex;
-			attribute vec3 nextNormal;
-			uniform float t;
-			
-			void main() {
-				// pass-on tex-coord & mesh alpha
-				gl_TexCoord[0] = gl_MultiTexCoord0;
-				meshAlpha = gl_Color.a;
-				
-				// direction of main light source
-				vec3 lightDir = normalize(vec3(gl_LightSource[0].position));
-				
-				vec3 normal = mix(gl_Normal, nextNormal, t);
-				normal = normalize(gl_NormalMatrix * gl_Normal);
-				
-				// diffuse shading
-				diffuseIntensity = max(dot(lightDir, normal), 0.0);
-				
-				// fog
-				float dist = length(vec3(gl_ModelViewMatrix * gl_Vertex)); // distance from camera
-				const float log_2 = 1.442695;
-				fogFactor = exp2(-gl_Fog.density * gl_Fog.density * dist * dist * log_2);
-				fogFactor = clamp(fogFactor, 0.0, 1.0);	
-				
-				// determine pixel position
-				vec3 pos = mix(gl_Vertex, nextVertex, t);
-				gl_Position = gl_ModelViewProjectionMatrix * pos;
-			}
-		]]>
-	</lerp-vertex-shader>
-
 	<team-fragment-shader>
 		<![CDATA[
 			void main() {
