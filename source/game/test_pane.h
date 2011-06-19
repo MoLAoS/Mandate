@@ -10,7 +10,7 @@
 #define _GLEST_GAME_TEST_PANE_H_
 
 #include "program.h"
-#include "ticker_tape.h"
+#include "compound_widgets.h"
 
 namespace Glest { namespace Main {
 
