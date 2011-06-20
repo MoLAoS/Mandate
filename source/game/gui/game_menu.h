@@ -18,6 +18,9 @@ using namespace Widgets;
 
 class GameMenu : public Frame {
 private:
+	Button *m_pinWidgetsBtn;
+
+private:
 	void onReturnToGame(Widget*);
 	void onOptions(Widget*);
 	void onExit(Widget*);

@@ -159,6 +159,8 @@ public:
 
 	Minimap* getMinimap() {return m_minimap;}
 
+	void setPinned(bool v);
+
 	virtual void render() override;
 };
 

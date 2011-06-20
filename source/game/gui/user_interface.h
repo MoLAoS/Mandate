@@ -174,6 +174,7 @@ public:
 	//get
 	Minimap *getMinimap()							{return m_minimap;}
 	const Minimap *getMinimap() const				{return m_minimap;}
+	ResourceBar* getResourceBar()                    {return m_resourceBar;}
 	const Input& getInput() const					{return input;}
 	LuaConsole* getLuaConsole()						{return m_luaConsole;}
 	Vec2i getPosObjWorld() const					{return posObjWorld;}

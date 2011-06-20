@@ -19,6 +19,8 @@
 #include "core_data.h"
 #include "user_interface.h"
 #include "world.h"
+#include "config.h"
+
 #include "leak_dumper.h"
 
 using namespace Shared::Graphics;
@@ -36,11 +38,9 @@ DisplayFrame::DisplayFrame(UserInterface *ui, Vec2i pos)
 		, m_display(0)
 		, m_ui(ui) {
 	m_ui = ui;
-	CHECK_HEAP();
 	setWidgetStyle(WidgetType::GAME_WIDGET_FRAME);
-	CHECK_HEAP();
 	Frame::setTitleBarSize(20);
-	CHECK_HEAP();
+
 	m_display = new Display(this, ui, Vec2i(0,0));
 	CellStrip::addCells(1);
 	m_display->setCell(1);
@@ -52,7 +52,7 @@ DisplayFrame::DisplayFrame(UserInterface *ui, Vec2i pos)
 	m_titleBar->enableShrinkExpand(false, false);
 	Expand.connect(this, &DisplayFrame::onExpand);
 	Shrink.connect(this, &DisplayFrame::onShrink);
-	CHECK_HEAP();
+	setPinned(g_config.getUiPinWidgets());
 }
 
 void DisplayFrame::resetSize() {
@@ -115,6 +115,11 @@ void DisplayFrame::render() {
 		return;
 	}
 	Frame::render();
+}
+
+void DisplayFrame::setPinned(bool v) {
+	Frame::setPinned(v);
+	m_titleBar->showShrinkExpand(!v);
 }
 
 // =====================================================

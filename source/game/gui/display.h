@@ -198,6 +198,7 @@ public:
 	void resetSize();
 
 	virtual void render() override;
+	void setPinned(bool v);
 };
 
 

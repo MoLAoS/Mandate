@@ -98,6 +98,7 @@ private:
 	string uiLastScenarioCatagory;
 	string uiLocale;
 	bool uiPhotoMode;
+	bool uiPinWidgets;
 	float uiScrollSpeed;
 
 	Config(const char* fileName);
@@ -185,6 +186,7 @@ public:
 	string getUiLastScenarioCatagory() const	{return uiLastScenarioCatagory;}
 	string getUiLocale() const					{return uiLocale;}
 	bool getUiPhotoMode() const					{return uiPhotoMode;}
+	bool getUiPinWidgets() const				{return uiPinWidgets;}
 	float getUiScrollSpeed() const				{return uiScrollSpeed;}
 
 	void setAiLogLevel(int val)					{aiLogLevel = val;}
@@ -254,6 +256,7 @@ public:
 	void setUiLastScenarioCatagory(string val)	{uiLastScenarioCatagory = val;}
 	void setUiLocale(string val)				{uiLocale = val;}
 	void setUiPhotoMode(bool val)				{uiPhotoMode = val;}
+	void setUiPinWidgets(bool val)				{uiPinWidgets = val;}
 	void setUiScrollSpeed(float val)			{uiScrollSpeed = val;}
 };
 

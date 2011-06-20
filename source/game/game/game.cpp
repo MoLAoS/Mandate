@@ -30,6 +30,7 @@
 #include "sim_interface.h"
 #include "network_interface.h"
 #include "game_menu.h"
+#include "resource_bar.h"
 #include "mouse_cursor.h"
 #include "options.h"
 
@@ -516,6 +517,14 @@ void GameState::toggleOptions(Widget*) {
 	} else {
 		m_options->setVisible(!m_options->isVisible());
 	}
+}
+
+void GameState::togglePinWidgets(Widget*) {
+	bool pin = !g_config.getUiPinWidgets();
+	g_config.setUiPinWidgets(pin);
+	static_cast<MinimapFrame*>(gui.getMinimap()->getParent())->setPinned(pin);
+	static_cast<ResourceBarFrame*>(gui.getResourceBar()->getParent())->setPinned(pin);
+	static_cast<DisplayFrame*>(gui.getDisplay()->getParent())->setPinned(pin);
 }
 
 void GameState::addScriptMessage(const string &header, const string &msg) {

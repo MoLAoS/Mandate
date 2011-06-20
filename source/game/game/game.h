@@ -175,6 +175,7 @@ public:
 	void toggleDebug(Widget* ptr = 0);
 	void toggleGameMenu(Widget* ptr = 0);
 	void toggleOptions(Widget* ptr = 0);
+	void togglePinWidgets(Widget* ptr = 0);
 
 protected:
 	// render

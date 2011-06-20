@@ -103,6 +103,7 @@ Config::Config(const char* fileName) {
 	uiLastScenarioCatagory = p->getString("UiLastScenarioCatagory", "glest_classic");
 	uiLocale = p->getString("UiLocale", "en");
 	uiPhotoMode = p->getBool("UiPhotoMode", false);
+	uiPinWidgets = p->getBool("UiPinWidgets", false);
 	uiScrollSpeed = p->getFloat("UiScrollSpeed", 1.5f);
 
 	delete p;
@@ -182,6 +183,7 @@ void Config::save(const char *path) {
 	p->setString("UiLastScenarioCatagory", uiLastScenarioCatagory);
 	p->setString("UiLocale", uiLocale);
 	p->setBool("UiPhotoMode", uiPhotoMode);
+	p->setBool("UiPinWidgets", uiPinWidgets);
 	p->setFloat("UiScrollSpeed", uiScrollSpeed);
 
 	p->save(path);

@@ -39,7 +39,7 @@ void ResourceBarFrame::render() {
 }
 
 ResourceBarFrame::ResourceBarFrame()
-		: Frame((Container*)WidgetWindow::getInstance(), ButtonFlags::SHRINK | ButtonFlags::EXPAND)  {
+		: Frame((Container*)WidgetWindow::getInstance(), ButtonFlags::SHRINK | ButtonFlags::EXPAND) {
 	setWidgetStyle(WidgetType::GAME_WIDGET_FRAME);
 	Frame::setTitleBarSize(20);
 	m_resourceBar = new ResourceBar(this);
@@ -49,11 +49,16 @@ ResourceBarFrame::ResourceBarFrame()
 		Anchor(AnchorType::NONE, 0), Anchor(AnchorType::NONE, 0));
 	m_resourceBar ->setAnchors(a);
 
-//	setPos(pos);
-
 	m_titleBar->enableShrinkExpand(false, false);
 	Expand.connect(this, &ResourceBarFrame::onExpand);
 	Shrink.connect(this, &ResourceBarFrame::onShrink);
+
+	setPinned(g_config.getUiPinWidgets());
+}
+
+void ResourceBarFrame::setPinned(bool v) {
+	Frame::setPinned(v);
+	m_titleBar->showShrinkExpand(!v);
 }
 
 void ResourceBarFrame::onExpand(Widget*) {
@@ -73,12 +78,12 @@ ResourceBar::ResourceBar(Container *parent)
 		, TextWidget(this)
 		, m_faction(0)
 		, m_moveOffset(0)
-		, m_draggingWidget(false) {
+		, m_draggingWidget(false)
+		, m_updateCounter(0) {
 	setWidgetStyle(WidgetType::RESOURCE_BAR);
 }
 
 void ResourceBar::init(const Faction *faction, std::set<const ResourceType*> &types) {
-	CHECK_HEAP();
 	m_faction = faction;
 
 	TextWidget::setAlignment(Alignment::NONE);
@@ -154,7 +159,6 @@ void ResourceBar::init(const Faction *faction, std::set<const ResourceType*> &ty
 		}
 	}
 	m_parent->setPos(Vec2i(g_metrics.getScreenW() / 2 - m_parent->getWidth() / 2, 5));
-	CHECK_HEAP();
 }
 
 ResourceBar::~ResourceBar() {
@@ -171,18 +175,21 @@ void ResourceBar::render() {
 
 ///@todo fix... this is called 120 times per second
 void ResourceBar::update() {
-	for (int i=0; i < m_resourceTypes.size(); ++i) {
-		stringstream ss;
-		const ResourceType* &rt = m_resourceTypes[i];
-		const StoredResource *res = m_faction->getResource(rt); // amount & balance
-		ss << m_headerStrings[i] << res->getAmount();
-		if (rt->getClass() == ResourceClass::CONSUMABLE) {
-			ss << "/" << m_faction->getStoreAmount(rt) << " (" << res->getBalance() << ")";
-		} else if (rt->getClass() != ResourceClass::STATIC) {
-			ss << '/' << m_faction->getStoreAmount(rt);
+	if (m_updateCounter % 10 == 0) {
+		for (int i=0; i < m_resourceTypes.size(); ++i) {
+			stringstream ss;
+			const ResourceType* &rt = m_resourceTypes[i];
+			const StoredResource *res = m_faction->getResource(rt); // amount & balance
+			ss << m_headerStrings[i] << res->getAmount();
+			if (rt->getClass() == ResourceClass::CONSUMABLE) {
+				ss << "/" << m_faction->getStoreAmount(rt) << " (" << res->getBalance() << ")";
+			} else if (rt->getClass() != ResourceClass::STATIC) {
+				ss << '/' << m_faction->getStoreAmount(rt);
+			}
+			setText(ss.str(), i);
 		}
-		setText(ss.str(), i);
 	}
+	++m_updateCounter;
 }
 
 bool ResourceBar::mouseDown(MouseButton btn, Vec2i pos) {

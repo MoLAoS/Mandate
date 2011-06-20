@@ -80,4 +80,5 @@ uiLastScenario				string	"glest_classic\/anarchy"	-	-	The name of the last scena
 uiLastScenarioCatagory		string	"glest_classic"	-		-		The category of the last scenario played.
 uiLocale					string	"en"			-		-		Language files that will be used for language strings. Will use the language file of the same name in the lang data folder with the *.lng extension.
 uiPhotoMode					bool	false			-		-		Toggles on or off photo mode, which hides the GUI for images. Note that this can be toggled from the in-game menu.
+uiPinWidgets				bool	false			-		-		Toggles in game widget move/size-ability.
 uiScrollSpeed				float	1.5f			-		-		Speed of scrolling the mouse wheel.

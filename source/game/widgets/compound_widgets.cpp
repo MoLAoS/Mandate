@@ -315,6 +315,7 @@ Frame::Frame(Container *parent, ButtonFlags flags, Vec2i pos, Vec2i sz)
 void Frame::init(ButtonFlags flags) {
 	setStyle(g_widgetConfig.getWidgetStyle(WidgetType::MESSAGE_BOX));
 
+	m_pinned = false;
 	m_pressed = m_rollingUp = m_rollingDown = m_rolledUp = false;
 	m_resizerAction = 0;
 
@@ -375,7 +376,7 @@ void Frame::setTitleText(const string &text) {
 }
 
 bool Frame::mouseDown(MouseButton btn, Vec2i pos) {
-	if (m_titleBar->isInside(pos) && btn == MouseButton::LEFT) {
+	if (m_titleBar->isInside(pos) && btn == MouseButton::LEFT && !m_pinned) {
 		m_pressed = true;
 		m_lastPos = pos;
 		return true;

@@ -135,6 +135,10 @@ public:
 		m_shrinkButton->setEnabled(shrink);
 		m_expandButton->setEnabled(expand);
 	}
+	void showShrinkExpand(bool v) {
+		m_shrinkButton->setVisible(v);
+		m_expandButton->setVisible(v);
+	}
 
 	void swapRollUpDown() {
 		if (m_rollUpButton->isVisible()) {
@@ -174,6 +178,7 @@ protected:
 	bool        m_rollingDown;
 	bool        m_rolledUp;
 	Vec2i       m_origSize;
+	bool        m_pinned;
 
 	ResizeWidgetAction *m_resizerAction;
 
@@ -193,6 +198,9 @@ public:
 	virtual bool mouseUp(MouseButton btn, Vec2i pos) override;
 
 	virtual void update() override;
+
+	void setPinned(bool v) { m_pinned = v; }
+	bool getPinned() const { return m_pinned; }
 
 	void setTitleBarSize(int sz) { CellStrip::setSizeHint(0, SizeHint(-1, sz)); }
 	void enableShrinkExpand(bool shrink, bool expand) { m_titleBar->enableShrinkExpand(shrink, expand); }

@@ -21,7 +21,7 @@ using Global::CoreData;
 
 typedef void (GameMenu::*SlotFunc)(Widget*);
 
-void buildButton(GameMenu *menu, CellStrip *strip, int cell, const string &txt, SlotFunc func) {
+Button* buildButton(GameMenu *menu, CellStrip *strip, int cell, const string &txt, SlotFunc func) {
 	int dh = g_widgetConfig.getDefaultItemHeight();
 	Vec2i btnSize(dh * 7, dh);
 	Button *btn = new Button(strip, Vec2i(0), btnSize);
@@ -29,6 +29,7 @@ void buildButton(GameMenu *menu, CellStrip *strip, int cell, const string &txt, 
 	btn->setAnchors(Anchors::getCentreAnchors());
 	btn->setText(txt);
 	btn->Clicked.connect(menu, func);
+	return btn;
 }
 
 GameMenu::GameMenu()
@@ -49,7 +50,9 @@ GameMenu::GameMenu()
 	buildButton(this, strip, 7, g_lang.get("ExitProgram"), &GameMenu::onExit);
 	buildButton(this, strip, 6, g_lang.get("QuitGame"), &GameMenu::onQuit);
 	buildButton(this, strip, 5, g_lang.get("SaveGame"), &GameMenu::onSaveGame);
-	buildButton(this, strip, 4, g_lang.get("PinWidgets"), &GameMenu::onPinWidgets);
+	m_pinWidgetsBtn = buildButton(this, strip, 4, 
+		g_config.getUiPinWidgets() ? g_lang.get("UnPinWidgets") : g_lang.get("PinWidgets"),
+		&GameMenu::onPinWidgets);
 	buildButton(this, strip, 3, g_lang.get("TogglePhotoMode"), &GameMenu::onTogglePhotoMode);
 	buildButton(this, strip, 2, g_lang.get("ToggleDebug"), &GameMenu::onDebugToggle);
 	buildButton(this, strip, 1, g_lang.get("Options"), &GameMenu::onOptions);
@@ -64,7 +67,8 @@ GameMenu::GameMenu()
 //}
 
 void GameMenu::onPinWidgets(Widget*) {
-
+	g_gameState.togglePinWidgets(0);
+	m_pinWidgetsBtn->setText(g_config.getUiPinWidgets() ? g_lang.get("UnPinWidgets") : g_lang.get("PinWidgets"));
 }
 
 void GameMenu::onReturnToGame(Widget*) {

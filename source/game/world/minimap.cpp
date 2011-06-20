@@ -101,7 +101,6 @@ void AttackNoticeCircle::render(Vec2i mmPos, int, fixed ratio) {
 //  class MinimapFrame
 // =====================================================
 
-
 MinimapFrame::MinimapFrame(Container *parent, Vec2i pos, bool FoW, bool SoD)
 		: Frame(parent, ButtonFlags::SHRINK | ButtonFlags::EXPAND) {
 	setWidgetStyle(WidgetType::GAME_WIDGET_FRAME);
@@ -113,6 +112,7 @@ MinimapFrame::MinimapFrame(Container *parent, Vec2i pos, bool FoW, bool SoD)
 		Anchor(AnchorType::NONE, 0), Anchor(AnchorType::NONE, 0));
 	m_minimap->setAnchors(a);
 	setPos(pos);
+	setPinned(g_config.getUiPinWidgets());
 }
 
 void MinimapFrame::initMinimp(int w, int h, const World *world, bool resumingGame) {
@@ -175,6 +175,11 @@ void MinimapFrame::render() {
 		return;
 	}
 	Frame::render();
+}
+
+void MinimapFrame::setPinned(bool v) {
+	Frame::setPinned(v);
+	m_titleBar->showShrinkExpand(!v);
 }
 
 // =====================================================

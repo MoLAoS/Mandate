@@ -41,6 +41,7 @@ private:
 	vector<string> m_headerStrings;
 	bool m_draggingWidget;
 	Vec2i m_moveOffset;
+	int m_updateCounter;
 
 public:
 	ResourceBar(Container *parent); ///@todo (ResourceBarFrame *parent)
@@ -71,6 +72,8 @@ private:
 public:
 	ResourceBarFrame();
 	ResourceBar * getResourceBar() {return m_resourceBar;}
+
+	void setPinned(bool v);
 
 	virtual void render() override;
 };

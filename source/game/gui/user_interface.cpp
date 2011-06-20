@@ -156,14 +156,6 @@ void UserInterface::init() {
 	m_dialogConsole = new Console(&g_widgetWindow, 10, true);
 	m_dialogConsole->setPos(Vec2i(20, 196));
 
-	int x = g_metrics.getScreenW() - 20 - 195;
-	int y = (g_metrics.getScreenH() - 500) / 2;
-
-	// Display Panel
-	DisplayFrame *displayFrame = new DisplayFrame(this, Vec2i(x,y));
-	m_display = displayFrame->getDisplay();
-	m_display->setSize();
-
 	// get 'this' FactionType, discover what resources need to be displayed
 	const Faction *fac = g_world.getThisFaction();
 	if (fac) {  //loadmap has no faction
@@ -196,6 +188,14 @@ void UserInterface::init() {
 		m_luaConsole->Button1Clicked.connect(this, &UserInterface::onCloseLuaConsole);
 		m_luaConsole->Close.connect(this, &UserInterface::onCloseLuaConsole);
 	}
+	int y = m_resourceBar->getParent()->getPos().y + m_resourceBar->getParent()->getHeight() + 10;
+	int x = g_metrics.getScreenW() - 20 - 195;
+
+	// Display Panel
+	DisplayFrame *displayFrame = new DisplayFrame(this, Vec2i(x,y));
+	m_display = displayFrame->getDisplay();
+	m_display->setSize();
+	m_minimap->getParent()->setPos(Vec2i(20, y));
 }
 
 void UserInterface::initMinimap(bool fow, bool sod, bool resuming) {
@@ -204,6 +204,7 @@ void UserInterface::initMinimap(bool fow, bool sod, bool resuming) {
 
 	int mx = 10;
 	int my = 50;
+
 	MinimapFrame *frame = new MinimapFrame(WidgetWindow::getInstance(), Vec2i(mx, my), fow, sod);
 	frame->initMinimp(g_map.getW(), g_map.getH(), &g_world, resuming);
 	m_minimap = frame->getMinimap();
