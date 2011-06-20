@@ -31,12 +31,8 @@ const string gaeMailString= CONTACT_STRING;
 
 const string glestVersionString= "v3.2.2";
 
-#if _GAE_DEBUG_EDITION_ && MAD_SYNC_CHECKING
-#	error MAD_SYNC_CHECKING and _GAE_DEBUG_EDITION_ not a good idea
-#elif _GAE_DEBUG_EDITION_
-	const string gaeVersionString = string(VERSION_STRING) + "_dev_edition";
-#elif MAD_SYNC_CHECKING
-	const string gaeVersionString = string(VERSION_STRING) + "_sync_test";
+#if _GAE_DEBUG_EDITION_
+	const string gaeVersionString = string(VERSION_STRING) + "_de (" + getGitHash() + ")";
 #else
 	const string gaeVersionString = string(VERSION_STRING) + " (" + getGitHash() + ")";
 #endif
