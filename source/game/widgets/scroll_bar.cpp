@@ -372,7 +372,7 @@ void ScrollBar::onScrollBtnFired(Widget *source) {
 }
 
 void ScrollBar::scrollLine(bool increase) {
-	m_shaft->onThumbMoved(increase ? m_lineSize : -m_lineSize);
+	m_shaft->onThumbMoved(increase ? m_shaft->getPageSize() : -m_shaft->getPageSize() );
 }
 
 // =====================================================
