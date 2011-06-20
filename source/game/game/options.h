@@ -81,11 +81,17 @@ private:
 				*m_filterList,
 				*m_lightsList,
 				*m_terrainRendererList,
-				*m_modelShaderList;
+				*m_modelShaderList,
+				*m_resolutionList;
 							
 	CheckBox	*m_3dTexCheckBox,
 		        *m_debugModeCheckBox,
-				*m_debugKeysCheckBox;
+				*m_debugKeysCheckBox,
+				*m_fullscreenCheckBox,
+				*m_autoRepairCheckBox,
+				*m_autoReturnCheckBox,
+				*m_bumpMappingCheckBox,
+				*m_specularMappingCheckBox;
 	
 	Slider2		*m_volFxSlider,
 				*m_volAmbientSlider,
@@ -117,6 +123,7 @@ private:
 	void setTexts();
 	void buildOptionsPanel(CellStrip *container, int cell);
 	void loadShaderList();
+	CheckBox *createStandardCheckBox(CellStrip *container, int cell, const string &text);
 
 	// Build tabs
 	void buildGameTab();
@@ -135,6 +142,11 @@ private:
 	void onToggleDebugMode(Widget*);
 	void onToggleDebugKeys(Widget*);
 	void onToggleShaders(Widget *source);
+	void onToggleFullscreen(Widget*);
+	void onToggleAutoRepair(Widget*);
+	void onToggleAutoReturn(Widget*);
+	void onToggleBumpMapping(Widget*);
+	void onToggleSpecularMapping(Widget*);
 };
 
 // =====================================================

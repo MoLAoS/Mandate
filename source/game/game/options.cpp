@@ -164,8 +164,168 @@ void Options::buildGameTab() {
 }
 
 void Options::buildVideoTab() {
+	Lang &lang = Lang::getInstance();
+	Config &config= Config::getInstance();
+
 	CellStrip *panel = new CellStrip(this, Orientation::HORIZONTAL, 2);
-	TabWidget::add(g_lang.get("Video"), panel);
+	TabWidget::add(lang.get("Video"), panel);
+
+	Anchors fillAnchors(Anchor(AnchorType::RIGID, 0));
+	Anchors padAnchors(Anchor(AnchorType::RIGID, 10), Anchor(AnchorType::RIGID, 0),
+		Anchor(AnchorType::RIGID, 10), Anchor(AnchorType::RIGID, 0));
+	Anchors squashAnchors(Anchor(AnchorType::RIGID, 0), Anchor(AnchorType::SPRINGY, 15));
+
+	Anchors centreAnchors;
+	centreAnchors.setCentre(true, false);
+
+	const int rows = 10;
+
+	// Column 1
+
+	CellStrip *col1 = new CellStrip(panel, Orientation::VERTICAL, Origin::FROM_TOP, rows);
+	col1->setCell(0);
+	col1->setAnchors(padAnchors);
+
+	OptionWidget *dw = new OptionWidget(col1, lang.get("Resolution"));
+	dw->setCell(0);
+
+	m_resolutionList = new DropList(dw);
+	m_resolutionList->setCell(1);
+	m_resolutionList->setAnchors(squashAnchors);
+	m_resolutionList->addItem(Conversion::toStr(config.getDisplayWidth()) + "x" + Conversion::toStr(config.getDisplayHeight()));
+	m_resolutionList->setSelected(0);
+	m_resolutionList->SelectionChanged.connect(this, &Options::onDropListSelectionChanged);
+
+	m_fullscreenCheckBox = createStandardCheckBox(col1, 1, lang.get("Fullscreen"));
+	m_fullscreenCheckBox->setChecked(!config.getDisplayWindowed());
+	m_fullscreenCheckBox->Clicked.connect(this, &Options::onToggleFullscreen);
+
+	m_bumpMappingCheckBox = createStandardCheckBox(col1, 2, lang.get("BumpMapping"));
+	m_bumpMappingCheckBox->setChecked(config.getRenderEnableBumpMapping());
+	m_bumpMappingCheckBox->Clicked.connect(this, &Options::onToggleBumpMapping);
+
+	m_specularMappingCheckBox = createStandardCheckBox(col1, 3, lang.get("SpecularMapping"));
+	m_specularMappingCheckBox->setChecked(config.getRenderEnableSpecMapping());
+	m_specularMappingCheckBox->Clicked.connect(this, &Options::onToggleSpecularMapping);
+
+	// Column 2
+
+	CellStrip *col2 = new CellStrip(panel, Orientation::VERTICAL, Origin::FROM_TOP, rows);
+	col2->setCell(1);
+	col2->setAnchors(padAnchors);
+
+	// Shadows
+	dw = new OptionWidget(col2, lang.get("Shadows"));
+	dw->setCell(0);
+	m_shadowsList = new DropList(dw);
+	m_shadowsList->setCell(1);
+	m_shadowsList->setAnchors(squashAnchors);
+	for(int i= 0; i < ShadowMode::COUNT; ++i){
+		m_shadowsList->addItem(lang.get(Renderer::shadowsToStr(ShadowMode(i))));
+	}
+	string str= config.getRenderShadows();
+	m_shadowsList->setSelected(clamp(int(Renderer::strToShadows(str)), 0, ShadowMode::COUNT - 1));
+	m_shadowsList->SelectionChanged.connect(this, &Options::onDropListSelectionChanged);
+
+	// Texture filter
+	dw = new OptionWidget(col2, lang.get("TextureFilter"));
+	dw->setCell(1);
+	m_filterList = new DropList(dw);
+	m_filterList->setCell(1);
+	m_filterList->setAnchors(squashAnchors);
+	m_filterList->addItem("Bilinear");
+	m_filterList->addItem("Trilinear");
+	m_filterList->setSelected(config.getRenderFilter());
+	m_filterList->SelectionChanged.connect(this, &Options::onDropListSelectionChanged);
+
+	// lights
+	DoubleOption *qw = new DoubleOption(col2, lang.get("MaxLights"), lang.get("Textures3D"));
+	qw->setCustomSplit(true, 35);
+	qw->setCell(2);
+	m_lightsList = new DropList(qw);
+	m_lightsList->setCell(1);
+	m_lightsList->setAnchors(squashAnchors);
+	for (int i = 1; i <= 8; ++i) {
+		m_lightsList->addItem(intToStr(i));
+	}
+	m_lightsList->setSelected(clamp(config.getRenderLightsMax()-1, 0, 7));
+	m_lightsList->SelectionChanged.connect(this, &Options::onDropListSelectionChanged);
+	m_lightsList->setDropBoxHeight(200);
+
+	// 3D Textures
+	CheckBoxHolder *cbh = new CheckBoxHolder(qw);
+	cbh->setCell(3);
+	m_3dTexCheckBox = new CheckBox(cbh);
+	m_3dTexCheckBox->setCell(1);
+	m_3dTexCheckBox->setAnchors(squashAnchors);
+	m_3dTexCheckBox->setChecked(config.getRenderTextures3D());
+	m_3dTexCheckBox->Clicked.connect(this, &Options::on3dTexturesToggle);
+
+	// render min / max distance
+	RelatedDoubleOption *rdo = new RelatedDoubleOption(col2,
+		lang.get("RenderDistance"), lang.get("Min"), lang.get("Max"));
+	rdo->setCell(3);
+	rdo->setCustomSplits(13, 14, 20);
+	m_minRenderDistSpinner = new Spinner(rdo);
+	m_minRenderDistSpinner->setCell(2);
+	m_minRenderDistSpinner->setAnchors(squashAnchors);
+	m_minRenderDistSpinner->setRanges(0, 20);
+	m_minRenderDistSpinner->setIncrement(1);
+	m_minRenderDistSpinner->setValue(int(config.getRenderDistanceMin()));
+	m_minRenderDistSpinner->ValueChanged.connect(this, &Options::onSpinnerValueChanged);
+
+	m_maxRenderDistSpinner = new Spinner(rdo);
+	m_maxRenderDistSpinner->setCell(4);
+	m_maxRenderDistSpinner->setAnchors(squashAnchors);
+	m_maxRenderDistSpinner->setRanges(32, 4096);
+	m_maxRenderDistSpinner->setIncrement(32);
+	m_maxRenderDistSpinner->setValue(int(config.getRenderDistanceMax()));
+	m_maxRenderDistSpinner->ValueChanged.connect(this, &Options::onSpinnerValueChanged);
+
+	// Field of View
+	//dw = new OptionWidget(col2, lang.get("RenderFoV"));
+	//dw->setCell(4);
+
+	// Enable Shaders
+	dw = new OptionWidget(col2, lang.get("UseShaders"));
+	dw->setCell(4);
+	cbh = new CheckBoxHolder(dw);
+	cbh->setCell(1);
+	cbh->setAnchors(fillAnchors);
+	CheckBox *checkBox  = new CheckBox(cbh);
+	checkBox->setCell(1);
+	checkBox->setAnchors(squashAnchors);
+	checkBox->setChecked(config.getRenderUseShaders());
+	checkBox->Clicked.connect(this, &Options::onToggleShaders);
+	if (g_config.getRenderTestingShaders()) {
+		checkBox->setEnabled(false);
+	}
+
+	// Terrain Shader
+	dw = new OptionWidget(col2, lang.get("TerrainShader"));
+	dw->setCell(5);
+	m_terrainRendererList = new DropList(dw);
+	m_terrainRendererList->setCell(1);
+	m_terrainRendererList->setAnchors(squashAnchors);
+	m_terrainRendererList->addItem("Original Terrain Renderer");
+	m_terrainRendererList->addItem("Terrain Renderer 2");
+	m_terrainRendererList->setSelected(config.getRenderTerrainRenderer() - 1);
+	m_terrainRendererList->SelectionChanged.connect(this, &Options::onDropListSelectionChanged);
+	
+	// Water Shader
+	//dw = new OptionWidget(col2, lang.get("WaterShader"));
+	//dw->setCell(7);
+
+	// Model Shader
+	dw = new OptionWidget(col2, lang.get("ModelShader"));
+	dw->setCell(6);
+
+	m_modelShaderList = new DropList(dw);
+	m_modelShaderList->setCell(1);
+	m_modelShaderList->setAnchors(squashAnchors);
+	m_modelShaderList->SelectionChanged.connect(this, &Options::onDropListSelectionChanged);
+
+	loadShaderList();
 }
 
 void Options::buildAudioTab() {
@@ -295,6 +455,9 @@ void Options::buildOptionsPanel(CellStrip *container, int cell) {
 	Anchors padAnchors(Anchor(AnchorType::RIGID, 10), Anchor(AnchorType::RIGID, 0),
 		Anchor(AnchorType::RIGID, 10), Anchor(AnchorType::RIGID, 0));
 
+	Anchors centreAnchors;
+	centreAnchors.setCentre(true, false);
+
 	CellStrip *pnl = new CellStrip(this, Orientation::HORIZONTAL, 2);
 	pnl->setAnchors(fillAnchors);
 	pnl->setPos(Vec2i(0,0));
@@ -364,118 +527,14 @@ void Options::buildOptionsPanel(CellStrip *container, int cell) {
 	m_maxCamAltitudeSpinner->setValue(int(config.getCameraMaxDistance()));
 	m_maxCamAltitudeSpinner->ValueChanged.connect(this, &Options::onSpinnerValueChanged);
 
-	// Shadows
-	dw = new OptionWidget(col2, lang.get("Shadows"));
-	dw->setCell(0);
-	m_shadowsList = new DropList(dw);
-	m_shadowsList->setCell(1);
-	m_shadowsList->setAnchors(squashAnchors);
-	for(int i= 0; i < ShadowMode::COUNT; ++i){
-		m_shadowsList->addItem(lang.get(Renderer::shadowsToStr(ShadowMode(i))));
-	}
-	string str= config.getRenderShadows();
-	m_shadowsList->setSelected(clamp(int(Renderer::strToShadows(str)), 0, ShadowMode::COUNT - 1));
-	m_shadowsList->SelectionChanged.connect(this, &Options::onDropListSelectionChanged);
+	// Column 2
+	m_autoRepairCheckBox = createStandardCheckBox(col2, 0, lang.get("AutoRepair"));
+	m_autoRepairCheckBox->setChecked(config.getGsAutoRepairEnabled());
+	m_autoRepairCheckBox->Clicked.connect(this, &Options::onToggleAutoRepair);
 
-	// Texture filter
-	dw = new OptionWidget(col2, lang.get("TextureFilter"));
-	dw->setCell(1);
-	m_filterList = new DropList(dw);
-	m_filterList->setCell(1);
-	m_filterList->setAnchors(squashAnchors);
-	m_filterList->addItem("Bilinear");
-	m_filterList->addItem("Trilinear");
-	m_filterList->setSelected(config.getRenderFilter());
-	m_filterList->SelectionChanged.connect(this, &Options::onDropListSelectionChanged);
-
-	// lights
-	DoubleOption *qw = new DoubleOption(col2, lang.get("MaxLights"), lang.get("Textures3D"));
-	qw->setCustomSplit(true, 35);
-	qw->setCell(2);
-	m_lightsList = new DropList(qw);
-	m_lightsList->setCell(1);
-	m_lightsList->setAnchors(squashAnchors);
-	for (int i = 1; i <= 8; ++i) {
-		m_lightsList->addItem(intToStr(i));
-	}
-	m_lightsList->setSelected(clamp(config.getRenderLightsMax()-1, 0, 7));
-	m_lightsList->SelectionChanged.connect(this, &Options::onDropListSelectionChanged);
-	m_lightsList->setDropBoxHeight(200);
-
-	// 3D Textures
-	CheckBoxHolder *cbh = new CheckBoxHolder(qw);
-	cbh->setCell(3);
-	m_3dTexCheckBox = new CheckBox(cbh);
-	m_3dTexCheckBox->setCell(1);
-	m_3dTexCheckBox->setAnchors(squashAnchors);
-	m_3dTexCheckBox->setChecked(config.getRenderTextures3D());
-	m_3dTexCheckBox->Clicked.connect(this, &Options::on3dTexturesToggle);
-
-	// render min / max distance
-	rdo = new RelatedDoubleOption(col2,
-		lang.get("RenderDistance"), lang.get("Min"), lang.get("Max"));
-	rdo->setCell(3);
-	rdo->setCustomSplits(13, 14, 20);
-	m_minRenderDistSpinner = new Spinner(rdo);
-	m_minRenderDistSpinner->setCell(2);
-	m_minRenderDistSpinner->setAnchors(squashAnchors);
-	m_minRenderDistSpinner->setRanges(0, 20);
-	m_minRenderDistSpinner->setIncrement(1);
-	m_minRenderDistSpinner->setValue(int(config.getRenderDistanceMin()));
-	m_minRenderDistSpinner->ValueChanged.connect(this, &Options::onSpinnerValueChanged);
-
-	m_maxRenderDistSpinner = new Spinner(rdo);
-	m_maxRenderDistSpinner->setCell(4);
-	m_maxRenderDistSpinner->setAnchors(squashAnchors);
-	m_maxRenderDistSpinner->setRanges(32, 4096);
-	m_maxRenderDistSpinner->setIncrement(32);
-	m_maxRenderDistSpinner->setValue(int(config.getRenderDistanceMax()));
-	m_maxRenderDistSpinner->ValueChanged.connect(this, &Options::onSpinnerValueChanged);
-
-	// Field of View
-	//dw = new OptionWidget(col2, lang.get("RenderFoV"));
-	//dw->setCell(4);
-
-	// Enable Shaders
-	dw = new OptionWidget(col2, lang.get("UseShaders"));
-	dw->setCell(4);
-	cbh = new CheckBoxHolder(dw);
-	cbh->setCell(1);
-	cbh->setAnchors(fillAnchors);
-	CheckBox *checkBox  = new CheckBox(cbh);
-	checkBox->setCell(1);
-	checkBox->setAnchors(squashAnchors);
-	checkBox->setChecked(config.getRenderUseShaders());
-	checkBox->Clicked.connect(this, &Options::onToggleShaders);
-	if (g_config.getRenderTestingShaders()) {
-		checkBox->setEnabled(false);
-	}
-
-	// Terrain Shader
-	dw = new OptionWidget(col2, lang.get("TerrainShader"));
-	dw->setCell(5);
-	m_terrainRendererList = new DropList(dw);
-	m_terrainRendererList->setCell(1);
-	m_terrainRendererList->setAnchors(squashAnchors);
-	m_terrainRendererList->addItem("Original Terrain Renderer");
-	m_terrainRendererList->addItem("Terrain Renderer 2");
-	m_terrainRendererList->setSelected(config.getRenderTerrainRenderer() - 1);
-	m_terrainRendererList->SelectionChanged.connect(this, &Options::onDropListSelectionChanged);
-	
-	// Water Shader
-	//dw = new OptionWidget(col2, lang.get("WaterShader"));
-	//dw->setCell(7);
-
-	// Model Shader
-	dw = new OptionWidget(col2, lang.get("ModelShader"));
-	dw->setCell(6);
-
-	m_modelShaderList = new DropList(dw);
-	m_modelShaderList->setCell(1);
-	m_modelShaderList->setAnchors(squashAnchors);
-	m_modelShaderList->SelectionChanged.connect(this, &Options::onDropListSelectionChanged);
-
-	loadShaderList();
+	m_autoReturnCheckBox = createStandardCheckBox(col2, 1, lang.get("AutoReturn"));
+	m_autoReturnCheckBox->setChecked(config.getGsAutoReturnEnabled());
+	m_autoReturnCheckBox->Clicked.connect(this, &Options::onToggleAutoReturn);
 }
 
 void Options::loadShaderList() {
@@ -500,6 +559,29 @@ void Options::loadShaderList() {
 	}
 }
 
+CheckBox *Options::createStandardCheckBox(CellStrip *container, int cell, const string &text) {
+	Anchors fillAnchors(Anchor(AnchorType::RIGID, 0));
+
+	Anchors centreAnchors;
+	centreAnchors.setCentre(true, false);
+
+	OptionWidget *dw = new OptionWidget(container, text);
+	dw->setCell(cell);
+	
+	CheckBoxHolder *cbh = new CheckBoxHolder(dw);
+	cbh->setCell(1);
+	cbh->setAnchors(fillAnchors);
+	
+	Vec2i cbSize(g_widgetConfig.getDefaultItemHeight());
+
+	CheckBox *checkBox = new CheckBox(cbh);
+	checkBox->setCell(2);
+	checkBox->setSize(cbSize);
+	checkBox->setAnchors(centreAnchors);
+	
+	return checkBox;
+}
+
 void Options::onToggleShaders(Widget*) {
 	g_config.setRenderUseShaders(!g_config.getRenderUseShaders());
 	loadShaderList();
@@ -518,6 +600,27 @@ void Options::onToggleDebugMode(Widget*) {
 
 void Options::onToggleDebugKeys(Widget*) {
 	g_config.setMiscDebugKeys(m_debugKeysCheckBox->isChecked());
+}
+
+void Options::onToggleFullscreen(Widget*) {
+	g_config.setDisplayWindowed(!m_fullscreenCheckBox->isChecked());
+	g_program.toggleFullscreen();
+}
+
+void Options::onToggleAutoRepair(Widget*) {
+	g_config.setGsAutoRepairEnabled(m_autoRepairCheckBox->isChecked());
+}
+
+void Options::onToggleAutoReturn(Widget*) {
+	g_config.setGsAutoReturnEnabled(m_autoReturnCheckBox->isChecked());
+}
+
+void Options::onToggleBumpMapping(Widget*) {
+	g_config.setRenderEnableBumpMapping(m_bumpMappingCheckBox->isChecked());
+}
+
+void Options::onToggleSpecularMapping(Widget*) {
+	g_config.setRenderEnableSpecMapping(m_specularMappingCheckBox->isChecked());
 }
 
 void Options::on3dTexturesToggle(Widget*) {
