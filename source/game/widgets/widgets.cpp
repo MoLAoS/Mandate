@@ -946,10 +946,14 @@ void TabWidget::onButtonClicked(Widget* widget) {
 	assert(index >= 0);
 
 	if (m_active != index) {
+		foreach (Buttons, it, m_buttons) {
+			(*it)->setSelected(false);
+		}
 		// hide the previous page and show the current one
 		m_pages[m_active]->setVisible(false);
 		m_pages[index]->setVisible(true);
 		m_active = index;
+		m_buttons[index]->setSelected(true);
 	}
 }
 
@@ -983,6 +987,7 @@ void TabWidget::add(const string &text, CellStrip *cellStrip) {
 		// show the first page
 		if (index == 0) {
 			cellStrip->setVisible(true);
+			m_buttons[m_buttons.size() - 1]->setSelected(true);
 		} else {
 			cellStrip->setVisible(false);
 		}
