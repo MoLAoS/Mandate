@@ -326,6 +326,7 @@ void ModelRendererGl::renderMesh(const Mesh *mesh, float fade, int frame, int id
 		mainBlock = &mesh->getInterpolationData()->getVertexBlock();
 	}
 	const int stride = mainBlock->getStride();
+	int tanAttribLoc = -1;
 	if (mainBlock->vbo_handle) {
 #		define VBO_OFFSET(x) ((void*)(x * sizeof(float)))
 		glBindBuffer(GL_ARRAY_BUFFER, mainBlock->vbo_handle);
@@ -337,10 +338,10 @@ void ModelRendererGl::renderMesh(const Mesh *mesh, float fade, int frame, int id
 		&& (mainBlock->type == MeshVertexBlock::POS_NORM_TAN 
 		|| mainBlock->type == MeshVertexBlock::POS_NORM_TAN_UV)) {
 			shaderProgram->setUniform("gae_HasNormalMap", 1u);
-			int loc = shaderProgram->getAttribLoc("gae_Tangent");
-			if (loc != -1) {
-				glEnableVertexAttribArray(loc);
-				glVertexAttribPointer(loc, 3, GL_FLOAT, GL_TRUE, stride, VBO_OFFSET(6));
+			tanAttribLoc = shaderProgram->getAttribLoc("gae_Tangent");
+			if (tanAttribLoc != -1) {
+				glEnableVertexAttribArray(tanAttribLoc);
+				glVertexAttribPointer(tanAttribLoc, 3, GL_FLOAT, GL_TRUE, stride, VBO_OFFSET(6));
 			}
 		} else {
 			shaderProgram->setUniform("gae_HasNormalMap", 0u);
@@ -385,6 +386,9 @@ void ModelRendererGl::renderMesh(const Mesh *mesh, float fade, int frame, int id
 
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+		if (tanAttribLoc != -1) {
+			glDisableVertexAttribArray(tanAttribLoc);
+		}
 
 		assertGl();
 
@@ -397,10 +401,10 @@ void ModelRendererGl::renderMesh(const Mesh *mesh, float fade, int frame, int id
 		&& (mainBlock->type == MeshVertexBlock::POS_NORM_TAN 
 		|| mainBlock->type == MeshVertexBlock::POS_NORM_TAN_UV)) {
 			shaderProgram->setUniform("gae_HasNormalMap", 1u);
-			int loc = shaderProgram->getAttribLoc("gae_Tangent");
-			if (loc != -1) {
-				glEnableVertexAttribArray(loc);
-				glVertexAttribPointer(loc, 3, GL_FLOAT, GL_TRUE, stride, &mainBlock->m_posNormTan[0].tan);
+			tanAttribLoc = shaderProgram->getAttribLoc("gae_Tangent");
+			if (tanAttribLoc != -1) {
+				glEnableVertexAttribArray(tanAttribLoc);
+				glVertexAttribPointer(tanAttribLoc, 3, GL_FLOAT, GL_TRUE, stride, &mainBlock->m_posNormTan[0].tan);
 			}
 		} else {
 			shaderProgram->setUniform("gae_HasNormalMap", 0u);
@@ -456,6 +460,9 @@ void ModelRendererGl::renderMesh(const Mesh *mesh, float fade, int frame, int id
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 		} else {
 			glDrawRangeElements(GL_TRIANGLES, 0, vertexCount-1, indexCount, indexType, mesh->getIndices().m_indices);
+		}
+		if (tanAttribLoc != -1) {
+			glDisableVertexAttribArray(tanAttribLoc);
 		}
 	}
 

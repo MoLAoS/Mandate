@@ -418,6 +418,7 @@ void TerrainRenderer2::render(SceneCuller &culler) {
 	const Texture2D *fowTex = g_userInterface.getMinimap()->getFowTexture();
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, static_cast<const Texture2DGl*>(fowTex)->getHandle());
+	
 	// update gl texture...
 	///@todo don't do this here, update after 'unitTex' is updated (every fifth call to Minimap::update())
 	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, fowTex->getPixmap()->getW(), fowTex->getPixmap()->getH(),
@@ -464,9 +465,9 @@ void TerrainRenderer2::render(SceneCuller &culler) {
 	// disable arrays/buffers & restore state
 	glDisableClientState(GL_VERTEX_ARRAY);
 	glDisableClientState(GL_NORMAL_ARRAY);
-	glActiveTexture(Renderer::fowTexUnit);
+	glClientActiveTexture(Renderer::fowTexUnit);
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-	glActiveTexture(Renderer::baseTexUnit);
+	glClientActiveTexture(Renderer::baseTexUnit);
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 

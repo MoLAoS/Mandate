@@ -196,12 +196,6 @@ void SurfaceAtlas2::buildTexture() {
 		tex->getPixmap()->init(texSize, texSize, 3);
 		m_textures.push_back(tex);
 	}
-	//Vec3f debugColour(1.f, 0.f, 0.f);
-	//for (int y=0; y < m_height; ++y) {
-	//	for (int x=0; x < m_width; ++x) {
-	//		pixmap->setPixel(x, y, debugColour.ptr());
-	//	}
-	//}
 
 	sideLength = texSize / surfaceSize;
 	float stepSize = 1.f / float(sideLength);
@@ -220,9 +214,6 @@ void SurfaceAtlas2::buildTexture() {
 
 			float s = tx * stepSize + pixelSize;
 			float t = ty * stepSize + pixelSize;
-			if (s < 0.f || s > 1.f || t < 0.f || t > 1.f) {
-				DEBUG_HOOK();
-			}
 			surfaceInfos[siIndex].setCoord(Vec2f(s, t));
 			surfaceInfos[siIndex].setTexId(texIndex);
 			x += surfaceSize;
@@ -237,7 +228,7 @@ void SurfaceAtlas2::buildTexture() {
 				}
 			}
 		}
-		pixmap->savePng("terrain_tex" + intToStr(texIndex) + ".png");
+		//pixmap->savePng("terrain_tex" + intToStr(texIndex) + ".png");
 		++texIndex;
 	} while (siIndex < surfaceInfos.size());
 }
