@@ -331,6 +331,10 @@ bool ask(string message) {
 	return res != 0;
 }
 
+void getPossibleScreenModes(vector<int> &widths, vector<int> &heights) {
+	///@todo getPossibleScreenModes for linux
+}
+
 void getScreenMode(int &width, int &height){
 	const SDL_VideoInfo *vidinfo = SDL_GetVideoInfo();
 	width = vidinfo->current_w;

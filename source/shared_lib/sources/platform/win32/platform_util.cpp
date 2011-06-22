@@ -153,6 +153,24 @@ void restoreVideoMode() {
 	assert(dispChangeErr == DISP_CHANGE_SUCCESSFUL);
 }
 
+void getPossibleScreenModes(vector<int> &widths, vector<int> &heights) {
+	// maybe have colorBits here too -hailstone 22June2011
+	int currentWidth = 0;
+	int currentHeight = 0;
+
+	DEVMODE dm = {0};
+	dm.dmSize = sizeof(dm);
+	for (int iModeNum = 0; EnumDisplaySettings(NULL, iModeNum, &dm) != 0; ++iModeNum) {
+		// make sure one is different to previous for unique combination
+		if (currentWidth != dm.dmPelsWidth || currentHeight != dm.dmPelsHeight) {
+			widths.push_back(dm.dmPelsWidth);
+			heights.push_back(dm.dmPelsHeight);
+			currentWidth = dm.dmPelsWidth;
+			currentHeight = dm.dmPelsHeight;
+		}
+	}
+}
+
 void getScreenMode(int &width, int &height) {
 	width = GetSystemMetrics(SM_CXSCREEN);
 	height = GetSystemMetrics(SM_CYSCREEN);

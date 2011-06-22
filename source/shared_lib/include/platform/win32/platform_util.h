@@ -100,6 +100,7 @@ void exceptionMessage(const exception &excp);
 inline int getScreenW()			{return GetSystemMetrics(SM_CXSCREEN);}
 inline int getScreenH()			{return GetSystemMetrics(SM_CYSCREEN);}
 
+void getPossibleScreenModes(vector<int> &widths, vector<int> &heights);
 void getScreenMode(int &width, int &height);
 
 inline void sleep(int millis)	{Sleep(millis);}

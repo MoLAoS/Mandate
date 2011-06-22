@@ -88,6 +88,7 @@ inline int getScreenH() {
 	return SDL_GetVideoSurface()->h;
 }
 
+void getPossibleScreenModes(vector<int> &widths, vector<int> &heights);
 void getScreenMode(int &width, int &height);
 
 inline void sleep(int millis) {

@@ -68,6 +68,18 @@ public:
 	sigslot::signal<Widget*> ValueChanged;
 };
 
+struct Resolution {
+	int width;
+	int height;
+	Resolution(int width, int height) {
+		this->width = width;
+		this->height = height;
+	}
+	string toString() {
+		return Conversion::toStr(width) + "x" + Conversion::toStr(height);
+	}
+};
+
 // =====================================================
 // 	class Options
 //
@@ -105,6 +117,7 @@ private:
 
 	map<string,string>  m_langMap;
 	vector<string>      m_modelShaders;
+	vector<Resolution>	m_resolutions;
 
 	// can be null, some options are disabled if in game
 	Glest::Menu::MenuStateOptions *m_optionsMenu;

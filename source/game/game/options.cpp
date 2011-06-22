@@ -192,8 +192,18 @@ void Options::buildVideoTab() {
 	m_resolutionList = new DropList(dw);
 	m_resolutionList->setCell(1);
 	m_resolutionList->setAnchors(squashAnchors);
-	m_resolutionList->addItem(Conversion::toStr(config.getDisplayWidth()) + "x" + Conversion::toStr(config.getDisplayHeight()));
-	m_resolutionList->setSelected(0);
+
+	// add the possible resoultions to the list
+	vector<int> widths;
+	vector<int> heights;
+	getPossibleScreenModes(widths, heights);
+	for (int i = 0; i < widths.size(); ++i) {
+		Resolution res(widths[i], heights[i]);
+		m_resolutions.push_back(res);
+		m_resolutionList->addItem(res.toString());
+	}
+
+	m_resolutionList->setSelected(Conversion::toStr(config.getDisplayWidth()) + "x" + Conversion::toStr(config.getDisplayHeight()));
 	m_resolutionList->SelectionChanged.connect(this, &Options::onDropListSelectionChanged);
 
 	m_fullscreenCheckBox = createStandardCheckBox(col1, 1, lang.get("Fullscreen"));
@@ -675,12 +685,28 @@ void Options::onDropListSelectionChanged(Widget *source) {
 	} else if (list == m_lightsList) {
 		config.setRenderLightsMax(list->getSelectedIndex() + 1);
 // 		saveConfig();
-	} else if (list = m_modelShaderList) {
+	} else if (list == m_modelShaderList) {
 		string shader = m_modelShaders[list->getSelectedIndex()];
 		g_renderer.changeShader(shader);
 		g_config.setRenderModelShader(shader);
 	} else if (list == m_terrainRendererList) {
 		g_config.setRenderTerrainRenderer(list->getSelectedIndex() + 1);
+	} else if (list == m_resolutionList) {
+		// change res
+		Resolution res = m_resolutions[m_resolutionList->getSelectedIndex()];
+		int colorBits = config.getRenderColorBits();
+		int refresh = g_config.getDisplayRefreshFrequency();
+
+		// recreate window
+		/*
+		if (changeVideoMode(res.width, res.height, colorBits, refresh)) {
+			// show timed dialog
+		} else {
+			// show error dialog
+		}
+		*/
+
+		///@todo update shadow texture size if larger than res -hailstone 22June2011
 	}
 }
 
