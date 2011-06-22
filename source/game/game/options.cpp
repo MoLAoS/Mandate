@@ -537,6 +537,14 @@ void Options::buildOptionsPanel(CellStrip *container, int cell) {
 	m_maxCamAltitudeSpinner->setValue(int(config.getCameraMaxDistance()));
 	m_maxCamAltitudeSpinner->ValueChanged.connect(this, &Options::onSpinnerValueChanged);
 
+	m_cameraInvertXAxisCheckBox = createStandardCheckBox(col1, 3, lang.get("CameraInvertXAxis"));
+	m_cameraInvertXAxisCheckBox->setChecked(config.getCameraInvertXAxis());
+	m_cameraInvertXAxisCheckBox->Clicked.connect(this, &Options::onToggleCameraInvertXAxis);
+	
+	m_cameraInvertYAxisCheckBox = createStandardCheckBox(col1, 4, lang.get("CameraInvertYAxis"));
+	m_cameraInvertYAxisCheckBox->setChecked(config.getCameraInvertYAxis());
+	m_cameraInvertYAxisCheckBox->Clicked.connect(this, &Options::onToggleCameraInvertYAxis);
+
 	// Column 2
 	m_autoRepairCheckBox = createStandardCheckBox(col2, 0, lang.get("AutoRepair"));
 	m_autoRepairCheckBox->setChecked(config.getGsAutoRepairEnabled());
@@ -631,6 +639,14 @@ void Options::onToggleBumpMapping(Widget*) {
 
 void Options::onToggleSpecularMapping(Widget*) {
 	g_config.setRenderEnableSpecMapping(m_specularMappingCheckBox->isChecked());
+}
+
+void Options::onToggleCameraInvertXAxis(Widget*) {
+	g_config.setCameraInvertXAxis(m_cameraInvertXAxisCheckBox->isChecked());
+}
+
+void Options::onToggleCameraInvertYAxis(Widget*) {
+	g_config.setCameraInvertYAxis(m_cameraInvertYAxisCheckBox->isChecked());
 }
 
 void Options::on3dTexturesToggle(Widget*) {

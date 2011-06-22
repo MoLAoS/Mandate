@@ -103,7 +103,9 @@ private:
 				*m_autoRepairCheckBox,
 				*m_autoReturnCheckBox,
 				*m_bumpMappingCheckBox,
-				*m_specularMappingCheckBox;
+				*m_specularMappingCheckBox,
+				*m_cameraInvertXAxisCheckBox,
+				*m_cameraInvertYAxisCheckBox;
 	
 	Slider2		*m_volFxSlider,
 				*m_volAmbientSlider,
@@ -160,6 +162,8 @@ private:
 	void onToggleAutoReturn(Widget*);
 	void onToggleBumpMapping(Widget*);
 	void onToggleSpecularMapping(Widget*);
+	void onToggleCameraInvertXAxis(Widget*);
+	void onToggleCameraInvertYAxis(Widget*);
 };
 
 // =====================================================
