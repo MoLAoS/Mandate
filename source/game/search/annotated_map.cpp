@@ -267,7 +267,7 @@ bool AnnotatedMap::updateCell(const Vec2i &pos, const Field field) {
   */
 void AnnotatedMap::computeClearances(const Vec2i &pos) {
 	assert(cellMap->isInside(pos));
-	if (pos.x >= cellMap->getW() - 2 || pos.y >= cellMap->getH() - 2) {
+	if (pos.x < 2 || pos.y < 2 || pos.x >= cellMap->getW() - 4 || pos.y >= cellMap->getH() - 4) {
 		metrics[pos].setAll(0);
 		return;
 	}

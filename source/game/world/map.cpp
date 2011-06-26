@@ -243,7 +243,7 @@ void Map::load(const string &path, TechTree *techTree, Tileset *tileset) {
 				Tile *tile = getTile(Vec2i(x, y));
 				Vec3f vert(x * cellScale + cellScale / 2.f, 0.f, y * cellScale + cellScale / 2.f);
 
-				if (objNumber == 0 || x == m_tileSize.w - 1 || y == m_tileSize.h - 1) {
+				if (objNumber == 0 || x == 0 || y == 0 || x >= m_tileSize.w - 2 || y >= m_tileSize.h - 2) {
 					tile->setObject(NULL);
 				} else if (objNumber <= Tileset::objCount) {
 					MapObject *o = g_world.newMapObject(tileset->getObjectType(objNumber - 1), vert);
