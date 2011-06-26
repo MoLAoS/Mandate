@@ -136,7 +136,7 @@ bool changeVideoMode(int resW, int resH, int colorBits, int refreshFrequency) {
 
 			devMode.dmDisplayFrequency = refreshFrequency;
 
-			LONG result = ChangeDisplaySettings(&devMode, 0);
+			LONG result = ChangeDisplaySettings(&devMode, CDS_FULLSCREEN);
 			if (result == DISP_CHANGE_SUCCESSFUL) {
 				return true;
 			} else {
