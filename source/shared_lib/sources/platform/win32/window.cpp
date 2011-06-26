@@ -43,8 +43,6 @@ Window::WindowMap Window::createdWindows;
 Window::Window() {
 	handle = 0;
 	style =  windowedFixedStyle;
-	exStyle = 0;
-	ownDc = false;
 	x = 0;
 	y = 0;
 	w = 100;
@@ -114,15 +112,23 @@ void Window::setSize(int w, int h) {
 
 	if (windowStyle != wsFullscreen) {
 		RECT rect;
+		rect.left = x;
+		rect.top = y;
+		rect.bottom = y + h;
+		rect.right = x + w;
+
+		AdjustWindowRectEx(&rect, style, FALSE, 0);
+
+		w = rect.right - rect.left;
+		h = rect.bottom - rect.top;
+	} else {
+		RECT rect;
 		rect.left = 0;
 		rect.top = 0;
 		rect.bottom = h;
 		rect.right = w;
 
-		AdjustWindowRect(&rect, style, FALSE);
-
-		w = rect.right - rect.left;
-		h = rect.bottom - rect.top;
+		AdjustWindowRectEx(&rect, style, FALSE, WS_EX_APPWINDOW);
 	}
 
 	this->w = w;
@@ -162,18 +168,12 @@ void Window::setStyle(WindowStyle windowStyle) {
 	switch (windowStyle) {
 	case wsFullscreen:
 		style = fullscreenStyle;
-		exStyle = WS_EX_APPWINDOW;
-		ownDc = true;
 		break;
 	case wsWindowedFixed:
 		style = windowedFixedStyle;
-		exStyle = 0;
-		ownDc = false;
 		break;
 	case wsWindowedResizeable:
 		style = windowedResizeableStyle;
-		exStyle = 0;
-		ownDc = false;
 		break;
 	}
 
@@ -195,12 +195,34 @@ void Window::setMouseCapture(bool c) {
 	}
 }
 
-void Window::toggleFullscreen() {
+Vec2i centreWindowPos(Vec2i wndSize) {
+	RECT rect;
+	SystemParametersInfo(SPI_GETWORKAREA, 0, &rect, 0);
+	Vec2i desktopPos(rect.left, rect.top);
+	Vec2i desktopSize(rect.right - rect.left, rect.bottom - rect.top);
+	Vec2i pos = (desktopSize - wndSize) / 2 + desktopPos;
+	return Vec2i(max(pos.x, desktopPos.x), max(pos.y, desktopPos.y));
+}
+
+bool Window::toggleFullscreen() {
 	if (windowStyle == wsFullscreen) {
 		setStyle(wsWindowedFixed);
+		restoreVideoMode();
 	} else {
+		if (!changeVideoMode(m_videoMode)) {
+			return false;
+		}
 		setStyle(wsFullscreen);
 	}
+	Vec2i pos;
+	if (windowStyle != wsFullscreen) {
+		pos = centreWindowPos(Vec2i(m_videoMode.w, m_videoMode.h));
+	} else {
+		pos = Vec2i(0, 0);
+	}
+	setPos(pos.x, pos.y);
+	setSize(m_videoMode.w, m_videoMode.h);
+	return true;
 }
 
 void Window::create() {
@@ -474,7 +496,7 @@ void Window::registerWindow(WNDPROC wndProc) {
 	this->className = "Window" + intToStr(Window::getNextClassName());
 
 	wc.cbSize        = sizeof(WNDCLASSEX);
-	wc.style         = CS_DBLCLKS | (ownDc ? CS_OWNDC : 0);
+	wc.style         = CS_DBLCLKS | CS_OWNDC;
 	wc.lpfnWndProc   = wndProc == NULL ? eventRouter : wndProc;
 	wc.cbClsExtra    = 0;
 	wc.cbWndExtra    = 0;
@@ -492,27 +514,20 @@ void Window::registerWindow(WNDPROC wndProc) {
 }
 
 void Window::createWindow(LPVOID creationData) {
-
-	handle = CreateWindowEx(
-				 exStyle,
-				 className.c_str(),
-				 text.c_str(),
-				 style,
-				 x, y, w, h,
-				 NULL, NULL, GetModuleHandle(NULL), creationData);
+	handle = CreateWindowEx(WS_EX_APPWINDOW, className.c_str(), text.c_str(),
+				 style, x, y, w, h, NULL, NULL, GetModuleHandle(NULL), creationData);
 
 	createdWindows.insert(std::pair<WindowHandle, Window*>(handle, this));
 	eventRouter(handle, WM_CREATE, 0, 0);
 
 	assert(handle != NULL);
 
-	RECT rect;
-	SystemParametersInfo(SPI_GETWORKAREA, 0, &rect, 0);
-	Vec2i size(w, h);
-	Vec2i desktopPos(rect.left, rect.top);
-	Vec2i desktopSize(rect.right - rect.left, rect.bottom - rect.top);
-	Vec2i pos = (desktopSize - size) / 2 + desktopPos;
-	setPos(max(pos.x, desktopPos.x), max(0, pos.y));
+	Vec2i pos;	if (windowStyle != wsFullscreen) {
+		pos = centreWindowPos(Vec2i(w, h));
+	} else {
+		pos = Vec2i(0, 0);
+	}
+	setPos(pos.x, pos.y);
 	ShowWindow(handle, SW_SHOW);
 	UpdateWindow(handle);
 }

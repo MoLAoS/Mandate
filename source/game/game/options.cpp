@@ -191,24 +191,29 @@ void Options::buildVideoTab() {
 
 	m_resolutionList = new DropList(dw);
 	m_resolutionList->setCell(1);
+	m_resolutionList->setDropBoxHeight(280);
 	m_resolutionList->setAnchors(squashAnchors);
 
-	// add the possible resoultions to the list
-	vector<int> widths;
-	vector<int> heights;
-	getPossibleScreenModes(widths, heights);
-	for (int i = 0; i < widths.size(); ++i) {
-		Resolution res(widths[i], heights[i]);
-		m_resolutions.push_back(res);
-		m_resolutionList->addItem(res.toString());
-	}
+	m_previousVidMode  = VideoMode(g_config.getDisplayWidth(), g_config.getDisplayHeight(),
+		g_config.getRenderColorBits(), g_config.getDisplayRefreshFrequency());
 
-	m_resolutionList->setSelected(Conversion::toStr(config.getDisplayWidth()) + "x" + Conversion::toStr(config.getDisplayHeight()));
+	// add the possible resoultions to the list
+	vector<VideoMode> modes;
+	getPossibleScreenModes(modes);
+	for (int i = 0; i < modes.size(); ++i) {
+		m_resolutions.push_back(modes[i]);
+		m_resolutionList->addItem(modes[i].toString());
+	}
+	syncVideoModeList(m_previousVidMode);
 	m_resolutionList->SelectionChanged.connect(this, &Options::onDropListSelectionChanged);
 
 	m_fullscreenCheckBox = createStandardCheckBox(col1, 1, lang.get("Fullscreen"));
 	m_fullscreenCheckBox->setChecked(!config.getDisplayWindowed());
 	m_fullscreenCheckBox->Clicked.connect(this, &Options::onToggleFullscreen);
+	if (m_resolutionList->getSelectedIndex() == -1) {
+		// current settings do not match an acceptable vid mode, disable
+		m_fullscreenCheckBox->setEnabled(false);
+	}
 
 	m_bumpMappingCheckBox = createStandardCheckBox(col1, 2, lang.get("BumpMapping"));
 	m_bumpMappingCheckBox->setChecked(config.getRenderEnableBumpMapping());
@@ -336,6 +341,16 @@ void Options::buildVideoTab() {
 	m_modelShaderList->SelectionChanged.connect(this, &Options::onDropListSelectionChanged);
 
 	loadShaderList();
+}
+
+void Options::syncVideoModeList(VideoMode mode) {
+	int currentIndex = -1;
+	for (int i = 0; i < m_resolutions.size(); ++i) {
+		if (m_resolutions[i] == mode) {
+			currentIndex = i;
+		}
+	}
+	m_resolutionList->setSelected(currentIndex);
 }
 
 void Options::buildAudioTab() {
@@ -621,8 +636,11 @@ void Options::onToggleDebugKeys(Widget*) {
 }
 
 void Options::onToggleFullscreen(Widget*) {
-	g_config.setDisplayWindowed(!m_fullscreenCheckBox->isChecked());
-	g_program.toggleFullscreen();
+	if (g_program.toggleFullscreen()) {
+		g_config.setDisplayWindowed(!m_fullscreenCheckBox->isChecked());
+	} else {
+		m_fullscreenCheckBox->setChecked(false);
+	}
 }
 
 void Options::onToggleAutoRepair(Widget*) {
@@ -709,10 +727,19 @@ void Options::onDropListSelectionChanged(Widget *source) {
 		g_config.setRenderTerrainRenderer(list->getSelectedIndex() + 1);
 	} else if (list == m_resolutionList) {
 		// change res
-		Resolution res = m_resolutions[m_resolutionList->getSelectedIndex()];
-		int colorBits = config.getRenderColorBits();
-		int refresh = g_config.getDisplayRefreshFrequency();
-
+		VideoMode mode = m_resolutions[m_resolutionList->getSelectedIndex()];
+		if (mode != g_program.getVideoMode()) {
+			m_previousVidMode = g_program.getVideoMode();
+			Vec2i sz(400, 240);
+			Vec2i screenDims = g_metrics.getScreenDims();
+			Vec2i pos = (screenDims - sz) / 2;
+			m_messageDialog = MessageDialog::showDialog(pos, sz, g_lang.get("Confirm"),
+				g_lang.get("ConfirmResChange"), g_lang.get("Ok"), g_lang.get("Cancel"));
+			m_messageDialog->Button1Clicked.connect(this, &Options::onConfirmResolutionChange);
+			m_messageDialog->Button2Clicked.connect(this, &Options::onCancelResolutionChange);
+			m_messageDialog->Escaped.connect(this, &Options::onCancelResolutionChange);
+			m_messageDialog->Close.connect(this, &Options::onCancelResolutionChange);
+		}
 		// recreate window
 		/*
 		if (changeVideoMode(res.width, res.height, colorBits, refresh)) {
@@ -724,6 +751,24 @@ void Options::onDropListSelectionChanged(Widget *source) {
 
 		///@todo update shadow texture size if larger than res -hailstone 22June2011
 	}
+}
+
+void Options::onCancelResolutionChange(Widget*) {
+	m_rootWindow->removeFloatingWidget(m_messageDialog);
+	m_messageDialog = 0;
+	syncVideoModeList(m_previousVidMode);
+}
+
+void Options::onConfirmResolutionChange(Widget*) {
+	m_rootWindow->removeFloatingWidget(m_messageDialog);
+	m_messageDialog = 0;
+	VideoMode mode = m_resolutions[m_resolutionList->getSelectedIndex()];
+	g_config.setDisplayWidth(mode.w);
+	g_config.setDisplayHeight(mode.h);
+	g_config.setDisplayRefreshFrequency(mode.freq);
+	g_config.setRenderColorBits(mode.bpp);
+	g_config.save();
+	g_program.exit();
 }
 
 void Options::onSliderValueChanged(Widget *source) {

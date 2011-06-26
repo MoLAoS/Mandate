@@ -20,15 +20,15 @@
 #include <errno.h>
 
 #include "types.h"
+#include "conversion.h"
+
+namespace Shared { namespace Platform {
 
 using std::string;
 using std::vector;
 using std::exception;
 using std::runtime_error;
-
-using Shared::Platform::int64;
-
-namespace Shared { namespace Platform {
+using namespace Util::Conversion;
 
 void fail(const char *msg, HRESULT hr);
 
@@ -89,8 +89,28 @@ inline void freeDirIterator(DirIterator &di) {
 void mkdir(const string &path, bool ignoreDirExists = false);
 size_t getFileSize(const string &path);
 
-bool changeVideoMode(int resH, int resW, int colorBits, int refreshFrequency);
+struct VideoMode {
+	int w, h;
+	int bpp;
+	int freq;
+
+	VideoMode() : w(0), h(0), bpp(0), freq(0) {}
+	VideoMode(int w, int h, int bpp, int freq) : w(w), h(h), bpp(bpp), freq(freq) {}
+
+	string toString() {
+		return toStr(w) + "x" + toStr(h) + " " + toStr(bpp) + "bpp @ " + toStr(freq) + "Hz.";
+	}
+	bool operator==(const VideoMode &m) const {
+		return (w == m.w && h == m.h && bpp == m.bpp && freq == m.freq);
+	}
+	bool operator!=(const VideoMode &m) const {
+		return !(*this == m);
+	}
+};
+
+bool changeVideoMode(const VideoMode in_mode);
 void restoreVideoMode();
+void getPossibleScreenModes(vector<VideoMode> &out_modes);
 void getScreenMode(int &width, int &height);
 
 void message(string message);
@@ -99,9 +119,6 @@ void exceptionMessage(const exception &excp);
 
 inline int getScreenW()			{return GetSystemMetrics(SM_CXSCREEN);}
 inline int getScreenH()			{return GetSystemMetrics(SM_CYSCREEN);}
-
-void getPossibleScreenModes(vector<int> &widths, vector<int> &heights);
-void getScreenMode(int &width, int &height);
 
 inline void sleep(int millis)	{Sleep(millis);}
 inline void showCursor(bool b)	{ShowCursor(b);}

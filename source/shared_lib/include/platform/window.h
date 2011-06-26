@@ -20,6 +20,7 @@
 #include "types.h"
 #include "input.h"
 #include "timer.h"
+#include "platform_util.h"
 
 using std::map;
 using std::string;
@@ -69,14 +70,13 @@ protected:
 	int w;
 	int h;
 	WindowHandle handle;
+	VideoMode m_videoMode;
 
 #	if defined(WIN32)
 		string text;
 		WindowStyle windowStyle;
 		string className;
 		DWORD style;
-		DWORD exStyle;
-		bool ownDc;
 
 		void setMouseCapture(bool c);
 #	else
@@ -100,6 +100,7 @@ public:
 	int getClientW();//			{return getW();}
 	int getClientH();//			{return getH();}
 	float getAspect();
+	VideoMode getVideoMode() const { return m_videoMode; }
 
 	//object state
 	void setText(string text);
@@ -108,6 +109,7 @@ public:
 	void setPos(int x, int y);
 	void setEnabled(bool enabled);
 	void setVisible(bool visible);
+	void setVideoMode(VideoMode viedoMode) { m_videoMode = viedoMode; }
 
 	//misc
 	void create();
@@ -116,7 +118,7 @@ public:
 	void restore();
 	//void showPopupMenu(Menu *menu, int x, int y);
 	void destroy();
-	void toggleFullscreen();
+	bool toggleFullscreen();
 	bool handleEvent();
 
 protected:

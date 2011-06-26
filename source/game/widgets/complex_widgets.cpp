@@ -522,10 +522,11 @@ void DropList::onExpandList(Widget*) {
 void DropList::onSelectionMade(Widget *source) {
 	ListBase *lb = static_cast<ListBase*>(source);
 	assert(floatingList == lb);
-	setSelected(lb->getSelectedIndex());
+	int ndx = lb->getSelectedIndex();
 	floatingList->Destroyed.disconnect(this);
 	onListDisposed(lb);
 	getRootWindow()->removeFloatingWidget(lb);
+	setSelected(ndx);
 }
 
 void DropList::onSameSelected(Widget *source) {

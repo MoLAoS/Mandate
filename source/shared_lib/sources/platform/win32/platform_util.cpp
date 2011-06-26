@@ -126,16 +126,12 @@ size_t getFileSize(const string &path) {
 
 
 
-bool changeVideoMode(int resW, int resH, int colorBits, int refreshFrequency) {
+bool changeVideoMode(const VideoMode in_mode) {
 	DEVMODE devMode;
 
 	for (int i = 0; EnumDisplaySettings(NULL, i, &devMode) ;i++) {
-		if (devMode.dmPelsWidth == resW &&
-				devMode.dmPelsHeight == resH &&
-				devMode.dmBitsPerPel == colorBits) {
-
-			devMode.dmDisplayFrequency = refreshFrequency;
-
+		if (devMode.dmPelsWidth == in_mode.w && devMode.dmPelsHeight == in_mode.h
+		&& devMode.dmBitsPerPel == in_mode.bpp && devMode.dmDisplayFrequency == in_mode.freq) {
 			LONG result = ChangeDisplaySettings(&devMode, CDS_FULLSCREEN);
 			if (result == DISP_CHANGE_SUCCESSFUL) {
 				return true;
@@ -153,20 +149,13 @@ void restoreVideoMode() {
 	assert(dispChangeErr == DISP_CHANGE_SUCCESSFUL);
 }
 
-void getPossibleScreenModes(vector<int> &widths, vector<int> &heights) {
-	// maybe have colorBits here too -hailstone 22June2011
-	int currentWidth = 0;
-	int currentHeight = 0;
-
+void getPossibleScreenModes(vector<VideoMode> &out_modes) {
 	DEVMODE dm = {0};
 	dm.dmSize = sizeof(dm);
 	for (int iModeNum = 0; EnumDisplaySettings(NULL, iModeNum, &dm) != 0; ++iModeNum) {
-		// make sure one is different to previous for unique combination
-		if (currentWidth != dm.dmPelsWidth || currentHeight != dm.dmPelsHeight) {
-			widths.push_back(dm.dmPelsWidth);
-			heights.push_back(dm.dmPelsHeight);
-			currentWidth = dm.dmPelsWidth;
-			currentHeight = dm.dmPelsHeight;
+		if (dm.dmBitsPerPel == 32/* || dm.dmBitsPerPel == 16*/) {
+			VideoMode mode(dm.dmPelsWidth, dm.dmPelsHeight, dm.dmBitsPerPel, dm.dmDisplayFrequency);
+			out_modes.push_back(mode);
 		}
 	}
 }

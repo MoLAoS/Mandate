@@ -17,6 +17,7 @@
 #include "compound_widgets.h"
 #include "slider.h"
 #include "sigslot.h"
+#include "platform_util.h"
 
 namespace Glest { namespace Menu {
 	class MenuStateOptions;
@@ -24,7 +25,7 @@ namespace Glest { namespace Menu {
 
 namespace Glest { namespace Gui {
 using namespace Widgets;
-
+using Shared::Platform::VideoMode;
 // =====================================================
 // 	class SpinnerValueBox
 // =====================================================
@@ -68,18 +69,6 @@ public:
 	sigslot::signal<Widget*> ValueChanged;
 };
 
-struct Resolution {
-	int width;
-	int height;
-	Resolution(int width, int height) {
-		this->width = width;
-		this->height = height;
-	}
-	string toString() {
-		return Conversion::toStr(width) + "x" + Conversion::toStr(height);
-	}
-};
-
 // =====================================================
 // 	class Options
 //
@@ -117,9 +106,12 @@ private:
 	Spinner     *m_minRenderDistSpinner,
 		        *m_maxRenderDistSpinner;
 
+	MessageDialog *m_messageDialog;
+
 	map<string,string>  m_langMap;
 	vector<string>      m_modelShaders;
-	vector<Resolution>	m_resolutions;
+	vector<VideoMode>	m_resolutions;
+	VideoMode           m_previousVidMode;
 
 	// can be null, some options are disabled if in game
 	Glest::Menu::MenuStateOptions *m_optionsMenu;
@@ -139,6 +131,7 @@ private:
 	void buildOptionsPanel(CellStrip *container, int cell);
 	void loadShaderList();
 	CheckBox *createStandardCheckBox(CellStrip *container, int cell, const string &text);
+	void syncVideoModeList(VideoMode mode);
 
 	// Build tabs
 	void buildGameTab();
@@ -164,6 +157,8 @@ private:
 	void onToggleSpecularMapping(Widget*);
 	void onToggleCameraInvertXAxis(Widget*);
 	void onToggleCameraInvertYAxis(Widget*);
+	void onCancelResolutionChange(Widget*);
+	void onConfirmResolutionChange(Widget*);
 };
 
 // =====================================================

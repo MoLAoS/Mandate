@@ -93,6 +93,10 @@ WidgetWindow::WidgetWindow()
 	initGl(g_config.getRenderColorBits(), g_config.getRenderDepthBits(), 0);
 	makeCurrentGl();
 
+	VideoMode currentMode(g_config.getDisplayWidth(), g_config.getDisplayHeight(), 
+		g_config.getRenderColorBits(), g_config.getDisplayRefreshFrequency());
+	setVideoMode(currentMode);
+
 	g_logger.logProgramEvent("Loading place-holder texture.");
 	Texture2D::defaultTexture = g_renderer.getTexture2D(ResourceScope::GLOBAL, "data/core/misc_textures/default.tga");
 
@@ -142,11 +146,9 @@ void WidgetWindow::setDisplaySettings() {
 		int colorBits= g_config.getRenderColorBits();
 		int screenWidth= g_config.getDisplayWidth();
 		int screenHeight= g_config.getDisplayHeight();
-
-		if (!(changeVideoMode(screenWidth, screenHeight, colorBits, freq)
-		|| changeVideoMode(screenWidth, screenHeight, colorBits, 0))) {
-			throw runtime_error( "Error setting video mode: " +
-				intToStr(screenWidth) + "x" + intToStr(screenHeight) + "x" + intToStr(colorBits));
+		VideoMode mode(screenWidth, screenHeight, colorBits, freq);
+		if (!changeVideoMode(mode)) {
+			throw runtime_error( "Error setting video mode: " + mode.toString());
 		}
 	}
 }
