@@ -152,11 +152,10 @@ void ServerInterface::doDataSync() {
 				} catch (NetworkError &e) {
 					LOG_NETWORK( e.what() );
 					string playerName = slots[i]->getName();
-					removeSlot(i);
 					sendTextMessage("Player " + intToStr(i) + " [" + playerName + "] diconnected.", -1);
+					removeSlot(i);
 				}
 			}
-
 		}
 		sleep(10);
 	}
@@ -209,6 +208,10 @@ void ServerInterface::dataSync(int playerNdx, DataSyncMessage &msg) {
 	const int n = m_dataSync->getChecksumCount();
 	for (int i=0; i < n; ++i) {
 		if (m_dataSync->getChecksum(i) != msg.getChecksum(i)) {
+			NETWORK_LOG(
+				"Checksum[" << i << "] mismatch. mine: " << intToHex(m_dataSync->getChecksum(i))
+				<< ", client's: " << intToHex(msg.getChecksum(i))
+			);
 			ok = false;
 			if (i < cmdOffset) {
 				string badBit;
@@ -235,17 +238,18 @@ void ServerInterface::dataSync(int playerNdx, DataSyncMessage &msg) {
 				)
 			} else if (i < cloakOffset) {
 				const ProducibleType *pt = m_prototypeFactory->getProdType(i - prodOffset);
+				//int id = i - prodOffset;
 				if (m_prototypeFactory->isUnitType(pt)) {
 					const UnitType *ut = static_cast<const UnitType*>(pt);
-					NETWORK_LOG( "DataSync Fail: UnitType " << i << ": " << ut->getName() 
+					NETWORK_LOG( "DataSync Fail: UnitType " << ut->getId() << ": " << ut->getName() 
 						<< " of FactionType: " << ut->getFactionType()->getName() );
 				} else if (m_prototypeFactory->isUpgradeType(pt)) {
 					const UpgradeType *ut = static_cast<const UpgradeType*>(pt);
-					NETWORK_LOG( "DataSync Fail: UpgradeType " << i << ": " << ut->getName() 
+					NETWORK_LOG( "DataSync Fail: UpgradeType " << ut->getId() << ": " << ut->getName() 
 						<< " of FactionType: " << ut->getFactionType()->getName() );
 				} else if (m_prototypeFactory->isGeneratedType(pt)) {
 					const GeneratedType *gt = static_cast<const GeneratedType*>(pt);
-					NETWORK_LOG( "DataSync Fail: GeneratedType " << i << ": " << gt->getName() << " of CommandType: " 
+					NETWORK_LOG( "DataSync Fail: GeneratedType " << gt->getId() << ": " << gt->getName() << " of CommandType: " 
 						<< gt->getCommandType()->getName() << " of UnitType: " 
 						<< gt->getCommandType()->getUnitType()->getName() );
 				} else {

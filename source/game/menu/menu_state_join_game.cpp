@@ -394,6 +394,7 @@ void MenuStateJoinGame::foundServer(Ip ip) {
 	m_serverTextBox->setText(ip.getString()); /*** *** CONCURRENCY ERROR *** ***/
 	delete m_findServerThread;
 	m_findServerThread = 0;
+	m_searching = false;
 	onConnect(0); /*** *** CONCURRENCY ERROR *** ***/
 }
 

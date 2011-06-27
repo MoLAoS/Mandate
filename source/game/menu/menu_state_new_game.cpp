@@ -51,13 +51,15 @@ void AnnouncerThread::execute() {
 		if (m_freeSlots) {
 			if (counter % 10 == 0) {
 				try {
+					//cout << "announcing game on LAN.\n";
 					m_socket.sendAnnounce(g_config.getNetAnnouncePort());
 				} catch (SocketException) {
 					// do nothing
-					printf("SocketException while announcing game on LAN.\n");
+					cout << "SocketException while announcing game on LAN.\n";
 				}
 			}
 		}
+		++counter;
 		sleep(100);
 	}
 }
