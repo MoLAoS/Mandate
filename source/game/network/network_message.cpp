@@ -714,7 +714,7 @@ void KeyFrame::addUpdate(ProjectileUpdate updt) {
 	writePtr += sizeof(ProjectileUpdate);
 	updateSize += sizeof(ProjectileUpdate);
 	++projUpdateCount;
-	NETWORK_LOG( __FUNCTION__ << "(ProjectileUpdate updt): Frame Offset: " << updt.end_offset );
+	NETWORK_LOG( __FUNCTION__ << "(ProjectileUpdate updt): Frame Offset: " << int(updt.end_offset) );
 }
 
 MoveSkillUpdate KeyFrame::getMoveUpdate() {
@@ -726,7 +726,7 @@ MoveSkillUpdate KeyFrame::getMoveUpdate() {
 	readPtr += sizeof(MoveSkillUpdate);
 	--moveUpdateCount;
 	NETWORK_LOG( __FUNCTION__ << "(): Pos Offset:" << res.posOffset()
-		<< " Frame Offset: " << res.end_offset );
+		<< " Frame Offset: " << int(res.end_offset) );
 	return res;
 }
 
@@ -738,7 +738,7 @@ ProjectileUpdate KeyFrame::getProjUpdate() {
 	ProjectileUpdate res(readPtr);
 	readPtr += sizeof(ProjectileUpdate);
 	--projUpdateCount;
-	NETWORK_LOG( __FUNCTION__ << "(): Frame Offset: " << res.end_offset );
+	NETWORK_LOG( __FUNCTION__ << "(): Frame Offset: " << int(res.end_offset) );
 	return res;
 }
 

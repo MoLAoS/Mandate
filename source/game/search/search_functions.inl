@@ -175,12 +175,12 @@ public:
 /** distance cost, no obstacle checks */
 class DistanceCost {
 public:
-	DistanceCost(){}
+	DistanceCost() {}
 	/** The cost function @param p1 position 1 @param p2 position 2 ('adjacent' p1)
 	  * @return 1.0 if p1 and p2 are 'in line', else SQRT2 */
 	float operator()(const Vec2i &p1, const Vec2i &p2) const {
-		assert ( p1.dist(p2) < 1.5 );
-		if ( p1.x != p2.x && p1.y != p2.y ) {
+		assert(p1.dist(p2) < 1.5);
+		if (p1.x != p2.x && p1.y != p2.y) {
 			return SQRT2;
 		}
 		return 1.0f;
@@ -201,46 +201,6 @@ public:
 		float diag = dx < dy ? dx : dy;
 		float straight = dx + dy - 2 * diag;
 		return 1.4 * diag + straight;
-	}
-};
-
-/** Diagonal Distance Overestimating Heuristic */
-class OverEstimate {
-private:
-	Vec2i target; /**< search target */
-
-public:
-	OverEstimate(const Vec2i &target) : target(target) {}
-	
-	/** The heuristic function. @param pos the position to calculate the heuristic for
-	  * @return an (over) estimate of the cost to target */
-	float operator()(const Vec2i &pos) const {
-		float dx = (float)abs(pos.x - target.x), 
-			  dy = (float)abs(pos.y - target.y);
-		float diag = dx < dy ? dx : dy;
-		float estimate = 1.4 * diag + (dx + dy - 2 * diag);
-		estimate *= 1.25;
-		return estimate;
-	}
-};
-
-/** Diagonal Distance underestimating Heuristic */
-class UnderEstimate {
-private:
-	Vec2i target; /**< search target */
-
-public:
-	UnderEstimate(const Vec2i &target) : target(target) {}
-	
-	/** The heuristic function. @param pos the position to calculate the heuristic for
-	  * @return an (over) estimate of the cost to target */
-	float operator()(const Vec2i &pos) const {
-		float dx = (float)abs(pos.x - target.x), 
-			  dy = (float)abs(pos.y - target.y);
-		float diag = dx < dy ? dx : dy;
-		float estimate = 1.4 * diag + (dx + dy - 2 * diag);
-		estimate *= 0.75;
-		return estimate;
 	}
 };
 
