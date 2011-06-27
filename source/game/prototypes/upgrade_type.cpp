@@ -218,8 +218,17 @@ void UpgradeType::doChecksum(Checksum &checksum) const {
 		it->m_enhancement.doChecksum(checksum);
 	}
 	///@todo resource mods
+
+	// iterating over a std::map is not the same as std::set !!
+	vector<int> enhanceIds;
 	foreach_const (EnhancementMap, it, m_enhancementMap) {
-		checksum.add(it->first->getId());
+		enhanceIds.push_back(it->first->getId());
+		///@todo add EnhancementType index (it->second->getEnhancement()) ?
+	}
+	// sort first
+	std::sort(enhanceIds.begin(), enhanceIds.end());
+	foreach (vector<int>, it, enhanceIds) {
+		checksum.add(*it);
 	}
 }
 
