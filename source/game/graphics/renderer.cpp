@@ -171,6 +171,8 @@ Renderer::Renderer() {
 	perspFov = config.getRenderFov();
 	perspNearPlane = config.getRenderDistanceMin();
 	perspFarPlane = config.getRenderDistanceMax();
+	game = 0;
+	m_mainMenu = 0;
 }
 
 Renderer::~Renderer(){
@@ -265,6 +267,20 @@ bool Renderer::init() {
 
 	return true;
 }
+
+void Renderer::resetGlLists() {
+	init2dList();
+
+	if (m_mainMenu) {
+		init3dListMenu(m_mainMenu);
+	}
+	if (game) {
+		init3dList();
+		init3dListGLSL();
+	}
+}
+
+
 
 void Renderer::changeShader(const string &name) {
 	if (name.empty()) {
@@ -372,6 +388,7 @@ void Renderer::initMenu(MainMenu *mm){
 	//modelRenderer->setCustomTexture(CoreData::getInstance().getCustomTexture());
 	modelRenderer->setLightCount(1);
 
+	m_mainMenu = mm;
 	init3dListMenu(mm);
 }
 
@@ -2222,8 +2239,9 @@ void Renderer::init3dListGLSL(){
 }
 
 void Renderer::init2dList() {
-	int width = g_config.getDisplayWidth();
-	int height = g_config.getDisplayHeight();
+	const Metrics &metrics = g_metrics;
+	int width = metrics.getScreenW();//g_config.getDisplayWidth();
+	int height = metrics.getScreenH();//g_config.getDisplayHeight();
 
 	//this list sets the state for the 2d rendering without 'virtual' co-ordinates
 	list2d = glGenLists(1);

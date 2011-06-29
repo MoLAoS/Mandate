@@ -42,6 +42,9 @@ class PlatformContextGl {
 protected:
 	DeviceContextHandle dch;
 	GlContextHandle glch;
+	int m_colorBits;
+	int m_depthBits;
+	int m_stencilBits;
 
 public:
 	void init(int colorBits, int depthBits, int stencilBits);
@@ -60,7 +63,17 @@ public:
 		assert(swapErr);
 	}
 
+	void changeWindow(WindowHandle wnd) {
+		this->dch = GetDC(wnd);
+		assert(dch!=NULL);
+		setupDeviceContext();
+		makeCurrent();
+	}
+
 	DeviceContextHandle getHandle() const {return dch;}
+
+private:
+	void setupDeviceContext();
 };
 
 

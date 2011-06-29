@@ -45,25 +45,20 @@ string getLastErrorMsg() {
 	return msg.str();
 }
 
-void PlatformContextGl::init(int colorBits, int depthBits, int stencilBits){
-
+void PlatformContextGl::setupDeviceContext() {
 	int iFormat;
 	PIXELFORMATDESCRIPTOR pfd;
 	BOOL err;
-
-	//Set8087CW($133F);
-	dch = GetDC(GetActiveWindow());
-	assert(dch!=NULL);
 
 	ZeroMemory(&pfd, sizeof(pfd));
 	pfd.nSize= sizeof(PIXELFORMATDESCRIPTOR);
 	pfd.nVersion= 1;
 	pfd.dwFlags= PFD_GENERIC_ACCELERATED | PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
 	pfd.iPixelType= PFD_TYPE_RGBA;
-	pfd.cColorBits= colorBits;
-	pfd.cDepthBits= depthBits;
+	pfd.cColorBits= m_colorBits;
+	pfd.cDepthBits= m_depthBits;
 	pfd.iLayerType= PFD_MAIN_PLANE;
-	pfd.cStencilBits= stencilBits;
+	pfd.cStencilBits= m_stencilBits;
 
 	iFormat = ChoosePixelFormat(dch, &pfd);
 	if (!iFormat) {
@@ -77,6 +72,18 @@ void PlatformContextGl::init(int colorBits, int depthBits, int stencilBits){
 		msg << "SetPixelFormat() failed.\n" << getLastErrorMsg();
 		throw runtime_error(msg.str());
 	}
+}
+
+void PlatformContextGl::init(int colorBits, int depthBits, int stencilBits){
+	m_colorBits = colorBits;
+	m_depthBits = depthBits;
+	m_stencilBits = stencilBits;
+
+	//Set8087CW($133F);
+	dch = GetDC(GetActiveWindow());
+	assert(dch!=NULL);
+
+	setupDeviceContext();
 
 	glch= wglCreateContext(dch);
 	if(glch==NULL){

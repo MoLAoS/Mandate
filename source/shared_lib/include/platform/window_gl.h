@@ -32,6 +32,7 @@ public:
 	void initGl(int colorBits, int depthBits, int stencilBits);
 	void makeCurrentGl();
 	void swapBuffersGl();
+	void resize(int width, int height);
 };
 
 }}//end namespace

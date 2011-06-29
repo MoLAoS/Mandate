@@ -18,6 +18,7 @@
 #include "control.h"
 #include "conversion.h"
 #include "platform_util.h"
+#include "gl_wrap.h"
 
 #include "leak_dumper.h"
 
@@ -47,15 +48,11 @@ Window::Window() {
 	y = 0;
 	w = 100;
 	h = 100;
+	m_resizing = false;
 }
 
 Window::~Window() {
-	if (handle != 0) {
-		DestroyWindow(handle);
-		handle = 0;
-		BOOL b = UnregisterClass(className.c_str(), GetModuleHandle(NULL));
-		assert(b);
-	}
+	destroy(className, handle);
 }
 
 //static
@@ -64,7 +61,14 @@ bool Window::handleEvent() {
 
 	while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
 		if (msg.message == WM_QUIT) {
-			return false;
+			// when the window is destroyed for resizing it will
+			// send a WM_QUIT message that should be ignored
+			if (m_resizing) {
+				m_resizing = false; // recreated window
+				continue;
+			} else {
+				return false;
+			}
 		}
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
@@ -138,6 +142,26 @@ void Window::setSize(int w, int h) {
 		MoveWindow(handle, x, y, w, h, FALSE);
 		UpdateWindow(handle);
 	}
+}
+
+void Window::resize(PlatformContextGl *context, int w, int h) {
+	m_resizing = true;
+
+	// store the context in a temporary window
+	registerWindow("temp");
+	WindowHandle temp = createWindow("temp");
+	context->changeWindow(temp);
+	
+	// remove the current window
+	destroy();
+
+	// create the new window with the changed size
+	setSize(w, h);
+	create();
+	context->changeWindow(handle);
+
+	// remove the temp window now the context has been moved
+	destroy(string("temp"), temp);
 }
 
 void Window::setPos(int x, int y) {
@@ -226,8 +250,9 @@ bool Window::toggleFullscreen() {
 }
 
 void Window::create() {
-	registerWindow();
-	createWindow();
+	className = "Window" + intToStr(Window::getNextClassName());
+	registerWindow(className);
+	handle = createWindow(className);
 }
 
 void Window::minimize() {
@@ -251,11 +276,20 @@ void Window::showPopupMenu(Menu *menu, int x, int y) {
 	TrackPopupMenu(menu->getHandle(), TPM_LEFTALIGN | TPM_TOPALIGN, rect.left + x, rect.top + y, 0, handle, NULL);
 }*/
 
+void Window::destroy(string &in_className, WindowHandle handle) {
+	if (handle != 0) {
+		DestroyWindow(handle);
+		handle = 0;
+	}
+	if (in_className != "") {
+		BOOL b = UnregisterClass(in_className.c_str(), GetModuleHandle(NULL));
+		in_className = "";
+		assert(b);
+	}
+}
+
 void Window::destroy() {
-	DestroyWindow(handle);
-	BOOL b = UnregisterClass(className.c_str(), GetModuleHandle(NULL));
-	assert(b);
-	handle = 0;
+	destroy(className, handle);
 }
 
 // ===================== PRIVATE =======================
@@ -490,10 +524,8 @@ int Window::getNextClassName() {
 	return ++nextClassName;
 }
 
-void Window::registerWindow(WNDPROC wndProc) {
+void Window::registerWindow(const string &className, WNDPROC wndProc) {
 	WNDCLASSEX wc;
-
-	this->className = "Window" + intToStr(Window::getNextClassName());
 
 	wc.cbSize        = sizeof(WNDCLASSEX);
 	wc.style         = CS_DBLCLKS | CS_OWNDC;
@@ -505,7 +537,7 @@ void Window::registerWindow(WNDPROC wndProc) {
 	wc.hCursor       = LoadCursor(NULL, IDC_ARROW);
 	wc.hbrBackground = (HBRUSH)(COLOR_WINDOW);
 	wc.lpszMenuName  = NULL;
-	wc.lpszClassName = this->className.c_str();
+	wc.lpszClassName = className.c_str();
 	wc.hIconSm       = NULL;
 
 	int registerClassErr = RegisterClassEx(&wc);
@@ -513,8 +545,8 @@ void Window::registerWindow(WNDPROC wndProc) {
 
 }
 
-void Window::createWindow(LPVOID creationData) {
-	handle = CreateWindowEx(WS_EX_APPWINDOW, className.c_str(), text.c_str(),
+WindowHandle Window::createWindow(const string &className, LPVOID creationData) {
+	WindowHandle handle = CreateWindowEx(WS_EX_APPWINDOW, className.c_str(), text.c_str(),
 				 style, x, y, w, h, NULL, NULL, GetModuleHandle(NULL), creationData);
 
 	createdWindows.insert(std::pair<WindowHandle, Window*>(handle, this));
@@ -530,6 +562,8 @@ void Window::createWindow(LPVOID creationData) {
 	setPos(pos.x, pos.y);
 	ShowWindow(handle, SW_SHOW);
 	UpdateWindow(handle);
+
+	return handle;
 }
 
 }}//end namespace
