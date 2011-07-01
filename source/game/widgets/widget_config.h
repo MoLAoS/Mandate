@@ -65,6 +65,7 @@ class WidgetConfig {
 	typedef const Texture2D*		TexPtr;
 	typedef const Font*				FontPtr;
 	typedef map<string, uint32>		IndexByNameMap;
+	typedef map<Font*, int>         FontSizeMap;
 	//typedef vector<BorderStyle>     BorderStyles;
 	//typedef vector<BackgroundStyle> BackgroundStyles;
 	//typedef vector<FontStyle>       FontStyles;
@@ -73,6 +74,8 @@ private:
 	vector<Colour>	 m_colours;
 	vector<FontPtr>  m_fonts;
 	vector<TexPtr>	 m_textures;
+
+	FontSizeMap      m_requestedFontSizes;
 
 	IndexByNameMap	 m_namedColours;
 	IndexByNameMap	 m_namedFonts;
@@ -120,6 +123,7 @@ public:
 	static WidgetConfig& getInstance();
 
 	void load();
+	void reloadFonts();
 
 public:
 	int loadTexture(const string &name, const string &path, bool mipmap = true);

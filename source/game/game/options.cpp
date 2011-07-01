@@ -763,6 +763,7 @@ void Options::onDropListSelectionChanged(Widget *source) {
 		g_config.setDisplayWidth(mode.w);
 		g_config.setDisplayHeight(mode.h);
 		g_renderer.resetGlLists();
+		g_widgetConfig.reloadFonts();
 
 		if (m_optionsMenu) {
 			m_optionsMenu->reload();

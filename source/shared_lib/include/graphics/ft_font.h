@@ -58,8 +58,9 @@ class FreeTypeFont : public Font {
 public:
 	Freetype::font_data fontData;
 
-	void init();
-	void end();
+	virtual void init() override;
+	virtual void reInit() override;
+	virtual void end() override;
 };
 
 }}}

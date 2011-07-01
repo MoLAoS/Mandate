@@ -204,9 +204,17 @@ void WidgetConfig::loadFont(const string &name, const string &path, int size) {
 	Font *font = g_renderer.newFreeTypeFont(ResourceScope::GLOBAL);
 	font->setType(path);
 	font->setSize(computeFontSize(size));
+	m_requestedFontSizes[font] = size;
 	m_fonts.push_back(font);
 	m_namedFonts[name] = m_fonts.size() - 1;
 	WIDGET_LOG( "adding font named '" << name << "' from path '" << path << "' @ size: " << size );
+}
+
+void WidgetConfig::reloadFonts() {
+	foreach (FontSizeMap, it, m_requestedFontSizes) {
+		it->first->setSize(computeFontSize(it->second));
+		it->first->reInit();
+	}
 }
 
 int WidgetConfig::loadTexture(const string &name, const string &path, bool mipmap) {

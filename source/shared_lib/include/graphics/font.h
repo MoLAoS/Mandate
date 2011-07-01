@@ -80,6 +80,7 @@ public:
 	Font();
 	virtual ~Font(){};
 	virtual void init() = 0;
+	virtual void reInit() = 0;
 	virtual void end() = 0;
 
 	//get

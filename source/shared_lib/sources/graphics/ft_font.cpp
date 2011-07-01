@@ -225,6 +225,11 @@ void FreeTypeFont::init() {
 	fontData.init(getType().c_str(), getSize(), metrics);
 }
 
+void FreeTypeFont::reInit() {
+	end();
+	init();
+}
+
 void FreeTypeFont::end() {
 	fontData.clean();
 }
