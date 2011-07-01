@@ -44,4 +44,8 @@ void WindowGl::swapBuffersGl(){
 	context.swapBuffers();
 }
 
+void WindowGl::resize(int width, int height) {
+	Window::resize(context.getPlatformContextGl(), width, height);
+}
+
 }}//end namespace

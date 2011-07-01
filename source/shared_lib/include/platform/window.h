@@ -71,6 +71,7 @@ protected:
 	int h;
 	WindowHandle handle;
 	VideoMode m_videoMode;
+	bool m_resizing;
 
 #	if defined(WIN32)
 		string text;
@@ -110,6 +111,7 @@ public:
 	void setEnabled(bool enabled);
 	void setVisible(bool visible);
 	void setVideoMode(VideoMode viedoMode) { m_videoMode = viedoMode; }
+	void resize(PlatformContextGl *context, int w, int h);
 
 	//misc
 	void create();
@@ -117,6 +119,7 @@ public:
 	void maximize();
 	void restore();
 	//void showPopupMenu(Menu *menu, int x, int y);
+	void destroy(string &in_className, WindowHandle handle);
 	void destroy();
 	bool toggleFullscreen();
 	bool handleEvent();
@@ -148,8 +151,8 @@ private:
 #	elif defined(WIN32)
 		static LRESULT CALLBACK eventRouter(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 		static int getNextClassName();
-		void registerWindow(WNDPROC wndProc = NULL);
-		void createWindow(LPVOID creationData = NULL);
+		void registerWindow(const string &className, WNDPROC wndProc = NULL);
+		WindowHandle createWindow(const string &className, LPVOID creationData = NULL);
 		void mouseEvent(int asdf, MouseButton mouseButton) {
 			const Vec2i &mousePos = input.getMousePos();
 			switch(asdf) {

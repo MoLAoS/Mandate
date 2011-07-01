@@ -27,10 +27,13 @@ private:
 	Metrics();
 
 public:
-	static const Metrics &getInstance(){
-		static const Metrics singleton;
+	static Metrics &getInstance(){
+		static Metrics singleton;
 		return singleton;
 	}
+
+	void setScreenW(int w) { screenW = w; }
+	void setScreenH(int h) { screenH = h; }
 
 	int getScreenW() const	{return screenW;}
 	int getScreenH() const	{return screenH;}

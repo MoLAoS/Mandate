@@ -106,6 +106,7 @@ private:
 
 	// game
 	const GameState *game;
+	MainMenu *m_mainMenu;
 
 	// misc
 	int triangleCount;
@@ -161,6 +162,7 @@ public:
 	void reset3d();
 	void reset2d();
 	void reset3dMenu();
+	void resetGlLists();
 
 	//end
 	void end();

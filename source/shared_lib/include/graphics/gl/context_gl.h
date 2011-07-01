@@ -35,7 +35,7 @@ public:
 	virtual void makeCurrent();
 	virtual void swapBuffers();
 
-	const PlatformContextGl *getPlatformContextGl() const	{return &pcgl;}
+	PlatformContextGl *getPlatformContextGl() {return &pcgl;}
 };
 
 }}}//end namespace

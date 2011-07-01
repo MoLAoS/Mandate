@@ -733,12 +733,13 @@ void Options::onDropListSelectionChanged(Widget *source) {
 			Vec2i sz(400, 240);
 			Vec2i screenDims = g_metrics.getScreenDims();
 			Vec2i pos = (screenDims - sz) / 2;
-			m_messageDialog = MessageDialog::showDialog(pos, sz, g_lang.get("Confirm"),
+			/*m_messageDialog = MessageDialog::showDialog(pos, sz, g_lang.get("Confirm"),
 				g_lang.get("ConfirmResChange"), g_lang.get("Ok"), g_lang.get("Cancel"));
 			m_messageDialog->Button1Clicked.connect(this, &Options::onConfirmResolutionChange);
 			m_messageDialog->Button2Clicked.connect(this, &Options::onCancelResolutionChange);
 			m_messageDialog->Escaped.connect(this, &Options::onCancelResolutionChange);
 			m_messageDialog->Close.connect(this, &Options::onCancelResolutionChange);
+			*/
 		}
 		// recreate window
 		/*
@@ -748,7 +749,17 @@ void Options::onDropListSelectionChanged(Widget *source) {
 			// show error dialog
 		}
 		*/
+		//g_program.resize(g_config.getDisplayWidth(), g_config.getDisplayHeight());
+		g_program.resize(mode.w, mode.h);
 
+		Metrics &metrics = Metrics::getInstance();
+		metrics.setScreenW(mode.w);
+		metrics.setScreenH(mode.h);
+		g_config.setDisplayWidth(mode.w);
+		g_config.setDisplayHeight(mode.h);
+		//glViewport(0, 0, metrics.getScreenW(), metrics.getScreenH());
+		g_renderer.resetGlLists();
+		//((Widget*)&g_program)->setSize(Vec2i(mode.w, mode.h));
 		///@todo update shadow texture size if larger than res -hailstone 22June2011
 	}
 }
