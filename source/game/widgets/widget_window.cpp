@@ -140,6 +140,11 @@ WidgetWindow::~WidgetWindow() {
 
 }
 
+void WidgetWindow::resize(int w, int h) {
+	Widget::setSize(Vec2i(w, h));
+	WindowGl::resize(w, h);
+}
+
 void WidgetWindow::setDisplaySettings() {
 	if (!g_config.getDisplayWindowed()) {
 		int freq= g_config.getDisplayRefreshFrequency();

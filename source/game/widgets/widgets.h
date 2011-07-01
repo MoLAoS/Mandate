@@ -409,15 +409,19 @@ private:
 	int m_active;
 	CellStrip *m_btnPnl;
 	Anchors m_anchors;
+
 protected:
 	void onButtonClicked(Widget *widget);
 	int getButtonPos(Button *button);
 	Button* createButton(const string &text);
+
 public:
 	TabWidget(Container *parent);
 
 	void add(const string &text, CellStrip *cellStrip);
 
+	int getActivePage() const { return m_active; }
+	void setActivePage(int i);
 };
 
 

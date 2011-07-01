@@ -24,6 +24,8 @@ displayHeight				int		height			-		-		Height of the window, in pixels.
 displayRefreshFrequency		int		60				-		-		The number of times to refresh the display per second (hertz).
 displayWidth				int		width			-		-		Width of the window, in pixels.
 displayWindowed				bool	false			-		-		Whether or not to display the game in windowed mode. If false, the game is fullscreen. 
+displayWindowPosX			int		-1				-		-		Position of window, x coordinate (-1 == centre)
+displayWindowPosY			int		-1				-		-		Position of window, y coordinate (-1 == centre)
 gsAutoRepairEnabled			bool	true			-		-		Toggles whether or not auto-repair (idle workers automatically repair damaged structures) is by default on. This can also be turned off in-game on a per-game basis.
 gsAutoReturnEnabled			bool	false			-		-		Toggles whether or not units return after automatically moving to attack a foe.
 gsDayTime					float	1000.f			-		-		Sets the length of the day/night cycle in seconds.
@@ -76,6 +78,7 @@ soundVolumeMusic			int		90				-		-		The volume of the background music from 0-10
 uiConsoleMaxLines			int		10				-		-		Maximum number of lines that are displayed at any one time in the in-game console. If more than this appear, the oldest ones disappear immediately.
 uiConsoleTimeout			int		20				-		-		Seconds before a console message disappears.
 uiFocusArrows				bool	true			-		-		Toggles the display of arrows on units showing their target.
+uiLastOptionsPage			int		0				0		5		Index of last options tab page selected
 uiLastScenario				string	"glest_classic\/anarchy"	-	-	The name of the last scenario played.
 uiLastScenarioCatagory		string	"glest_classic"	-		-		The category of the last scenario played.
 uiLocale					string	"en"			-		-		Language files that will be used for language strings. Will use the language file of the same name in the lang data folder with the *.lng extension.

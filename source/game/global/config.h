@@ -42,6 +42,8 @@ private:
 	int displayHeight;
 	int displayRefreshFrequency;
 	int displayWidth;
+	int displayWindowPosX;
+	int displayWindowPosY;
 	bool displayWindowed;
 	bool gsAutoRepairEnabled;
 	bool gsAutoReturnEnabled;
@@ -94,6 +96,7 @@ private:
 	int uiConsoleMaxLines;
 	int uiConsoleTimeout;
 	bool uiFocusArrows;
+	int uiLastOptionsPage;
 	string uiLastScenario;
 	string uiLastScenarioCatagory;
 	string uiLocale;
@@ -130,6 +133,8 @@ public:
 	int getDisplayHeight() const				{return displayHeight;}
 	int getDisplayRefreshFrequency() const		{return displayRefreshFrequency;}
 	int getDisplayWidth() const					{return displayWidth;}
+	int getDisplayWindowPosX() const			{return displayWindowPosX;}
+	int getDisplayWindowPosY() const			{return displayWindowPosY;}
 	bool getDisplayWindowed() const				{return displayWindowed;}
 	bool getGsAutoRepairEnabled() const			{return gsAutoRepairEnabled;}
 	bool getGsAutoReturnEnabled() const			{return gsAutoReturnEnabled;}
@@ -182,6 +187,7 @@ public:
 	int getUiConsoleMaxLines() const			{return uiConsoleMaxLines;}
 	int getUiConsoleTimeout() const				{return uiConsoleTimeout;}
 	bool getUiFocusArrows() const				{return uiFocusArrows;}
+	int getUiLastOptionsPage() const			{return uiLastOptionsPage;}
 	string getUiLastScenario() const			{return uiLastScenario;}
 	string getUiLastScenarioCatagory() const	{return uiLastScenarioCatagory;}
 	string getUiLocale() const					{return uiLocale;}
@@ -200,6 +206,8 @@ public:
 	void setDisplayHeight(int val)				{displayHeight = val;}
 	void setDisplayRefreshFrequency(int val)	{displayRefreshFrequency = val;}
 	void setDisplayWidth(int val)				{displayWidth = val;}
+	void setDisplayWindowPosX(int val)			{displayWindowPosX = val;}
+	void setDisplayWindowPosY(int val)			{displayWindowPosY = val;}
 	void setDisplayWindowed(bool val)			{displayWindowed = val;}
 	void setGsAutoRepairEnabled(bool val)		{gsAutoRepairEnabled = val;}
 	void setGsAutoReturnEnabled(bool val)		{gsAutoReturnEnabled = val;}
@@ -252,6 +260,7 @@ public:
 	void setUiConsoleMaxLines(int val)			{uiConsoleMaxLines = val;}
 	void setUiConsoleTimeout(int val)			{uiConsoleTimeout = val;}
 	void setUiFocusArrows(bool val)				{uiFocusArrows = val;}
+	void setUiLastOptionsPage(int val)			{uiLastOptionsPage = val;}
 	void setUiLastScenario(string val)			{uiLastScenario = val;}
 	void setUiLastScenarioCatagory(string val)	{uiLastScenarioCatagory = val;}
 	void setUiLocale(string val)				{uiLocale = val;}

@@ -146,10 +146,13 @@ void Window::setSize(int w, int h) {
 
 void Window::resize(PlatformContextGl *context, int w, int h) {
 	m_resizing = true;
+	setVisible(false);
 
 	// store the context in a temporary window
 	registerWindow("temp");
 	WindowHandle temp = createWindow("temp");
+	ShowWindow(temp, SW_HIDE);
+	UpdateWindow(temp);
 	context->changeWindow(temp);
 	
 	// remove the current window
@@ -159,7 +162,8 @@ void Window::resize(PlatformContextGl *context, int w, int h) {
 	setSize(w, h);
 	create();
 	context->changeWindow(handle);
-
+	setVisible(true);
+	
 	// remove the temp window now the context has been moved
 	destroy(string("temp"), temp);
 }
@@ -238,12 +242,7 @@ bool Window::toggleFullscreen() {
 		}
 		setStyle(wsFullscreen);
 	}
-	Vec2i pos;
-	if (windowStyle != wsFullscreen) {
-		pos = centreWindowPos(Vec2i(m_videoMode.w, m_videoMode.h));
-	} else {
-		pos = Vec2i(0, 0);
-	}
+	Vec2i pos = (windowStyle != wsFullscreen) ? centreWindowPos(Vec2i(m_videoMode.w, m_videoMode.h)) :  Vec2i(0, 0);
 	setPos(pos.x, pos.y);
 	setSize(m_videoMode.w, m_videoMode.h);
 	return true;
@@ -278,8 +277,8 @@ void Window::showPopupMenu(Menu *menu, int x, int y) {
 
 void Window::destroy(string &in_className, WindowHandle handle) {
 	if (handle != 0) {
+		ShowWindow(handle, SW_HIDE);
 		DestroyWindow(handle);
-		handle = 0;
 	}
 	if (in_className != "") {
 		BOOL b = UnregisterClass(in_className.c_str(), GetModuleHandle(NULL));
@@ -290,6 +289,7 @@ void Window::destroy(string &in_className, WindowHandle handle) {
 
 void Window::destroy() {
 	destroy(className, handle);
+	handle = 0;
 }
 
 // ===================== PRIVATE =======================
@@ -546,6 +546,9 @@ void Window::registerWindow(const string &className, WNDPROC wndProc) {
 }
 
 WindowHandle Window::createWindow(const string &className, LPVOID creationData) {
+	Vec2i pos = (windowStyle != wsFullscreen) ? centreWindowPos(Vec2i(w, h)) : Vec2i(0, 0);
+	setPos(pos.x, pos.y);
+
 	WindowHandle handle = CreateWindowEx(WS_EX_APPWINDOW, className.c_str(), text.c_str(),
 				 style, x, y, w, h, NULL, NULL, GetModuleHandle(NULL), creationData);
 
@@ -554,12 +557,6 @@ WindowHandle Window::createWindow(const string &className, LPVOID creationData) 
 
 	assert(handle != NULL);
 
-	Vec2i pos;	if (windowStyle != wsFullscreen) {
-		pos = centreWindowPos(Vec2i(w, h));
-	} else {
-		pos = Vec2i(0, 0);
-	}
-	setPos(pos.x, pos.y);
 	ShowWindow(handle, SW_SHOW);
 	UpdateWindow(handle);
 

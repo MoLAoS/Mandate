@@ -134,6 +134,8 @@ void MenuStateOptions::update() {
 
 void MenuStateOptions::reload() {
 	m_transitionTarget = Transition::RE_LOAD;
+	int foo = m_options->getActivePage();
+	g_config.setUiLastOptionsPage(foo);
 	doFadeOut();
 }
 
@@ -141,10 +143,8 @@ void MenuStateOptions::reload() {
 
 void MenuStateOptions::saveConfig(){
 	//m_options->save();
+	g_config.save();
 
-	Config &config= Config::getInstance();
-
-	config.save();
 	Renderer::getInstance().loadConfig();
 	SoundRenderer::getInstance().loadConfig();
 }

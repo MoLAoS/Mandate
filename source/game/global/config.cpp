@@ -47,6 +47,8 @@ Config::Config(const char* fileName) {
 	displayHeight = p->getInt("DisplayHeight", height);
 	displayRefreshFrequency = p->getInt("DisplayRefreshFrequency", 60);
 	displayWidth = p->getInt("DisplayWidth", width);
+	displayWindowPosX = p->getInt("DisplayWindowPosX", -1);
+	displayWindowPosY = p->getInt("DisplayWindowPosY", -1);
 	displayWindowed = p->getBool("DisplayWindowed", false);
 	gsAutoRepairEnabled = p->getBool("GsAutoRepairEnabled", true);
 	gsAutoReturnEnabled = p->getBool("GsAutoReturnEnabled", false);
@@ -99,6 +101,7 @@ Config::Config(const char* fileName) {
 	uiConsoleMaxLines = p->getInt("UiConsoleMaxLines", 10);
 	uiConsoleTimeout = p->getInt("UiConsoleTimeout", 20);
 	uiFocusArrows = p->getBool("UiFocusArrows", true);
+	uiLastOptionsPage = p->getInt("UiLastOptionsPage", 0, 0, 5);
 	uiLastScenario = p->getString("UiLastScenario", "glest_classic/anarchy");
 	uiLastScenarioCatagory = p->getString("UiLastScenarioCatagory", "glest_classic");
 	uiLocale = p->getString("UiLocale", "en");
@@ -127,6 +130,8 @@ void Config::save(const char *path) {
 	p->setInt("DisplayHeight", displayHeight);
 	p->setInt("DisplayRefreshFrequency", displayRefreshFrequency);
 	p->setInt("DisplayWidth", displayWidth);
+	p->setInt("DisplayWindowPosX", displayWindowPosX);
+	p->setInt("DisplayWindowPosY", displayWindowPosY);
 	p->setBool("DisplayWindowed", displayWindowed);
 	p->setBool("GsAutoRepairEnabled", gsAutoRepairEnabled);
 	p->setBool("GsAutoReturnEnabled", gsAutoReturnEnabled);
@@ -179,6 +184,7 @@ void Config::save(const char *path) {
 	p->setInt("UiConsoleMaxLines", uiConsoleMaxLines);
 	p->setInt("UiConsoleTimeout", uiConsoleTimeout);
 	p->setBool("UiFocusArrows", uiFocusArrows);
+	p->setInt("UiLastOptionsPage", uiLastOptionsPage);
 	p->setString("UiLastScenario", uiLastScenario);
 	p->setString("UiLastScenarioCatagory", uiLastScenarioCatagory);
 	p->setString("UiLocale", uiLocale);

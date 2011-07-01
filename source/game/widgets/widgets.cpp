@@ -958,6 +958,20 @@ void TabWidget::onButtonClicked(Widget* widget) {
 	}
 }
 
+void TabWidget::setActivePage(int index) {
+	if (m_active != index) {
+		// hide the previous page and show the current one
+		m_pages[m_active]->setVisible(false);
+		m_pages[index]->setVisible(true);
+
+		// deselect the previous button and select the current one
+		m_buttons[m_active]->setSelected(false);
+		m_buttons[index]->setSelected(true);
+
+		m_active = index;
+	}
+}
+
 Button* TabWidget::createButton(const string &text) {
 	int s = g_widgetConfig.getDefaultItemHeight();
 	m_btnPnl->addCells(1);

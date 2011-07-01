@@ -102,6 +102,8 @@ public:
 
 	MouseCursor& getMouseCursor() { return *m_mouseCursor; }
 
+	virtual void resize(int w, int h) override;
+
 protected: // Shared::Platform::Window virtual events
 	virtual void eventMouseDown(int x, int y, MouseButton mouseButton) override;
 	virtual void eventMouseUp(int x, int y, MouseButton mouseButton) override;

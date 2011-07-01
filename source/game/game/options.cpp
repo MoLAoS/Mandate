@@ -156,6 +156,11 @@ Options::Options(CellStrip *parent, MenuStateOptions *optionsMenu)
 	if (!m_optionsMenu) {
 		disableWidgets();
 	}
+	int page = g_config.getUiLastOptionsPage();
+	if (page < 0 || page > 5) {
+		page = 0;
+	}
+	setActivePage(page);
 }
 
 void Options::buildGameTab() {
@@ -757,8 +762,12 @@ void Options::onDropListSelectionChanged(Widget *source) {
 		metrics.setScreenH(mode.h);
 		g_config.setDisplayWidth(mode.w);
 		g_config.setDisplayHeight(mode.h);
-		//glViewport(0, 0, metrics.getScreenW(), metrics.getScreenH());
 		g_renderer.resetGlLists();
+
+		if (m_optionsMenu) {
+			m_optionsMenu->reload();
+		}
+		
 		//((Widget*)&g_program)->setSize(Vec2i(mode.w, mode.h));
 		///@todo update shadow texture size if larger than res -hailstone 22June2011
 	}
