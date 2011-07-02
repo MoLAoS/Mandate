@@ -111,13 +111,14 @@ private:
 	map<string,string>  m_langMap;
 	vector<string>      m_modelShaders;
 	vector<VideoMode>	m_resolutions;
-	VideoMode           m_previousVidMode;
+	//VideoMode           m_previousVidMode;
 
 	// can be null, some options are disabled if in game
 	Glest::Menu::MenuStateOptions *m_optionsMenu;
 
 public:
 	Options(CellStrip *parent, Glest::Menu::MenuStateOptions *optionsMenu);
+	virtual ~Options();
 
 	void save();
 	virtual string descType() const override { return "Options"; }
@@ -157,8 +158,8 @@ private:
 	void onToggleSpecularMapping(Widget*);
 	void onToggleCameraInvertXAxis(Widget*);
 	void onToggleCameraInvertYAxis(Widget*);
-	void onCancelResolutionChange(Widget*);
-	void onConfirmResolutionChange(Widget*);
+	//void onCancelResolutionChange(Widget*);
+	//void onConfirmResolutionChange(Widget*);
 };
 
 // =====================================================

@@ -19,6 +19,7 @@ using namespace Widgets;
 class GameMenu : public Frame {
 private:
 	Button *m_pinWidgetsBtn;
+	CellStrip *m_btnStrip;
 
 private:
 	void onReturnToGame(Widget*);
@@ -32,6 +33,7 @@ private:
 
 public:
 	GameMenu();
+	void init();
 	/*static GameMenu* showDialog(Vec2i pos, Vec2i size);*/
 
 	virtual Vec2i getPrefSize() const override { return Vec2i(-1); }

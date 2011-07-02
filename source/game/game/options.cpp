@@ -9,6 +9,7 @@
 #include "util.h"
 #include "FSFactory.hpp"
 #include "menu_state_options.h"
+#include "game.h"
 
 #include "leak_dumper.h"
 
@@ -163,6 +164,10 @@ Options::Options(CellStrip *parent, MenuStateOptions *optionsMenu)
 	setActivePage(page);
 }
 
+Options::~Options() {
+	g_config.setUiLastOptionsPage(getActivePage());
+}
+
 void Options::buildGameTab() {
 	//CellStrip *panel = new CellStrip(this, Orientation::HORIZONTAL, 2);
 	//TabWidget::add(g_lang.get("Game"), panel);
@@ -183,7 +188,7 @@ void Options::buildVideoTab() {
 	Anchors centreAnchors;
 	centreAnchors.setCentre(true, false);
 
-	const int rows = 10;
+	const int rows = 7;
 
 	// Column 1
 
@@ -199,8 +204,6 @@ void Options::buildVideoTab() {
 	m_resolutionList->setDropBoxHeight(280);
 	m_resolutionList->setAnchors(squashAnchors);
 
-	m_previousVidMode  = VideoMode(g_config.getDisplayWidth(), g_config.getDisplayHeight(),
-		g_config.getRenderColorBits(), g_config.getDisplayRefreshFrequency());
 
 	// add the possible resoultions to the list
 	vector<VideoMode> modes;
@@ -209,7 +212,9 @@ void Options::buildVideoTab() {
 		m_resolutions.push_back(modes[i]);
 		m_resolutionList->addItem(modes[i].toString());
 	}
-	syncVideoModeList(m_previousVidMode);
+	VideoMode mode = VideoMode(g_config.getDisplayWidth(), g_config.getDisplayHeight(),
+		g_config.getRenderColorBits(), g_config.getDisplayRefreshFrequency());
+	syncVideoModeList(mode);
 	m_resolutionList->SelectionChanged.connect(this, &Options::onDropListSelectionChanged);
 
 	m_fullscreenCheckBox = createStandardCheckBox(col1, 1, lang.get("Fullscreen"));
@@ -734,7 +739,7 @@ void Options::onDropListSelectionChanged(Widget *source) {
 		// change res
 		VideoMode mode = m_resolutions[m_resolutionList->getSelectedIndex()];
 		if (mode != g_program.getVideoMode()) {
-			m_previousVidMode = g_program.getVideoMode();
+			//m_previousVidMode = g_program.getVideoMode();
 			Vec2i sz(400, 240);
 			Vec2i screenDims = g_metrics.getScreenDims();
 			Vec2i pos = (screenDims - sz) / 2;
@@ -755,7 +760,8 @@ void Options::onDropListSelectionChanged(Widget *source) {
 		}
 		*/
 		//g_program.resize(g_config.getDisplayWidth(), g_config.getDisplayHeight());
-		g_program.resize(mode.w, mode.h);
+		/*g_program.setVideoMode(mode);*/
+		g_program.resize(mode);
 
 		Metrics &metrics = Metrics::getInstance();
 		metrics.setScreenW(mode.w);
@@ -767,30 +773,33 @@ void Options::onDropListSelectionChanged(Widget *source) {
 
 		if (m_optionsMenu) {
 			m_optionsMenu->reload();
+		} else {
+			g_gameState.rejigWidgets();
 		}
+		g_config.save();
 		
 		//((Widget*)&g_program)->setSize(Vec2i(mode.w, mode.h));
 		///@todo update shadow texture size if larger than res -hailstone 22June2011
 	}
 }
 
-void Options::onCancelResolutionChange(Widget*) {
-	m_rootWindow->removeFloatingWidget(m_messageDialog);
-	m_messageDialog = 0;
-	syncVideoModeList(m_previousVidMode);
-}
-
-void Options::onConfirmResolutionChange(Widget*) {
-	m_rootWindow->removeFloatingWidget(m_messageDialog);
-	m_messageDialog = 0;
-	VideoMode mode = m_resolutions[m_resolutionList->getSelectedIndex()];
-	g_config.setDisplayWidth(mode.w);
-	g_config.setDisplayHeight(mode.h);
-	g_config.setDisplayRefreshFrequency(mode.freq);
-	g_config.setRenderColorBits(mode.bpp);
-	g_config.save();
-	g_program.exit();
-}
+//void Options::onCancelResolutionChange(Widget*) {
+//	m_rootWindow->removeFloatingWidget(m_messageDialog);
+//	m_messageDialog = 0;
+//	syncVideoModeList(m_previousVidMode);
+//}
+//
+//void Options::onConfirmResolutionChange(Widget*) {
+//	m_rootWindow->removeFloatingWidget(m_messageDialog);
+//	m_messageDialog = 0;
+//	VideoMode mode = m_resolutions[m_resolutionList->getSelectedIndex()];
+//	g_config.setDisplayWidth(mode.w);
+//	g_config.setDisplayHeight(mode.h);
+//	g_config.setDisplayRefreshFrequency(mode.freq);
+//	g_config.setRenderColorBits(mode.bpp);
+//	g_config.save();
+//	g_program.exit();
+//}
 
 void Options::onSliderValueChanged(Widget *source) {
 	Slider2 *slider = static_cast<Slider2*>(source);
@@ -886,6 +895,8 @@ OptionsFrame::OptionsFrame(Container* parent)
 }
 
 void OptionsFrame::init() {
+	
+	delete m_options;
 
 	// apply/cancel buttons
 

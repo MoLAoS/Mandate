@@ -527,6 +527,11 @@ void GameState::togglePinWidgets(Widget*) {
 	static_cast<DisplayFrame*>(gui.getDisplay()->getParent())->setPinned(pin);
 }
 
+void GameState::rejigWidgets() {
+	m_gameMenu->init();
+	m_options->layoutCells();
+}
+
 void GameState::addScriptMessage(const string &header, const string &msg) {
 	m_scriptMessages.push_back(ScriptMessage(header, msg));
 	if (!m_modalDialog) {
