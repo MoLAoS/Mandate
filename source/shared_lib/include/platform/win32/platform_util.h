@@ -89,25 +89,7 @@ inline void freeDirIterator(DirIterator &di) {
 void mkdir(const string &path, bool ignoreDirExists = false);
 size_t getFileSize(const string &path);
 
-struct VideoMode {
-	int w, h;
-	int bpp;
-	int freq;
-
-	VideoMode() : w(0), h(0), bpp(0), freq(0) {}
-	VideoMode(int w, int h, int bpp, int freq) : w(w), h(h), bpp(bpp), freq(freq) {}
-
-	string toString() {
-		return toStr(w) + "x" + toStr(h) + " " + toStr(bpp) + "bpp @ " + toStr(freq) + "Hz.";
-	}
-	bool operator==(const VideoMode &m) const {
-		return (w == m.w && h == m.h && bpp == m.bpp && freq == m.freq);
-	}
-	bool operator!=(const VideoMode &m) const {
-		return !(*this == m);
-	}
-};
-
+string videoModeToString(const VideoMode in_mode);
 bool changeVideoMode(const VideoMode in_mode);
 void restoreVideoMode();
 void getPossibleScreenModes(vector<VideoMode> &out_modes);

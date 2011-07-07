@@ -81,6 +81,22 @@ namespace Shared { namespace Platform {
 	typedef int SOCKET;
 #endif
 
+struct VideoMode {
+	int w, h;
+	int bpp;
+	int freq;
+
+	VideoMode() : w(0), h(0), bpp(0), freq(0) {}
+	VideoMode(int w, int h, int bpp, int freq) : w(w), h(h), bpp(bpp), freq(freq) {}
+
+	bool operator==(const VideoMode &m) const {
+		return (w == m.w && h == m.h && bpp == m.bpp && freq == m.freq);
+	}
+	bool operator!=(const VideoMode &m) const {
+		return !(*this == m);
+	}
+};
+
 }}//end namespace
 
 #endif

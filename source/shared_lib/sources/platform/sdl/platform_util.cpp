@@ -310,14 +310,6 @@ size_t getFileSize(const string &path) {
 	return s.st_size;
 }
 
-bool changeVideoMode(int resW, int resH, int colorBits, int ) {
-	Private::shouldBeFullscreen = true;
-	return true;
-}
-
-void restoreVideoMode() {
-}
-
 void message(string message) {
 	std::cerr << "******************************************************\n";
 	std::cerr << "    " << message << "\n";
@@ -331,8 +323,21 @@ bool ask(string message) {
 	return res != 0;
 }
 
-void getPossibleScreenModes(vector<int> &widths, vector<int> &heights) {
-	///@todo getPossibleScreenModes for linux
+string videoModeToString(const VideoMode in_mode) {
+	return toStr(in_mode.w) + "x" + toStr(in_mode.h) + " " + toStr(in_mode.bpp) + "bpp @ " 
+		+ toStr(in_mode.freq) + "Hz.";
+}
+
+bool changeVideoMode(const VideoMode in_mode) {
+	Private::shouldBeFullscreen = true;
+	return true;
+}
+
+void restoreVideoMode() {
+}
+
+void getPossibleScreenModes(vector<VideoMode> &out_modes) {
+	///@todo implement getPossibleScreenModes for SDL
 }
 
 void getScreenMode(int &width, int &height){

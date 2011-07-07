@@ -207,7 +207,7 @@ void Options::buildVideoTab() {
 	getPossibleScreenModes(modes);
 	for (int i = 0; i < modes.size(); ++i) {
 		m_resolutions.push_back(modes[i]);
-		m_resolutionList->addItem(modes[i].toString());
+		m_resolutionList->addItem(videoModeToString(modes[i]));
 	}
 	syncVideoModeList(m_previousVidMode);
 	m_resolutionList->SelectionChanged.connect(this, &Options::onDropListSelectionChanged);

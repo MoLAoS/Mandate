@@ -153,7 +153,7 @@ void WidgetWindow::setDisplaySettings() {
 		int screenHeight= g_config.getDisplayHeight();
 		VideoMode mode(screenWidth, screenHeight, colorBits, freq);
 		if (!changeVideoMode(mode)) {
-			throw runtime_error( "Error setting video mode: " + mode.toString());
+			throw runtime_error( "Error setting video mode: " + videoModeToString(mode));
 		}
 	}
 }

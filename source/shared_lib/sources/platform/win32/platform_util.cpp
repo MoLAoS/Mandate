@@ -124,7 +124,10 @@ size_t getFileSize(const string &path) {
 	return ret;
 }
 
-
+string videoModeToString(const VideoMode in_mode) {
+	return toStr(in_mode.w) + "x" + toStr(in_mode.h) + " " + toStr(in_mode.bpp) + "bpp @ " 
+		+ toStr(in_mode.freq) + "Hz.";
+}
 
 bool changeVideoMode(const VideoMode in_mode) {
 	DEVMODE devMode;

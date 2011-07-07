@@ -70,8 +70,11 @@ inline void freeDirIterator(DirIterator &di) {
 void mkdir(const string &path, bool ignoreDirExists = false);
 size_t getFileSize(const string &path);
 
-bool changeVideoMode(int resH, int resW, int colorBits, int refreshFrequency);
+string videoModeToString(const VideoMode in_mode);
+bool changeVideoMode(const VideoMode in_mode);
 void restoreVideoMode();
+void getPossibleScreenModes(vector<VideoMode> &out_modes);
+void getScreenMode(int &width, int &height);
 
 void message(string message);
 bool ask(string message);
@@ -87,9 +90,6 @@ inline int getScreenW() {
 inline int getScreenH() {
 	return SDL_GetVideoSurface()->h;
 }
-
-void getPossibleScreenModes(vector<int> &widths, vector<int> &heights);
-void getScreenMode(int &width, int &height);
 
 inline void sleep(int millis) {
 	SDL_Delay(millis);
