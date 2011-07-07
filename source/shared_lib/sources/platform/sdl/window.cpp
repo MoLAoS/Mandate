@@ -135,6 +135,10 @@ void Window::setSize(int w, int h) {
 	Private::ScreenHeight = h;
 }
 
+void Window::resize(PlatformContextGl *context, VideoMode mode) {
+	///@todo implement resize for SDL
+}
+
 void Window::setPos(int x, int y)  {
 	if(x != 0 || y != 0) {
 		NOIMPL;
