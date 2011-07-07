@@ -22,6 +22,7 @@
 
 #include "types.h"
 #include "timer.h"
+#include "conversion.h"
 
 using std::string;
 using std::vector;
@@ -30,6 +31,8 @@ using std::exception;
 using Shared::Platform::int64;
 
 namespace Shared { namespace Platform {
+
+using namespace Util::Conversion;
 
 // =====================================================
 //	class PlatformExceptionHandler
