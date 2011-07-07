@@ -177,6 +177,8 @@ public:
 	void toggleOptions(Widget* ptr = 0);
 	void togglePinWidgets(Widget* ptr = 0);
 
+	void rejigWidgets();
+
 protected:
 	// render
 	void render3d();

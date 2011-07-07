@@ -111,7 +111,7 @@ public:
 	void setEnabled(bool enabled);
 	void setVisible(bool visible);
 	void setVideoMode(VideoMode viedoMode) { m_videoMode = viedoMode; }
-	void resize(PlatformContextGl *context, int w, int h);
+	void resize(PlatformContextGl *context, VideoMode mode);
 
 	//misc
 	void create();

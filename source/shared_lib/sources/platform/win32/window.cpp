@@ -144,7 +144,7 @@ void Window::setSize(int w, int h) {
 	}
 }
 
-void Window::resize(PlatformContextGl *context, int w, int h) {
+void Window::resize(PlatformContextGl *context, VideoMode mode) {
 	m_resizing = true;
 	setVisible(false);
 
@@ -158,8 +158,21 @@ void Window::resize(PlatformContextGl *context, int w, int h) {
 	// remove the current window
 	destroy();
 
+	// change viedo mode if fullscreen
+	if (windowStyle == wsFullscreen) {
+		if (changeVideoMode(mode)) {
+			m_videoMode = mode;
+		} else {
+			cout << "Error setting viedo mode " << mode.w << "x" << mode.h << " " << mode.bpp
+				<< "bpp @ " << mode.freq << " Hz.\n";
+			// error...
+		}
+	} else {
+		m_videoMode = mode;
+	}
+
 	// create the new window with the changed size
-	setSize(w, h);
+	setSize(m_videoMode.w, m_videoMode.h);
 	create();
 	context->changeWindow(handle);
 	setVisible(true);

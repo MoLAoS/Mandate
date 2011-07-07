@@ -280,8 +280,6 @@ void Renderer::resetGlLists() {
 	}
 }
 
-
-
 void Renderer::changeShader(const string &name) {
 	if (name.empty()) {
 		g_logger.logProgramEvent("Deleting model shader.");
@@ -311,6 +309,7 @@ void Renderer::cycleShaders() {
 
 void Renderer::initGame(GameState *game) {
 	this->game= game;
+	m_mainMenu = 0;
 
 	// check gl caps
 	checkGlOptionalCaps();

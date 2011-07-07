@@ -140,9 +140,9 @@ WidgetWindow::~WidgetWindow() {
 
 }
 
-void WidgetWindow::resize(int w, int h) {
-	Widget::setSize(Vec2i(w, h));
-	WindowGl::resize(w, h);
+void WidgetWindow::resize(VideoMode mode) {
+	WindowGl::resize(mode);
+	Widget::setSize(Vec2i(getClientW(), getClientH()));
 }
 
 void WidgetWindow::setDisplaySettings() {
