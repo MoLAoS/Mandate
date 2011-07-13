@@ -250,7 +250,9 @@ void ClientInterface::update() {
 	while (!requestedCommands.empty() && cmdList.addCommand(&requestedCommands.back())) {
 		requestedCommands.pop_back();
 	}
-	send(&cmdList);
+	if (cmdList.getCommandCount()) {
+		send(&cmdList);
+	}
 }
 
 void ClientInterface::updateKeyframe(int frameCount) {

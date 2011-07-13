@@ -117,6 +117,7 @@ bool UpgradeType::loadNewStyle(const XmlNode *node, const string &dir, const Tec
 					string msg = "Unknown affect node, expected 'unit' or 'tag', got '"
 						+ affectNode->getName() + "'";
 					g_logger.logXmlError(dir, msg.c_str());
+					loadOk = false;
 				}
 			}
 		} catch (runtime_error e) { 
@@ -151,7 +152,7 @@ bool UpgradeType::loadOldStyle(const XmlNode *node, const string &dir, const Tec
 	e.setMoveSpeed(node->getOptionalIntValue("move-speed"));
 	e.setProdSpeed(node->getOptionalIntValue("production-speed"));
 
-	//initialize values using new format if nodes are present
+	// initialize values using new format if nodes are present
 	if (node->getChild("static-modifiers", 0, false) || node->getChild("multipliers", 0, false)
 	|| node->getChild("point-boosts", 0, false)) {
 		if (!e.load(node, dir, techTree, factionType)) {

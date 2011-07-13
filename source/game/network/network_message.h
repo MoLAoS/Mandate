@@ -241,7 +241,7 @@ public:
 // ==============================================================
 //	class CommandList
 // ==============================================================
-/**	Message to issue commands to several units */
+/**	Message to send (unit) commands to server */
 class CommandListMessage : public Message {
 	friend class NetworkConnection;
 private:
