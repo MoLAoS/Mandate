@@ -166,7 +166,24 @@ TestPane::TestPane(Program &program)
 	Container *window = static_cast<Container*>(&program);
 	WidgetConfig &cfg = g_widgetConfig;
 
-	test2(this);
+	KeymapWidget *kmw = new KeymapWidget(window);
+
+	Vec2i sd = g_metrics.getScreenDims();
+	Vec2i sz = Vec2i(sd.w * 8 / 10, sd.h * 7 / 10);
+	Vec2i pos = (sd - sz) / 2;
+	kmw->setPos(pos);
+	kmw->setSize(sz);
+
+
+	//KeyEntryWidget *kew = new KeyEntryWidget(window, g_program.getKeymap(), UserCommand::ATTACK);
+
+	////HotKeyInputBox *box = new HotKeyInputBox(window);
+	//const int h = g_widgetConfig.getDefaultItemHeight() / 4 * 5;
+	//Vec2i sz = Vec2i(g_metrics.getScreenW() * 7 / 10/*h * 5*/, h);
+	//Vec2i pos = (g_metrics.getScreenDims() - sz) / 2;
+	//kew->setPos(pos);
+	//kew->setSize(sz);
+	//test2(this);
 
 }
 

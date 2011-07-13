@@ -11,6 +11,7 @@
 
 #include "program.h"
 #include "compound_widgets.h"
+#include "keymap_widget.h"
 
 namespace Glest { namespace Main {
 
