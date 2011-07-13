@@ -32,7 +32,13 @@ public:
 	virtual void execute(const Mesh *mesh)= 0;
 };
 
-WRAPPED_ENUM( RenderMode, WIREFRAME, OBJECTS, UNITS, SHADOWS, SELECTION );
+WRAPPED_ENUM( RenderMode, 
+	WIREFRAME,
+	SELECTION,
+	OBJECTS,
+	UNITS,
+	SHADOWS
+);
 
 // =====================================================
 //	class ModelRenderer
@@ -56,6 +62,7 @@ public:
 	virtual void begin(RenderMode mode, bool fog, MeshCallback *meshCallback = 0) = 0;
 	virtual void end() = 0;
 	virtual void render(const Model *model, float fade = 1.f, int frame = 0, int id = 0, UnitShaderSet *shaderSet = 0) = 0;
+	virtual void renderOutline(const Model *model) = 0;
 	virtual void renderNormalsOnly(const Model *model) = 0;
 	virtual void renderMesh(const Mesh *mesh, float fade = 1.f, int frame = 0, int id = 0, UnitShaderSet *shaderSet = 0) = 0;
 	virtual void renderMeshNormalsOnly(const Mesh *mesh) = 0;

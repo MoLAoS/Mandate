@@ -173,6 +173,7 @@ Renderer::Renderer() {
 	perspFarPlane = config.getRenderDistanceMax();
 	game = 0;
 	m_mainMenu = 0;
+	m_teamColourMode = TeamColourMode::DISABLED;
 }
 
 Renderer::~Renderer(){
@@ -1045,6 +1046,7 @@ void Renderer::renderUnits() {
 			Debug::reportRenderUnitsFlag = false;
 		}
 	)
+	const int frame = g_world.getFrameCount();
 	for (int i=0; i < GameConstants::maxPlayers + 1; ++i) {
 		if (toRender[i].empty()) continue;
 
@@ -1067,22 +1069,30 @@ void Renderer::renderUnits() {
 			}
 			RUNTIME_CHECK(unit->getPos().x >= 0 && unit->getPos().y >= 0);
 			RUNTIME_CHECK(unit->getPos().x < world->getMap()->getW() && unit->getPos().y < world->getMap()->getH());
-
-			// push model-view matrix
-			glPushMatrix();
-
-			// translate
-			Vec3f currVec = unit->getCurrVectorSink();
-			glTranslatef(currVec.x, currVec.y, currVec.z);
-
-			// rotate
-			glRotatef(unit->getRotation(), 0.f, 1.f, 0.f);
-			glRotatef(unit->getVerticalRotation(), 1.f, 0.f, 0.f);
+			float alphaThreshold = 0.5f;
+			UnitShaderSet *uss = 0;
+			const int id = unit->getId();
 
 			// get model, lerp to animProgess
 			const Model *model = unit->getCurrentModel();
 			bool cycleAnim = unit->isAlive() && !unit->getCurrSkill()->isStretchyAnim();
 			model->updateInterpolationData(unit->getAnimProgress(), cycleAnim);
+
+			// push model-view matrix
+			glPushMatrix();
+			Vec3f currVec = unit->getCurrVectorSink();
+
+			// translate
+			glTranslatef(currVec.x, currVec.y, currVec.z);
+
+			// rotate
+			glRotatef(unit->getRotation(), 0.f, 1.f, 0.f);
+			//glRotatef(unit->getVerticalRotation(), 1.f, 0.f, 0.f);
+
+			if (m_teamColourMode == TeamColourMode::OUTLINE
+			|| m_teamColourMode == TeamColourMode::BOTH) {
+				modelRenderer->renderOutline(model);
+			}
 
 			// dead/cloak alpha
 			float alpha = unit->getRenderAlpha();
@@ -1090,31 +1100,26 @@ void Renderer::renderUnits() {
 
 			///@todo generalise so custom shaders can be attached to other things
 			/// all controlled with Lua snippets perhaps.
-
-			// render
 			if (fade) {
-				modelRenderer->setAlphaThreshold(0.f);
+				alphaThreshold = 0.f;
 				if (unit->isCloaked()) {
-					UnitShaderSet *uss = 0;
 					if (unit->getFaction()->isAlly(thisFaction)) {
 						uss = unit->getType()->getCloakType()->getAllyShaders();
 					} else {
 						uss = unit->getType()->getCloakType()->getEnemyShaders();
 					}
-					if (uss) {
-						const int frame = g_world.getFrameCount();
-						const int id = unit->getId();
-						modelRenderer->render(model, alpha, frame, id, uss);
-					} else {
-						modelRenderer->render(model, alpha);
-					}
-				} else {
-					modelRenderer->render(model, alpha);
 				}
-			} else {
-				modelRenderer->setAlphaThreshold(0.5f);
-				modelRenderer->render(model);
 			}
+
+			// team colour tint shader?
+			if (m_teamColourMode >= TeamColourMode::TINT) {
+				uss = static_cast<ModelRendererGl*>(modelRenderer)->getTeamTintShader();
+			}
+
+			// render
+			modelRenderer->render(model, alpha, frame, id, uss);
+
+			// inc tri & point counters
 			triangleCount += model->getTriangleCount();
 			pointCount += model->getVertexCount();
 

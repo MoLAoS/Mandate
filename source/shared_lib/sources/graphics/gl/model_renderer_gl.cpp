@@ -40,6 +40,7 @@ ModelRendererGl::ModelRendererGl()
 		, m_lastTexture()
 		, m_alphaThreshold(0.f)
 		, m_currentLightCount(1)
+		, m_teamTintShader(0)
 		, m_shaderIndex(-1)
 		, m_lastShaderProgram(0) {
 	m_fixedFunctionProgram = new FixedPipeline();
@@ -69,6 +70,13 @@ void ModelRendererGl::loadShaders(const vector<string> &setNames) {
 	if (!m_shaders.empty()) {
 		m_shaderIndex = 0; // use first in list
 	}
+	try {
+		m_teamTintShader = new UnitShaderSet(string("gae/shaders/misc_model/team_tint.xml"));
+	} catch (runtime_error &e) {
+		mediaErrorLog.add(e.what(), string("gae/shaders/misc_model/team_tint.xml"));
+		delete m_teamTintShader;
+		m_teamTintShader = 0;
+	}
 }
 
 void ModelRendererGl::loadShader(const string &name) {
@@ -95,6 +103,13 @@ void ModelRendererGl::loadShader(const string &name) {
 	}
 	if (!m_shaders.empty()) {
 		m_shaderIndex = 0; // use if loaded ok
+	}
+	try {
+		m_teamTintShader = new UnitShaderSet(string("gae/shaders/misc_model/team_tint.xml"));
+	} catch (runtime_error &e) {
+		mediaErrorLog.add(e.what(), string("gae/shaders/misc_model/team_tint.xml"));
+		delete m_teamTintShader;
+		m_teamTintShader = 0;
 	}
 }
 
@@ -127,23 +142,26 @@ void ModelRendererGl::begin(RenderMode mode, bool fog, MeshCallback *meshCallbac
 	m_lastTexture = 0;
 	glBindTexture(GL_TEXTURE_2D, 0);
 
-	//push attribs
+	// push attribs
 	glPushAttrib(GL_ENABLE_BIT | GL_LIGHTING_BIT | GL_POLYGON_BIT | GL_CURRENT_BIT | GL_TEXTURE_BIT);
 	glPushClientAttrib(GL_CLIENT_VERTEX_ARRAY_BIT);
 
-	//init opengl
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	// init opengl
+	if (m_renderMode < RenderMode::OBJECTS) {
+		glDisable(GL_BLEND);
+	} else {
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	}
 	glFrontFace(GL_CCW);
-//	glEnable(GL_NORMALIZE); // we don't scale or shear, don't need this
 
 	glEnableClientState(GL_VERTEX_ARRAY);
 
-	if (mode == RenderMode::UNITS || mode == RenderMode::OBJECTS) {
+	if (m_renderMode >= RenderMode::OBJECTS && m_renderMode < RenderMode::SHADOWS) {
 		glEnableClientState(GL_NORMAL_ARRAY);
 	}
 
-	if (mode == RenderMode::UNITS || mode == RenderMode::OBJECTS || mode == RenderMode::SHADOWS) {
+	if (m_renderMode >= RenderMode::OBJECTS) {
 		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 	}	
 
@@ -151,6 +169,19 @@ void ModelRendererGl::begin(RenderMode mode, bool fog, MeshCallback *meshCallbac
 	assertGl();
 }
 
+void ModelRendererGl::renderOutline(const Model *model) {
+	// assertions
+	assert(m_rendering && m_renderMode == RenderMode::UNITS);
+	assertGl();
+	
+	// render every mesh
+	for (uint32 i = 0; i < model->getMeshCount(); ++i) {
+		renderMeshOutline(model->getMesh(i));
+	}
+
+	// assertions
+	assertGl();
+}
 
 void ModelRendererGl::end() {
 	// assertions
@@ -465,8 +496,100 @@ void ModelRendererGl::renderMesh(const Mesh *mesh, float fade, int frame, int id
 			glDisableVertexAttribArray(tanAttribLoc);
 		}
 	}
-
 	assertGl();
+}
+
+void ModelRendererGl::renderMeshOutline(const Mesh *mesh) {
+	// assertions
+	assert(m_renderMode == RenderMode::UNITS);
+	assertGl();
+
+	const uint32 vertexCount = mesh->getVertexCount();
+	const uint32 indexCount = mesh->getIndexCount();
+	if (!mesh->getVertexCount()) {
+		return;
+	}
+	if (m_lastShaderProgram) {
+		m_lastShaderProgram->end();
+	}
+
+	// disable texture0 and lighting
+	glActiveTexture(diffuseTextureUnit);
+	glDisable(GL_TEXTURE_2D);
+	glDisable(GL_LIGHTING);
+
+	// outline setup
+	
+	// render back facing polygons as lines
+	glPolygonMode(GL_BACK, GL_LINE);
+	glLineWidth(2.f);
+	glEnable (GL_LINE_SMOOTH);
+
+	// cull front facing polygons
+	glEnable(GL_CULL_FACE);
+	glCullFace(GL_FRONT);
+
+	// push outline back a bit
+	glPolygonOffset(0.f, -1.f);
+
+	// team colour
+	Vec4f color(getTeamColour(), 1.f);
+	glColor4fv(color.ptr());
+
+	// disable tex-coord arrays
+	if (m_duplicateTexCoords) {
+		glActiveTexture(GL_TEXTURE0 + m_secondaryTexCoordUnit);
+		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+	}
+	glActiveTexture(GL_TEXTURE0);
+	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+
+	//assertions
+	assertGl();
+
+	// vertices
+	const MeshVertexBlock *vertexBlock = 0;
+	if (mesh->getStaticVertData().count != 0) {
+		vertexBlock = &mesh->getStaticVertData();
+	} else {
+		vertexBlock = &mesh->getInterpolationData()->getVertexBlock();
+	}
+	
+	const int stride = vertexBlock->getStride();
+	int indexType = mesh->getIndices().type == MeshIndexBlock::UNSIGNED_16 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT;
+	if (vertexBlock->vbo_handle) { // all VBO
+		glBindBuffer(GL_ARRAY_BUFFER, vertexBlock->vbo_handle);
+		glVertexPointer(3, GL_FLOAT, stride, 0);
+ 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->getIndices().vbo_handle);
+		glDrawRangeElements(GL_TRIANGLES, 0, vertexCount - 1, indexCount, indexType, VBO_OFFSET(0));
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+		assertGl();
+
+	} else { // Non static mesh or VBOs disabled
+		glVertexPointer(3, GL_FLOAT, stride, vertexBlock->m_arrayPtr);
+		if (use_vbos) { // non-static mesh, indices are in VBO
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->getIndices().vbo_handle);
+			glDrawRangeElements(GL_TRIANGLES, 0, vertexCount - 1, indexCount, indexType, VBO_OFFSET(0));
+			glBindBuffer(GL_ARRAY_BUFFER, 0);
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+			assertGl();
+		} else { // all old-school
+			glDrawRangeElements(GL_TRIANGLES, 0, vertexCount - 1, indexCount, indexType, mesh->getIndices().m_indices);
+			assertGl();
+		}
+	}
+
+	// restore stuff
+	glEnable(GL_TEXTURE_2D);
+	glEnable(GL_LIGHTING);
+	glCullFace(GL_BACK);
+	glPolygonMode(GL_BACK, GL_FILL);
+	glPolygonOffset(0.f, 0.f);
+	assertGl();
+	if (m_lastShaderProgram) {
+		m_lastShaderProgram->begin();
+	}
 }
 
 void ModelRendererGl::setAlphaThreshold(float a) {

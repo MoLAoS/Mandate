@@ -221,7 +221,8 @@ const AssignmentInfo Keymap::commandInfo[UserCommand::COUNT] = {
 	{0,						0,						0,						0}, // PATROL
 	{KeyCode::R,			0,						0,						0}, // ROTATE_BUILDING
 	{KeyCode::BACK_QUOTE,	0,						0,						0}, // SHOW_LUA_CONSOLE
-	{KeyCode::QUOTE,		0,						0,						0}  // CYCLE_SHADERS
+	{KeyCode::QUOTE,		0,						0,						0}, // CYCLE_SHADERS
+	{KeyCode::SEMI_COLON,	0,						0,						0}  // TOGGLE_TEAM_TINT
 };
 #pragma pack(pop)
 

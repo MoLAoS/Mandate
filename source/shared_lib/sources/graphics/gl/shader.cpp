@@ -170,6 +170,7 @@ void GlslProgram::compileAndLink(const char *vs, const char *fs) {
 		cout << "-";
 	}
 	cout << endl;
+	cout.flush();
 
 	m_v = glCreateShader(GL_VERTEX_SHADER);
 	m_f = glCreateShader(GL_FRAGMENT_SHADER);

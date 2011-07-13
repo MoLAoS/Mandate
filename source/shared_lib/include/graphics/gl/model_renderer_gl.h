@@ -39,6 +39,7 @@ private:
 	MeshCallback *m_meshCallback;
 
 	UnitShaderSets   m_shaders;
+	UnitShaderSet   *m_teamTintShader;
 	int	             m_shaderIndex; // index in m_shaders of UnitShaderSet we a currently using, or -1
 	
 	ShaderProgram	*m_lastShaderProgram;
@@ -59,6 +60,8 @@ public:
 
 	void deleteModelShader();
 
+	UnitShaderSet* getTeamTintShader() { return m_teamTintShader; }
+
 	void cycleShaderSet();
 	const string& getShaderName();
 	bool isUsingShaders() const { return m_shaderIndex != -1; }
@@ -70,6 +73,7 @@ public:
 	void end() override;
 	
 	void render(const Model *model, float fade = 1.f, int frame = 0, int id = 0, UnitShaderSet *customShaders = 0) override;
+	void renderOutline(const Model *model) override;
 	void renderNormalsOnly(const Model *model) override;
 	void renderMeshNormalsOnly(const Mesh *mesh) override;
 
@@ -78,6 +82,7 @@ public:
 
 	void renderMeshNormals(const Mesh *mesh);
 	void renderMesh(const Mesh *mesh, float fade = 1.f, int frame = 0, int id = 0, UnitShaderSet *customShaders = 0) override;
+	void renderMeshOutline(const Mesh *mesh);
 };
 
 }}}//end namespace

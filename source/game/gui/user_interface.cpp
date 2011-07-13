@@ -509,6 +509,13 @@ void UserInterface::hotKey(UserCommand cmd) {
 	WIDGET_LOG( __FUNCTION__ << "( " << UserCommandNames[cmd] << " )" );
 
 	switch (cmd) {
+		case UserCommand::TOGGLE_TEAM_TINT:
+			{
+				int mode = (g_renderer.getTeamColourMode() + 1) % TeamColourMode::COUNT;
+				g_renderer.setTeamColourMode(TeamColourMode(mode));
+				//cout << "Team colour mode is: " << mode << endl;
+			}
+			break;
 		case UserCommand::GOTO_SELECTION:
 			centerCameraOnSelection();
 			break;
