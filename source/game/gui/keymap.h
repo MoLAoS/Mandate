@@ -15,6 +15,7 @@
 #include "properties.h"
 #include "input.h"
 #include "lang.h"
+#include "sigslot.h"
 
 using Shared::Util::Properties;
 using namespace Shared::Platform;
@@ -25,149 +26,191 @@ using Glest::Global::Lang;
 namespace Glest { namespace Gui {
 
 // =====================================================
-// 	class Keymap
+// 	enum UserCommand
 // =====================================================
-enum UserCommand {
-	ucNone,
-	ucChatAudienceAll,
-	ucChatAudienceTeam,
-	ucChatAudienceToggle,
-	ucEnterChatMode,
-	ucMenuMain,
-	ucMenuQuit,
-	ucMenuSave,
-	ucMenuLoad,
-	ucQuitNow,
-	ucQuickSave,
-	ucQuickLoad,
-	ucPauseOn,
-	ucPauseOff,
-	ucPauseToggle,
-	ucSpeedInc,
-	ucSpeedDec,
-	ucSpeedReset,
-	ucNetworkStatusOn,
-	ucNetworkStatusOff,
-	ucNetworkStatusToggle,
-	ucSaveScreenshot,
-	ucCameraZoomIn,
-	ucCameraZoomOut,
-	ucCameraPitchUp,
-	ucCameraPitchDown,
-	ucCameraRotateLeft,
-	ucCameraRotateRight,
-	ucCameraZoomReset,
-	ucCameraAngleReset,
-	ucCameraZoomAndAngleReset,
-	ucCameraPosLeft,
-	ucCameraPosRight,
-	ucCameraPosUp,
-	ucCameraPosDown,
-	ucCameraGotoSelection,
-	ucCameraGotoLastEvent,
-	ucSelectNextIdleHarvester,
-	ucSelectNextIdleBuilder,
-	ucSelectNextIdleRepairer,
-	ucSelectNextIdleWorker,
-	ucSelectNextIdleRestorer,
-	ucSelectNextIdleProducer,
-	ucSelectNextProducer,
-	ucSelectNextDamaged,
-	ucSelectNextBuiltBuilding,
-	ucSelectNextStore,
-	ucAttack,
-	ucStop,
-	ucMove,
-	ucReplenish,
-	ucGuard,
-	ucFollow,
-	ucPatrol,
-	ucRotate,
-	ucLuaConsole,
-	ucCycleShaders,
 
-	ucCount
+STRINGY_ENUM( UserCommand,
+	NONE,
+
+	// Chat
+	CHAT_AUDIENCE_ALL,
+	CHAT_AUDIENCE_TEAM,
+	CHAT_AUDIENCE_TOGGLE,
+	SHOW_CHAT_DIALOG,
+
+	// 
+	QUIT_GAME,
+	SAVE_GAME,
+
+	// game speed/pause
+	PAUSE_GAME,
+	RESUME_GAME,
+	TOGGLE_PAUSE,
+	INC_SPEED,
+	DEC_SPEED,
+	RESET_SPEED,
+
+	SAVE_SCREENSHOT,
+
+	// camera
+	ZOOM_CAMERA_IN,
+	ZOOM_CAMERA_OUT,
+	PITCH_CAMERA_UP,
+	PITCH_CAMERA_DOWN,
+	ROTATE_CAMERA_LEFT,
+	ROTATE_CAMERA_RIGHT,
+	CAMERA_RESET_ZOOM,
+	CAMERA_RESET_ANGLE,
+	CAMERA_RESET,
+	MOVE_CAMERA_LEFT,
+	MOVE_CAMERA_RIGHT,
+	MOVE_CAMERA_UP,
+	MOVE_CAMERA_DOWN,
+	GOTO_SELECTION,
+	GOTO_LAST_EVENT,
+
+	// select stuff
+	SELECT_IDLE_HARVESTER,
+	SELECT_IDLE_BUILDER,
+	SELECT_IDLE_REPAIRER,
+	SELECT_IDLE_WORKER,
+	SELECT_IDLE_RESTORER,
+	SELECT_IDLE_PRODUCER,
+	SELECT_NEXT_PRODUCER,
+	SELECT_NEXT_DAMAGED,
+	SELECT_NEXT_BUILT_BUILDING,
+	SELECT_NEXT_STORE,
+
+	// Commands
+	ATTACK,
+	STOP,
+	MOVE,
+	REPAIR,
+	GUARD,
+	FOLLOW,
+	PATROL,
+
+	// misc
+	ROTATE_BUILDING,
+	SHOW_LUA_CONSOLE,
+	CYCLE_SHADERS
+);
+
+struct ModKeys {
+	enum { SHIFT = 1, CTRL = 2, ALT = 4, META = 8 };
 };
 
-class Keymap {
+struct AssignmentInfo {
+	unsigned short defKey1;
+	unsigned short defMod1;
+	unsigned short defKey2;
+	unsigned short defMod2;
+};
+
+/** 
+ * A single key map entry specifying a KeyCode and a set of modifiers.  Modifiers use the values
+ * of the BasicKeyModifier enum as bit masks for each modifier key.
+ */
+class HotKey {
+private:
+	KeyCode m_keyCode;
+	int     m_modFlags;
+
 public:
-	enum BasicKeyModifier {
-		bkmNone		= 0x00,
-		bkmShift	= 0x01,
-		bkmCtrl		= 0x02,
-		bkmAlt		= 0x04,
-		bkmMeta		= 0x08,
-	};
+	HotKey() : m_keyCode(KeyCode::NONE), m_modFlags(0) {}
+	HotKey(KeyCode key, int mod) : m_keyCode(key), m_modFlags(mod) {}
+	HotKey(const HotKey &v) : m_keyCode(v.m_keyCode), m_modFlags(v.m_modFlags) {}
 
-#pragma pack(push, 1)
+	bool operator<(const HotKey &arg) const {
+		return m_keyCode != arg.m_keyCode ? m_keyCode < arg.m_keyCode : m_modFlags < arg.m_modFlags;
+	}
+	bool operator==(const HotKey &arg) const {
+		return m_keyCode == arg.m_keyCode && m_modFlags == arg.m_modFlags;
+	}
+	bool operator!=(const HotKey &arg) const {
+		return !(*this == arg);
+	}
+	bool matches(KeyCode key, int mod) const {
+		return m_keyCode == key && m_modFlags == mod;
+	}
+	bool isSet() const { return m_keyCode != KeyCode::NONE; }
+	KeyCode getKey() const			{return m_keyCode;}
+	int getMod() const				{return m_modFlags;}
+	void clear() 					{m_keyCode = KeyCode::NONE; m_modFlags = 0;}
+	void init(const string &str);
+	string toString() const;
+};
 
-	struct UserCommandInfo {
-		const char *name;
-		unsigned short defKey1;
-		unsigned char defMod1;
-		unsigned short defKey2;
-		unsigned char defMod2;
-	};
+class HotKeyAssignment {
+private:
+	UserCommand  m_userCommand;
+	HotKey       m_hotKey1;
+	HotKey       m_hotKey2;
 
-#pragma pack(pop)
+public:
+	HotKeyAssignment(UserCommand userCommand, const AssignmentInfo &info)
+			: m_userCommand(userCommand)
+			, m_hotKey1(KeyCode(info.defKey1), info.defMod1)
+			, m_hotKey2(KeyCode(info.defKey2), info.defMod2) {
+	}
+	HotKeyAssignment(UserCommand userCommand)
+			: m_userCommand(userCommand)
+			, m_hotKey1(KeyCode::NONE, 0)
+			, m_hotKey2(KeyCode::NONE, 0) {
+	}
+	HotKeyAssignment(const HotKeyAssignment &v)
+			: m_userCommand(v.m_userCommand)
+			, m_hotKey1(v.m_hotKey1)
+			, m_hotKey2(v.m_hotKey2) {
+	}
+	HotKeyAssignment()
+			: m_userCommand(UserCommand::NONE)
+			, m_hotKey1(KeyCode::NONE, 0)
+			, m_hotKey2(KeyCode::NONE, 0) {
+	}
 
-	/** 
-	 * A single key map entry specifying a KeyCode and a set of modifiers.  Modifiers use the values
-	 * of the BasicKeyModifier enum as bit masks for each modifier key.
-	 */
-	class Entry {
-	private:
-		KeyCode key;
-		int mod;
+	bool matches(KeyCode keyCode, int mod) const {
+		return m_hotKey1.matches(keyCode, mod) || m_hotKey2.matches(keyCode, mod);
+	}
 
-	public:
-		Entry(KeyCode key, int mod) : key(key), mod(mod) {}
-		Entry(const Entry &v) : key(v.key), mod(v.mod) {}
-
-		bool operator <(const Entry &arg) const {
-			return key != arg.key ? key < arg.key : mod < arg.mod;
-		}
-		bool operator ==(const Entry &arg) const {
-			return key == arg.key && mod == arg.mod;
-		}
-		bool matches(KeyCode key, int mod) const {
-			return this->key == key && this->mod == mod;
-		}
-		KeyCode getKey() const			{return key;}
-		int getMod() const				{return mod;}
-		void clear() 					{key = KeyCode::NONE; mod = bkmNone;}
-		void init(const string &str);
-		string toString() const;
-	};
+	UserCommand getUserCommand() const { return m_userCommand; }
+	HotKey getHotKey1() const { return m_hotKey1; }
+	HotKey getHotKey2() const { return m_hotKey2; }
 	
-	class EntryPair {
-		Entry a;
-		Entry b;
+	void setHotKey1(HotKey hk);
+	void setHotKey2(HotKey hk);
 
-	public:
-		EntryPair(const UserCommandInfo &info) 
-				: a((KeyCode)info.defKey1, (BasicKeyModifier)info.defMod1)
-				, b((KeyCode)info.defKey2, (BasicKeyModifier)info.defMod2) {
-		}
-		EntryPair(const EntryPair &v) : a(v.a), b(v.b) {}
+	bool isSet() const { return m_hotKey1.isSet() || m_hotKey2.isSet(); }
 
-		bool matches(KeyCode keyCode, int mod) const {
-			return a.matches(keyCode, mod) || b.matches(keyCode, mod);
-		}
-		const Entry &getA() const	{return a;}
-		const Entry &getB() const	{return b;}
-		void clear() 				{a.clear(); b.clear();}
-		void init(const string &str);
-		string toString() const;
-	};
+	void clear();
+	void init(const string &str);
+	string toString() const;
+
+	sigslot::signal<HotKeyAssignment*> Modified;
+};
+
+
+// =====================================================
+// 	class Keymap
+// =====================================================
+
+class Keymap : public sigslot::has_slots {
+public:
+	typedef vector<HotKeyAssignment>      HotKeyAssignments;
+	typedef map<HotKey, UserCommand>      HotKeyCommandMap;
+	typedef pair<HotKey, HotKey>          HotKeyPair;
+	typedef map<UserCommand, HotKeyPair>  CommandHotKeyMap;
 
 private:
-	const Input &input;
-	const Lang &lang;
-	vector<EntryPair> entries;
-	map<Entry, UserCommand> entryCmdMap;
+	const Input&             m_input;
+	const Lang&              m_lang;
+	HotKeyAssignments        m_entries; // all Assignments, indexed by UserCommand
+	HotKeyCommandMap         m_hotKeyCmdMap; // hotkey to user-command map
+	CommandHotKeyMap         m_cmdHotKeyMap; // user-command to hotkeys map (for convenience of maintenaince)
+	string                   m_filename;
+	bool                     m_dirty;
 
-	static const UserCommandInfo commandInfo[ucCount];
+	static const AssignmentInfo commandInfo[UserCommand::COUNT];
 
 private:
 	Keymap(const Keymap &);
@@ -175,17 +218,24 @@ private:
 
 public:
 	Keymap(const Input &input, const char* fileName);
-	bool isMapped(Key key, UserCommand cmd) const;	
-	UserCommand getCommand(Key key) const;	
+	//bool isMapped(Key key, UserCommand cmd) const;	
+	UserCommand getCommand(HotKey hotKey) const;
+	UserCommand getCommand(KeyCode key, int modFlags) const;
+	UserCommand getCommand(Key key) const;
 	int getCurrentMods() const;
+	HotKeyAssignment& getAssignment(UserCommand uc) { return m_entries[uc]; }
 
-	void load(const char *path);
-	void save(const char *path);
+	void load(const char *path = 0);
+	void save(const char *path = 0);
 
 	static const char* getCommandName(UserCommand cmd);
 
-private:
-	void reinit();
+	sigslot::signal<bool> DirtyModified;
+
+	void onAssignmentModified(HotKeyAssignment *assignment);
+//
+//private:
+//	void reinit();
 };
 
 }}//end namespace

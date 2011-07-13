@@ -46,7 +46,7 @@ namespace Glest { namespace Gui {
 
 const float Mouse3d::fadeSpeed= 1.f/50.f;
 
-Mouse3d::Mouse3d(){
+Mouse3d::Mouse3d() {
 	enabled = false;
 	rot = 0;
 	fade = 0.f;
@@ -73,31 +73,31 @@ void Mouse3d::update() {
 // 	class SelectionQuad
 // ===============================
 
-SelectionQuad::SelectionQuad(){
-	enabled= false;
-	posDown= Vec2i(0);
-	posUp= Vec2i(0);
+SelectionQuad::SelectionQuad() {
+	enabled = false;
+	posDown = Vec2i(0);
+	posUp = Vec2i(0);
 }
 
-void SelectionQuad::setPosDown(const Vec2i &posDown){
-	enabled= true;
-	this->posDown= posDown;
-	this->posUp= posDown;
+void SelectionQuad::setPosDown(const Vec2i &posDown) {
+	enabled = true;
+	this->posDown = posDown;
+	this->posUp = posDown;
 }
 
-void SelectionQuad::setPosUp(const Vec2i &posUp){
-	this->posUp= posUp;
+void SelectionQuad::setPosUp(const Vec2i &posUp) {
+	this->posUp = posUp;
 }
 
-void SelectionQuad::disable(){
-	enabled= false;
+void SelectionQuad::disable() {
+	enabled = false;
 }
 
 // =====================================================
 // 	class UserInterface
 // =====================================================
 
-UserInterface* UserInterface::currentGui = NULL;
+UserInterface* UserInterface::currentGui = 0;
 
 //constructor
 UserInterface::UserInterface(GameState &game)
@@ -116,21 +116,21 @@ UserInterface::UserInterface(GameState &game)
 		, m_selectingSecond(false)
 		, m_selectedFacing(CardinalDir::NORTH)
 		, m_selectionDirty(false) {
-	posObjWorld= Vec2i(54, 14);
-	dragStartPos= Vec2i(0, 0);
-	computeSelection= false;
-	validPosObjWorld= false;
-	choosenBuildingType= NULL;
-	activeCommandType= NULL;
-	activeCommandClass= CmdClass::STOP;
-	selectingPos= false;
+	posObjWorld = Vec2i(54, 14);
+	dragStartPos = Vec2i(0, 0);
+	computeSelection = false;
+	validPosObjWorld = false;
+	choosenBuildingType = 0;
+	activeCommandType = 0;
+	activeCommandClass = CmdClass::STOP;
+	selectingPos = false;
 	selectedObject = 0;
-	selectingMeetingPoint= false;
-	activePos= invalidPos;
+	selectingMeetingPoint = false;
+	activePos = invalidPos;
 	dragging = false;
 	needSelectionUpdate = false;
 	currentGui = this;
-	currentGroup= invalidGroupIndex;
+	currentGroup = invalidGroupIndex;
 }
 
 UserInterface::~UserInterface() {
@@ -141,9 +141,9 @@ UserInterface::~UserInterface() {
 
 void UserInterface::init() {
 	// refs
-	this->commander= g_simInterface.getCommander();
-	this->gameCamera= game.getGameCamera();
-	this->world= &g_world;
+	this->commander = g_simInterface.getCommander();
+	this->gameCamera = game.getGameCamera();
+	this->world = &g_world;
 
 	buildPositions.reserve(max(world->getMap()->getH(), world->getMap()->getW()));
 	selection = new Selection();
@@ -161,13 +161,13 @@ void UserInterface::init() {
 	if (fac) {  //loadmap has no faction
 		const FactionType *ft = fac->getType();
 		set<const ResourceType*> displayResources;
-		for (int i= 0; i < g_world.getTechTree()->getResourceTypeCount(); ++i) {
+		for (int i = 0; i < g_world.getTechTree()->getResourceTypeCount(); ++i) {
 			const ResourceType *rt = g_world.getTechTree()->getResourceType(i);
 			if (!rt->isDisplay()) {
 				continue;
 			}
 			// if any UnitType needs the resource
-			for (int j=0; j < ft->getUnitTypeCount(); ++j) {
+			for (int j = 0; j < ft->getUnitTypeCount(); ++j) {
 				const UnitType *ut = ft->getUnitType(j);
 				ResourceAmount r = ut->getCost(rt, fac);
 				if (r.getType()) {
@@ -375,26 +375,22 @@ void UserInterface::mouseDownLeft(int x, int y) {
 		return;
 	}
 
-	const Unit *targetUnit= NULL;
+	const Unit *targetUnit = 0;
 	if (units.size()) {
 		targetUnit = units.front();
 		worldPos = targetUnit->getPos();
 	}
 
-	if (selectingPos) {
-		// give standard orders
+	if (selectingPos) { // give standard orders
 		giveTwoClickOrders(worldPos, (Unit *)targetUnit);
 
-	// set meeting point
-	} else if (selectingMeetingPoint) {
+	} else if (selectingMeetingPoint) { // set meeting point
 		if (selection->isComandable()) {
-			commander->tryGiveCommand(selection, CmdFlags(), NULL,
-					CmdClass::SET_MEETING_POINT, worldPos);
+			commander->tryGiveCommand(selection, CmdFlags(), 0, CmdClass::SET_MEETING_POINT, worldPos);
 		}
 		resetState(false);
 
-	//begin drag-drop selection & update selection for single-click
-	} else {
+	} else { // begin drag-drop selection & update selection for single-click
 		selectionQuad.setPosDown(Vec2i(x, y));
 		calculateNearest(units, gameCamera->getPos());
 		updateSelection(false, units);
@@ -418,7 +414,7 @@ void UserInterface::mouseUpLeft(int x, int y) {
 	} else if (isPlacingBuilding() && dragging) {
 		Vec2i worldPos;
 		if (g_renderer.computePosition(Vec2i(x, y), worldPos)) {
-			giveTwoClickOrders(worldPos, NULL);
+			giveTwoClickOrders(worldPos, 0);
 		} else {
 			m_console->addStdMessage("InvalidPosition");
 		}
@@ -426,7 +422,7 @@ void UserInterface::mouseUpLeft(int x, int y) {
 }
 
 void UserInterface::mouseUpRight(int x, int y) {
-	WIDGET_LOG( __FUNCTION__ << "( " << x << ", " << y << " )");
+	WIDGET_LOG( __FUNCTION__ << "( " << x << ", " << y << " )" );
 
 	if (!g_camera.isMoving()) {
 		Vec2i worldPos;
@@ -484,10 +480,10 @@ void UserInterface::mouseMove(int x, int y) {
 	}
 
 	//compute position for building
-	if(isPlacingBuilding()){
+	if (isPlacingBuilding()) {
 		validPosObjWorld= Renderer::getInstance().computePosition(Vec2i(x,y), posObjWorld);
 
-		if(!validPosObjWorld) {
+		if (!validPosObjWorld) {
 			buildPositions.clear();
 		} else {
 			computeBuildPositions(posObjWorld);
@@ -495,7 +491,7 @@ void UserInterface::mouseMove(int x, int y) {
 	}
 }
 
-void UserInterface::groupKey(int groupIndex){
+void UserInterface::groupKey(int groupIndex) {
 	if (input.isCtrlDown()) {
 		selection->assignGroup(groupIndex);
 	} else {
@@ -510,120 +506,80 @@ void UserInterface::groupKey(int groupIndex){
 }
 
 void UserInterface::hotKey(UserCommand cmd) {
-	WIDGET_LOG( __FUNCTION__ << "( " << Keymap::getCommandName(cmd) << " )" );
+	WIDGET_LOG( __FUNCTION__ << "( " << UserCommandNames[cmd] << " )" );
 
-	switch(cmd) {
-	// goto selection
-	case ucCameraGotoSelection:
-		centerCameraOnSelection();
-		break;
-
-	// goto last event
-	case ucCameraGotoLastEvent:
-		centerCameraOnLastEvent();
-		break;
-
- 	// select idle harvester
-	case ucSelectNextIdleHarvester:
-		selectInterestingUnit(InterestingUnitType::IDLE_HARVESTER);
-		break;
-
- 	// select idle builder
-	case ucSelectNextIdleBuilder:
-		selectInterestingUnit(InterestingUnitType::IDLE_BUILDER);
-		break;
-
- 	// select idle repairing/healing unit
-	case ucSelectNextIdleRepairer:
-		selectInterestingUnit(InterestingUnitType::IDLE_REPAIRER);
-		break;
-
- 	// select idle worker (can either build, repair, or harvest)
-	case ucSelectNextIdleWorker:
-		selectInterestingUnit(InterestingUnitType::IDLE_WORKER);
-		break;
-
- 	// select idle non-hp restoration-skilled unit
-	case ucSelectNextIdleRestorer:
-		selectInterestingUnit(InterestingUnitType::IDLE_RESTORER);
-		break;
-
- 	// select idle producer
-	case ucSelectNextIdleProducer:
-		selectInterestingUnit(InterestingUnitType::IDLE_PRODUCER);
-		break;
-
- 	// select idle or non-idle producer
-	case ucSelectNextProducer:
-		selectInterestingUnit(InterestingUnitType::PRODUCER);
-		break;
-
- 	// select damaged unit
-	case ucSelectNextDamaged:
-		selectInterestingUnit(InterestingUnitType::DAMAGED);
-		break;
-
- 	// select building (completed)
-	case ucSelectNextBuiltBuilding:
-		selectInterestingUnit(InterestingUnitType::BUILT_BUILDING);
-		break;
-
- 	// select storeage unit
-	case ucSelectNextStore:
-		selectInterestingUnit(InterestingUnitType::STORE);
-		break;
-
- 	// Attack
-	case ucAttack:
-		clickCommonCommand(CmdClass::ATTACK);
-		break;
-
-	// Stop
-	case ucStop:
-		clickCommonCommand(CmdClass::STOP);
-		break;
-
- 	// Move
-	case ucMove:
-		clickCommonCommand(CmdClass::MOVE);
-		break;
-
- 	// Repair / Heal / Replenish
-	case ucReplenish:
-		clickCommonCommand(CmdClass::REPAIR);
-		break;
-
- 	// Guard
-	case ucGuard:
-		clickCommonCommand(CmdClass::GUARD);
-		break;
-
- 	// Follow
-	case ucFollow:
-		//clickCommonCommand();
-		break;
-
- 	// Patrol
-	case ucPatrol:
-		clickCommonCommand(CmdClass::PATROL);
-		break;
-
-	case ucRotate:
-		if (isPlacingBuilding()) {
-			m_selectedFacing = CardinalDir((m_selectedFacing + 1) % CardinalDir::COUNT);
-		}
-		break;
-
-	case ucLuaConsole:
-		if (g_simInterface.asNetworkInterface()) {
-			g_console.addLine(g_lang.get("NotAvailable"));
-		} else {
-			m_luaConsole->setVisible(!m_luaConsole->isVisible());
-		}
-		break;
-
-	default:
-		break;
+	switch (cmd) {
+		case UserCommand::GOTO_SELECTION:
+			centerCameraOnSelection();
+			break;
+		case UserCommand::GOTO_LAST_EVENT:
+			centerCameraOnLastEvent();
+			break;
+		case UserCommand::SELECT_IDLE_HARVESTER:
+			selectInterestingUnit(InterestingUnitType::IDLE_HARVESTER);
+			break;
+		case UserCommand::SELECT_IDLE_BUILDER:
+			selectInterestingUnit(InterestingUnitType::IDLE_BUILDER);
+			break;
+		case UserCommand::SELECT_IDLE_REPAIRER:
+			selectInterestingUnit(InterestingUnitType::IDLE_REPAIRER);
+			break;
+		case UserCommand::SELECT_IDLE_WORKER:
+			selectInterestingUnit(InterestingUnitType::IDLE_WORKER);
+			break;
+		case UserCommand::SELECT_IDLE_RESTORER:
+			selectInterestingUnit(InterestingUnitType::IDLE_RESTORER);
+			break;
+		case UserCommand::SELECT_IDLE_PRODUCER:
+			selectInterestingUnit(InterestingUnitType::IDLE_PRODUCER);
+			break;
+		case UserCommand::SELECT_NEXT_PRODUCER:
+			selectInterestingUnit(InterestingUnitType::PRODUCER);
+			break;
+		case UserCommand::SELECT_NEXT_DAMAGED:
+			selectInterestingUnit(InterestingUnitType::DAMAGED);
+			break;
+		case UserCommand::SELECT_NEXT_BUILT_BUILDING:
+			selectInterestingUnit(InterestingUnitType::BUILT_BUILDING);
+			break;
+		case UserCommand::SELECT_NEXT_STORE:
+			selectInterestingUnit(InterestingUnitType::STORE);
+			break;
+		case UserCommand::ATTACK:
+			clickCommonCommand(CmdClass::ATTACK);
+			break;
+		case UserCommand::STOP:
+			clickCommonCommand(CmdClass::STOP);
+			break;
+		case UserCommand::MOVE:
+			clickCommonCommand(CmdClass::MOVE);
+			break;
+		case UserCommand::REPAIR:
+			clickCommonCommand(CmdClass::REPAIR);
+			break;
+		case UserCommand::GUARD:
+			clickCommonCommand(CmdClass::GUARD);
+			break;
+		case UserCommand::FOLLOW:
+			//clickCommonCommand();
+			break;
+		case UserCommand::PATROL:
+			clickCommonCommand(CmdClass::PATROL);
+			break;
+		case UserCommand::ROTATE_BUILDING:
+			if (isPlacingBuilding()) {
+				m_selectedFacing = CardinalDir((m_selectedFacing + 1) % CardinalDir::COUNT);
+			}
+			break;
+		case UserCommand::SHOW_LUA_CONSOLE:
+			if (g_simInterface.asNetworkInterface()) {
+				g_console.addLine(g_lang.get("NotAvailable"));
+			} else {
+				m_luaConsole->setVisible(!m_luaConsole->isVisible());
+			}
+			break;
+		default:
+			break;
 	}
 }
 
@@ -659,17 +615,17 @@ void UserInterface::giveOneClickOrders() {
 			result = commander->tryGiveCommand(selection, flags, activeCommandType);
 		}
 	} else {
-		result = commander->tryGiveCommand(selection, flags, NULL, activeCommandClass);
+		result = commander->tryGiveCommand(selection, flags, 0, activeCommandClass);
 	}
 	addOrdersResultToConsole(activeCommandClass, result);
-	activeCommandType = NULL;
+	activeCommandType = 0;
 	activeCommandClass = CmdClass::STOP;
 }
 
 void UserInterface::giveDefaultOrders(const Vec2i &targetPos, Unit *targetUnit) {
 	// give order
-	CmdResult result = commander->tryGiveCommand(selection,
-			CmdFlags(CmdProps::QUEUE, input.isShiftDown()), NULL, CmdClass::NULL_COMMAND, targetPos, targetUnit);
+	CmdResult result = commander->tryGiveCommand(selection, CmdFlags(CmdProps::QUEUE, input.isShiftDown()),
+			0, CmdClass::NULL_COMMAND, targetPos, targetUnit);
 
 	// graphical result
 	addOrdersResultToConsole(activeCommandClass, result);
@@ -702,17 +658,15 @@ void UserInterface::giveTwoClickOrders(const Vec2i &targetPos, Unit *targetUnit)
 					CmdClass::NULL_COMMAND, targetPos, targetUnit);
 			}
 		} else {
-			result = commander->tryGiveCommand(selection, flags, NULL, activeCommandClass, targetPos, targetUnit);
+			result = commander->tryGiveCommand(selection, flags, 0, activeCommandClass, targetPos, targetUnit);
 		}
 	} else {
-		if (activeCommandClass == CmdClass::BUILD
-		|| activeCommandClass == CmdClass::TRANSFORM) {
+		if (activeCommandClass == CmdClass::BUILD || activeCommandClass == CmdClass::TRANSFORM) {
 			// selecting pos for building
 			assert(isPlacingBuilding());
 
 			// if this is a multi-build (ie. walls) then start dragging and wait for mouse up
-			if (activeCommandClass == CmdClass::BUILD
-			&& choosenBuildingType->isMultiBuild() && !dragging) {
+			if (activeCommandClass == CmdClass::BUILD && choosenBuildingType->isMultiBuild() && !dragging) {
 				dragging = true;
 				dragStartPos = posObjWorld;
 				return;
@@ -728,7 +682,7 @@ void UserInterface::giveTwoClickOrders(const Vec2i &targetPos, Unit *targetUnit)
 				// don't reserve any resources if multiple builders or if not first build pos
 				flags.set(CmdProps::DONT_RESERVE_RESOURCES, selection->getCount() > 1 || !first);
 				result = commander->tryGiveCommand(selection, flags, activeCommandType,
-					CmdClass::NULL_COMMAND, *i, NULL, choosenBuildingType, m_selectedFacing);
+					CmdClass::NULL_COMMAND, *i, 0, choosenBuildingType, m_selectedFacing);
 			}
 		}
 	}
@@ -753,23 +707,23 @@ void UserInterface::giveTwoClickOrders(const Vec2i &targetPos, Unit *targetUnit)
 	}
 }
 
-void UserInterface::centerCameraOnSelection(){
+void UserInterface::centerCameraOnSelection() {
 	if (!selection->isEmpty()) {
 		Vec3f refPos = selection->getRefPos();
 		gameCamera->centerXZ(refPos.x, refPos.z);
 	}
 }
 
-void UserInterface::centerCameraOnLastEvent(){
+void UserInterface::centerCameraOnLastEvent() {
 	Vec3f lastEventLoc = world->getThisFaction()->getLastEventLoc();
 	if (!(lastEventLoc.x == -1.0f)) {
 		gameCamera->centerXZ(lastEventLoc.x, lastEventLoc.z);
 	}
 }
 
-void UserInterface::selectInterestingUnit(InterestingUnitType iut){
+void UserInterface::selectInterestingUnit(InterestingUnitType iut) {
 	const Faction* thisFaction = world->getThisFaction();
-	const Unit* previousUnit = NULL;
+	const Unit* previousUnit = 0;
 	bool previousFound = true;
 
 	//start at the next harvester
@@ -799,7 +753,7 @@ void UserInterface::selectInterestingUnit(InterestingUnitType iut){
 		}
 	}
 	// search again if we have a previous
-	if (selection->isEmpty() && previousUnit != NULL && previousFound == true) {
+	if (selection->isEmpty() && previousUnit != 0 && previousFound == true) {
 		for (int i=0; i < thisFaction->getUnitCount(); ++i) {
 			Unit* unit = thisFaction->getUnit(i);
 			if (unit->isInteresting(iut)) {
@@ -867,12 +821,12 @@ void UserInterface::onFirstTierSelect(int posDisplay) {
 				activeCommandClass = activeCommandType->getClass();
 			} else {
 				posDisplay = invalidPos;
-				activeCommandType = NULL;
+				activeCommandType = 0;
 				activeCommandClass = CmdClass::STOP;
 				return;
 			}
 		} else { // non uniform selection, use activeCommandClass
-			activeCommandType = NULL;
+			activeCommandType = 0;
 			activeCommandClass = m_display->getCommandClass(posDisplay);
 		}
 
@@ -885,7 +839,7 @@ void UserInterface::onFirstTierSelect(int posDisplay) {
 		} else if (activeCommandType && activeCommandType->getClass() == CmdClass::TRANSFORM
 		&& activeCommandType->getProducedCount() == 1) {
 			choosenBuildingType = static_cast<const UnitType*>(activeCommandType->getProduced(0));
-			assert(choosenBuildingType != NULL);
+			assert(choosenBuildingType);
 			selectingPos = true;
 			g_program.getMouseCursor().setAppearance(MouseAppearance::CMD_ICON, activeCommandType->getImage());
 			m_minimap->setLeftClickOrder(true);
@@ -930,7 +884,7 @@ void UserInterface::onSecondTierSelect(int posDisplay) {
 		|| activeCommandType->getClass() == CmdClass::TRANSFORM) {
 			if (world->getFaction(factionIndex)->reqsOk(pt)) {
 				choosenBuildingType = static_cast<const UnitType*>(pt);
-				assert(choosenBuildingType != NULL);
+				assert(choosenBuildingType != 0);
 				selectingPos = true;
 				activePos = posDisplay;
 				g_program.getMouseCursor().setAppearance(MouseAppearance::CMD_ICON, choosenBuildingType->getImage());
@@ -947,7 +901,7 @@ void UserInterface::onSecondTierSelect(int posDisplay) {
 	computeDisplay();
 }
 
-///@todo move to Display
+///@todo move to Display?
 void UserInterface::computePortraitInfo(int posDisplay) {
 	if (selection->getCount() < posDisplay) {
 		m_display->setToolTipText2("", "");
@@ -1010,7 +964,7 @@ void UserInterface::computeCommandInfo(int posDisplay) {
 		} else {
 			if (selection->isUniform()) { // uniform selection
 				const CommandType *ct = m_display->getCommandType(posDisplay);
-				if (ct != NULL) {
+				if (ct != 0) {
 					computeCommandTip(ct);
 				}
 			} else { // non uniform selection
@@ -1094,7 +1048,7 @@ void UserInterface::computeSelectionPanel() {
 
 void UserInterface::computeHousedUnitsPanel() {
 	bool transported = false;
-	int i=0;
+	int i = 0;
 	for (int ndx = 0; ndx < selection->getCount(); ++ndx) {
 		if (selection->getUnit(ndx)->getType()->isOfClass(UnitClass::CARRIER)) {
 			const Unit *unit = selection->getUnit(ndx);
@@ -1227,102 +1181,100 @@ void UserInterface::computeDisplay() {
 ///@todo move parts to CommandType classes (hmmm... CommandTypes that need to know about Console ?!? Nope.)
 void UserInterface::addOrdersResultToConsole(CmdClass cc, CmdResult result) {
 	switch (result) {
-	case CmdResult::SUCCESS:
-		break;
-	case CmdResult::FAIL_BLOCKED:
-		m_console->addStdMessage("BuildingNoPlace");
-		break;
-	case CmdResult::FAIL_REQUIREMENTS:
-			switch (cc) {
-		case CmdClass::BUILD:
-			m_console->addStdMessage("BuildingNoReqs");
+		case CmdResult::SUCCESS:
 			break;
-		case CmdClass::PRODUCE:
-			m_console->addStdMessage("UnitNoReqs");
+		case CmdResult::FAIL_BLOCKED:
+			m_console->addStdMessage("BuildingNoPlace");
 			break;
-		case CmdClass::UPGRADE:
-			m_console->addStdMessage("UpgradeNoReqs");
+		case CmdResult::FAIL_REQUIREMENTS:
+				switch (cc) {
+			case CmdClass::BUILD:
+				m_console->addStdMessage("BuildingNoReqs");
+				break;
+			case CmdClass::PRODUCE:
+				m_console->addStdMessage("UnitNoReqs");
+				break;
+			case CmdClass::UPGRADE:
+				m_console->addStdMessage("UpgradeNoReqs");
+				break;
+			default:
+				break;
+			}
 			break;
-		default:
-			break;
-		}
-		break;
-	case CmdResult::FAIL_RESOURCES: {
+		case CmdResult::FAIL_RESOURCES: {
    			const Faction::ResourceTypes &needed = Faction::getNeededResources();
 			string a, b;
 				for (int i = 0; i < needed.size(); ++i) {
 					if (i != needed.size() - 1 || needed.size() == 1) {
-					if(i) {
-						a += ", ";
+						if (i) {
+							a += ", ";
+						}
+						a += needed[i]->getName();
+					} else {
+						b = needed[i]->getName();
 					}
-					a += needed[i]->getName();
-				} else {
-					b = needed[i]->getName();
 				}
-			}
 
 				if (needed.size() == 1) {
 					switch(cc) {
-				case CmdClass::BUILD:
-					m_console->addStdMessage("BuildingNoRes1", a);
-					break;
-				case CmdClass::PRODUCE:
-					m_console->addStdMessage("UnitNoRes1", a);
-					break;
-				case CmdClass::UPGRADE:
-					m_console->addStdMessage("UpgradeNoRes1", a);
-					break;
-				case CmdClass::MORPH:
-					m_console->addStdMessage("MorphNoRes1", a);
-					break;
-				default:
-					m_console->addStdMessage("GenericNoRes1", a);
-					break;
-				}
-			} else {
+						case CmdClass::BUILD:
+							m_console->addStdMessage("BuildingNoRes1", a);
+							break;
+						case CmdClass::PRODUCE:
+							m_console->addStdMessage("UnitNoRes1", a);
+							break;
+						case CmdClass::UPGRADE:
+							m_console->addStdMessage("UpgradeNoRes1", a);
+							break;
+						case CmdClass::MORPH:
+							m_console->addStdMessage("MorphNoRes1", a);
+							break;
+						default:
+							m_console->addStdMessage("GenericNoRes1", a);
+							break;
+					}
+				} else {
 					switch (cc) {
-				case CmdClass::BUILD:
-					m_console->addStdMessage("BuildingNoRes2", a, b);
-					break;
-				case CmdClass::PRODUCE:
-					m_console->addStdMessage("UnitNoRes2", a, b);
-					break;
-				case CmdClass::UPGRADE:
-					m_console->addStdMessage("UpgradeNoRes2", a, b);
-					break;
-				case CmdClass::MORPH:
-					m_console->addStdMessage("MorphNoRes2", a, b);
-					break;
-				default:
-					m_console->addStdMessage("GenericNoRes2", a, b);
-					break;
+						case CmdClass::BUILD:
+							m_console->addStdMessage("BuildingNoRes2", a, b);
+							break;
+						case CmdClass::PRODUCE:
+							m_console->addStdMessage("UnitNoRes2", a, b);
+							break;
+						case CmdClass::UPGRADE:
+							m_console->addStdMessage("UpgradeNoRes2", a, b);
+							break;
+						case CmdClass::MORPH:
+							m_console->addStdMessage("MorphNoRes2", a, b);
+							break;
+						default:
+							m_console->addStdMessage("GenericNoRes2", a, b);
+							break;
+					}
 				}
 			}
-		}
+			break;
+		case CmdResult::FAIL_PET_LIMIT:
+			m_console->addStdMessage("PetLimitReached");
+			break;
 
-		break;
+		case CmdResult::FAIL_LOAD_LIMIT:
+			m_console->addStdMessage("LoadLimitReached");
+			break;
 
-	case CmdResult::FAIL_PET_LIMIT:
-		m_console->addStdMessage("PetLimitReached");
-		break;
+		case CmdResult::FAIL_INVALID_LOAD:
+			m_console->addStdMessage("CanNotLoadUnit");
+			break;
 
-	case CmdResult::FAIL_LOAD_LIMIT:
-		m_console->addStdMessage("LoadLimitReached");
-		break;
+		case CmdResult::FAIL_UNDEFINED:
+			m_console->addStdMessage("InvalidOrder");
+			break;
 
-	case CmdResult::FAIL_INVALID_LOAD:
-		m_console->addStdMessage("CanNotLoadUnit");
-		break;
-
-	case CmdResult::FAIL_UNDEFINED:
-		m_console->addStdMessage("InvalidOrder");
-		break;
-
-	case CmdResult::SOME_FAILED:
-		m_console->addStdMessage("SomeOrdersFailed");
-		break;
-	default:
-		throw runtime_error("unhandled CmdResult");
+		case CmdResult::SOME_FAILED:
+			m_console->addStdMessage("SomeOrdersFailed");
+			break;
+		default:
+			throw runtime_error("unhandled CmdResult");
 	}
 }
 
@@ -1331,8 +1283,8 @@ void UserInterface::selectAllUnitsOfType(UnitVector &out_units, const Unit *refU
 
 	for (int i = 0; i < world->getFaction(factionIndex)->getUnitCount(); ++i) {
 		Unit *unit = world->getFaction(factionIndex)->getUnit(i);
-		if (unit->getPos().dist(refUnit->getPos()) < radius &&
-				unit->getType() == refUnit->getType()) {
+		if (unit->getPos().dist(refUnit->getPos()) < radius
+		&& unit->getType() == refUnit->getType()) {
 			out_units.push_back(unit);
 		}
 	}
@@ -1378,9 +1330,7 @@ void UserInterface::updateSelection(bool doubleClick, UnitVector &units) {
 bool UserInterface::computeTarget(const Vec2i &screenPos, Vec2i &worldPos, UnitVector &units, const MapObject *&obj) {
 	units.clear();
 	validPosObjWorld = g_renderer.computePosition(screenPos, worldPos);
-	//const MapObject *junk = 0;
 	g_renderer.computeSelected(units, obj, screenPos, screenPos);
-	//g_gameState.lastPick(units, selectedObject);
 
 	if (!units.empty()) {
 		return true;
@@ -1395,7 +1345,7 @@ bool UserInterface::computeTarget(const Vec2i &screenPos, Vec2i &worldPos, UnitV
 void UserInterface::computeBuildPositions(const Vec2i &end) {
 	assert(isPlacingBuilding());
 
-	if(!dragging) {
+	if (!dragging) {
 		buildPositions.resize(1);
 		buildPositions[0] = end;
 		return;
@@ -1405,7 +1355,7 @@ void UserInterface::computeBuildPositions(const Vec2i &end) {
 	Vec2i offset = dragStartPos - end;
 	Vec2i offsetAdjusted;
 	int count;
-	if(abs(offset.x) > abs(offset.y)) {
+	if (abs(offset.x) > abs(offset.y)) {
 		count = abs(offset.x / size) + 1;
 		offsetAdjusted.x = (offset.x / size) * size;
 		float mulit = float(offset.x) / float(offsetAdjusted.x);

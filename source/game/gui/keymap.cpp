@@ -34,31 +34,32 @@ using Shared::Util::toLower;
 static const char *modNames[4] = {"Shift", "Ctrl", "Alt", "Meta"};
 	
 // =====================================================
-// 	class Keymap::Entry
+// 	class HotKey
 // =====================================================
-void Keymap::Entry::init(const string &str) {
-	key = KeyCode::NONE;
-	mod = 0;
-	if(str.empty()) {
+
+void HotKey::init(const string &str) {
+	m_keyCode = KeyCode::NONE;
+	m_modFlags = 0;
+	if (str.empty()) {
 		return;
 	}
 	size_t lastPlus = str.rfind('+');
-	if(lastPlus == string::npos) {
-		key = Key::findByName(str.c_str());
+	if (lastPlus == string::npos) {
+		m_keyCode = Key::findByName(str.c_str());
 	} else {
-		key = Key::findByName(str.substr(lastPlus + 1).c_str());
+		m_keyCode = Key::findByName(str.substr(lastPlus + 1).c_str());
 		//string modStr = str.substr(0, lastPos - 1);
 		size_t start = 0;
-		for(size_t plus = str.find('+'); plus != string::npos; plus = str.find('+', start)) {
+		for (size_t plus = str.find('+'); plus != string::npos; plus = str.find('+', start)) {
 			string modStr = str.substr(start, plus - start);
 			int i;
-			for(i = 0; i < 4; ++i) {
-				if(!strcasecmp(modStr.c_str(),modNames[i])) {
-					mod = mod | (1 << i);
+			for (i = 0; i < 4; ++i) {
+				if (!strcasecmp(modStr.c_str(),modNames[i])) {
+					m_modFlags |= (1 << i);
 					break;
 				}
 			}
-			if(i == 4) {
+			if (i == 4) {
 				throw range_error(string() + "Invalid key modifier name: " + modStr);
 			}
 			start = plus + 1;
@@ -66,32 +67,32 @@ void Keymap::Entry::init(const string &str) {
 	}
 }
 
-string Keymap::Entry::toString() const {
+string HotKey::toString() const {
 	stringstream ret;
-	if(key) {
-		if(mod) {
-			for(int i = 0; i < 4; ++i) {
-				if((1 << i) & mod) {
-					switch(i) {
-						case 0: if(key == KeyCode::LEFT_SHIFT || key == KeyCode::RIGHT_SHIFT) continue; break;
-						case 1: if(key == KeyCode::LEFT_CTRL  || key == KeyCode::RIGHT_CTRL)  continue; break;
-						case 2: if(key == KeyCode::LEFT_ALT   || key == KeyCode::RIGHT_ALT)   continue; break;
-						case 3: if(key == KeyCode::LEFT_META  || key == KeyCode::RIGHT_META)  continue; break;
+	if (m_keyCode) {
+		if (m_modFlags) {
+			for (int i = 0; i < 4; ++i) {
+				if ((1 << i) & m_modFlags) {
+					switch (i) {
+						case 0: if (m_keyCode == KeyCode::LEFT_SHIFT || m_keyCode == KeyCode::RIGHT_SHIFT) continue;
+						case 1: if (m_keyCode == KeyCode::LEFT_CTRL  || m_keyCode == KeyCode::RIGHT_CTRL)  continue;
+						case 2: if (m_keyCode == KeyCode::LEFT_ALT   || m_keyCode == KeyCode::RIGHT_ALT)   continue;
+						case 3: if (m_keyCode == KeyCode::LEFT_META  || m_keyCode == KeyCode::RIGHT_META)  continue;
 					}
 					ret << modNames[i] << "+";
 				}
 			}
 		}
-		ret << Key::getName((KeyCode)key);
+		ret << Key::getName(m_keyCode);
 	}
 	return ret.str();
 }
 
 // =====================================================
-// 	class Keymap::EntryPair
+// 	class HotKeyAssignment
 // =====================================================
 
-void Keymap::EntryPair::init(const string &str) {
+void HotKeyAssignment::init(const string &str) {
 	string s;
 	s.reserve(str.size());
 	clear();
@@ -107,23 +108,59 @@ void Keymap::EntryPair::init(const string &str) {
 		return;
 	}
 
-	// split if it contains a comma
+	// split if it contains m_hotKey1 comma
 	size_t comma = s.find(',');
-	if(comma != string::npos) {
-		if(s.size() > comma + 1) {
-			b.init(s.substr(comma + 1));
+	if (comma != string::npos) {
+		if (s.size() > comma + 1) {
+			m_hotKey2.init(s.substr(comma + 1));
 		}
-		if(comma > 0) {
+		if (comma > 0) {
 			s = s.substr(0, comma);
 		}
 	}
-	a.init(s);
+	m_hotKey1.init(s);
+	if (m_hotKey1.isSet() || m_hotKey2.isSet()) {
+		Modified(this);
+	}
 }
 
-string Keymap::EntryPair::toString() const {
-	string astr = a.toString();
-	string bstr = b.toString();
-	if(!astr.empty() && !bstr.empty()) {
+
+void HotKeyAssignment::setHotKey1(HotKey hk) {
+	if (hk == m_hotKey1) {
+		return;
+	}
+	m_hotKey1 = hk;
+	if (!m_hotKey1.isSet() && m_hotKey2.isSet()) {
+		m_hotKey1 = m_hotKey2;
+		m_hotKey2.clear();
+	}
+	Modified(this);
+}
+
+void HotKeyAssignment::setHotKey2(HotKey hk) {
+	if (hk == m_hotKey2) {
+		return;
+	}
+	m_hotKey2 = hk;
+	if (!m_hotKey1.isSet() && m_hotKey2.isSet()) {
+		m_hotKey1 = m_hotKey2;
+		m_hotKey2.clear();
+	}
+	Modified(this);
+}
+
+void HotKeyAssignment::clear() {
+	if (m_hotKey1.isSet() || m_hotKey2.isSet()) {
+		m_hotKey1.clear();
+		m_hotKey2.clear();
+		Modified(this);
+	}
+}
+
+string HotKeyAssignment::toString() const {
+	string astr = m_hotKey1.toString();
+	string bstr = m_hotKey2.toString();
+	if (!astr.empty() && !bstr.empty()) {
 		return astr + ", " + bstr;
 	}
 	return astr + bstr;
@@ -134,104 +171,131 @@ string Keymap::EntryPair::toString() const {
 // =====================================================
 
 #pragma pack(push, 1)
-/*	  name,					prim_key,	prim_key mods,	sec_key,	sec_key mods */
-const Keymap::UserCommandInfo Keymap::commandInfo[ucCount] = {
-	{"None",					0,				0,			0,				0},
-	{"ChatAudienceAll",			0,				0,			0,				0},
-	{"ChatAudienceTeam",		0,				0,			0,				0},
-	{"ChatAudienceToggle",		KeyCode::H,		0,			0,				0},
-	{"EnterChatMode",			KeyCode::RETURN,0,			0,				0},
-	{"MenuMain",				0,				0,			0,				0},
-	{"MenuQuit",				KeyCode::ESCAPE,0,			0,				0},
-	{"MenuSave",				KeyCode::Z,		0,			0,				0},
-	{"MenuLoad",				0,				0,			0,				0},
-	{"QuitNow",					0,				0,			0,				0},
-	{"QuickSave",				0,				0,			0,				0},
-	{"QuickLoad",				0,				0,			0,				0},
-	{"PauseOn",					0,				0,			0,				0},
-	{"PauseOff",				0,				0,			0,				0},
-	{"PauseToggle",				KeyCode::P,		0,			0,				0},
-	{"SpeedInc",				KeyCode::EQUAL,	0,	KeyCode::KEYPAD_PLUS,	0},
-	{"SpeedDec",				KeyCode::MINUS,	0,	KeyCode::KEYPAD_MINUS,	0},
-	{"SpeedReset",				0,				0,			0,				0},
-	{"NetworkStatusOn",			0,				0,			0,				0},
-	{"NetworkStatusOff",		0,				0,			0,				0},
-	{"NetworkStatusToggle",		KeyCode::N,		0,			0,				0},
-	{"SaveScreenshot",			KeyCode::E,		0,			0,				0},
-	{"CameraZoomIn",			KeyCode::PAGE_UP,	0,		0,				0},
-	{"CameraZoomOut",			KeyCode::PAGE_DOWN,	0,		0,				0},
-	{"CameraPitchUp",			KeyCode::W,		bkmShift,	0,				0},
-	{"CameraPitchDown",			KeyCode::S,		bkmShift,	0,				0},
-	{"CameraRotateLeft",		KeyCode::A,		bkmShift,	0,				0},
-	{"CameraRotateRight",		KeyCode::D,		bkmShift,	0,				0},
-	{"CameraZoomReset",			0,				0,			0,				0},
-	{"CameraAngleReset",		0,				0,			0,				0},
-	{"CameraZoomAndAngleReset",	0,				0,			0,				0},
-	{"CameraPosLeft",			KeyCode::ARROW_LEFT,	0,	0,				0},
-	{"CameraPosRight",			KeyCode::ARROW_RIGHT,	0,	0,				0},
-	{"CameraPosUp",				KeyCode::ARROW_UP,		0,	0,				0},
-	{"CameraPosDown",			KeyCode::ARROW_DOWN,	0,	0,				0},
-	{"CameraGotoSelection",		KeyCode::SPACE,	0,			0,				0},
-	{"CameraGotoLastEvent",		KeyCode::SPACE,	bkmShift,	0,				0},
-	{"SelectNextIdleHarvester",	KeyCode::I,		0,			0,				0},
-	{"SelectNextIdleBuilder",	0,				0,			0,				0},
-	{"SelectNextIdleRepairer",	0,				0,			0,				0},
-	{"SelectNextIdleWorker",	0,				0,			0,				0},
-	{"SelectNextIdleRestorer",	0,				0,			0,				0},
-	{"SelectNextIdleProducer",	0,				0,			0,				0},
-	{"SelectNextProducer",		0,				0,			0,				0},
-	{"SelectNextDamaged",		KeyCode::D,		0,			0,				0},
-	{"SelectNextBuiltBuilding",	KeyCode::B,		0,			0,				0},
-	{"SelectNextStore",			KeyCode::T,		0,			0,				0},
-	{"Attack",					KeyCode::A,		0,			0,				0},
-	{"Stop",					KeyCode::S,		0,			0,				0},
-	{"Move",					KeyCode::M,		0,			0,				0},
-	{"Replenish",				0,				0,			0,				0},
-	{"Guard",					KeyCode::G,		0,			0,				0},
-	{"Follow",					0,				0,			0,				0},
-	{"Patrol",					0,				0,			0,				0},
-	{"Rotate",					KeyCode::R,		0,			0,				0},
-	{"LuaConsole",				KeyCode::BACK_QUOTE, 0,		0,				0},
-	{"CycleShaders",			KeyCode::QUOTE, 0,			0,				0}
+/*	prim_key,				prim_key mods,			sec_key,				sec_key mods */
+const AssignmentInfo Keymap::commandInfo[UserCommand::COUNT] = {
+	{0,						0,						0,						0}, // NONE
+	{0,						0,						0,						0}, // CHAT_AUDIENCE_ALL
+	{0,						0,						0,						0}, // CHAT_AUDIENCE_TEAM
+	{KeyCode::H,			0,						0,						0}, // CHAT_AUDIENCE_TOGGLE
+	{KeyCode::RETURN,		0,						0,						0}, // SHOW_CHAT_DIALOG
+	{KeyCode::ESCAPE,		0,						0,						0}, // QUIT_GAME
+	{KeyCode::Z,			0,						0,						0}, // SAVE_GAME
+	{0,						0,						0,						0}, // PAUSE_GAME
+	{0,						0,						0,						0}, // RESUME_GAME
+	{KeyCode::P,			0,						0,						0}, // TOGGLE_PAUSE
+	{KeyCode::EQUAL,		0,						KeyCode::KEYPAD_PLUS,	0}, // INC_SPEED
+	{KeyCode::MINUS,		0,						KeyCode::KEYPAD_MINUS,	0}, // DEC_SPEED
+	{0,						0,						0,						0}, // RESET_SPEED
+	{KeyCode::E,			0,						0,						0}, // SAVE_SCREENSHOT
+	{KeyCode::PAGE_UP,		0,						0,						0}, // ZOOM_CAMERA_IN
+	{KeyCode::PAGE_DOWN,	0,						0,						0}, // ZOOM_CAMERA_OUT
+	{KeyCode::W,			ModKeys::SHIFT,			0,						0}, // PITCH_CAMERA_UP
+	{KeyCode::S,			ModKeys::SHIFT,			0,						0}, // PITCH_CAMERA_DOWN
+	{KeyCode::A,			ModKeys::SHIFT,			0,						0}, // ROTATE_CAMERA_LEFT
+	{KeyCode::D,			ModKeys::SHIFT,			0,						0}, // ROTATE_CAMERA_RIGHT
+	{0,						0,						0,						0}, // CAMERA_RESET_ZOOM
+	{0,						0,						0,						0}, // CAMERA_RESET_ANGLE
+	{0,						0,						0,						0}, // CAMERA_RESET
+	{KeyCode::ARROW_LEFT,	0,						0,						0}, // MOVE_CAMERA_LEFT
+	{KeyCode::ARROW_RIGHT,	0,						0,						0}, // MOVE_CAMERA_RIGHT
+	{KeyCode::ARROW_UP,		0,						0,						0}, // MOVE_CAMERA_UP
+	{KeyCode::ARROW_DOWN,	0,						0,						0}, // MOVE_CAMERA_DOWN
+	{KeyCode::SPACE,		0,						0,						0}, // GOTO_SELECTION
+	{KeyCode::SPACE,		ModKeys::SHIFT,			0,						0}, // GOTO_LAST_EVENT
+	{KeyCode::I,			0,						0,						0}, // SELECT_IDLE_HARVESTER
+	{0,						0,						0,						0}, // SELECT_IDLE_BUILDER
+	{0,						0,						0,						0}, // SELECT_IDLE_REPAIRER
+	{0,						0,						0,						0}, // SELECT_IDLE_WORKER
+	{0,						0,						0,						0}, // SELECT_IDLE_RESTORER
+	{0,						0,						0,						0}, // SELECT_IDLE_PRODUCER
+	{0,						0,						0,						0}, // SELECT_NEXT_PRODUCER
+	{KeyCode::D,			0,						0,						0}, // SELECT_NEXT_DAMAGED
+	{KeyCode::B,			0,						0,						0}, // SELECT_NEXT_BUILT_BUILDING
+	{KeyCode::T,			0,						0,						0}, // SELECT_NEXT_STORE
+	{KeyCode::A,			0,						0,						0}, // ATTACK
+	{KeyCode::S,			0,						0,						0}, // STOP
+	{KeyCode::M,			0,						0,						0}, // MOVE
+	{0,						0,						0,						0}, // REPAIR
+	{KeyCode::G,			0,						0,						0}, // GUARD
+	{0,						0,						0,						0}, // FOLLOW
+	{0,						0,						0,						0}, // PATROL
+	{KeyCode::R,			0,						0,						0}, // ROTATE_BUILDING
+	{KeyCode::BACK_QUOTE,	0,						0,						0}, // SHOW_LUA_CONSOLE
+	{KeyCode::QUOTE,		0,						0,						0}  // CYCLE_SHADERS
 };
 #pragma pack(pop)
 
-Keymap::Keymap(const Input &input, const char* fileName) :
-		input(input), lang(Lang::getInstance()) {
-	for(int i = ucNone; i != ucCount; ++i) {
-		entries.push_back(EntryPair(commandInfo[i]));
-		//entries[i] = EntryPair(commandInfo[i]);
+Keymap::Keymap(const Input &input, const char* fileName)
+		: m_input(input)
+		, m_lang(Lang::getInstance())
+		, m_filename(fileName)
+		, m_dirty(false) {
+	foreach_enum(UserCommand, uc) {
+		m_entries.push_back(HotKeyAssignment(uc, commandInfo[uc]));
+		m_entries.back().Modified.connect(this, &Keymap::onAssignmentModified);
+		HotKey hk1 = m_entries.back().getHotKey1();
+		if (hk1.isSet()) {
+			m_hotKeyCmdMap[hk1] = uc;
+		}
+		HotKey hk2 = m_entries.back().getHotKey2();
+		if (hk2.isSet()) {
+			m_hotKeyCmdMap[hk2] = uc;
+		}
+		m_cmdHotKeyMap[uc] = HotKeyPair(hk1, hk2);
 	}
-	
-	if(fileName && Shared::Util::fileExists(fileName)) {
-		load(fileName);
+
+	if (FSFactory::fileExists(m_filename.c_str())) {
+		load(m_filename.c_str());
 	}
 }
 
-void Keymap::reinit() {
-	entryCmdMap.clear();
-	for(int i = ucNone; i != ucCount; ++i) {
-		EntryPair &ep = entries[i];
-		if(ep.getA().getKey()) {
-			entryCmdMap[ep.getA()] = (UserCommand)i;
-		}
-		if(ep.getB().getKey()) {
-			entryCmdMap[ep.getB()] = (UserCommand)i;
-		}
+void Keymap::onAssignmentModified(HotKeyAssignment *assignment) {
+	UserCommand uCmd = assignment->getUserCommand();
+	HotKeyPair foo = m_cmdHotKeyMap[uCmd];
+	if (foo.first.isSet()) {
+		assert(m_hotKeyCmdMap[foo.first] == uCmd);
+		m_hotKeyCmdMap.erase(foo.first);
 	}
+	if (foo.second.isSet()) {
+		assert(m_hotKeyCmdMap[foo.second] == uCmd);
+		m_hotKeyCmdMap.erase(foo.second);
+	}
+	if (assignment->getHotKey1().isSet()) {
+		m_hotKeyCmdMap[assignment->getHotKey1()] = uCmd;
+	}
+	if (assignment->getHotKey2().isSet()) {
+		m_hotKeyCmdMap[assignment->getHotKey2()] = uCmd;
+	}
+	m_cmdHotKeyMap[uCmd] = HotKeyPair(assignment->getHotKey1(), assignment->getHotKey2());
 }
+
+//void Keymap::reinit() {
+//	m_hotKeyCmdMap.clear();
+//	foreach_enum (UserCommand, uc) {
+//		HotKeyAssignment &hka = m_entries[uc];
+//		if (hka.getHotKey1().isSet()) {
+//			m_hotKeyCmdMap[hka.getHotKey1()] = uc;
+//		}
+//		if (hka.getHotKey2().isSet()) {
+//			m_hotKeyCmdMap[hka.getHotKey2()] = uc;
+//		}
+//	}
+//}
 
 void Keymap::load(const char *path) {
+	if (!path) {
+		path = m_filename.c_str();
+	}
 	Properties p;
 	p.load(path);
  	const Properties::PropertyMap &pm = p.getPropertyMap();
 	Properties::PropertyMap::const_iterator it;
-	for(int i = ucNone; i != ucCount; ++i) {
-		string cmdName = toLower(getCommandName((UserCommand)i));		
+	for (UserCommand uc(1); uc < UserCommand::COUNT; ++uc) {
+		string cmdName = toLower(getCommandName(uc));
 		it = pm.find(cmdName);
-		if(it != pm.end()) {
+		if (it != pm.end()) {
 			try {
-				entries[i].init(it->second);
+				m_entries[uc].init(it->second);
 			} catch (runtime_error &e) {
 				stringstream str;
 				str << "Failed to parse key map file " << path << ". Failed entry:" << endl
@@ -240,29 +304,40 @@ void Keymap::load(const char *path) {
 			}
 		}
 	}
-	reinit();
+	//reinit();
+	if (m_dirty) {
+		m_dirty = false;
+		DirtyModified(false);
+	}
 }
 
 void Keymap::save(const char *path) {
+	if (!path) {
+		path = m_filename.c_str();
+	}
 	try {
-		ostream *out = FSFactory::getInstance()->getOStream(path);
+		ostream *out = g_fileFactory.getOStream(path);
 		size_t maxSize = 0;
-		for(int i = ucNone + 1; i != ucCount; ++i) {
-			size_t size = strlen(getCommandName((UserCommand)i));
-			if(size > maxSize) {
+		for (UserCommand uc(1); uc < UserCommand::COUNT; ++uc) {
+			size_t size = strlen(getCommandName(uc));
+			if (size > maxSize) {
 				maxSize = size;
 			}
 		}
-		for(int i = ucNone + 1; i != ucCount; ++i) {
-			const char* name = getCommandName((UserCommand)i);
+		for (UserCommand uc(1); uc < UserCommand::COUNT; ++uc) {
+			const char* name = getCommandName(uc);
 			size_t size = strlen(name);
-			*out << getCommandName((UserCommand)i);
-			for(int j = size; j < maxSize; ++j) {
+			*out << getCommandName(uc);
+			for(int i = size; i < maxSize; ++i) {
 				*out << " ";
 			}
-			*out << " = " << entries[i].toString() << endl;
+			*out << " = " << m_entries[uc].toString() << endl;
 		}
 		delete out;
+		if (m_dirty) {
+			m_dirty = false;
+			DirtyModified(false);
+		}
 	} catch (runtime_error &e) {
 		stringstream str;
 		str << "Failed to save key map file: " << path << endl << e.what();
@@ -270,35 +345,42 @@ void Keymap::save(const char *path) {
 	}
 }
 
-bool Keymap::isMapped(Key key, UserCommand cmd) const {
-	assert(cmd >= 0 && cmd < ucCount);
-	KeyCode keyCode = key.getCode();
-	if(keyCode <= KeyCode::UNKNOWN) {
-		return false;
+//bool Keymap::isMapped(Key key, UserCommand cmd) const {
+//	assert(cmd > UserCommand::INVALID && cmd < UserCommand::COUNT);
+//	KeyCode keyCode = key.getCode();
+//	if (keyCode <= KeyCode::UNKNOWN) {
+//		return false;
+//	}
+//	return entries[cmd].matches(keyCode, getCurrentMods());
+//}
+
+UserCommand Keymap::getCommand(KeyCode keyCode, int modFlags) const {
+	if (keyCode > KeyCode::UNKNOWN) {
+		HotKeyCommandMap::const_iterator i = m_hotKeyCmdMap.find(HotKey(keyCode, modFlags));
+		return i == m_hotKeyCmdMap.end() ? UserCommand::NONE : i->second;
 	}
-	return entries[cmd].matches(keyCode, getCurrentMods());
+	return UserCommand::NONE;
 }
 
 UserCommand Keymap::getCommand(Key key) const {
-	KeyCode keyCode = key.getCode();
-	if(keyCode > KeyCode::UNKNOWN) {
-		map<Entry, UserCommand>::const_iterator i = entryCmdMap.find(
-				Entry(keyCode, getCurrentMods()));
-		return i == entryCmdMap.end() ? ucNone : i->second;
-	}
-	return ucNone;
+	return getCommand(key.getCode(), getCurrentMods());
+}
+
+UserCommand Keymap::getCommand(HotKey entry) const {
+	return getCommand(entry.getKey(), entry.getMod());
 }
 
 int Keymap::getCurrentMods() const {
-	return	  (input.isShiftDown()	? bkmShift	: 0)
-			| (input.isCtrlDown()	? bkmCtrl	: 0)
-			| (input.isAltDown()	? bkmAlt	: 0)
-			| (input.isMetaDown()	? bkmMeta	: 0);
+	return	  (m_input.isShiftDown() ? ModKeys::SHIFT : 0)
+			| (m_input.isCtrlDown()	 ? ModKeys::CTRL  : 0)
+			| (m_input.isAltDown()   ? ModKeys::ALT   : 0)
+			| (m_input.isMetaDown()  ? ModKeys::META  : 0);
 }
 
 const char* Keymap::getCommandName(UserCommand cmd) {
-	assert(cmd >= 0 && cmd < ucCount);
-	return commandInfo[cmd].name;
+	assert(cmd > UserCommand::INVALID && cmd < UserCommand::COUNT);
+	return UserCommandNames[cmd];
+	//return commandInfo[cmd].name;
 }
 
 }}//end namespace

@@ -662,11 +662,11 @@ void GameState::renderFg(){
 
 void GameState::tick() {
 	lastWorldFps = worldFps;
-	lastUpdateFps= updateFps;
-	lastRenderFps= renderFps;
+	lastUpdateFps = updateFps;
+	lastRenderFps = renderFps;
 	worldFps = 0;
-	updateFps= 0;
-	renderFps= 0;
+	updateFps = 0;
+	renderFps = 0;
 
 	if (netError) return;
 
@@ -675,7 +675,7 @@ void GameState::tick() {
 	m_debugStats.report(ss);
 	m_debugPanel->setDebugText(ss.str());
 
-	//Win/lose check
+	// Win/lose check
 	GameStatus status = simInterface->checkWinner();
 	if (status == GameStatus::WON) {
 		showWinMessageBox();
@@ -715,11 +715,11 @@ void GameState::mouseUpRight(int x, int y) {
 	if (!noInput) {
 		gui.mouseUpRight(x, y);
 	}
-	if (gameCamera.isMoving()) {
-		// stop moving if button is released
-		gameCamera.setMoveZ(0, true);
-		gameCamera.setMoveX(0, true);
-	}
+	//if (gameCamera.isMoving()) {
+	//	// stop moving if button is released
+	//	gameCamera.setMoveZ(0, true);
+	//	gameCamera.setMoveX(0, true);
+	//}
 }
 
 void GameState::mouseDoubleClickLeft(int x, int y) {
@@ -800,24 +800,24 @@ void GameState::keyDown(const Key &key) {
 
 	if (g_config.getMiscDebugKeys()) {
 		stringstream str;
-		Keymap::Entry e(key.getCode(), keymap.getCurrentMods());
+		HotKey e(key.getCode(), keymap.getCurrentMods());
 		str << e.toString();
-		if (cmd != ucNone) {
+		if (cmd != UserCommand::NONE) {
 			str << " = " << Keymap::getCommandName(cmd);
 		}
 		gui.getRegularConsole()->addLine(str.str());
 	}
-	if (cmd == ucCycleShaders) {
+	if (cmd == UserCommand::CYCLE_SHADERS) {
 		g_renderer.cycleShaders();
-	} else if (cmd == ucChatAudienceAll) {
+	} else if (cmd == UserCommand::CHAT_AUDIENCE_ALL) {
 		m_chatDialog->setTeamOnly(false);
-	} else if (cmd == ucChatAudienceTeam) {
+	} else if (cmd == UserCommand::CHAT_AUDIENCE_TEAM) {
 		m_chatDialog->setTeamOnly(true);
-	} else if (cmd == ucChatAudienceToggle) {
+	} else if (cmd == UserCommand::CHAT_AUDIENCE_TOGGLE) {
 		m_chatDialog->toggleTeamOnly();
-	} else if (cmd == ucEnterChatMode) {
+	} else if (cmd == UserCommand::SHOW_CHAT_DIALOG) {
 		doChatDialog();
-	} else if (cmd == ucSaveScreenshot) {
+	} else if (cmd == UserCommand::SAVE_SCREENSHOT) {
 		int i;
 		const int MAX_SCREENSHOTS = 100;
 
@@ -834,50 +834,50 @@ void GameState::keyDown(const Key &key) {
 		if (i > MAX_SCREENSHOTS) {
 			gui.getRegularConsole()->addLine(g_lang.get("ScreenshotDirectoryFull"));
 		}
-	} else if (cmd == ucCameraPosLeft) { // move camera left
+	} else if (cmd == UserCommand::MOVE_CAMERA_LEFT) { // move camera left
 		gameCamera.setMoveX(-scrollSpeed, false);
-	} else if (cmd == ucCameraPosRight) { // move camera right
+	} else if (cmd == UserCommand::MOVE_CAMERA_RIGHT) { // move camera right
 		gameCamera.setMoveX(scrollSpeed, false);
-	} else if (cmd == ucCameraPosUp) { // move camera up
+	} else if (cmd == UserCommand::MOVE_CAMERA_UP) { // move camera up
 		gameCamera.setMoveZ(scrollSpeed, false);
-	} else if (cmd == ucCameraPosDown) { // move camera down
+	} else if (cmd == UserCommand::MOVE_CAMERA_DOWN) { // move camera down
 		gameCamera.setMoveZ(-scrollSpeed, false);
-	} else if (cmd == ucCameraRotateLeft) { // rotate camera left
+	} else if (cmd == UserCommand::ROTATE_CAMERA_LEFT) { // rotate camera left
 		gameCamera.setRotate(-1);
-	} else if (cmd == ucCameraRotateRight ) { // rotate camera right
+	} else if (cmd == UserCommand::ROTATE_CAMERA_RIGHT) { // rotate camera right
 		gameCamera.setRotate(1);
-	} else if (cmd == ucCameraZoomIn) { // camera zoom in
+	} else if (cmd == UserCommand::ZOOM_CAMERA_IN) { // camera zoom in
 		gameCamera.zoom(15.f);
-	} else if (cmd == ucCameraZoomOut) { // camera zoom out
+	} else if (cmd == UserCommand::ZOOM_CAMERA_OUT) { // camera zoom out
 		gameCamera.zoom(-15.f);
-	} else if (cmd == ucCameraPitchUp) { // camera pitch up
+	} else if (cmd == UserCommand::PITCH_CAMERA_UP) { // camera pitch up
 		gameCamera.setMoveY(1);
-	} else if ( cmd == ucCameraPitchDown) { // camera pitch down
+	} else if ( cmd == UserCommand::PITCH_CAMERA_DOWN) { // camera pitch down
 		gameCamera.setMoveY(-1);
-	} else if (cmd == ucCameraZoomAndAngleReset) { // reset camera height & angle
+	} else if (cmd == UserCommand::CAMERA_RESET) { // reset camera height & angle
 		gameCamera.reset();
-	} else if (cmd == ucCameraZoomReset) { // reset camera height
+	} else if (cmd == UserCommand::CAMERA_RESET_ZOOM) { // reset camera height
 		gameCamera.reset(false, true);
-	} else if (cmd == ucCameraAngleReset) { // reset camera angle
+	} else if (cmd == UserCommand::CAMERA_RESET_ANGLE) { // reset camera angle
 		gameCamera.reset(true, false);
 	} else if (speedChangesAllowed) {
 		GameSpeed curSpeed = simInterface->getSpeed();
 		GameSpeed newSpeed = curSpeed;
-		if (cmd == ucPauseOn) { // pause on
+		if (cmd == UserCommand::PAUSE_GAME) { // pause on
 			newSpeed = simInterface->pause();
-		} else if (cmd == ucPauseOff) { // pause off
+		} else if (cmd == UserCommand::RESUME_GAME) { // pause off
 			newSpeed = simInterface->resume();
-		} else if (cmd == ucPauseToggle) { // toggle
+		} else if (cmd == UserCommand::TOGGLE_PAUSE) { // toggle
 			if (curSpeed == GameSpeed::PAUSED) {
 				newSpeed = simInterface->resume();
 			} else {
 				newSpeed = simInterface->pause();
 			}
-		} else if (cmd == ucSpeedInc) { // increment speed
+		} else if (cmd == UserCommand::INC_SPEED) { // increment speed
 			newSpeed = simInterface->incSpeed();
-		} else if (cmd == ucSpeedDec) { // decrement speed
+		} else if (cmd == UserCommand::DEC_SPEED) { // decrement speed
 			newSpeed = simInterface->decSpeed();
-		} else if (cmd == ucSpeedReset) { // reset speed
+		} else if (cmd == UserCommand::RESET_SPEED) { // reset speed
 			newSpeed = simInterface->resetSpeed();
 		}
 		if (curSpeed != newSpeed) {
@@ -891,11 +891,11 @@ void GameState::keyDown(const Key &key) {
 			return;
 		}
 	}
-	if (cmd == ucMenuQuit) { // exit
+	if (cmd == UserCommand::QUIT_GAME) { // exit
 		if (!gui.cancelPending()) {
 			doGameMenu();
 		}
-	} else if (cmd == ucMenuSave) { // save
+	} else if (cmd == UserCommand::SAVE_GAME) { // save
 		if (!m_modalDialog) {
 			doSaveBox();
 		}
@@ -915,16 +915,16 @@ void GameState::keyUp(const Key &key) {
 		gameCamera.setMoveZ(0.f, false);
 	} else {
 		switch (keymap.getCommand(key)) {
-			case ucCameraRotateLeft: case ucCameraRotateRight:
+			case UserCommand::ROTATE_CAMERA_LEFT: case UserCommand::ROTATE_CAMERA_RIGHT:
 				gameCamera.setRotate(0.f);
 				break;
-			case ucCameraPitchUp: case ucCameraPitchDown:
+			case UserCommand::PITCH_CAMERA_UP: case UserCommand::PITCH_CAMERA_DOWN:
 				gameCamera.setMoveY(0.f);
 				break;
-			case ucCameraPosUp: case ucCameraPosDown:
+			case UserCommand::MOVE_CAMERA_UP: case UserCommand::MOVE_CAMERA_DOWN:
 				gameCamera.setMoveZ(0.f, false);
 				break;
-			case ucCameraPosLeft: case ucCameraPosRight:
+			case UserCommand::MOVE_CAMERA_LEFT: case UserCommand::MOVE_CAMERA_RIGHT:
 				gameCamera.setMoveX(0.f, false);
 				break;
 		}
@@ -945,65 +945,58 @@ void GameState::quitGame() {
 
 void GameState::render3d(){
 	_PROFILE_FUNCTION();
+	Renderer &renderer = g_renderer;
 
 	//init
-	g_renderer.reset3d();
+	renderer.reset3d();
 
-	g_renderer.loadGameCameraMatrix();
-	g_renderer.computeVisibleArea();
-	g_renderer.setupLighting();
+	renderer.loadGameCameraMatrix();
+	renderer.computeVisibleArea();
+	renderer.setupLighting();
 
 	//shadow map
-	g_renderer.renderShadowsToTexture();
+	renderer.renderShadowsToTexture();
 
 	//clear buffers
-	g_renderer.clearBuffers();
+	renderer.clearBuffers();
 
 	//surface
-	g_renderer.renderSurface();
+	renderer.renderSurface();
 
 	//selection circles
-	g_renderer.renderSelectionEffects();
+	renderer.renderSelectionEffects();
 
 	//units
-	g_renderer.renderUnits();
+	renderer.renderUnits();
 
 	//objects
-	g_renderer.renderObjects();
+	renderer.renderObjects();
 
 	//water
-	g_renderer.renderWater();
-	g_renderer.renderWaterEffects();
+	renderer.renderWater();
+	renderer.renderWaterEffects();
 
 	//particles
-	g_renderer.renderParticleManager(ResourceScope::GAME);
+	renderer.renderParticleManager(ResourceScope::GAME);
 
 	//mouse 3d
-	g_renderer.renderMouse3d();
+	renderer.renderMouse3d();
 }
 
 void GameState::render2d(){
 	_PROFILE_FUNCTION();
 
-	//init
+	// init
 	g_renderer.reset2d();
 
-	//selection
+	// selection box
 	g_renderer.renderSelectionQuad();
 
-	//script display text
+	// script display text
 	if (!m_scriptDisplay.empty() && !m_modalDialog) {
 		///@todo put on widget
 		//g_renderer.renderText(m_scriptDisplay, g_widgetConfig.getMenuFont()[FontSize::NORMAL];,
 		//	gui.getDisplay()->getColor(), m_scriptDisplayPos.x, m_scriptDisplayPos.y, false);
-	}
-
-	// debug info
-	if (g_config.getMiscDebugMode()) {
-
-		///@todo put on widget
-		//g_renderer.renderText(str.str(), g_coreData.getFTDisplayFont(),
-		//	gui.getDisplay()->getColor(), 10, 120, false);
 	}
 }
 
@@ -1028,18 +1021,17 @@ void GameState::saveGame(string name) const {
 	XmlIo::getInstance().save("savegames/" + name + ".sav", &root);
 }
 
-void ShowMap::render2d(){
-	////init
-	//g_renderer.reset2d();
+// =====================================================
+//  class ShowMap
+// =====================================================
 
-	////2d mouse
-	//g_renderer.renderMouse2d(mouseX, mouseY, mouse2d, gui.isSelectingPos() ? 1.f : 0.f);
+void ShowMap::render2d(){
 }
 
 void ShowMap::keyDown(const Key &key) {
 	UserCommand cmd = keymap.getCommand(key);
 
-	if (cmd == ucSaveScreenshot) {
+	if (cmd == UserCommand::SAVE_SCREENSHOT) {
 		int i;
 		const int MAX_SCREENSHOTS = 100;
 
@@ -1053,62 +1045,45 @@ void ShowMap::keyDown(const Key &key) {
 				break;
 			}
 		}
-
 		if (i > MAX_SCREENSHOTS) {
 			gui.getRegularConsole()->addLine(g_lang.get("ScreenshotDirectoryFull"));
 		}
-
-	//move camera left
-	} else if (cmd == ucCameraPosLeft) {
+	} else if (cmd == UserCommand::MOVE_CAMERA_LEFT) { // move camera left
 		gameCamera.setMoveX(-scrollSpeed, false);
-
-	//move camera right
-	} else if (cmd == ucCameraPosRight) {
+	} else if (cmd == UserCommand::MOVE_CAMERA_RIGHT) { // move camera right
 		gameCamera.setMoveX(scrollSpeed, false);
-
-	//move camera up
-	} else if (cmd == ucCameraPosUp) {
+	} else if (cmd == UserCommand::MOVE_CAMERA_UP) { // move camera up
 		gameCamera.setMoveZ(scrollSpeed, false);
-
-	//move camera down
-	} else if (cmd == ucCameraPosDown) {
+	} else if (cmd == UserCommand::MOVE_CAMERA_DOWN) { // move camera down
 		gameCamera.setMoveZ(-scrollSpeed, false);
-
-	} else if (cmd == ucCameraZoomAndAngleReset) { // reset camera height & angle
+	} else if (cmd == UserCommand::CAMERA_RESET) { // reset camera height & angle
 		gameCamera.reset();
-	} else if (cmd == ucCameraZoomReset) { // reset camera height
+	} else if (cmd == UserCommand::CAMERA_RESET_ZOOM) { // reset camera height
 		gameCamera.reset(false, true);
-	} else if (cmd == ucCameraAngleReset) { // reset camera angle
+	} else if (cmd == UserCommand::CAMERA_RESET_ANGLE) { // reset camera angle
 		gameCamera.reset(true, false);
-
-	//exit
-	} else if (cmd == ucMenuQuit) {
+	} else if (cmd == UserCommand::QUIT_GAME) {
 		if (!gui.cancelPending()) {
 			doExitMessage(g_lang.get("ExitGame?"));
 		}
-
 	} else {
 		switch (cmd) {
-			//rotate camera left
-			case ucCameraRotateLeft:
+			// rotate camera left
+			case UserCommand::ROTATE_CAMERA_LEFT:
 				gameCamera.setRotate(-1);
 				break;
-
-			//rotate camera right
-			case ucCameraRotateRight:
+			// rotate camera right
+			case UserCommand::ROTATE_CAMERA_RIGHT:
 				gameCamera.setRotate(1);
 				break;
-
-			//camera up
-			case ucCameraPitchUp:
+			// camera up
+			case UserCommand::PITCH_CAMERA_UP:
 				gameCamera.setMoveY(1);
 				break;
-
-			//camera down
-			case ucCameraPitchDown:
+			// camera down
+			case UserCommand::PITCH_CAMERA_DOWN:
 				gameCamera.setMoveY(-1);
 				break;
-
 			default:
 				break;
 		}
