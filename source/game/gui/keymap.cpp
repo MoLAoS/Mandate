@@ -358,7 +358,7 @@ void Keymap::save(const char *path) {
 UserCommand Keymap::getCommand(KeyCode keyCode, int modFlags) const {
 	if (keyCode > KeyCode::UNKNOWN) {
 		HotKeyCommandMap::const_iterator i = m_hotKeyCmdMap.find(HotKey(keyCode, modFlags));
-		return i == m_hotKeyCmdMap.end() ? UserCommand::NONE : i->second;
+		return i == m_hotKeyCmdMap.end() ? UserCommand::NONE : (UserCommand::Enum)i->second;
 	}
 	return UserCommand::NONE;
 }
