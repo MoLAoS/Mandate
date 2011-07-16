@@ -329,6 +329,7 @@ string videoModeToString(const VideoMode in_mode) {
 }
 
 bool changeVideoMode(const VideoMode in_mode) {
+	//FIXME: huh? what's that? SDL_SetVideoMode(in_mode.w, in_mode.h, in_mode.bpp, /* FLAGS*/); better
 	Private::shouldBeFullscreen = true;
 	return true;
 }
@@ -337,31 +338,25 @@ void restoreVideoMode() {
 }
 
 void getPossibleScreenModes(vector<VideoMode> &out_modes) {
-	///@todo implement getPossibleScreenModes for SDL
+	//FIXME: use real flags, without SDL_FULLSCREEN most likely all possible
+	SDL_Rect **modes = SDL_ListModes(NULL, SDL_FULLSCREEN|SDL_OPENGL);
+	if (modes == (SDL_Rect**)0) { // Check if there are any modes available
+		// No modes available!
+	}else if (modes == (SDL_Rect**)-1) { // Check if our resolution is restricted
+		// All resolutions available.
+	}else{
+		// valid modes
+		for (int i=0; modes[i]; ++i){
+			VideoMode mode(modes[i]->w, modes[i]->h, 0, 0);
+			out_modes.push_back(mode);
+		}
+	}
 }
 
 void getScreenMode(int &width, int &height){
 	const SDL_VideoInfo *vidinfo = SDL_GetVideoInfo();
 	width = vidinfo->current_w;
 	height = vidinfo->current_h;
-
-#if 0
-	SDL_Rect **modes = SDL_ListModes(NULL, SDL_FULLSCREEN|SDL_OPENGL);
-	// Check if there are any modes available
-	if (modes == (SDL_Rect**)0) {
-		printf("No modes available!\n");
-		exit(-1);
-	}
-	// Check if our resolution is restricted
-	if (modes == (SDL_Rect**)-1) {
-		printf("All resolutions available.\n");
-	}else{
-		// Print valid modes
-		printf("Available Modes\n");
-		for (i=0; modes[i]; ++i)
-		printf("  %d x %d\n", modes[i]->w, modes[i]->h);
-	}
-#endif
 }
 
 }}//end namespace

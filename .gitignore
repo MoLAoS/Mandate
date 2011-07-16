@@ -1,8 +1,8 @@
 
-build/
+build*/
 data/game/*.dll
 data/game/*.log
 data/game/*.ini
 data/game/addons/
 .project
-
+*~

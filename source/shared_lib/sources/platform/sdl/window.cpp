@@ -136,7 +136,11 @@ void Window::setSize(int w, int h) {
 }
 
 void Window::resize(PlatformContextGl *context, VideoMode mode) {
-	///@todo implement resize for SDL
+	int flags = SDL_OPENGL;
+	if(Private::shouldBeFullscreen){
+		flags |= SDL_FULLSCREEN;
+	}
+	SDL_SetVideoMode(mode.w, mode.h, mode.bpp, flags);
 }
 
 void Window::setPos(int x, int y)  {
