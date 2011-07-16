@@ -133,6 +133,8 @@ struct MeshVertexBlock {
 				m_posNormTan = reinterpret_cast<Vertex_PNT*>(p); break;
 			case POS_NORM_TAN_UV:
 				m_posNormTanTex = new Vertex_PNTU[count]; break;
+			case NONE:
+				/*NOP*/ break;
 		}
 	}
 
@@ -148,6 +150,8 @@ struct MeshVertexBlock {
 				free_aligned_vec3_array((Vec3f*)m_arrayPtr); break;
 			case POS_NORM_TAN:
 				free_aligned_vec3_array((Vec3f*)m_arrayPtr); break;
+			case NONE:
+				/*NOP*/ break;
 		}
 		m_arrayPtr = 0;
 	}

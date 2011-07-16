@@ -380,7 +380,7 @@ Unit* Targets::getNearestSkillClass(SkillClass sc) {
 			return it->first;
 		}
 	}
-	return false;
+	return NULL;
 }
 
 Unit* Targets::getNearestHpRatio(fixed hpRatio) {
@@ -389,7 +389,7 @@ Unit* Targets::getNearestHpRatio(fixed hpRatio) {
 			return it->first;
 		}
 	}
-	return false;
+	return NULL;
 }
 
 }} // end namespace Glest::Game

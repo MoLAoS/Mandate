@@ -117,7 +117,7 @@ private:
 	const Variant &getValue(const Key &key) const {
 		Map it = _map.find(key);
 		if (it == _map.end()) {
-			throw range_error();
+			throw range_error("");
 		} else {
 			return it->second;
 		}

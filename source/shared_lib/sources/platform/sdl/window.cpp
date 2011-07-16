@@ -191,7 +191,7 @@ void Window::destroy() {
 }
 
 bool Window::toggleFullscreen() {
-	SDL_WM_ToggleFullScreen(SDL_GetVideoSurface());
+	return SDL_WM_ToggleFullScreen(SDL_GetVideoSurface());
 }
 
 void Window::handleMouseDown(SDL_Event event) {
