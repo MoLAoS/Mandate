@@ -177,10 +177,16 @@ void Options::buildVideoTab() {
 	Lang &lang = Lang::getInstance();
 	Config &config= Config::getInstance();
 
-	CellStrip *panel = new CellStrip(this, Orientation::HORIZONTAL, 2);
-	TabWidget::add(lang.get("Video"), panel);
-
 	Anchors fillAnchors(Anchor(AnchorType::RIGID, 0));
+
+	CellStrip *panel = new CellStrip(this, Orientation::HORIZONTAL, 2);
+	panel->setAnchors(fillAnchors);
+	panel->setPos(Vec2i(0,0));
+	panel->anchor();
+	panel->setSize(Vec2i(g_config.getDisplayWidth(), g_widgetConfig.getDefaultItemHeight()));
+
+	TabWidget::add(lang.get("Video"), panel);
+	
 	Anchors padAnchors(Anchor(AnchorType::RIGID, 10), Anchor(AnchorType::RIGID, 0),
 		Anchor(AnchorType::RIGID, 10), Anchor(AnchorType::RIGID, 0));
 	Anchors squashAnchors(Anchor(AnchorType::RIGID, 0), Anchor(AnchorType::SPRINGY, 15));
@@ -232,6 +238,35 @@ void Options::buildVideoTab() {
 	m_specularMappingCheckBox = createStandardCheckBox(col1, 3, lang.get("SpecularMapping"));
 	m_specularMappingCheckBox->setChecked(config.getRenderEnableSpecMapping());
 	m_specularMappingCheckBox->Clicked.connect(this, &Options::onToggleSpecularMapping);
+
+	dw = new OptionWidget(col1, lang.get("ShadowTextureSize"));
+	dw->setCell(4);
+
+	m_shadowTextureSizeList = new DropList(dw);
+	m_shadowTextureSizeList->setCell(1);
+	m_shadowTextureSizeList->setDropBoxHeight(280);
+	m_shadowTextureSizeList->setAnchors(squashAnchors);
+
+	// sizes must be powers of 2 and less than the resolution
+	///@todo only add the sizes less than resolution (both width and height values) - hailstone 17July2011
+	m_shadowTextureSizeList->addItem("64");
+	m_shadowTextureSizeList->addItem("128");
+	m_shadowTextureSizeList->addItem("256");
+	m_shadowTextureSizeList->addItem("512");
+	m_shadowTextureSizeList->addItem("1024");
+	m_shadowTextureSizeList->setSelected(toStr(config.getRenderShadowTextureSize()));
+	m_shadowTextureSizeList->SelectionChanged.connect(this, &Options::onDropListSelectionChanged);
+
+	dw = new OptionWidget(col1, lang.get("ShadowFrameSkip"));
+	dw->setCell(5);
+	
+	m_shadowFrameSkipSpinner = new Spinner(dw);
+	m_shadowFrameSkipSpinner->setCell(1);
+	m_shadowFrameSkipSpinner->setAnchors(squashAnchors);
+	m_shadowFrameSkipSpinner->setRanges(0, 1000); ///@todo work out the details - hailstone 17July2011
+	m_shadowFrameSkipSpinner->setIncrement(32);
+	m_shadowFrameSkipSpinner->setValue(config.getRenderShadowFrameSkip());
+	m_shadowFrameSkipSpinner->ValueChanged.connect(this, &Options::onSpinnerValueChanged);
 
 	// Column 2
 
@@ -351,6 +386,12 @@ void Options::buildVideoTab() {
 	m_modelShaderList->SelectionChanged.connect(this, &Options::onDropListSelectionChanged);
 
 	loadShaderList();
+
+	SizeHint hint(-1, int(g_widgetConfig.getDefaultItemHeight() * 1.5f));
+	for (int i=0; i < rows; ++i) {
+		col1->setSizeHint(i, hint);
+		col2->setSizeHint(i, hint);
+	}
 }
 
 void Options::syncVideoModeList(VideoMode mode) {
@@ -578,6 +619,32 @@ void Options::buildOptionsPanel(CellStrip *container, int cell) {
 	m_autoReturnCheckBox = createStandardCheckBox(col2, 1, lang.get("AutoReturn"));
 	m_autoReturnCheckBox->setChecked(config.getGsAutoReturnEnabled());
 	m_autoReturnCheckBox->Clicked.connect(this, &Options::onToggleAutoReturn);
+
+	m_focusArrowsCheckBox = createStandardCheckBox(col2, 2, lang.get("FocusArrows"));
+	m_focusArrowsCheckBox->setChecked(config.getUiFocusArrows());
+	m_focusArrowsCheckBox->Clicked.connect(this, &Options::onToggleFocusArrows);
+
+	dw = new OptionWidget(col2, lang.get("ConsoleMaxLines"));
+	dw->setCell(3);
+	
+	m_consoleMaxLinesSpinner = new Spinner(dw);
+	m_consoleMaxLinesSpinner->setCell(1);
+	m_consoleMaxLinesSpinner->setAnchors(squashAnchors);
+	m_consoleMaxLinesSpinner->setRanges(1, 100);
+	m_consoleMaxLinesSpinner->setIncrement(1);
+	m_consoleMaxLinesSpinner->setValue(config.getUiConsoleMaxLines());
+	m_consoleMaxLinesSpinner->ValueChanged.connect(this, &Options::onSpinnerValueChanged);
+
+	dw = new OptionWidget(col2, lang.get("ScrollSpeed"));
+	dw->setCell(4);
+	
+	m_scrollSpeedSpinner = new Spinner(dw);
+	m_scrollSpeedSpinner->setCell(1);
+	m_scrollSpeedSpinner->setAnchors(squashAnchors);
+	m_scrollSpeedSpinner->setRanges(1, 100);
+	m_scrollSpeedSpinner->setIncrement(1);
+	m_scrollSpeedSpinner->setValue((int)config.getUiScrollSpeed());
+	m_scrollSpeedSpinner->ValueChanged.connect(this, &Options::onSpinnerValueChanged);
 }
 
 void Options::loadShaderList() {
@@ -604,6 +671,7 @@ void Options::loadShaderList() {
 
 CheckBox *Options::createStandardCheckBox(CellStrip *container, int cell, const string &text) {
 	Anchors fillAnchors(Anchor(AnchorType::RIGID, 0));
+	Anchors squashAnchors(Anchor(AnchorType::RIGID, 0), Anchor(AnchorType::SPRINGY, 15));
 
 	Anchors centreAnchors;
 	centreAnchors.setCentre(true, false);
@@ -618,9 +686,11 @@ CheckBox *Options::createStandardCheckBox(CellStrip *container, int cell, const 
 	Vec2i cbSize(g_widgetConfig.getDefaultItemHeight());
 
 	CheckBox *checkBox = new CheckBox(cbh);
-	checkBox->setCell(2);
+	checkBox->setCell(1);
 	checkBox->setSize(cbSize);
-	checkBox->setAnchors(centreAnchors);
+	checkBox->setAnchors(squashAnchors);//centreAnchors);
+	
+	///@todo fix the anchors. The size is weird. - hailstone 17Jully2011
 	
 	return checkBox;
 }
@@ -677,6 +747,10 @@ void Options::onToggleCameraInvertYAxis(Widget*) {
 	g_config.setCameraInvertYAxis(m_cameraInvertYAxisCheckBox->isChecked());
 }
 
+void Options::onToggleFocusArrows(Widget*) {
+	g_config.setUiFocusArrows(m_focusArrowsCheckBox->isChecked());
+}
+
 void Options::on3dTexturesToggle(Widget*) {
 	Config &config= Config::getInstance();
 	config.setRenderTextures3D(m_3dTexCheckBox->isChecked());
@@ -693,6 +767,12 @@ void Options::onSpinnerValueChanged(Widget *source) {
 		g_config.setRenderDistanceMin(float(spinner->getValue()));
 	} else if (spinner == m_maxRenderDistSpinner) {
 		g_config.setRenderDistanceMax(float(spinner->getValue()));
+	} else if (spinner == m_shadowFrameSkipSpinner) {
+		g_config.setRenderShadowFrameSkip(spinner->getValue());
+	} else if (spinner == m_consoleMaxLinesSpinner) {
+		g_config.setUiConsoleMaxLines(spinner->getValue());
+	} else if (spinner == m_scrollSpeedSpinner) {
+		g_config.setUiScrollSpeed(float(spinner->getValue()));
 	}
 }
 
@@ -735,6 +815,8 @@ void Options::onDropListSelectionChanged(Widget *source) {
 		g_config.setRenderModelShader(shader);
 	} else if (list == m_terrainRendererList) {
 		g_config.setRenderTerrainRenderer(list->getSelectedIndex() + 1);
+	} else if (list == m_shadowTextureSizeList) {
+		g_config.setRenderShadowTextureSize(Conversion::strToInt(list->getSelectedItem()->getText()));
 	} else if (list == m_resolutionList) {
 		// change res
 		VideoMode mode = m_resolutions[m_resolutionList->getSelectedIndex()];

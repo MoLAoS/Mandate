@@ -83,7 +83,8 @@ private:
 				*m_lightsList,
 				*m_terrainRendererList,
 				*m_modelShaderList,
-				*m_resolutionList;
+				*m_resolutionList,
+				*m_shadowTextureSizeList;
 							
 	CheckBox	*m_3dTexCheckBox,
 		        *m_debugModeCheckBox,
@@ -94,7 +95,8 @@ private:
 				*m_bumpMappingCheckBox,
 				*m_specularMappingCheckBox,
 				*m_cameraInvertXAxisCheckBox,
-				*m_cameraInvertYAxisCheckBox;
+				*m_cameraInvertYAxisCheckBox,
+				*m_focusArrowsCheckBox;
 	
 	Slider2		*m_volFxSlider,
 				*m_volAmbientSlider,
@@ -105,6 +107,10 @@ private:
 
 	Spinner     *m_minRenderDistSpinner,
 		        *m_maxRenderDistSpinner;
+
+	Spinner		*m_consoleMaxLinesSpinner,
+				*m_shadowFrameSkipSpinner,
+				*m_scrollSpeedSpinner;
 
 	MessageDialog *m_messageDialog;
 
@@ -158,6 +164,7 @@ private:
 	void onToggleSpecularMapping(Widget*);
 	void onToggleCameraInvertXAxis(Widget*);
 	void onToggleCameraInvertYAxis(Widget*);
+	void onToggleFocusArrows(Widget*);
 	//void onCancelResolutionChange(Widget*);
 	//void onConfirmResolutionChange(Widget*);
 };
