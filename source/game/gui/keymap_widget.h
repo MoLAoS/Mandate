@@ -62,9 +62,18 @@ public:
 
 };
 
-class KeymapWidget : public CellStrip {
+class KeymapWidget : public CellStrip, public sigslot::has_slots {
+private:
+	ScrollBar      *m_scrollBar;
+	KeyEntryWidget *m_keyEntryWidgets[UserCommand::COUNT - 1];
+	int             m_kewStartOffsets[UserCommand::COUNT - 1];
+
+	void onScroll(ScrollBar*);
+
 public:
 	KeymapWidget(Container *parent);
+
+	virtual void setSize(const Vec2i &sz) override;
 };
 
 }}

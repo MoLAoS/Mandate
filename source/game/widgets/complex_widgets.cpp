@@ -44,7 +44,7 @@ ListBase::ListBase(WidgetWindow* window, Orientation orient, Origin orgn, int ce
 // =====================================================
 
 ListBox::ListBox(Container* parent)
-: ListBase(parent, Orientation::HORIZONTAL, Origin::FROM_LEFT, 2)
+		: ListBase(parent, Orientation::HORIZONTAL, Origin::FROM_LEFT, 2)
 		, MouseWidget(this)
 		, m_listStrip(0)
 		, m_scrollBar(0){

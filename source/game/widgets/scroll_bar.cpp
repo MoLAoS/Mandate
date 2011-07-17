@@ -475,7 +475,7 @@ void ScrollPane::onHorizontalScroll(ScrollBar*) {
 }
 
 void ScrollPane::onScrollCellResized(Vec2i avail) {
-	WIDGET_LOG( descShort() << " ScrollPane::layoutCells() setting available scroll range to " << avail );
+	WIDGET_LOG( descShort() << " ScrollPane::onScrollCellResized() setting available scroll range to " << avail );
 	m_vertBar->setRanges(m_totalRange.h, avail.h);
 	m_horizBar->setRanges(m_totalRange.w, avail.w);
 	setOffset(m_offset);

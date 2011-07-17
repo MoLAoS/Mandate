@@ -204,32 +204,53 @@ void KeyEntryWidget::onHotKeyAssignmentChanged(HotKeyAssignment *assignment) {
 
 KeymapWidget::KeymapWidget(Container *parent)
 		: CellStrip(parent, Orientation::HORIZONTAL, 2) {
-	CellStrip *leftCol = new CellStrip(this, Orientation::VERTICAL, Origin::FROM_TOP);
-	leftCol->setAnchors(Anchors::getFillAnchors());
-	leftCol->setCell(0);
-	CellStrip *rightCol = new CellStrip(this, Orientation::VERTICAL, Origin::FROM_TOP);
-	rightCol->setCell(1);
-	rightCol->setAnchors(Anchors::getFillAnchors());
+	setWidgetStyle(WidgetType::LIST_BOX);
+	CellStrip *entryStrip = new CellStrip(this, Orientation::VERTICAL, Origin::FROM_TOP);
+	entryStrip->setAnchors(Anchors::getFillAnchors());
+	entryStrip->setCell(0);
+	setSizeHint(0, SizeHint(100));
+
+	CellStrip *scrollBarStrip = new CellStrip(this, Orientation::VERTICAL, Origin::FROM_TOP, 1);
+	scrollBarStrip->setCell(1);
+	scrollBarStrip->setAnchors(Anchors::getFillAnchors());
+	setSizeHint(1, SizeHint(-1, g_widgetConfig.getDefaultItemHeight()));
+	m_scrollBar = new ScrollBar(scrollBarStrip, true, g_widgetConfig.getDefaultItemHeight() * 5 / 4);
+	m_scrollBar->setCell(0);
+	m_scrollBar->setAnchors(Anchors::getFillAnchors());
+	m_scrollBar->ThumbMoved.connect(this, &KeymapWidget::onScroll);
+
+	int itemHeight = g_widgetConfig.getDefaultItemHeight() * 5 / 4;
+	int totalHeight = itemHeight * (UserCommand::COUNT - 1);
+	int y = getBorderTop();
 
 	Keymap &keymap = g_program.getKeymap();
-	int ih = g_widgetConfig.getDefaultItemHeight() * 5 / 4;
-	int lc = 0;
-	int rc = 0;
 	for (UserCommand uc(1); uc != UserCommand::COUNT; ++uc) {
-		if (uc <= UserCommand::SELECT_IDLE_HARVESTER) {
-			KeyEntryWidget *kew = new KeyEntryWidget(leftCol, keymap, uc);
-			kew->setAnchors(Anchors::getFillAnchors());
-			leftCol->addCells(1);
-			leftCol->setSizeHint(lc, SizeHint(-1, ih));
-			kew->setCell(lc++);
-		} else {
-			KeyEntryWidget *kew = new KeyEntryWidget(rightCol, keymap, uc);
-			kew->setAnchors(Anchors::getFillAnchors());
-			rightCol->addCells(1);
-			rightCol->setSizeHint(rc, SizeHint(-1, ih));
-			kew->setCell(rc++);
-		}
+		int ndx = uc - 1;
+		m_keyEntryWidgets[ndx] = new KeyEntryWidget(entryStrip, keymap, uc);
+		m_keyEntryWidgets[ndx]->setAnchors(Anchors::getFillAnchors());
+		entryStrip->addCells(1);
+		entryStrip->setSizeHint(ndx, SizeHint(-1, itemHeight));
+		m_keyEntryWidgets[ndx]->setCell(ndx);
+		m_kewStartOffsets[ndx] = y;
+		y += itemHeight;
 	}
+}
+
+void KeymapWidget::onScroll(ScrollBar *) {
+	Vec2i pos(getBorderLeft(), getBorderTop());
+	int offset = round(m_scrollBar->getThumbPos());
+	for (int i = 0; i < UserCommand::COUNT - 1; ++i) {
+		pos.y = m_kewStartOffsets[i] - offset;
+		m_keyEntryWidgets[i]->setPos(pos);
+	}
+}
+
+void KeymapWidget::setSize(const Vec2i &sz) {
+	CellStrip::setSize(sz);
+	int itemHeight = g_widgetConfig.getDefaultItemHeight() * 5 / 4;
+	int avail = sz.h - getBordersVert();
+	int total = itemHeight * (UserCommand::COUNT - 1);
+	m_scrollBar->setRanges(total, avail);
 }
 
 }}
