@@ -203,6 +203,18 @@ Audio=Audio
 Video=Video
 Debug=Debug
 Controls=Controls
+AutoReturn=Auto Return
+FocusArrows=Focus Arrows
+ConsoleMaxLines=Max Console Lines
+ScrollSpeed=Scroll Speed
+CameraInvertXAxis=Invert X Scrolling
+CameraInvertYAxis=Invert Y Scrolling
+Fullscreen=Fullscreen
+Resolution=Resolution
+ShadowTextureSize=Shadow Texture Size
+SpecularMapping=Specular Mapping
+BumpMapping=Bump Mapping
+ShadowFrameSkip=Shadow Frame Skip
 
 ; Misc
 Name=Name
