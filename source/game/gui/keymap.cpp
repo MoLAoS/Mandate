@@ -95,35 +95,35 @@ string HotKey::toString() const {
 void HotKeyAssignment::init(const string &str) {
 	string s;
 	s.reserve(str.size());
-	clear();
+	//clear();
 
 	// remove whitespace
-	for(int j = 0; j < str.size(); ++j) {
-		if(!isspace(str[j])) {
+	for (int j = 0; j < str.size(); ++j) {
+		if (!isspace(str[j])) {
 			s += str[j];
 		}
 	}
 
-	if(s.empty()) {
-		return;
-	}
-
-	// split if it contains m_hotKey1 comma
-	size_t comma = s.find(',');
-	if (comma != string::npos) {
-		if (s.size() > comma + 1) {
-			m_hotKey2.init(s.substr(comma + 1));
+	if (s.empty()) {
+		m_hotKey1.clear();
+		m_hotKey2.clear();
+	} else {
+		// split if it contains a comma
+		size_t comma = s.find(',');
+		if (comma != string::npos) {
+			if (s.size() > comma + 1) {
+				m_hotKey2.init(s.substr(comma + 1));
+			}
+			if (comma > 0) {
+				s = s.substr(0, comma);
+			}
+		} else {
+			m_hotKey2.clear();
 		}
-		if (comma > 0) {
-			s = s.substr(0, comma);
-		}
+		m_hotKey1.init(s);
 	}
-	m_hotKey1.init(s);
-	if (m_hotKey1.isSet() || m_hotKey2.isSet()) {
-		Modified(this);
-	}
+	Modified(this);
 }
-
 
 void HotKeyAssignment::setHotKey1(HotKey hk) {
 	if (hk == m_hotKey1) {
@@ -232,21 +232,27 @@ Keymap::Keymap(const Input &input, const char* fileName)
 		, m_filename(fileName)
 		, m_dirty(false) {
 	foreach_enum(UserCommand, uc) {
+		if (uc == UserCommand::ROTATE_BUILDING) {
+			DEBUG_HOOK();
+		}
 		m_entries.push_back(HotKeyAssignment(uc, commandInfo[uc]));
-		m_entries.back().Modified.connect(this, &Keymap::onAssignmentModified);
-		HotKey hk1 = m_entries.back().getHotKey1();
-		if (hk1.isSet()) {
-			m_hotKeyCmdMap[hk1] = uc;
-		}
-		HotKey hk2 = m_entries.back().getHotKey2();
-		if (hk2.isSet()) {
-			m_hotKeyCmdMap[hk2] = uc;
-		}
-		m_cmdHotKeyMap[uc] = HotKeyPair(hk1, hk2);
 	}
 
 	if (FSFactory::fileExists(m_filename.c_str())) {
 		load(m_filename.c_str());
+	}
+
+	for (UserCommand uc(1); uc != UserCommand::COUNT; ++uc) {
+		m_entries[uc].Modified.connect(this, &Keymap::onAssignmentModified);
+		HotKey hk1 = m_entries[uc].getHotKey1();
+		if (hk1.isSet()) {
+			m_hotKeyCmdMap[hk1] = uc;
+		}
+		HotKey hk2 = m_entries[uc].getHotKey2();
+		if (hk2.isSet()) {
+			m_hotKeyCmdMap[hk2] = uc;
+		}
+		m_cmdHotKeyMap[uc] = HotKeyPair(hk1, hk2);
 	}
 }
 
@@ -268,6 +274,7 @@ void Keymap::onAssignmentModified(HotKeyAssignment *assignment) {
 		m_hotKeyCmdMap[assignment->getHotKey2()] = uCmd;
 	}
 	m_cmdHotKeyMap[uCmd] = HotKeyPair(assignment->getHotKey1(), assignment->getHotKey2());
+	save();
 }
 
 //void Keymap::reinit() {
@@ -296,6 +303,9 @@ void Keymap::load(const char *path) {
 		it = pm.find(cmdName);
 		if (it != pm.end()) {
 			try {
+				if (uc == UserCommand::ROTATE_BUILDING) {
+					DEBUG_HOOK();
+				}
 				m_entries[uc].init(it->second);
 			} catch (runtime_error &e) {
 				stringstream str;

@@ -10,6 +10,7 @@
 #include "FSFactory.hpp"
 #include "menu_state_options.h"
 #include "game.h"
+#include "keymap_widget.h"
 
 #include "leak_dumper.h"
 
@@ -158,7 +159,7 @@ Options::Options(CellStrip *parent, MenuStateOptions *optionsMenu)
 		disableWidgets();
 	}
 	int page = g_config.getUiLastOptionsPage();
-	if (page < 0 || page > 5) {
+	if (page < 0 || page > 4) {
 		page = 0;
 	}
 	setActivePage(page);
@@ -449,13 +450,24 @@ void Options::buildAudioTab() {
 }
 
 void Options::buildControlsTab() {
-	CellStrip *panel = new CellStrip(this, Orientation::HORIZONTAL, 2);
+	CellStrip *panel = new CellStrip(this, Orientation::VERTICAL, 2);
 	TabWidget::add(g_lang.get("Controls"), panel);
+
+	StaticText *label = new StaticText(panel);
+	label->setCell(0);
+	label->setAnchors(Anchors::getFillAnchors());
+	label->setAlignment(Alignment::FLUSH_LEFT);
+	label->setText(g_lang.get("HotKeys"));
+	panel->setSizeHint(0, SizeHint(-1, g_widgetConfig.getDefaultItemHeight() * 5 / 4));
+
+	KeymapWidget *keymapWidget = new KeymapWidget(panel);
+	keymapWidget->setCell(1);
+	keymapWidget->setAnchors(Anchors::getFillAnchors());
 }
 
 void Options::buildNetworkTab() {
-	CellStrip *panel = new CellStrip(this, Orientation::HORIZONTAL, 2);
-	TabWidget::add(g_lang.get("Network"), panel);
+	//CellStrip *panel = new CellStrip(this, Orientation::HORIZONTAL, 2);
+	//TabWidget::add(g_lang.get("Network"), panel);
 }
 
 void Options::buildDebugTab() {

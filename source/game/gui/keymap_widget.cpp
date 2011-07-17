@@ -130,7 +130,7 @@ void KeyEntryWidget::onHotKeyChanged(Widget *wdgt) {
 		string msg = "The key combo '" + ib->getHotKey().toString() + "' is currently assigned to '"
 			+ formatString(UserCommandNames[existingAssignment]) 
 			+ "'. Do you want to replace this assignment?";
-		Vec2i sz(600, 400);
+		Vec2i sz(400, 300);
 		Vec2i pos = (g_metrics.getScreenDims() - sz) / 2;
 		m_msgBox = MessageDialog::showDialog(pos, sz, "Change Hotkey?", msg, "Yes (Change)", "No (Cancel)");
 		m_msgBox->Button1Clicked.connect(this, &KeyEntryWidget::onConfirmHotKeyChange);
@@ -146,12 +146,12 @@ void KeyEntryWidget::onHotKeyChanged(Widget *wdgt) {
 		m_nextValue = ib->getHotKey();
 
 	} else {
+		HotKey hk(ib->getText());
 		if (ib == m_inputBox1) {
-			hka.getHotKey1().init(ib->getText());
+			hka.setHotKey1(hk);
 		} else {
-			hka.getHotKey2().init(ib->getText());
+			hka.setHotKey2(hk);
 		}
-		m_keymap.save();
 	}
 }
 
@@ -190,6 +190,7 @@ void KeyEntryWidget::onCancelHotKeyChange(Widget*) {
 	g_widgetWindow.removeFloatingWidget(m_msgBox);
 	m_msgBox = 0;
 	m_prevValue = m_nextValue = HotKey();
+	m_keymap.save();
 }
 
 void KeyEntryWidget::onHotKeyAssignmentChanged(HotKeyAssignment *assignment) {

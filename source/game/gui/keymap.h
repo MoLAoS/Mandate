@@ -121,6 +121,7 @@ public:
 	HotKey() : m_keyCode(KeyCode::NONE), m_modFlags(0) {}
 	HotKey(KeyCode key, int mod) : m_keyCode(key), m_modFlags(mod) {}
 	HotKey(const HotKey &v) : m_keyCode(v.m_keyCode), m_modFlags(v.m_modFlags) {}
+	HotKey(const string &str) { init(str); }
 
 	bool operator<(const HotKey &arg) const {
 		return m_keyCode != arg.m_keyCode ? m_keyCode < arg.m_keyCode : m_modFlags < arg.m_modFlags;
