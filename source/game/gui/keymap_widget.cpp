@@ -206,7 +206,7 @@ void KeyEntryWidget::onHotKeyAssignmentChanged(HotKeyAssignment *assignment) {
 KeymapWidget::KeymapWidget(Container *parent)
 		: CellStrip(parent, Orientation::HORIZONTAL, 2) {
 	setWidgetStyle(WidgetType::LIST_BOX);
-	CellStrip *entryStrip = new CellStrip(this, Orientation::VERTICAL, Origin::FROM_TOP);
+	CellStrip *entryStrip = new CellStrip(this, Orientation::VERTICAL, Origin::FROM_TOP, 0);
 	entryStrip->setAnchors(Anchors::getFillAnchors());
 	entryStrip->setCell(0);
 	setSizeHint(0, SizeHint(100));
@@ -222,7 +222,7 @@ KeymapWidget::KeymapWidget(Container *parent)
 
 	int itemHeight = g_widgetConfig.getDefaultItemHeight() * 5 / 4;
 	int totalHeight = itemHeight * (UserCommand::COUNT - 1);
-	int y = getBorderTop();
+	int y = 0;//getBorderTop();
 
 	Keymap &keymap = g_program.getKeymap();
 	for (UserCommand uc(1); uc != UserCommand::COUNT; ++uc) {
@@ -238,7 +238,7 @@ KeymapWidget::KeymapWidget(Container *parent)
 }
 
 void KeymapWidget::onScroll(ScrollBar *) {
-	Vec2i pos(getBorderLeft(), getBorderTop());
+	Vec2i pos(0,0);//getBorderLeft(), getBorderTop());
 	int offset = round(m_scrollBar->getThumbPos());
 	for (int i = 0; i < UserCommand::COUNT - 1; ++i) {
 		pos.y = m_kewStartOffsets[i] - offset;
