@@ -132,11 +132,11 @@ STRINGY_ENUM( EffectStacking,
 
 /** effects flags
   * effect properties:
-  * <ul><li><b>ALLY</b> effects allies.</li>
-  *		<li><b>FOE</b> effects foes.</li>
-  *		<li><b>NO_NORMAL_UNITS</b> doesn't effects normal units.</li>
-  *		<li><b>BUILDINGS</b> effects buildings.</li>
-  *		<li><b>PETS_ONLY</b> only effects pets of the originator.</li>
+  * <ul><li><b>ALLY</b> affects allies.</li>
+  *		<li><b>FOE</b> affects foes.</li>
+  *		<li><b>NO_NORMAL_UNITS</b> doesn't affect normal units.</li>
+  *		<li><b>BUILDINGS</b> affects buildings.</li>
+  *		<li><b>PETS_ONLY</b> only affects pets of the originator.</li>
   *		<li><b>NON_LIVING</b> .</li>
   *		<li><b>SCALE_SPLASH_STRENGTH</b> decrease strength when applied from splash.</li>
   *		<li><b>ENDS_WITH_SOURCE</b> ends when the unit causing the effect dies.</li>

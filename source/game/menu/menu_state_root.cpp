@@ -87,10 +87,9 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 		label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 
 		int advEng2Len = label->getTextDimensions().w;
-		int y_step = int(g_widgetConfig.getTitleFont()->getMetrics()->getHeight() + 1.f);
 
-		int a = g_widgetConfig.getTitleFont()->getMetrics()->getMaxDescent();
-		int b = g_widgetConfig.getVersionFont()->getMetrics()->getMaxDescent();
+		int a = int(g_widgetConfig.getTitleFont()->getMetrics()->getMaxDescent());
+		int b = int(g_widgetConfig.getVersionFont()->getMetrics()->getMaxDescent());
 		int oy = a - b;
 
 		// Version label

@@ -40,13 +40,11 @@ private:
 	/** Unit that caused this effect, or -1 if this is a recourse effect. */
 	UnitId source;
 
-	/** If this is a recourse effect, the primary effect that this is a recourse
-	  * of, NULL otherwise. */
+	/** If this is a recourse effect, the primary effect that this is a recourse of, NULL otherwise. */
 	Effect *root;
 
-	/** A modifier that adjusts how powerful this effect, based upon the type,
-	  * should be. Each value of this effect will be multiplied by strength
-	  * before being applied to the Unit or any other modifiers. */
+	/** A modifier that adjusts how powerful this effect, based upon the type, should be. Each value of 
+	  * this effect will be multiplied by strength before being applied to the Unit or any other modifiers. */
 	fixed strength;
 
 	/** The effect's duration in game ticks (1 game tick == 40 world frames) */
@@ -67,8 +65,14 @@ public:
 		const TechTree *tt;
 
 		CreateParams(const EffectType* type, Unit *source, Effect *root, fixed strength,
-						const Unit *recipient, const TechTree *tt) 
-			: type(type), source(source), root(root), strength(strength), recipient(recipient), tt(tt) { }
+					 const Unit *recipient, const TechTree *tt)
+				: type(type)
+				, source(source)
+				, root(root)
+				, strength(strength)
+				, recipient(recipient)
+				, tt(tt) {
+		}
 	};
 
 private:
