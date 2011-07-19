@@ -245,8 +245,10 @@ void ScrollBarShaft::recalc() {
 }
 
 void ScrollBarShaft::setSize(const Vec2i &sz) {
-	Container::setSize(sz);
-	recalc();
+	if (getSize() != sz) {
+		Container::setSize(sz);
+		recalc();
+	}
 }
 
 bool ScrollBarShaft::mouseDown(MouseButton btn, Vec2i pos) {

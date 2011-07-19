@@ -174,7 +174,7 @@ void ScrollText::setText(const string &txt, ScrollAction scroll) {
 	float oldOffset = m_scrollBar->getThumbPos();
 
 	setAndWrapText(txt);
-	recalc();	
+	recalc();
 
 	if (scroll == ScrollAction::BOTTOM) {
 		m_scrollBar->setThumbPosPercent(100);
