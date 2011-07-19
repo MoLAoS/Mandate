@@ -153,6 +153,7 @@ void DebugStats::report(ostream &stream) {
 	if (m_debugSections[DebugSection::WORLD]) {
 		stream << "\nWorld stats:\n"
 			<< "   Frames per Sec: " << m_lastWorldFps << endl
+			<< "   Total frame count: " << g_world.getFrameCount() << endl
 			<< "   Time of day: " << g_world.getTimeFlow()->describeTime() << endl;
 	}
 	if (m_debugSections[DebugSection::PERFORMANCE]) {
