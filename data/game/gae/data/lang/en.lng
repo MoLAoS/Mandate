@@ -215,6 +215,7 @@ ShadowTextureSize=Shadow Texture Size
 SpecularMapping=Specular Mapping
 BumpMapping=Bump Mapping
 ShadowFrameSkip=Shadow Frame Skip
+HotKeys=Hot-Keys
 
 ; Misc
 Name=Name
