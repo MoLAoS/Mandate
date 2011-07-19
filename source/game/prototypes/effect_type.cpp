@@ -97,7 +97,7 @@ bool EffectType::load(const XmlNode *en, const string &dir, const TechTree *tt, 
 				flags.set(EffectTypeFlag::ALLY, true);
 				flags.set(EffectTypeFlag::FOE, true);
 			} else {
-				throw runtime_error("Not a valid value for units-effected: " + tmp + ": " + dir);
+				throw runtime_error("Not a valid value for effect target: '" + tmp + "' : " + dir);
 			}
 		} else { // default value
 			flags.set(EffectTypeFlag::ALLY, true);

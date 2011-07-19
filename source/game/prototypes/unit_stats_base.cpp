@@ -465,7 +465,7 @@ void EnhancementType::initMultiplier(const XmlNode *node, const string &dir) {
 bool EnhancementType::load(const XmlNode *baseNode, const string &dir, const TechTree *tt, const FactionType *ft) {
 	const XmlNode *node;
 	bool loadOk = true;
-	//static modifiers
+	// static modifiers
 	try {
 		node = baseNode->getChild("static-modifiers", 0, false);
 		if(node) {
@@ -477,7 +477,7 @@ bool EnhancementType::load(const XmlNode *baseNode, const string &dir, const Tec
 		g_logger.logXmlError(dir, e.what());
 		loadOk = false;
 	}
-	//multipliers
+	// multipliers
 	try {
 		node = baseNode->getChild("multipliers", 0, false);
 		if (node) {

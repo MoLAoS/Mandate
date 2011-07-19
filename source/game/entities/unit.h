@@ -326,7 +326,7 @@ public:
 	const SkillType *getCurrSkill() const		{return currSkill;}
 	const EnhancementType *getTotalUpgrade() const	{return &totalUpgrade;}
 	float getRotation() const					{return rotation;}
-	float getVerticalRotation() const			{return 0.0f;}
+	Vec2f getVerticalRotation() const			{return Vec2f(0.f);}
 	ParticleSystem *getFire() const				{return fire;}
 	int getKills() const						{return kills;}
 	const Level *getLevel() const				{return level;}

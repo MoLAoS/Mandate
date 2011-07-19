@@ -43,14 +43,14 @@ bool Level::load(const XmlNode *levelNode, const string &dir, const TechTree *tt
 	try { 
 		m_name = levelNode->getAttribute("name")->getRestrictedValue();
 	} catch (runtime_error e) {
-		g_logger.logXmlError ( dir, e.what() );
+		g_logger.logXmlError(dir, e.what());
 		loadOk = false;
 	}
 
 	try { 
 		kills = levelNode->getAttribute("kills")->getIntValue(); 
 		const XmlAttribute *defaultsAtt = levelNode->getAttribute("defaults", 0);
-		if(defaultsAtt && !defaultsAtt->getBoolValue()) {
+		if (defaultsAtt && !defaultsAtt->getBoolValue()) {
 			maxHpMult = 1;
 			maxEpMult = 1;
 			sightMult = 1;
@@ -59,12 +59,13 @@ bool Level::load(const XmlNode *levelNode, const string &dir, const TechTree *tt
 		}
 	}
 	catch (runtime_error e) {
-		g_logger.logXmlError ( dir, e.what() );
+		g_logger.logXmlError(dir, e.what());
 		loadOk = false;
 	}
 
-	if ( ! EnhancementType::load(levelNode, dir, tt, ft) )
+	if (!EnhancementType::load(levelNode, dir, tt, ft)) {
 		loadOk = false;
+	}
 	return loadOk;
 }
 
@@ -571,7 +572,7 @@ int UnitType::getStore(const ResourceType *rt, const Faction *f) const {
 ResourceAmount UnitType::getStoredResource(int i, const Faction *f) const {
 	ResourceAmount res(storedResources[i]);
 	Modifier mod = f->getStoreModifier(this, res.getType());
-	res.setAmount( (res.getAmount() * mod.getMultiplier()).intp() + mod.getAddition() );
+	res.setAmount((res.getAmount() * mod.getMultiplier()).intp() + mod.getAddition());
 	return res;
 }
 

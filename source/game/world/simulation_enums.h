@@ -40,7 +40,7 @@ STRINGY_ENUM( GameSpeed,
   *		<li><b>CPU_EASY</b> CPU easy player</li>
   *		<li><b>CPU</b> CPU player</li>
   *		<li><b>CPU_ULTRA</b> Cheating CPU player</li>
-  *		<li><b>CPU_MEGA</b> Extreemly cheating CPU player</li>
+  *		<li><b>CPU_MEGA</b> Extremely cheating CPU player</li>
   *		<li><b>NETWORK</b> Network player</li>
   *		<li><b>HUMAN</b> Local Player</li></ul>
   */

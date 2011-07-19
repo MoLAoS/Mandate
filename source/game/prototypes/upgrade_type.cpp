@@ -94,7 +94,7 @@ bool UpgradeType::loadNewStyle(const XmlNode *node, const string &dir, const Tec
 		} catch (runtime_error e) {
 			g_logger.logXmlError(dir, e.what());
 			loadOk = false;
-		} 
+		}
 		try { // Units affected by this upgrade
 			const XmlNode *affectsNode = enhanceNode->getChild("affects", 0);
 			for (int j=0; j < affectsNode->getChildCount(); ++j) {
