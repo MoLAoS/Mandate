@@ -264,8 +264,8 @@ void Options::buildVideoTab() {
 	m_shadowFrameSkipSpinner = new Spinner(dw);
 	m_shadowFrameSkipSpinner->setCell(1);
 	m_shadowFrameSkipSpinner->setAnchors(squashAnchors);
-	m_shadowFrameSkipSpinner->setRanges(0, 1000); ///@todo work out the details - hailstone 17July2011
-	m_shadowFrameSkipSpinner->setIncrement(32);
+	m_shadowFrameSkipSpinner->setRanges(0, 5); ///@todo work out the details - hailstone 17July2011
+	m_shadowFrameSkipSpinner->setIncrement(1);
 	m_shadowFrameSkipSpinner->setValue(config.getRenderShadowFrameSkip());
 	m_shadowFrameSkipSpinner->ValueChanged.connect(this, &Options::onSpinnerValueChanged);
 
