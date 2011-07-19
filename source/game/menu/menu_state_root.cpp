@@ -89,12 +89,16 @@ MenuStateRoot::MenuStateRoot(Program &program, MainMenu *mainMenu)
 		int advEng2Len = label->getTextDimensions().w;
 		int y_step = int(g_widgetConfig.getTitleFont()->getMetrics()->getHeight() + 1.f);
 
+		int a = g_widgetConfig.getTitleFont()->getMetrics()->getMaxDescent();
+		int b = g_widgetConfig.getVersionFont()->getMetrics()->getMaxDescent();
+		int oy = a - b;
+
 		// Version label
 		label = new Widgets::StaticText(pp);
 		label->textStyle().m_fontIndex = g_widgetConfig.getVersionFontNdx();
 		label->setText(gaeVersionString);
 		sz = label->getTextDimensions() + Vec2i(10,5);
-		Vec2i pos = Vec2i(tx + advEng2Len + 5, logoHeight - ty - sz.h);
+		Vec2i pos = Vec2i(tx + advEng2Len + 5, logoHeight - ty - sz.h - oy);
 		label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
 		label->setPos(pos);
 		label->setSize(sz);
