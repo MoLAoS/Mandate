@@ -11,7 +11,7 @@
 
 #include <string>
 
-#include "compound_widgets.h"
+#include "framed_widgets.h"
 
 namespace Glest { namespace Gui {
 using namespace Widgets;

@@ -6,8 +6,8 @@
 //  GPL V3, see source/licence.txt
 // ==============================================================
 
-#ifndef _GLEST_WIDGETS_COMPLEX_WIDGETS_INCLUDED_
-#define _GLEST_WIDGETS_COMPLEX_WIDGETS_INCLUDED_
+#ifndef _GLEST_WIDGETS__LIST_WIDGETS_H_
+#define _GLEST_WIDGETS__LIST_WIDGETS_H_
 
 #include "widgets.h"
 #include "scroll_bar.h"

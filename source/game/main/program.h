@@ -23,7 +23,7 @@
 #include "forward_decs.h"
 #include "game_constants.h"
 #include "widget_window.h"
-#include "compound_widgets.h"
+#include "framed_widgets.h"
 
 using namespace Shared::Platform;
 using namespace Glest::Graphics;

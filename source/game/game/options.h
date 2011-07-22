@@ -14,7 +14,7 @@
 #ifndef _GLEST_GAME_OPTIONS_H_
 #define _GLEST_GAME_OPTIONS_H_
 
-#include "compound_widgets.h"
+#include "framed_widgets.h"
 #include "slider.h"
 #include "sigslot.h"
 #include "platform_util.h"
@@ -26,48 +26,6 @@ namespace Glest { namespace Menu {
 namespace Glest { namespace Gui {
 using namespace Widgets;
 using Shared::Platform::VideoMode;
-// =====================================================
-// 	class SpinnerValueBox
-// =====================================================
-
-class SpinnerValueBox : public StaticText {
-public:
-	SpinnerValueBox(Container *parent) : StaticText(parent) {
-		setWidgetStyle(WidgetType::TEXT_BOX);
-	}
-	virtual void setStyle() override { setWidgetStyle(WidgetType::TEXT_BOX); }
-};
-
-// =====================================================
-// 	class Spinner
-// =====================================================
-
-class Spinner : public CellStrip,  public sigslot::has_slots {
-private:
-	SpinnerValueBox  *m_valueBox;
-	ScrollBarButton  *m_upButton;
-	ScrollBarButton  *m_downButton;
-	int               m_minValue;
-	int               m_maxValue;
-	int               m_increment;
-	int               m_value;
-
-	void onButtonFired(Widget *btn);
-
-public:
-	Spinner(Container *parent);
-
-	void setRanges(int min, int max) { m_minValue = min; m_maxValue = max; }
-	void setIncrement(int inc) { m_increment = inc; }
-	void setValue(int val) { 
-		m_value = clamp(val, m_minValue, m_maxValue);
-		m_valueBox->setText(intToStr(m_value));
-	}
-
-	int getValue() const { return m_value; }
-
-	sigslot::signal<Widget*> ValueChanged;
-};
 
 // =====================================================
 // 	class Options

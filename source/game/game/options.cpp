@@ -20,125 +20,6 @@ using namespace Glest::Graphics;
 namespace Glest { namespace Gui {
 
 // =====================================================
-// 	class RelatedDoubleOption
-// =====================================================
-
-class RelatedDoubleOption : public CellStrip {
-public:
-	RelatedDoubleOption(Container *parent, const string &title, const string &txt1, const string &txt2)
-			: CellStrip(parent, Orientation::HORIZONTAL, Origin::FROM_LEFT, 5) {
-		setSizeHint(0, SizeHint(40));
-		setSizeHint(1, SizeHint(10));
-		setSizeHint(2, SizeHint(20));
-		setSizeHint(3, SizeHint(10));
-		setSizeHint(4, SizeHint(20));
-
-		Anchors dwAnchors(Anchor(AnchorType::RIGID, 0), Anchor(AnchorType::RIGID, 2),
-			Anchor(AnchorType::RIGID, 0), Anchor(AnchorType::RIGID, 2));
-		setAnchors(dwAnchors);
-
-		StaticText *label = new StaticText(this);
-		label->setText(title);
-		label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
-		label->setCell(0);
-		label->setAnchors(Anchor(AnchorType::RIGID, 0));
-		label->setAlignment(Alignment::FLUSH_RIGHT);
-		label->borderStyle().setSizes(0, 0, 10, 0);
-
-		label = new StaticText(this);
-		label->setText(txt1);
-		label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
-		label->setCell(1);
-		label->setAnchors(Anchor(AnchorType::RIGID, 0));
-		label->setAlignment(Alignment::FLUSH_RIGHT);
-		label->borderStyle().setSizes(0, 0, 10, 0);
-
-		label = new StaticText(this);
-		label->setText(txt2);
-		label->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
-		label->setCell(3);
-		label->setAnchors(Anchor(AnchorType::RIGID, 0));
-		label->setAlignment(Alignment::FLUSH_RIGHT);
-		label->borderStyle().setSizes(0, 0, 10, 0);
-	}
-
-	void setCustomSplits(int label, int val1, int val2) {
-		setSizeHint(1, SizeHint(label));
-		setSizeHint(2, SizeHint(val1));
-		setSizeHint(3, SizeHint(label));
-		setSizeHint(4, SizeHint(val2));
-	}
-};
-
-// =====================================================
-// 	class CheckBoxHolder
-// =====================================================
-
-class CheckBoxHolder : public CellStrip {
-public:
-	CheckBoxHolder(Container *parent)
-			: CellStrip(parent, Orientation::HORIZONTAL, 3) {
-		setSizeHint(0, SizeHint());
-		setSizeHint(1, SizeHint(-1, g_widgetConfig.getDefaultItemHeight()));
-		setSizeHint(2, SizeHint());
-		setAnchors(Anchors(Anchor(AnchorType::RIGID, 0)));
-	}
-};
-
-// =====================================================
-// 	class Spinner
-// =====================================================
-
-Spinner::Spinner(Container *parent)
-		: CellStrip(parent, Orientation::HORIZONTAL, 2)
-		, m_minValue(0), m_maxValue(0), m_increment(1), m_value(0) {
-	Anchors anchors(Anchor(AnchorType::RIGID, 0));
-	setAnchors(anchors);
-	m_valueBox = new SpinnerValueBox(this);
-	m_valueBox->setCell(0);
-	m_valueBox->setAnchors(anchors);
-	m_valueBox->setText("0");
-
-	setSizeHint(1, SizeHint(-1, g_widgetConfig.getDefaultItemHeight()));
-	m_upButton = new ScrollBarButton(this, Direction::UP);
-	m_upButton->setCell(1);
-	Anchors a = anchors;
-	a.set(Edge::BOTTOM, 50, true);
-	m_upButton->setAnchors(a);
-	m_upButton->Fire.connect(this, &Spinner::onButtonFired);
-
-	m_downButton = new ScrollBarButton(this, Direction::DOWN);
-	m_downButton->setCell(1);
-	a = anchors;
-	a.set(Edge::TOP, 50, true);
-	m_downButton->setAnchors(a);
-	m_downButton->Fire.connect(this, &Spinner::onButtonFired);
-}
-
-void Spinner::onButtonFired(Widget *source) {
-	ScrollBarButton *btn = static_cast<ScrollBarButton*>(source);
-	int val = m_value + (btn == m_upButton ? m_increment : -m_increment);
-	val = clamp(val, m_minValue, m_maxValue);
-	if (val != m_value) {
-		if (m_value == m_minValue) {
-			m_downButton->setEnabled(true);
-		}
-		if (m_value == m_maxValue) {
-			m_upButton->setEnabled(true);
-		}
-		m_value = val;
-		m_valueBox->setText(intToStr(m_value));
-		ValueChanged(this);
-		if (m_value == m_minValue) {
-			m_downButton->setEnabled(false);
-		}
-		if (m_value == m_maxValue) {
-			m_upButton->setEnabled(false);
-		}
-	}
-}
-
-// =====================================================
 // 	class Options
 // =====================================================
 
@@ -471,10 +352,11 @@ void Options::buildNetworkTab() {
 }
 
 void Options::buildDebugTab() {
-	CellStrip *panel = new CellStrip(this, Orientation::VERTICAL, Origin::FROM_TOP, 1);
+	CellStrip *panel = new CellStrip(this, Orientation::VERTICAL, Origin::FROM_TOP, 2);
 	TabWidget::add(g_lang.get("Debug"), panel);
 	SizeHint hint(-1, int(g_widgetConfig.getDefaultItemHeight() * 1.5f));
 	panel->setSizeHint(0, hint);
+	panel->setSizeHint(1, SizeHint());
 
 	// centre check-boxes vetically in cell
 	Anchors centreAnchors;
@@ -510,6 +392,10 @@ void Options::buildDebugTab() {
 
 	//panel->borderStyle().setSolid(g_widgetConfig.getColourIndex(Vec3f(1.f, 0.f, 1.f)));
 	//panel->borderStyle().setSizes(2);
+
+	DebugOptions *dbgOptions = new DebugOptions(panel, m_optionsMenu != 0);
+	dbgOptions->setCell(1);
+	dbgOptions->setAnchors(Anchors::getFillAnchors());
 }
 
 void Options::disableWidgets() {

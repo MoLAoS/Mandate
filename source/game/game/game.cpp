@@ -188,7 +188,7 @@ void GameState::init() {
 	m_chatDialog->setVisible(false);
 
 	m_debugPanel = new DebugPanel(static_cast<Container*>(&g_program));
-	m_debugPanel->setSize(Vec2i(300, 400));
+	m_debugPanel->setSize(Vec2i(400, 400));
 	m_debugPanel->setPos(Vec2i(25, 250));
 	m_debugPanel->setVisible(g_config.getMiscDebugMode());
 	m_debugPanel->setButtonText("");
@@ -653,7 +653,7 @@ void GameState::renderBg(){
 }
 
 void GameState::renderFg(){
-	SECTION_TIMER(RENDER_2D);
+	SECTION_TIMER(RENDER_SWAP_BUFFERS);
 	render2d();
 	Renderer::getInstance().swapBuffers();
 }

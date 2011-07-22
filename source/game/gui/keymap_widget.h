@@ -10,7 +10,7 @@
 #define _GLEST_GAME_GUI__KEYMAP_WIDGET_H_
 
 #include <string>
-#include "compound_widgets.h"
+#include "framed_widgets.h"
 #include "keymap.h"
 
 namespace Glest { namespace Gui {
@@ -62,7 +62,7 @@ public:
 
 };
 
-class KeymapWidget : public CellStrip, public sigslot::has_slots {
+class KeymapWidget : public CellStrip, public MouseWidget, public sigslot::has_slots {
 private:
 	ScrollBar      *m_scrollBar;
 	KeyEntryWidget *m_keyEntryWidgets[UserCommand::COUNT - 1];
@@ -74,6 +74,8 @@ public:
 	KeymapWidget(Container *parent);
 
 	virtual void setSize(const Vec2i &sz) override;
+
+	virtual bool mouseWheel(Vec2i pos, int z) override { m_scrollBar->scrollLine(z > 0); return true; }
 };
 
 }}

@@ -16,7 +16,7 @@
 
 #include "main_menu.h"
 #include "thread.h"
-#include "compound_widgets.h"
+#include "framed_widgets.h"
 
 namespace Glest { namespace Menu {
 

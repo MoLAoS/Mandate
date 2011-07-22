@@ -9,7 +9,7 @@
 #ifndef _GLEST__WIDGETS__PLAYER_SLOT_WIDGET__INCLUDED_
 #define _GLEST__WIDGETS__PLAYER_SLOT_WIDGET__INCLUDED_
 
-#include "complex_widgets.h"
+#include "list_widgets.h"
 #include "game_constants.h"
 #include "lang.h"
 

@@ -27,7 +27,7 @@
 #include "config.h"
 #include "keymap.h"
 #include "battle_end.h"
-#include "compound_widgets.h"
+#include "framed_widgets.h"
 #include "debug_stats.h"
 #include "debug_widgets.h"
 #include "game_menu.h"
@@ -118,6 +118,7 @@ public:
 	GameCamera *getGameCamera()				{return &gameCamera;}
 	const UserInterface *getGui() const		{return &gui;}
 	UserInterface *getGui()					{return &gui;}
+	DebugStats* getDebugStats()             {return &m_debugStats;}
 	Vec2i getMousePos() const				{return Vec2i(mouseX, mouseY);}
 	
 	// ProgramState implementation

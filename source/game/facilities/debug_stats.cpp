@@ -14,6 +14,7 @@
 #include "game_camera.h"
 #include "game.h"
 #include "cluster_map.h"
+#include "properties.h"
 
 namespace Glest { namespace Debug {
 
@@ -24,6 +25,9 @@ using namespace Shared::Util;
 DebugStats *g_debugStats = 0;
 
 inline string formatTime(int64 ms) {
+	if (ms < 0) {
+		ms = 0;
+	}
 	int sec = ms / 1000;
 	if (sec) {
 		int millis = ms % 1000;
@@ -64,36 +68,62 @@ int64 DebugStats::avg(const TickRecords &records) {
 }
 
 DebugStats::DebugStats() {
-	// sections
-	m_debugSections[DebugSection::PERFORMANCE] = true;
-	m_debugSections[DebugSection::RENDERER] = true;
-	m_debugSections[DebugSection::CAMERA] = false;
-	m_debugSections[DebugSection::GUI] = true;
-	m_debugSections[DebugSection::WORLD] = true;
-	m_debugSections[DebugSection::RESOURCES] = false;
-	m_debugSections[DebugSection::CLUSTER_MAP] = false;
-	m_debugSections[DebugSection::PARTICLE_USE] = false;
-
-	// performance sections
-	foreach_enum (TimerSection, s) {
-		m_reportFlags[s] = false;
-		m_sectoinNames[s] = formatEnumName(TimerSectionNames[s]);
-	}
-	m_reportFlags[TimerSection::RENDER_3D] = true;
-	m_reportFlags[TimerSection::RENDER_SURFACE] = true;
-	m_reportFlags[TimerSection::RENDER_WATER] = true;
-	m_reportFlags[TimerSection::RENDER_OBJECTS] = true;
-	m_reportFlags[TimerSection::RENDER_UNITS] = true;
-	m_reportFlags[TimerSection::RENDER_SHADOWS] = true;
-
-	// performance stats to show
-	m_reportTotals = false;
-	m_reportLastTick = false;
-	m_reportAvgLast5 = true;
-	m_reportRatio = false;
-	
+	loadConfig();	
 	m_lastRenderFps = 0;
 	m_lastWorldFps = 0;
+	foreach_enum (TimerSection, s) {
+		m_currentTickTimers[s] = Chrono();
+		m_totalTimers[s] = Chrono();
+	}
+	foreach_enum (TimerSection, s) {
+		int a = m_currentTickTimers[s].getMillis();
+		if (a) {
+			DEBUG_HOOK();
+		}
+
+		assert(m_currentTickTimers[s].getMillis() == 0);
+		assert(m_totalTimers[s].getMillis() == 0);
+	}
+}
+
+void DebugStats::loadConfig() {
+	Properties p;
+	if (fileExists("debug.ini")) {
+		try {
+			p.load("debug.ini");
+		} catch (std::exception &e) {
+		}
+	}
+	foreach_enum (DebugSection, ds) {
+		m_debugSections[ds] = p.getBool(DebugSectionNames[ds], false);
+	}
+	foreach_enum (TimerSection, ts) {
+		m_reportSections[ts] = p.getBool(TimerSectionNames[ts], false);
+	}
+	foreach_enum (TimerReportFlag, trf) {
+		m_reportFlags[trf] = p.getBool(TimerReportFlagNames[trf], false);
+	}
+	if (!fileExists("debug.ini")) {
+		p.save("debug.ini");
+	}
+}
+
+void DebugStats::saveConfig() {
+	Properties p;
+	foreach_enum (DebugSection, ds) {
+		p.setBool(DebugSectionNames[ds], m_debugSections[ds]);
+	}
+	foreach_enum (TimerSection, ts) {
+		p.setBool(TimerSectionNames[ts], m_reportSections[ts]);
+	}
+	foreach_enum (TimerReportFlag, trf) {
+		p.setBool(TimerReportFlagNames[trf], m_reportFlags[trf]);
+	}
+	p.save("debug.ini");
+}
+
+void DebugStats::init() {
+	m_startTime = Chrono::getCurMillis();
 }
 
 float DebugStats::getTimeRatio(TimerSection section) const {
@@ -118,17 +148,17 @@ void DebugStats::tick(int renderFps, int worldFps) {
 
 void DebugStats::reportTotal(TimerSection section, stringstream &stream) {
 	int64 time = m_totalTimers[section].getMillis();
-	stream << "   " << m_sectoinNames[section] << " : " << formatTime(time) << endl;
+	stream << "   " << formatEnumName(TimerSectionNames[section]) << " : " << formatTime(time) << endl;
 }
 
 void DebugStats::reportLast(TimerSection section, stringstream &stream) {
-	int64 time = m_tickRecords[section].empty() ? 0 : m_tickRecords[section].back();
-	stream << "   " << m_sectoinNames[section] << " : " << formatTime(time) << endl;
+	int64 time = m_tickRecords[section].empty() ? int64(0) : m_tickRecords[section].back();
+	stream << "   " << formatEnumName(TimerSectionNames[section]) << " : " << formatTime(time) << endl;
 }
 
 void DebugStats::reportLast5(TimerSection section, stringstream &stream) {
 	int64 time = avg(m_tickRecords[section]);
-	stream << "   " << m_sectoinNames[section] << " : " << formatTime(time) << endl;
+	stream << "   " << formatEnumName(TimerSectionNames[section]) << " : " << formatTime(time) << endl;
 }
 
 void DebugStats::report(ostream &stream) {
@@ -190,56 +220,39 @@ void DebugStats::doPerformanceReport() {
 		return;
 	}
 	stringstream stream;
-	if (m_reportTotals) {
+	if (m_reportFlags[TimerReportFlag::TOTAL_TIME]) {
 		stream << "Total time taken this game:\n";
 		foreach_enum (TimerSection, s) {
-			if (m_reportFlags[s]) {
+			if (m_reportSections[s]) {
 				reportTotal(s, stream);
 			}
 		}
 	}
-	if (m_reportLastTick) {
+	if (m_reportFlags[TimerReportFlag::LAST_SEC]) {
 		stream << "Time taken in the last second:\n";
 		foreach_enum (TimerSection, s) {
-			if (m_reportFlags[s]) {
+			if (m_reportSections[s]) {
 				reportLast(s, stream);
 			}
 		}
 	}
-	if (m_reportAvgLast5) {
-		stream << "Average time taken (per sec) in the last 5 sec:\n";
+	if (m_reportFlags[TimerReportFlag::LAST_5_SEC]) {
+		stream << "Average time per sec in the last 5:\n";
 		foreach_enum (TimerSection, s) {
-			if (m_reportFlags[s]) {
+			if (m_reportSections[s]) {
 				reportLast5(s, stream);
 			}
 		}
 	}
-
-	if (m_reportRatio) {
+	if (m_reportFlags[TimerReportFlag::TOTAL_RATIO]) {
 		stream << "Percentage of time since game start:\n";
 		foreach_enum (TimerSection, s) {
-			if (m_reportFlags[s]) {
-				stream << "   " << m_sectoinNames[s] << " : " << (getTimeRatio(s) * 100.f) << " %" << endl;
+			if (m_reportSections[s]) {
+				stream << "   " << formatEnumName(TimerSectionNames[s]) << " : " << (getTimeRatio(s) * 100.f) << " %" << endl;
 			}
 		}
 	}
 	m_performanceReportCache = stream.str();
 }
-
-void DebugStats::init() {
-	m_startTime = Chrono::getCurMillis();
-}
-
-void DebugStats::enterSection(TimerSection section) {
-	m_totalTimers[section].start();
-	m_currentTickTimers[section].start();
-}
-
-void DebugStats::exitSection(TimerSection section) {
-	m_totalTimers[section].stop();
-	m_currentTickTimers[section].stop();
-}
-
-
 
 }}

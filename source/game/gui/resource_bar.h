@@ -15,7 +15,7 @@
 
 #include <string>
 
-#include "compound_widgets.h"
+#include "framed_widgets.h"
 #include "forward_decs.h"
 
 using std::string;

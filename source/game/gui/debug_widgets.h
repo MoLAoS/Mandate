@@ -6,15 +6,17 @@
 //  GPL V3, see source/licence.txt
 // ==============================================================
 
-#ifndef _GLEST_GAME_GUI_DEBUG_WIDGETS_H_
-#define _GLEST_GAME_GUI_DEBUG_WIDGETS_H_
+#ifndef _GLEST_GUI__DEBUG_WIDGETS_H_
+#define _GLEST_GUI__DEBUG_WIDGETS_H_
 
 #include <string>
-#include "compound_widgets.h"
+#include "framed_widgets.h"
+#include "debug_stats.h"
 
 namespace Glest { namespace Gui {
 
 using namespace Widgets;
+using namespace Debug;
 
 class DebugPanel : public MessageDialog {
 public:
@@ -25,6 +27,20 @@ public:
 	}
 
 	virtual string descType() const override { return "DebugPanel"; }
+};
+
+class DebugOptions : public CellStrip, public sigslot::has_slots {
+private:
+	CheckBox *m_debugSections[DebugSection::COUNT];
+	CheckBox *m_timerSections[TimerSection::COUNT];
+	CheckBox *m_timerReports[TimerReportFlag::COUNT];
+
+	DebugStats *m_stats;
+
+public:
+	DebugOptions(Container *parent, bool menu);
+
+	void onCheckChanged(Widget *cb);
 };
 
 }}

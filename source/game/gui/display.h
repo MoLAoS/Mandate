@@ -22,7 +22,7 @@
 #include "widgets.h"
 #include "forward_decs.h"
 #include "selection.h"
-#include "compound_widgets.h"
+#include "framed_widgets.h"
 #include "tool_tips.h"
 
 using std::string;

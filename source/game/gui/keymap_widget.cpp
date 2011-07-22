@@ -204,7 +204,8 @@ void KeyEntryWidget::onHotKeyAssignmentChanged(HotKeyAssignment *assignment) {
 // =====================================================
 
 KeymapWidget::KeymapWidget(Container *parent)
-		: CellStrip(parent, Orientation::HORIZONTAL, 2) {
+		: CellStrip(parent, Orientation::HORIZONTAL, 2)
+		, MouseWidget(this) {
 	setWidgetStyle(WidgetType::LIST_BOX);
 	CellStrip *entryStrip = new CellStrip(this, Orientation::VERTICAL, Origin::FROM_TOP, 0);
 	entryStrip->setAnchors(Anchors::getFillAnchors());

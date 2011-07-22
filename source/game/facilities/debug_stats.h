@@ -14,15 +14,18 @@
 #include "game_constants.h"
 #include "util.h"
 
+#include "properties.h"
+
 namespace Glest { namespace Debug {
 
 using std::stringstream;
+using Shared::Util::Properties;
 using namespace Shared::Platform;
 
 STRINGY_ENUM( TimerSection,
-
 	RENDER_2D,
 	RENDER_3D,
+	RENDER_SWAP_BUFFERS,
 	RENDER_SURFACE,
 	RENDER_WATER,
 	RENDER_MODELS,
@@ -37,6 +40,13 @@ STRINGY_ENUM( TimerSection,
 	//AI_TOTAL
 )
 
+STRINGY_ENUM( TimerReportFlag,
+	LAST_SEC,
+	LAST_5_SEC,
+	TOTAL_TIME,
+	TOTAL_RATIO
+)
+
 STRINGY_ENUM( DebugSection,
 	PERFORMANCE,
 	RENDERER,
@@ -48,7 +58,6 @@ STRINGY_ENUM( DebugSection,
 	PARTICLE_USE
 )
 
-
 class DebugStats {
 public:
 	typedef std::deque<int64> TickRecords;
@@ -59,16 +68,11 @@ private:
 	Chrono		m_currentTickTimers[TimerSection::COUNT];
 	TickRecords	m_tickRecords[TimerSection::COUNT];
 
-	bool		m_reportFlags[TimerSection::COUNT];
-	bool		m_reportTotals;
-	bool		m_reportLastTick;
-	bool		m_reportAvgLast5;
-	bool		m_reportRatio;
-
-	string		m_sectoinNames[TimerSection::COUNT];
+	//string		m_sectionNames[TimerSection::COUNT];
+	bool		m_reportSections[TimerSection::COUNT];
+	bool        m_reportFlags[TimerReportFlag::COUNT];
 
 	int64		m_startTime;
-
 
 	// Debug sections
 	bool		m_debugSections[DebugSection::COUNT];
@@ -89,16 +93,27 @@ private:
 public:
 	DebugStats();
 
+	void loadConfig();
+	void saveConfig();
 	void init();
-	void enterSection(TimerSection section);
-	void exitSection(TimerSection section);
+
+	void enterSection(TimerSection section) {
+		m_totalTimers[section].start();
+		m_currentTickTimers[section].start();
+	}
+	void exitSection(TimerSection section) {
+		m_totalTimers[section].stop();
+		m_currentTickTimers[section].stop();
+	}
 	void tick(int renderFps, int worldFps);
 
 	bool isEnabled(DebugSection section) const { return m_debugSections[section]; }
-	bool isEnabled(TimerSection section) const { return m_reportFlags[section]; }
+	bool isEnabled(TimerSection section) const { return m_reportSections[section]; }
+	bool isEnabled(TimerReportFlag flag) const { return m_reportFlags[flag]; }
 
 	void setEnabled(DebugSection section, bool enable) { m_debugSections[section] = enable; }
-	void setEnabled(TimerSection section, bool enable) { m_reportFlags[section] = enable; }
+	void setEnabled(TimerSection section, bool enable) { m_reportSections[section] = enable; }
+	void setEnabled(TimerReportFlag flag, bool enable) { m_reportFlags[flag] = enable; }
 
 	void report(ostream &stream);
 };

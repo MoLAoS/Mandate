@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of Glest (www.glest.org)
 //
-//	Copyright (C) 2001-2005 Marti�o Figueroa
+//	Copyright (C) 2001-2005 Martiño Figueroa
 //				  2010 James McCulloch <silnarm at gmail>
 //
 //	You can redistribute this code and/or modify it under

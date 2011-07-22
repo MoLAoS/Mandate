@@ -15,7 +15,7 @@
 
 #include "properties.h"
 #include "main_menu.h"
-#include "compound_widgets.h"
+#include "framed_widgets.h"
 #include "thread.h"
 
 using Shared::Util::Properties;

@@ -12,7 +12,7 @@
 #include <string>
 
 #include "keymap.h"
-#include "compound_widgets.h"
+#include "framed_widgets.h"
 #include "network_message.h"
 
 namespace Glest { namespace Sim {

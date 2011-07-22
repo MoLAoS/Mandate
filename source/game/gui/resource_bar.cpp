@@ -1,7 +1,7 @@
 // ==============================================================
 //	This file is part of Glest (www.glest.org)
 //
-//	Copyright (C) 2001-2008 Marti�o Figueroa
+//	Copyright (C) 2001-2008 Martiño Figueroa
 //				  2010 James McCulloch
 //
 //	You can redistribute this code and/or modify it under
@@ -15,7 +15,7 @@
 
 #include "metrics.h"
 #include "widget_window.h"
-#include "compound_widgets.h"
+#include "framed_widgets.h"
 #include "core_data.h"
 #include "resource_type.h"
 #include "math_util.h"

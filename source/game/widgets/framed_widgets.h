@@ -6,62 +6,14 @@
 //  GPL V3, see source/licence.txt
 // ==============================================================
 
-#ifndef _GLEST_COMPOUND_WIDGETS_INCLUDED_
-#define _GLEST_COMPOUND_WIDGETS_INCLUDED_
+#ifndef _GLEST_WIDGETS__FRAMED_WIDGETS_H_
+#define _GLEST_WIDGETS__FRAMED_WIDGETS_H_
 
-#include "complex_widgets.h"
+#include "list_widgets.h"
+#include "misc_widgets.h"
 #include "ticker_tape.h" // Actions
 
 namespace Glest { namespace Widgets {
-
-class OptionContainer : public Container {
-private:
-	StaticText* m_label;
-	Widget*		m_widget;
-
-	bool	m_abosulteLabelSize;
-	int		m_labelSize;
-
-public:
-	OptionContainer(Container* parent, Vec2i pos, Vec2i size, const string &labelText);
-
-	void setLabelWidth(int value, bool absolute);
-
-	///@todo deprecate, over addChild, assume second child is contained widget
-	void setWidget(Widget* widget);
-	Widget* getWidget() { return m_widget; }
-
-	virtual Vec2i getPrefSize() const override;
-	virtual Vec2i getMinSize() const override;
-
-	virtual string descType() const override { return "OptionBox"; }
-};
-
-WRAPPED_ENUM( ScrollAction, TOP, MAINTAIN, BOTTOM );
-
-class ScrollText : public CellStrip, public TextWidget, public sigslot::has_slots {
-protected:
-	ScrollBar  *m_scrollBar;
-	StaticText *m_staticText;
-	string      m_origString;
-	Anchors     m_anchorNoScroll;
-	Anchors     m_anchorWithScroll;
-
-private:
-	void init();
-	void setAndWrapText(const string &txt);
-
-public:
-	ScrollText(Container* parent);
-	ScrollText(Container* parent, Vec2i pos, Vec2i size);
-
-	void recalc();
-	void onScroll(ScrollBar*);
-	void setText(const string &txt, ScrollAction scroll = ScrollAction::TOP);
-
-	virtual void setSize(const Vec2i &sz) override;
-	virtual void render() override;
-};
 
 class ButtonFlags {
 private:
@@ -272,20 +224,6 @@ public:
 	const string& getMessageText() const { return m_scrollText->getText(); }
 
 	virtual string descType() const override { return "MessageDialog"; }
-};
-
-// =====================================================
-// class InputBox
-// =====================================================
-
-class InputBox : public TextBox {
-public:
-	InputBox(Container *parent);
-//	InputBox(Container *parent, Vec2i pos, Vec2i size);
-
-	virtual bool keyDown(Key key) override;
-	sigslot::signal<Widget*> Escaped;
-	virtual string descType() const override { return "InputBox"; }
 };
 
 // =====================================================
