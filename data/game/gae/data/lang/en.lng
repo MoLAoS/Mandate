@@ -217,6 +217,36 @@ BumpMapping=Bump Mapping
 ShadowFrameSkip=Shadow Frame Skip
 HotKeys=Hot-Keys
 
+DebugSections=Debug sections
+Performance=Performance
+Renderer=Renderer
+Camera=Camera
+Gui=GUI
+World=World
+Resources=Resources
+Cluster_Map=Cluster map
+Particle_Use=Particle use
+
+PerformanceSections=Performance Sections
+Render_2D=Render 2D.
+Render_3D=Render 3D.
+Render_Surface=Render terrain.
+Render_Water=Render water.
+Render_Models=Render Models.
+Render_Objects=Render Tileset Objects.
+Render_Units=Render Units.
+Render_Shadows=Render shadows.
+Render_Select=Render selection.
+PathFinder_Total=Pathing total.
+PathFinder_LowLevel=Pathing low-level.
+PathFinder_Hierarchical=Pathing hierarchical.
+
+PerformanceReport=Performance Reports
+Last_Sec=Last sec
+Last_5_Sec=Last 5 Secs
+Total_Time=Total time
+Total_Ratio=Total percentage
+
 ; Misc
 Name=Name
 No=No
