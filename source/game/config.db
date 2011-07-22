@@ -42,6 +42,7 @@ netServerIp					string	"192.168.1.1"	-		-		The last server IP address which conn
 netServerPort				int		61357			1024	65535	Port to use when acting as a server (eg: hosting a game).
 renderCheckGlCaps			bool	true			-		-		Check for a compatible OpenGL version.
 renderColorBits				int		32				-		-		Number of bits used for the color buffer (also known as the pixel buffer). This determines the number of colors available. 
+renderCompressTextures		bool	true			-		-		Enabled texture compression (uses less memory, adds 'initialisation time')
 renderDepthBits				int		isWindows()?32:16	-	-		Number of bits used for the depth buffer (also known as the Z-buffer). This determines the distances from the camera objects are and influences shadows.
 renderDistanceMax			float	64.f			1.f		65536.f	Maximum distance from the camera objects can be before they are no longer rendered.
 renderDistanceMin			float	1.f				0.0f	65536.f	Minimum distance objects must be from the camera in order to be rendered.

@@ -21,12 +21,17 @@ namespace Shared{ namespace Graphics{ namespace Gl{
 //	class TextureGl
 // =====================================================
 
-class TextureGl{
+class TextureGl {
 protected:
-	GLuint handle;	
+	GLuint handle;
+
+	static bool compressTextures;
 
 public:
 	GLuint getHandle() const	{return handle;}
+
+	static void setCompressTextures(bool enable) { compressTextures = enable; }
+	
 };
 
 // =====================================================

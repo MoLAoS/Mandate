@@ -61,6 +61,7 @@ private:
 	int netServerPort;
 	bool renderCheckGlCaps;
 	int renderColorBits;
+	bool renderCompressTextures;
 	int renderDepthBits;
 	float renderDistanceMax;
 	float renderDistanceMin;
@@ -152,6 +153,7 @@ public:
 	int getNetServerPort() const				{return netServerPort;}
 	bool getRenderCheckGlCaps() const			{return renderCheckGlCaps;}
 	int getRenderColorBits() const				{return renderColorBits;}
+	bool getRenderCompressTextures() const		{return renderCompressTextures;}
 	int getRenderDepthBits() const				{return renderDepthBits;}
 	float getRenderDistanceMax() const			{return renderDistanceMax;}
 	float getRenderDistanceMin() const			{return renderDistanceMin;}
@@ -225,6 +227,7 @@ public:
 	void setNetServerPort(int val)				{netServerPort = val;}
 	void setRenderCheckGlCaps(bool val)			{renderCheckGlCaps = val;}
 	void setRenderColorBits(int val)			{renderColorBits = val;}
+	void setRenderCompressTextures(bool val)	{renderCompressTextures = val;}
 	void setRenderDepthBits(int val)			{renderDepthBits = val;}
 	void setRenderDistanceMax(float val)		{renderDistanceMax = val;}
 	void setRenderDistanceMin(float val)		{renderDistanceMin = val;}

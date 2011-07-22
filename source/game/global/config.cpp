@@ -66,6 +66,7 @@ Config::Config(const char* fileName) {
 	netServerPort = p->getInt("NetServerPort", 61357, 1024, 65535);
 	renderCheckGlCaps = p->getBool("RenderCheckGlCaps", true);
 	renderColorBits = p->getInt("RenderColorBits", 32);
+	renderCompressTextures = p->getBool("RenderCompressTextures", true);
 	renderDepthBits = p->getInt("RenderDepthBits", isWindows()?32:16);
 	renderDistanceMax = p->getFloat("RenderDistanceMax", 64.f, 1.f, 65536.f);
 	renderDistanceMin = p->getFloat("RenderDistanceMin", 1.f, 0.0f, 65536.f);
@@ -149,6 +150,7 @@ void Config::save(const char *path) {
 	p->setInt("NetServerPort", netServerPort);
 	p->setBool("RenderCheckGlCaps", renderCheckGlCaps);
 	p->setInt("RenderColorBits", renderColorBits);
+	p->setBool("RenderCompressTextures", renderCompressTextures);
 	p->setInt("RenderDepthBits", renderDepthBits);
 	p->setFloat("RenderDistanceMax", renderDistanceMax);
 	p->setFloat("RenderDistanceMin", renderDistanceMin);

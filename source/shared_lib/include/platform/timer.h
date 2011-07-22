@@ -46,6 +46,11 @@ using Shared::Platform::int64;
 
 namespace Shared { namespace Platform {
 
+#ifndef NDEBUG
+#	define IF_DEBUG(x) x
+#else
+#	define IF_DEBUG(x)
+#endif
 // =====================================================
 //	class Chrono
 // =====================================================
@@ -60,31 +65,40 @@ private:
 #endif
 	static int64 freq;
 	static bool initialized;
+	IF_DEBUG(
+		bool running;
+	);
 
 public:
-	Chrono() : startTime(0), stopTime(0), accumTime(0) {
+	Chrono() {
+		IF_DEBUG( running = false; )
+		reset();
 	}
 
 	void start() {
-	    getCurTicks(startTime);
+		IF_DEBUG( assert(!running); running = true; );
+	    startTime = getCurMillis();
 	    stopTime = 0;
 	}
 
 	void stop() {
-	    getCurTicks(stopTime);
+		IF_DEBUG( assert(running); running = false; );
+	    stopTime = getCurMillis();
 		accumTime += stopTime - startTime;
+		startTime = stopTime = 0;
 	}
 
 	void reset() {
+		IF_DEBUG( assert(!running); );
 		startTime = stopTime = accumTime = 0;
 	}
 
 	const int64 &getStartTime() const	{return startTime;}
 	const int64 &getStopTime() const	{return stopTime;}
-	const int64 &getAccumTime() const	{return accumTime;}
-	int64 getMicros() const				{return queryCounter(1000000);}
-	int64 getMillis() const				{return queryCounter(1000);}
-	int64 getSeconds() const			{return queryCounter(1);}
+	const int64 &getAccumTime() const	{IF_DEBUG( assert(!running) );return accumTime;}
+	//int64 getMicros() const				{return queryCounter(1000000);}
+	int64 getMillis() const				{return accumTime;}
+	//int64 getSeconds() const			{return queryCounter(1);}
 	static const int64 &getResolution()	{return freq;}
 
 #ifdef _CHRONO_USE_POSIX
@@ -125,9 +139,9 @@ public:
 
 private:
 	static bool init();
-	int64 queryCounter(int multiplier) const {
-		return multiplier * (accumTime + (stopTime ? 0 : getCurTicks() - startTime)) / freq;
-	}
+	//int64 queryCounter(int multiplier) const {
+	//	return multiplier * (accumTime + (stopTime ? 0 : getCurTicks() - startTime)) / freq;
+	//}
 };
 
 

@@ -30,7 +30,7 @@
 #include "sim_interface.h"
 #include "network_interface.h"
 #include "test_pane.h"
-
+#include "texture_gl.h"
 #include "leak_dumper.h"
 
 #include "interpolation.h"
@@ -118,6 +118,8 @@ Program::Program(CmdArgs &args)
 		, keymap(getInput(), "keymap.ini") {
 	// lang
 	g_lang.setLocale(g_config.getUiLocale());
+
+	TextureGl::setCompressTextures(g_config.getRenderCompressTextures());
 
 	// sound
 	g_soundRenderer.init(this);
@@ -267,7 +269,13 @@ void Program::loop() {
 				_PROFILE_SCOPE("Program::loop() : Render");
 				m_programState->renderBg();
 				g_renderer.reset2d();
+				if (m_programState->isGameState()) {
+					static_cast<GameState*>(m_programState)->getDebugStats()->enterSection(TimerSection::RENDER_2D);
+				}
 				WidgetWindow::render();
+				if (m_programState->isGameState()) {
+					static_cast<GameState*>(m_programState)->getDebugStats()->exitSection(TimerSection::RENDER_2D);
+				}
 				m_programState->renderFg();
 			}
 		}

@@ -19,79 +19,81 @@
 
 #include "leak_dumper.h"
 
-namespace Shared{ namespace Graphics{ namespace Gl{
+namespace Shared { namespace Graphics { namespace Gl {
 
 using namespace Platform;
 
-GLint toWrapModeGl(Texture::WrapMode wrapMode){
-	switch(wrapMode){
-	case Texture::wmClamp:
-		return GL_CLAMP;
-	case Texture::wmRepeat:
-		return GL_REPEAT;
-	case Texture::wmClampToEdge:
-		return GL_CLAMP_TO_EDGE;
-	default:
-		assert(false);
-		return GL_CLAMP;
+bool TextureGl::compressTextures = true;
+
+GLint toWrapModeGl(Texture::WrapMode wrapMode) {
+	switch (wrapMode) {
+		case Texture::wmClamp:
+			return GL_CLAMP;
+		case Texture::wmRepeat:
+			return GL_REPEAT;
+		case Texture::wmClampToEdge:
+			return GL_CLAMP_TO_EDGE;
+		default:
+			assert(false);
+			return GL_CLAMP;
 	}
 }
 
-GLint toFormatGl(Texture::Format format, int components){
-	switch(format){
-	case Texture::fAuto:
-		switch(components){
-		case 1:
+GLint toFormatGl(Texture::Format format, int components) {
+	switch (format) {
+		case Texture::fAuto:
+			switch (components) {
+				case 1:
+					return GL_LUMINANCE;
+				case 3:
+					return GL_RGB;
+				case 4:
+					return GL_RGBA;
+				default:
+					assert(false);
+					return GL_RGBA;
+			}
+			break;
+		case Texture::fLuminance:
 			return GL_LUMINANCE;
-		case 3:
+		case Texture::fAlpha:
+			return GL_ALPHA;
+		case Texture::fRgb:
 			return GL_RGB;
-		case 4:
+		case Texture::fRgba:
 			return GL_RGBA;
 		default:
 			assert(false);
-			return GL_RGBA;
-		}
-		break;
-	case Texture::fLuminance:
-		return GL_LUMINANCE;
-	case Texture::fAlpha:
-		return GL_ALPHA;
-	case Texture::fRgb:
-		return GL_RGB;
-	case Texture::fRgba:
-		return GL_RGBA;
-	default:
-		assert(false);
-		return GL_RGB;
+			return GL_RGB;
 	}
 }
 
-GLint toInternalFormatGl(Texture::Format format, int components){
+GLint toInternalFormatGl(Texture::Format format, int components) {
 	switch(format){
-	case Texture::fAuto:
-		switch(components){
-		case 1:
+		case Texture::fAuto:
+			switch (components) {
+				case 1:
+					return GL_COMPRESSED_LUMINANCE;
+				case 3:
+					return GL_COMPRESSED_RGB;
+				case 4:
+					return GL_COMPRESSED_RGBA;
+				default:
+					assert(false);
+					return GL_COMPRESSED_RGBA;
+			}
+			break;
+		case Texture::fLuminance:
 			return GL_COMPRESSED_LUMINANCE;
-		case 3:
+		case Texture::fAlpha:
+			return GL_COMPRESSED_ALPHA;
+		case Texture::fRgb:
 			return GL_COMPRESSED_RGB;
-		case 4:
+		case Texture::fRgba:
 			return GL_COMPRESSED_RGBA;
 		default:
 			assert(false);
-			return GL_COMPRESSED_RGBA;
-		}
-		break;
-	case Texture::fLuminance:
-		return GL_COMPRESSED_LUMINANCE;
-	case Texture::fAlpha:
-		return GL_COMPRESSED_ALPHA;
-	case Texture::fRgb:
-		return GL_COMPRESSED_RGB;
-	case Texture::fRgba:
-		return GL_COMPRESSED_RGBA;
-	default:
-		assert(false);
-		return GL_COMPRESSED_RGB;
+			return GL_COMPRESSED_RGB;
 	}
 }
 
@@ -99,7 +101,7 @@ GLint toInternalFormatGl(Texture::Format format, int components){
 //	class Texture1DGl
 // =====================================================
 
-void Texture1DGl::init(Filter filter, int maxAnisotropy){
+void Texture1DGl::init(Filter filter, int maxAnisotropy) {
 	assertGl();
 
 	if (!inited) {
@@ -171,8 +173,8 @@ void Texture1DGl::deletePixmap() {
 	pixmap = 0;
 }
 
-void Texture1DGl::end(){
-	if(inited){
+void Texture1DGl::end() {
+	if (inited) {
 		assertGl();
 		glDeleteTextures(1, &handle);
 		assertGl();
@@ -205,7 +207,7 @@ void Texture2DGl::init(Filter filter, int maxAnisotropy) {
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrap);
 
 		//maxAnisotropy
-		if(isGlExtensionSupported("GL_EXT_texture_filter_anisotropic")){
+		if (isGlExtensionSupported("GL_EXT_texture_filter_anisotropic")) {
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, maxAnisotropy);
 		}
 
@@ -237,7 +239,7 @@ void Texture2DGl::init(Filter filter, int maxAnisotropy) {
 				pixmap->getW(), pixmap->getH(), 0, glFormat, GL_UNSIGNED_BYTE, pixels);
 
 			GLint error = glGetError();
-			if (error != GL_NO_ERROR){
+			if (error != GL_NO_ERROR) {
 				string msg = (char*)gluErrorString(error);
 				stringstream ss;
 				ss	<< "Error sending pixmap data to GL: " << msg << endl 
@@ -256,8 +258,8 @@ void Texture2DGl::deletePixmap() {
 	pixmap = 0;
 }
 
-void Texture2DGl::end(){
-	if(inited){
+void Texture2DGl::end() {
+	if (inited) {
 		assertGl();
 		glDeleteTextures(1, &handle);
 		assertGl();
@@ -268,10 +270,10 @@ void Texture2DGl::end(){
 //	class Texture3DGl
 // =====================================================
 
-void Texture3DGl::init(Filter filter, int maxAnisotropy){
+void Texture3DGl::init(Filter filter, int maxAnisotropy) {
 	assertGl();
 
-	if(!inited){
+	if (!inited) {
 
 		//params
 		GLint wrap = toWrapModeGl(wrapMode);
@@ -299,7 +301,7 @@ void Texture3DGl::init(Filter filter, int maxAnisotropy){
 			pixmap->getW(), pixmap->getH(), pixmap->getD(), 0, glFormat, GL_UNSIGNED_BYTE, pixels);
 
 		GLint error = glGetError();
-		if (error != GL_NO_ERROR){
+		if (error != GL_NO_ERROR) {
 			string msg = (char*)gluErrorString(error);
 			stringstream ss;
 			ss	<< "Error sending pixmap data to GL: " << msg << endl 
@@ -319,8 +321,8 @@ void Texture3DGl::deletePixmap() {
 	pixmap = 0;
 }
 
-void Texture3DGl::end(){
-	if(inited){
+void Texture3DGl::end() {
+	if (inited) {
 		assertGl();
 		glDeleteTextures(1, &handle);
 		assertGl();
