@@ -264,6 +264,7 @@ void Options::buildVideoTab() {
 	m_waterRendererList->addItem(lang.get("Opaque"));
 	m_waterRendererList->addItem(lang.get("3D Textures"));
 	m_waterRendererList->setSelected(int(config.getRenderTextures3D()));
+	m_waterRendererList->SelectionChanged.connect(this, &Options::onDropListSelectionChanged);
 
 	TabWidget::add(lang.get("Video"), container);
 }
@@ -488,9 +489,9 @@ void Options::onDropListSelectionChanged(Widget *source) {
 		} else {
 			g_gameState.rejigWidgets();
 		}
-		save();
 		///@todo update shadow texture size if larger than res -hailstone 22June2011
 	}
+	save();
 }
 
 void Options::onSliderValueChanged(Widget *source) {
