@@ -31,6 +31,8 @@ public:
 
 class DebugOptions : public CellStrip, public sigslot::has_slots {
 private:
+	CheckBox *m_debugMode;
+	CheckBox *m_debugKeys;
 	CheckBox *m_debugSections[DebugSection::COUNT];
 	CheckBox *m_timerSections[TimerSection::COUNT];
 	CheckBox *m_timerReports[TimerReportFlag::COUNT];

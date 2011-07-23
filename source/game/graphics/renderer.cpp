@@ -250,7 +250,24 @@ bool Renderer::init() {
 		}
 	// load single model shader
 	} else if (g_config.getRenderUseShaders()) {
-		string name = g_config.getRenderModelShader();
+		bool bump = g_config.getRenderEnableBumpMapping();
+		bool spec = g_config.getRenderEnableSpecMapping();
+		if (spec) {
+			if (!fileExists("gae/shaders/spec.xml") || !fileExists("gae/shaders/bump_spec.xml")) {
+				g_config.setRenderEnableSpecMapping(false);
+				spec = false;
+			}
+		}
+		string name;
+		if (bump && spec) {
+			name = "bump_spec";
+		} else if (bump) {
+			name = "bump";
+		} else if (spec) {
+			name = "spec";
+		} else {
+			name = "basic";
+		}
 		g_logger.logProgramEvent("Loading model shader: " + name + ".");
 		try {
 			static_cast<ModelRendererGl*>(modelRenderer)->loadShader(name);
@@ -1751,9 +1768,12 @@ void Renderer::autoConfig(){
 	// Model shaders...
 	if (isGlVersionSupported(2, 0, 0)) {
 		config.setRenderUseShaders(true);
-		config.setRenderModelShader("basic");
+		config.setRenderEnableBumpMapping(false);
+		config.setRenderEnableSpecMapping(false);
 	} else {
 		config.setRenderUseShaders(false);
+		config.setRenderEnableBumpMapping(false);
+		config.setRenderEnableSpecMapping(false);
 	}
 }
 

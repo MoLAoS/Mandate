@@ -82,7 +82,6 @@ Config::Config(const char* fileName) {
 	renderGraphicsFactory = p->getString("RenderGraphicsFactory", "OpenGL");
 	renderInterpolationMethod = p->getString("RenderInterpolationMethod", "SIMD");
 	renderLightsMax = p->getInt("RenderLightsMax", 1, 0, 8);
-	renderModelShader = p->getString("RenderModelShader", "basic");
 	renderModelTestShaders = p->getString("RenderModelTestShaders", "basic,bump_map");
 	renderShadowAlpha = p->getFloat("RenderShadowAlpha", 0.2f, 0.f, 1.f);
 	renderShadowFrameSkip = p->getInt("RenderShadowFrameSkip", 2);
@@ -167,7 +166,6 @@ void Config::save(const char *path) {
 	p->setString("RenderGraphicsFactory", renderGraphicsFactory);
 	p->setString("RenderInterpolationMethod", renderInterpolationMethod);
 	p->setInt("RenderLightsMax", renderLightsMax);
-	p->setString("RenderModelShader", renderModelShader);
 	p->setString("RenderModelTestShaders", renderModelTestShaders);
 	p->setFloat("RenderShadowAlpha", renderShadowAlpha);
 	p->setInt("RenderShadowFrameSkip", renderShadowFrameSkip);

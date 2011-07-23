@@ -120,7 +120,7 @@ private:
 public:
 	MenuStateJoinGame(Program &program, MainMenu *mainMenu, bool connect = false, Ip serverIp = Ip());
 
-	void update();
+	virtual void update() override;
 
 	MenuStates getIndex() const { return MenuStates::JOIN_GAME; }
 

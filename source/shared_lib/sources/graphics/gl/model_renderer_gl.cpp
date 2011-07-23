@@ -104,12 +104,14 @@ void ModelRendererGl::loadShader(const string &name) {
 	if (!m_shaders.empty()) {
 		m_shaderIndex = 0; // use if loaded ok
 	}
-	try {
-		m_teamTintShader = new UnitShaderSet(string("gae/shaders/misc_model/team_tint.xml"));
-	} catch (runtime_error &e) {
-		mediaErrorLog.add(e.what(), string("gae/shaders/misc_model/team_tint.xml"));
-		delete m_teamTintShader;
-		m_teamTintShader = 0;
+	if (!m_teamTintShader) {
+		try {
+			m_teamTintShader = new UnitShaderSet(string("gae/shaders/misc_model/team_tint.xml"));
+		} catch (runtime_error &e) {
+			mediaErrorLog.add(e.what(), string("gae/shaders/misc_model/team_tint.xml"));
+			delete m_teamTintShader;
+			m_teamTintShader = 0;
+		}
 	}
 }
 

@@ -172,44 +172,44 @@ public:
 	void initMinimap(bool fow, bool sod, bool resuming);
 
 	//get
-	Minimap *getMinimap()                           {return m_minimap;}
-	const Minimap *getMinimap() const               {return m_minimap;}
-	ResourceBar* getResourceBar()                   {return m_resourceBar;}
-	const Input& getInput() const                   {return input;}
-	LuaConsole* getLuaConsole()                     {return m_luaConsole;}
-	Vec2i getPosObjWorld() const                    {return posObjWorld;}
-	const UnitType *getBuilding() const;
-	const Vec2i &getDragStartPos() const            {return dragStartPos;}
-	const BuildPositions &getBuildPositions() const {return buildPositions;}
-	CardinalDir getBuildingFacing() const           {return m_selectedFacing;}
+	Minimap*              getMinimap()               { return m_minimap;        }
+	const Minimap*        getMinimap() const         { return m_minimap;        }
+	ResourceBar*          getResourceBar()           { return m_resourceBar;    }
+	const Input&          getInput() const           { return input;            }
+	LuaConsole*           getLuaConsole()            { return m_luaConsole;     }
+	Vec2i                 getPosObjWorld() const     { return posObjWorld;      }
+	const UnitType*       getBuilding() const;
+	const Vec2i&          getDragStartPos() const    { return dragStartPos;     }
+	const BuildPositions& getBuildPositions() const  { return buildPositions;   }
+	CardinalDir           getBuildingFacing() const  { return m_selectedFacing; }
+	const Mouse3d*        getMouse3d() const         { return &mouse3d;         }
+	Console*              getRegularConsole()        { return m_console;        }
+	Console*              getDialogConsole()         { return m_dialogConsole;  }
+	const Display*        getDisplay()	const        { return m_display;        }
+	const Selection*      getSelection()	const    { return selection;        }
+	Selection*            getSelection()             { return selection;        }
+	const SelectionQuad*  getSelectionQuad() const   { return &selectionQuad;   }
+	const MapObject*      getSelectedObject() const  { return selectedObject;   }
 
-	const Mouse3d *getMouse3d() const               {return &mouse3d;}
-	Console* getRegularConsole()                    {return m_console;}
-	Console* getDialogConsole()                     {return m_dialogConsole;}
-	const Display *getDisplay()	const               {return m_display;}
-	const Selection *getSelection()	const           {return selection;}
-	Selection *getSelection()                       {return selection;}
-	const SelectionQuad *getSelectionQuad() const   {return &selectionQuad;}
-	const MapObject* getSelectedObject() const      { return selectedObject; }
-
-	bool isValidPosObjWorld() const         {return validPosObjWorld;}
-	bool isSelecting() const                {return selectionQuad.isEnabled();}
-	bool isSelectingPos() const             {return selectingPos;}
-	bool isSelected(const Unit *unit) const {return selection->hasUnit(unit);}
+	bool isValidPosObjWorld() const         { return validPosObjWorld;          }
+	bool isSelecting() const                { return selectionQuad.isEnabled(); }
+	bool isSelectingPos() const             { return selectingPos;              }
+	bool isSelected(const Unit *unit) const { return selection->hasUnit(unit);  }
 	bool isPlacingBuilding() const;
-	bool isDragging() const                 {return dragging;}
-	bool isNeedSelectionUpdate() const      {return needSelectionUpdate;}
+	bool isDragging() const                 { return dragging;                  }
+	bool isNeedSelectionUpdate() const      { return needSelectionUpdate;       }
+	bool isTeamColourModeActive() const     { return m_teamCoulorMode;          }
 
 	//set
-	void invalidatePosObjWorld()            {validPosObjWorld= false;}
-	void setComputeSelectionFlag()          {computeSelection= true;}
+	void invalidatePosObjWorld()            { validPosObjWorld= false;          }
+	void setComputeSelectionFlag()          { computeSelection= true;           }
 
 	//events
 	void update();
 
 	void tick();
 
-	void onSelectionUpdated(){
+	void onSelectionUpdated() {
 		currentGroup = invalidGroupIndex;
 		m_display->setSize();
 	}

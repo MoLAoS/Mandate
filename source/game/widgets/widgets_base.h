@@ -159,6 +159,8 @@ protected:
 	int          m_cell;
 	// styles inherited
 
+	bool  m_permanent;
+
 protected: // flag setters
 	void setHover(bool v);
 	void setFocus(bool v);
@@ -179,6 +181,10 @@ public: // get border sizes
 	}
 	Vec2i getBordersAll() const	{ return Vec2i(getBordersHoriz(), getBordersVert()); }
 	
+	bool isPermanent() const { return m_permanent; }
+	void setPermanent() { m_permanent = true; }
+	void setTransient() { m_permanent = false; }
+
 private:
 	void setMouseWidget(MouseWidget *mw) { m_mouseWidget = mw; }
 	void setKeyboardWidget(KeyboardWidget *kw) { m_keyboardWidget = kw; }

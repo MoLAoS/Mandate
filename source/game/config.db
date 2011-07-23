@@ -67,7 +67,6 @@ renderUseShaders			bool	true			-		-		Enable or disable the use of shaders. Openg
 renderUseVBOs				bool	false			-		-		Enable or disable the use of VBOs.
 renderTestingShaders		bool	false			-		-		Use test shaders
 renderModelTestShaders		string	"basic,bump_map"	-	-		Shaders to use if RenderTestingShaders is true. Seprate each shader with a comma.
-renderModelShader			string	"basic"			-		-		Shader to use for rendering models if RenderUseShaders is true.
 renderEnableBumpMapping		bool	true			-		-		Enable or disable bump mapping if RenderUseShaders is true.
 renderEnableSpecMapping		bool	true			-		-		Enable or disable specular mapping if RenderUseShaders is true.
 soundFactory				string	isWindows()?"DirectSound8":"OpenAL"	-	-	The sound renderer to use. Either OpenAL (for Linux and Mac) or DirectSound8 (for Windows).

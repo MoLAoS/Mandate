@@ -132,6 +132,7 @@ WidgetWindow::WidgetWindow()
 WidgetWindow::~WidgetWindow() {
 	// delete children
 	clear();
+	Container::clear(); // even the permanent ones
 	unregisterUpdate(m_mouseCursor);
 	delete m_mouseCursor;
 
@@ -180,7 +181,15 @@ void WidgetWindow::clear() {
 		delete floatingWidget;
 		floatingWidget = 0;
 	}
-	Container::clear();
+	WidgetList deleteList;
+	foreach (WidgetList, it, m_children) {
+		if (!(*it)->isPermanent()) {
+			deleteList.push_back(*it);
+		}
+	}
+	foreach (WidgetList, it, deleteList) {
+		delete *it;
+	}
 }
 
 void WidgetWindow::render() {

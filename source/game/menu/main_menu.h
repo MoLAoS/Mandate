@@ -68,9 +68,7 @@ private:
 	bool gaeLogoOnRootMenu;
 	bool gplLogoOnRootMenu;
 
-	int mouseX, mouseY;
 	int mouse2dAnim;
-	int fps, lastFps;
 
 private:
 	MainMenu(const MainMenu &);
@@ -87,12 +85,7 @@ public:
 	virtual void renderBg();
 	virtual void renderFg();
 	virtual void update();
-	virtual void tick();
 	virtual void init();
-	virtual void mouseMove(int x, int y, const MouseState &mouseState);
-	virtual void mouseDownLeft(int x, int y);
-	virtual void mouseDownRight(int x, int y);
-	virtual void keyDown(const Key &key);
 	virtual void keyPress(char c);
 
 	void setState(MenuState *state);
@@ -112,7 +105,6 @@ protected:
 	Program &program;
 	MainMenu *mainMenu;
 	bool	m_transition;
-	StaticText *m_debugText;
 
 protected:
 	float	m_fade;
@@ -126,16 +118,8 @@ public:
 	MenuState(Program &program, MainMenu *mainMenu);
 
 	virtual ~MenuState() {}
-	virtual void mouseClick(int x, int y, MouseButton mouseButton) {}
-	virtual void mouseMove(int x, int y, const MouseState &mouseState) {}
-	virtual void render() {}
 	virtual void update();
-	virtual void keyDown(const Key &key){}
-	virtual void keyPress(char c){}
 	
-	void showDebugText(bool visible) { m_debugText->setVisible(visible); }
-	void setDebugString(const string &s);
-
 	virtual MenuStates getIndex() const = 0;
 
 	void doFadeIn() { m_fadeIn = true; m_fadeOut = false; }

@@ -77,7 +77,6 @@ private:
 	string renderGraphicsFactory;
 	string renderInterpolationMethod;
 	int renderLightsMax;
-	string renderModelShader;
 	string renderModelTestShaders;
 	float renderShadowAlpha;
 	int renderShadowFrameSkip;
@@ -170,7 +169,6 @@ public:
 	string getRenderGraphicsFactory() const		{return renderGraphicsFactory;}
 	string getRenderInterpolationMethod() const	{return renderInterpolationMethod;}
 	int getRenderLightsMax() const				{return renderLightsMax;}
-	string getRenderModelShader() const			{return renderModelShader;}
 	string getRenderModelTestShaders() const	{return renderModelTestShaders;}
 	float getRenderShadowAlpha() const			{return renderShadowAlpha;}
 	int getRenderShadowFrameSkip() const		{return renderShadowFrameSkip;}
@@ -245,7 +243,6 @@ public:
 	void setRenderGraphicsFactory(string val)	{renderGraphicsFactory = val;}
 	void setRenderInterpolationMethod(string val){renderInterpolationMethod = val;}
 	void setRenderLightsMax(int val)			{renderLightsMax = val;}
-	void setRenderModelShader(string val)		{renderModelShader = val;}
 	void setRenderModelTestShaders(string val)	{renderModelTestShaders = val;}
 	void setRenderShadowAlpha(float val)		{renderShadowAlpha = val;}
 	void setRenderShadowFrameSkip(int val)		{renderShadowFrameSkip = val;}

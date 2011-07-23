@@ -89,7 +89,7 @@ public:
 	}
 
 	void reset() {
-		IF_DEBUG( assert(!running); );
+		IF_DEBUG( running = false; );
 		startTime = stopTime = accumTime = 0;
 	}
 

@@ -40,13 +40,11 @@ private:
 				*m_filterList,
 				*m_lightsList,
 				*m_terrainRendererList,
-				*m_modelShaderList,
+				*m_waterRendererList,
 				*m_resolutionList,
 				*m_shadowTextureSizeList;
-							
-	CheckBox	*m_3dTexCheckBox,
-		        *m_debugModeCheckBox,
-				*m_debugKeysCheckBox,
+
+	CheckBox	*m_useShadersCheckBox,
 				*m_fullscreenCheckBox,
 				*m_autoRepairCheckBox,
 				*m_autoReturnCheckBox,
@@ -75,7 +73,6 @@ private:
 	map<string,string>  m_langMap;
 	vector<string>      m_modelShaders;
 	vector<VideoMode>	m_resolutions;
-	//VideoMode           m_previousVidMode;
 
 	// can be null, some options are disabled if in game
 	Glest::Menu::MenuStateOptions *m_optionsMenu;
@@ -90,12 +87,6 @@ public:
 private:
 	void disableWidgets();
 	void setupListBoxLang();
-	void initLabels();
-	void initListBoxes();
-	void setTexts();
-	void buildOptionsPanel(CellStrip *container, int cell);
-	void loadShaderList();
-	CheckBox *createStandardCheckBox(CellStrip *container, int cell, const string &text);
 	void syncVideoModeList(VideoMode mode);
 
 	// Build tabs
@@ -107,24 +98,14 @@ private:
 	void buildDebugTab();
 
 	// Event callbacks
-	void on3dTexturesToggle(Widget *source);
+	void onCheckBoxCahnged(Widget *source);
 	void onSliderValueChanged(Widget *source);
 	void onSpinnerValueChanged(Widget *source);
 	void onDropListSelectionChanged(Widget *source);
 	void onPlayerNameChanged(Widget *source);
-	void onToggleDebugMode(Widget*);
-	void onToggleDebugKeys(Widget*);
-	void onToggleShaders(Widget *source);
-	void onToggleFullscreen(Widget*);
-	void onToggleAutoRepair(Widget*);
-	void onToggleAutoReturn(Widget*);
-	void onToggleBumpMapping(Widget*);
-	void onToggleSpecularMapping(Widget*);
-	void onToggleCameraInvertXAxis(Widget*);
-	void onToggleCameraInvertYAxis(Widget*);
-	void onToggleFocusArrows(Widget*);
-	//void onCancelResolutionChange(Widget*);
-	//void onConfirmResolutionChange(Widget*);
+
+private:
+	bool haveSpecShaders;
 };
 
 // =====================================================

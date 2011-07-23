@@ -94,7 +94,7 @@ public:
 		m_announcer.join();
 	}
 
-	void update();
+	virtual void update() override;
 
 	MenuStates getIndex() const { return MenuStates::NEW_GAME; }
 

@@ -44,7 +44,7 @@ public:
 	MenuStateRoot(Program &program, MainMenu *mainMenu);
 
 	// MenuState::update()
-	void update();
+	virtual void update() override;
 
 	// Event handler
 	void onButtonClick(Widget*);

@@ -118,6 +118,9 @@ private:
 
 	SimulationInterface *simulationInterface;
 
+	int fps, lastFps;
+	StaticText *m_fpsLabel;
+
 	ProgramState *m_programState;
 	bool crashed;
 	bool terminating;
@@ -137,6 +140,8 @@ public:
 
 	SimulationInterface* getSimulationInterface() { return simulationInterface; }
 	void setSimInterface(SimulationInterface *si);
+
+	void setFpsCounterVisible(bool v);
 
 	// InputWidget virtuals
 	virtual bool mouseDown(MouseButton btn, Vec2i pos) override;

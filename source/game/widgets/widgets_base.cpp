@@ -164,7 +164,7 @@ void Widget::init(const Vec2i &pos, const Vec2i &size) {
 	m_visible = true;
 	m_selected = false;
 	m_enabled = true;
-
+	m_permanent = false;
 	m_pos = pos;
 	m_size = size;
 	if (m_rootWindow != this) {

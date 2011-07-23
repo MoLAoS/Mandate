@@ -60,7 +60,7 @@ private:
 public:
 	MenuStateScenario(Program &program, MainMenu *mainMenu);
 
-	void update();
+	virtual void update() override;
 
 	void launchGame();
 	void setScenario(int i);

@@ -27,7 +27,7 @@ public:
 
 	void onButtonClick(Widget*);
 
-	void update();
+	virtual void update() override;
 
 	MenuStates getIndex() const { return MenuStates::GFX_INFO; }
 

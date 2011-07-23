@@ -102,12 +102,8 @@ MainMenu::MainMenu(Program &program, bool setRootMenu)
 		, totalConversion(false)
 		, gaeLogoOnRootMenu(false) {
 	loadXml();
-	mouseX = 100;
-	mouseY = 100;
 
 	state = NULL;
-
-	fps = lastFps = 0;
 
 	if (setRootMenu) {
 		setState(new MenuStateRoot(program, this));
@@ -127,7 +123,6 @@ void MainMenu::init() {
 
 // synchronous render update
 void MainMenu::renderBg() {
-	++fps;
 	g_renderer.clearBuffers();
 
 	//3d
@@ -139,9 +134,7 @@ void MainMenu::renderBg() {
 }
 
 void MainMenu::renderFg() {
-	//2d
-	g_renderer.reset2d();
-	state->render();
+	// 2d
 	g_renderer.swapBuffers();
 }
 
@@ -153,33 +146,7 @@ void MainMenu::update() {
 	state->update();
 }
 
-void MainMenu::tick() {
-	lastFps = fps;
-	fps = 0;
-	string s = "FPS: " + intToStr(lastFps);
-	state->setDebugString(s);
-}
-
-void MainMenu::mouseMove(int x, int y, const MouseState &ms) {
-	mouseX = x;
-	mouseY = y;
-	state->mouseMove(x, y, ms);
-}
-
-void MainMenu::mouseDownLeft(int x, int y) {
-	state->mouseClick(x, y, MouseButton::LEFT);
-}
-
-void MainMenu::mouseDownRight(int x, int y) {
-	state->mouseClick(x, y, MouseButton::RIGHT);
-}
-
-void MainMenu::keyDown(const Key &key) {
-	state->keyDown(key);
-}
-
 void MainMenu::keyPress(char c) {
-	state->keyPress(c);
 	switch (c) {
 		case '\'':
 			g_renderer.cycleShaders();
@@ -196,7 +163,6 @@ void MainMenu::setState(MenuState *state) {
 	} else {
 		setCameraOnSetState = true;
 	}
-//	g_program.initMouse();
 }
 
 void MainMenu::setCameraTarget(MenuStates state) {
@@ -205,14 +171,14 @@ void MainMenu::setCameraTarget(MenuStates state) {
 }
 
 void MainMenu::loadXml() {
-	//camera
+	// camera
 	XmlTree xmlTree;
 	xmlTree.load("data/core/menu/menu.xml");
 	const XmlNode *menuNode = xmlTree.getRootNode();
 	const XmlNode *cameraNode = menuNode->getChild("camera");
 
 	foreach_enum (MenuStates, state) {
-		//position
+		// position
 		const XmlNode *positionNode = cameraNode->getChild(stateNames[state] + "-position");
 		Vec3f startPosition;
 		startPosition.x = positionNode->getAttribute("x")->getFloatValue();
@@ -220,7 +186,7 @@ void MainMenu::loadXml() {
 		startPosition.z = positionNode->getAttribute("z")->getFloatValue();
 		stateCameras[state].setPosition(startPosition);
 
-		//rotation
+		// rotation
 		const XmlNode *rotationNode = cameraNode->getChild(stateNames[state] + "-rotation");
 		Vec3f startRotation;
 		startRotation.x = rotationNode->getAttribute("x")->getFloatValue();
@@ -236,6 +202,19 @@ void MainMenu::loadXml() {
 		gaeLogoOnRootMenu = logoNode->getOptionalBoolValue("gae-logo", totalConversion);
 		gplLogoOnRootMenu = logoNode->getOptionalBoolValue("gpl-logo", true);
 	}
+}
+
+// =====================================================
+//  class MenuState
+// =====================================================
+
+MenuState::MenuState(Program &program, MainMenu *mainMenu)
+		: program(program), mainMenu(mainMenu)
+ 		, m_fade(0.f)
+		, m_fadeIn(true)
+		, m_fadeOut(false)
+		, m_transition(false) {
+	program.setFade(m_fade);
 }
 
 void MenuState::update() {
@@ -255,41 +234,6 @@ void MenuState::update() {
 		}
 		program.setFade(m_fade);
 	}
-}
-
-//class DebugClass : public sigslot::has_slots {
-//public:
-//	void onWidgetDestoyed(Widget *widget) {
-//		DEBUG_HOOK();
-//	}
-//};
-//DebugClass debugHelper;
-
-// =====================================================
-//  class MenuState
-// =====================================================
-
-MenuState::MenuState(Program &program, MainMenu *mainMenu)
-		: program(program), mainMenu(mainMenu)
- 		, m_fade(0.f)
-		, m_fadeIn(true)
-		, m_fadeOut(false)
-		, m_transition(false) {
-	program.setFade(m_fade);
-	//const Font *fontPtr = g_widgetConfig.getMenuFont();
-	Vec2i pos(10, 50);// - int(fontPtr->getMetrics()->getHeight()));
-	m_debugText = new StaticText(&program, pos, Vec2i(0));
-	m_debugText->setText("FPS: ");
-	m_debugText->setAlignment(Alignment::FLUSH_LEFT);
-	if (!g_config.getMiscDebugMode()) {
-		m_debugText->setVisible(false);
-	}
-	//m_debugText->Destroyed.connect(&debugHelper, &DebugClass::onWidgetDestoyed);
-}
-
-void MenuState::setDebugString(const string &s) {
-	m_debugText->setText(s);
-	m_debugText->setSize(m_debugText->getPrefSize());
 }
 
 }}//end namespace

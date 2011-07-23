@@ -26,8 +26,9 @@ namespace Glest { namespace Gui {
 Options::Options(CellStrip *parent, MenuStateOptions *optionsMenu)
 		: TabWidget(parent)
 		, m_optionsMenu(optionsMenu) {
+	haveSpecShaders = fileExists("gae/shaders/spec.xml") && fileExists("gae/shaders/bump_spec.xml");
 	setSizeHint(0, SizeHint(-1, g_widgetConfig.getDefaultItemHeight()));
-	buildOptionsPanel(parent, 0);
+	//buildOptionsPanel(parent, 0);
 	// add each tab
 	buildGameTab();
 	buildVideoTab();
@@ -51,47 +52,98 @@ Options::~Options() {
 }
 
 void Options::buildGameTab() {
-	//CellStrip *panel = new CellStrip(this, Orientation::HORIZONTAL, 2);
-	//TabWidget::add(g_lang.get("Game"), panel);
+	Config &config = g_config;
+	Lang &lang = g_lang;
+
+	CellStrip *container = new CellStrip(this, Orientation::HORIZONTAL, 2);
+
+	OptionPanel *leftPnl = new OptionPanel(container, 0);
+	OptionPanel *rightPnl = new OptionPanel(container, 1);
+
+	leftPnl->setSplitDistance(30);
+	rightPnl->setSplitDistance(30);
+
+	// Left column
+
+	// Player Name
+	TextBox *tb = leftPnl->addTextBox(lang.get("PlayerName"), g_config.getNetPlayerName());
+	tb->TextChanged.connect(this, &Options::onPlayerNameChanged);
+
+	// Language
+	m_langList = leftPnl->addDropList(lang.get("Language"));
+	setupListBoxLang();
+	m_langList->SelectionChanged.connect(this, &Options::onDropListSelectionChanged);
+	m_langList->setDropBoxHeight(200);
+
+	// Camera min / max altitude
+	SpinnerPair sp = leftPnl->addSpinnerPair(lang.get("CameraAltitude"), lang.get("Min"), lang.get("Max"));
+
+	m_minCamAltitudeSpinner = sp.first;
+	m_minCamAltitudeSpinner->setRanges(0, 20);
+	m_minCamAltitudeSpinner->setIncrement(1);
+	m_minCamAltitudeSpinner->setValue(int(config.getCameraMinDistance()));
+	m_minCamAltitudeSpinner->ValueChanged.connect(this, &Options::onSpinnerValueChanged);
+
+	m_maxCamAltitudeSpinner = sp.second;
+	m_maxCamAltitudeSpinner->setRanges(32, 2048);
+	m_maxCamAltitudeSpinner->setIncrement(32);
+	m_maxCamAltitudeSpinner->setValue(int(config.getCameraMaxDistance()));
+	m_maxCamAltitudeSpinner->ValueChanged.connect(this, &Options::onSpinnerValueChanged);
+
+	// Invert axis
+	m_cameraInvertXAxisCheckBox = leftPnl->addCheckBox(lang.get("CameraInvertXAxis"), config.getCameraInvertXAxis());
+	m_cameraInvertXAxisCheckBox->Clicked.connect(this, &Options::onCheckBoxCahnged);
+	
+	m_cameraInvertYAxisCheckBox = leftPnl->addCheckBox(lang.get("CameraInvertYAxis"), config.getCameraInvertYAxis());
+	m_cameraInvertYAxisCheckBox->Clicked.connect(this, &Options::onCheckBoxCahnged);
+
+	// Right column
+
+	// Auto repair / return
+	m_autoRepairCheckBox = rightPnl->addCheckBox(lang.get("AutoRepair"), config.getGsAutoRepairEnabled());
+	m_autoRepairCheckBox->Clicked.connect(this, &Options::onCheckBoxCahnged);
+
+	m_autoReturnCheckBox = rightPnl->addCheckBox(lang.get("AutoReturn"), config.getGsAutoReturnEnabled());
+	m_autoReturnCheckBox->Clicked.connect(this, &Options::onCheckBoxCahnged);
+
+	// focus arrows
+	m_focusArrowsCheckBox = rightPnl->addCheckBox(lang.get("FocusArrows"), config.getUiFocusArrows());
+	m_focusArrowsCheckBox->Clicked.connect(this, &Options::onCheckBoxCahnged);
+
+	// max console lines
+	m_consoleMaxLinesSpinner = rightPnl->addSpinner(lang.get("ConsoleMaxLines"));
+	m_consoleMaxLinesSpinner->setRanges(1, 100);
+	m_consoleMaxLinesSpinner->setIncrement(1);
+	m_consoleMaxLinesSpinner->setValue(config.getUiConsoleMaxLines());
+	m_consoleMaxLinesSpinner->ValueChanged.connect(this, &Options::onSpinnerValueChanged);
+
+	// scroll speed
+	m_scrollSpeedSpinner = rightPnl->addSpinner(lang.get("ScrollSpeed"));
+	m_scrollSpeedSpinner->setRanges(1, 100);
+	m_scrollSpeedSpinner->setIncrement(1);
+	m_scrollSpeedSpinner->setValue(int(config.getUiScrollSpeed()));
+	m_scrollSpeedSpinner->ValueChanged.connect(this, &Options::onSpinnerValueChanged);
+
+	TabWidget::add(g_lang.get("Game"), container);
 }
 
 void Options::buildVideoTab() {
-	Lang &lang = Lang::getInstance();
-	Config &config= Config::getInstance();
+	Config &config = g_config;
+	Lang &lang = g_lang;
 
-	Anchors fillAnchors(Anchor(AnchorType::RIGID, 0));
+	CellStrip *container = new CellStrip(this, Orientation::HORIZONTAL, 2);
 
-	CellStrip *panel = new CellStrip(this, Orientation::HORIZONTAL, 2);
-	panel->setAnchors(fillAnchors);
-	panel->setPos(Vec2i(0,0));
-	panel->anchor();
-	panel->setSize(Vec2i(g_config.getDisplayWidth(), g_widgetConfig.getDefaultItemHeight()));
+	OptionPanel *leftPnl = new OptionPanel(container, 0);
+	OptionPanel *rightPnl = new OptionPanel(container, 1);
 
-	TabWidget::add(lang.get("Video"), panel);
+	leftPnl->setSplitDistance(40);
+	rightPnl->setSplitDistance(40);
 	
-	Anchors padAnchors(Anchor(AnchorType::RIGID, 10), Anchor(AnchorType::RIGID, 0),
-		Anchor(AnchorType::RIGID, 10), Anchor(AnchorType::RIGID, 0));
-	Anchors squashAnchors(Anchor(AnchorType::RIGID, 0), Anchor(AnchorType::SPRINGY, 15));
-
-	Anchors centreAnchors;
-	centreAnchors.setCentre(true, false);
-
-	const int rows = 7;
-
 	// Column 1
-
-	CellStrip *col1 = new CellStrip(panel, Orientation::VERTICAL, Origin::FROM_TOP, rows);
-	col1->setCell(0);
-	col1->setAnchors(padAnchors);
-
-	OptionWidget *dw = new OptionWidget(col1, lang.get("Resolution"));
-	dw->setCell(0);
-
-	m_resolutionList = new DropList(dw);
-	m_resolutionList->setCell(1);
+	
+	// Video Mode
+	m_resolutionList = leftPnl->addDropList(lang.get("Resolution"));
 	m_resolutionList->setDropBoxHeight(280);
-	m_resolutionList->setAnchors(squashAnchors);
-
 
 	// add the possible resoultions to the list
 	vector<VideoMode> modes;
@@ -105,29 +157,38 @@ void Options::buildVideoTab() {
 	syncVideoModeList(mode);
 	m_resolutionList->SelectionChanged.connect(this, &Options::onDropListSelectionChanged);
 
-	m_fullscreenCheckBox = createStandardCheckBox(col1, 1, lang.get("Fullscreen"));
-	m_fullscreenCheckBox->setChecked(!config.getDisplayWindowed());
-	m_fullscreenCheckBox->Clicked.connect(this, &Options::onToggleFullscreen);
+	// Fullscreen
+	m_fullscreenCheckBox = leftPnl->addCheckBox(lang.get("Fullscreen"), !config.getDisplayWindowed());
+	m_fullscreenCheckBox->Clicked.connect(this, &Options::onCheckBoxCahnged);
 	if (m_resolutionList->getSelectedIndex() == -1) {
 		// current settings do not match an acceptable vid mode, disable
 		m_fullscreenCheckBox->setEnabled(false);
 	}
 
-	m_bumpMappingCheckBox = createStandardCheckBox(col1, 2, lang.get("BumpMapping"));
-	m_bumpMappingCheckBox->setChecked(config.getRenderEnableBumpMapping());
-	m_bumpMappingCheckBox->Clicked.connect(this, &Options::onToggleBumpMapping);
+	// Enable Shaders
+	m_useShadersCheckBox = leftPnl->addCheckBox(lang.get("UseShaders"), config.getRenderUseShaders());
+	m_useShadersCheckBox->Clicked.connect(this, &Options::onCheckBoxCahnged);
+	if (g_config.getRenderTestingShaders()) {
+		m_useShadersCheckBox->setEnabled(false);
+	}
 
-	m_specularMappingCheckBox = createStandardCheckBox(col1, 3, lang.get("SpecularMapping"));
-	m_specularMappingCheckBox->setChecked(config.getRenderEnableSpecMapping());
-	m_specularMappingCheckBox->Clicked.connect(this, &Options::onToggleSpecularMapping);
+	if (config.getRenderEnableSpecMapping() && !haveSpecShaders) {
+		config.setRenderEnableSpecMapping(false);
+	}
 
-	dw = new OptionWidget(col1, lang.get("ShadowTextureSize"));
-	dw->setCell(4);
+	// Enable bump mapping
+	m_bumpMappingCheckBox = leftPnl->addCheckBox(lang.get("BumpMapping"), config.getRenderEnableBumpMapping());
+	m_bumpMappingCheckBox->Clicked.connect(this, &Options::onCheckBoxCahnged);
+	m_bumpMappingCheckBox->setEnabled(config.getRenderUseShaders());
 
-	m_shadowTextureSizeList = new DropList(dw);
-	m_shadowTextureSizeList->setCell(1);
+	// Enable specular mapping
+	m_specularMappingCheckBox = leftPnl->addCheckBox(lang.get("SpecularMapping"), config.getRenderEnableSpecMapping());
+	m_specularMappingCheckBox->Clicked.connect(this, &Options::onCheckBoxCahnged);
+	m_specularMappingCheckBox->setEnabled(haveSpecShaders);
+
+	// Shadow texture size
+	m_shadowTextureSizeList = leftPnl->addDropList(lang.get("ShadowTextureSize"), true);
 	m_shadowTextureSizeList->setDropBoxHeight(280);
-	m_shadowTextureSizeList->setAnchors(squashAnchors);
 
 	// sizes must be powers of 2 and less than the resolution
 	///@todo only add the sizes less than resolution (both width and height values) - hailstone 17July2011
@@ -139,29 +200,17 @@ void Options::buildVideoTab() {
 	m_shadowTextureSizeList->setSelected(toStr(config.getRenderShadowTextureSize()));
 	m_shadowTextureSizeList->SelectionChanged.connect(this, &Options::onDropListSelectionChanged);
 
-	dw = new OptionWidget(col1, lang.get("ShadowFrameSkip"));
-	dw->setCell(5);
-	
-	m_shadowFrameSkipSpinner = new Spinner(dw);
-	m_shadowFrameSkipSpinner->setCell(1);
-	m_shadowFrameSkipSpinner->setAnchors(squashAnchors);
-	m_shadowFrameSkipSpinner->setRanges(0, 5); ///@todo work out the details - hailstone 17July2011
+	// Shadow frame skip
+	m_shadowFrameSkipSpinner = leftPnl->addSpinner(lang.get("ShadowFrameSkip"));
+	m_shadowFrameSkipSpinner->setRanges(0, 5);
 	m_shadowFrameSkipSpinner->setIncrement(1);
 	m_shadowFrameSkipSpinner->setValue(config.getRenderShadowFrameSkip());
 	m_shadowFrameSkipSpinner->ValueChanged.connect(this, &Options::onSpinnerValueChanged);
 
 	// Column 2
 
-	CellStrip *col2 = new CellStrip(panel, Orientation::VERTICAL, Origin::FROM_TOP, rows);
-	col2->setCell(1);
-	col2->setAnchors(padAnchors);
-
 	// Shadows
-	dw = new OptionWidget(col2, lang.get("Shadows"));
-	dw->setCell(0);
-	m_shadowsList = new DropList(dw);
-	m_shadowsList->setCell(1);
-	m_shadowsList->setAnchors(squashAnchors);
+	m_shadowsList = rightPnl->addDropList(lang.get("Shadows"));
 	for(int i= 0; i < ShadowMode::COUNT; ++i){
 		m_shadowsList->addItem(lang.get(Renderer::shadowsToStr(ShadowMode(i))));
 	}
@@ -170,23 +219,14 @@ void Options::buildVideoTab() {
 	m_shadowsList->SelectionChanged.connect(this, &Options::onDropListSelectionChanged);
 
 	// Texture filter
-	dw = new OptionWidget(col2, lang.get("TextureFilter"));
-	dw->setCell(1);
-	m_filterList = new DropList(dw);
-	m_filterList->setCell(1);
-	m_filterList->setAnchors(squashAnchors);
+	m_filterList = rightPnl->addDropList(lang.get("TextureFilter"));
 	m_filterList->addItem("Bilinear");
 	m_filterList->addItem("Trilinear");
 	m_filterList->setSelected(config.getRenderFilter());
 	m_filterList->SelectionChanged.connect(this, &Options::onDropListSelectionChanged);
 
 	// lights
-	DoubleOption *qw = new DoubleOption(col2, lang.get("MaxLights"), lang.get("Textures3D"));
-	qw->setCustomSplit(true, 35);
-	qw->setCell(2);
-	m_lightsList = new DropList(qw);
-	m_lightsList->setCell(1);
-	m_lightsList->setAnchors(squashAnchors);
+	m_lightsList = rightPnl->addDropList(lang.get("MaxLights"), true);
 	for (int i = 1; i <= 8; ++i) {
 		m_lightsList->addItem(intToStr(i));
 	}
@@ -194,31 +234,15 @@ void Options::buildVideoTab() {
 	m_lightsList->SelectionChanged.connect(this, &Options::onDropListSelectionChanged);
 	m_lightsList->setDropBoxHeight(200);
 
-	// 3D Textures
-	CheckBoxHolder *cbh = new CheckBoxHolder(qw);
-	cbh->setCell(3);
-	m_3dTexCheckBox = new CheckBox(cbh);
-	m_3dTexCheckBox->setCell(1);
-	m_3dTexCheckBox->setAnchors(squashAnchors);
-	m_3dTexCheckBox->setChecked(config.getRenderTextures3D());
-	m_3dTexCheckBox->Clicked.connect(this, &Options::on3dTexturesToggle);
-
 	// render min / max distance
-	RelatedDoubleOption *rdo = new RelatedDoubleOption(col2,
-		lang.get("RenderDistance"), lang.get("Min"), lang.get("Max"));
-	rdo->setCell(3);
-	rdo->setCustomSplits(13, 14, 20);
-	m_minRenderDistSpinner = new Spinner(rdo);
-	m_minRenderDistSpinner->setCell(2);
-	m_minRenderDistSpinner->setAnchors(squashAnchors);
+	SpinnerPair sp = rightPnl->addSpinnerPair(lang.get("RenderDistance"), lang.get("Min"), lang.get("Max"));
+	m_minRenderDistSpinner = sp.first;
 	m_minRenderDistSpinner->setRanges(0, 20);
 	m_minRenderDistSpinner->setIncrement(1);
 	m_minRenderDistSpinner->setValue(int(config.getRenderDistanceMin()));
 	m_minRenderDistSpinner->ValueChanged.connect(this, &Options::onSpinnerValueChanged);
 
-	m_maxRenderDistSpinner = new Spinner(rdo);
-	m_maxRenderDistSpinner->setCell(4);
-	m_maxRenderDistSpinner->setAnchors(squashAnchors);
+	m_maxRenderDistSpinner = sp.second;
 	m_maxRenderDistSpinner->setRanges(32, 4096);
 	m_maxRenderDistSpinner->setIncrement(32);
 	m_maxRenderDistSpinner->setValue(int(config.getRenderDistanceMax()));
@@ -228,52 +252,20 @@ void Options::buildVideoTab() {
 	//dw = new OptionWidget(col2, lang.get("RenderFoV"));
 	//dw->setCell(4);
 
-	// Enable Shaders
-	dw = new OptionWidget(col2, lang.get("UseShaders"));
-	dw->setCell(4);
-	cbh = new CheckBoxHolder(dw);
-	cbh->setCell(1);
-	cbh->setAnchors(fillAnchors);
-	CheckBox *checkBox  = new CheckBox(cbh);
-	checkBox->setCell(1);
-	checkBox->setAnchors(squashAnchors);
-	checkBox->setChecked(config.getRenderUseShaders());
-	checkBox->Clicked.connect(this, &Options::onToggleShaders);
-	if (g_config.getRenderTestingShaders()) {
-		checkBox->setEnabled(false);
-	}
-
 	// Terrain Shader
-	dw = new OptionWidget(col2, lang.get("TerrainShader"));
-	dw->setCell(5);
-	m_terrainRendererList = new DropList(dw);
-	m_terrainRendererList->setCell(1);
-	m_terrainRendererList->setAnchors(squashAnchors);
+	m_terrainRendererList = rightPnl->addDropList(lang.get("TerrainShader"));
 	m_terrainRendererList->addItem("Original Terrain Renderer");
 	m_terrainRendererList->addItem("Terrain Renderer 2");
 	m_terrainRendererList->setSelected(config.getRenderTerrainRenderer() - 1);
 	m_terrainRendererList->SelectionChanged.connect(this, &Options::onDropListSelectionChanged);
 	
 	// Water Shader
-	//dw = new OptionWidget(col2, lang.get("WaterShader"));
-	//dw->setCell(7);
+	m_waterRendererList = rightPnl->addDropList(lang.get("WaterShader"));
+	m_waterRendererList->addItem(lang.get("Opaque"));
+	m_waterRendererList->addItem(lang.get("3D Textures"));
+	m_waterRendererList->setSelected(int(config.getRenderTextures3D()));
 
-	// Model Shader
-	dw = new OptionWidget(col2, lang.get("ModelShader"));
-	dw->setCell(6);
-
-	m_modelShaderList = new DropList(dw);
-	m_modelShaderList->setCell(1);
-	m_modelShaderList->setAnchors(squashAnchors);
-	m_modelShaderList->SelectionChanged.connect(this, &Options::onDropListSelectionChanged);
-
-	loadShaderList();
-
-	SizeHint hint(-1, int(g_widgetConfig.getDefaultItemHeight() * 1.5f));
-	for (int i=0; i < rows; ++i) {
-		col1->setSizeHint(i, hint);
-		col2->setSizeHint(i, hint);
-	}
+	TabWidget::add(lang.get("Video"), container);
 }
 
 void Options::syncVideoModeList(VideoMode mode) {
@@ -332,7 +324,6 @@ void Options::buildAudioTab() {
 
 void Options::buildControlsTab() {
 	CellStrip *panel = new CellStrip(this, Orientation::VERTICAL, 2);
-	TabWidget::add(g_lang.get("Controls"), panel);
 
 	StaticText *label = new StaticText(panel);
 	label->setCell(0);
@@ -344,6 +335,8 @@ void Options::buildControlsTab() {
 	KeymapWidget *keymapWidget = new KeymapWidget(panel);
 	keymapWidget->setCell(1);
 	keymapWidget->setAnchors(Anchors::getFillAnchors());
+
+	TabWidget::add(g_lang.get("Controls"), panel);
 }
 
 void Options::buildNetworkTab() {
@@ -352,50 +345,8 @@ void Options::buildNetworkTab() {
 }
 
 void Options::buildDebugTab() {
-	CellStrip *panel = new CellStrip(this, Orientation::VERTICAL, Origin::FROM_TOP, 2);
-	TabWidget::add(g_lang.get("Debug"), panel);
-	SizeHint hint(-1, int(g_widgetConfig.getDefaultItemHeight() * 1.5f));
-	panel->setSizeHint(0, hint);
-	panel->setSizeHint(1, SizeHint());
-
-	// centre check-boxes vetically in cell
-	Anchors centreAnchors;
-	centreAnchors.setCentre(true, false);
-
-	// using centering anchors, must size widgets ourselves
-	Vec2i cbSize(g_widgetConfig.getDefaultItemHeight());
-
-	Lang &lang= Lang::getInstance();
-	Config &config= Config::getInstance();
-
-	// Debug mode/keys container
-	DoubleOption *qw = new DoubleOption(panel, lang.get("DebugMode"), lang.get("DebugKeys"));
-	qw->setCell(0);
-	qw->setCustomSplit(true, 30);  // DoubleOption was 'geared' to live in a two column layout...
-	qw->setCustomSplit(false, 30);
-
-	// Debug mode
-	m_debugModeCheckBox = new CheckBox(qw);
-	m_debugModeCheckBox->setCell(1);
-	m_debugModeCheckBox->setSize(cbSize);
-	m_debugModeCheckBox->setAnchors(centreAnchors);
-	m_debugModeCheckBox->setChecked(config.getMiscDebugMode());
-	m_debugModeCheckBox->Clicked.connect(this, &Options::onToggleDebugMode);
-
-	// Debug keys
-	m_debugKeysCheckBox = new CheckBox(qw);
-	m_debugKeysCheckBox->setCell(3);
-	m_debugKeysCheckBox->setSize(cbSize);
-	m_debugKeysCheckBox->setAnchors(centreAnchors);
-	m_debugKeysCheckBox->setChecked(config.getMiscDebugKeys());
-	m_debugKeysCheckBox->Clicked.connect(this, &Options::onToggleDebugKeys);
-
-	//panel->borderStyle().setSolid(g_widgetConfig.getColourIndex(Vec3f(1.f, 0.f, 1.f)));
-	//panel->borderStyle().setSizes(2);
-
-	DebugOptions *dbgOptions = new DebugOptions(panel, m_optionsMenu != 0);
-	dbgOptions->setCell(1);
-	dbgOptions->setAnchors(Anchors::getFillAnchors());
+	DebugOptions *dbgOptions = new DebugOptions(this, m_optionsMenu != 0);
+	TabWidget::add(g_lang.get("Debug"), dbgOptions);
 }
 
 void Options::disableWidgets() {
@@ -404,15 +355,8 @@ void Options::disableWidgets() {
 	m_shadowsList->setEnabled(false);
 	m_filterList->setEnabled(false);
 	m_lightsList->setEnabled(false);
-	m_modelShaderList->setEnabled(false);
-
-	m_3dTexCheckBox->setEnabled(false);
-	m_debugModeCheckBox->setEnabled(false);
-	m_debugKeysCheckBox->setEnabled(false);
-	
-	//m_volFxSlider->setEnabled(false);
-	//m_volAmbientSlider->setEnabled(false);
-	//m_volMusicSlider->setEnabled(false);
+	m_terrainRendererList->setEnabled(false);
+	m_waterRendererList->setEnabled(false);
 
 	m_minCamAltitudeSpinner->setEnabled(false);
 	m_maxCamAltitudeSpinner->setEnabled(false);
@@ -421,238 +365,54 @@ void Options::disableWidgets() {
 	m_maxRenderDistSpinner->setEnabled(false);
 }
 
-void Options::buildOptionsPanel(CellStrip *container, int cell) {
-	Lang &lang= Lang::getInstance();
-	Config &config= Config::getInstance();
-
-	Anchors fillAnchors(Anchor(AnchorType::RIGID, 0));
-	Anchors padAnchors(Anchor(AnchorType::RIGID, 10), Anchor(AnchorType::RIGID, 0),
-		Anchor(AnchorType::RIGID, 10), Anchor(AnchorType::RIGID, 0));
-
-	Anchors centreAnchors;
-	centreAnchors.setCentre(true, false);
-
-	CellStrip *pnl = new CellStrip(this, Orientation::HORIZONTAL, 2);
-	pnl->setAnchors(fillAnchors);
-	pnl->setPos(Vec2i(0,0));
-	pnl->anchor();
-	pnl->setSize(Vec2i(g_config.getDisplayWidth(), g_widgetConfig.getDefaultItemHeight()));
-	//pnl->borderStyle().setSolid(g_widgetConfig.getColourIndex(Vec3f(1.f, 0.f, 1.f)));
-	//pnl->borderStyle().setSizes(2);
-	TabWidget::add(g_lang.get("Game"), pnl);
-	//borderStyle().setSolid(g_widgetConfig.getColourIndex(Vec3f(1.f, 0.f, 1.f)));
-	//borderStyle().setSizes(2);
-
-	const int rows = 10;
-
-	CellStrip *col1 = new CellStrip(pnl, Orientation::VERTICAL, Origin::FROM_TOP, rows);
-	col1->setCell(0);
-	col1->setAnchors(padAnchors);
-
-	CellStrip *col2 = new CellStrip(pnl, Orientation::VERTICAL, Origin::FROM_TOP, rows);
-	col2->setCell(1);
-	col2->setAnchors(padAnchors);
-
-	SizeHint hint(-1, int(g_widgetConfig.getDefaultItemHeight() * 1.5f));
-	for (int i=0; i < rows; ++i) {
-		col1->setSizeHint(i, hint);
-		col2->setSizeHint(i, hint);
-	}
-
-	Anchors squashAnchors(Anchor(AnchorType::RIGID, 0), Anchor(AnchorType::SPRINGY, 15));
-
-	// Player Name
-	OptionWidget *dw = new OptionWidget(col1, lang.get("PlayerName"));
-	dw->setCell(0);
-	TextBox *tb = new TextBox(dw);
-	tb->setText(g_config.getNetPlayerName());
-	tb->setCell(1);
-	tb->setAnchors(squashAnchors);
-	tb->TextChanged.connect(this, &Options::onPlayerNameChanged);
-
-	// Language
-	dw = new OptionWidget(col1, lang.get("Language"));
-	dw->setCell(1);
-	m_langList = new DropList(dw);
-	m_langList->setCell(1);
-	m_langList->setAnchors(squashAnchors);
-	setupListBoxLang();
-	m_langList->SelectionChanged.connect(this, &Options::onDropListSelectionChanged);
-	m_langList->setDropBoxHeight(200);
-
-	// Camera min / max altitude
-	RelatedDoubleOption *rdo = new RelatedDoubleOption(col1,
-		lang.get("CameraAltitude"), lang.get("Min"), lang.get("Max"));
-	rdo->setCell(2);
-	rdo->setCustomSplits(13, 14, 20);
-	m_minCamAltitudeSpinner = new Spinner(rdo);
-	m_minCamAltitudeSpinner->setCell(2);
-	m_minCamAltitudeSpinner->setAnchors(squashAnchors);
-	m_minCamAltitudeSpinner->setRanges(0, 20);
-	m_minCamAltitudeSpinner->setIncrement(1);
-	m_minCamAltitudeSpinner->setValue(int(config.getCameraMinDistance()));
-	m_minCamAltitudeSpinner->ValueChanged.connect(this, &Options::onSpinnerValueChanged);
-
-	m_maxCamAltitudeSpinner = new Spinner(rdo);
-	m_maxCamAltitudeSpinner->setCell(4);
-	m_maxCamAltitudeSpinner->setAnchors(squashAnchors);
-	m_maxCamAltitudeSpinner->setRanges(32, 2048);
-	m_maxCamAltitudeSpinner->setIncrement(32);
-	m_maxCamAltitudeSpinner->setValue(int(config.getCameraMaxDistance()));
-	m_maxCamAltitudeSpinner->ValueChanged.connect(this, &Options::onSpinnerValueChanged);
-
-	m_cameraInvertXAxisCheckBox = createStandardCheckBox(col1, 3, lang.get("CameraInvertXAxis"));
-	m_cameraInvertXAxisCheckBox->setChecked(config.getCameraInvertXAxis());
-	m_cameraInvertXAxisCheckBox->Clicked.connect(this, &Options::onToggleCameraInvertXAxis);
-	
-	m_cameraInvertYAxisCheckBox = createStandardCheckBox(col1, 4, lang.get("CameraInvertYAxis"));
-	m_cameraInvertYAxisCheckBox->setChecked(config.getCameraInvertYAxis());
-	m_cameraInvertYAxisCheckBox->Clicked.connect(this, &Options::onToggleCameraInvertYAxis);
-
-	// Column 2
-	m_autoRepairCheckBox = createStandardCheckBox(col2, 0, lang.get("AutoRepair"));
-	m_autoRepairCheckBox->setChecked(config.getGsAutoRepairEnabled());
-	m_autoRepairCheckBox->Clicked.connect(this, &Options::onToggleAutoRepair);
-
-	m_autoReturnCheckBox = createStandardCheckBox(col2, 1, lang.get("AutoReturn"));
-	m_autoReturnCheckBox->setChecked(config.getGsAutoReturnEnabled());
-	m_autoReturnCheckBox->Clicked.connect(this, &Options::onToggleAutoReturn);
-
-	m_focusArrowsCheckBox = createStandardCheckBox(col2, 2, lang.get("FocusArrows"));
-	m_focusArrowsCheckBox->setChecked(config.getUiFocusArrows());
-	m_focusArrowsCheckBox->Clicked.connect(this, &Options::onToggleFocusArrows);
-
-	dw = new OptionWidget(col2, lang.get("ConsoleMaxLines"));
-	dw->setCell(3);
-	
-	m_consoleMaxLinesSpinner = new Spinner(dw);
-	m_consoleMaxLinesSpinner->setCell(1);
-	m_consoleMaxLinesSpinner->setAnchors(squashAnchors);
-	m_consoleMaxLinesSpinner->setRanges(1, 100);
-	m_consoleMaxLinesSpinner->setIncrement(1);
-	m_consoleMaxLinesSpinner->setValue(config.getUiConsoleMaxLines());
-	m_consoleMaxLinesSpinner->ValueChanged.connect(this, &Options::onSpinnerValueChanged);
-
-	dw = new OptionWidget(col2, lang.get("ScrollSpeed"));
-	dw->setCell(4);
-	
-	m_scrollSpeedSpinner = new Spinner(dw);
-	m_scrollSpeedSpinner->setCell(1);
-	m_scrollSpeedSpinner->setAnchors(squashAnchors);
-	m_scrollSpeedSpinner->setRanges(1, 100);
-	m_scrollSpeedSpinner->setIncrement(1);
-	m_scrollSpeedSpinner->setValue((int)config.getUiScrollSpeed());
-	m_scrollSpeedSpinner->ValueChanged.connect(this, &Options::onSpinnerValueChanged);
-}
-
-void Options::loadShaderList() {
-	m_modelShaderList->clearItems();
-	if (g_config.getRenderUseShaders() && !g_config.getRenderTestingShaders()) {
-		findAll("/gae/shaders/*.xml", m_modelShaders, true, false);
-		string currentName = g_config.getRenderModelShader();
-		int currentNdx = -1, i = 0;
-		foreach (vector<string>, it, m_modelShaders) {
-			if (currentName == *it) {
-				currentNdx = i;
-			}
-			m_modelShaderList->addItem(formatString(*it));
-			++i;
-		}
-		m_modelShaderList->SelectionChanged.disconnect(this);
-		m_modelShaderList->setSelected(currentNdx);
-		m_modelShaderList->SelectionChanged.connect(this, &Options::onDropListSelectionChanged);
-		m_modelShaderList->setEnabled(true);
-	} else {
-		m_modelShaderList->setEnabled(false);
-	}
-}
-
-CheckBox *Options::createStandardCheckBox(CellStrip *container, int cell, const string &text) {
-	Anchors fillAnchors(Anchor(AnchorType::RIGID, 0));
-	Anchors squashAnchors(Anchor(AnchorType::RIGID, 0), Anchor(AnchorType::SPRINGY, 15));
-
-	Anchors centreAnchors;
-	centreAnchors.setCentre(true, false);
-
-	OptionWidget *dw = new OptionWidget(container, text);
-	dw->setCell(cell);
-	
-	CheckBoxHolder *cbh = new CheckBoxHolder(dw);
-	cbh->setCell(1);
-	cbh->setAnchors(fillAnchors);
-	
-	Vec2i cbSize(g_widgetConfig.getDefaultItemHeight());
-
-	CheckBox *checkBox = new CheckBox(cbh);
-	checkBox->setCell(1);
-	checkBox->setSize(cbSize);
-	checkBox->setAnchors(squashAnchors);//centreAnchors);
-	
-	///@todo fix the anchors. The size is weird. - hailstone 17Jully2011
-	
-	return checkBox;
-}
-
-void Options::onToggleShaders(Widget*) {
-	g_config.setRenderUseShaders(!g_config.getRenderUseShaders());
-	loadShaderList();
+void setShader() {
 	if (!g_config.getRenderUseShaders()) {
 		g_renderer.changeShader("");
-	}
-}
-
-void Options::onToggleDebugMode(Widget*) {
-	g_config.setMiscDebugMode(m_debugModeCheckBox->isChecked());
-	if (m_optionsMenu) {
-		m_optionsMenu->showDebugText(m_debugModeCheckBox->isChecked());
-	}
-	save();
-}
-
-void Options::onToggleDebugKeys(Widget*) {
-	g_config.setMiscDebugKeys(m_debugKeysCheckBox->isChecked());
-}
-
-void Options::onToggleFullscreen(Widget*) {
-	if (g_program.toggleFullscreen()) {
-		g_config.setDisplayWindowed(!m_fullscreenCheckBox->isChecked());
 	} else {
-		m_fullscreenCheckBox->setChecked(false);
+		if (g_config.getRenderEnableBumpMapping() && g_config.getRenderEnableSpecMapping())  {
+			g_renderer.changeShader("bump_spec");
+		} else if (g_config.getRenderEnableBumpMapping()) {
+			g_renderer.changeShader("bump");
+		} else if (g_config.getRenderEnableSpecMapping()) {
+			g_renderer.changeShader("spec");
+		} else {
+			g_renderer.changeShader("basic");
+		}
 	}
 }
 
-void Options::onToggleAutoRepair(Widget*) {
-	g_config.setGsAutoRepairEnabled(m_autoRepairCheckBox->isChecked());
-}
-
-void Options::onToggleAutoReturn(Widget*) {
-	g_config.setGsAutoReturnEnabled(m_autoReturnCheckBox->isChecked());
-}
-
-void Options::onToggleBumpMapping(Widget*) {
-	g_config.setRenderEnableBumpMapping(m_bumpMappingCheckBox->isChecked());
-}
-
-void Options::onToggleSpecularMapping(Widget*) {
-	g_config.setRenderEnableSpecMapping(m_specularMappingCheckBox->isChecked());
-}
-
-void Options::onToggleCameraInvertXAxis(Widget*) {
-	g_config.setCameraInvertXAxis(m_cameraInvertXAxisCheckBox->isChecked());
-}
-
-void Options::onToggleCameraInvertYAxis(Widget*) {
-	g_config.setCameraInvertYAxis(m_cameraInvertYAxisCheckBox->isChecked());
-}
-
-void Options::onToggleFocusArrows(Widget*) {
-	g_config.setUiFocusArrows(m_focusArrowsCheckBox->isChecked());
-}
-
-void Options::on3dTexturesToggle(Widget*) {
-	Config &config= Config::getInstance();
-	config.setRenderTextures3D(m_3dTexCheckBox->isChecked());
-// 	saveConfig();
+void Options::onCheckBoxCahnged(Widget *src) {
+	CheckBox *cb = static_cast<CheckBox*>(src);
+	if (cb == m_fullscreenCheckBox) {
+		if (g_program.toggleFullscreen()) {
+			g_config.setDisplayWindowed(!m_fullscreenCheckBox->isChecked());
+		} else {
+			m_fullscreenCheckBox->setChecked(false);
+		}
+	} else if (cb == m_useShadersCheckBox) {
+		g_config.setRenderUseShaders(m_useShadersCheckBox->isChecked());
+		setShader();
+		m_bumpMappingCheckBox->setEnabled(g_config.getRenderUseShaders());
+		if (haveSpecShaders) {
+			m_specularMappingCheckBox->setEnabled(g_config.getRenderUseShaders());
+		}
+	} else if (cb == m_autoRepairCheckBox) {
+		g_config.setGsAutoRepairEnabled(m_autoRepairCheckBox->isChecked());
+	} else if (cb == m_autoReturnCheckBox) {
+		g_config.setGsAutoReturnEnabled(m_autoReturnCheckBox->isChecked());
+	} else if (cb == m_bumpMappingCheckBox) {
+		g_config.setRenderEnableBumpMapping(m_bumpMappingCheckBox->isChecked());
+		setShader();
+	} else if (cb == m_specularMappingCheckBox) {
+		g_config.setRenderEnableSpecMapping(m_specularMappingCheckBox->isChecked());
+		setShader();
+	} else if (cb == m_cameraInvertXAxisCheckBox) {
+		g_config.setCameraInvertXAxis(m_cameraInvertXAxisCheckBox->isChecked());
+	} else if (cb == m_cameraInvertYAxisCheckBox) {
+		g_config.setCameraInvertYAxis(m_cameraInvertYAxisCheckBox->isChecked());
+	} else if (cb == m_focusArrowsCheckBox) {
+		g_config.setUiFocusArrows(m_focusArrowsCheckBox->isChecked());
+	}
 }
 
 void Options::onSpinnerValueChanged(Widget *source) {
@@ -681,7 +441,7 @@ void Options::onPlayerNameChanged(Widget *source) {
 
 void Options::onDropListSelectionChanged(Widget *source) {
 	ListBase *list = static_cast<ListBase*>(source);
-	Config &config= Config::getInstance();
+	Config &config = g_config;
 
 	if (list == m_langList) {
 		map<string,string>::iterator it = m_langMap.find(list->getSelectedItem()->getText());
@@ -699,55 +459,27 @@ void Options::onDropListSelectionChanged(Widget *source) {
 		}
 	} else if (list == m_filterList) {
 		config.setRenderFilter(m_filterList->getSelectedItem()->getText());
-// 		saveConfig();
 	} else if (list == m_shadowsList) {
 		int index = m_shadowsList->getSelectedIndex();
 		config.setRenderShadows(Renderer::shadowsToStr(ShadowMode(index)));
-// 		saveConfig();
 	} else if (list == m_lightsList) {
 		config.setRenderLightsMax(list->getSelectedIndex() + 1);
-// 		saveConfig();
-	} else if (list == m_modelShaderList) {
-		string shader = m_modelShaders[list->getSelectedIndex()];
-		g_renderer.changeShader(shader);
-		g_config.setRenderModelShader(shader);
 	} else if (list == m_terrainRendererList) {
-		g_config.setRenderTerrainRenderer(list->getSelectedIndex() + 1);
+		config.setRenderTerrainRenderer(list->getSelectedIndex() + 1);
+	} else if (list == m_waterRendererList) {
+		config.setRenderTextures3D(bool(list->getSelectedIndex()));
 	} else if (list == m_shadowTextureSizeList) {
-		g_config.setRenderShadowTextureSize(Conversion::strToInt(list->getSelectedItem()->getText()));
+		config.setRenderShadowTextureSize(Conversion::strToInt(list->getSelectedItem()->getText()));
 	} else if (list == m_resolutionList) {
 		// change res
 		VideoMode mode = m_resolutions[m_resolutionList->getSelectedIndex()];
-		if (mode != g_program.getVideoMode()) {
-			//m_previousVidMode = g_program.getVideoMode();
-			Vec2i sz(400, 240);
-			Vec2i screenDims = g_metrics.getScreenDims();
-			Vec2i pos = (screenDims - sz) / 2;
-			/*m_messageDialog = MessageDialog::showDialog(pos, sz, g_lang.get("Confirm"),
-				g_lang.get("ConfirmResChange"), g_lang.get("Ok"), g_lang.get("Cancel"));
-			m_messageDialog->Button1Clicked.connect(this, &Options::onConfirmResolutionChange);
-			m_messageDialog->Button2Clicked.connect(this, &Options::onCancelResolutionChange);
-			m_messageDialog->Escaped.connect(this, &Options::onCancelResolutionChange);
-			m_messageDialog->Close.connect(this, &Options::onCancelResolutionChange);
-			*/
-		}
-		// recreate window
-		/*
-		if (changeVideoMode(res.width, res.height, colorBits, refresh)) {
-			// show timed dialog
-		} else {
-			// show error dialog
-		}
-		*/
-		//g_program.resize(g_config.getDisplayWidth(), g_config.getDisplayHeight());
-		/*g_program.setVideoMode(mode);*/
 		g_program.resize(mode);
 
 		Metrics &metrics = Metrics::getInstance();
 		metrics.setScreenW(mode.w);
 		metrics.setScreenH(mode.h);
-		g_config.setDisplayWidth(mode.w);
-		g_config.setDisplayHeight(mode.h);
+		config.setDisplayWidth(mode.w);
+		config.setDisplayHeight(mode.h);
 		g_renderer.resetGlLists();
 		g_widgetConfig.reloadFonts();
 
@@ -756,30 +488,10 @@ void Options::onDropListSelectionChanged(Widget *source) {
 		} else {
 			g_gameState.rejigWidgets();
 		}
-		g_config.save();
-		
-		//((Widget*)&g_program)->setSize(Vec2i(mode.w, mode.h));
+		save();
 		///@todo update shadow texture size if larger than res -hailstone 22June2011
 	}
 }
-
-//void Options::onCancelResolutionChange(Widget*) {
-//	m_rootWindow->removeFloatingWidget(m_messageDialog);
-//	m_messageDialog = 0;
-//	syncVideoModeList(m_previousVidMode);
-//}
-//
-//void Options::onConfirmResolutionChange(Widget*) {
-//	m_rootWindow->removeFloatingWidget(m_messageDialog);
-//	m_messageDialog = 0;
-//	VideoMode mode = m_resolutions[m_resolutionList->getSelectedIndex()];
-//	g_config.setDisplayWidth(mode.w);
-//	g_config.setDisplayHeight(mode.h);
-//	g_config.setDisplayRefreshFrequency(mode.freq);
-//	g_config.setRenderColorBits(mode.bpp);
-//	g_config.save();
-//	g_program.exit();
-//}
 
 void Options::onSliderValueChanged(Widget *source) {
 	Slider2 *slider = static_cast<Slider2*>(source);
@@ -798,9 +510,7 @@ void Options::onSliderValueChanged(Widget *source) {
 // private
 
 void Options::save() {
-	Config &config= Config::getInstance();
-
-	config.save();
+	g_config.save();
 	Renderer::getInstance().loadConfig();
 	SoundRenderer::getInstance().loadConfig();
 }

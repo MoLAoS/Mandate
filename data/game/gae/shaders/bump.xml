@@ -4,7 +4,7 @@
      GPL V2, see source/licence.txt
 -->
 
-<unit-shader-set name="bump_map">
+<unit-shader-set name="bump">
 
 	<description>
 		<![CDATA[

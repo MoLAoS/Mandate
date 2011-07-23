@@ -45,7 +45,7 @@ private:
 public:
 	MenuStateOptions(Program &program, MainMenu *mainMenu);
 
-	void update();
+	virtual void update() override;
 
 	MenuStates getIndex() const { return MenuStates::OPTIONS; }
 	void reload();

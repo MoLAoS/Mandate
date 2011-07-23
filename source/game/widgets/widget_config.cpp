@@ -910,6 +910,7 @@ void WidgetConfig::load() {
 	loadStyles("Display", WidgetType::DISPLAY);
 	loadStyles("Console", WidgetType::CONSOLE);
 	loadStyles("GameStats", WidgetType::GAME_STATS);
+	loadStyles("OptionsPanel", WidgetType::OPTIONS_PANEL);
 
 	loadStyles("TestWidget", WidgetType::TEST_WIDGET);
 	if (luaScript.getGlobal("TestWidget")) {

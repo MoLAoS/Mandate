@@ -29,6 +29,7 @@ namespace Glest { namespace Widgets {
 class WidgetWindow : public Container, public MouseWidget, public KeyboardWidget, public WindowGl {
 private:
 	typedef std::stack<Widget*> WidgetStack;
+	typedef std::set<Widget*>   WidgetSet;
 	typedef std::set<string>    NameSet;
 	typedef std::stack<Rect2i>  ClipStack;
 

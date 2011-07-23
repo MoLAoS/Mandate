@@ -32,7 +32,7 @@ public:
 
 	void onReturn(Widget*);
 
-	void update();
+	virtual void update() override;
 };
 
 }}//end namespace

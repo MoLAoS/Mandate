@@ -134,6 +134,19 @@ Program::Program(CmdArgs &args)
 	WidgetWindow::instance = this;
 	singleton = this;
 
+	lastFps = fps = 0;
+	m_fpsLabel = new StaticText(this);
+	m_fpsLabel->setText("FPS: " + intToStr(000));
+	Vec2i sz = m_fpsLabel->getTextDimensions();
+	m_fpsLabel->setPos(Vec2i(g_metrics.getScreenW() - sz.w - 5,  5));
+	m_fpsLabel->setSize(sz);
+	m_fpsLabel->setText("FPS: 0");	
+	m_fpsLabel->setAlignment(Alignment::FLUSH_RIGHT);
+	m_fpsLabel->setPermanent();
+	if (!g_config.getMiscDebugMode()) {
+		m_fpsLabel->setVisible(false);
+	}
+
 	if (cmdArgs.isTest("interpolation")) {
 		Shared::Graphics::test_interpolate();
 	}
@@ -150,19 +163,19 @@ Program::~Program() {
 bool Program::init() {
 
 	// startup and immediately host a game
-	if(cmdArgs.isServer()) {
+	if (cmdArgs.isServer()) {
 		MainMenu* mainMenu = new MainMenu(*this, false);
 		setState(mainMenu);
 		mainMenu->setState(new MenuStateNewGame(*this, mainMenu, true));
 
 	// startup and immediately connect to server
-	} else if(!cmdArgs.getClientIP().empty()) {
+	} else if (!cmdArgs.getClientIP().empty()) {
 		MainMenu* mainMenu = new MainMenu(*this, false);
 		setState(mainMenu);
 		mainMenu->setState(new MenuStateJoinGame(*this, mainMenu, true, Ip(cmdArgs.getClientIP())));
 	
 	// load map and tileset without players
-	} else if(!cmdArgs.getLoadmap().empty()) {
+	} else if (!cmdArgs.getLoadmap().empty()) {
 		GameSettings &gs = simulationInterface->getGameSettings();
 		gs.setPreviewSettings();
 		string map = cmdArgs.getLoadmap();
@@ -186,7 +199,7 @@ bool Program::init() {
 		}
 
 	// start scenario
-	} else if(!cmdArgs.getScenario().empty()) {
+	} else if (!cmdArgs.getScenario().empty()) {
 		ScenarioInfo scenarioInfo;
 		try {
 			Scenario::loadScenarioInfo(cmdArgs.getScenario(), cmdArgs.getCategory(), &scenarioInfo);
@@ -239,6 +252,10 @@ bool Program::init() {
 	return true;
 }
 
+void Program::setFpsCounterVisible(bool v) {
+	m_fpsLabel->setVisible(v);
+}
+
 void Program::loop() {
 	size_t sleepTime;
 
@@ -277,6 +294,7 @@ void Program::loop() {
 					static_cast<GameState*>(m_programState)->getDebugStats()->exitSection(TimerSection::RENDER_2D);
 				}
 				m_programState->renderFg();
+				++fps;
 			}
 		}
 
@@ -296,6 +314,9 @@ void Program::loop() {
 		while (tickTimer.isTime()) {
 			_PROFILE_SCOPE("Program::loop() : tick");
 			m_programState->tick();
+			lastFps = fps;
+			fps = 0;
+			m_fpsLabel->setText("FPS: " + intToStr(lastFps));
 		}
 
 		// update world
