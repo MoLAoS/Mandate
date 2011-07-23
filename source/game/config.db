@@ -86,3 +86,4 @@ uiLocale					string	"en"			-		-		Language files that will be used for language s
 uiPhotoMode					bool	false			-		-		Toggles on or off photo mode, which hides the GUI for images. Note that this can be toggled from the in-game menu.
 uiPinWidgets				bool	false			-		-		Toggles in game widget move/size-ability.
 uiScrollSpeed				float	1.5f			-		-		Speed of scrolling the mouse wheel.
+uiTeamColourMode			int		1				1		3		Team colour mode effect (1 == outline, 2 == tint, 3 = tine & outline)

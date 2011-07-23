@@ -1089,11 +1089,6 @@ void Renderer::renderUnits() {
 			glRotatef(unit->getRotation(), 0.f, 1.f, 0.f);
 			//glRotatef(unit->getVerticalRotation(), 1.f, 0.f, 0.f);
 
-			if (m_teamColourMode == TeamColourMode::OUTLINE
-			|| m_teamColourMode == TeamColourMode::BOTH) {
-				modelRenderer->renderOutline(model);
-			}
-
 			// dead/cloak alpha
 			float alpha = unit->getRenderAlpha();
 			bool fade = alpha < 1.f;
@@ -1117,7 +1112,11 @@ void Renderer::renderUnits() {
 			}
 
 			// render
-			modelRenderer->render(model, alpha, frame, id, uss);
+			if (m_teamColourMode == TeamColourMode::OUTLINE || m_teamColourMode == TeamColourMode::BOTH) {
+				modelRenderer->renderOutlined(model, 4, modelRenderer->getTeamColour(), alpha, frame, id, uss);
+			} else {
+				modelRenderer->render(model, alpha, frame, id, uss);
+			}
 
 			// inc tri & point counters
 			triangleCount += model->getTriangleCount();

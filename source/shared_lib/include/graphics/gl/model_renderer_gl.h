@@ -73,7 +73,7 @@ public:
 	void end() override;
 	
 	void render(const Model *model, float fade = 1.f, int frame = 0, int id = 0, UnitShaderSet *customShaders = 0) override;
-	void renderOutline(const Model *model) override;
+	void renderOutlined(const Model *model, int lineWidth, const Vec3f &colour, float fade = 1.f, int frame = 0, int id = 0, UnitShaderSet *customShaders = 0) override;
 	void renderNormalsOnly(const Model *model) override;
 	void renderMeshNormalsOnly(const Mesh *mesh) override;
 

@@ -173,18 +173,6 @@ TestPane::TestPane(Program &program)
 	Vec2i pos = (sd - sz) / 2;
 	kmw->setPos(pos);
 	kmw->setSize(sz);
-
-
-	//KeyEntryWidget *kew = new KeyEntryWidget(window, g_program.getKeymap(), UserCommand::ATTACK);
-
-	////HotKeyInputBox *box = new HotKeyInputBox(window);
-	//const int h = g_widgetConfig.getDefaultItemHeight() / 4 * 5;
-	//Vec2i sz = Vec2i(g_metrics.getScreenW() * 7 / 10/*h * 5*/, h);
-	//Vec2i pos = (g_metrics.getScreenDims() - sz) / 2;
-	//kew->setPos(pos);
-	//kew->setSize(sz);
-	//test2(this);
-
 }
 
 TestPane::~TestPane() {

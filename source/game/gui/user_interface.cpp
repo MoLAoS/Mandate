@@ -131,6 +131,7 @@ UserInterface::UserInterface(GameState &game)
 	needSelectionUpdate = false;
 	currentGui = this;
 	currentGroup = invalidGroupIndex;
+	m_teamCoulorMode = false;
 }
 
 UserInterface::~UserInterface() {
@@ -510,10 +511,14 @@ void UserInterface::hotKey(UserCommand cmd) {
 
 	switch (cmd) {
 		case UserCommand::TOGGLE_TEAM_TINT:
-			{
-				int mode = (g_renderer.getTeamColourMode() + 1) % TeamColourMode::COUNT;
+			m_teamCoulorMode = !m_teamCoulorMode;
+			if (m_teamCoulorMode) {
+				int mode = g_config.getUiTeamColourMode();
 				g_renderer.setTeamColourMode(TeamColourMode(mode));
-				//cout << "Team colour mode is: " << mode << endl;
+				m_console->addLine("Team-Colour-Mode On");
+			} else {
+				g_renderer.setTeamColourMode(TeamColourMode::DISABLED);
+				m_console->addLine("Team-Colour-Mode Off");
 			}
 			break;
 		case UserCommand::GOTO_SELECTION:

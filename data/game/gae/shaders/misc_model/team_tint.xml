@@ -17,16 +17,6 @@
 	<!-- varying and uniform vars -->
 	<variables>
 		<![CDATA[
-			//struct gae_LightParams {
-			//	vec3 position;
-			//	vec3 diffuse;
-			//	vec3 ambient;
-			//};
-			//
-			//uniform gae_LightParams  gae_PrimaryLight;
-			//uniform gae_LightParams  gae_PointLights[7];
-			//uniform vec3             gae_SceneAmbientLight;
-			
 			uniform float            gae_AlphaThreshold;
 			uniform int              gae_LightCount;
 			uniform int              gae_IsUsingFog;

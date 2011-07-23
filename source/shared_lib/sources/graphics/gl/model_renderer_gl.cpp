@@ -169,20 +169,6 @@ void ModelRendererGl::begin(RenderMode mode, bool fog, MeshCallback *meshCallbac
 	assertGl();
 }
 
-void ModelRendererGl::renderOutline(const Model *model) {
-	// assertions
-	assert(m_rendering && m_renderMode == RenderMode::UNITS);
-	assertGl();
-	
-	// render every mesh
-	for (uint32 i = 0; i < model->getMeshCount(); ++i) {
-		renderMeshOutline(model->getMesh(i));
-	}
-
-	// assertions
-	assertGl();
-}
-
 void ModelRendererGl::end() {
 	// assertions
 	assert(m_rendering);
@@ -211,6 +197,48 @@ void ModelRendererGl::render(const Model *model, float fade, int frame, int id, 
 	for (uint32 i = 0; i < model->getMeshCount(); ++i) {
 		renderMesh(model->getMesh(i), fade, frame, id, customShaders);
 	}
+
+	//assertions
+	assertGl();
+}
+
+void ModelRendererGl::renderOutlined(const Model *model, int lineWidth, const Vec3f &colour, float fade, int frame, int id, UnitShaderSet *customShaders) {
+	//assertions
+	assert(m_rendering);
+	assertGl();
+
+	glEnable(GL_STENCIL_TEST);
+	glClearStencil(0);
+	glClear(GL_STENCIL_BUFFER_BIT);
+	glStencilFunc(GL_ALWAYS, 1, 1);
+	glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+	// render every mesh
+	for (uint32 i = 0; i < model->getMeshCount(); ++i) {
+		renderMesh(model->getMesh(i), fade, frame, id, customShaders);
+	}
+
+	glColor3fv(colour.ptr());
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	glLineWidth(float(lineWidth));
+
+	// disable texture0 and lighting
+	glActiveTexture(diffuseTextureUnit);
+	glDisable(GL_TEXTURE_2D);
+	glDisable(GL_LIGHTING);
+	glEnable (GL_LINE_SMOOTH);
+
+	glStencilFunc(GL_NOTEQUAL, 1, 1);
+	glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+
+	// render outline
+	for (uint32 i = 0; i < model->getMeshCount(); ++i) {
+		renderMeshOutline(model->getMesh(i));
+	}
+
+	glDisable(GL_STENCIL_TEST);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	glEnable(GL_TEXTURE_2D);
+	glEnable(GL_LIGHTING);
 
 	//assertions
 	assertGl();
@@ -513,28 +541,15 @@ void ModelRendererGl::renderMeshOutline(const Mesh *mesh) {
 		m_lastShaderProgram->end();
 	}
 
-	// disable texture0 and lighting
-	glActiveTexture(diffuseTextureUnit);
-	glDisable(GL_TEXTURE_2D);
-	glDisable(GL_LIGHTING);
-
-	// outline setup
-	
-	// render back facing polygons as lines
-	glPolygonMode(GL_BACK, GL_LINE);
-	glLineWidth(2.f);
-	glEnable (GL_LINE_SMOOTH);
-
-	// cull front facing polygons
-	glEnable(GL_CULL_FACE);
-	glCullFace(GL_FRONT);
+	// set cull face
+	if (mesh->isTwoSided()) {
+		glDisable(GL_CULL_FACE);
+	} else {
+		glEnable(GL_CULL_FACE);
+	}
 
 	// push outline back a bit
 	glPolygonOffset(0.f, -1.f);
-
-	// team colour
-	Vec4f color(getTeamColour(), 1.f);
-	glColor4fv(color.ptr());
 
 	// disable tex-coord arrays
 	if (m_duplicateTexCoords) {
@@ -580,11 +595,6 @@ void ModelRendererGl::renderMeshOutline(const Mesh *mesh) {
 		}
 	}
 
-	// restore stuff
-	glEnable(GL_TEXTURE_2D);
-	glEnable(GL_LIGHTING);
-	glCullFace(GL_BACK);
-	glPolygonMode(GL_BACK, GL_FILL);
 	glPolygonOffset(0.f, 0.f);
 	assertGl();
 	if (m_lastShaderProgram) {

@@ -90,7 +90,7 @@ WidgetWindow::WidgetWindow()
 	
 	// render
 	g_logger.logProgramEvent("Initialising OpenGL");
-	initGl(g_config.getRenderColorBits(), g_config.getRenderDepthBits(), 0);
+	initGl(g_config.getRenderColorBits(), g_config.getRenderDepthBits(), 1);
 	makeCurrentGl();
 
 	VideoMode currentMode(g_config.getDisplayWidth(), g_config.getDisplayHeight(), 

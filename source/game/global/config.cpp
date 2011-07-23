@@ -109,6 +109,7 @@ Config::Config(const char* fileName) {
 	uiPhotoMode = p->getBool("UiPhotoMode", false);
 	uiPinWidgets = p->getBool("UiPinWidgets", false);
 	uiScrollSpeed = p->getFloat("UiScrollSpeed", 1.5f);
+	uiTeamColourMode = p->getInt("UiTeamColourMode", 1, 1, 3);
 
 	delete p;
 
@@ -193,6 +194,7 @@ void Config::save(const char *path) {
 	p->setBool("UiPhotoMode", uiPhotoMode);
 	p->setBool("UiPinWidgets", uiPinWidgets);
 	p->setFloat("UiScrollSpeed", uiScrollSpeed);
+	p->setInt("UiTeamColourMode", uiTeamColourMode);
 
 	p->save(path);
 	delete p;

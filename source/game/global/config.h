@@ -104,6 +104,7 @@ private:
 	bool uiPhotoMode;
 	bool uiPinWidgets;
 	float uiScrollSpeed;
+	int uiTeamColourMode;
 
 	Config(const char* fileName);
 	
@@ -196,6 +197,7 @@ public:
 	bool getUiPhotoMode() const					{return uiPhotoMode;}
 	bool getUiPinWidgets() const				{return uiPinWidgets;}
 	float getUiScrollSpeed() const				{return uiScrollSpeed;}
+	int getUiTeamColourMode() const				{return uiTeamColourMode;}
 
 	void setAiLogLevel(int val)					{aiLogLevel = val;}
 	void setAiLoggingEnabled(bool val)			{aiLoggingEnabled = val;}
@@ -270,6 +272,7 @@ public:
 	void setUiPhotoMode(bool val)				{uiPhotoMode = val;}
 	void setUiPinWidgets(bool val)				{uiPinWidgets = val;}
 	void setUiScrollSpeed(float val)			{uiScrollSpeed = val;}
+	void setUiTeamColourMode(int val)			{uiTeamColourMode = val;}
 };
 
 }}//end namespace
