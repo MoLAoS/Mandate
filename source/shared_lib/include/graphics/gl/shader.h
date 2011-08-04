@@ -18,6 +18,7 @@
 
 #include "gl_wrap.h"
 #include "xml_parser.h"
+#include "util.h"
 
 namespace Shared { namespace Graphics {
 
@@ -59,42 +60,61 @@ public:
 	virtual int  getAttribLoc(const string &name) override { return -1; }
 };
 
+
+WRAPPED_ENUM( ShaderType,
+	VERTEX,
+	FRAGMENT
+);
+
+// Shader
+class GlslShader {
+protected:
+	GLuint      m_handle;
+	string      m_path;
+	string      m_name;
+	ShaderType  m_type;
+	string      m_log;	
+
+public:
+	GlslShader();
+
+	int getHandle() const { return m_handle; }
+	const string& getPath() const { return m_path; }
+	const string& getLog() const { return m_log; }
+
+	bool load(const string &path, ShaderType st);
+};
+
 // =====================================================
 //	class GlslProgram
 // =====================================================
 
+typedef std::vector<GlslShader*> ShaderList;
+
 class GlslProgram : public ShaderProgram {
 private:
-	GLuint m_v, m_f, m_p;
-	string m_name;
-
-	//static void show_info_log(
-	//	GLuint object,
-	//	PFNGLGETSHADERIVPROC glGet__iv,
-	//	PFNGLGETSHADERINFOLOGPROC glGet__InfoLog);
-
-	//string getCompileError(const string path, bool vert);
-	//string getLinkError(const string path);
-
-	bool getCompileInfoLog(GLuint handle, string &out);
-	bool getLinkerInfoLog(GLuint handle, string &out);
-
-	bool compileShader(GLuint handle, const char *src, string &out_log);
-
-	bool compileVertexShader(const char *src);
-	bool compileFragmentShader(const char *src);
-	bool linkShaderProgram();
+	ShaderList m_shaders;
+	GLuint     m_handle;
+	string     m_dir;
+	string     m_name;
+	string     m_log;
 
 public:
 	GlslProgram(const string &name);
 	~GlslProgram();
 
-	void compileAndLink(const char *vertSource, const char *fragSource);
+	int getHandle() const { return m_handle; }
+	const string& getName() const { return m_name; }
+	const string& getLog() const { return m_log; }
+
+	bool load(const string &path, bool vertex);
+	void add(GlslShader *shader);
+	bool link();
 
 	virtual void begin() override;
 	virtual void end() override;
 
-	virtual unsigned int getId() override { return m_p; }
+	virtual unsigned int getId() override { return m_handle; }
 	virtual bool setUniform(const string &name, GLuint value) override;
 	virtual bool setUniform(const string &name, GLint value) override;
 	virtual bool setUniform(const string &name, GLfloat value) override;
@@ -102,28 +122,7 @@ public:
 	virtual int  getAttribLoc(const string &name) override;
 };
 
-// =====================================================
-//	class UnitShaderSet
-// =====================================================
-
-class UnitShaderSet {
-private:
-	string           m_path;
-	string	         m_name;
-	ShaderProgram	*m_teamColour;
-	ShaderProgram	*m_rgbaColour;
-
-public:
-	UnitShaderSet(const string &xmlPath);
-	~UnitShaderSet();
-
-	const string&  getName()        {return m_name;}
-
-	ShaderProgram* getTeamProgram() {return m_teamColour;}
-	ShaderProgram* getRgbaProgram() {return m_rgbaColour;}
-};
-
-typedef vector<UnitShaderSet*> UnitShaderSets;
+typedef std::vector<GlslProgram*> GlslPrograms;
 
 }} // end namespace
 

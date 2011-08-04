@@ -15,26 +15,16 @@
 #include "game.h"
 #include "cluster_map.h"
 #include "properties.h"
+#include "util.h"
 
 namespace Glest { namespace Debug {
 
 using Graphics::Renderer;
 using Gui::GameCamera;
 using namespace Shared::Util;
+using namespace Shared::Debug;
 
 DebugStats *g_debugStats = 0;
-
-inline string formatTime(int64 ms) {
-	if (ms < 0) {
-		ms = 0;
-	}
-	int sec = ms / 1000;
-	if (sec) {
-		int millis = ms % 1000;
-		return intToStr(sec) + " s, " + intToStr(millis) + " ms.";
-	}
-	return intToStr(int(ms)) + " ms.";
-}
 
 string formatEnumName(const string &enumName) {
 	string result;

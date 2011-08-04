@@ -96,9 +96,7 @@ public:
 	const int64 &getStartTime() const	{return startTime;}
 	const int64 &getStopTime() const	{return stopTime;}
 	const int64 &getAccumTime() const	{IF_DEBUG( assert(!running) );return accumTime;}
-	//int64 getMicros() const				{return queryCounter(1000000);}
 	int64 getMillis() const				{return accumTime;}
-	//int64 getSeconds() const			{return queryCounter(1);}
 	static const int64 &getResolution()	{return freq;}
 
 #ifdef _CHRONO_USE_POSIX
@@ -106,8 +104,8 @@ public:
 	static int64 getCurMicros()			{return getCurTicks();}
 	static int64 getCurMillis()			{return getCurTicks() / 1000;}
 	static int64 getCurSeconds()		{return getCurTicks() / 1000000;}
-	static void getCurTicks(int64 &dest){dest = getCurTicks();}
-	static int64 getCurTicks() {
+	volatile static void getCurTicks(int64 &dest){dest = getCurTicks();}
+	volatile static int64 getCurTicks() {
 		struct timeval now;
 		gettimeofday(&now, &tz);
 		return 1000000LL * now.tv_sec + now.tv_usec;
@@ -119,8 +117,8 @@ public:
 	static int64 getCurMicros()			{return SDL_GetTicks() * 1000;}
 	static int64 getCurMillis()			{return SDL_GetTicks();}
 	static int64 getCurSeconds()		{return SDL_GetTicks() / 1000;}
-	static void getCurTicks(int64 &dest){dest = getCurTicks();}
-	static int64 getCurTicks()			{return SDL_GetTicks();}
+	volatile static void getCurTicks(int64 &dest){dest = getCurTicks();}
+	volatile static int64 getCurTicks()			{return SDL_GetTicks();}
 
 #endif
 #ifdef _CHRONO_USE_WIN
@@ -128,8 +126,8 @@ public:
 	static int64 getCurMicros()			{return getCurTicks() * 1000000 / freq;}
 	static int64 getCurMillis()			{return getCurTicks() * 1000 / freq;}
 	static int64 getCurSeconds()		{return getCurTicks() / freq;}
-	static void getCurTicks(int64 &dest){QueryPerformanceCounter((LARGE_INTEGER*) &dest);}
-	static int64 getCurTicks() {
+	volatile static void getCurTicks(int64 &dest){QueryPerformanceCounter((LARGE_INTEGER*) &dest);}
+	volatile static int64 getCurTicks() {
 		int64 now;
 		QueryPerformanceCounter((LARGE_INTEGER*) &now);
 		return now;
@@ -139,9 +137,6 @@ public:
 
 private:
 	static bool init();
-	//int64 queryCounter(int multiplier) const {
-	//	return multiplier * (accumTime + (stopTime ? 0 : getCurTicks() - startTime)) / freq;
-	//}
 };
 
 

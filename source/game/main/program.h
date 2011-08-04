@@ -13,7 +13,6 @@
 #define _GLEST_GAME_PROGRAM_H_
 
 #include "context.h"
-#include "timer.h"
 #include "platform_util.h"
 #include "socket.h"
 #include "metrics.h"

@@ -61,10 +61,10 @@ public:
 
 	virtual void begin(RenderMode mode, bool fog, MeshCallback *meshCallback = 0) = 0;
 	virtual void end() = 0;
-	virtual void render(const Model *model, float fade = 1.f, int frame = 0, int id = 0, UnitShaderSet *shaderSet = 0) = 0;
-	virtual void renderOutlined(const Model *model, int lineWidth, const Vec3f &colour, float fade = 1.f, int frame = 0, int id = 0, UnitShaderSet *customShaders = 0) = 0;
+	virtual void render(const Model *model, float fade = 1.f, int frame = 0, int id = 0, ShaderProgram *shaderProgram= 0) = 0;
+	virtual void renderOutlined(const Model *model, int lineWidth, const Vec3f &colour, float fade = 1.f, int frame = 0, int id = 0, ShaderProgram *shaderProgram = 0) = 0;
 	virtual void renderNormalsOnly(const Model *model) = 0;
-	virtual void renderMesh(const Mesh *mesh, float fade = 1.f, int frame = 0, int id = 0, UnitShaderSet *shaderSet = 0) = 0;
+	virtual void renderMesh(const Mesh *mesh, float fade = 1.f, int frame = 0, int id = 0, ShaderProgram *shaderProgram = 0) = 0;
 	virtual void renderMeshNormalsOnly(const Mesh *mesh) = 0;
 };
 

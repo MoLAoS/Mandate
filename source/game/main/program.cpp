@@ -118,16 +118,15 @@ Program::Program(CmdArgs &args)
 		, keymap(getInput(), "keymap.ini") {
 	// lang
 	g_lang.setLocale(g_config.getUiLocale());
-
-	TextureGl::setCompressTextures(g_config.getRenderCompressTextures());
-
-	// sound
-	g_soundRenderer.init(this);
-
+	
 	if (!fileExists("keymap.ini")) {
 		keymap.save("keymap.ini");
 	}
-	keymap.load("keymap.ini");
+
+	{	ONE_TIME_TIMER(Init_Sound, cout);
+		// sound
+		g_soundRenderer.init(this);
+	}
 
 	simulationInterface = new SimulationInterface(*this);
 

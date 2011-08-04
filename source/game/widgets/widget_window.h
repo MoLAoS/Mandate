@@ -14,6 +14,7 @@
 
 #include "window_gl.h"
 #include "sigslot.h"
+#include "timer.h"
 
 #include "widgets_base.h"
 

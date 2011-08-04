@@ -28,15 +28,15 @@ CloakType::CloakType(const UnitType *ut)
 		, m_cost(0)
 		, m_cloakSound(0)
 		, m_deCloakSound(0)
-		, m_allyShaders(0)
-		, m_enemyShaders(0) {
+		, m_allyShader(0)
+		, m_enemyShader(0) {
 }
 
 CloakType::~CloakType() {
 	delete m_cloakSound;
 	delete m_deCloakSound;
-	delete m_allyShaders;
-	delete m_enemyShaders;
+	delete m_allyShader;
+	delete m_enemyShader;
 }
 
 void CloakType::load(const string &dir, const XmlNode *cloakNode, const TechTree *tt,
@@ -83,23 +83,25 @@ void CloakType::load(const string &dir, const XmlNode *cloakNode, const TechTree
 
 		} else if (childNode->getName() == "ally-shader") { // custom shaders
 			if (childNode->getBoolValue()) {
-				string path = dir + "/" + childNode->getAttribute("path")->getRestrictedValue();
-				try {
-					m_allyShaders = new UnitShaderSet(cleanPath(path));
-				} catch (runtime_error &e) {
-					delete m_allyShaders;
-					m_allyShaders = 0;
-				}
+				string path = dir + "/" + childNode->getAttribute("dir")->getRestrictedValue();
+				string name = childNode->getAttribute("name")->getRestrictedValue();
+				path = cleanPath(path);
+				GlslProgram *program = new GlslProgram(name);
+				program->load(path + "/" + name + ".vs", true);
+				program->load(path + "/" + name + ".fs", false);
+				program->link();
+
+				// wrap-up better...
 			}
 		} else if (childNode->getName() == "enemy-shader") {
 			if (childNode->getBoolValue()) {
-				string path = dir + "/" + childNode->getAttribute("path")->getRestrictedValue();
-				try {
-					m_enemyShaders = new UnitShaderSet(cleanPath(path));
-				} catch (runtime_error &e) {
-					delete m_allyShaders;
-					m_enemyShaders = 0;
-				}
+				//string path = dir + "/" + childNode->getAttribute("path")->getRestrictedValue();
+				//try {
+				//	m_enemyShaders = new UnitShaderSet(cleanPath(path));
+				//} catch (runtime_error &e) {
+				//	delete m_allyShaders;
+				//	m_enemyShaders = 0;
+				//}
 			}
 		}
 	}

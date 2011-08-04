@@ -44,75 +44,85 @@ ModelRendererGl::ModelRendererGl()
 		, m_shaderIndex(-1)
 		, m_lastShaderProgram(0) {
 	m_fixedFunctionProgram = new FixedPipeline();
+	m_perVertexLighting = new GlslShader();
+	if (!m_perVertexLighting->load("gae/shaders/per_vert_lighting.vs", ShaderType::VERTEX)) {
+		cout << "Error loading gae/shaders/per_vert_lighting.vs\n";
+		while (mediaErrorLog.hasError()) {
+			MediaErrorLog::ErrorRecord rec = mediaErrorLog.popError();
+			cout << "\t" << rec.msg << endl;
+		}
+	}
 }
 
 ModelRendererGl::~ModelRendererGl() {
-	foreach_const (UnitShaderSets, it, m_shaders) {
+	foreach_const (GlslPrograms, it, m_shaders) {
 		delete *it;
 	}
 	delete m_fixedFunctionProgram;
+	delete m_perVertexLighting;
+}
+
+GlslProgram* ModelRendererGl::loadShader(const string &dir, const string &name) {
+	if (isGlVersionSupported(2, 0, 0)) {
+		string vertPath = dir + "/" + name + ".vs";
+		string fragPath = dir + "/" + name + ".fs";
+		GlslProgram *shaderProgram = new GlslProgram(name);
+		shaderProgram->add(m_perVertexLighting);
+		if (!shaderProgram->load(vertPath, true)) {
+			mediaErrorLog.add(shaderProgram->getLog(), vertPath);
+			delete shaderProgram;
+			return 0;
+		}
+		if (!shaderProgram->load(fragPath, false)) {
+			mediaErrorLog.add(shaderProgram->getLog(), fragPath);
+			delete shaderProgram;
+			return 0;
+		}
+		if (!shaderProgram->link()) {
+			mediaErrorLog.add(shaderProgram->getLog(), dir + name + ".*");
+			delete shaderProgram;
+			return 0;
+		}
+		return shaderProgram;
+	}
+	return 0;
 }
 
 void ModelRendererGl::loadShaders(const vector<string> &setNames) {
 	if (isGlVersionSupported(2, 0, 0)) {
 		foreach_const (vector<string>, it, setNames) {
-			string path = "gae/shaders/" + *it + ".xml";
-			UnitShaderSet *shaderSet = 0;
-			try {
-				shaderSet = new UnitShaderSet(path);
-				m_shaders.push_back(shaderSet);
-			} catch (runtime_error &e) {
-				mediaErrorLog.add(e.what(), path);
-				delete shaderSet;
+			GlslProgram *program = loadShader("gae/shaders/", *it);
+			if (program) {
+				m_shaders.push_back(program);
 			}
 		}
 	}
 	if (!m_shaders.empty()) {
 		m_shaderIndex = 0; // use first in list
 	}
-	try {
-		m_teamTintShader = new UnitShaderSet(string("gae/shaders/misc_model/team_tint.xml"));
-	} catch (runtime_error &e) {
-		mediaErrorLog.add(e.what(), string("gae/shaders/misc_model/team_tint.xml"));
-		delete m_teamTintShader;
-		m_teamTintShader = 0;
+}
+
+void ModelRendererGl::setShader(const string &name) {
+	for (int i=0; i < m_shaders.size(); ++i) {
+		if (m_shaders[i]->getName() == name) {
+			m_shaderIndex = i;
+			return;
+		}
+	}
+	GlslProgram *program = loadShader("gae/shaders/", name);
+	if (program) {
+		m_shaders.push_back(program);
+		m_shaderIndex = m_shaders.size() - 1;
+	} else {
+		m_shaderIndex = -1;
 	}
 }
 
-void ModelRendererGl::loadShader(const string &name) {
-	if (!m_shaders.empty()) { // delete last (check if changed??)
-		foreach (UnitShaderSets, it, m_shaders) {
-			delete *it;
-		}
-		m_shaders.clear();
-	}
-	if (name.empty()) {
-		m_shaderIndex = -1;
-		return;
-	}
-	if (isGlVersionSupported(2, 0, 0)) {
-		string path = "gae/shaders/" + name + ".xml";
-		UnitShaderSet *shaderSet = 0;
-		try {
-			shaderSet = new UnitShaderSet(path);
-			m_shaders.push_back(shaderSet);
-		} catch (runtime_error &e) {
-			mediaErrorLog.add(e.what(), path);
-			delete shaderSet;
-		}
-	}
-	if (!m_shaders.empty()) {
-		m_shaderIndex = 0; // use if loaded ok
-	}
+ShaderProgram* ModelRendererGl::getTeamTintShader() {
 	if (!m_teamTintShader) {
-		try {
-			m_teamTintShader = new UnitShaderSet(string("gae/shaders/misc_model/team_tint.xml"));
-		} catch (runtime_error &e) {
-			mediaErrorLog.add(e.what(), string("gae/shaders/misc_model/team_tint.xml"));
-			delete m_teamTintShader;
-			m_teamTintShader = 0;
-		}
+		m_teamTintShader = loadShader("gae/shaders/misc_model/", "team-tint");
 	}
+	return m_teamTintShader;
 }
 
 void ModelRendererGl::cycleShaderSet() {
@@ -190,7 +200,7 @@ void ModelRendererGl::end() {
 	assertGl();
 }
 
-void ModelRendererGl::render(const Model *model, float fade, int frame, int id, UnitShaderSet *customShaders) {
+void ModelRendererGl::render(const Model *model, float fade, int frame, int id, ShaderProgram *customShaders) {
 	//assertions
 	assert(m_rendering);
 	assertGl();
@@ -204,7 +214,7 @@ void ModelRendererGl::render(const Model *model, float fade, int frame, int id, 
 	assertGl();
 }
 
-void ModelRendererGl::renderOutlined(const Model *model, int lineWidth, const Vec3f &colour, float fade, int frame, int id, UnitShaderSet *customShaders) {
+void ModelRendererGl::renderOutlined(const Model *model, int lineWidth, const Vec3f &colour, float fade, int frame, int id, ShaderProgram *customShaders) {
 	//assertions
 	assert(m_rendering);
 	assertGl();
@@ -266,7 +276,7 @@ void ModelRendererGl::renderMeshNormalsOnly(const Mesh *mesh) {
 
 // ===================== PRIVATE =======================
 
-void ModelRendererGl::renderMesh(const Mesh *mesh, float fade, int frame, int id, UnitShaderSet *customShaders) {
+void ModelRendererGl::renderMesh(const Mesh *mesh, float fade, int frame, int id, ShaderProgram *customShaders) {
 	//assertions
 	assertGl();
 
@@ -350,15 +360,9 @@ void ModelRendererGl::renderMesh(const Mesh *mesh, float fade, int frame, int id
 		}
 	} else {
 		if (customShaders) {
-			if (mesh->usesTeamTexture()) {
-				shaderProgram = customShaders->getTeamProgram();
-			} else {
-				shaderProgram = customShaders->getRgbaProgram();
-			}
-		} else if (mesh->usesTeamTexture()) {
-			shaderProgram = m_shaders[m_shaderIndex]->getTeamProgram();
+			shaderProgram = customShaders;
 		} else {
-			shaderProgram = m_shaders[m_shaderIndex]->getRgbaProgram();
+			shaderProgram = m_shaders[m_shaderIndex];
 		}
 	}
 	if (shaderProgram != m_lastShaderProgram) {
@@ -371,6 +375,8 @@ void ModelRendererGl::renderMesh(const Mesh *mesh, float fade, int frame, int id
 	}
 	///@todo would be better to do this once only per faction, set from the game somewhere/somehow
 	shaderProgram->setUniform("gae_TeamColour", getTeamColour());
+	int teamColourFlag = (mesh->usesTeamTexture() && mode == RenderMode::UNITS) ? 1 : 0;
+	shaderProgram->setUniform("gae_UsesTeamColour", teamColourFlag);
 	shaderProgram->setUniform("gae_AlphaThreshold", m_alphaThreshold);
 	shaderProgram->setUniform("gae_LightCount", m_currentLightCount);
 	if (customShaders) {

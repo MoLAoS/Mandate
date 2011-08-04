@@ -561,32 +561,32 @@ void Mesh::buildCube(int size, int height, Texture2D *tex) {
 
 void Mesh::computeTangents(Vec3f *verts, Vec2f *texCoords, uint32 *indices, Vec3f *&tangents) {
 	tangents = new Vec3f[vertexCount * frameCount];
-	for (unsigned int i=0; i < vertexCount * frameCount; ++i) {
+	for (unsigned int i = 0; i < vertexCount * frameCount; ++i) {
 		tangents[i] = Vec3f(0.f);
 	}
 	for (int frame = 0; frame < frameCount; ++frame) {
-		unsigned int indexBase = frame * vertexCount;
-		for (unsigned int i=0; i < indexCount; i += 3) {
-			for (int j=0; j < 3; ++j) {
-				uint32 i0= indices[i+j];
-				uint32 i1= indices[i+(j+1)%3];
-				uint32 i2= indices[i+(j+2)%3];
+		unsigned int vertexBase = frame * vertexCount;
+		for (unsigned int i = 0; i < indexCount; i += 3) {
+			for (int j = 0; j < 3; ++j) {
+				uint32 i0 = indices[i + j];
+				uint32 i1 = indices[i + (j + 1) % 3];
+				uint32 i2 = indices[i + (j + 2) % 3];
 
-				Vec3f p0 = verts[indexBase + i0];
-				Vec3f p1 = verts[indexBase + i1];
-				Vec3f p2 = verts[indexBase + i2];
+				Vec3f p0 = verts[vertexBase + i0];
+				Vec3f p1 = verts[vertexBase + i1];
+				Vec3f p2 = verts[vertexBase + i2];
 
-				float u0= texCoords[i0].x;
-				float u1= texCoords[i1].x;
-				float u2= texCoords[i2].x;
+				float u0 = texCoords[i0].x;
+				float u1 = texCoords[i1].x;
+				float u2 = texCoords[i2].x;
 
-				float v0= texCoords[i0].y;
-				float v1= texCoords[i1].y;
-				float v2= texCoords[i2].y;
+				float v0 = texCoords[i0].y;
+				float v1 = texCoords[i1].y;
+				float v2 = texCoords[i2].y;
 
-				tangents[indexBase + i0]+=
-					((p2-p0)*(v1-v0)-(p1-p0)*(v2-v0))/
-					((u2-u0)*(v1-v0)-(u1-u0)*(v2-v0));
+				tangents[vertexBase + i0] +=
+					((p2 - p0) * (v1 - v0) - (p1 - p0) * (v2 - v0)) /
+					((u2 - u0) * (v1 - v0) - (u1 - u0) * (v2 - v0));
 			}
 		}
 	}

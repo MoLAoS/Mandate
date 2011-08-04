@@ -9,10 +9,6 @@
 #include "pch.h"
 #include <stack>
 
-#include "window_gl.h"
-#include "sigslot.h"
-
-#include "widgets_base.h"
 #include "widget_window.h"
 #include "widgets.h"
 #include "mouse_cursor.h"
@@ -24,6 +20,7 @@
 #include "imageset.h"
 #include "platform_util.h"
 #include "opengl.h"
+#include "util.h"
 
 #include "leak_dumper.h"
 
@@ -57,76 +54,89 @@ WidgetWindow::WidgetWindow()
 		, KeyboardWidget(this)
 		, floatingWidget(0)
 		, anim(0.f), slowAnim(0.f)
-		, awaitingMouseUp(false)
-		/*, mouseIcon(0)
-		, mouseMain(0)
-		, mouseAnimations(0) */{
-	m_size = g_metrics.getScreenDims();
+		, awaitingMouseUp(false) {
+	TextureGl::setCompressTextures(g_config.getRenderCompressTextures());
+	{
+		ONE_TIME_TIMER(Init_Window, cout);
 
-	// Window
-	Window::setText("Glest Advanced Engine");
-	Window::setStyle(g_config.getDisplayWindowed() ? wsWindowedFixed: wsFullscreen);
-	Window::setPos(0, 0);
-	Window::setSize(g_config.getDisplayWidth(), g_config.getDisplayHeight());
-	Window::create();
+		m_size = g_metrics.getScreenDims();
 
-	// set video mode
-	setDisplaySettings();
+		// Window
+		Window::setText("Glest Advanced Engine");
+		Window::setStyle(g_config.getDisplayWindowed() ? wsWindowedFixed: wsFullscreen);
+		Window::setPos(0, 0);
+		Window::setSize(g_config.getDisplayWidth(), g_config.getDisplayHeight());
+		Window::create();
 
-	// some flags for model interpolation/rendering
-	string lerpMethodName = g_config.getRenderInterpolationMethod();
-	if (lerpMethodName == "x87") {
-		Shared::Graphics::meshLerpMethod = LerpMethod::x87;
-	} else if (lerpMethodName == "SIMD") {
-		Shared::Graphics::meshLerpMethod = LerpMethod::SIMD;
-	//} else if (lerpMethodName == "GLSL") {
-	//	Shared::Graphics::meshLerpMethod = LerpMethod::GLSL;
-	} else {
-		// error ?
-		Shared::Graphics::meshLerpMethod = LerpMethod::SIMD;
+		// set video mode
+		setDisplaySettings();
+
+		// some flags for model interpolation/rendering
+		string lerpMethodName = g_config.getRenderInterpolationMethod();
+		if (lerpMethodName == "x87") {
+			Shared::Graphics::meshLerpMethod = LerpMethod::x87;
+		} else if (lerpMethodName == "SIMD") {
+			Shared::Graphics::meshLerpMethod = LerpMethod::SIMD;
+		//} else if (lerpMethodName == "GLSL") {
+		//	Shared::Graphics::meshLerpMethod = LerpMethod::GLSL;
+		} else {
+			// error ?
+			Shared::Graphics::meshLerpMethod = LerpMethod::SIMD;
+		}
+		Shared::Graphics::use_vbos = g_config.getRenderUseVBOs();
+		Shared::Graphics::use_tangents = g_config.getRenderEnableBumpMapping() || g_config.getRenderTestingShaders();
+
 	}
-	Shared::Graphics::use_vbos = g_config.getRenderUseVBOs();
-	Shared::Graphics::use_tangents = g_config.getRenderEnableBumpMapping();
+	{
+		ONE_TIME_TIMER(Init_OpenGL, cout);
+		
+		// render
+		g_logger.logProgramEvent("Initialising OpenGL");
+		initGl(g_config.getRenderColorBits(), g_config.getRenderDepthBits(), 1);
+		makeCurrentGl();
+
+		VideoMode currentMode(g_config.getDisplayWidth(), g_config.getDisplayHeight(), 
+			g_config.getRenderColorBits(), g_config.getDisplayRefreshFrequency());
+		setVideoMode(currentMode);
+	}
+	{
+		ONE_TIME_TIMER(Load_WidgetConfig, cout);
+
+		g_logger.logProgramEvent("Loading place-holder texture.");
+		Texture2D::defaultTexture = g_renderer.getTexture2D(ResourceScope::GLOBAL, "data/core/misc_textures/default.tga");
+		// load coreData & widgetConfig, (needs renderer, but must load before renderer init) and init renderer
+		g_logger.logProgramEvent("Loading Widget config.");
+		g_widgetConfig.load();
+	}
+	{
+		ONE_TIME_TIMER(Init_Renderer, cout);
+
+		if (!g_coreData.load() || !g_renderer.init()) {
+			throw runtime_error("An error occurred loading core data.\nPlease see " + g_fileFactory.getConfigDir() + "glestadv-error.log");
+		}
+		m_config = &g_widgetConfig;
+
+		mouseOverStack.push(this);
+
+		foreach_enum (MouseButton, btn) {
+			mouseDownWidgets[btn] = 0;
+		}
+		lastMouseDownWidget = 0;
+		lastKeyDownWidget = 0;
+		keyboardFocused = m_keyboardWidget;
+
+		///@todo ImageSetMouseCursor ... & config option?
+		//if (false) {
+		//	m_mouseCursor = new CodeMouseCursor(this);
+		//} else {
+			m_mouseCursor = new ImageSetMouseCursor(this);
+			m_mouseCursor->initMouse();
+			registerUpdate(m_mouseCursor);
+		//}
+
+		textRendererFT = g_renderer.getFreeTypeRenderer();
 	
-	// render
-	g_logger.logProgramEvent("Initialising OpenGL");
-	initGl(g_config.getRenderColorBits(), g_config.getRenderDepthBits(), 1);
-	makeCurrentGl();
-
-	VideoMode currentMode(g_config.getDisplayWidth(), g_config.getDisplayHeight(), 
-		g_config.getRenderColorBits(), g_config.getDisplayRefreshFrequency());
-	setVideoMode(currentMode);
-
-	g_logger.logProgramEvent("Loading place-holder texture.");
-	Texture2D::defaultTexture = g_renderer.getTexture2D(ResourceScope::GLOBAL, "data/core/misc_textures/default.tga");
-
-	// load coreData & widgetConfig, (needs renderer, but must load before renderer init) and init renderer
-	g_logger.logProgramEvent("Loading Widget config.");
-	g_widgetConfig.load();
-	if (!g_coreData.load() || !g_renderer.init()) {
-		throw runtime_error("An error occurred loading core data.\nPlease see " + g_fileFactory.getConfigDir() + "glestadv-error.log");
 	}
-	m_config = &g_widgetConfig;
-
-	mouseOverStack.push(this);
-
-	foreach_enum (MouseButton, btn) {
-		mouseDownWidgets[btn] = 0;
-	}
-	lastMouseDownWidget = 0;
-	lastKeyDownWidget = 0;
-	keyboardFocused = m_keyboardWidget;
-
-	///@todo ImageSetMouseCursor ... & config option?
-	//if (false) {
-	//	m_mouseCursor = new CodeMouseCursor(this);
-	//} else {
-		m_mouseCursor = new ImageSetMouseCursor(this);
-		m_mouseCursor->initMouse();
-		registerUpdate(m_mouseCursor);
-	//}
-
-	textRendererFT = g_renderer.getFreeTypeRenderer();
 } 
 
 WidgetWindow::~WidgetWindow() {

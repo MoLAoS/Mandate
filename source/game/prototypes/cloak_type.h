@@ -43,8 +43,8 @@ private:
 	StaticSound      *m_cloakSound;
 	StaticSound      *m_deCloakSound;
 	/*Texture2D        *m_image;*/
-	UnitShaderSet    *m_allyShaders;
-	UnitShaderSet    *m_enemyShaders;
+	ShaderProgram    *m_allyShader;
+	ShaderProgram    *m_enemyShader;
 
 private:
 	CloakType(const UnitType *ut);
@@ -62,8 +62,8 @@ public:
 	int  getEnergyCost() const             { return m_cost; }
 	StaticSound* getCloakSound() const     { return m_cloakSound; }
 	StaticSound* getDeCloakSound() const   { return m_deCloakSound; }
-	UnitShaderSet* getAllyShaders() const  { return m_allyShaders; }
-	UnitShaderSet* getEnemyShaders() const { return m_enemyShaders; }
+	ShaderProgram* getAllyShader() const   { return m_allyShader; }
+	ShaderProgram* getEnemyShader() const  { return m_enemyShader; }
 
 	void doChecksum(Checksum &cs) const;
 };

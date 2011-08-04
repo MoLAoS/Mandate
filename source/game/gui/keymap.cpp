@@ -296,6 +296,7 @@ void Keymap::load(const char *path) {
 	}
 	Properties p;
 	p.load(path);
+
  	const Properties::PropertyMap &pm = p.getPropertyMap();
 	Properties::PropertyMap::const_iterator it;
 	for (UserCommand uc(1); uc < UserCommand::COUNT; ++uc) {
@@ -303,9 +304,9 @@ void Keymap::load(const char *path) {
 		it = pm.find(cmdName);
 		if (it != pm.end()) {
 			try {
-				if (uc == UserCommand::ROTATE_BUILDING) {
-					DEBUG_HOOK();
-				}
+				//if (uc == UserCommand::ROTATE_BUILDING) {
+				//	DEBUG_HOOK();
+				//}
 				m_entries[uc].init(it->second);
 			} catch (runtime_error &e) {
 				stringstream str;

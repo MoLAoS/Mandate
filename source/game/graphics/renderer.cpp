@@ -30,7 +30,7 @@
 #include "sim_interface.h"
 #include "debug_stats.h"
 #include "program.h"
-
+#include "util.h"
 #include "leak_dumper.h"
 
 #if _GAE_DEBUG_EDITION_
@@ -199,32 +199,37 @@ Renderer &Renderer::getInstance(){
 // ==================== init ====================
 
 bool Renderer::init() {
-	// config
-	g_logger.logProgramEvent("Initialising renderer.");
-	Config &config= Config::getInstance();
-	loadConfig();
-	if (config.getRenderCheckGlCaps()) {
-		checkGlCaps();
-	}
-	if (config.getMiscFirstTime()) {
-		config.setMiscFirstTime(false);
-		autoConfig();
-		config.save();
-	}
-	// init resource managers
-	g_logger.logProgramEvent("\tinit core data.");
-	try {
-		modelManager[ResourceScope::GLOBAL]->init();
-		textureManager[ResourceScope::GLOBAL]->init();
-		fontManager[ResourceScope::GLOBAL]->init();
-	} catch (runtime_error &e) {
-		g_logger.logProgramEvent(
-			string("\tError while initialising data in ResourceScope::GLOBAL.\n\t") + e.what());
-		return false;
-	}
 
+	{	ONE_TIME_TIMER(Renderer_Load_Config, cout);
+		// config
+		g_logger.logProgramEvent("Initialising renderer.");
+		Config &config= Config::getInstance();
+		loadConfig();
+		if (config.getRenderCheckGlCaps()) {
+			checkGlCaps();
+		}
+		if (config.getMiscFirstTime()) {
+			config.setMiscFirstTime(false);
+			autoConfig();
+			config.save();
+		}
+	}
+	{	ONE_TIME_TIMER(Renderer_Init_Resources, cout);
+		// init resource managers
+		g_logger.logProgramEvent("\tinit core data.");
+		try {
+			modelManager[ResourceScope::GLOBAL]->init();
+			textureManager[ResourceScope::GLOBAL]->init();
+			fontManager[ResourceScope::GLOBAL]->init();
+		} catch (runtime_error &e) {
+			g_logger.logProgramEvent(
+				string("\tError while initialising data in ResourceScope::GLOBAL.\n\t") + e.what());
+			return false;
+		}
+	}
 	// load shader code (todo ?: do this in initGame(), so a shader-set can be selected in menu)
 	if (g_config.getRenderTestingShaders()) {
+		ONE_TIME_TIMER(Renderer_Load_Test_Shaders, cout);
 		// some hacky stuff so we can test easier, get a list of shader 'sets' to load
 		string names = g_config.getRenderModelTestShaders();
 		g_logger.logProgramEvent("\t'renderTestShaders' is set, loading model shaders: " + names + ".");
@@ -239,21 +244,18 @@ bool Renderer::init() {
 			tok = strtok(0, ",");
 		}
 		delete [] tmp;
-		try {
-			static_cast<ModelRendererGl*>(modelRenderer)->loadShaders(programNames);
-		} catch (runtime_error &e) {
-			g_logger.logError("\tError: shader source load/compile failed:\n\t" + string(e.what()));
-		}
+		static_cast<ModelRendererGl*>(modelRenderer)->loadShaders(programNames);
 		while (mediaErrorLog.hasError()) {
 			MediaErrorLog::ErrorRecord rec = mediaErrorLog.popError();
 			g_logger.logError(rec.path, rec.msg);
 		}
 	// load single model shader
 	} else if (g_config.getRenderUseShaders()) {
+		ONE_TIME_TIMER(Renderer_Load_Shader, cout);
 		bool bump = g_config.getRenderEnableBumpMapping();
 		bool spec = g_config.getRenderEnableSpecMapping();
 		if (spec) {
-			if (!fileExists("gae/shaders/spec.xml") || !fileExists("gae/shaders/bump_spec.xml")) {
+			if (!fileExists("gae/shaders/spec.vs") || !fileExists("gae/shaders/bump_spec.vs")) {
 				g_config.setRenderEnableSpecMapping(false);
 				spec = false;
 			}
@@ -269,20 +271,14 @@ bool Renderer::init() {
 			name = "basic";
 		}
 		g_logger.logProgramEvent("Loading model shader: " + name + ".");
-		try {
-			static_cast<ModelRendererGl*>(modelRenderer)->loadShader(name);
-		} catch (runtime_error &e) {
-			g_logger.logError("\tError: shader source load/compile failed:\n\t" + string(e.what()));
-		}
+		static_cast<ModelRendererGl*>(modelRenderer)->setShader(name);
 		while (mediaErrorLog.hasError()) {
 			MediaErrorLog::ErrorRecord rec = mediaErrorLog.popError();
 			g_logger.logError(rec.path, rec.msg);
 		}
 	}
-
 	g_logger.logProgramEvent("\tinit 2d display lists.");
 	init2dList();
-
 	return true;
 }
 
@@ -304,11 +300,7 @@ void Renderer::changeShader(const string &name) {
 	} else {
 		g_logger.logProgramEvent("Loading model shader: " + name + ".");
 	}
-	try {
-		static_cast<ModelRendererGl*>(modelRenderer)->loadShader(name);
-	} catch (runtime_error &e) {
-		g_logger.logError("\tError: shader source load/compile failed:\n\t" + string(e.what()));
-	}
+	static_cast<ModelRendererGl*>(modelRenderer)->setShader(name);
 	while (mediaErrorLog.hasError()) {
 		MediaErrorLog::ErrorRecord rec = mediaErrorLog.popError();
 		g_logger.logError(rec.path, rec.msg);
@@ -326,6 +318,7 @@ void Renderer::cycleShaders() {
 }
 
 void Renderer::initGame(GameState *game) {
+	ONE_TIME_TIMER(Renderer_Init_Game, cout);
 	this->game= game;
 	m_mainMenu = 0;
 
@@ -399,6 +392,8 @@ void Renderer::initGame(GameState *game) {
 }
 
 void Renderer::initMenu(MainMenu *mm){
+	ONE_TIME_TIMER(Renderer_Init_Menu, cout);
+
 	modelManager[ResourceScope::MENU]->init();
 	textureManager[ResourceScope::MENU]->init();
 	fontManager[ResourceScope::MENU]->init();
@@ -1087,7 +1082,7 @@ void Renderer::renderUnits() {
 			RUNTIME_CHECK(unit->getPos().x >= 0 && unit->getPos().y >= 0);
 			RUNTIME_CHECK(unit->getPos().x < world->getMap()->getW() && unit->getPos().y < world->getMap()->getH());
 			float alphaThreshold = 0.5f;
-			UnitShaderSet *uss = 0;
+			ShaderProgram *shader = 0;
 			const int id = unit->getId();
 
 			// get model, lerp to animProgess
@@ -1116,23 +1111,23 @@ void Renderer::renderUnits() {
 				alphaThreshold = 0.f;
 				if (unit->isCloaked()) {
 					if (unit->getFaction()->isAlly(thisFaction)) {
-						uss = unit->getType()->getCloakType()->getAllyShaders();
+						shader = unit->getType()->getCloakType()->getAllyShader();
 					} else {
-						uss = unit->getType()->getCloakType()->getEnemyShaders();
+						shader = unit->getType()->getCloakType()->getEnemyShader();
 					}
 				}
 			}
 
 			// team colour tint shader?
 			if (m_teamColourMode >= TeamColourMode::TINT) {
-				uss = static_cast<ModelRendererGl*>(modelRenderer)->getTeamTintShader();
+				shader = static_cast<ModelRendererGl*>(modelRenderer)->getTeamTintShader();
 			}
 
 			// render
 			if (m_teamColourMode == TeamColourMode::OUTLINE || m_teamColourMode == TeamColourMode::BOTH) {
-				modelRenderer->renderOutlined(model, 4, modelRenderer->getTeamColour(), alpha, frame, id, uss);
+				modelRenderer->renderOutlined(model, 4, modelRenderer->getTeamColour(), alpha, frame, id, shader);
 			} else {
-				modelRenderer->render(model, alpha, frame, id, uss);
+				modelRenderer->render(model, alpha, frame, id, shader);
 			}
 
 			// inc tri & point counters

@@ -29,6 +29,8 @@
 #include "math_util.h"
 #include "lang_features.h"
 #include "random.h"
+#include "timer.h"
+#include "conversion.h"
 
 using std::list;
 using std::string;
@@ -410,6 +412,49 @@ void jumble(vector<T> &list, Random &rand) {
 	}
 }
 
-}}//end namespace
+}
+
+namespace Debug {
+
+using Platform::Chrono;
+using namespace Util;
+
+inline string formatName(const string &str) {
+	string res = str;
+	foreach (string, c, res) {
+		if (*c == '_') {
+			*c = ' ';
+		}
+	}
+	return res;
+}
+
+inline string formatTime(int64 ms) {
+	if (ms < 0) {
+		ms = 0;
+	}
+	int sec = ms / 1000;
+	if (sec) {
+		int millis = ms % 1000;
+		return intToStr(sec) + " s, " + intToStr(millis) + " ms.";
+	}
+	return intToStr(int(ms)) + " ms.";
+}
+
+struct OneTimeTimer {
+	string name;
+	Chrono chrono;
+	std::ostream& out;
+
+	OneTimeTimer(const string &name, std::ostream& out) : name(name), out(out) {chrono.start();}
+	~OneTimeTimer() {
+		chrono.stop();
+		out << formatName(name) << ": " << formatTime(chrono.getAccumTime()) << endl;
+	}
+};
+
+}} // end namespace Shared
+
+#define ONE_TIME_TIMER(name, ostream) Shared::Debug::OneTimeTimer oneTimeTimer_##name(#name, ostream)
 
 #endif
