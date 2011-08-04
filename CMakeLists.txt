@@ -254,7 +254,7 @@ endif()
 set(CPACK_STRIP_FILES "TRUE")
 
 set(CPACK_SOURCE_GENERATOR "TBZ2")
-set(CPACK_SOURCE_IGNORE_FILES "/.git/;/.svn/;.kdev;.supp;.patch;.db;/build;.*~;/docs/html/;/package")
+set(CPACK_SOURCE_IGNORE_FILES "/.git/;.gitignore;/.svn/;.kdev;.supp;.patch;.db;/build;.*~;/docs/html/;/package")
 set(CPACK_SOURCE_PACKAGE_FILE_NAME "glestae-src-${GAE_VERSION}")
 # get it written to CPackConfig.cmake
 include(CPack)
@@ -280,12 +280,19 @@ else(DOXYGEN_FOUND)
 endif(DOXYGEN_FOUND)
 
 
+option(GAE_PKG_ONLY_DATA "" OFF)
+option(GAE_PKG_ONLY_BIN "" OFF)
+
 # add stuff
-add_subdirectory(source)
+if(NOT GAE_PKG_ONLY_DATA)
+	add_subdirectory(source)
+endif()
 
 # data directory
-install(DIRECTORY data/game/data data/game/maps data/game/techs data/game/tilesets data/game/gae
-		DESTINATION share/glestae OPTIONAL REGEX "/.svn" EXCLUDE)
+if(NOT GAE_PKG_ONLY_BIN)
+	install(DIRECTORY data/game/data data/game/maps data/game/techs data/game/tilesets data/game/gae
+			DESTINATION share/glestae OPTIONAL REGEX "/.svn" EXCLUDE)
+endif()
 
 if(NOT WIN32)
 	# add uninstall target; FIXME: does not delete created folders
