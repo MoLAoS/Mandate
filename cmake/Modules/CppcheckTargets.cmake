@@ -171,13 +171,22 @@ function(add_cppcheck _name)
 			endif()
 		endforeach()
 
+		get_property(_cppcheck_incs DIRECTORY PROPERTY INCLUDE_DIRECTORIES)
+		foreach(_inc ${_cppcheck_incs})
+			list(APPEND _incs -I ${_inc})
+		endforeach(_inc)
+
 		if("1.${CMAKE_VERSION}" VERSION_LESS "1.2.8.0")
 			# Older than CMake 2.8.0
 			add_test(${_name}_cppcheck_test
 				"${CPPCHECK_EXECUTABLE}"
 				${CPPCHECK_TEMPLATE_ARG}
 				${_cppcheck_args}
-				${_files})
+				${_files}
+				${_incs}
+				"-f"
+# 				"-j2"
+			)
 		else()
 			# CMake 2.8.0 and newer
 			add_test(NAME
@@ -186,7 +195,11 @@ function(add_cppcheck _name)
 				"${CPPCHECK_EXECUTABLE}"
 				${CPPCHECK_TEMPLATE_ARG}
 				${_cppcheck_args}
-				${_files})
+				${_files}
+				${_incs}
+				"-f"
+# 				"-j2"
+			)
 		endif()
 
 		set_tests_properties(${_name}_cppcheck_test
