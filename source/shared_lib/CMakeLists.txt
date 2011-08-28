@@ -91,3 +91,7 @@ if (MSVC)
 	endif (GAE_USE_PRECOMPILED_HDR)
 
 endif(MSVC)
+
+if(CPPCHECK_FOUND)
+	add_cppcheck(shared_lib)
+endif(CPPCHECK_FOUND)

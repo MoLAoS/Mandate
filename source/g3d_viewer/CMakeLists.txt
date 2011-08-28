@@ -15,3 +15,7 @@ if(UNIX AND NOT APPLE)
 	install(FILES gae_g3dviewer.png DESTINATION share/pixmaps)
 	install(FILES gae_g3dviewer.desktop DESTINATION share/applications)
 endif(UNIX AND NOT APPLE)
+
+if(CPPCHECK_FOUND)
+	add_cppcheck(gae_g3dviewer)
+endif(CPPCHECK_FOUND)

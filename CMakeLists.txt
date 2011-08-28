@@ -279,6 +279,15 @@ else(DOXYGEN_FOUND)
 	message(STATUS "disabled doc")
 endif(DOXYGEN_FOUND)
 
+# cppcheck
+find_package(cppcheck)
+if(CPPCHECK_FOUND)
+	include(CppcheckTargets)
+# 	add_cppcheck(<taget-name>)
+else(CPPCHECK_FOUND)
+	message(STATUS "disabled tests with cppcheck")
+endif(CPPCHECK_FOUND)
+
 
 option(GAE_PKG_ONLY_DATA "" OFF)
 option(GAE_PKG_ONLY_BIN "" OFF)

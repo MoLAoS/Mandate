@@ -15,3 +15,7 @@ if(UNIX AND NOT APPLE)
 	install(FILES gae_mapeditor.png DESTINATION share/pixmaps)
 	install(FILES gae_mapeditor.desktop DESTINATION share/applications)
 endif(UNIX AND NOT APPLE)
+
+if(CPPCHECK_FOUND)
+	add_cppcheck(gae_mapeditor)
+endif(CPPCHECK_FOUND)

@@ -90,3 +90,7 @@ if (WIN32)
 		set_target_properties(glestadv PROPERTIES COMPILE_FLAGS "/DUSE_PCH=0")
 	endif (GAE_USE_PRECOMPILED_HDR)
 endif (WIN32)
+
+if(CPPCHECK_FOUND)
+	add_cppcheck(glestadv)
+endif(CPPCHECK_FOUND)
