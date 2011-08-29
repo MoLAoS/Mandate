@@ -67,6 +67,8 @@ public:
 
 	void deleteModelShader();
 
+	void initUniformHandles(ShaderProgram *shader);
+
 	ShaderProgram* getTeamTintShader();
 
 	void cycleShaderSet();
