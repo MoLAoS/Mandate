@@ -1231,12 +1231,9 @@ bool TiXmlDocument::SaveFile( const char * filename ) const
 {
 	FileOps *f = FSFactory::getInstance()->getFileOps();
 	f->openWrite(filename);
-	if (f) {
-		bool result = SaveFile(f);
-		delete f;
-		return result;
-	}
-	return false;
+	bool result = SaveFile(f);
+	delete f;
+	return result;
 }
 
 
