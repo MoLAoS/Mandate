@@ -486,6 +486,7 @@ public:
 	virtual void subDesc(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const override;
 	virtual void update(Unit *unit) const;
 	virtual void tick(const Unit *unit, Command &command) const;
+	virtual CmdResult check(const Unit *unit, const Command &command) const;
 
 	//get
 	const RepairSkillType *getRepairSkillType() const	{return repairSkillType;}
