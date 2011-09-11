@@ -315,11 +315,11 @@ void OptionPanel::onScroll(ScrollBar *sb) {
 	}
 }
 
-StaticText* OptionPanel::addLabel(const string &txt) {
+ListBoxItem* OptionPanel::addLabel(const string &txt) {
 	int h  = int(g_widgetConfig.getDefaultItemHeight() * 1.5f);
 	Anchors fillAnchors(Anchor(AnchorType::RIGID, 0));
 
-	StaticText *label = new StaticText(m_list);
+	ListBoxItem *label = new ListBoxItem(m_list); //hacky change from StaticText to use WidgetType::LIST_ITEM style - hailstone
 	label->setAlignment(Alignment::FLUSH_LEFT);
 	label->setAnchors(fillAnchors);
 	label->setCell(m_list->getCellCount());
