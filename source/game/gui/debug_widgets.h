@@ -38,13 +38,10 @@ private:
 	CheckBox *m_timerReports[TimerReportFlag::COUNT];
 
 	DebugStats *m_stats;
-	OptionPanel *rightPnl;
-	std::map<std::string, Widget *> m_headings;
 
 public:
 	DebugOptions(Container *parent, bool menu);
 
-	void onHeadingClicked(Widget *cb);
 	void onCheckChanged(Widget *cb);
 };
 

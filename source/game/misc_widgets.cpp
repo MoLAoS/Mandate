@@ -315,6 +315,23 @@ void OptionPanel::onScroll(ScrollBar *sb) {
 	}
 }
 
+void OptionPanel::onHeadingClicked(Widget *widget) {
+	ListBoxItem *heading = static_cast<ListBoxItem*>(widget);
+	// need to set to start so the heading position is accurate
+	setScrollPosition(0);
+	setScrollPosition(m_headings[heading->getText()]->getPos().y);
+}
+
+ListBoxItem* OptionPanel::addHeading(OptionPanel* headingPnl, const string &txt) {
+	ListBoxItem *link = headingPnl->addLabel(" " + txt);
+	link->Clicked.connect(this, &OptionPanel::onHeadingClicked);
+
+	ListBoxItem *heading = addLabel(" " + txt);
+	m_headings.insert(std::pair<string, ListBoxItem*>(" " + txt, heading));
+
+	return heading;
+}
+
 ListBoxItem* OptionPanel::addLabel(const string &txt) {
 	int h  = int(g_widgetConfig.getDefaultItemHeight() * 1.5f);
 	Anchors fillAnchors(Anchor(AnchorType::RIGID, 0));
