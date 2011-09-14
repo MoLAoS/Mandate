@@ -195,6 +195,20 @@ void Options::buildVideoTab() {
 	m_specularMappingCheckBox->Clicked.connect(this, &Options::onCheckBoxCahnged);
 	m_specularMappingCheckBox->setEnabled(haveSpecShaders);
 
+	// Terrain Shader
+	m_terrainRendererList = rightPnl->addDropList(lang.get("TerrainShader"));
+	m_terrainRendererList->addItem("Original Terrain Renderer");
+	m_terrainRendererList->addItem("Terrain Renderer 2");
+	m_terrainRendererList->setSelected(config.getRenderTerrainRenderer() - 1);
+	m_terrainRendererList->SelectionChanged.connect(this, &Options::onDropListSelectionChanged);
+	
+	// Water Shader
+	m_waterRendererList = rightPnl->addDropList(lang.get("WaterShader"));
+	m_waterRendererList->addItem(lang.get("Opaque"));
+	m_waterRendererList->addItem(lang.get("3D Textures"));
+	m_waterRendererList->setSelected(int(config.getRenderTextures3D()));
+	m_waterRendererList->SelectionChanged.connect(this, &Options::onDropListSelectionChanged);
+
 	rightPnl->addHeading(leftPnl, g_lang.get("Shadows"));
 
 	// Shadow texture size
@@ -227,7 +241,7 @@ void Options::buildVideoTab() {
 	m_shadowsList->setSelected(clamp(int(Renderer::strToShadows(str)), 0, ShadowMode::COUNT - 1));
 	m_shadowsList->SelectionChanged.connect(this, &Options::onDropListSelectionChanged);
 
-	rightPnl->addHeading(leftPnl, g_lang.get("Graphics"));
+	rightPnl->addHeading(leftPnl, g_lang.get("Misc"));
 
 	// Texture filter
 	m_filterList = rightPnl->addDropList(lang.get("TextureFilter"));
@@ -262,20 +276,6 @@ void Options::buildVideoTab() {
 	// Field of View
 	//dw = new OptionWidget(col2, lang.get("RenderFoV"));
 	//dw->setCell(4);
-
-	// Terrain Shader
-	m_terrainRendererList = rightPnl->addDropList(lang.get("TerrainShader"));
-	m_terrainRendererList->addItem("Original Terrain Renderer");
-	m_terrainRendererList->addItem("Terrain Renderer 2");
-	m_terrainRendererList->setSelected(config.getRenderTerrainRenderer() - 1);
-	m_terrainRendererList->SelectionChanged.connect(this, &Options::onDropListSelectionChanged);
-	
-	// Water Shader
-	m_waterRendererList = rightPnl->addDropList(lang.get("WaterShader"));
-	m_waterRendererList->addItem(lang.get("Opaque"));
-	m_waterRendererList->addItem(lang.get("3D Textures"));
-	m_waterRendererList->setSelected(int(config.getRenderTextures3D()));
-	m_waterRendererList->SelectionChanged.connect(this, &Options::onDropListSelectionChanged);
 
 	TabWidget::add(lang.get("Video"), container);
 }
