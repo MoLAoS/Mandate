@@ -491,7 +491,6 @@ void GameState::onSaveSelected(Widget*) {
 }
 
 void GameState::toggleDebug(Widget*) {
-	assert(m_debugPanel->isVisible() == g_config.getMiscDebugMode());
 	bool v = !m_debugPanel->isVisible();
 	m_debugPanel->setVisible(v);
 	g_config.setMiscDebugMode(v);
