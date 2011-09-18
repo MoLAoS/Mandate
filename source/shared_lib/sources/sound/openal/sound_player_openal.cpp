@@ -130,6 +130,7 @@ void StreamSoundSource::stop(int64 fadeoff)
 	if(fadeoff > 0) {
 		fadeState = FadingOff;
 		fade = fadeoff;
+		chrono.reset();
 		chrono.start();
 	} else {
 		stop();
@@ -150,6 +151,7 @@ void StreamSoundSource::play(StrSound* sound, int64 fadeon)
 		alSourcef(source, AL_GAIN, 0);
 		fadeState = FadingOn;
 		fade = fadeon;
+		chrono.reset();
 		chrono.start();
 	} else {
 		fadeState = NoFading;
