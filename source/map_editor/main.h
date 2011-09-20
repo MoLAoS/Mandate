@@ -187,6 +187,7 @@ public:
 
 	void onMouseDown(wxMouseEvent &event, int x, int y);
 	void onMouseMove(wxMouseEvent &event, int x, int y);
+	void onMousewheelRotation(wxMouseEvent &event);
 
 	void onKeyDown(wxKeyEvent &e);
 
@@ -257,6 +258,7 @@ public:
 
 	void onMouseDown(wxMouseEvent &event);
 	void onMouseMove(wxMouseEvent &event);
+	void onMousewheelRotation(wxMouseEvent &event);
 	void onKeyDown(wxKeyEvent &event);
 	void onPaint(wxPaintEvent &event);
 
