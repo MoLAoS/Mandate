@@ -760,21 +760,23 @@ void GameState::mouseMove(int x, int y, const MouseState &ms) {
 		}
 	}*/ else {
 		if (!noInput) {
-			//main window
-			if (y < 10) {
-				gameCamera.setMoveZ(scrollSpeed, true);
-			} else if (y > g_metrics.getScreenH() - 10) {
-				gameCamera.setMoveZ(-scrollSpeed, true);
-			} else {
-				gameCamera.setMoveZ(0, true);
-			}
+			// main window
+			if (g_config.getUiMoveCameraAtScreenEdge()) { // move camera at screen edges ?
+				if (y < 10) {
+					gameCamera.setMoveZ(scrollSpeed, true);
+				} else if (y > g_metrics.getScreenH() - 10) {
+					gameCamera.setMoveZ(-scrollSpeed, true);
+				} else {
+					gameCamera.setMoveZ(0, true);
+				}
 
-			if (x < 10) {
-				gameCamera.setMoveX(-scrollSpeed, true);
-			} else if (x > g_metrics.getScreenW() - 10) {
-				gameCamera.setMoveX(scrollSpeed, true);
-			} else {
-				gameCamera.setMoveX(0, true);
+				if (x < 10) {
+					gameCamera.setMoveX(-scrollSpeed, true);
+				} else if (x > g_metrics.getScreenW() - 10) {
+					gameCamera.setMoveX(scrollSpeed, true);
+				} else {
+					gameCamera.setMoveX(0, true);
+				}
 			}
 		}
 		if (!noInput) { // graphics
