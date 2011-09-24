@@ -93,6 +93,10 @@ void Options::buildGameTab() {
 	m_maxCamAltitudeSpinner->setValue(int(config.getCameraMaxDistance()));
 	m_maxCamAltitudeSpinner->ValueChanged.connect(this, &Options::onSpinnerValueChanged);
 
+	// Move camera at screen edges
+	m_cameraMoveAtEdgesCheckBox = rightPnl->addCheckBox(lang.get("MoveCameraAtScreenEdges"), g_config.getUiMoveCameraAtScreenEdge());
+	m_cameraMoveAtEdgesCheckBox->Clicked.connect(this, &Options::onCheckBoxCahnged);
+
 	// Invert axis
 	m_cameraInvertXAxisCheckBox = rightPnl->addCheckBox(lang.get("CameraInvertXAxis"), config.getCameraInvertXAxis());
 	m_cameraInvertXAxisCheckBox->Clicked.connect(this, &Options::onCheckBoxCahnged);
@@ -422,6 +426,8 @@ void Options::onCheckBoxCahnged(Widget *src) {
 		g_config.setCameraInvertXAxis(m_cameraInvertXAxisCheckBox->isChecked());
 	} else if (cb == m_cameraInvertYAxisCheckBox) {
 		g_config.setCameraInvertYAxis(m_cameraInvertYAxisCheckBox->isChecked());
+	} else if (cb == m_cameraMoveAtEdgesCheckBox) {
+		g_config.setUiMoveCameraAtScreenEdge(m_cameraMoveAtEdgesCheckBox->isChecked());
 	} else if (cb == m_focusArrowsCheckBox) {
 		g_config.setUiFocusArrows(m_focusArrowsCheckBox->isChecked());
 	}

@@ -1,6 +1,6 @@
 ; English lang file
 
-; Zones, translate 'Land' as Surface!
+; Zones, please translate 'Land' as 'Surface'.
 Air=Air
 Land=Surface
 
@@ -195,6 +195,7 @@ PlayerName=Player Name
 CameraAltitude=Camera Altitude
 Min=Min
 Max=Max
+MoveCameraAtScreenEdges=Move at screen edges
 RenderDistance=Render Distance
 RenderFoV=Field of view
 MaxRenderFPS=Maximum FPS
