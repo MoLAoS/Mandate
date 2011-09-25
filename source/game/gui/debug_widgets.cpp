@@ -21,7 +21,7 @@ using namespace Global;
 using namespace Gui;
 
 DebugOptions::DebugOptions(Container *parent, bool menu)
-		: CellStrip(parent, Orientation::HORIZONTAL, Origin::FROM_LEFT, 2) {
+		: CellStrip(parent, Orientation::HORIZONTAL, Origin::FROM_LEFT, 2), m_isInGame(!menu) {
 	if (menu) {
 		m_stats = new DebugStats();
 	} else {
@@ -65,6 +65,9 @@ void DebugOptions::onCheckChanged(Widget *widget) {
 	if (cb == m_debugMode) {
 		g_config.setMiscDebugMode(!g_config.getMiscDebugMode());
 		g_program.setFpsCounterVisible(g_config.getMiscDebugMode());
+		if (m_isInGame) {
+			g_gameState.toggleDebug();
+		}
 		return;
 	}
 	if (cb == m_debugKeys) {

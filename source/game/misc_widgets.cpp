@@ -279,7 +279,7 @@ OptionPanel::OptionPanel(CellStrip *parent, int cell)
 	m_list->setAnchors(Anchors::getFillAnchors());
 	setSizeHint(0, SizeHint());
 	
-	m_scrollBar = new ScrollBar(this, true, int(g_widgetConfig.getDefaultItemHeight() * 1.5f));
+	m_scrollBar = new ScrollBar(this, true, sbw);
 	m_scrollBar->setCell(1);
 	m_scrollBar->setAnchors(Anchors::getFillAnchors());
 	m_scrollBar->ThumbMoved.connect(this, &OptionPanel::onScroll);

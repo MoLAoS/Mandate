@@ -38,6 +38,7 @@ private:
 	CheckBox *m_timerReports[TimerReportFlag::COUNT];
 
 	DebugStats *m_stats;
+	bool m_isInGame;
 
 public:
 	DebugOptions(Container *parent, bool menu);
