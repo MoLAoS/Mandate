@@ -1729,9 +1729,6 @@ bool CommandType::unitInRange(const Unit *unit, int range, Unit **rangedPtr,
 
 		Map *map = g_world.getMap();
 		while (pci.getNext(pos, distance)) {
-			if (effectivePos.dist(pos) > range) {
-				continue;
-			}
 			foreach_enum (Zone, z) { // all zones
 				if (!asts || asts->getZone(z)) { // looking for target in z?
 					// does cell contain a bad guy?
@@ -1755,7 +1752,7 @@ bool CommandType::unitInRange(const Unit *unit, int range, Unit **rangedPtr,
 				}
 			}
 		}
-
+	
 		if (!enemies.size()) {
 			return false;
 		}
