@@ -294,6 +294,7 @@ void OptionPanel::setSize(const Vec2i &sz) {
 		setSizeHint(1, m_scrollSizeHint);
 		m_scrollBar->setVisible(true);
 		m_scrollBar->setRanges(req_h, sz.h - getBordersVert());
+		m_scrollBar->setThumbPos(m_scrollOffset);
 	} else {
 		setSizeHint(1, m_noScrollSizeHint);
 		m_scrollBar->setVisible(false);
