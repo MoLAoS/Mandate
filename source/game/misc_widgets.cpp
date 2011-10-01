@@ -279,7 +279,7 @@ OptionPanel::OptionPanel(CellStrip *parent, int cell)
 	m_list->setAnchors(Anchors::getFillAnchors());
 	setSizeHint(0, SizeHint());
 	
-	m_scrollBar = new ScrollBar(this, true, int(g_widgetConfig.getDefaultItemHeight() * 1.5f));
+	m_scrollBar = new ScrollBar(this, true, sbw);
 	m_scrollBar->setCell(1);
 	m_scrollBar->setAnchors(Anchors::getFillAnchors());
 	m_scrollBar->ThumbMoved.connect(this, &OptionPanel::onScroll);
@@ -294,6 +294,7 @@ void OptionPanel::setSize(const Vec2i &sz) {
 		setSizeHint(1, m_scrollSizeHint);
 		m_scrollBar->setVisible(true);
 		m_scrollBar->setRanges(req_h, sz.h - getBordersVert());
+		m_scrollBar->setThumbPos(m_scrollOffset);
 	} else {
 		setSizeHint(1, m_noScrollSizeHint);
 		m_scrollBar->setVisible(false);
@@ -315,11 +316,28 @@ void OptionPanel::onScroll(ScrollBar *sb) {
 	}
 }
 
-StaticText* OptionPanel::addLabel(const string &txt) {
+void OptionPanel::onHeadingClicked(Widget *widget) {
+	ListBoxItem *heading = static_cast<ListBoxItem*>(widget);
+	// need to set to start so the heading position is accurate
+	setScrollPosition(0);
+	setScrollPosition(m_headings[heading->getText()]->getPos().y);
+}
+
+ListBoxItem* OptionPanel::addHeading(OptionPanel* headingPnl, const string &txt) {
+	ListBoxItem *link = headingPnl->addLabel(" " + txt);
+	link->Clicked.connect(this, &OptionPanel::onHeadingClicked);
+
+	ListBoxItem *heading = addLabel(" " + txt);
+	m_headings.insert(std::pair<string, ListBoxItem*>(" " + txt, heading));
+
+	return heading;
+}
+
+ListBoxItem* OptionPanel::addLabel(const string &txt) {
 	int h  = int(g_widgetConfig.getDefaultItemHeight() * 1.5f);
 	Anchors fillAnchors(Anchor(AnchorType::RIGID, 0));
 
-	StaticText *label = new StaticText(m_list);
+	ListBoxItem *label = new ListBoxItem(m_list); //hacky change from StaticText to use WidgetType::LIST_ITEM style - hailstone
 	label->setAlignment(Alignment::FLUSH_LEFT);
 	label->setAnchors(fillAnchors);
 	label->setCell(m_list->getCellCount());

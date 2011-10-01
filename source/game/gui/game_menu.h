@@ -27,7 +27,7 @@ private:
 	void onExit(Widget*);
 	void onQuit(Widget*);
 	void onSaveGame(Widget*);
-	void onDebugToggle(Widget*);
+	//void onDebugToggle(Widget*);
 	void onTogglePhotoMode(Widget*);
 	void onPinWidgets(Widget*);
 

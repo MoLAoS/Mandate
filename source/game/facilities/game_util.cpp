@@ -32,9 +32,9 @@ const string gaeMailString= CONTACT_STRING;
 const string glestVersionString= "v3.2.2";
 
 #if _GAE_DEBUG_EDITION_
-	const string gaeVersionString = string(VERSION_STRING) + "_de (" + getGitHash() + ")";
+	const string gaeVersionString = string(VERSION_STRING) + "_de" + getGitHash();
 #else
-	const string gaeVersionString = string(VERSION_STRING) + " (" + getGitHash() + ")";
+	const string gaeVersionString = string(VERSION_STRING) + getGitHash();
 #endif
 
 string getCrashDumpFileName(){
@@ -43,16 +43,11 @@ string getCrashDumpFileName(){
 
 string getGitHash() {
 	const string desc(build_git_sha);
-	string hash;
+	string hash = "+git_";
 	if (desc.size() > 7) {
-		hash = desc.substr(desc.size() - 7);
-		foreach (string, c, hash) {
-			if (islower(*c)) {
-				*c = toupper(*c);
-			}
-		}
+		hash += desc.substr(desc.size() - 7);
 	} else {
-		hash = "???";
+		hash = "";
 	}
 	return hash;
 }

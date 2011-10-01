@@ -242,6 +242,7 @@ void StrSoundBuffer::stop(int64 fadeOff){
 	else{
 		this->fade= fadeOff;
 		state= sFadingOff;
+		chrono.reset();
 		chrono.start();
 	}
 

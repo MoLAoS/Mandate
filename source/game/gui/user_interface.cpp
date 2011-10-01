@@ -1160,7 +1160,7 @@ void UserInterface::computeCommandPanel() {
 				const ProducibleType *pt = activeCommandType->getProduced(i);
 				if (unit->getFaction()->isAvailable(pt)) {
 					m_display->setDownImage(j, pt->getImage());
-					m_display->setDownLighted(j, unit->getFaction()->reqsOk(pt));
+					m_display->setDownLighted(j, unit->getFaction()->reqsOk(activeCommandType, pt));
 						m_display->setIndex(j, i);
 						++j;
 					}

@@ -201,13 +201,16 @@ private:
 	int           m_scrollOffset;
 	int           m_splitDistance;
 
+	std::map<std::string, Widget *> m_headings;
+
 	SizeHint m_scrollSizeHint;
 	SizeHint m_noScrollSizeHint;
 
 public:
 	OptionPanel(CellStrip *parent, int cell);
 
-	StaticText* addLabel(const string &txt);
+	ListBoxItem* addHeading(OptionPanel* headingPnl, const string &txt);
+	ListBoxItem* addLabel(const string &txt);
 	CheckBox*   addCheckBox(const string &lbl, bool checked);
 	TextBox*    addTextBox(const string &lbl, const string &txt);
 	DropList*   addDropList(const string &lbl, bool compact = false);
@@ -215,12 +218,14 @@ public:
 	SpinnerPair addSpinnerPair(const string &lbl, const string &lbl1, const string &lbl2);
 
 	void setSplitDistance(int v) { m_splitDistance = v; }
+	void setScrollPosition(float v) { m_scrollBar->setThumbPos(v); }
 
 	virtual void setSize(const Vec2i &sz) override;
 
 	virtual bool mouseWheel(Vec2i pos, int z) override { m_scrollBar->scrollLine(z > 0); return true; }
 
 	void onScroll(ScrollBar *sb);
+	void onHeadingClicked(Widget *cb);
 };
 
 }}

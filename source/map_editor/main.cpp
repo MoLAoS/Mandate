@@ -506,6 +506,13 @@ void MainWindow::onMouseMove(wxMouseEvent &event, int x, int y) {
 	event.Skip();
 }
 
+void MainWindow::onMousewheelRotation(wxMouseEvent &event) {
+	int i = event.GetWheelRotation();
+	program->incCellSize(i / abs(i));
+	REFRESH();
+	event.Skip();
+}
+
 void MainWindow::onMenuFileNew(wxCommandEvent &event){
 	if (checkChanges()) {
 		delete program;
@@ -1057,6 +1064,11 @@ void GlCanvas::onMouseMove(wxMouseEvent &event) {
 	mainWindow->onMouseMove(event, x, y);
 }
 
+void GlCanvas::onMousewheelRotation(wxMouseEvent &event) {
+	if (event.GetWheelRotation() != 0)
+		mainWindow->onMousewheelRotation(event);
+}
+
 void GlCanvas::onKeyDown(wxKeyEvent &event) {
 	int x, y;
 	event.GetPosition(&x, &y);
@@ -1076,6 +1088,7 @@ BEGIN_EVENT_TABLE(GlCanvas, wxGLCanvas)
 
 	EVT_LEFT_DOWN(GlCanvas::onMouseDown)
 	EVT_MOTION(GlCanvas::onMouseMove)
+	EVT_MOUSEWHEEL(GlCanvas::onMousewheelRotation)
 	
 	EVT_PAINT(GlCanvas::onPaint)
 END_EVENT_TABLE()

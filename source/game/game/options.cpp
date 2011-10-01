@@ -56,27 +56,30 @@ void Options::buildGameTab() {
 	Lang &lang = g_lang;
 
 	CellStrip *container = new CellStrip(this, Orientation::HORIZONTAL, 2);
+	container->setSizeHint(0, SizeHint(35, -1));
+	container->setSizeHint(1, SizeHint(65, -1));
 
 	OptionPanel *leftPnl = new OptionPanel(container, 0);
 	OptionPanel *rightPnl = new OptionPanel(container, 1);
 
-	leftPnl->setSplitDistance(30);
-	rightPnl->setSplitDistance(30);
+	//leftPnl->setSplitDistance(30);
+	//rightPnl->setSplitDistance(30);
 
-	// Left column
-
+	rightPnl->addHeading(leftPnl, g_lang.get("General"));
 	// Player Name
-	TextBox *tb = leftPnl->addTextBox(lang.get("PlayerName"), g_config.getNetPlayerName());
+	TextBox *tb = rightPnl->addTextBox(lang.get("PlayerName"), g_config.getNetPlayerName());
 	tb->TextChanged.connect(this, &Options::onPlayerNameChanged);
 
 	// Language
-	m_langList = leftPnl->addDropList(lang.get("Language"));
+	m_langList = rightPnl->addDropList(lang.get("Language"));
 	setupListBoxLang();
 	m_langList->SelectionChanged.connect(this, &Options::onDropListSelectionChanged);
 	m_langList->setDropBoxHeight(200);
 
+	rightPnl->addHeading(leftPnl, g_lang.get("Camera"));
+
 	// Camera min / max altitude
-	SpinnerPair sp = leftPnl->addSpinnerPair(lang.get("CameraAltitude"), lang.get("Min"), lang.get("Max"));
+	SpinnerPair sp = rightPnl->addSpinnerPair(lang.get("CameraAltitude"), lang.get("Min"), lang.get("Max"));
 
 	m_minCamAltitudeSpinner = sp.first;
 	m_minCamAltitudeSpinner->setRanges(0, 20);
@@ -90,14 +93,18 @@ void Options::buildGameTab() {
 	m_maxCamAltitudeSpinner->setValue(int(config.getCameraMaxDistance()));
 	m_maxCamAltitudeSpinner->ValueChanged.connect(this, &Options::onSpinnerValueChanged);
 
+	// Move camera at screen edges
+	m_cameraMoveAtEdgesCheckBox = rightPnl->addCheckBox(lang.get("MoveCameraAtScreenEdges"), g_config.getUiMoveCameraAtScreenEdge());
+	m_cameraMoveAtEdgesCheckBox->Clicked.connect(this, &Options::onCheckBoxCahnged);
+
 	// Invert axis
-	m_cameraInvertXAxisCheckBox = leftPnl->addCheckBox(lang.get("CameraInvertXAxis"), config.getCameraInvertXAxis());
+	m_cameraInvertXAxisCheckBox = rightPnl->addCheckBox(lang.get("CameraInvertXAxis"), config.getCameraInvertXAxis());
 	m_cameraInvertXAxisCheckBox->Clicked.connect(this, &Options::onCheckBoxCahnged);
 	
-	m_cameraInvertYAxisCheckBox = leftPnl->addCheckBox(lang.get("CameraInvertYAxis"), config.getCameraInvertYAxis());
+	m_cameraInvertYAxisCheckBox = rightPnl->addCheckBox(lang.get("CameraInvertYAxis"), config.getCameraInvertYAxis());
 	m_cameraInvertYAxisCheckBox->Clicked.connect(this, &Options::onCheckBoxCahnged);
 
-	// Right column
+	rightPnl->addHeading(leftPnl, g_lang.get("Behavior"));
 
 	// Auto repair / return
 	m_autoRepairCheckBox = rightPnl->addCheckBox(lang.get("AutoRepair"), config.getGsAutoRepairEnabled());
@@ -109,6 +116,8 @@ void Options::buildGameTab() {
 	// focus arrows
 	m_focusArrowsCheckBox = rightPnl->addCheckBox(lang.get("FocusArrows"), config.getUiFocusArrows());
 	m_focusArrowsCheckBox->Clicked.connect(this, &Options::onCheckBoxCahnged);
+
+	rightPnl->addHeading(leftPnl, g_lang.get("Interface"));
 
 	// max console lines
 	m_consoleMaxLinesSpinner = rightPnl->addSpinner(lang.get("ConsoleMaxLines"));
@@ -132,17 +141,19 @@ void Options::buildVideoTab() {
 	Lang &lang = g_lang;
 
 	CellStrip *container = new CellStrip(this, Orientation::HORIZONTAL, 2);
+	container->setSizeHint(0, SizeHint(35, -1));
+	container->setSizeHint(1, SizeHint(65, -1));
 
 	OptionPanel *leftPnl = new OptionPanel(container, 0);
 	OptionPanel *rightPnl = new OptionPanel(container, 1);
 
-	leftPnl->setSplitDistance(40);
-	rightPnl->setSplitDistance(40);
-	
-	// Column 1
+	/*leftPnl->setSplitDistance(40);
+	rightPnl->setSplitDistance(40);*/
+
+	rightPnl->addHeading(leftPnl, g_lang.get("General"));
 	
 	// Video Mode
-	m_resolutionList = leftPnl->addDropList(lang.get("Resolution"));
+	m_resolutionList = rightPnl->addDropList(lang.get("Resolution"));
 	m_resolutionList->setDropBoxHeight(280);
 
 	// add the possible resoultions to the list
@@ -158,15 +169,17 @@ void Options::buildVideoTab() {
 	m_resolutionList->SelectionChanged.connect(this, &Options::onDropListSelectionChanged);
 
 	// Fullscreen
-	m_fullscreenCheckBox = leftPnl->addCheckBox(lang.get("Fullscreen"), !config.getDisplayWindowed());
+	m_fullscreenCheckBox = rightPnl->addCheckBox(lang.get("Fullscreen"), !config.getDisplayWindowed());
 	m_fullscreenCheckBox->Clicked.connect(this, &Options::onCheckBoxCahnged);
 	if (m_resolutionList->getSelectedIndex() == -1) {
 		// current settings do not match an acceptable vid mode, disable
 		m_fullscreenCheckBox->setEnabled(false);
 	}
 
+	rightPnl->addHeading(leftPnl, g_lang.get("Shaders"));
+
 	// Enable Shaders
-	m_useShadersCheckBox = leftPnl->addCheckBox(lang.get("UseShaders"), config.getRenderUseShaders());
+	m_useShadersCheckBox = rightPnl->addCheckBox(lang.get("UseShaders"), config.getRenderUseShaders());
 	m_useShadersCheckBox->Clicked.connect(this, &Options::onCheckBoxCahnged);
 	if (g_config.getRenderTestingShaders()) {
 		m_useShadersCheckBox->setEnabled(false);
@@ -177,17 +190,33 @@ void Options::buildVideoTab() {
 	}
 
 	// Enable bump mapping
-	m_bumpMappingCheckBox = leftPnl->addCheckBox(lang.get("BumpMapping"), config.getRenderEnableBumpMapping());
+	m_bumpMappingCheckBox = rightPnl->addCheckBox(lang.get("BumpMapping"), config.getRenderEnableBumpMapping());
 	m_bumpMappingCheckBox->Clicked.connect(this, &Options::onCheckBoxCahnged);
 	m_bumpMappingCheckBox->setEnabled(config.getRenderUseShaders());
 
 	// Enable specular mapping
-	m_specularMappingCheckBox = leftPnl->addCheckBox(lang.get("SpecularMapping"), config.getRenderEnableSpecMapping());
+	m_specularMappingCheckBox = rightPnl->addCheckBox(lang.get("SpecularMapping"), config.getRenderEnableSpecMapping());
 	m_specularMappingCheckBox->Clicked.connect(this, &Options::onCheckBoxCahnged);
 	m_specularMappingCheckBox->setEnabled(haveSpecShaders);
 
+	// Terrain Shader
+	m_terrainRendererList = rightPnl->addDropList(lang.get("TerrainShader"));
+	m_terrainRendererList->addItem("Original Terrain Renderer");
+	m_terrainRendererList->addItem("Terrain Renderer 2");
+	m_terrainRendererList->setSelected(config.getRenderTerrainRenderer() - 1);
+	m_terrainRendererList->SelectionChanged.connect(this, &Options::onDropListSelectionChanged);
+	
+	// Water Shader
+	m_waterRendererList = rightPnl->addDropList(lang.get("WaterShader"));
+	m_waterRendererList->addItem(lang.get("Opaque"));
+	m_waterRendererList->addItem(lang.get("3D Textures"));
+	m_waterRendererList->setSelected(int(config.getRenderTextures3D()));
+	m_waterRendererList->SelectionChanged.connect(this, &Options::onDropListSelectionChanged);
+
+	rightPnl->addHeading(leftPnl, g_lang.get("Shadows"));
+
 	// Shadow texture size
-	m_shadowTextureSizeList = leftPnl->addDropList(lang.get("ShadowTextureSize"), true);
+	m_shadowTextureSizeList = rightPnl->addDropList(lang.get("ShadowTextureSize"), true);
 	m_shadowTextureSizeList->setDropBoxHeight(280);
 
 	// sizes must be powers of 2 and less than the resolution
@@ -201,13 +230,11 @@ void Options::buildVideoTab() {
 	m_shadowTextureSizeList->SelectionChanged.connect(this, &Options::onDropListSelectionChanged);
 
 	// Shadow frame skip
-	m_shadowFrameSkipSpinner = leftPnl->addSpinner(lang.get("ShadowFrameSkip"));
+	m_shadowFrameSkipSpinner = rightPnl->addSpinner(lang.get("ShadowFrameSkip"));
 	m_shadowFrameSkipSpinner->setRanges(0, 5);
 	m_shadowFrameSkipSpinner->setIncrement(1);
 	m_shadowFrameSkipSpinner->setValue(config.getRenderShadowFrameSkip());
 	m_shadowFrameSkipSpinner->ValueChanged.connect(this, &Options::onSpinnerValueChanged);
-
-	// Column 2
 
 	// Shadows
 	m_shadowsList = rightPnl->addDropList(lang.get("Shadows"));
@@ -217,6 +244,8 @@ void Options::buildVideoTab() {
 	string str= config.getRenderShadows();
 	m_shadowsList->setSelected(clamp(int(Renderer::strToShadows(str)), 0, ShadowMode::COUNT - 1));
 	m_shadowsList->SelectionChanged.connect(this, &Options::onDropListSelectionChanged);
+
+	rightPnl->addHeading(leftPnl, g_lang.get("Misc"));
 
 	// Texture filter
 	m_filterList = rightPnl->addDropList(lang.get("TextureFilter"));
@@ -251,20 +280,6 @@ void Options::buildVideoTab() {
 	// Field of View
 	//dw = new OptionWidget(col2, lang.get("RenderFoV"));
 	//dw->setCell(4);
-
-	// Terrain Shader
-	m_terrainRendererList = rightPnl->addDropList(lang.get("TerrainShader"));
-	m_terrainRendererList->addItem("Original Terrain Renderer");
-	m_terrainRendererList->addItem("Terrain Renderer 2");
-	m_terrainRendererList->setSelected(config.getRenderTerrainRenderer() - 1);
-	m_terrainRendererList->SelectionChanged.connect(this, &Options::onDropListSelectionChanged);
-	
-	// Water Shader
-	m_waterRendererList = rightPnl->addDropList(lang.get("WaterShader"));
-	m_waterRendererList->addItem(lang.get("Opaque"));
-	m_waterRendererList->addItem(lang.get("3D Textures"));
-	m_waterRendererList->setSelected(int(config.getRenderTextures3D()));
-	m_waterRendererList->SelectionChanged.connect(this, &Options::onDropListSelectionChanged);
 
 	TabWidget::add(lang.get("Video"), container);
 }
@@ -411,6 +426,8 @@ void Options::onCheckBoxCahnged(Widget *src) {
 		g_config.setCameraInvertXAxis(m_cameraInvertXAxisCheckBox->isChecked());
 	} else if (cb == m_cameraInvertYAxisCheckBox) {
 		g_config.setCameraInvertYAxis(m_cameraInvertYAxisCheckBox->isChecked());
+	} else if (cb == m_cameraMoveAtEdgesCheckBox) {
+		g_config.setUiMoveCameraAtScreenEdge(m_cameraMoveAtEdgesCheckBox->isChecked());
 	} else if (cb == m_focusArrowsCheckBox) {
 		g_config.setUiFocusArrows(m_focusArrowsCheckBox->isChecked());
 	}

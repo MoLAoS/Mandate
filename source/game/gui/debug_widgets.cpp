@@ -21,7 +21,7 @@ using namespace Global;
 using namespace Gui;
 
 DebugOptions::DebugOptions(Container *parent, bool menu)
-		: CellStrip(parent, Orientation::HORIZONTAL, Origin::FROM_LEFT, 2) {
+		: CellStrip(parent, Orientation::HORIZONTAL, Origin::FROM_LEFT, 2), m_isInGame(!menu) {
 	if (menu) {
 		m_stats = new DebugStats();
 	} else {
@@ -31,26 +31,29 @@ DebugOptions::DebugOptions(Container *parent, bool menu)
 	Anchors fillAnchors = Anchors::getFillAnchors();
 	OptionPanel *leftPnl = new OptionPanel(this, 0);
 	OptionPanel *rightPnl = new OptionPanel(this, 1);
+	setSizeHint(0, SizeHint(35, -1));
+	setSizeHint(1, SizeHint(65, -1));
 
-	m_debugMode = leftPnl->addCheckBox(g_lang.get("DebugMode"), g_config.getMiscDebugMode());
+	rightPnl->addHeading(leftPnl, g_lang.get("General"));
+
+	m_debugMode = rightPnl->addCheckBox(g_lang.get("DebugMode"), g_config.getMiscDebugMode());
 	m_debugMode->Clicked.connect(this, &DebugOptions::onCheckChanged);
-	m_debugKeys = leftPnl->addCheckBox(g_lang.get("DebugKeys"), g_config.getMiscDebugKeys());
+	m_debugKeys = rightPnl->addCheckBox(g_lang.get("DebugKeys"), g_config.getMiscDebugKeys());
 	m_debugKeys->Clicked.connect(this, &DebugOptions::onCheckChanged);
 
-	leftPnl->addLabel(g_lang.get("DebugSections"));
-
+	rightPnl->addHeading(leftPnl, g_lang.get("DebugSections"));
 	foreach_enum (DebugSection, ds) {
-		m_debugSections[ds] = leftPnl->addCheckBox(g_lang.get(DebugSectionNames[ds]), m_stats->isEnabled(ds));
+		m_debugSections[ds] = rightPnl->addCheckBox(g_lang.get(DebugSectionNames[ds]), m_stats->isEnabled(ds));
 		m_debugSections[ds]->Clicked.connect(this, &DebugOptions::onCheckChanged);
 	}
 
-	rightPnl->addLabel(g_lang.get("PerformanceReport"));
+	rightPnl->addHeading(leftPnl, g_lang.get("PerformanceReport"));
 	foreach_enum(TimerReportFlag, trf) {
 		m_timerReports[trf] = rightPnl->addCheckBox(g_lang.get(TimerReportFlagNames[trf]), m_stats->isEnabled(trf));
 		m_timerReports[trf]->Clicked.connect(this, &DebugOptions::onCheckChanged);
 	}
 
-	rightPnl->addLabel(g_lang.get("PerformanceSections"));
+	rightPnl->addHeading(leftPnl, g_lang.get("PerformanceSections"));
 	foreach_enum (TimerSection, ts) {
 		m_timerSections[ts] = rightPnl->addCheckBox(g_lang.get(TimerSectionNames[ts]), m_stats->isEnabled(ts));
 		m_timerSections[ts]->Clicked.connect(this, &DebugOptions::onCheckChanged);
@@ -62,6 +65,9 @@ void DebugOptions::onCheckChanged(Widget *widget) {
 	if (cb == m_debugMode) {
 		g_config.setMiscDebugMode(!g_config.getMiscDebugMode());
 		g_program.setFpsCounterVisible(g_config.getMiscDebugMode());
+		if (m_isInGame) {
+			g_gameState.toggleDebug();
+		}
 		return;
 	}
 	if (cb == m_debugKeys) {

@@ -62,11 +62,11 @@ inline void trimTrailingNewlines(string &str) {
 void initUnitShader(ShaderProgram *program) {
 	assertGl();
 	program->begin();
-	program->setUniform( "gae_DiffuseTex", 0u );
-	program->setUniform( "gae_NormalMap",  3u );
-	program->setUniform( "gae_SpecMap",    4u );
-	program->setUniform( "gae_LightMap",   5u );
-	program->setUniform( "gae_CustomTex",  6u );
+	program->setUniform( program->getUniformLoc("gae_DiffuseTex"), 0u );
+	program->setUniform( program->getUniformLoc("gae_NormalMap"),  3u );
+	program->setUniform( program->getUniformLoc("gae_SpecMap"),    4u );
+	program->setUniform( program->getUniformLoc("gae_LightMap"),   5u );
+	program->setUniform( program->getUniformLoc("gae_CustomTex"),  6u );
 	program->end();
 	assertGl();
 }
@@ -180,12 +180,36 @@ void GlslProgram::end() {
 	assertGl();
 }
 
+bool GlslProgram::addUniform(const string &name) {
+	int handle = getUniformLoc(name);
+	m_uniformHandles.insert(std::pair<string, int>(name, handle));
+	
+	return handle != -1;
+}
+
 bool GlslProgram::setUniform(const string &name, GLuint value) {
-	return setUniform(name, GLint(value));
+	return setUniform(m_uniformHandles[name], value);
 }
 
 bool GlslProgram::setUniform(const string &name, GLint value) {
-	int handle = glGetUniformLocation(m_handle, name.c_str());
+	return setUniform(m_uniformHandles[name], value); 
+}
+
+bool GlslProgram::setUniform(const string &name, GLfloat value) {
+	return setUniform(m_uniformHandles[name], value);
+}
+
+bool GlslProgram::setUniform(const string &name, const Vec3f &value) {
+	return setUniform(m_uniformHandles[name], value);
+}
+
+///
+
+bool GlslProgram::setUniform(int handle, GLuint value) {
+	return setUniform(handle, GLint(value));
+}
+
+bool GlslProgram::setUniform(int handle, GLint value) {
 	if (handle != -1) {
 		glUniform1i(handle, value);
 		return true;
@@ -193,8 +217,7 @@ bool GlslProgram::setUniform(const string &name, GLint value) {
 	return false;
 }
 
-bool GlslProgram::setUniform(const string &name, GLfloat value) {
-	int handle = glGetUniformLocation(m_handle, name.c_str());
+bool GlslProgram::setUniform(int handle, GLfloat value) {
 	if (handle != -1) {
 		glUniform1f(handle, value);
 		return true;
@@ -202,13 +225,16 @@ bool GlslProgram::setUniform(const string &name, GLfloat value) {
 	return false;
 }
 
-bool GlslProgram::setUniform(const string &name, const Vec3f &value) {
-	int handle = glGetUniformLocation(m_handle, name.c_str());
+bool GlslProgram::setUniform(int handle, const Vec3f &value) {
 	if (handle != -1) {
 		glUniform3fv(handle, 1, value.ptr());
 		return true;
 	}
 	return false;
+}
+
+int GlslProgram::getUniformLoc(const string &name) {
+	return glGetUniformLocation(m_handle, name.c_str());
 }
 
 int GlslProgram::getAttribLoc(const string &name) {

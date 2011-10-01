@@ -1602,16 +1602,17 @@ void CastSpellCommandType::update(Unit *unit) const {
 	assert(command->getType() == this);
 
 	if (unit->getCurrSkill() != m_castSpellSkillType) {
-		if (!command->getUnit()) {
-			if (unit->getFaction()->isThisFaction()) {
-				g_console.addLine(g_lang.get("InvalidTarget"));
-				unit->finishCommand();
-				unit->setCurrSkill(SkillClass::STOP);
-				return;
-			}
+		if (m_affects == SpellAffect::SELF) {
+			unit->setTarget(unit);
+			unit->setCurrSkill(m_castSpellSkillType);
+		} else if (!command->getUnit() && unit->getFaction()->isThisFaction()) {
+			g_console.addLine(g_lang.get("InvalidTarget"));
+			unit->finishCommand();
+			unit->setCurrSkill(SkillClass::STOP);
+		} else {
+			unit->setTarget(command->getUnit());
+			unit->setCurrSkill(m_castSpellSkillType);
 		}
-		unit->setTarget(command->getUnit());
-		unit->setCurrSkill(m_castSpellSkillType);
 		return;
 	}
 	if (!m_cycle) {
@@ -1728,9 +1729,6 @@ bool CommandType::unitInRange(const Unit *unit, int range, Unit **rangedPtr,
 
 		Map *map = g_world.getMap();
 		while (pci.getNext(pos, distance)) {
-			if (effectivePos.dist(pos) > range) {
-				continue;
-			}
 			foreach_enum (Zone, z) { // all zones
 				if (!asts || asts->getZone(z)) { // looking for target in z?
 					// does cell contain a bad guy?
@@ -1754,7 +1752,7 @@ bool CommandType::unitInRange(const Unit *unit, int range, Unit **rangedPtr,
 				}
 			}
 		}
-
+	
 		if (!enemies.size()) {
 			return false;
 		}

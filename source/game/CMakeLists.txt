@@ -45,7 +45,7 @@ if(WIN32)
 else(WIN32)
 	add_custom_command(
 		OUTPUT version.cpp
-		COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/version.sh
+		COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/version.sh ${CMAKE_SOURCE_DIR}
 		#DEPENDS glestadv
 	)
 	add_custom_target(version ALL DEPENDS version.cpp)

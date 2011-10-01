@@ -1386,11 +1386,10 @@ void Renderer::renderMenuBackground(const MenuBackground *menuBackground){
 			}
 			glEnd();
 		}
-		glDisable(GL_BLEND);
+		
 		// raindrops
 		if (menuBackground->getRain()) {
 			const float maxRaindropAlpha = 0.5f;
-			glEnable(GL_BLEND);
 			glDisable(GL_LIGHTING);
 			glDisable(GL_ALPHA_TEST);
 			glDepthMask(GL_FALSE);
@@ -1419,6 +1418,7 @@ void Renderer::renderMenuBackground(const MenuBackground *menuBackground){
 				glPopMatrix();
 			}
 		}
+		glDisable(GL_BLEND);
 	}
 	glPopAttrib();
 	assertGl();

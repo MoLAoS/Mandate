@@ -46,7 +46,7 @@ GameMenu::GameMenu()
 
 void GameMenu::init() {
 	m_btnStrip->clear();
-	m_btnStrip->addCells(8);
+	m_btnStrip->addCells(7);
 
 	int dh = g_widgetConfig.getDefaultItemHeight();
 	Vec2i size = Vec2i(dh * 8, dh * 11);
@@ -54,14 +54,14 @@ void GameMenu::init() {
 	setPos(pos);
 	setSize(size);
 
-	buildButton(this, m_btnStrip, 7, g_lang.get("ExitProgram"), &GameMenu::onExit);
-	buildButton(this, m_btnStrip, 6, g_lang.get("QuitGame"), &GameMenu::onQuit);
-	buildButton(this, m_btnStrip, 5, g_lang.get("SaveGame"), &GameMenu::onSaveGame);
-	m_pinWidgetsBtn = buildButton(this, m_btnStrip, 4, 
+	buildButton(this, m_btnStrip, 6, g_lang.get("ExitProgram"), &GameMenu::onExit);
+	buildButton(this, m_btnStrip, 5, g_lang.get("QuitGame"), &GameMenu::onQuit);
+	buildButton(this, m_btnStrip, 4, g_lang.get("SaveGame"), &GameMenu::onSaveGame);
+	m_pinWidgetsBtn = buildButton(this, m_btnStrip, 3, 
 		g_config.getUiPinWidgets() ? g_lang.get("UnPinWidgets") : g_lang.get("PinWidgets"),
 		&GameMenu::onPinWidgets);
-	buildButton(this, m_btnStrip, 3, g_lang.get("TogglePhotoMode"), &GameMenu::onTogglePhotoMode);
-	buildButton(this, m_btnStrip, 2, g_lang.get("ToggleDebug"), &GameMenu::onDebugToggle);
+	buildButton(this, m_btnStrip, 2, g_lang.get("TogglePhotoMode"), &GameMenu::onTogglePhotoMode);
+	//buildButton(this, m_btnStrip, 2, g_lang.get("ToggleDebug"), &GameMenu::onDebugToggle);
 	buildButton(this, m_btnStrip, 1, g_lang.get("Options"), &GameMenu::onOptions);
 	buildButton(this, m_btnStrip, 0, g_lang.get("ReturnToGame"), &GameMenu::onReturnToGame);
 }
@@ -85,10 +85,9 @@ void GameMenu::onOptions(Widget*) {
 	g_gameState.toggleOptions();
 }
 
-void GameMenu::onDebugToggle(Widget*) {
-	//g_config.setMiscDebugMode(!g_config.getMiscDebugMode());
-	g_gameState.toggleDebug();
-}
+//void GameMenu::onDebugToggle(Widget*) {
+//	g_gameState.toggleDebug();
+//}
 
 void GameMenu::onTogglePhotoMode(Widget*) {
 	g_config.setUiPhotoMode(!g_config.getUiPhotoMode());

@@ -224,6 +224,15 @@ void RepairCommandType::subDesc(const Unit *unit, CmdDescriptor *callback, ProdT
 	}
 }
 
+CmdResult RepairCommandType::check(const Unit *unit, const Command &command) const {
+	// if no commanded unit then it is auto repair and already checked
+	if (!command.getCommandedUnit() || command.getUnit() && canRepair(command.getUnit()->getType())) {
+		return CmdResult::SUCCESS;
+	} else {
+		return CmdResult::FAIL_UNDEFINED;
+	}
+}
+
 //get
 bool RepairCommandType::canRepair(const UnitType *unitType) const{
 	for(int i=0; i < repairableUnits.size(); ++i) {

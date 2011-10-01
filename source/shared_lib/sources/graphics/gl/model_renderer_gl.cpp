@@ -94,6 +94,7 @@ void ModelRendererGl::loadShaders(const vector<string> &setNames) {
 			GlslProgram *program = loadShader("gae/shaders/", *it);
 			if (program) {
 				m_shaders.push_back(program);
+				initUniformHandles(program);
 			}
 		}
 	}
@@ -113,9 +114,21 @@ void ModelRendererGl::setShader(const string &name) {
 	if (program) {
 		m_shaders.push_back(program);
 		m_shaderIndex = m_shaders.size() - 1;
+		initUniformHandles(program);
 	} else {
 		m_shaderIndex = -1;
 	}
+}
+
+void ModelRendererGl::initUniformHandles(ShaderProgram *shader) {
+	shader->addUniform("gae_HasNormalMap");
+	shader->addUniform("gae_EntityId");
+	shader->addUniform("gae_FrameNumber");
+	shader->addUniform("gae_LightCount");
+	shader->addUniform("gae_AlphaThreshold");
+	shader->addUniform("gae_UsesTeamColour");
+	shader->addUniform("gae_TeamColour");
+	shader->addUniform("gae_IsUsingFog");
 }
 
 ShaderProgram* ModelRendererGl::getTeamTintShader() {

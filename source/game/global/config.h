@@ -100,6 +100,7 @@ private:
 	string uiLastScenario;
 	string uiLastScenarioCatagory;
 	string uiLocale;
+	bool uiMoveCameraAtScreenEdge;
 	bool uiPhotoMode;
 	bool uiPinWidgets;
 	float uiScrollSpeed;
@@ -192,6 +193,7 @@ public:
 	string getUiLastScenario() const			{return uiLastScenario;}
 	string getUiLastScenarioCatagory() const	{return uiLastScenarioCatagory;}
 	string getUiLocale() const					{return uiLocale;}
+	bool getUiMoveCameraAtScreenEdge() const	{return uiMoveCameraAtScreenEdge;}
 	bool getUiPhotoMode() const					{return uiPhotoMode;}
 	bool getUiPinWidgets() const				{return uiPinWidgets;}
 	float getUiScrollSpeed() const				{return uiScrollSpeed;}
@@ -266,6 +268,7 @@ public:
 	void setUiLastScenario(string val)			{uiLastScenario = val;}
 	void setUiLastScenarioCatagory(string val)	{uiLastScenarioCatagory = val;}
 	void setUiLocale(string val)				{uiLocale = val;}
+	void setUiMoveCameraAtScreenEdge(bool val)	{uiMoveCameraAtScreenEdge = val;}
 	void setUiPhotoMode(bool val)				{uiPhotoMode = val;}
 	void setUiPinWidgets(bool val)				{uiPinWidgets = val;}
 	void setUiScrollSpeed(float val)			{uiScrollSpeed = val;}
