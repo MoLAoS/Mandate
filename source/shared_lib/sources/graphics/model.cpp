@@ -416,19 +416,39 @@ void Mesh::load(const string &dir, FileOps *f, TextureManager *textureManager){
 	size_t vfCount = frameCount * vertexCount;
 	if (vfCount) {
 		if (f->read(vertices, 12 * vfCount, 1) != 1) {
+			delete [] vertices;
+			delete [] normals;
+			delete [] tangents;
+			delete [] texCoords;
+			delete [] indices;
 			throw runtime_error("error reading mesh, insufficient vertex data.");
 		}
 		//cout << "reading " << (vfCount * 12) << " bytes of normal data.\n";
 		if (f->read(normals, 12 * vfCount, 1) != 1) {
+			delete [] vertices;
+			delete [] normals;
+			delete [] tangents;
+			delete [] texCoords;
+			delete [] indices;
 			throw runtime_error("error reading mesh, insufficient normal vector data.");
 		}
 	}
 
 	if (meshHeader.textures && f->read(texCoords, sizeof(Vec2f)*vertexCount, 1) != 1) {
+		delete [] vertices;
+		delete [] normals;
+		delete [] tangents;
+		delete [] texCoords;
+		delete [] indices;
 		throw runtime_error("error reading mesh, insufficient texture co-ordinate data.");
 	}
 	if (indexCount) {
 		if (f->read(indices, sizeof(uint32)*indexCount, 1) != 1) {
+			delete [] vertices;
+			delete [] normals;
+			delete [] tangents;
+			delete [] texCoords;
+			delete [] indices;
 			throw runtime_error("error reading mesh, insufficient vertex index data.");
 		}
 	}
