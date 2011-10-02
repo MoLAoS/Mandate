@@ -29,7 +29,7 @@ using Shared::PhysFS::FSFactory;
 namespace MapEditor {
 
 const string MainWindow::versionString = "v1.5.0";
-const string MainWindow::winHeader = "Glest Map Editor " + versionString + " - Built: " + __DATE__;
+const string MainWindow::winHeader = "Glest Map Editor";
 
 // ===============================================
 //	class Global functions
@@ -60,7 +60,7 @@ MainWindow::MainWindow()
 		, enabledGroup(ctHeight)
 		, fileModified(false)
 		, program(0) {
-	fileName = "New (unsaved) map";
+	//fileName = "New (unsaved) map";
 
 	SetIcon(wxIcon(gae_mapeditor_xpm));
 
@@ -301,19 +301,27 @@ void MainWindow::buildToolBars() {
 
 void MainWindow::buildStatusBar() {
 	int status_widths[StatusItems::COUNT] = {
-		10, // empty
-		-2, // File name
-		-1, // File type
+		50, // X-position
+		50, // Y-position
 		-2, // Current Object
 		-2, // Brush Type
 		-2, // Brush 'Value'
 		-1, // Brush Radius
 	};
+	int status_styles[StatusItems::COUNT] = {
+		wxSB_FLAT, // X-position
+		wxSB_FLAT, // Y-position
+		wxSB_FLAT, // Current Object
+		wxSB_FLAT, // Brush Type
+		wxSB_FLAT, // Brush 'Value'
+		wxSB_FLAT, // Brush Radius
+	};
 	CreateStatusBar(StatusItems::COUNT);
 	GetStatusBar()->SetStatusWidths(StatusItems::COUNT, status_widths);
-
-	SetStatusText(wxT("File: ") + ToUnicode(fileName), StatusItems::FILE_NAME);
-	SetStatusText(wxT(".gbm"), StatusItems::FILE_TYPE);
+	GetStatusBar()->SetStatusStyles(StatusItems::COUNT, status_styles);
+	
+	SetStatusText(wxT("X: 0"), StatusItems::POS_X);
+	SetStatusText(wxT("Y: 0"), StatusItems::POS_Y);
 	SetStatusText(wxT("Object: None (Erase)"), StatusItems::CURR_OBJECT);
 	SetStatusText(wxT("Brush: Height"), StatusItems::BRUSH_TYPE);
 	SetStatusText(wxT("Value: 0"), StatusItems::BRUSH_VALUE);
@@ -328,15 +336,15 @@ void MainWindow::init(string fname, wxString glest) {
 	glCanvas->SetCurrent();
 	program = new Program(glCanvas->GetClientSize().x, glCanvas->GetClientSize().y);
 
-	fileName = "New (unsaved) Map";
+	//fileName = "New (unsaved) Map";
 	if (!fname.empty() && fileExists(fname)) {
 		program->loadMap(fname);
 		currentFile = fname;
-		fileName = cutLastExt(basename(fname));
+		//fileName = cutLastExt(basename(fname));
 	}
 	this->glest = glest;
 	
-	SetTitle(ToUnicode(winHeader + "; " + currentFile));
+	SetTitle(windowCaption());
 	setDirty(false);
 	setExtension();
 	centreMap();
@@ -424,9 +432,9 @@ void MainWindow::setDirty(bool val) {
 	}
 	fileModified = val;
 	if (fileModified) {
-		SetStatusText(wxT("File: ") + ToUnicode(fileName) + wxT("*"), StatusItems::FILE_NAME);
+		SetTitle(wxT("*") + windowCaption());
 	} else {
-		SetStatusText(wxT("File: ") + ToUnicode(fileName), StatusItems::FILE_NAME);
+		SetTitle(windowCaption());
 	}
 }
 
@@ -439,12 +447,17 @@ void MainWindow::setExtension() {
 		currentFile = cutLastExt(currentFile);
 	}
 	if (Program::getMap()->getMaxFactions() <= 4) {
-		SetStatusText(wxT(".gbm"), StatusItems::FILE_TYPE);
+		//SetStatusText(wxT(".gbm"), StatusItems::FILE_TYPE);
 		currentFile += ".gbm";
 	} else {
-		SetStatusText(wxT(".mgm"), StatusItems::FILE_TYPE);
+		//SetStatusText(wxT(".mgm"), StatusItems::FILE_TYPE);
 		currentFile += ".mgm";
 	}
+}
+
+wxString MainWindow::windowCaption() const {
+	return ((currentFile.empty()) ? wxT("New (unsaved) Map") : ToUnicode(currentFile))
+		+ wxT(" - ") + ToUnicode(winHeader);
 }
 
 // WxGLCanvas::Refresh() is not working on windows, possibly because
@@ -485,6 +498,9 @@ void MainWindow::onMouseMove(wxMouseEvent &event, int x, int y) {
 		program->setOffset(x - lastX, y - lastY);
 		repaint = true;
 	} else {
+		Vec2i coords = program->getCellCoords(x, y);
+		SetStatusText(wxT("X: ") + ToUnicode(intToStr(coords.x)), StatusItems::POS_X);
+		SetStatusText(wxT("Y: ") + ToUnicode(intToStr(coords.y)), StatusItems::POS_Y);
 		int currResource = program->getResource(x, y);
 		if (currResource > 0) {
 			SetStatusText(wxT("Resource: ") + ToUnicode(resource_descs[currResource]), StatusItems::CURR_OBJECT);
@@ -520,9 +536,9 @@ void MainWindow::onMenuFileLoad(wxCommandEvent &event) {
 		if (fileDialog.ShowModal() == wxID_OK) {
 			currentFile = fileDialog.GetPath().ToAscii();
 			program->loadMap(currentFile);
-			fileName = cutLastExt(basename(currentFile));
+			//fileName = cutLastExt(basename(currentFile));
 			setExtension();
-			SetTitle(ToUnicode(winHeader + "; " + currentFile));
+			SetTitle(windowCaption());
 			centreMap();
 			setDirty(false);
 			setFactionCount();
@@ -548,10 +564,10 @@ void MainWindow::onMenuFileSaveAs(wxCommandEvent &event) {
 		currentFile = fileDialog.GetPath().ToAscii();
 		setExtension();
 		program->saveMap(currentFile);
-		fileName = cutLastExt(basename(currentFile));
+		//fileName = cutLastExt(basename(currentFile));
 		setDirty(false);
 	}
-	SetTitle(ToUnicode(winHeader + "; " + currentFile));
+	SetTitle(windowCaption());
 }
 
 void MainWindow::onMenuFileExit(wxCommandEvent &event) {
@@ -593,7 +609,7 @@ void MainWindow::onMenuEditReset(wxCommandEvent &event) {
 		wxMessageDialog(NULL, ToUnicode(e.what()), wxT("Exception"), wxOK | wxICON_ERROR).ShowModal();
 	}
 	currentFile = "";
-	fileName = "New (unsaved) map";
+	//fileName = "New (unsaved) map";
 
 	centreMap();
 	setDirty(false);
@@ -713,9 +729,18 @@ void MainWindow::onMenuMiscResetZoomAndPos(wxCommandEvent &event) {
 }
 
 void MainWindow::onMenuMiscAbout(wxCommandEvent &event) {
+	
+	string tmp = "Glest Map Editor " + versionString + " - Built: "	+ __DATE__
+		+ "\n\nCopyright 2004 The Glest Team"
+		+ "\n(with improvements by others, 2010)."
+		+ "\n\nThis program is free software; you can redistribute it and/or"
+		+ "\nmodify it under the terms of the GNU General Public License"
+		+ "\nas published by the Free Software Foundation; either version 2"
+		+ "\nof the License, or (at your option) any later version.";
+	
 	wxMessageDialog(
 		NULL,
-		wxT("Glest Map Editor - Copyright 2004 The Glest Team\n(with improvements by others, 2010)."),
+		wxString(tmp.c_str(), wxConvUTF8),
 		wxT("About")).ShowModal();
 }
 
