@@ -166,7 +166,9 @@ function(add_cppcheck _name)
 		foreach(_source ${_cppcheck_sources})
 			get_source_file_property(_cppcheck_lang "${_source}" LANGUAGE)
 			get_source_file_property(_cppcheck_loc "${_source}" LOCATION)
-			if("${_cppcheck_lang}" MATCHES "CXX")
+			if("${_cppcheck_lang}" MATCHES "CXX"
+					AND NOT ${_source} MATCHES ".+\\.h(pp)?$") # exclude header files, get included anyway
+
 				list(APPEND _files "${_cppcheck_loc}")
 			endif()
 		endforeach()
@@ -176,6 +178,22 @@ function(add_cppcheck _name)
 			list(APPEND _incs -I ${_inc})
 		endforeach(_inc)
 
+		get_property(_cppcheck_defs DIRECTORY PROPERTY COMPILE_DEFINITIONS)
+		foreach(_def ${_cppcheck_defs})
+			list(APPEND _defs "-D${_def}")
+		endforeach(_def ${_cppcheck_defs})
+
+		# get compiler pre-definitions as i don't care on linux about mac code in an included library header
+		# makes it much faster, but obviously lowers scope of check
+		if(CMAKE_COMPILER_IS_GNUCXX)
+			execute_process(COMMAND sh -c "g++ -dM -E - </dev/null"
+							COMMAND sed "s/#define /-D/;s/ /=/"
+							OUTPUT_VARIABLE _cppcheck_gcc_predefines
+			)
+			string(REPLACE "\n" ";" _predefs ${_cppcheck_gcc_predefines})
+			list(APPEND _defs ${_predefs})
+		endif(CMAKE_COMPILER_IS_GNUCXX)
+
 		if("1.${CMAKE_VERSION}" VERSION_LESS "1.2.8.0")
 			# Older than CMake 2.8.0
 			add_test(${_name}_cppcheck_test
@@ -184,8 +202,9 @@ function(add_cppcheck _name)
 				${_cppcheck_args}
 				${_files}
 				${_incs}
+				${_defs}
 				"-f"
-# 				"-j2"
+				"-j2"
 			)
 		else()
 			# CMake 2.8.0 and newer
@@ -197,8 +216,9 @@ function(add_cppcheck _name)
 				${_cppcheck_args}
 				${_files}
 				${_incs}
+				${_defs}
 				"-f"
-# 				"-j2"
+				"-j2"
 			)
 		endif()
 
