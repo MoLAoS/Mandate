@@ -142,6 +142,7 @@ public:
 	int getObject(int x, int y);
 	int getResource(int x, int y);
 	static const Map *getMap() {return map;}
+	Vec2i getCellCoords(int x, int y);
 };
 
 }// end namespace

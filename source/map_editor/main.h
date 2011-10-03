@@ -40,9 +40,8 @@ enum BrushType {
 };
 
 WRAPPED_ENUM( StatusItems,
-	NULL_ENTRY,
-	FILE_NAME,
-	FILE_TYPE,
+	POS_X,
+	POS_Y,
 	CURR_OBJECT,
 	BRUSH_TYPE,
 	BRUSH_VALUE,
@@ -171,7 +170,7 @@ private:
 	
 	ChangeType enabledGroup;
 
-	string fileName;
+	//string fileName;
 	bool fileModified;
 
 	wxString glest;
@@ -243,6 +242,8 @@ private:
 	void setFactionCount();
 
 	void centreMap();
+	
+	wxString windowCaption() const;
 };
 
 // =====================================================
