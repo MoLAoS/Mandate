@@ -176,6 +176,10 @@ int Program::getResource(int x, int y) {
 	}
 }
 
+Vec2i Program::getCellCoords(int x, int y) {
+	return Vec2i((x - offsetX) / cellSize, (y + offsetY) / cellSize);
+}
+
 void Program::glestChangeMapHeight(int x, int y, int Height, int radius) {
 	assert(map);
 	map->glestChangeHeight((x - offsetX) / cellSize, (y + offsetY) / cellSize, Height, radius);

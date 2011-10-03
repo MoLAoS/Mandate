@@ -875,7 +875,7 @@ CmdResult Unit::giveCommand(Command *command) {
 
 	if (ct->isQueuable() || command->isQueue()) { // user wants this queued...
 		// cancel current command if it is not queuable or marked to be queued
-		if(!commands.empty() && !commands.front()->getType()->isQueuable() && !command->isQueue()) {
+		if (!commands.empty() && !commands.front()->getType()->isQueuable() && !command->isQueue()) {
 			CMD_LOG( "incoming command wants queue, but current is not queable. Cancel current command" );
 			cancelCurrCommand();
 			clearPath();
@@ -1017,43 +1017,45 @@ CmdResult Unit::finishCommand() {
 
 /** cancel command on back of queue */
 CmdResult Unit::cancelCommand() {
-	// is empty?
-	if(commands.empty()){
+	unsigned int n = commands.size();
+	if (n == 0) { // is empty?
 		CMD_UNIT_LOG( this, "cancelCommand() No commands to cancel!");
 		return CmdResult::FAIL_UNDEFINED;
-	}
-
-	//undo command
-	const CommandType *ct = commands.back()->getType();
-	undoCommand(*commands.back());
-
-	//delete ans pop command
-	g_world.deleteCommand(commands.back());
-	commands.pop_back();
-
-	StateChanged(this);
-
-	//clear routes
-	clearPath();
-	
-	if (commands.empty()) {
-		CMD_UNIT_LOG( this, "current " << ct->getName() << " command cancelled.");
+	} else if (n == 1) { // back is front (single command)
+		CMD_UNIT_LOG( this, "cancelCommand() Only one command, cancelling current.");
+		return cancelCurrCommand();
 	} else {
-		CMD_UNIT_LOG( this, "a queued " << ct->getName() << " command cancelled.");
+		// undo command
+		const CommandType *ct = commands.back()->getType();
+		undoCommand(*commands.back());
+
+		// delete and pop command
+		g_world.deleteCommand(commands.back());
+		commands.pop_back();
+
+		StateChanged(this);
+
+		//clear routes
+		clearPath();
+		
+		//if (commands.empty()) {
+		//	CMD_UNIT_LOG( this, "current " << ct->getName() << " command cancelled.");
+		//} else {
+			CMD_UNIT_LOG( this, "a queued " << ct->getName() << " command cancelled.");
+		//}
+		return CmdResult::SUCCESS;
 	}
-	return CmdResult::SUCCESS;
 }
 
 /** cancel current command */
 CmdResult Unit::cancelCurrCommand() {
-	//is empty?
-	if(commands.empty()) {
+	if (commands.empty()) { // is empty?
 		CMD_UNIT_LOG( this, "cancelCurrCommand() No commands to cancel!");
 		return CmdResult::FAIL_UNDEFINED;
 	}
-
-	//undo command
+	// undo command
 	undoCommand(*commands.front());
+	systemStartFrame = -1;
 
 	Command *command = popCommand();
 
@@ -1069,7 +1071,12 @@ void Unit::removeCommands() {
 	if (!g_program.isTerminating() && World::isConstructed()) {
 		CMD_UNIT_LOG( this, "clearing all commands." );
 	}
+	cancelCurrCommand(); // undo current and clean-up 'system start' (in case casting/attacking)
 	while (!commands.empty()) {
+
+		///todo: should we undo() these ??
+		//  -silnarm 2-Oct-2011
+
 		g_world.deleteCommand(commands.back());
 		commands.pop_back();
 	}
@@ -2438,6 +2445,7 @@ void Unit::updateTarget(const Unit *target) {
 
 /** clear command queue */
 void Unit::clearCommands() {
+	cancelCurrCommand();
 	while (!commands.empty()) {
 		undoCommand(*commands.back());
 		g_world.deleteCommand(commands.back());
