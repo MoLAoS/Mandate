@@ -189,8 +189,15 @@ void UserInterface::init() {
 		m_luaConsole->Button1Clicked.connect(this, &UserInterface::onCloseLuaConsole);
 		m_luaConsole->Close.connect(this, &UserInterface::onCloseLuaConsole);
 	}
-	int y = m_resourceBar->getParent()->getPos().y + m_resourceBar->getParent()->getHeight() + 10;
-	int x = g_metrics.getScreenW() - 20 - 195;
+
+	int x, y;
+	if (m_resourceBar) {
+		y = m_resourceBar->getParent()->getPos().y + m_resourceBar->getParent()->getHeight() + 10;
+		x = g_metrics.getScreenW() - 20 - 195;
+	} else {
+		y = 20;
+		x = g_metrics.getScreenW() - 20 - 195;
+	}
 
 	// Display Panel
 	DisplayFrame *displayFrame = new DisplayFrame(this, Vec2i(x,y));
