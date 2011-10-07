@@ -457,7 +457,7 @@ void MainWindow::setExtension() {
 
 wxString MainWindow::windowCaption() const {
 	return ((currentFile.empty()) ? wxT("New (unsaved) Map") : ToUnicode(currentFile))
-		+ wxT(" - ") + ToUnicode(winHeader);
+		+ wxString(wxT(" - ")) + ToUnicode(winHeader);
 }
 
 // WxGLCanvas::Refresh() is not working on windows, possibly because
