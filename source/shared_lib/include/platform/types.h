@@ -46,9 +46,6 @@ namespace Shared { namespace Platform {
 	typedef long long int64;
 	typedef unsigned long long uint64;
 
-#	define strcasecmp stricmp
-#	define strtok_r(a,b,c) strtok(a,b)
-#	define log2(x) (log(float(x))/log(2.f))
 #endif
 
 #ifdef USE_SDL
@@ -73,8 +70,6 @@ namespace Shared { namespace Platform {
 	typedef Uint32 uint32;
 	typedef Sint64 int64;
 	typedef Uint64 uint64;
-
-#	define override
 #endif
 
 #ifdef USE_POSIX_SOCKETS
