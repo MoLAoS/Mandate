@@ -15,8 +15,14 @@
 #include <cmath>
 #include "vec.h"
 
-#if defined(WIN32) || defined(WIN64)
-	inline float roundf(float f) { return f > 0 ? floorf(f + 0.5f) : ceilf(f - 0.5f); }
+
+#ifdef __NEED_ROUND_FUNC
+	// TODO: validate these inlines
+	// pick your poison
+	inline double round(double d)	{return d > 0.  ? floor (d + 0.5)  : ceilf(d - 0.5 );}
+	inline float roundf(float f)	{return f > 0.f ? floorf(f + 0.5f) : ceilf(f - 0.5f);}
+	//inline double round(double d)	{double fl = floor(d); return (d - fl) >= 0.5  ? fl + 1.  : fl;}
+	//inline float roundf(float f)	{float  fl = floor(f); return (f - fl) >= 0.5f ? fl + 1.f : fl;}
 #endif
 
 namespace Shared { namespace Math {
