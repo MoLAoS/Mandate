@@ -29,7 +29,7 @@
 #		define SDL_BUTTON_X2		7
 #	endif
 #elif defined(WIN32)  || defined(WIN64)
-#	define NOMINMAX
+#	define NOMINMAX // see http://support.microsoft.com/kb/143208
 #	include <windows.h>
 #	ifndef VK_OEM_102
 #		define VK_OEM_102		0xE2

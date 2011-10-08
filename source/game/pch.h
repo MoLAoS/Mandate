@@ -41,7 +41,7 @@
 #	if _GAE_USE_XAUDIO2_
 #		include <xaudio2.h>
 #	endif
-#	define NOMINMAX
+#	define NOMINMAX // see http://support.microsoft.com/kb/143208
 #	include <windows.h>
 #	include <crtdbg.h>
 #	include <io.h>

@@ -20,7 +20,7 @@
 #	include <SDL_thread.h>
 #endif
 #if defined(WIN32)  || defined(WIN64)
-#	define NOMINMAX
+#	define NOMINMAX // see http://support.microsoft.com/kb/143208
 #	include <windows.h>
 #endif
 

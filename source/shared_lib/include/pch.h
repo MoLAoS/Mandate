@@ -33,7 +33,6 @@
 #	if defined (USE_SDL)
 #		error USE_SDL is not compatible with WIN32 or WIN64
 #	endif
-#	define NOMINMAX
 // new stuff
 #define _CRTDBG_MAP_ALLOC
 #include <malloc.h>
@@ -42,6 +41,7 @@
 #	if _GAE_USE_XAUDIO2_
 #		include <xaudio2.h>
 #	endif
+#	define NOMINMAX // see http://support.microsoft.com/kb/143208
 #	include <windows.h>
 #	include <crtdbg.h>
 #else
