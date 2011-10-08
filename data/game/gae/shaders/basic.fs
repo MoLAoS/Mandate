@@ -29,7 +29,7 @@ void main() {
 	colour = vec4(lightColour * colour.rgb, meshAlpha * colour.a);
 	
 	// below alpha threshold ?
-	if (colour.a < gae_AlphaThreshold) {
+	if (meshAlpha == 1.0 && colour.a < gae_AlphaThreshold) {
 		discard;
 	}
 	gl_FragColor = mix(gl_Fog.color, colour, fogFactor);
