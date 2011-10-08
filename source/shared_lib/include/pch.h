@@ -13,6 +13,7 @@
 #	define USE_PCH 0
 #endif
 #include "projectConfig.h"
+#include "lang_features.h"
 
 #ifndef _SHARED_PCH_H_
 #define _SHARED_PCH_H_
@@ -57,7 +58,6 @@
 
 // some local headers of importance
 #include "types.h"
-#include "lang_features.h"
 #include "profiler.h"
 
 // POSIX base
