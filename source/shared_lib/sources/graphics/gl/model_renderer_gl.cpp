@@ -63,7 +63,7 @@ ModelRendererGl::~ModelRendererGl() {
 }
 
 GlslProgram* ModelRendererGl::loadShader(const string &dir, const string &name) {
-	if (isGlVersionSupported(2, 0, 0)) {
+	if (isGlVersionSupported(2, 0, 0) && !name.empty()) {
 		string vertPath = dir + "/" + name + ".vs";
 		string fragPath = dir + "/" + name + ".fs";
 		GlslProgram *shaderProgram = new GlslProgram(name);
@@ -118,6 +118,7 @@ void ModelRendererGl::setShader(const string &name) {
 	} else {
 		m_shaderIndex = -1;
 	}
+	assertGl();
 }
 
 void ModelRendererGl::initUniformHandles(ShaderProgram *shader) {
