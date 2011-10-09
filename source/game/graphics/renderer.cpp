@@ -1127,6 +1127,7 @@ void Renderer::renderUnits() {
 			if (m_teamColourMode == TeamColourMode::OUTLINE || m_teamColourMode == TeamColourMode::BOTH) {
 				modelRenderer->renderOutlined(model, 4, modelRenderer->getTeamColour(), alpha, frame, id, shader);
 			} else {
+				modelRenderer->setAlphaThreshold(alphaThreshold);
 				modelRenderer->render(model, alpha, frame, id, shader);
 			}
 
