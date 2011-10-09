@@ -18,7 +18,6 @@
 #include "core_data.h"
 #include "metrics.h"
 #include "lang.h"
-#include "components.h"
 
 #include "leak_dumper.h"
 #include "world.h"

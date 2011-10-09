@@ -20,7 +20,6 @@
 #include "renderer.h"
 #include "main_menu.h"
 #include "sound_renderer.h"
-#include "components.h"
 #include "metrics.h"
 #include "stats.h"
 

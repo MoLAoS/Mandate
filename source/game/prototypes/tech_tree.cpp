@@ -21,7 +21,6 @@
 #include "xml_parser.h"
 #include "platform_util.h"
 #include "program.h"
-#include "components.h"
 
 #include "leak_dumper.h"
 #include "profiler.h"

@@ -156,7 +156,7 @@ void MainMenu::keyPress(char c) {
 void MainMenu::setState(MenuState *state) {
 	delete this->state;
 	this->state = state;
-	GraphicComponent::resetFade();
+	//GraphicComponent::resetFade();
 
 	if (setCameraOnSetState) {
 		menuBackground.setTargetCamera(&stateCameras[state->getIndex()]);

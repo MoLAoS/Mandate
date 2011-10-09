@@ -17,7 +17,6 @@
 #include "texture_gl.h"
 #include "main_menu.h"
 #include "config.h"
-#include "components.h"
 #include "time_flow.h"
 #include "graphics_interface.h"
 #include "object.h"
