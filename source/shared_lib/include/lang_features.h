@@ -392,14 +392,16 @@ inline char *strtok_r(char *str, const char *delim, char **saveptr) {return strt
 
 #ifdef REALLY_GNUC
 #	ifdef __GXX_RTTI
-#		warning "Warning: you have RTTI enabled, which is not used and will only inflate your code"
+#		define __RTTI_ENABLED
+//#		warning "Warning: you have RTTI enabled, which is not used and will only inflate your code"
 #	endif
 #	ifndef __EXCEPTIONS
 #		warning "Warning: you have disabled exceptions and this program uses them."
 #	endif
 #elif defined(__INTEL_COMPILER)
 #	ifdef __INTEL_RTTI__ && __INTEL_RTTI__ == 1
-#		warning "Warning: you have RTTI enabled, which is not used and will only inflate your code"
+#		define __RTTI_ENABLED
+//#		warning "Warning: you have RTTI enabled, which is not used and will only inflate your code"
 #	endif
 #	ifndef __EXCEPTIONS
 #		warning "Warning: you have disabled exceptions and this program uses them."
@@ -407,7 +409,7 @@ inline char *strtok_r(char *str, const char *delim, char **saveptr) {return strt
 #elif defined(_MSC_FULL_VER)
 #	ifdef _CPPRTTI
 #		define __RTTI_ENABLED
-#		pragma message( "Warning: you have RTTI enabled, which is not used and will only inflate your code" )
+//#		pragma message( "Warning: you have RTTI enabled, which is not used and will only inflate your code" )
 #	endif
 #	ifndef _CPPUNWIND
 #		define __EXCEPTIONS_DISABLED
