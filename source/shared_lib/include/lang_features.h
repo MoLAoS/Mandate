@@ -243,7 +243,7 @@
 #		define CXX11_UNRESTRICTED_UNIONS
 #		define CXX11_NOEXCEPT
 #	endif
-#	if GCC_FULL_VERSION > 40700
+#	if GCC_FULL_VERSION > 40700 (beta)
 #		define CXX11_OVERRIDE_AND_FINAL
 #		define CXX11_IN_CLASS_MEMBER_INITIALIZERS
 #		define CXX11_EXTENDED_FRIENDS
@@ -284,7 +284,7 @@
 #		define CXX11_RVALUE_REFERENCES_20
 #		define CXX11_EXCEPTION_PTR
 #	endif
-#	if _MSC_VER >= 1700 // MSVC v11.0 (??)
+#	if _MSC_VER >= 1700 // MSVC v11.0 (not yet released)
 #		define CXX11_DECLTYPE_11
 #		define CXX11_RVALUE_REFERENCES_21
 #	endif
@@ -329,7 +329,7 @@
 #endif
 #endif // defined(CXX11_ENABLED)
 
-#if 0 // C++11features not in any of our compilers
+#if 0 // C++11 features not in any of our compilers
 #	define CXX11_BUILTIN_TYPE_TRAITS
 #	define CXX11_INHERITED_CONSTRUCTORS
 #	define CXX11_THREAD_LOCAL_STORAGE
@@ -365,8 +365,6 @@
  * Add function aliases as needed
  */
 
-#include <cmath>
-
 #if defined(_MSC_VER)
 	// TODO: this needs a better check to make sure we don't already have it in some form
 #	define __NEED_ROUND_FUNC
@@ -382,8 +380,10 @@
 /* strtok in msvcrt uses TLS for thread safety and can therefore be aliased to strtok omitting the
  * POSIX-defined saveptr parameter of strtok_r.  The same is true for HP-UX's libc.*/
 #if defined(_MSC_VER) || defined(_HPUX)
-//#	define strtok_r(a,b,c)			strtok(a,b)
-inline char *strtok_r(char *str, const char *delim, char **saveptr) {return strtok(str, delim);}
+#	define strtok_r(a,b,c)			strtok(a,b)
+// An inline is better, but we can't be sure strtok has been declared yet :(  Maybe these function
+// alisas and inlines should get moved elsewhere, but the check for their need remain here?
+//inline char *strtok_r(char *str, const char *delim, char **saveptr) {return strtok(str, delim);}
 #endif
 
 /**************************************************************************************************
