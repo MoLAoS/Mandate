@@ -19,6 +19,8 @@
 // This tells the macros in util.h to instantiate EnumNames objects, rather than just declare them extern
 #define GAME_CONSTANTS_DEF
 
+#include "lang_features.h"
+
 #include "game_constants.h"
 #include "simulation_enums.h"
 #include "input_enums.h"
