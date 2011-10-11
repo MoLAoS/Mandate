@@ -33,6 +33,10 @@ set(test_srcs
 	facilities/reverse_rect_iter_test.h
 )
 
+if(CMAKE_CXX_FLAGS MATCHES -fno-rtti)
+	string(REPLACE -fno-rtti "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+endif()
+
 include_directories(${glestshared_incs} ${game_incs} ${CPPUNIT_INCLUDE_DIR})
 add_executable(test_suite ${test_srcs})
 
