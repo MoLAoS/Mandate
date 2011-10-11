@@ -12,6 +12,7 @@
 #ifndef _GAME_PCH_H_
 #define _GAME_PCH_H_
 
+#include "lang_features.h"
 #include "projectConfig.h"
 
 // some local headers of importance
