@@ -47,7 +47,9 @@
 #	define REALLY_GNUC 1
 #	define GCC_FULL_VERSION (__GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNUC_PATCHLEVEL__)
 # else /* just to be safe... */
-#	define REALLY_GNUC 0
+#	ifdef REALLY_GNUC
+#		undef REALLY_GNUC
+#	endif
 #	undef GCC_FULL_VERSION
 #endif
 
