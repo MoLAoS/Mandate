@@ -165,7 +165,7 @@ private:
 	//
 
 	// unit trigger helper...
-	static void doUnitTrigger(int id, string &cond, string &evnt, int ud);
+	static void doUnitTrigger(int id, const string &cond, const string &evnt, int ud);
 
 	// Timers, Triggers, Events...
 	static int setTimer(LuaHandle* luaHandle);			// Game.setTimer()
@@ -215,6 +215,12 @@ private:
 	static int findLocationForBuilding(LuaHandle* luaHandle);
 	static int findResourceLocation(LuaHandle* luaHandle);
 
+	// ditto ... and should be one getPlayer() and then [with player = getPlayer(0);] ndx = player:getIndex(); col = player:getColour(), etc
+	static int getPlayerCount(LuaHandle* luaHandle);
+	static int getHumanPlayerIndex(LuaHandle* luaHandle);
+	static int getPlayerName(LuaHandle* luaHandle);
+	static int getPlayerTeam(LuaHandle* luaHandle);
+	static int getPlayerColour(LuaHandle* luaHandle);
 
 	// game flow
 	static int setPlayerAsWinner(LuaHandle* luaHandle);		// Faction:setWinnerFlag()

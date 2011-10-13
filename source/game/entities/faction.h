@@ -63,6 +63,7 @@ public:
 // 	factionColours
 // =====================================================
 
+extern string factionColourStrings[GameConstants::maxColours];
 extern Colour factionColours[GameConstants::maxColours];
 extern Colour factionColoursOutline[GameConstants::maxColours];
 

@@ -36,6 +36,13 @@ namespace Glest { namespace Entities {
 
 using ProtoTypes::UnitType;
 
+string factionColourStrings[GameConstants::maxColours] = {
+	"red", "green", "blue", "yellow", 
+	"cyan", "orange", "pink", "white", 
+	"maroon", "forest", "navy", "mint", 
+	"teal", "brown", "purple", "sky"
+};
+
 // faction colours, in RGBA format
 Colour factionColours[GameConstants::maxColours] = {
 
