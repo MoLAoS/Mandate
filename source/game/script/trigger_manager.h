@@ -20,7 +20,6 @@
 #include "vec.h"
 #include "timer.h"
 
-//#include "components.h"
 #include "logger.h"
 
 #include "game_constants.h"

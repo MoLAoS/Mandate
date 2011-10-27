@@ -16,7 +16,6 @@
 #include "platform_util.h"
 #include "socket.h"
 #include "metrics.h"
-#include "components.h"
 #include "keymap.h"
 #include "CmdArgs.h"
 #include "forward_decs.h"

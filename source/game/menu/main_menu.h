@@ -17,7 +17,6 @@
 #include "vec.h"
 #include "world.h"
 #include "program.h"
-#include "components.h"
 #include "menu_background.h"
 #include "game_settings.h"
 #include "widgets.h"

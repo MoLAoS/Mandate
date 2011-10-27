@@ -12,6 +12,10 @@
 #include "pch.h"
 #include "pixmap.h"
 
+#ifndef Z_DEFAULT_COMPRESSION
+#   include "zlib.h"
+#endif
+
 #include <stdexcept>
 #include <cstdio>
 #include <cassert>
