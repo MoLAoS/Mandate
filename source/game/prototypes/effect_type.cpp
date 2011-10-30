@@ -279,7 +279,7 @@ void EffectType::getDesc(string &str) const {
 	str += g_lang.getFactionString(getFactionType()->getName(), getName());
 
 	// effected units
-	if (isEffectsPetsOnly() || !isEffectsFoe() || !isEffectsAlly()) {
+	if (isEffectsPetsOnly() || isEffectsFoe() || isEffectsAlly()) {
 		str += "\n   " + g_lang.get("Affects") + ": ";
 		if (isEffectsPetsOnly()) {
 			str += g_lang.get("PetsOnly");
