@@ -101,15 +101,21 @@ void BackgroundStyle::setTexture(int imageIndex) {
 	m_imageIndex = imageIndex;
 }
 
-
 TextStyle::TextStyle() {
 	memset(this, 0, sizeof(*this));
+	m_smallFontIndex = m_largeFontIndex = -1;
 }
 
 void TextStyle::setNormal(int fontIndex, int colourIndex) {
+	m_fontIndex = fontIndex;
+	m_colourIndex = colourIndex;
 }
 
 void TextStyle::setShadow(int fontIndex, int colourIndex, int shadowColourIndex) {
+	m_fontIndex = fontIndex;
+	m_colourIndex = colourIndex;
+	m_shadowColourIndex = shadowColourIndex;
+	m_shadow = true;
 }
 
 

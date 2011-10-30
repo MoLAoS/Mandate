@@ -203,11 +203,13 @@ void WidgetConfig::setOverlayTexture(const string &type, const string &name) {
 void WidgetConfig::loadFont(const string &name, const string &path, int size) {
 	Font *font = g_renderer.newFreeTypeFont(ResourceScope::GLOBAL);
 	font->setType(path);
-	font->setSize(computeFontSize(size));
+	int scaled_size = computeFontSize(size);
+	font->setSize(scaled_size);
 	m_requestedFontSizes[font] = size;
 	m_fonts.push_back(font);
 	m_namedFonts[name] = m_fonts.size() - 1;
-	WIDGET_LOG( "adding font named '" << name << "' from path '" << path << "' @ size: " << size );
+	WIDGET_LOG( "adding font named '" << name << "' from path '" << path << "' @ size (requested): " << size 
+		<< " (scaled size = " << scaled_size << ")" );
 }
 
 void WidgetConfig::reloadFonts() {
