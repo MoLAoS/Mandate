@@ -232,6 +232,19 @@ public:
 
 	FontPtr getFont(int ndx) const;
 	FontPtr getFont() const { return getFont(m_textStyle.m_fontIndex); }
+	FontPtr getSmallFont() const {
+		if (m_textStyle.m_smallFontIndex != -1) { 
+			return getFont(m_textStyle.m_smallFontIndex);
+		}
+		return getFont();
+	}
+	FontPtr getBigFont() const {
+		if (m_textStyle.m_largeFontIndex != -1) { 
+			return getFont(m_textStyle.m_largeFontIndex);
+		}
+		return getFont();
+	}
+
 	TexPtr  getTexture(int ndx) const;
 	Colour  getColour(int ndx) const;
 

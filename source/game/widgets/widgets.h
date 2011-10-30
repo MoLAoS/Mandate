@@ -351,7 +351,7 @@ public:
 // =====================================================
 
 /** Simple container coupling (horizontally) a label (StaticText) with a user supplied 'option' widget.
-  * Splits space 40/60 (label/option) use setPercentSplit() or setAbsoluteSplt() to chnage.
+  * Splits space 40/60 (label/option) use setPercentSplit() or setAbsoluteSplt() to change.
   */
 class OptionWidget : public CellStrip {
 public:

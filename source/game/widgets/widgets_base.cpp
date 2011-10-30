@@ -1084,8 +1084,8 @@ void TextWidget::renderTextShadowed(int ndx) {
 	Colour shadowColour = cfg.getColour(m_texts[ndx].m_shadowColour);
 	colour.a = uint8(clamp(unsigned(colour.a * me->getFade() * m_texts[ndx].m_fade), 0u, 255u));
 	shadowColour.a = uint8(clamp(unsigned(shadowColour.a * me->getFade() * m_texts[ndx].m_fade), 0u, 255u));
-	renderText(m_texts[ndx].m_text, sPos.x, sPos.y, shadowColour);
-	renderText(m_texts[ndx].m_text, pos.x, pos.y, colour);
+	renderText(m_texts[ndx].m_text, sPos.x, sPos.y, shadowColour, m_texts[ndx].m_font);
+	renderText(m_texts[ndx].m_text, pos.x, pos.y, colour, m_texts[ndx].m_font);
 }
 
 void TextWidget::renderTextDoubleShadowed(int ndx) {
@@ -1100,9 +1100,9 @@ void TextWidget::renderTextDoubleShadowed(int ndx) {
 	colour.a = uint8(clamp(unsigned(colour.a * me->getFade() * m_texts[ndx].m_fade), 0u, 255u));
 	shadowColour.a = uint8(clamp(unsigned(shadowColour.a * me->getFade() * m_texts[ndx].m_fade), 0u, 255u));
 	shadowColour2.a = uint8(clamp(unsigned(shadowColour2.a * me->getFade() * m_texts[ndx].m_fade), 0u, 255u));
-	renderText(m_texts[ndx].m_text, sPos2.x, sPos2.y, shadowColour2);
-	renderText(m_texts[ndx].m_text, sPos1.x, sPos1.y, shadowColour);
-	renderText(m_texts[ndx].m_text, pos.x, pos.y, colour);
+	renderText(m_texts[ndx].m_text, sPos2.x, sPos2.y, shadowColour2, m_texts[ndx].m_font);
+	renderText(m_texts[ndx].m_text, sPos1.x, sPos1.y, shadowColour, m_texts[ndx].m_font);
+	renderText(m_texts[ndx].m_text, pos.x, pos.y, colour, m_texts[ndx].m_font);
 }
 
 Vec2i TextWidget::getTextDimensions() const {
