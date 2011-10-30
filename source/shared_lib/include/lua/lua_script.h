@@ -109,13 +109,16 @@ private:
 //	class LuaArguments
 // =====================================================
 
-// class LuaStack
-
+// class LuaStack // better name?
 class LuaArguments {
 private:
 	lua_State *luaState;
 	int returnCount;
-	int args;
+	int argCount;
+
+	bool returnInTable;
+	int returnInTableCount;
+	int returnTableIndex;
 
 public:
 	LuaArguments(lua_State *luaState);
@@ -129,7 +132,10 @@ public:
 	Vec4i getVec4i(int argumentIndex) const;
 	StringSet getStringSet(int ndx) const;
 	int getReturnCount() const					{return returnCount;}
-	int getArgumentCount() const				{return args;}
+	int getArgumentCount() const				{return argCount;}
+
+	void startReturnTable();
+	void endReturnTable();
 
 	void returnInt(int value);
 	void returnString(const string &value);

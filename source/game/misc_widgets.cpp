@@ -294,7 +294,7 @@ void OptionPanel::setSize(const Vec2i &sz) {
 		setSizeHint(1, m_scrollSizeHint);
 		m_scrollBar->setVisible(true);
 		m_scrollBar->setRanges(req_h, sz.h - getBordersVert());
-		m_scrollBar->setThumbPos(m_scrollOffset);
+		m_scrollBar->setThumbPos(float(m_scrollOffset));
 	} else {
 		setSizeHint(1, m_noScrollSizeHint);
 		m_scrollBar->setVisible(false);
@@ -320,7 +320,7 @@ void OptionPanel::onHeadingClicked(Widget *widget) {
 	ListBoxItem *heading = static_cast<ListBoxItem*>(widget);
 	// need to set to start so the heading position is accurate
 	setScrollPosition(0);
-	setScrollPosition(m_headings[heading->getText()]->getPos().y);
+	setScrollPosition(float(m_headings[heading->getText()]->getPos().y));
 }
 
 ListBoxItem* OptionPanel::addHeading(OptionPanel* headingPnl, const string &txt) {

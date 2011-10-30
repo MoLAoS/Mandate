@@ -95,6 +95,8 @@ int getWaterLevel(LuaHandle *luaHandle);
 
 int setTime(LuaHandle *luaHandle);
 
+int returnTableTest(LuaHandle *luaHandle);
+
 void ScriptManager::initGame() {
 	const Scenario*	scenario = g_world.getScenario();
 
@@ -117,6 +119,10 @@ void ScriptManager::initGame() {
 	LUA_FUNC(getTileHeight);
 	LUA_FUNC(getWaterLevel);
 	LUA_FUNC(setTime);
+
+	LUA_FUNC(returnTableTest);
+
+
 
 	// AI helpers
 	LUA_FUNC(initSurveyor);
@@ -259,6 +265,17 @@ void ScriptManager::initGame() {
 	} else {
 		addErrorMessage("Warning, no startup script defined", true);
 	}
+}
+
+int returnTableTest(LuaHandle *l) {
+	LuaArguments args(l);
+
+	args.startReturnTable();
+		args.returnString("What is the meaning of life?");
+		args.returnInt(42);
+	args.endReturnTable();
+
+	return args.getReturnCount();
 }
 
 int setTime(LuaHandle *l) {

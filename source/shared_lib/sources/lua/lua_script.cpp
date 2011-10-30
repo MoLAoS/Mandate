@@ -355,8 +355,11 @@ bool LuaScript::checkType(LuaType type, int ndx) const {
 
 LuaArguments::LuaArguments(lua_State *luaState) {
 	this->luaState= luaState;
-	args = lua_gettop(luaState);
+	argCount = lua_gettop(luaState);
 	returnCount= 0;
+	returnInTable = false;
+	returnInTableCount = 0;
+	returnTableIndex = 0;
 }
 
 /* Better LUA error handling, if one of these fail then an attempt to call a C++ function
@@ -480,32 +483,74 @@ StringSet LuaArguments::getStringSet(int ndx) const {
 	return res;
 }
 
-void LuaArguments::returnInt(int value){
+void LuaArguments::startReturnTable() {
+	if (returnInTable) {
+		throw runtime_error("error: attempt to return table within table to lua, not currently supported.");
+	}
+	returnInTable = true;
+	lua_newtable(luaState);
+	returnTableIndex = lua_gettop(luaState);
 	++returnCount;
-	lua_pushinteger(luaState, value);
+}
+
+void LuaArguments::endReturnTable() {
+	if (!returnInTable) {
+		throw runtime_error("error: LuaArguments::endReturnTable() called without matching LuaArguments::startReturnTable().");
+	}
+	returnInTable = false;
+	returnTableIndex = 0;
+	returnInTableCount = 0;
+}
+
+void LuaArguments::returnInt(int value) {
+	if (returnInTable) {
+		++returnInTableCount;
+		lua_pushinteger(luaState, value);
+		lua_rawseti(luaState, -2, returnInTableCount);
+	} else {
+		++returnCount;
+		lua_pushinteger(luaState, value);
+	}
 }
 
 void LuaArguments::returnString(const string &value){
-	++returnCount;
-	lua_pushstring(luaState, value.c_str());
+	if (returnInTable) {
+		++returnInTableCount;
+		lua_pushstring(luaState, value.c_str());
+		lua_rawseti(luaState, -2, returnInTableCount);
+	} else {
+		++returnCount;
+		lua_pushstring(luaState, value.c_str());
+	}
 }
 
 void LuaArguments::returnVec2i(const Vec2i &value){
-	++returnCount;
-
+	if (returnInTable) {
+		++returnInTableCount;
+	} else {
+		++returnCount;
+	}
 	lua_newtable(luaState);
-
 	lua_pushnumber(luaState, value.x);
 	lua_rawseti(luaState, -2, 1);
-
 	lua_pushnumber(luaState, value.y);
 	lua_rawseti(luaState, -2, 2);
+	if (returnInTable) {
+		lua_rawseti(luaState, -2, returnInTableCount);
+	}
 }
 
 void LuaArguments::returnBool(bool value){
-	++returnCount;
-	lua_pushboolean(luaState, value);
+	if (returnInTable) {
+		++returnInTableCount;
+		lua_pushboolean(luaState, value);
+		lua_rawseti(luaState, -2, returnInTableCount);
+	} else {
+		++returnCount;
+		lua_pushboolean(luaState, value);
+	}
 }
+
 
 const char* LuaArguments::getType(int ndx) const {
 	if (lua_isnumber(luaState, ndx)) {
@@ -576,7 +621,7 @@ string LuaArguments::descArgPos(int ndx) const {
 	if (ndx > 0) {
 		return intToStr(ndx);
 	}
-	return intToStr(args + 1 + ndx);
+	return intToStr(argCount + 1 + ndx);
 }
 
 }}//end namespace
