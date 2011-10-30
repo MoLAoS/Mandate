@@ -150,6 +150,8 @@ class MinimapFrame : public Frame {
 private:
 	Minimap  *m_minimap;
 
+	void doEnableShrinkExpand(MinimapSize sz);
+
 	void onExpand(Widget*);
 	void onShrink(Widget*);
 

@@ -123,14 +123,7 @@ void MinimapFrame::initMinimp(int w, int h, const World *world, bool resumingGam
 	Shrink.connect(this, &MinimapFrame::onShrink);
 }
 
-void MinimapFrame::onExpand(Widget*) {
-	assert(m_minimap->getMinimapSize() != MinimapSize::LARGE);
-	MinimapSize sz = m_minimap->getMinimapSize();
-	cout << "MinimapFrame::onExpand() : current size: " << sz << ", new size ";
-	++sz;
-	cout << sz << endl;
-
-	m_minimap->setMinimapSize(sz);
+void MinimapFrame::doEnableShrinkExpand(MinimapSize sz) {
 	switch (sz) {
 		case MinimapSize::LARGE:
 			enableShrinkExpand(true, false);
@@ -143,6 +136,17 @@ void MinimapFrame::onExpand(Widget*) {
 			break;
 		default: assert(false);
 	}
+}
+
+void MinimapFrame::onExpand(Widget*) {
+	assert(m_minimap->getMinimapSize() != MinimapSize::LARGE);
+	MinimapSize sz = m_minimap->getMinimapSize();
+	cout << "MinimapFrame::onExpand() : current size: " << sz << ", new size ";
+	++sz;
+	cout << sz << endl;
+
+	m_minimap->setMinimapSize(sz);
+	doEnableShrinkExpand(sz);
 	Vec2i size = m_minimap->getSize() + getBordersAll() + Vec2i(0, 20);
 	setSize(size);
 }
@@ -154,18 +158,7 @@ void MinimapFrame::onShrink(Widget*) {
 	--sz;
 	cout << sz << endl;
 	m_minimap->setMinimapSize(sz);
-	switch (sz) {
-		case MinimapSize::LARGE:
-			enableShrinkExpand(true, false);
-			break;
-		case MinimapSize::MEDIUM:
-			enableShrinkExpand(true, true);
-			break;
-		case MinimapSize::SMALL:
-			enableShrinkExpand(false, true);
-			break;
-		default: assert(false);
-	}
+	doEnableShrinkExpand(sz);
 	Vec2i size = m_minimap->getSize() + getBordersAll() + Vec2i(0, 20);
 	setSize(size);
 }
