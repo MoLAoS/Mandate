@@ -36,18 +36,23 @@ using Glest::ProtoTypes::ResourceType;
 
 class ResourceBar : public Widget, public MouseWidget, public ImageWidget, public TextWidget {
 private:
-	const Faction *m_faction;
+	const Faction*              m_faction;
 	vector<const ResourceType*> m_resourceTypes;
-	vector<string> m_headerStrings;
-	bool m_draggingWidget;
+	vector<string>              m_headerStrings;
+
+	int   m_iconSize;
+	bool  m_draggingWidget;
 	Vec2i m_moveOffset;
-	int m_updateCounter;
+	int   m_updateCounter;
 
 public:
 	ResourceBar(Container *parent); ///@todo (ResourceBarFrame *parent)
 	~ResourceBar();
 
 	void init(const Faction *faction, std::set<const ResourceType*> &types);
+	void reInit(int iconSize);
+
+	int getIconSize() const { return m_iconSize; }
 
 	virtual void update() override;
 	virtual void render() override;
@@ -65,6 +70,9 @@ public:
 class ResourceBarFrame : public Frame {
 private:
 	ResourceBar *m_resourceBar;
+
+
+	void doEnableShrinkExpand(int sz);
 
 	void onExpand(Widget*);
 	void onShrink(Widget*);

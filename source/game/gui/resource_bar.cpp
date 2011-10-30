@@ -49,10 +49,9 @@ ResourceBarFrame::ResourceBarFrame()
 		Anchor(AnchorType::NONE, 0), Anchor(AnchorType::NONE, 0));
 	m_resourceBar ->setAnchors(a);
 
-	m_titleBar->enableShrinkExpand(false, false);
 	Expand.connect(this, &ResourceBarFrame::onExpand);
 	Shrink.connect(this, &ResourceBarFrame::onShrink);
-
+	doEnableShrinkExpand(16);
 	setPinned(g_config.getUiPinWidgets());
 }
 
@@ -61,10 +60,35 @@ void ResourceBarFrame::setPinned(bool v) {
 	m_titleBar->showShrinkExpand(!v);
 }
 
+void ResourceBarFrame::doEnableShrinkExpand(int sz) {
+	switch (sz) {
+		case 16:
+			enableShrinkExpand(false, true);
+			break;
+		case 24:
+			enableShrinkExpand(true, true);
+			break;
+		case 32:
+			enableShrinkExpand(true, false);
+			break;
+		default: assert(false);
+	}
+}
+
 void ResourceBarFrame::onExpand(Widget*) {
+	int sz = m_resourceBar->getIconSize();
+	assert(sz == 16 || sz == 24);
+	sz += 8;
+	m_resourceBar->reInit(sz);
+	doEnableShrinkExpand(sz);
 }
 
 void ResourceBarFrame::onShrink(Widget*) {
+	int sz = m_resourceBar->getIconSize();
+	assert(sz == 32 || sz == 24);
+	sz -= 8;
+	m_resourceBar->reInit(sz);
+	doEnableShrinkExpand(sz);
 }
 
 // =====================================================
@@ -77,10 +101,93 @@ ResourceBar::ResourceBar(Container *parent)
 		, ImageWidget(this)
 		, TextWidget(this)
 		, m_faction(0)
+		, m_iconSize(16)
 		, m_moveOffset(0)
 		, m_draggingWidget(false)
 		, m_updateCounter(0) {
 	setWidgetStyle(WidgetType::RESOURCE_BAR);
+}
+
+void ResourceBar::reInit(int iconSize) {
+	m_iconSize = iconSize;
+
+	const int padding = m_iconSize / 4;
+	const int imgAndPad = m_iconSize + padding;
+
+	const Font *font;
+	int fontIndex = -1;
+	if (iconSize == 16) {
+		font = getSmallFont();
+		fontIndex = m_textStyle.m_smallFontIndex != -1 ? m_textStyle.m_smallFontIndex : m_textStyle.m_fontIndex;
+	} else if (iconSize == 32) {
+		font = getBigFont();
+		fontIndex = m_textStyle.m_largeFontIndex != -1 ? m_textStyle.m_largeFontIndex : m_textStyle.m_fontIndex;
+	} else {
+		assert(iconSize == 24);
+		font = getFont();
+		fontIndex = m_textStyle.m_fontIndex;
+	}
+	const FontMetrics *fm = font->getMetrics();
+
+	vector<int> reqWidths;
+	int total_req = 0, i = 0;;
+	foreach_const (vector<const ResourceType*>, it, m_resourceTypes) {
+		int w;
+		if ((*it)->getClass() == ResourceClass::CONSUMABLE) {
+			w = imgAndPad + int(fm->getTextDiminsions(m_headerStrings[i] + "8000/80000 (8000)").w);
+		} else if ((*it)->getClass() == ResourceClass::STATIC) {
+			w = imgAndPad + int(fm->getTextDiminsions(m_headerStrings[i] + "80000").w);
+		} else {
+			w = imgAndPad + int(fm->getTextDiminsions(m_headerStrings[i] + "80000/800000").w);
+		}
+		total_req += w;
+		reqWidths.push_back(w);
+		++i;
+	}
+	int max_width = g_metrics.getScreenW() - imgAndPad - m_parent->getBordersHoriz();
+	if (total_req < max_width) {
+		// single row
+		setSize(Vec2i(total_req, imgAndPad));
+		m_parent->setSize(Vec2i(total_req + m_parent->getBordersHoriz(), 20 + imgAndPad + m_parent->getBordersVert()));
+
+		int x_pos = 5, y_pos = padding / 2;
+		for (int i=0; i < m_resourceTypes.size(); ++i) {
+			setImageX(0, i, Vec2i(x_pos, y_pos), Vec2i(m_iconSize, m_iconSize));
+			setTextPos(Vec2i(x_pos + imgAndPad, y_pos), i);
+			setTextFont(fontIndex, i);
+			x_pos += reqWidths[i];
+		}
+	} else {
+		// multi row (only 2 for now)
+		///@todo support more than 2 rows?
+		int width1 = 0, width2 = 0;
+		int stopAt = (reqWidths.size() + 1) / 2;
+		for (int i=0; i < stopAt; ++i) {
+			width1 += reqWidths[i];
+		}
+		for (int i=stopAt; i < reqWidths.size(); ++i) {
+			width2 += reqWidths[i];
+		}
+		setSize(Vec2i(std::max(width1, width2), imgAndPad * 2));
+		Vec2i pSize(std::max(width1, width2) + m_parent->getBordersHoriz(), 20 + imgAndPad * 2 + m_parent->getBordersVert());
+		m_parent->setSize(pSize);
+
+		int x_pos = 5, y_pos = imgAndPad + padding / 2;
+		for (int i=0; i < stopAt; ++i) {
+			setImageX(0, i, Vec2i(x_pos, y_pos), Vec2i(m_iconSize, m_iconSize));
+			setTextPos(Vec2i(x_pos + imgAndPad, y_pos), i);
+			setTextFont(fontIndex, i);
+			x_pos += reqWidths[i];			
+		}
+		x_pos = 5, y_pos = padding / 2;
+		for (int i=stopAt; i < reqWidths.size(); ++i) {
+			setImageX(0, i, Vec2i(x_pos, y_pos), Vec2i(m_iconSize, m_iconSize));
+			setTextPos(Vec2i(x_pos + imgAndPad, y_pos), i);
+			setTextFont(fontIndex, i);
+			x_pos += reqWidths[i];			
+		}
+	}
+	m_parent->setPos(Vec2i(g_metrics.getScreenW() / 2 - m_parent->getWidth() / 2, 5));
 }
 
 void ResourceBar::init(const Faction *faction, std::set<const ResourceType*> &types) {
@@ -89,15 +196,9 @@ void ResourceBar::init(const Faction *faction, std::set<const ResourceType*> &ty
 	TextWidget::setAlignment(Alignment::NONE);
 	g_widgetWindow.registerUpdate(this);
 
-	const Font *font = getFont();
-	const FontMetrics *fm = font->getMetrics();
-
 	foreach (std::set<const ResourceType*>, it, types) {
 		m_resourceTypes.push_back(*it);
 	}
-
-	vector<int> reqWidths;
-	int total_req = 0;
 	foreach_const (vector<const ResourceType*>, it, m_resourceTypes) {
 		addImage((*it)->getImage());
 		string name = (*it)->getName();
@@ -107,58 +208,9 @@ void ResourceBar::init(const Faction *faction, std::set<const ResourceType*> &ty
 		}
 		m_headerStrings.push_back(tName + ": ");
 		addText(m_headerStrings.back());
-		int w;
-		if ((*it)->getClass() == ResourceClass::CONSUMABLE) {
-			w = 16 + 4 + int(fm->getTextDiminsions(m_headerStrings.back() + "8000/80000 (8000)").w);
-		} else if ((*it)->getClass() == ResourceClass::STATIC) {
-			w = 16 + 4 + int(fm->getTextDiminsions(m_headerStrings.back() + "80000").w);
-		} else {
-			w = 16 + 4 + int(fm->getTextDiminsions(m_headerStrings.back() + "80000/800000").w);
-		}
-		total_req += w;
-		reqWidths.push_back(w);
 	}
-	int max_width = g_metrics.getScreenW() - 20 - m_parent->getBordersHoriz();
-	if (total_req < max_width) {
-		// single row
-		setSize(Vec2i(total_req, 20));
-		m_parent->setSize(Vec2i(total_req + m_parent->getBordersHoriz(), 40 + m_parent->getBordersVert()));
 
-		int x_pos = 5, y_pos = 2;
-		for (int i=0; i < m_resourceTypes.size(); ++i) {
-			setImageX(0, i, Vec2i(x_pos, y_pos), Vec2i(16, 16));
-			setTextPos(Vec2i(x_pos + 20, y_pos), i);
-			x_pos += reqWidths[i];
-		}
-	} else {
-		// multi row (only 2 for now)
-		///@todo support more than 2 rows?
-		int width1 = 0, width2 = 0;
-		int stopAt = reqWidths.size() / 2 + 1;
-		for (int i=0; i < stopAt; ++i) {
-			width1 += reqWidths[i];
-		}
-		for (int i=stopAt; i < reqWidths.size(); ++i) {
-			width2 += reqWidths[i];
-		}
-		setSize(Vec2i(std::max(width1, width2), 40));
-		Vec2i pSize(std::max(width1, width2) + m_parent->getBordersHoriz(), 60 + m_parent->getBordersVert());
-		m_parent->setSize(pSize);
-
-		int x_pos = 5, y_pos = 22;
-		for (int i=0; i < stopAt; ++i) {
-			setImageX(0, i, Vec2i(x_pos, y_pos), Vec2i(16, 16));
-			setTextPos(Vec2i(x_pos + 20, y_pos), i);
-			x_pos += reqWidths[i];			
-		}
-		x_pos = 5, y_pos = 2;
-		for (int i=stopAt; i < reqWidths.size(); ++i) {
-			setImageX(0, i, Vec2i(x_pos, y_pos), Vec2i(16, 16));
-			setTextPos(Vec2i(x_pos + 20, y_pos), i);
-			x_pos += reqWidths[i];			
-		}
-	}
-	m_parent->setPos(Vec2i(g_metrics.getScreenW() / 2 - m_parent->getWidth() / 2, 5));
+	reInit(m_iconSize);
 }
 
 ResourceBar::~ResourceBar() {
