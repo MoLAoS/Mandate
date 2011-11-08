@@ -3,8 +3,13 @@
 ###########################################################################
 # Glest Model / Texture / UV / Animation Importer and Exporter
 # for the Game Glest that u can find http://www.glest.org
+# copyright 2005 By Andreas Becker (seltsamuel@yahoo.de)
+#
 # 2011/05/25: v0.1 alpha1
-# created by William Zheng for Blender 2.57(loveheaven_zhengwei@hotmail.com)
+# modified by William Zheng for Blender 2.57(loveheaven_zhengwei@hotmail.com)
+#
+# Started Date: 07 June 2005  Put Public 20 June 2005   
+#  Distributed under the GNU PUBLIC LICENSE
 #"""
 #Here an explanation of the V4 Format found at www.glest.org
 #================================
