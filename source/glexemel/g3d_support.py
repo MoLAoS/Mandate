@@ -471,7 +471,7 @@ def G3DLoader(filepath):			#Main Import Routine
 		print ("All Done, have a good Day :-)\n\n")
 		return
 
-def G3DSaver(filepath):
+def G3DSaver(filepath, context):
 	print ("\nNow Exporting File: " + filepath)
 	fileID = open(filepath,"wb")
 
@@ -480,7 +480,11 @@ def G3DSaver(filepath):
 	# G3DModelHeaderv4
 	fileID.write(struct.pack("<HB", len(bpy.data.meshes), 0))
 	# meshes
-	for mesh in bpy.data.meshes:
+	#for mesh in bpy.data.meshes:
+	for obj in bpy.data.objects:#context.selected_objects:
+		if obj.type != 'MESH':
+			continue
+		mesh = obj.data
 		if len(mesh.materials) > 0:
 			# we have a texture, hopefully
 			material = mesh.materials[0]
@@ -496,7 +500,7 @@ def G3DSaver(filepath):
 			textures = 0
 
 		meshname = mesh.name
-		frameCount = 1 #FIXME: animation missing
+		frameCount = context.scene.frame_end - context.scene.frame_start +1
 		#Real face count (only use triangle)
 		realFaceCount = 0
 		newindices=[]
@@ -505,10 +509,13 @@ def G3DSaver(filepath):
 				realFaceCount += 1
 				newindices.extend(face.vertices_raw[0:3])
 
+		#FIXME: abort when no triangles as it crashs g3dviewer
 		indexCount = realFaceCount * 3
 		vertexCount = len(mesh.vertices)
 		specularPower = 9.999999  # unused, same as old exporter
-		properties = 0 #FIXME
+		properties = 1 #FIXME: customcolor always enabled
+		if mesh.show_double_sided:
+			properties |= 2
 
 		# MeshHeader
 		fileID.write(struct.pack("<64s3I8f2I",
@@ -525,9 +532,15 @@ def G3DSaver(filepath):
 		#MeshData
 		vertices = []
 		normals = []
-		for vertex in mesh.vertices:
-			vertices.extend(vertex.co)
-			normals.extend(vertex.normal)
+		fcurrent = context.scene.frame_current
+		for i in range(context.scene.frame_start, context.scene.frame_end+1):
+			context.scene.frame_set(i)
+			m = mesh.copy()
+			m.transform(obj.matrix_world)
+			for vertex in m.vertices:
+				vertices.extend(vertex.co)
+				normals.extend(vertex.normal)
+		context.scene.frame_set(fcurrent)
 
 		# see G3DMeshdataV4
 		vertex_format = "<%if" % int(frameCount * vertexCount * 3)
@@ -591,7 +604,7 @@ class ExportG3D(bpy.types.Operator, ExportHelper):
 
 	def execute(self, context):
 		try:
-			G3DSaver(self.filepath)
+			G3DSaver(self.filepath, context)
 		except:
 			import traceback
 			traceback.print_exc()
@@ -622,3 +635,4 @@ def unregister():
 if __name__ == '__main__':
 	register()
 #	main()
+	#G3DSaver("test.g3d", bpy.context)
