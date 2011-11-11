@@ -477,27 +477,35 @@ def G3DSaver(filepath, context):
 
 	# G3DHeader v4
 	fileID.write(struct.pack("<3cB", b'G', b'3', b'D', 4))
+	#get real meshcount as len(bpy.data.meshes) holds also old meshes
+	meshCount = 0
+	for obj in bpy.data.objects:#context.selected_objects:
+		if obj.type == 'MESH':
+			meshCount += 1
 	# G3DModelHeaderv4
-	fileID.write(struct.pack("<HB", len(bpy.data.meshes), 0))
+	fileID.write(struct.pack("<HB", meshCount, 0))
 	# meshes
 	#for mesh in bpy.data.meshes:
 	for obj in bpy.data.objects:#context.selected_objects:
 		if obj.type != 'MESH':
 			continue
 		mesh = obj.data
+		diffuseColor = [1.0, 1.0, 1.0]
+		specularColor = [0.9, 0.9, 0.9]
+		opacity = 1.0
+		textures = 0
 		if len(mesh.materials) > 0:
 			# we have a texture, hopefully
 			material = mesh.materials[0]
-			diffuseColor = material.diffuse_color
-			specularColor = material.specular_color
-			opacity = material.alpha
-			textures = 1
-			texname = bpy.path.basename(material.active_texture.image.filepath)
-		else:
-			diffuseColor = [1.0, 1.0, 1.0]
-			specularColor = [0.9, 0.9, 0.9]
-			opacity = 1.0
-			textures = 0
+			if material.active_texture.type == 'IMAGE':
+				diffuseColor = material.diffuse_color
+				specularColor = material.specular_color
+				opacity = material.alpha
+				textures = 1
+				texname = bpy.path.basename(material.active_texture.image.filepath)
+			else:
+				#FIXME: needs warning in gui
+				print("active texture in first material isn't of type IMAGE")
 
 		meshname = mesh.name
 		frameCount = context.scene.frame_end - context.scene.frame_start +1
@@ -510,6 +518,8 @@ def G3DSaver(filepath, context):
 				newindices.extend(face.vertices_raw[0:3])
 
 		#FIXME: abort when no triangles as it crashs g3dviewer
+		if realFaceCount == 0:
+			print("no triangles found")
 		indexCount = realFaceCount * 3
 		vertexCount = len(mesh.vertices)
 		specularPower = 9.999999  # unused, same as old exporter
@@ -527,7 +537,7 @@ def G3DSaver(filepath, context):
 			properties, textures
 		))
 		#Texture names
-		if len(mesh.materials) > 0: # only when we have one
+		if textures == 1: # only when we have one
 			fileID.write(struct.pack("<64s", bytes(texname, "ascii")))
 		#MeshData
 		vertices = []
@@ -552,7 +562,7 @@ def G3DSaver(filepath, context):
 		fileID.write(struct.pack(normals_format, *normals))
 
 		# texcoords
-		if len(mesh.materials) > 0: # only when we have one
+		if textures == 1: # only when we have one
 			uvtex = mesh.uv_textures[0]
 			uvlist = []
 			uvlist[:] = [[0]*2 for i in range(len(mesh.vertices))]
@@ -635,4 +645,7 @@ def unregister():
 if __name__ == '__main__':
 	register()
 #	main()
+
+	#G3DLoader("import.g3d")
 	#G3DSaver("test.g3d", bpy.context)
+
