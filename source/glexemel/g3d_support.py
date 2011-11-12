@@ -97,13 +97,13 @@
 ###########################################################################
 
 bl_info = {
-	"name": "G3D Mesh Importer",
+	"name": "G3D Mesh Import/Export",
 	"author": "William Zheng (corrected by MrPostiga)",
 	"version": (0, 1, 1),
 	"blender": (2, 6, 0),
 	"api": 36079,
-	"location": "File > Import > Glest 3D File (.g3d)",
-	"description": "Import .g3d file and create a mesh",
+	"location": "File > Import-Export",
+	"description": "Import/Export .g3d file",
 	"warning": "",
 	"wiki_url": "",
 	"tracker_url": "",
@@ -511,21 +511,70 @@ def G3DSaver(filepath, context):
 		frameCount = context.scene.frame_end - context.scene.frame_start +1
 		#Real face count (only use triangle)
 		realFaceCount = 0
-		newindices=[]
-		for face in mesh.faces:
-			if (len(face.vertices) == 3):
-				realFaceCount += 1
-				newindices.extend(face.vertices_raw[0:3])
+		indices=[]
+		newverts=[]
+		if textures == 1:
+			uvtex = mesh.uv_textures[0]
+			uvlist = []
+			uvlist[:] = [[0]*2 for i in range(len(mesh.vertices))]
+			s = set()
+			for face in mesh.faces:
+				faceindices = [] # we create new faces when duplicating vertices
+				if (len(face.vertices) == 3):
+					realFaceCount += 1
+					uvdata = uvtex.data[face.index]
+					for i in range(3):
+						vindex = face.vertices[i]
+						if vindex not in s:
+							s.add(vindex)
+							uvlist[vindex] = uvdata.uv[i]
+						elif uvlist[vindex] != uvdata.uv[i]:
+							# duplicate vertex because it takes part in different faces
+							# with different texcoords
+							newverts.append(vindex)
+							uvlist.append(uvdata.uv[i])
+							#FIXME: probably better with some counter
+							vindex = len(mesh.vertices) + len(newverts) -1
+
+						faceindices.append(vindex)
+					indices.extend(faceindices)
+		else:
+			for face in mesh.faces:
+				if (len(face.vertices) == 3):
+					realFaceCount += 1
+					indices.extend(face.vertices[0:3])
+
 
 		#FIXME: abort when no triangles as it crashs g3dviewer
 		if realFaceCount == 0:
 			print("no triangles found")
 		indexCount = realFaceCount * 3
-		vertexCount = len(mesh.vertices)
+		vertexCount = len(mesh.vertices) + len(newverts)
 		specularPower = 9.999999  # unused, same as old exporter
 		properties = 1 #FIXME: customcolor always enabled
 		if mesh.show_double_sided:
 			properties |= 2
+
+		#MeshData
+		vertices = []
+		normals = []
+		fcurrent = context.scene.frame_current
+		for i in range(context.scene.frame_start, context.scene.frame_end+1):
+			context.scene.frame_set(i)
+			#FIXME: this is hacky
+			if obj.find_armature() == None:
+				m = mesh.copy()
+				m.transform(obj.matrix_world)
+			else:
+				#FIXME: not sure what's better: PREVIEW or RENDER settings
+				m = obj.to_mesh(context.scene, True, 'RENDER')
+			for vertex in m.vertices:
+				vertices.extend(vertex.co)
+				normals.extend(vertex.normal)
+			for nv in newverts:
+				vertices.extend(m.vertices[nv].co)
+				normals.extend(m.vertices[nv].normal)
+		context.scene.frame_set(fcurrent)
 
 		# MeshHeader
 		fileID.write(struct.pack("<64s3I8f2I",
@@ -539,18 +588,6 @@ def G3DSaver(filepath, context):
 		#Texture names
 		if textures == 1: # only when we have one
 			fileID.write(struct.pack("<64s", bytes(texname, "ascii")))
-		#MeshData
-		vertices = []
-		normals = []
-		fcurrent = context.scene.frame_current
-		for i in range(context.scene.frame_start, context.scene.frame_end+1):
-			context.scene.frame_set(i)
-			m = mesh.copy()
-			m.transform(obj.matrix_world)
-			for vertex in m.vertices:
-				vertices.extend(vertex.co)
-				normals.extend(vertex.normal)
-		context.scene.frame_set(fcurrent)
 
 		# see G3DMeshdataV4
 		vertex_format = "<%if" % int(frameCount * vertexCount * 3)
@@ -563,22 +600,12 @@ def G3DSaver(filepath, context):
 
 		# texcoords
 		if textures == 1: # only when we have one
-			uvtex = mesh.uv_textures[0]
-			uvlist = []
-			uvlist[:] = [[0]*2 for i in range(len(mesh.vertices))]
-			for f in mesh.faces:
-				if (len(face.vertices) == 3):
-					uvdata = uvtex.data[f.index]
-					uvlist[f.vertices[0]] = [uvdata.uv1[0], uvdata.uv1[1]]
-					uvlist[f.vertices[1]] = [uvdata.uv2[0], uvdata.uv2[1]]
-					uvlist[f.vertices[2]] = [uvdata.uv3[0], uvdata.uv3[1]]
-
 			texcoords = []
 			for uv in uvlist:
 				texcoords.extend(uv)
 			fileID.write(struct.pack(texturecoords_format, *texcoords))
 
-		fileID.write(struct.pack(indices_format, *newindices))
+		fileID.write(struct.pack(indices_format, *indices))
 
 	fileID.close()
 	return
