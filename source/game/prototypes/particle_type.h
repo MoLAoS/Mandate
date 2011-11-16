@@ -69,7 +69,7 @@ public:
 
 class SplashType: public ParticleSystemType {
 private:
-	int emissionRateFade;
+	float emissionRateFade;
 	float verticalSpreadA;
 	float verticalSpreadB;
 	float horizontalSpreadA;

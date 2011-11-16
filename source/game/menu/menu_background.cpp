@@ -70,7 +70,7 @@ MenuBackground::MenuBackground(){
 	if(rain){
 		RainParticleSystem *rps= new RainParticleSystem();
 		rps->setSpeed(12.f / WORLD_FPS);
-		rps->setEmissionRate(25);
+		rps->setEmissionRate(25.f);
 		rps->setWindSpeed2(-90.f, 4.f / WORLD_FPS);
 		rps->setPos(Vec3f(0.f, 25.f, 0.f));
 		rps->setColor(Vec4f(1.f, 1.f, 1.f, 0.2f));
@@ -84,7 +84,7 @@ MenuBackground::MenuBackground(){
 	} else if (menuNode->getOptionalBoolValue("snow")) {
 		SnowParticleSystem *sps = new SnowParticleSystem(1200);
 		sps->setSpeed(1.5f / WORLD_FPS);
-		sps->setEmissionRate(2);
+		sps->setEmissionRate(2.f);
 		sps->setWindSpeed2(-90.f, 0.5f / WORLD_FPS);
 		sps->setPos(Vec3f(0.f, 25.f, 0.f));
 		sps->setRadius(30.f);

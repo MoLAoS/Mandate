@@ -153,7 +153,8 @@ protected:
 	float speed;
 	float gravity;
 	
-	int emissionRate;
+	float emissionRate;
+	float emissionRateRemainder;
 	int energy;
 	int energyVar;
 	
@@ -185,7 +186,7 @@ public:
 	float getSizeNoEnergy() const						{return sizeNoEnergy;}
 	float getSpeed() const								{return speed;}
 	float getGravity() const							{return gravity;}
-	int getEmissionRate() const							{return emissionRate;}
+	float getEmissionRate() const						{return emissionRate;}
 	int getEnergy() const								{return energy;}
 	int getEnergyVar() const							{return energyVar;}
 	float getRadius() const								{return radius;}
@@ -207,7 +208,7 @@ public:
 	void setSizeNoEnergy(float v)						{sizeNoEnergy = v;}
 	void setSpeed(float v)								{speed = v;}
 	void setGravity(float v)							{gravity = v;}
-	void setEmissionRate(int v)							{emissionRate = v;}
+	void setEmissionRate(float v)						{emissionRate = v;}
 	void setEnergy(int v)								{energy = v;}
 	void setEnergyVar(int v)							{energyVar = v;}
 	void setRadius(float v)								{radius = v;}
@@ -254,6 +255,8 @@ protected:
 	int aliveParticleCount;
 	Vec3f pos;
 	Vec3f windSpeed;
+	float emissionRateRemainder;
+
 
 public:
 	//constructor and destructor

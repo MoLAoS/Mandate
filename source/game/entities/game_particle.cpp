@@ -352,7 +352,7 @@ void Projectile::setPath(Vec3f startPos, Vec3f endPos, int frames) {
 Splash::Splash(bool visible, const ParticleSystemBase &model,  int particleCount)
 		: DirectedParticleSystem(ParticleUse::SPLASH, visible, model, particleCount)
 		, prevParticleSystem(0)
-		, emissionRateFade(1)
+		, emissionRateFade(1.f)
 		, verticalSpreadA(1.f)
 		, verticalSpreadB(0.f)
 		, horizontalSpreadA(1.f)
@@ -369,7 +369,7 @@ void Splash::update() {
 	ParticleSystem::update();
 	if (state == sPlay) {
 		emissionRate -= emissionRateFade;
-		if (emissionRate <= 0) {
+		if (emissionRate <= 0.f) {
 			state = sFade;
 		}
 	}

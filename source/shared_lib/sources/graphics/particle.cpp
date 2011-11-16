@@ -60,7 +60,7 @@ ParticleSystemBase::ParticleSystemBase()
 		, sizeNoEnergy(1.f)
 		, speed(1.f)
 		, gravity(0.f)
-		, emissionRate(15)
+		, emissionRate(15.f)
 		, energy(250)
 		, energyVar(50)
 		, radius(0.f)
@@ -124,7 +124,8 @@ ParticleSystem::ParticleSystem(int particleCount)
 		, visible(true)
 		, aliveParticleCount(0)
 		, pos(0.f)
-		, windSpeed(0.f) {
+		, windSpeed(0.f)
+		, emissionRateRemainder(0.f) {
 }
 
 ParticleSystem::ParticleSystem(const ParticleSystemBase &model, int particleCount)
@@ -137,7 +138,8 @@ ParticleSystem::ParticleSystem(const ParticleSystemBase &model, int particleCoun
 		, visible(true)
 		, aliveParticleCount(0)
 		, pos(0.f)
-		, windSpeed(0.f) {
+		, windSpeed(0.f)
+		, emissionRateRemainder(0.f) {
 }
 
 void ParticleSystem::initArray(ParticleUse use) {
@@ -178,7 +180,10 @@ void ParticleSystem::update() {
 			}
 		}
 		if (state != sFade) {
-			for (int i = 0; i < emissionRate; ++i) {
+			float fCount = emissionRateRemainder + emissionRate;
+			int count = fCount;
+			emissionRateRemainder = fCount - count;
+			for (int i = 0; i < count; ++i) {
 				Particle *p = createParticle();
 				initParticle(p, i);
 			}
@@ -258,7 +263,7 @@ void ParticleSystem::updateParticle(Particle *p) {
 RainParticleSystem::RainParticleSystem(int particleCount)
 		: ParticleSystem(particleCount) {
 	setRadius(20.f);
-	setEmissionRate(25);
+	setEmissionRate(25.f);
 	setSize(3.0f);
 	setColor(Vec4f(0.5f, 0.5f, 0.5f, 0.3f));
 	setColor2(Vec4f(0.5f, 0.5f, 0.5f, 0.0f));
@@ -296,7 +301,7 @@ bool RainParticleSystem::deathTest(Particle *p) {
 
 SnowParticleSystem::SnowParticleSystem(int particleCount) : ParticleSystem(particleCount) {
 	setRadius(30.0f);
-	setEmissionRate(2);
+	setEmissionRate(2.f);
 	setSize(0.2f);
 	setColor(Vec4f(0.8f, 0.8f, 0.8f, 0.8f));
 	setSpeed(0.025f);
