@@ -196,7 +196,7 @@
  * This is by no means complete.
  */
 
-#if __cplusplus > 199711L
+#if __cplusplus >= 199711L
 #	define CXX11_ENABLED
 #endif
 
