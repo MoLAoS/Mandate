@@ -132,7 +132,7 @@ MenuStateLoadGame::MenuStateLoadGame(Program &program, MainMenu *mainMenu)
 	Vec2i dim = g_metrics.getScreenDims();
 
 	if (!loadGameList()) {
-		Vec2i sz(330, 256);
+		Vec2i sz = g_widgetConfig.getDefaultDialogSize();
 		strip->clear();
 		m_messageDialog = MessageDialog::showDialog(g_metrics.getScreenDims() / 2 - sz / 2, sz,
 			g_lang.get("Error"), g_lang.get("NoSavedGames"), g_lang.get("Ok"), "");
@@ -155,7 +155,7 @@ void MenuStateLoadGame::onButtonClick(Widget *source) {
 		doFadeOut();
 	} else if (btn == m_deleteButton) {
 		g_soundRenderer.playFx(g_coreData.getClickSoundC());
-		Vec2i sz(330, 256);
+		Vec2i sz = g_widgetConfig.getDefaultDialogSize();
 
 		const string &fileName = m_savedGameList->getSelectedItem()->getText();
 		m_messageDialog = MessageDialog::showDialog(g_metrics.getScreenDims() / 2 - sz / 2, sz, 

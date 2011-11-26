@@ -254,8 +254,8 @@ void MenuStateJoinGame::onConnect(Widget*) {
 	// validate Ip ??
 
 	m_connectPanel->setVisible(false);
-	Vec2i pos, size(300, 200);
-	pos = g_metrics.getScreenDims() / 2 - size / 2;
+	Vec2i size = g_widgetConfig.getDefaultDialogSize();
+	Vec2i pos = g_metrics.getScreenDims() / 2 - size / 2;
 	assert(!m_messageBox);
 	m_messageBox = MessageDialog::showDialog(pos, size, "Connecting...",
 		"Connecting, Please wait.", g_lang.get("Cancel"), "");
@@ -345,8 +345,8 @@ void MenuStateJoinGame::onSearchForGame(Widget*) {
 	m_historyList->setSelected(-1);
 	m_serverTextBox->setText("");
 	m_connectPanel->setVisible(false);
-	Vec2i pos, size(300, 200);
-	pos = g_metrics.getScreenDims() / 2 - size / 2;
+	Vec2i size = g_widgetConfig.getDefaultDialogSize();
+	Vec2i pos = g_metrics.getScreenDims() / 2 - size / 2;
 	assert(!m_messageBox);
 	m_messageBox = MessageDialog::showDialog(pos, size, "Searching...",
 		"Searching, Please wait.", g_lang.get("Cancel"), "");
@@ -422,8 +422,8 @@ void MenuStateJoinGame::update() {
 		}
 		if (m_connectResult == ConnectResult::SUCCESS) {
 			m_connected = true;
-			Vec2i pos, size(300, 200);
-			pos = g_metrics.getScreenDims() / 2 - size / 2;
+			Vec2i size = g_widgetConfig.getDefaultDialogSize();
+			Vec2i pos = g_metrics.getScreenDims() / 2 - size / 2;
 			m_messageBox = MessageDialog::showDialog(pos, size, g_lang.get("Connected"),
 				g_lang.get("Connected") + "\n" + g_lang.get("WaitingHost"), g_lang.get("Disconnect"), "");
 			m_messageBox->Button1Clicked.connect(this, &MenuStateJoinGame::onDisconnect);

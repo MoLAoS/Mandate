@@ -127,7 +127,7 @@ public:
 
 public:
 	int loadTexture(const string &name, const string &path, bool mipmap = true);
-	void loadFont(const string &name, const string &path, int size);
+	void loadFont(const string &name, const string &path, int size, int min = -1, int max = -1);
 
 	void setDefaultFont(const string &type, const string &name);
 	void setMouseTexture(const string &name);
@@ -144,6 +144,7 @@ public:
 	//int getFontIndex(const Font *f);
 	int getTextureIndex(const Texture2D *t);
 
+	Vec2i getDefaultDialogSize() const;
 	int getDefaultItemHeight() const;
 
 	int getDefaultFontIndex(FontUsage fu) const { return m_defaultFonts[fu]; }

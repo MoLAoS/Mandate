@@ -517,7 +517,7 @@ void MenuStateNewGame::onButtonClick(Widget *source) {
 		g_soundRenderer.playFx(CoreData::getInstance().getClickSoundA());
 	} else {
 		if (hasUnconnectedSlots()) {
-			Vec2i sz(330, 256);
+			Vec2i sz = g_widgetConfig.getDefaultDialogSize();
 			m_messageDialog = MessageDialog::showDialog(g_metrics.getScreenDims() / 2 - sz / 2,
 				sz, g_lang.get("NotConnected"), g_lang.get("WaitingForConnections"), g_lang.get("Yes"), g_lang.get("No"));
 			m_messageDialog->Button1Clicked.connect(this, &MenuStateNewGame::onCloseUnconnectedSlots);

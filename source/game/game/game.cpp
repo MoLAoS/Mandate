@@ -396,7 +396,9 @@ void GameState::doExitMessage(const string &msg) {
 		m_chatDialog->setVisible(false);
 	}
 	gui.resetState();
-	Vec2i size(330, 220), pos = g_metrics.getScreenDims() / 2 - size / 2;
+
+	Vec2i size = g_widgetConfig.getDefaultDialogSize();
+	Vec2i pos = g_metrics.getScreenDims() / 2 - size / 2;
 	BasicDialog *dialog = MessageDialog::showDialog(pos, size, g_lang.get("ExitGame?"),
 		msg, g_lang.get("Ok"), g_lang.get("Cancel"));
 	dialog->Button1Clicked.connect(this, &GameState::onConfirmQuitGame);
@@ -418,7 +420,8 @@ void GameState::confirmExitProgram() {
 	if (m_chatDialog->isVisible()) {
 		m_chatDialog->setVisible(false);
 	}
-	Vec2i size(330, 220), pos = g_metrics.getScreenDims() / 2 - size / 2;
+	Vec2i size = g_widgetConfig.getDefaultDialogSize();
+	Vec2i pos = g_metrics.getScreenDims() / 2 - size / 2;
 	BasicDialog *dialog = MessageDialog::showDialog(pos, size, g_lang.get("ExitProgram?"),
 		g_lang.get("ExitProgram?"), g_lang.get("Ok"), g_lang.get("Cancel"));
 	dialog->Button1Clicked.connect(this, &GameState::onConfirmExitProgram);
@@ -459,7 +462,8 @@ void GameState::doSaveBox() {
 		m_modalDialog = 0;
 	}
 	gui.resetState();
-	Vec2i size(320, 200), pos = g_metrics.getScreenDims() / 2 - size / 2;
+	Vec2i size = g_widgetConfig.getDefaultDialogSize();
+	Vec2i pos = g_metrics.getScreenDims() / 2 - size / 2;
 	InputDialog* dialog = InputDialog::showDialog(pos, size, g_lang.get("SaveGame"),
 		g_lang.get("SelectSaveGame"), g_lang.get("Save"), g_lang.get("Cancel"));
 	m_modalDialog = dialog;
@@ -556,7 +560,8 @@ void GameState::setScriptDisplay(const string &msg) {
 
 void GameState::doScriptMessage() {
 	assert(!m_scriptMessages.empty());
-	Vec2i size(320, 200), pos = g_metrics.getScreenDims() / 2 - size / 2;
+	Vec2i size = g_widgetConfig.getDefaultDialogSize();
+	Vec2i pos = g_metrics.getScreenDims() / 2 - size / 2;
 	MessageDialog* dialog = MessageDialog::showDialog(pos, size,
 		g_lang.getScenarioString(m_scriptMessages.front().header),
 		g_lang.getScenarioString(m_scriptMessages.front().text), g_lang.get("Ok"), "");

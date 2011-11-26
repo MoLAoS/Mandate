@@ -41,6 +41,7 @@ public:
 
 class TitleBar : public CellStrip, public sigslot::has_slots {
 private:
+	///@todo class TitlebarButton : Button { ... } just store a WidgetType...
 #	define BUTTON_CLASS(X, WT)                      \
 		class X : public Button {                   \
 		public:                                     \

@@ -121,10 +121,15 @@ int loadTexture(LuaHandle *lh) {
 int loadFont(LuaHandle *lh) {
 	LuaArguments args(lh);
 	string name, path;
-	int size;
-	if (Script::ScriptManager::extractArgs(args, "loadFont", "str,str,int", &name, &path, &size)) {
-		WidgetConfig::getInstance().loadFont(name, path, size);
+	int size, min, max;
+	bool ok = false;
+	if (Script::ScriptManager::extractArgs(args, 0, "str,str,int,int,int", &name, &path, &size, &min, &max)) {
+		ok = true;
+	} else if (Script::ScriptManager::extractArgs(args, "loadFont", "str,str,int", &name, &path, &size)) {
+		ok = true;
+		min = max = -1;
 	}
+	WidgetConfig::getInstance().loadFont(name, path, size, min, max);
 	return args.getReturnCount();
 }
 
@@ -200,10 +205,13 @@ void WidgetConfig::setOverlayTexture(const string &type, const string &name) {
 	m_defaultOverlays[ou] = ndx;
 }
 
-void WidgetConfig::loadFont(const string &name, const string &path, int size) {
+void WidgetConfig::loadFont(const string &name, const string &path, int size, int min, int max) {
 	Font *font = g_renderer.newFreeTypeFont(ResourceScope::GLOBAL);
 	font->setType(path);
 	int scaled_size = computeFontSize(size);
+	if (min != -1 && max != -1) {
+		scaled_size = clamp(scaled_size, min, max);
+	}
 	font->setSize(scaled_size);
 	m_requestedFontSizes[font] = size;
 	m_fonts.push_back(font);
@@ -270,13 +278,12 @@ void WidgetConfig::addGlestTexture(const string &name, TexPtr tex) {
 }
 
 int WidgetConfig::computeFontSize(int size) {
-	float sz = float(size);
-	float scale = g_config.getDisplayHeight() / 800.f;
-	sz *= scale;
+	const float scale = g_config.getDisplayHeight() / 800.f;
+	float sz = float(size) * scale;
 	if (sz < 10.f) {
 		sz = 10.f;
 	}
-	return int(roundf(sz));
+	return round(sz);
 }
 
 void WidgetConfig::loadBorderStyle(WidgetType widgetType, BorderStyle &style, BorderStyle *src) {
@@ -930,6 +937,11 @@ void WidgetConfig::load() {
 
 int WidgetConfig::getDefaultItemHeight() const {
 	return int(m_fonts[m_defaultFonts[FontUsage::MENU]]->getMetrics()->getHeight() * 1.3f);
+}
+
+Vec2i WidgetConfig::getDefaultDialogSize() const {
+	int dih = getDefaultItemHeight();
+	return Vec2i(dih * 12, dih * 6);
 }
 
 int WidgetConfig::getColourIndex(const Colour &c) {
