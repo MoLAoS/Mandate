@@ -520,10 +520,29 @@ def G3DSaver(filepath, context):
 			s = set()
 			for face in mesh.faces:
 				faceindices = [] # we create new faces when duplicating vertices
-				if (len(face.vertices) == 3):
+				realFaceCount += 1
+				uvdata = uvtex.data[face.index]
+				for i in range(3):
+					vindex = face.vertices[i]
+					if vindex not in s:
+						s.add(vindex)
+						uvlist[vindex] = uvdata.uv[i]
+					elif uvlist[vindex] != uvdata.uv[i]:
+						# duplicate vertex because it takes part in different faces
+						# with different texcoords
+						newverts.append(vindex)
+						uvlist.append(uvdata.uv[i])
+						#FIXME: probably better with some counter
+						vindex = len(mesh.vertices) + len(newverts) -1
+
+					faceindices.append(vindex)
+				indices.extend(faceindices)
+
+				#FIXME: stupid copy&paste
+				if len(face.vertices) == 4:
+					faceindices = []
 					realFaceCount += 1
-					uvdata = uvtex.data[face.index]
-					for i in range(3):
+					for i in [0,2,3]:
 						vindex = face.vertices[i]
 						if vindex not in s:
 							s.add(vindex)
@@ -540,9 +559,14 @@ def G3DSaver(filepath, context):
 					indices.extend(faceindices)
 		else:
 			for face in mesh.faces:
-				if (len(face.vertices) == 3):
+				realFaceCount += 1
+				indices.extend(face.vertices[0:3])
+				if len(face.vertices) == 4:
 					realFaceCount += 1
-					indices.extend(face.vertices[0:3])
+					# new face because quad got split
+					indices.append(face.vertices[0])
+					indices.append(face.vertices[2])
+					indices.append(face.vertices[3])
 
 
 		#FIXME: abort when no triangles as it crashs g3dviewer
@@ -551,8 +575,10 @@ def G3DSaver(filepath, context):
 		indexCount = realFaceCount * 3
 		vertexCount = len(mesh.vertices) + len(newverts)
 		specularPower = 9.999999  # unused, same as old exporter
-		properties = 1 #FIXME: customcolor always enabled
+		properties = 0
 		if mesh.show_double_sided:
+			properties |= 1
+		if textures==1 and mesh.materials[0].use_face_texture_alpha:
 			properties |= 2
 
 		#MeshData
