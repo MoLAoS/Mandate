@@ -207,7 +207,14 @@ void Selection::onUnitStateChanged(Unit *unit) {
 	m_gui->onSelectionStateChanged();
 }
 
+struct UnitTypeIdCompare {
+	bool operator()(const Unit *u1, const Unit *u2) {
+		return u1->getType()->getId() < u2->getType()->getId();
+	}
+};
+
 void Selection::update() {
+	sort(m_selectedUnits.begin(), m_selectedUnits.end(), UnitTypeIdCompare());
 	if (m_selectedUnits.empty()) {
 		m_empty = true;
 		m_enemy = false;
