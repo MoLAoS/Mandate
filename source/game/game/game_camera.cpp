@@ -48,14 +48,13 @@ GameCamera::GameCamera()
 		: pos(0.f, defaultHeight, 0.f)
 		, destPos(0.f, defaultHeight, 0.f)
 		, destAng(startingVAng, startingHAng) {
-	state = sGame;
+	state = State::GAME;
 
 	// config
 	speed = 15.f / GameConstants::cameraFps;
 	clampBounds = !g_config.getUiPhotoMode();
 
-	vAng = startingVAng;
-	hAng = startingHAng;
+	ang = Vec2f(startingVAng, startingHAng);
 
 	rotate = 0;
 
@@ -93,8 +92,8 @@ void GameCamera::setPos(Vec2f pos){
 }
 
 void GameCamera::setAngles(float h, float v) {
-	destAng.x = vAng = v;
-	destAng.y = hAng = h;
+	destAng.x = ang.x = v;
+	destAng.y = ang.y = h;
 	clampAng();
 }
 
@@ -133,8 +132,8 @@ void GameCamera::setCameraMotion(const Vec2i &posit, const Vec2i &angle,
 	linearDelay = linearFrameDelay;
 	angularDelay = angularFrameDelay;
 	linearVelocity = Vec3f(destPos - pos) / float(linearFrameCount);
-	angularVelocity.x = float(destAng.x - vAng) / angularFrameCount;
-	y -= hAng;
+	angularVelocity.x = float(destAng.x - ang.x) / angularFrameCount;
+	y -= ang.y;
 	if (y < 0.f) {
 		y += 360.f;
 	}
@@ -143,18 +142,22 @@ void GameCamera::setCameraMotion(const Vec2i &posit, const Vec2i &angle,
 	}
 	angularVelocity.y = y / angularFrameCount;
 }
-void GameCamera::update() {
+
+bool GameCamera::update() {
+	Vec3f prevPos = pos;
+	Vec2f prevAng = ang;
+
 	Vec3f move = moveMouse + moveKey;
 
-	//move XZ
-	if(move.z){
+	// move XZ
+	if (move.z) {
 		moveForwardH(speed * move.z, 0.9f);
 	}
-	if(move.x){
+	if (move.x) {
 		moveSideH(speed * move.x, 0.9f);
 	}
 
-	if (state == sScenario) { // scenario doing something tricky,
+	if (state == State::SCENARIO) { // scenario doing something tricky,
 		if (currLinearFrame < totalLinearFrames) {
 			if (linearDelay == 0) {
 				pos += linearVelocity;
@@ -165,18 +168,18 @@ void GameCamera::update() {
 		}
 		if (currAngularFrame < totalAngularFrames) {
 			if (angularDelay == 0) {
-				hAng += angularVelocity.y;
-				vAng += angularVelocity.x;
+				ang.x += angularVelocity.y;
+				ang.y += angularVelocity.x;
 				currAngularFrame++;
 			} else {
 				angularDelay--;
 			}
 		}
-		if (currAngularFrame == totalAngularFrames && currLinearFrame == totalLinearFrames) {
-			state = sGame;
+		if (currAngularFrame >= totalAngularFrames && currLinearFrame >= totalLinearFrames) {
+			state = State::GAME;
 		}
 	} else { // else game state
-		if(fabs(rotate) == 1.f){
+		if (fabs(rotate) == 1.f) {
 			rotateHV(speed*5*rotate, 0);
 		}
 		if (move.y > 0.f) {
@@ -191,18 +194,18 @@ void GameCamera::update() {
 				rotateHV(0.f, -speed * 1.7f * move.y);
 			}
 		}
-		if (abs(destAng.x - vAng) > 0.01f) {
-			vAng += (destAng.x - vAng) / hTransitionMult;
+		if (abs(destAng.x - ang.x) > 0.01f) {
+			ang.x += (destAng.x - ang.x) / hTransitionMult;
 		}
-		if (abs(destAng.y - hAng) > 0.01f) {
-			if (abs(destAng.y - hAng) > 180) {
-				if (destAng.y > hAng) {
-					hAng += (destAng.y - hAng - 360) / vTransitionMult;
+		if (abs(destAng.y - ang.y) > 0.01f) {
+			if (abs(destAng.y - ang.y) > 180) {
+				if (destAng.y > ang.y) {
+					ang.y += (destAng.y - ang.y - 360) / vTransitionMult;
 				} else {
-					hAng += (destAng.y - hAng + 360) / vTransitionMult;
+					ang.y += (destAng.y - ang.y + 360) / vTransitionMult;
 				}
 			} else {
-				hAng += (destAng.y - hAng) / vTransitionMult;
+				ang.y += (destAng.y - ang.y) / vTransitionMult;
 			}
 		}
 		if (abs(destPos.x - pos.x) > 0.01f) {
@@ -220,6 +223,7 @@ void GameCamera::update() {
 	if (clampBounds) {
 		clampPosXYZ(0.0f, (float)limitX, minHeight, maxHeight, 0.0f, (float)limitY);
 	}
+	return (pos != prevPos || ang != prevAng);
 }
 
 void GameCamera::resetScenario() {
@@ -231,7 +235,7 @@ void GameCamera::resetScenario() {
 	currLinearFrame = 0;
 	totalAngularFrames = 0;
 	totalLinearFrames = 0;
-	state = sScenario;
+	state = State::SCENARIO;
 }
 
 void GameCamera::reset(bool angle, bool height) {
@@ -264,8 +268,8 @@ void GameCamera::transitionVH(float v, float h) {
 }
 
 void GameCamera::zoom(float dist) {
-	float flatDist = dist * cosf(degToRad(vAng));
-	Vec3f offset(flatDist * sinf(degToRad(hAng)), dist * sinf(degToRad(vAng)), flatDist * -cosf(degToRad(hAng)));
+	float flatDist = dist * cosf(degToRad(ang.x));
+	Vec3f offset(flatDist * sinf(degToRad(ang.y)), dist * sinf(degToRad(ang.x)), flatDist * -cosf(degToRad(ang.y)));
 	float mult = 1.f;
 	if (destPos.y + offset.y < minHeight) {
 		mult = abs((destPos.y - minHeight) / offset.y);
@@ -282,7 +286,7 @@ void GameCamera::load(const XmlNode *node) {
 
 void GameCamera::save(XmlNode *node) const {
 	node->addChild("pos", pos);
-	node->addChild("angle", Vec2f(vAng, hAng));
+	node->addChild("angle", ang);
 }
 
 // ==================== PRIVATE ====================
@@ -314,25 +318,25 @@ void GameCamera::clampPosXYZ(float x1, float x2, float y1, float y2, float z1, f
 }
 
 void GameCamera::rotateHV(float h, float v){
-	destAng.x = vAng += v;
-	destAng.y = hAng += h;
+	destAng.x = ang.x += v;
+	destAng.y = ang.y += h;
 	clampAng();
 }
 
 void GameCamera::clampAng() {
-	if(vAng > maxVAng)		vAng = maxVAng;
+	if(ang.x > maxVAng)		ang.x = maxVAng;
 	if(destAng.x > maxVAng)	destAng.x = maxVAng;
-	if(vAng < minVAng)		vAng = minVAng;
+	if(ang.x < minVAng)		ang.x = minVAng;
 	if(destAng.x < minVAng)	destAng.x = minVAng;
-	if(hAng > 360.f)		hAng -= 360.f;
+	if(ang.y > 360.f)		ang.y -= 360.f;
 	if(destAng.y > 360.f)	destAng.y -= 360.f;
-	if(hAng < 0.f)			hAng += 360.f;
+	if(ang.y < 0.f)			ang.y += 360.f;
 	if(destAng.y < 0.f)		destAng.y = 360.f;
 }
 
 //move camera forwad but never change heightFactor
 void GameCamera::moveForwardH(float d, float response) {
-	Vec3f offset(sinf(degToRad(hAng)) * d, 0.f, -cosf(degToRad(hAng)) * d);
+	Vec3f offset(sinf(degToRad(ang.y)) * d, 0.f, -cosf(degToRad(ang.y)) * d);
 	destPos += offset;
 	pos.x += offset.x * response;
 	pos.z += offset.z * response;
@@ -340,7 +344,7 @@ void GameCamera::moveForwardH(float d, float response) {
 
 //move camera to a side but never change heightFactor
 void GameCamera::moveSideH(float d, float response){
-	Vec3f offset(sinf(degToRad(hAng+90)) * d, 0.f, -cosf(degToRad(hAng+90)) * d);
+	Vec3f offset(sinf(degToRad(ang.y+90)) * d, 0.f, -cosf(degToRad(ang.y+90)) * d);
 	destPos += offset;
 	pos.x += (destPos.x - pos.x) * response;
 	pos.z += (destPos.z - pos.z) * response;

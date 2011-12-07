@@ -206,6 +206,7 @@ void ModelRendererGl::end() {
 	// restore stuff
 	if (m_lastShaderProgram) {
 		m_lastShaderProgram->end();
+		m_lastShaderProgram = 0;
 	}
 	glPopAttrib();
 	glPopClientAttrib();

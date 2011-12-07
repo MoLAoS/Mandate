@@ -49,19 +49,13 @@ public:
 	static float moveScale;
 
 public:
-	enum State{
-		sGame,
-		sScenario
-	};
+	WRAPPED_ENUM( State, GAME, SCENARIO );
 
 private:
 	Vec3f pos;
 	Vec3f destPos;
 
-	float hAng;	//YZ plane positive -Z axis
-	float vAng;	//XZ plane positive +Z axis
-	float lastHAng;
-	float lastVAng;
+	Vec2f ang;
 	Vec2f destAng;
 
 	float rotate;
@@ -102,11 +96,11 @@ public:
 
 	void init(int limitX, int limitY);
 
-	bool isMoving() {return moveMouse != Vec3f(0.f);}
+	bool isMoving() {return moveMouse != Vec3f(0.f) || moveKey != Vec3f(0.f);}
 
 	//get
-	float getHAng() const		{return hAng;};
-	float getVAng() const		{return vAng;}
+	float getHAng() const		{return ang.y;};
+	float getVAng() const		{return ang.x;}
 	State getState() const		{return state;}
 	const Vec3f &getPos() const	{return pos;}
 
@@ -138,12 +132,12 @@ public:
 
 	void stop() {
 		destPos = pos;
-		destAng.x = vAng;
-		destAng.y = hAng;
+		destAng = ang;
 	}
 
 	//other
-	void update();
+	/** Update the camera @return true if the camera moved or rotated this update */
+	bool update();
 	void reset(bool angle = true, bool height = true);
 	void resetScenario();
 

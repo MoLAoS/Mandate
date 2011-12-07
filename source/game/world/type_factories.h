@@ -20,7 +20,6 @@
 
 namespace Glest { namespace Sim {
 using namespace ProtoTypes;
-using Util::Logger;
 
 // ===================================================================
 //  class EntityFactory, a factory class for transient instance types
@@ -247,7 +246,7 @@ public:
 // ===============================
 
 typedef DynamicTypeFactory<SkillClass, SkillType>            SkillTypeFactory;
-typedef DynamicTypeFactory<CmdClass, CommandType>        CommandTypeFactory;
+typedef DynamicTypeFactory<CmdClass, CommandType>            CommandTypeFactory;
 typedef DynamicTypeFactory<ProducibleClass, ProducibleType>  ProducibleTypeFactory;
 typedef DynamicTypeFactory<EffectClass, EffectType>	         EffectTypeFactory;
 typedef SingleTypeFactory<CloakType>                         CloakTypeFactory;

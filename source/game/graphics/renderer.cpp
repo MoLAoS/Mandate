@@ -1034,7 +1034,7 @@ void Renderer::renderUnits() {
 
 	modelRenderer->begin(RenderMode::UNITS, g_world.getTileset()->getFog(), &meshCallbackTeamColor);
 
-	vector<const Unit*> toRender[GameConstants::maxPlayers + 1];
+	ConstUnitVector toRender[GameConstants::maxPlayers + 1];
 
 	///@todo Just use cells to determine the alive ones, then check all dead ones
 	for (int i=0; i < world->getFactionCount(); ++i) { 
@@ -1072,8 +1072,8 @@ void Renderer::renderUnits() {
 		}
 
 		glMatrixMode(GL_MODELVIEW);
-		vector<const Unit *>::iterator it = toRender[i].begin();
-		for ( ; it != toRender[i].end(); ++it) {
+
+		foreach (ConstUnitVector, it, toRender[i]) {
 			unit = *it;
 			if (unit->isCarried()) {
 				continue;
@@ -1087,7 +1087,11 @@ void Renderer::renderUnits() {
 			// get model, lerp to animProgess
 			const Model *model = unit->getCurrentModel();
 			bool cycleAnim = unit->isAlive() && !unit->getCurrSkill()->isStretchyAnim();
-			model->updateInterpolationData(unit->getAnimProgress(), cycleAnim);
+
+			{
+				SECTION_TIMER(RENDER_INTERPOLATE);
+				model->updateInterpolationData(unit->getAnimProgress(), cycleAnim);
+			}
 
 			// push model-view matrix
 			glPushMatrix();
@@ -1503,8 +1507,8 @@ void Renderer::computeSelected(UnitVector &units, const MapObject *&obj, const V
 	glInitNames();
 
 	//render units and resources
-	renderUnitsFast();
-	renderObjectsFast();
+	renderUnitsForSelection();
+	renderObjectsForSelection();
 
 	//pop matrices
 	glMatrixMode(GL_PROJECTION);
@@ -1591,7 +1595,7 @@ void Renderer::renderShadowsToTexture() {
 				glMatrixMode(GL_PROJECTION);
 				glPushMatrix();
 				glLoadIdentity();
-				if (game->getGameCamera()->getState() == GameCamera::sGame) {
+				if (game->getGameCamera()->getState() == GameCamera::State::GAME) {
 					glOrtho(-35, 5, -15, 15, -1000, 1000);
 				} else {
 					glOrtho(-30, 30, -20, 20, -1000, 1000);
@@ -1624,8 +1628,8 @@ void Renderer::renderShadowsToTexture() {
 				glPolygonOffset(1.0f, 0.001f);
 			}
 			//render 3d
-			renderUnitsFast(true);
-			renderObjectsFast(true);
+			renderUnitsForShadows();
+			renderObjectsForShadows();
 			//read color buffer
 			glBindTexture(GL_TEXTURE_2D, shadowMapHandle);
 			glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, shadowTextureSize, shadowTextureSize);
@@ -1878,8 +1882,7 @@ Vec4f Renderer::computeWaterColor(float waterLevel, float cellHeight){
 
 // ==================== fast render ====================
 
-//render units for shadows or selection purposes
-void Renderer::renderUnitsFast(bool renderingShadows) {
+void Renderer::renderUnitsForShadows() {
 	const Unit *unit;
 	bool changeColor = false;
 	const World *world= &g_world;
@@ -1891,27 +1894,159 @@ void Renderer::renderUnitsFast(bool renderingShadows) {
 	glPushAttrib(GL_ENABLE_BIT | GL_TEXTURE_BIT);
 	glDisable(GL_LIGHTING);
 
-	if (!renderingShadows) {
-		glDisable(GL_TEXTURE_2D);
-	} else {
-		glEnable(GL_TEXTURE_2D);
-		modelRenderer->setAlphaThreshold(0.5f);
+	glEnable(GL_TEXTURE_2D);
+	modelRenderer->setAlphaThreshold(0.5f);
 
-		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
+	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
 
-		//set color to the texture alpha
-		glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_REPLACE);
-		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_PRIMARY_COLOR);
-		glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, GL_SRC_COLOR);
+	//set color to the texture alpha
+	glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_REPLACE);
+	glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_PRIMARY_COLOR);
+	glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, GL_SRC_COLOR);
 
-		//set alpha to the texture alpha
-		glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_REPLACE);
-		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, GL_TEXTURE);
-		glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
+	//set alpha to the texture alpha
+	glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_REPLACE);
+	glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, GL_TEXTURE);
+	glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
+
+	modelRenderer->begin(RenderMode::SHADOWS, false, 0);
+
+	vector<const Unit*> toRender[GameConstants::maxPlayers + 1];
+	set<const Unit*> unitsSeen;
+	for (SceneCuller::iterator it = culler.cell_begin(); it != culler.cell_end(); ++it ) {
+		const Vec2i &pos = *it;
+		if (!map->isInside(pos)) continue;
+		for (Zone z(0); z < Zone::COUNT; ++z) {
+			const Unit *unit = map->getCell(pos)->getUnit(z);
+			if (unit && thisFaction->canSee(unit) && unitsSeen.find(unit) == unitsSeen.end()) {
+				unitsSeen.insert(unit);
+				toRender[unit->getFactionIndex() + 1].push_back(unit);
+			}
+ 		}
 	}
 
-	RenderMode mode = renderingShadows ? RenderMode::SHADOWS : RenderMode::SELECTION;
-	modelRenderer->begin(mode, false, 0);
+	for (int i=0; i < GameConstants::maxPlayers + 1; ++i) {
+		if (toRender[i].empty()) continue;
+
+		vector<const Unit *>::iterator it = toRender[i].begin();
+		for ( ; it != toRender[i].end(); ++it) {
+			unit = *it;
+			if (unit->isCarried() || unit->isCloaked()) {
+				continue;
+			}
+			glMatrixMode(GL_MODELVIEW);
+			glPushMatrix();
+			RUNTIME_CHECK(!unit->isCarried() && unit->getPos().x >= 0 && unit->getPos().y >= 0);
+
+			//translate
+			Vec3f currVec = unit->getCurrVectorFlat();
+			glTranslatef(currVec.x, currVec.y, currVec.z);
+
+			//rotate
+			glRotatef(unit->getRotation(), 0.f, 1.f, 0.f);
+
+			// faded shadows
+			float color = 1.0f - shadowAlpha;
+				
+			//dead alpha
+			float alpha = unit->getRenderAlpha();
+			float fade = alpha < 1.0;
+			color *= alpha;
+			changeColor = changeColor || fade;
+
+			if(m_shadowMode == ShadowMode::MAPPED) {
+				if(changeColor) {
+					//fprintf(stderr, "color = %f\n", color);
+					glColor3f(color, color, color);
+					glClearColor(1.f, 1.f, 1.f, 1.f);
+					glDisable(GL_DEPTH_TEST);
+					glClear(GL_COLOR_BUFFER_BIT);
+					if(!fade) {
+						changeColor = false;
+					}
+				}
+			} else if (fade) {
+				// skip this unit's shadow in projected shadows
+				glPopMatrix();
+				continue;
+			}
+
+			//render
+			const Model *model = unit->getCurrentModel();
+			model->updateInterpolationData(unit->getAnimProgress(), unit->isAlive());
+			modelRenderer->render(model);
+
+			glPopMatrix();
+		}
+	}
+	modelRenderer->end();
+	glPopAttrib();
+}
+
+void Renderer::renderObjectsForShadows() {
+	const World *world= &g_world;
+	const Map *map= world->getMap();
+
+	assertGl();
+
+	glPushAttrib(GL_ENABLE_BIT| GL_TEXTURE_BIT);
+	glDisable(GL_LIGHTING);
+	modelRenderer->setAlphaThreshold(0.5f);
+
+	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
+
+	//set color to the texture alpha
+	glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_REPLACE);
+	glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_PRIMARY_COLOR);
+	glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, GL_SRC_COLOR);
+
+	//set alpha to the texture alpha
+	glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_REPLACE);
+	glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, GL_TEXTURE);
+	glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
+
+	modelRenderer->begin(RenderMode::SHADOWS, false, 0);
+
+	int thisTeamIndex = world->getThisTeamIndex();
+
+	SceneCuller::iterator it = culler.tile_begin();
+	for ( ; it != culler.tile_end(); ++it) {
+		const Vec2i &pos = *it;
+		if (!map->isInside(pos)) {
+			continue;
+		}
+		Tile *sc = map->getTile(pos);
+		MapObject *o = sc->getObject();
+		if(o && sc->isExplored(thisTeamIndex)) {
+			Vec3f v = o->getPos();
+			glMatrixMode(GL_MODELVIEW);
+			glPushMatrix();
+				glTranslatef(v.x, v.y, v.z);
+				glRotatef(o->getRotation(), 0.f, 1.f, 0.f);
+				modelRenderer->render(o->getModel());
+			glPopMatrix();
+		}
+	}
+	modelRenderer->end();
+	glPopAttrib();
+	assertGl();
+}
+
+void Renderer::renderUnitsForSelection() {
+	const Unit *unit;
+	bool changeColor = false;
+	const World *world= &g_world;
+	const Faction *thisFaction = world->getThisFaction();
+	const Map *map = world->getMap();
+
+	assertGl();
+
+	glPushAttrib(GL_ENABLE_BIT | GL_TEXTURE_BIT);
+	glDisable(GL_LIGHTING);
+
+	glDisable(GL_TEXTURE_2D);
+
+	modelRenderer->begin(RenderMode::SELECTION, false, 0);
 
 	vector<const Unit*> toRender[GameConstants::maxPlayers + 1];
 	set<const Unit*> unitsSeen;
@@ -1934,53 +2069,20 @@ void Renderer::renderUnitsFast(bool renderingShadows) {
 		vector<const Unit *>::iterator it = toRender[i].begin();
 		for ( ; it != toRender[i].end(); ++it) {
 			unit = *it;
-			if (unit->isCarried() || (unit->isCloaked() && renderingShadows)) {
+			if (unit->isCarried()) {
 				continue;
 			}
-
 			glPushName(unit->getId());
 			glMatrixMode(GL_MODELVIEW);
-
-			//debuxar modelo
 			glPushMatrix();
-
 			RUNTIME_CHECK(!unit->isCarried() && unit->getPos().x >= 0 && unit->getPos().y >= 0);
 
 			//translate
 			Vec3f currVec = unit->getCurrVectorFlat();
-
 			glTranslatef(currVec.x, currVec.y, currVec.z);
 
 			//rotate
 			glRotatef(unit->getRotation(), 0.f, 1.f, 0.f);
-
-			// faded shadows
-			if(renderingShadows) {
-				float color = 1.0f - shadowAlpha;
-				
-				//dead alpha
-				float alpha = unit->getRenderAlpha();
-				float fade = alpha < 1.0;
-				color *= alpha;
-				changeColor = changeColor || fade;
-
-				if(m_shadowMode == ShadowMode::MAPPED) {
-					if(changeColor) {
-						//fprintf(stderr, "color = %f\n", color);
-						glColor3f(color, color, color);
-						glClearColor(1.f, 1.f, 1.f, 1.f);
-						glDisable(GL_DEPTH_TEST);
-						glClear(GL_COLOR_BUFFER_BIT);
-						if(!fade) {
-							changeColor = false;
-						}
-					}
-				} else if(fade) {
-					// skip this unit's shadow in projected shadows
-					glPopMatrix();
-					continue;
-				}
-			}
 
 			//render
 			const Model *model = unit->getCurrentModel();
@@ -1996,8 +2098,7 @@ void Renderer::renderUnitsFast(bool renderingShadows) {
 	glPopAttrib();
 }
 
-//render objects for shadows
-void Renderer::renderObjectsFast(bool renderingShadows) {
+void Renderer::renderObjectsForSelection() {
 	const World *world= &g_world;
 	const Map *map= world->getMap();
 
@@ -2005,26 +2106,9 @@ void Renderer::renderObjectsFast(bool renderingShadows) {
 
 	glPushAttrib(GL_ENABLE_BIT| GL_TEXTURE_BIT);
 	glDisable(GL_LIGHTING);
-	if (!renderingShadows) {
-		glDisable(GL_TEXTURE_2D);
-	} else {
-		modelRenderer->setAlphaThreshold(0.5f);
+	glDisable(GL_TEXTURE_2D);
 
-		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
-
-		//set color to the texture alpha
-		glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_REPLACE);
-		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_PRIMARY_COLOR);
-		glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, GL_SRC_COLOR);
-
-		//set alpha to the texture alpha
-		glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_REPLACE);
-		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, GL_TEXTURE);
-		glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
-	}
-
-	RenderMode mode = renderingShadows ? RenderMode::SHADOWS : RenderMode::SELECTION;
-	modelRenderer->begin(mode, false, 0);
+	modelRenderer->begin(RenderMode::SELECTION, false, 0);
 
 	int thisTeamIndex = world->getThisTeamIndex();
 
@@ -2036,21 +2120,16 @@ void Renderer::renderObjectsFast(bool renderingShadows) {
 		}
 		Tile *sc = map->getTile(pos);
 		MapObject *o = sc->getObject();
-		if(o && sc->isExplored(thisTeamIndex)) {
-			MapResource *r = o->getResource();
-			if (!renderingShadows && !r) {
-				continue;
-			}
+		if (o && sc->isExplored(thisTeamIndex) && o->getResource()) {
 			glPushName(0x101);	// resource
 			glPushName(o->getId());	// obj id
 
-			const Model *objModel = sc->getObject()->getModel();
 			Vec3f v = o->getPos();
 			glMatrixMode(GL_MODELVIEW);
 			glPushMatrix();
 				glTranslatef(v.x, v.y, v.z);
 				glRotatef(o->getRotation(), 0.f, 1.f, 0.f);
-				modelRenderer->render(objModel);
+				modelRenderer->render(o->getModel());
 			glPopMatrix();
 
 			glPopName();

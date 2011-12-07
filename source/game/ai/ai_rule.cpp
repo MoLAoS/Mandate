@@ -138,7 +138,7 @@ void AiRuleRepair::execute() {
 
 	//try all of our repairable units in case one type of repairer is busy, but
 	//others aren't.
-	foreach (Units, it, repairable) {
+	foreach_const (ConstUnitVector, it, repairable) {
 		const Unit *damagedUnit = *it;
 		AI_LOG( GENERAL, 3, "AiRuleRepair::execute: Trying to find repairer for damaged unit id " << damagedUnit->getId()
 			<< " @ " << damagedUnit->getPos() );

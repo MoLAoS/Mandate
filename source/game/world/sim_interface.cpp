@@ -234,6 +234,7 @@ int SimulationInterface::launchGame() {
 }
 
 bool SimulationInterface::updateWorld() {
+	SECTION_TIMER(WORLD_TOTAL);
 	if (speed == GameSpeed::PAUSED) {
 		return false;
 	}

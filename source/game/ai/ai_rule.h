@@ -15,6 +15,7 @@
 #include <string>
 #include "vec.h"
 #include "unit_type.h"
+#include "unit.h"
 
 namespace Glest { namespace Plan {
 
@@ -111,8 +112,7 @@ public:
 
 class AiRuleRepair: public AiRule{
 private:
-	typedef vector<const Unit *> Units;
-	Units repairable;
+	ConstUnitVector repairable;
 
 public:
 	AiRuleRepair(Ai *ai);
@@ -228,7 +228,6 @@ public:
 class AiRuleProduce: public AiRule{
 private:
 	typedef map<const UnitType*, const CommandType*> CmdByUtMap;
-	typedef vector<const Unit *> ConstUnitVector;
 
 private:
 	const ProduceTask *produceTask;
@@ -256,7 +255,7 @@ class AiRuleBuild: public AiRule{
 private:
 	typedef map<const UnitType *, const CommandType*> CmdByUtMap;
 	typedef vector<const UnitType *> UnitTypeList;
-	typedef vector<const Unit*> ConstUnitVector;
+
 private:
 	const BuildTask *buildTask;
 

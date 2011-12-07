@@ -281,8 +281,13 @@ private:
 	void checkExtension(const string &extension, const string &msg);
 
 	// selection or shadows render
-	void renderObjectsFast(bool shadows = false);
-	void renderUnitsFast(bool renderingShadows = false);
+	void renderObjectsForShadows();
+	void renderUnitsForShadows();
+	void renderObjectsForSelection();
+	void renderUnitsForSelection();
+
+	//void renderObjectsFast(bool shadows = false);
+	//void renderUnitsFast(bool renderingShadows = false);
 
 	//gl requirements
 	void checkGlCaps();
