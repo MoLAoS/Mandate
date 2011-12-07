@@ -160,7 +160,9 @@ Display::Display(Container *parent, UserInterface *ui, Vec2i pos)
 	TextWidget::addText(""); // (2) queued orders text (to display below progress bar if present)
 	TextWidget::addText(""); // (3) progress bar
 
-	const FontMetrics *fm = getFont()->getMetrics();
+	const Font *font = getSmallFont();
+	int fontIndex = m_textStyle.m_smallFontIndex != -1 ? m_textStyle.m_smallFontIndex : m_textStyle.m_fontIndex;
+	const FontMetrics *fm = font->getMetrics();
 
 	///@todo fix: centre text with image
 	TextWidget::setTextPos(Vec2i(40, m_imageSize / 4), 0);
@@ -203,6 +205,10 @@ Display::Display(Container *parent, UserInterface *ui, Vec2i pos)
 	}
 	y += m_imageSize;
 	m_sizes.transportSize = Vec2i(x, y);
+
+	for (int i=0; i < 5; ++i) {
+		setTextFont(fontIndex, i);
+	}
 
 	const Texture2D* overlayImages[3] = {
 		g_widgetConfig.getTickTexture(),
