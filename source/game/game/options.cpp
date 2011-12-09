@@ -11,6 +11,8 @@
 #include "menu_state_options.h"
 #include "game.h"
 #include "keymap_widget.h"
+#include "user_interface.h"
+#include "resource_bar.h"
 
 #include "leak_dumper.h"
 
@@ -118,6 +120,9 @@ void Options::buildGameTab() {
 	m_focusArrowsCheckBox->Clicked.connect(this, &Options::onCheckBoxCahnged);
 
 	rightPnl->addHeading(leftPnl, g_lang.get("Interface"));
+
+	m_resoureNamesCheckBox = rightPnl->addCheckBox(lang.get("ResourceNames"), g_config.getUiResourceNames());
+	m_resoureNamesCheckBox->Clicked.connect(this, &Options::onCheckBoxCahnged);
 
 	// max console lines
 	m_consoleMaxLinesSpinner = rightPnl->addSpinner(lang.get("ConsoleMaxLines"));
@@ -430,6 +435,11 @@ void Options::onCheckBoxCahnged(Widget *src) {
 		g_config.setUiMoveCameraAtScreenEdge(m_cameraMoveAtEdgesCheckBox->isChecked());
 	} else if (cb == m_focusArrowsCheckBox) {
 		g_config.setUiFocusArrows(m_focusArrowsCheckBox->isChecked());
+	} else if (cb == m_resoureNamesCheckBox) {
+		g_config.setUiResourceNames(m_resoureNamesCheckBox->isChecked());
+		if (!m_optionsMenu) {
+			g_userInterface.getResourceBar()->reInit(-1);
+		}
 	}
 }
 

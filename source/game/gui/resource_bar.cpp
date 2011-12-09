@@ -109,7 +109,9 @@ ResourceBar::ResourceBar(Container *parent)
 }
 
 void ResourceBar::reInit(int iconSize) {
-	m_iconSize = iconSize;
+	if (iconSize != -1) {
+		m_iconSize = iconSize;
+	}
 
 	const bool includeNames = g_config.getUiResourceNames();
 	const int padding = m_iconSize / 4;
@@ -117,14 +119,14 @@ void ResourceBar::reInit(int iconSize) {
 
 	const Font *font;
 	int fontIndex = -1;
-	if (iconSize == 16) {
+	if (m_iconSize == 16) {
 		font = getSmallFont();
 		fontIndex = m_textStyle.m_smallFontIndex != -1 ? m_textStyle.m_smallFontIndex : m_textStyle.m_fontIndex;
-	} else if (iconSize == 32) {
+	} else if (m_iconSize == 32) {
 		font = getBigFont();
 		fontIndex = m_textStyle.m_largeFontIndex != -1 ? m_textStyle.m_largeFontIndex : m_textStyle.m_fontIndex;
 	} else {
-		assert(iconSize == 24);
+		assert(m_iconSize == 24);
 		font = getFont();
 		fontIndex = m_textStyle.m_fontIndex;
 	}
@@ -137,7 +139,7 @@ void ResourceBar::reInit(int iconSize) {
 	vector<int> reqWidths;
 	int total_req = 0, i = 0;;
 	foreach_const (vector<const ResourceType*>, it, m_resourceTypes) {
-		string testLine = includeNames ? m_headerStrings[i] : string() + trailerStrings[(*it)->getClass()];
+		string testLine = (includeNames ? m_headerStrings[i] : string("")) + trailerStrings[(*it)->getClass()];
 		int w = imgAndPad + int(fm->getTextDiminsions(testLine).w);
 		total_req += w;
 		reqWidths.push_back(w);
@@ -232,7 +234,7 @@ void ResourceBar::update() {
 			const ResourceType* &rt = m_resourceTypes[i];
 			const StoredResource *res = m_faction->getResource(rt); // amount & balance
 			if (g_config.getUiResourceNames()) {
-				ss << m_headerStrings[i] << res->getAmount();
+				ss << m_headerStrings[i];
 			}
 			ss << res->getAmount();
 			if (rt->getClass() == ResourceClass::CONSUMABLE) {

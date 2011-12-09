@@ -53,6 +53,7 @@ private:
 				*m_cameraInvertXAxisCheckBox,
 				*m_cameraInvertYAxisCheckBox,
 				*m_cameraMoveAtEdgesCheckBox,
+				*m_resoureNamesCheckBox,
 				*m_focusArrowsCheckBox;
 	
 	Slider2		*m_volFxSlider,
