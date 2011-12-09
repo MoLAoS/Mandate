@@ -111,6 +111,7 @@ ResourceBar::ResourceBar(Container *parent)
 void ResourceBar::reInit(int iconSize) {
 	m_iconSize = iconSize;
 
+	const bool includeNames = g_config.getUiResourceNames();
 	const int padding = m_iconSize / 4;
 	const int imgAndPad = m_iconSize + padding;
 
@@ -128,18 +129,16 @@ void ResourceBar::reInit(int iconSize) {
 		fontIndex = m_textStyle.m_fontIndex;
 	}
 	const FontMetrics *fm = font->getMetrics();
-
+	string trailerStrings[ResourceClass::COUNT];
+	trailerStrings[ResourceClass::TECHTREE] = "80000/800000";
+	trailerStrings[ResourceClass::TILESET] = "80000/800000";
+	trailerStrings[ResourceClass::STATIC] = "80000";
+	trailerStrings[ResourceClass::CONSUMABLE] = "8000/80000 (8000)";
 	vector<int> reqWidths;
 	int total_req = 0, i = 0;;
 	foreach_const (vector<const ResourceType*>, it, m_resourceTypes) {
-		int w;
-		if ((*it)->getClass() == ResourceClass::CONSUMABLE) {
-			w = imgAndPad + int(fm->getTextDiminsions(m_headerStrings[i] + "8000/80000 (8000)").w);
-		} else if ((*it)->getClass() == ResourceClass::STATIC) {
-			w = imgAndPad + int(fm->getTextDiminsions(m_headerStrings[i] + "80000").w);
-		} else {
-			w = imgAndPad + int(fm->getTextDiminsions(m_headerStrings[i] + "80000/800000").w);
-		}
+		string testLine = includeNames ? m_headerStrings[i] : string() + trailerStrings[(*it)->getClass()];
+		int w = imgAndPad + int(fm->getTextDiminsions(testLine).w);
 		total_req += w;
 		reqWidths.push_back(w);
 		++i;
@@ -226,14 +225,16 @@ void ResourceBar::render() {
 	}
 }
 
-///@todo fix... this is called 120 times per second
 void ResourceBar::update() {
 	if (m_updateCounter % 10 == 0) {
 		for (int i=0; i < m_resourceTypes.size(); ++i) {
 			stringstream ss;
 			const ResourceType* &rt = m_resourceTypes[i];
 			const StoredResource *res = m_faction->getResource(rt); // amount & balance
-			ss << m_headerStrings[i] << res->getAmount();
+			if (g_config.getUiResourceNames()) {
+				ss << m_headerStrings[i] << res->getAmount();
+			}
+			ss << res->getAmount();
 			if (rt->getClass() == ResourceClass::CONSUMABLE) {
 				ss << "/" << m_faction->getStoreAmount(rt) << " (" << res->getBalance() << ")";
 			} else if (rt->getClass() != ResourceClass::STATIC) {

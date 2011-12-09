@@ -103,6 +103,7 @@ private:
 	bool uiMoveCameraAtScreenEdge;
 	bool uiPhotoMode;
 	bool uiPinWidgets;
+	bool uiResourceNames;
 	float uiScrollSpeed;
 	int uiTeamColourMode;
 
@@ -196,6 +197,7 @@ public:
 	bool getUiMoveCameraAtScreenEdge() const	{return uiMoveCameraAtScreenEdge;}
 	bool getUiPhotoMode() const					{return uiPhotoMode;}
 	bool getUiPinWidgets() const				{return uiPinWidgets;}
+	bool getUiResourceNames() const				{return uiResourceNames;}
 	float getUiScrollSpeed() const				{return uiScrollSpeed;}
 	int getUiTeamColourMode() const				{return uiTeamColourMode;}
 
@@ -271,6 +273,7 @@ public:
 	void setUiMoveCameraAtScreenEdge(bool val)	{uiMoveCameraAtScreenEdge = val;}
 	void setUiPhotoMode(bool val)				{uiPhotoMode = val;}
 	void setUiPinWidgets(bool val)				{uiPinWidgets = val;}
+	void setUiResourceNames(bool val)			{uiResourceNames = val;}
 	void setUiScrollSpeed(float val)			{uiScrollSpeed = val;}
 	void setUiTeamColourMode(int val)			{uiTeamColourMode = val;}
 };

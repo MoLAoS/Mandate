@@ -108,6 +108,7 @@ Config::Config(const char* fileName) {
 	uiMoveCameraAtScreenEdge = p->getBool("UiMoveCameraAtScreenEdge", true);
 	uiPhotoMode = p->getBool("UiPhotoMode", false);
 	uiPinWidgets = p->getBool("UiPinWidgets", false);
+	uiResourceNames = p->getBool("UiResourceNames", true);
 	uiScrollSpeed = p->getFloat("UiScrollSpeed", 1.5f);
 	uiTeamColourMode = p->getInt("UiTeamColourMode", 1, 1, 3);
 
@@ -193,6 +194,7 @@ void Config::save(const char *path) {
 	p->setBool("UiMoveCameraAtScreenEdge", uiMoveCameraAtScreenEdge);
 	p->setBool("UiPhotoMode", uiPhotoMode);
 	p->setBool("UiPinWidgets", uiPinWidgets);
+	p->setBool("UiResourceNames", uiResourceNames);
 	p->setFloat("UiScrollSpeed", uiScrollSpeed);
 	p->setInt("UiTeamColourMode", uiTeamColourMode);
 

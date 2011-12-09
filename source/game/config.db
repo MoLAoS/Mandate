@@ -87,3 +87,4 @@ uiPinWidgets				bool	false			-		-		Toggles in game widget move/size-ability.
 uiMoveCameraAtScreenEdge	bool	true			-		-		Whether to move the camera when the pointer approaches screen/window edges.
 uiScrollSpeed				float	1.5f			-		-		Speed of scrolling the mouse wheel.
 uiTeamColourMode			int		1				1		3		Team colour mode effect (1 == outline, 2 == tint, 3 = tine & outline)
+uiResourceNames				bool	true			-		-		Show resource names on the ResourceBar widget, or only icons.
