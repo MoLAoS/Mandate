@@ -147,8 +147,9 @@ void ResourceBar::reInit(int iconSize) {
 	int max_width = g_metrics.getScreenW() - imgAndPad - m_parent->getBordersHoriz();
 	if (total_req < max_width) {
 		// single row
-		setSize(Vec2i(total_req, imgAndPad));
-		m_parent->setSize(Vec2i(total_req + m_parent->getBordersHoriz(), 20 + imgAndPad + m_parent->getBordersVert()));
+		int h = std::max(imgAndPad, int(fm->getHeight()));
+		setSize(Vec2i(total_req, h));
+		m_parent->setSize(Vec2i(total_req + m_parent->getBordersHoriz(), 20 + h + m_parent->getBordersVert()));
 
 		int x_pos = 5, y_pos = padding / 2;
 		for (int i=0; i < m_resourceTypes.size(); ++i) {
