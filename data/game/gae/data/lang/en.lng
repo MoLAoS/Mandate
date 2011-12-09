@@ -221,6 +221,7 @@ SpecularMapping=Specular Mapping
 BumpMapping=Bump Mapping
 ShadowFrameSkip=Shadow Frame Skip
 HotKeys=Hot-Keys
+ResourceNames=Resource Names
 
 DebugSections=Debug sections
 Performance=Performance
