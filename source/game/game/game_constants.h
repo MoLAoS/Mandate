@@ -26,7 +26,7 @@
 #define g_cartographer      (*World::getInstance().getCartographer())
 #define g_renderer          (Renderer::getInstance())
 #define g_soundRenderer     (SoundRenderer::getInstance())
-#define g_logger            (Logger::getInstance())
+#define g_logger            (Util::Logger::getInstance())
 #define g_lang              (Lang::getInstance())
 #define g_metrics           (Metrics::getInstance())
 #define g_coreData          (CoreData::getInstance())
