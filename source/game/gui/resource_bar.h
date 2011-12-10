@@ -61,6 +61,9 @@ public:
 	virtual bool mouseDown(MouseButton btn, Vec2i pos) override;
 	virtual bool mouseUp(MouseButton btn, Vec2i pos) override;
 	virtual bool mouseMove(Vec2i pos) override;
+
+	void persist();
+	void reset();
 };
 
 // =====================================================
@@ -71,7 +74,7 @@ class ResourceBarFrame : public Frame {
 private:
 	ResourceBar *m_resourceBar;
 
-
+private:
 	void doEnableShrinkExpand(int sz);
 
 	void onExpand(Widget*);

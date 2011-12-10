@@ -137,6 +137,9 @@ public:
 	void setLeftClickOrder(bool enable) { m_leftClickOrder = enable; }
 	void setRightClickOrder(bool enable) { m_rightClickOrder = enable; }
 
+	void persist();
+	void reset();
+
 private:
 	void computeTerrainTexture(const World *world);  // init terrain tex
 	void setExploredState(const World *world);       // init FoW pixmaps
@@ -157,7 +160,7 @@ private:
 
 public:
 	MinimapFrame(Container *parent, Vec2i pos, bool FoW, bool SoD);
-	void initMinimp(int w, int h, const World *world, bool resumingGame);
+	void initMinimp(MinimapSize sz, int w, int h, const World *world, bool resumingGame);
 
 	Minimap* getMinimap() {return m_minimap;}
 

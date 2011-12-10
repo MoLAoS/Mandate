@@ -203,18 +203,23 @@ void UserInterface::init() {
 	DisplayFrame *displayFrame = new DisplayFrame(this, Vec2i(x,y));
 	m_display = displayFrame->getDisplay();
 	m_display->setSize();
-	m_minimap->getParent()->setPos(Vec2i(20, y));
+
+	//m_minimap->getParent()->setPos(Vec2i(20, y));
 }
 
 void UserInterface::initMinimap(bool fow, bool sod, bool resuming) {
 	const int &mapW = g_map.getW();
 	const int &mapH = g_map.getH();
 
-	int mx = 10;
-	int my = 50;
+	Vec2i pos;
+	if (g_config.getUiLastMinimapPosX() != -1 && g_config.getUiLastMinimapPosY() != -1) {
+		pos = Vec2i(g_config.getUiLastMinimapPosX(), g_config.getUiLastMinimapPosY());
+	} else {
+		pos = Vec2i(10, 50);
+	}
 
-	MinimapFrame *frame = new MinimapFrame(WidgetWindow::getInstance(), Vec2i(mx, my), fow, sod);
-	frame->initMinimp(g_map.getW(), g_map.getH(), &g_world, resuming);
+	MinimapFrame *frame = new MinimapFrame(WidgetWindow::getInstance(), pos, fow, sod);
+	frame->initMinimp(MinimapSize(g_config.getUiLastMinimapSize() - 1), mapW, mapH, &g_world, resuming);
 	m_minimap = frame->getMinimap();
 	m_minimap->LeftClickOrder.connect(this, &UserInterface::onLeftClickOrder);
 	m_minimap->RightClickOrder.connect(this, &UserInterface::onRightClickOrder);

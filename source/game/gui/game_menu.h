@@ -30,6 +30,8 @@ private:
 	//void onDebugToggle(Widget*);
 	void onTogglePhotoMode(Widget*);
 	void onPinWidgets(Widget*);
+	void onSaveWidgets(Widget*);
+	void onResetWidgets(Widget*);
 
 public:
 	GameMenu();

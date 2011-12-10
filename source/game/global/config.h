@@ -96,7 +96,16 @@ private:
 	int uiConsoleMaxLines;
 	int uiConsoleTimeout;
 	bool uiFocusArrows;
+	int uiLastDisplayPosX;
+	int uiLastDisplayPosY;
+	int uiLastDisplaySize;
+	int uiLastMinimapPosX;
+	int uiLastMinimapPosY;
+	int uiLastMinimapSize;
 	int uiLastOptionsPage;
+	int uiLastResourceBarPosX;
+	int uiLastResourceBarPosY;
+	int uiLastResourceBarSize;
 	string uiLastScenario;
 	string uiLastScenarioCatagory;
 	string uiLocale;
@@ -190,7 +199,16 @@ public:
 	int getUiConsoleMaxLines() const			{return uiConsoleMaxLines;}
 	int getUiConsoleTimeout() const				{return uiConsoleTimeout;}
 	bool getUiFocusArrows() const				{return uiFocusArrows;}
+	int getUiLastDisplayPosX() const			{return uiLastDisplayPosX;}
+	int getUiLastDisplayPosY() const			{return uiLastDisplayPosY;}
+	int getUiLastDisplaySize() const			{return uiLastDisplaySize;}
+	int getUiLastMinimapPosX() const			{return uiLastMinimapPosX;}
+	int getUiLastMinimapPosY() const			{return uiLastMinimapPosY;}
+	int getUiLastMinimapSize() const			{return uiLastMinimapSize;}
 	int getUiLastOptionsPage() const			{return uiLastOptionsPage;}
+	int getUiLastResourceBarPosX() const		{return uiLastResourceBarPosX;}
+	int getUiLastResourceBarPosY() const		{return uiLastResourceBarPosY;}
+	int getUiLastResourceBarSize() const		{return uiLastResourceBarSize;}
 	string getUiLastScenario() const			{return uiLastScenario;}
 	string getUiLastScenarioCatagory() const	{return uiLastScenarioCatagory;}
 	string getUiLocale() const					{return uiLocale;}
@@ -266,7 +284,16 @@ public:
 	void setUiConsoleMaxLines(int val)			{uiConsoleMaxLines = val;}
 	void setUiConsoleTimeout(int val)			{uiConsoleTimeout = val;}
 	void setUiFocusArrows(bool val)				{uiFocusArrows = val;}
+	void setUiLastDisplayPosX(int val)			{uiLastDisplayPosX = val;}
+	void setUiLastDisplayPosY(int val)			{uiLastDisplayPosY = val;}
+	void setUiLastDisplaySize(int val)			{uiLastDisplaySize = val;}
+	void setUiLastMinimapPosX(int val)			{uiLastMinimapPosX = val;}
+	void setUiLastMinimapPosY(int val)			{uiLastMinimapPosY = val;}
+	void setUiLastMinimapSize(int val)			{uiLastMinimapSize = val;}
 	void setUiLastOptionsPage(int val)			{uiLastOptionsPage = val;}
+	void setUiLastResourceBarPosX(int val)		{uiLastResourceBarPosX = val;}
+	void setUiLastResourceBarPosY(int val)		{uiLastResourceBarPosY = val;}
+	void setUiLastResourceBarSize(int val)		{uiLastResourceBarSize = val;}
 	void setUiLastScenario(string val)			{uiLastScenario = val;}
 	void setUiLastScenarioCatagory(string val)	{uiLastScenarioCatagory = val;}
 	void setUiLocale(string val)				{uiLocale = val;}

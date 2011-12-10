@@ -12,6 +12,8 @@
 #include "core_data.h"
 #include "game.h"
 #include "program.h"
+#include "user_interface.h"
+#include "resource_bar.h"
 
 #include "leak_dumper.h"
 
@@ -37,7 +39,7 @@ GameMenu::GameMenu()
 		, m_btnStrip(0) {
 	setTitleText(g_lang.get("GameMenu"));
 
-	m_btnStrip = new CellStrip(this, Orientation::VERTICAL, 8); // 8 buttons
+	m_btnStrip = new CellStrip(this, Orientation::VERTICAL, 9); // 8 buttons
 	m_btnStrip->setCell(1);
 	m_btnStrip->setAnchors(Anchors::getFillAnchors());
 	Close.connect(this, &GameMenu::onReturnToGame);
@@ -46,20 +48,22 @@ GameMenu::GameMenu()
 
 void GameMenu::init() {
 	m_btnStrip->clear();
-	m_btnStrip->addCells(7);
+	m_btnStrip->addCells(9);
 
 	int dh = g_widgetConfig.getDefaultItemHeight();
-	Vec2i size = Vec2i(dh * 8, dh * 11);
+	Vec2i size = Vec2i(dh * 8, dh * 12);
 	Vec2i pos = Vec2i(g_metrics.getScreenDims() - size) / 2;
 	setPos(pos);
 	setSize(size);
 
-	buildButton(this, m_btnStrip, 6, g_lang.get("ExitProgram"), &GameMenu::onExit);
-	buildButton(this, m_btnStrip, 5, g_lang.get("QuitGame"), &GameMenu::onQuit);
-	buildButton(this, m_btnStrip, 4, g_lang.get("SaveGame"), &GameMenu::onSaveGame);
-	m_pinWidgetsBtn = buildButton(this, m_btnStrip, 3, 
+	buildButton(this, m_btnStrip, 8, g_lang.get("ExitProgram"), &GameMenu::onExit);
+	buildButton(this, m_btnStrip, 7, g_lang.get("QuitGame"), &GameMenu::onQuit);
+	buildButton(this, m_btnStrip, 6, g_lang.get("SaveGame"), &GameMenu::onSaveGame);
+	m_pinWidgetsBtn = buildButton(this, m_btnStrip, 5,
 		g_config.getUiPinWidgets() ? g_lang.get("UnPinWidgets") : g_lang.get("PinWidgets"),
 		&GameMenu::onPinWidgets);
+	buildButton(this, m_btnStrip, 4, g_lang.get("SaveWidgets"), &GameMenu::onSaveWidgets);
+	buildButton(this, m_btnStrip, 3, g_lang.get("ResetWidgets"), &GameMenu::onResetWidgets);
 	buildButton(this, m_btnStrip, 2, g_lang.get("TogglePhotoMode"), &GameMenu::onTogglePhotoMode);
 	//buildButton(this, m_btnStrip, 2, g_lang.get("ToggleDebug"), &GameMenu::onDebugToggle);
 	buildButton(this, m_btnStrip, 1, g_lang.get("Options"), &GameMenu::onOptions);
@@ -71,6 +75,18 @@ void GameMenu::init() {
 //	g_widgetWindow.setFloatingWidget(menu, true);
 //	return menu;
 //}
+
+void GameMenu::onSaveWidgets(Widget*) {
+	g_userInterface.getResourceBar()->persist();
+	g_userInterface.getMinimap()->persist();
+	g_config.save();
+}
+
+void GameMenu::onResetWidgets(Widget*) {
+	g_userInterface.getResourceBar()->reset();
+	g_userInterface.getMinimap()->reset();
+	g_config.save();
+}
 
 void GameMenu::onPinWidgets(Widget*) {
 	g_gameState.togglePinWidgets(0);

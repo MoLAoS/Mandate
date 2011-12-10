@@ -109,11 +109,13 @@ ResourceBar::ResourceBar(Container *parent)
 }
 
 void ResourceBar::reInit(int iconSize) {
+	Config &cfg = g_config;
 	if (iconSize != -1) {
+		assert(iconSize == 16  || iconSize == 24 || iconSize == 32);
 		m_iconSize = iconSize;
 	}
 
-	const bool includeNames = g_config.getUiResourceNames();
+	const bool includeNames = cfg.getUiResourceNames();
 	const int padding = m_iconSize / 4;
 	const int imgAndPad = m_iconSize + padding;
 
@@ -189,7 +191,13 @@ void ResourceBar::reInit(int iconSize) {
 			x_pos += reqWidths[i];			
 		}
 	}
-	m_parent->setPos(Vec2i(g_metrics.getScreenW() / 2 - m_parent->getWidth() / 2, 5));
+	Vec2i pos;
+	if (cfg.getUiLastResourceBarPosX() != -1 && cfg.getUiLastResourceBarPosY() != -1) {
+		pos = Vec2i(cfg.getUiLastResourceBarPosX(), cfg.getUiLastResourceBarPosY());
+	} else {
+		pos = Vec2i(g_metrics.getScreenW() / 2 - m_parent->getWidth() / 2, 5);
+	}
+	m_parent->setPos(pos);
 }
 
 void ResourceBar::init(const Faction *faction, std::set<const ResourceType*> &types) {
@@ -211,8 +219,27 @@ void ResourceBar::init(const Faction *faction, std::set<const ResourceType*> &ty
 		m_headerStrings.push_back(tName + ": ");
 		addText(m_headerStrings.back());
 	}
-
+	m_iconSize = (g_config.getUiLastResourceBarSize() + 1) * 8;
 	reInit(m_iconSize);
+}
+
+void ResourceBar::persist() {
+	Config &cfg = g_config;
+
+	Vec2i pos = m_parent->getPos();
+	int sz = m_iconSize / 8 - 1;
+
+	cfg.setUiLastResourceBarSize(sz);
+	cfg.setUiLastResourceBarPosX(pos.x);
+	cfg.setUiLastResourceBarPosY(pos.y);
+}
+
+void ResourceBar::reset() {
+	Config &cfg = g_config;
+	cfg.setUiLastResourceBarSize(1);
+	cfg.setUiLastResourceBarPosX(-1);
+	cfg.setUiLastResourceBarPosY(-1);
+	reInit(16);
 }
 
 ResourceBar::~ResourceBar() {

@@ -115,12 +115,17 @@ MinimapFrame::MinimapFrame(Container *parent, Vec2i pos, bool FoW, bool SoD)
 	setPinned(g_config.getUiPinWidgets());
 }
 
-void MinimapFrame::initMinimp(int w, int h, const World *world, bool resumingGame) {
+void MinimapFrame::initMinimp(MinimapSize size, int w, int h, const World *world, bool resumingGame) {
 	m_minimap->init(w, h, world, resumingGame);
 	Vec2i sz = m_minimap->getSize() + getBordersAll() + Vec2i(0, 20);
 	setSize(sz);
 	Expand.connect(this, &MinimapFrame::onExpand);
 	Shrink.connect(this, &MinimapFrame::onShrink);
+	if (size == MinimapSize::SMALL) {
+		onShrink(0);
+	} else if (size == MinimapSize::LARGE) {
+		onExpand(0);
+	}
 }
 
 void MinimapFrame::doEnableShrinkExpand(MinimapSize sz) {
@@ -292,6 +297,8 @@ void Minimap::init(int w, int h, const World *world, bool resumingGame) {
 	m_attackNoticeTex->getPixmap()->load("data/core/misc_textures/attack_notice.png");
 
 	CHECK_HEAP();
+
+
 }
 
 Minimap::~Minimap(){
@@ -326,6 +333,27 @@ void Minimap::addAttackNotice(Vec2i pos) {
 	}
 	m_attackNotices.push_back(AttackNoticeCircle());
 	m_attackNotices.back().init(pos);
+}
+
+
+void Minimap::persist() {
+	Config &cfg = g_config;
+
+	Vec2i pos = m_parent->getPos();
+	int sz = getMinimapSize() + 1;
+
+	cfg.setUiLastMinimapSize(sz);
+	cfg.setUiLastMinimapPosX(pos.x);
+	cfg.setUiLastMinimapPosY(pos.y);
+}
+
+void Minimap::reset() {
+	Config &cfg = g_config;
+	cfg.setUiLastMinimapSize(2);
+	cfg.setUiLastMinimapPosX(-1);
+	cfg.setUiLastMinimapPosY(-1);
+	setMinimapSize(MinimapSize::MEDIUM);
+	m_parent->setPos(Vec2i(10, 50));
 }
 
 // ==================== set ====================
@@ -387,7 +415,7 @@ void Minimap::setMinimapSize(MinimapSize ms) {
 	fixed md = std::max(m_w, m_h);
 	fixed zoom = sz / md;
 	if (zoom == m_currZoom) {
-		return;
+		//return;
 	}
 	m_currZoom = zoom;
 	Vec2i size((zoom * m_w).intp(), (zoom * m_h).intp());
