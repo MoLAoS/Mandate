@@ -76,13 +76,13 @@ void DisplayFrame::onExpand(Widget*) {
 
 	m_display->setFuzzySize(sz);
 	//switch (sz) {
-	//	case MinimapSize::LARGE:
+	//	case FuzzySize::LARGE:
 	//		enableShrinkExpand(true, false);
 	//		break;
-	//	case MinimapSize::MEDIUM:
+	//	case FuzzySize::MEDIUM:
 	//		enableShrinkExpand(true, true);
 	//		break;
-	//	case MinimapSize::SMALL:
+	//	case FuzzySize::SMALL:
 	//		enableShrinkExpand(false, true);
 	//		break;
 	//	default: assert(false);
@@ -96,13 +96,13 @@ void DisplayFrame::onShrink(Widget*) {
 	--sz;
 	m_display->setFuzzySize(sz);
 	//switch (sz) {
-	//	case MinimapSize::LARGE:
+	//	case FuzzySize::LARGE:
 	//		enableShrinkExpand(true, false);
 	//		break;
-	//	case MinimapSize::MEDIUM:
+	//	case FuzzySize::MEDIUM:
 	//		enableShrinkExpand(true, true);
 	//		break;
-	//	case MinimapSize::SMALL:
+	//	case FuzzySize::SMALL:
 	//		enableShrinkExpand(false, true);
 	//		break;
 	//	default: assert(false);

@@ -219,7 +219,7 @@ void UserInterface::initMinimap(bool fow, bool sod, bool resuming) {
 	}
 
 	MinimapFrame *frame = new MinimapFrame(WidgetWindow::getInstance(), pos, fow, sod);
-	frame->initMinimp(MinimapSize(g_config.getUiLastMinimapSize() - 1), mapW, mapH, &g_world, resuming);
+	frame->initMinimp(FuzzySize(g_config.getUiLastMinimapSize() - 1), mapW, mapH, &g_world, resuming);
 	m_minimap = frame->getMinimap();
 	m_minimap->LeftClickOrder.connect(this, &UserInterface::onLeftClickOrder);
 	m_minimap->RightClickOrder.connect(this, &UserInterface::onRightClickOrder);

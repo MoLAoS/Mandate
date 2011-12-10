@@ -222,7 +222,8 @@ BumpMapping=Bump Mapping
 ShadowFrameSkip=Shadow Frame Skip
 HotKeys=Hot-Keys
 ResourceNames=Resource Names
-
+SaveWidgets=Save Widgets
+ResetWidgets=Reset Widgets
 DebugSections=Debug sections
 Performance=Performance
 Renderer=Renderer
