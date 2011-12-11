@@ -215,8 +215,8 @@ void Display::layout() {
 	y += m_imageSize;
 	m_sizes.portraitSize = Vec2i(x, y);
 
-	///@todo fix: centre text with image
-	TextWidget::setTextPos(Vec2i(m_imageSize * 5 / 4, m_imageSize / 4), 0); // (0) unit title
+	int titleYpos = std::max((m_imageSize - int(m_fontMetrics->getHeight() + 1.f)) / 2, 0);
+	TextWidget::setTextPos(Vec2i(m_imageSize * 5 / 4, titleYpos), 0); // (0) unit title
 
 	Vec2i arPos, aaPos, afPos;
 	x = 0;
@@ -241,7 +241,7 @@ void Display::layout() {
 	m_sizes.commandSize = Vec2i(x, y);
 
 	x = 0;
-	y += int(m_imageSize * 0.5f);
+	y += m_imageSize * 3 / 2;
 	TextWidget::setTextPos(Vec2i(x, y), 4); // (4) 'Transported' label
 	y += int(m_fontMetrics->getHeight() + 1.f);
 	m_carryImageOffset = Vec2i(x, y);
