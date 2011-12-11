@@ -171,6 +171,8 @@ public:
 	void resetTipPos() {resetTipPos(m_commandOffset);}
 	DisplayButton computeIndex(Vec2i pos, bool screenPos = false);
 	DisplayButton getHoverButton() const { return m_hoverBtn; }
+	void persist();
+	void reset();
 
 	virtual void render() override;
 	virtual string descType() const override { return "DisplayPanel"; }
@@ -191,6 +193,7 @@ private:
 	Display *m_display;
 	UserInterface *m_ui;
 
+public:
 	void onExpand(Widget*);
 	void onShrink(Widget*);
 

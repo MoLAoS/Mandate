@@ -331,6 +331,30 @@ void Display::layout() {
 	}
 }
 
+void Display::persist() {
+	Config &cfg = g_config;
+
+	Vec2i pos = m_parent->getPos();
+	int sz = getFuzzySize() + 1;
+
+	cfg.setUiLastDisplaySize(sz);
+	cfg.setUiLastDisplayPosX(pos.x);
+	cfg.setUiLastDisplayPosY(pos.y);
+}
+
+void Display::reset() {
+	Config &cfg = g_config;
+	cfg.setUiLastDisplaySize(2);
+	cfg.setUiLastDisplayPosX(-1);
+	cfg.setUiLastDisplayPosY(-1);
+	if (getFuzzySize() == FuzzySize::SMALL) {
+		static_cast<DisplayFrame*>(m_parent)->onExpand(0);
+	} else if (getFuzzySize() == FuzzySize::LARGE) {
+		static_cast<DisplayFrame*>(m_parent)->onShrink(0);
+	}
+	m_parent->setPos(Vec2i(g_metrics.getScreenW() - 20 - m_parent->getWidth(), 20));
+}
+
 void Display::setFuzzySize(FuzzySize fuzzySize) {
 	m_fuzzySize = fuzzySize;
 	layout();

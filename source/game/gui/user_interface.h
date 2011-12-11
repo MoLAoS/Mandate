@@ -186,6 +186,7 @@ public:
 	Console*              getRegularConsole()        { return m_console;        }
 	Console*              getDialogConsole()         { return m_dialogConsole;  }
 	const Display*        getDisplay()	const        { return m_display;        }
+	Display*              getDisplay()	             { return m_display;        }
 	const Selection*      getSelection()	const    { return selection;        }
 	Selection*            getSelection()             { return selection;        }
 	const SelectionQuad*  getSelectionQuad() const   { return &selectionQuad;   }

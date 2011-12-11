@@ -191,12 +191,17 @@ void UserInterface::init() {
 	}
 
 	int x, y;
-	if (m_resourceBar) {
-		y = m_resourceBar->getParent()->getPos().y + m_resourceBar->getParent()->getHeight() + 10;
-		x = g_metrics.getScreenW() - 20 - 195;
+	if (g_config.getUiLastDisplayPosX() != -1 && g_config.getUiLastDisplayPosY() != -1) {
+		x = g_config.getUiLastDisplayPosX();
+		y = g_config.getUiLastDisplayPosY();
 	} else {
-		y = 20;
-		x = g_metrics.getScreenW() - 20 - 195;
+		if (m_resourceBar) {
+			y = m_resourceBar->getParent()->getPos().y + m_resourceBar->getParent()->getHeight() + 10;
+			x = g_metrics.getScreenW() - 20 - 195;
+		} else {
+			y = 20;
+			x = g_metrics.getScreenW() - 20 - 195;
+		}
 	}
 
 	// Display Panel
@@ -204,6 +209,12 @@ void UserInterface::init() {
 	m_display = displayFrame->getDisplay();
 	m_display->setSize();
 
+	if (g_config.getUiLastDisplaySize() >= 2) {
+		displayFrame->onExpand(0);
+	} 
+	if (g_config.getUiLastDisplaySize() == 3) {
+		displayFrame->onExpand(0);
+	}
 	//m_minimap->getParent()->setPos(Vec2i(20, y));
 }
 
