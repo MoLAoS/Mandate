@@ -129,99 +129,45 @@ Display::Display(Container *parent, UserInterface *ui, Vec2i pos)
 		, m_toolTip(0) {
 	CHECK_HEAP();
 	setWidgetStyle(WidgetType::DISPLAY);
-	int x = 0;
-	int y = 0;
-	m_sizes.logoSize = Vec2i(192, 192);
-	m_portraitOffset = Vec2i(x, y);
-	for (int i = 0; i < selectionCellCount; ++i) { // selection potraits
-		if (i && i % cellWidthCount == 0) {
-			y += m_imageSize;
-			x = 0;
-		}
-		ImageWidget::addImageX(0, Vec2i(x,y), Vec2i(m_imageSize));
-		x += m_imageSize;
-	}
-	y += m_imageSize;
-	m_sizes.portraitSize = Vec2i(x, y);
 
+	for (int i = 0; i < selectionCellCount; ++i) { // selection potraits
+		ImageWidget::addImageX(0, Vec2i(0), Vec2i(m_imageSize));
+	}
 	TextWidget::setAlignment(Alignment::NONE);
 	TextWidget::setText(""); // (0) unit title
 	TextWidget::addText(""); // (1) unit text
 	TextWidget::addText(""); // (2) queued orders text (to display below progress bar if present)
 	TextWidget::addText(""); // (3) progress bar
-
-	const Font *font = getSmallFont();
-	int fontIndex = m_textStyle.m_smallFontIndex != -1 ? m_textStyle.m_smallFontIndex : m_textStyle.m_fontIndex;
-	m_fontMetrics = font->getMetrics();
-
-	///@todo fix: centre text with image
-	TextWidget::setTextPos(Vec2i(40, m_imageSize / 4), 0);
-
-	Vec2i arPos, aaPos, afPos;
-	x = 0;
-	y = m_imageSize + m_imageSize / 4 + int(m_fontMetrics->getHeight()) * 6;
-	m_commandOffset = Vec2i(x, y);
 	for (int i = 0; i < commandCellCount; ++i) { // command buttons
-		if (i && i % cellWidthCount == 0) {
-			y += m_imageSize;
-			x = 0;
-		}
-		ImageWidget::addImageX(0, Vec2i(x,y), Vec2i(m_imageSize));
-		if (i == UserInterface::autoRepairPos) {
-			arPos = Vec2i(x, y);
-		} else if (i == UserInterface::autoAttackPos) {
-			aaPos = Vec2i(x, y);
-		} else if (i == UserInterface::autoFleePos) {
-			afPos = Vec2i(x, y);
-		}
-		x += m_imageSize;
+		ImageWidget::addImageX(0, Vec2i(0), Vec2i(m_imageSize));
 	}
-	y += m_imageSize;
-	m_sizes.commandSize = Vec2i(x, y);
-
-	x = 0;
-	y += int(m_imageSize * 0.5f);
 	TextWidget::addText(""); // (4) 'Transported' label
-	TextWidget::setTextPos(Vec2i(x, y), 4);
-	y += int(m_fontMetrics->getHeight() + 1.f);
-	m_carryImageOffset = Vec2i(x, y);
 	for (int i = 0; i < transportCellCount; ++i) { // loaded unit portraits
-		if (i && i % cellWidthCount == 0) {
-			y += m_imageSize;
-			x = 0;
-		}
-		ImageWidget::addImageX(0, Vec2i(x,y), Vec2i(m_imageSize));
-		x += m_imageSize;
+		ImageWidget::addImageX(0, Vec2i(0), Vec2i(m_imageSize));
 	}
-	y += m_imageSize;
-	m_sizes.transportSize = Vec2i(x, y);
-
-	for (int i=0; i < 5; ++i) {
-		setTextFont(fontIndex, i);
-	}
-
 	const Texture2D* overlayImages[3] = {
 		g_widgetConfig.getTickTexture(),
 		g_widgetConfig.getCrossTexture(),
 		g_widgetConfig.getQuestionTexture()
 	};
-	m_autoRepairOn = addImageX(overlayImages[0], arPos, Vec2i(m_imageSize));
-	m_autoRepairOff = addImageX(overlayImages[1], arPos, Vec2i(m_imageSize));
-	m_autoRepairMixed = addImageX(overlayImages[2], arPos, Vec2i(m_imageSize));
+	m_autoRepairOn = addImageX(overlayImages[0], Vec2i(0), Vec2i(m_imageSize));
+	m_autoRepairOff = addImageX(overlayImages[1], Vec2i(0), Vec2i(m_imageSize));
+	m_autoRepairMixed = addImageX(overlayImages[2], Vec2i(0), Vec2i(m_imageSize));
 
-	m_autoAttackOn = addImageX(overlayImages[0], aaPos, Vec2i(m_imageSize));
-	m_autoAttackOff = addImageX(overlayImages[1], aaPos, Vec2i(m_imageSize));
-	m_autoAttackMixed = addImageX(overlayImages[2], aaPos, Vec2i(m_imageSize));
+	m_autoAttackOn = addImageX(overlayImages[0], Vec2i(0), Vec2i(m_imageSize));
+	m_autoAttackOff = addImageX(overlayImages[1], Vec2i(0), Vec2i(m_imageSize));
+	m_autoAttackMixed = addImageX(overlayImages[2], Vec2i(0), Vec2i(m_imageSize));
 
-	m_autoFleeOn =  addImageX(overlayImages[0], afPos, Vec2i(m_imageSize));
-	m_autoFleeOff = addImageX(overlayImages[1], afPos, Vec2i(m_imageSize));
-	m_autoFleeMixed = addImageX(overlayImages[2], afPos, Vec2i(m_imageSize));
+	m_autoFleeOn =  addImageX(overlayImages[0], Vec2i(0), Vec2i(m_imageSize));
+	m_autoFleeOff = addImageX(overlayImages[1], Vec2i(0), Vec2i(m_imageSize));
+	m_autoFleeMixed = addImageX(overlayImages[2], Vec2i(0), Vec2i(m_imageSize));
 
 	// -loadmap doesn't have any faction
 	const Texture2D *logoTex = (g_world.getThisFaction()) ? g_world.getThisFaction()->getLogoTex() : 0;
 	if (logoTex) {
 		m_logo = ImageWidget::addImageX(logoTex, Vec2i(0, 0), Vec2i(192,192));
 	}
+	layout();
 
 	m_selectedCommandIndex = invalidIndex;
 	setProgressBar(-1);
