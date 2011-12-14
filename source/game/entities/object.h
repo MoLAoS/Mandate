@@ -40,6 +40,7 @@ private:
 	int id;
 	MapObjectType *objectType;
 	MapResource *resource;
+	Vec2i tilePos;
 	Vec3f pos;
 	float rotation;
 	int variation;
@@ -48,8 +49,10 @@ private:
 public:
 	struct CreateParams {
 		MapObjectType *objectType;
+		Vec2i tilePos;
 		const Vec3f pos;
-		CreateParams(MapObjectType *objectType, const Vec3f &pos) : objectType(objectType), pos(pos) {}
+		CreateParams(MapObjectType *objectType, const Vec2i &tilePos, const Vec3f &worldPos) 
+			: objectType(objectType), tilePos(tilePos), pos(worldPos) {}
 	};
 
 private:
@@ -64,6 +67,7 @@ public:
 	int getId() const 					{return id;}
 	const MapObjectType *getType() const{return objectType;}
 	MapResource *getResource() const	{return resource;}
+	Vec2i getTilePos() const            { return tilePos; }
 	Vec3f getPos() const				{return pos;}
 	float getRotation()	const			{return rotation;}
 	const Model *getModel() const;

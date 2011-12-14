@@ -39,6 +39,7 @@ MapObject::MapObject(CreateParams params)//MapObjectType *objType, const Vec3f &
 	int seed = int(Chrono::getCurMicros());
 	Random random(seed);
 	const float max_offset = 0.2f;
+	tilePos = params.tilePos;
 	pos = params.pos + Vec3f(random.randRange(-max_offset, max_offset), 0.0f, random.randRange(-max_offset, max_offset));
 	rotation = random.randRange(0.f, 360.f);
 	if (objectType != NULL) {

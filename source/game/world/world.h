@@ -125,8 +125,8 @@ public:
 		return m_commandFactory.newInstance(params);
 	}
 
-	MapObject* newMapObject(MapObjectType *objType, const Vec3f &p) {
-		MapObject::CreateParams params(objType, p);
+	MapObject* newMapObject(MapObjectType *objType, const Vec2i &tilePos, const Vec3f &worldPos) {
+		MapObject::CreateParams params(objType, tilePos, worldPos);
 		return m_mapObjectFactory.newInstance(params);
 	}
 

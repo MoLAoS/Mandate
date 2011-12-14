@@ -246,7 +246,7 @@ void Map::load(const string &path, TechTree *techTree, Tileset *tileset) {
 				if (objNumber == 0 || x == 0 || y == 0 || x >= m_tileSize.w - 2 || y >= m_tileSize.h - 2) {
 					tile->setObject(NULL);
 				} else if (objNumber <= Tileset::objCount) {
-					MapObject *o = g_world.newMapObject(tileset->getObjectType(objNumber - 1), vert);
+					MapObject *o = g_world.newMapObject(tileset->getObjectType(objNumber - 1), Vec2i(x, y), vert);
 					tile->setObject(o);
 					for (int i = 0; i < techTree->getResourceTypeCount(); ++i) {
 						const ResourceType *rt = techTree->getResourceType(i);
@@ -256,7 +256,7 @@ void Map::load(const string &path, TechTree *techTree, Tileset *tileset) {
 					}
 				} else {
 					const ResourceType *rt = techTree->getTechResourceType(objNumber - Tileset::objCount) ;
-					MapObject *o = g_world.newMapObject(NULL, vert);
+					MapObject *o = g_world.newMapObject(NULL, Vec2i(x, y), vert);
 					tile->setObject(o);
 					o->setResource(rt, Vec2i(x, y) * cellScale);
 				}
