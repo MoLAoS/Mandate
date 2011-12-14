@@ -633,7 +633,57 @@ void Renderer::loadCameraMatrix(const Camera *camera) {
 
 void Renderer::computeVisibleArea() {
 	culler.establishScene();
-	IF_DEBUG_EDITION( Debug::getDebugRenderer().sceneEstablished(culler); )
+
+	m_objectsToRender.clear();
+	for (int i=0; i < GameConstants::maxPlayers + 1; ++i) {
+		m_unitsToRender[i].clear();
+	}
+	static UnitSet unitsSeen;
+	unitsSeen.clear();
+
+	World &world = g_world;
+
+	// map objects
+	Map *map = world.getMap();
+	int thisTeamIndex = world.getThisTeamIndex();
+	for (SceneCuller::iterator it = culler.tile_begin(); it != culler.tile_end(); ++it ) {
+		const Vec2i &pos = *it;
+		if (!map->isInsideTile(pos)) continue;
+		Tile *tile = map->getTile(pos);
+		MapObject *o = tile->getObject();
+		if (o && tile->isExplored(thisTeamIndex)) {
+			m_objectsToRender.push_back(o);
+		}
+	}
+
+	const Faction *thisFaction = world.getThisFaction();
+	// units
+	// alive units, from cells
+	for (SceneCuller::iterator it = culler.cell_begin(); it != culler.cell_end(); ++it ) {
+		const Vec2i &pos = *it;
+		if (!map->isInside(pos)) continue;
+		foreach_enum (Zone, z) {
+			const Unit *unit = map->getCell(pos)->getUnit(z);
+			if (unit && thisFaction->canSee(unit) && unitsSeen.find(unit) == unitsSeen.end()) {
+				unitsSeen.insert(unit);
+				m_unitsToRender[unit->getFactionIndex() + 1].push_back(unit);
+			}
+ 		}
+	}
+	// dead units, check all (they aren't in cells anymore)
+	UnitFactory &factory = world.getUnitFactory();
+	for (Units::const_iterator it = factory.begin_dead(); it != factory.end_dead(); ++it) {
+		if (thisFaction->canSee(*it) && culler.isInside((*it)->getCenteredPos())) {
+			m_unitsToRender[(*it)->getFactionIndex() + 1].push_back(*it);
+		}
+	}
+	IF_DEBUG_EDITION( 
+		Debug::getDebugRenderer().sceneEstablished(culler); 
+		if (Debug::reportRenderUnitsFlag) {
+			reportRenderUnits(m_unitsToRender);
+			Debug::reportRenderUnitsFlag = false;
+		}
+	)
 }
 
 // =======================================
@@ -813,38 +863,35 @@ void Renderer::renderObjects() {
 
 	int thisTeamIndex = world->getThisTeamIndex();
 
-	SceneCuller::iterator it = culler.tile_begin();
-	for ( ; it != culler.tile_end(); ++it ) {
-		const Vec2i &pos = *it;
-		if (!map->isInsideTile(pos)) continue;
-		Tile *sc= map->getTile(pos);
-		MapObject *o= sc->getObject();
-		if(o && sc->isExplored(thisTeamIndex)) {
-
-			const Model *objModel= sc->getObject()->getModel();
-			Vec3f v= o->getPos();
+	foreach_const (ConstMapObjVector, it, m_objectsToRender) {
+		const MapObject *obj = *it;
+		const Vec2i tilePos = obj->getTilePos();
+		if (!map->isInsideTile(tilePos)) continue;
+		Tile *tile = map->getTile(tilePos);
+		if (tile->isExplored(thisTeamIndex)) {
+			const Model *objModel = obj->getModel();
+			Vec3f vec = obj->getPos();
 
 			// ambient and diffuse color is taken from tile pos on FoW tex (ie, shades of grey)
-			float fowFactor= fowTex->getPixmap()->getPixelf(pos.x, pos.y);
-			Vec4f color= Vec4f(Vec3f(fowFactor), 1.f);
-			glColor4fv(color.ptr());
-			Vec4f matColour = color * ambFactor;
+			float fowFactor = fowTex->getPixmap()->getPixelf(tilePos.x, tilePos.y);
+			Vec4f colour = Vec4f(Vec3f(fowFactor), 1.f);
+			glColor4fv(colour.ptr());
+			Vec4f matColour = colour * ambFactor;
 			glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, matColour.ptr());
 			Vec4f fogColour = Vec4f(baseFogColor * fowFactor, 1.f);
 			glFogfv(GL_FOG_COLOR, fogColour.ptr());
 
 			glMatrixMode(GL_MODELVIEW);
 			glPushMatrix();
-				glTranslatef(v.x, v.y, v.z);
-				glRotatef(o->getRotation(), 0.f, 1.f, 0.f);
+				glTranslatef(vec.x, vec.y, vec.z);
+				glRotatef(obj->getRotation(), 0.f, 1.f, 0.f);
 
 				objModel->updateInterpolationData(0.f, true);
 				modelRenderer->render(objModel);
 
-				triangleCount+= objModel->getTriangleCount();
-				pointCount+= objModel->getVertexCount();
+				triangleCount += objModel->getTriangleCount();
+				pointCount += objModel->getVertexCount();
 			glPopMatrix();
-
 		}
 	}
 	modelRenderer->end();
@@ -1034,32 +1081,9 @@ void Renderer::renderUnits() {
 
 	modelRenderer->begin(RenderMode::UNITS, g_world.getTileset()->getFog(), &meshCallbackTeamColor);
 
-	ConstUnitVector toRender[GameConstants::maxPlayers + 1];
-
-	///@todo Just use cells to determine the alive ones, then check all dead ones
-	for (int i=0; i < world->getFactionCount(); ++i) { 
-		for (int j=0; j < world->getFaction(i)->getUnitCount(); ++j) {
-			unit = world->getFaction(i)->getUnit(j);
-			if (thisFaction->canSee(unit) && culler.isInside(unit->getCenteredPos())) {
-				toRender[i + 1].push_back(unit);
-			}
-		}
-	}
-	for (int i=0; i < world->getGlestimals()->getUnitCount(); ++i) {
-			unit = world->getGlestimals()->getUnit(i);
-			if (thisFaction->canSee(unit) && culler.isInside(unit->getPos())) {
-				toRender[0].push_back(unit);
-			}
-	}
-	IF_DEBUG_EDITION(
-		if (Debug::reportRenderUnitsFlag) {
-			reportRenderUnits(toRender);
-			Debug::reportRenderUnitsFlag = false;
-		}
-	)
 	const int frame = g_world.getFrameCount();
 	for (int i=0; i < GameConstants::maxPlayers + 1; ++i) {
-		if (toRender[i].empty()) continue;
+		if (m_unitsToRender[i].empty()) continue;
 
 		if (i) {
 			meshCallbackTeamColor.setTeamTexture(world->getFaction(i - 1)->getTexture());
@@ -1073,7 +1097,7 @@ void Renderer::renderUnits() {
 
 		glMatrixMode(GL_MODELVIEW);
 
-		foreach (ConstUnitVector, it, toRender[i]) {
+		foreach (ConstUnitVector, it, m_unitsToRender[i]) {
 			unit = *it;
 			if (unit->isCarried()) {
 				continue;
@@ -1172,10 +1196,8 @@ void Renderer::renderSelectionEffects() {
 	glLineWidth(2.f);
 
 	// units
-	for (int i=0; i<selection->getCount(); ++i) {
-
-		const Unit *unit= selection->getUnit(i);
-
+	for (int i=0; i < selection->getCount(); ++i) {
+		const Unit *unit = selection->getUnit(i);
 		RUNTIME_CHECK(!unit->isCarried() && unit->getPos().x >= 0 && unit->getPos().y >= 0);
 
 		// translate
@@ -1227,37 +1249,33 @@ void Renderer::renderSelectionEffects() {
 			}
 		}
 
-		//meeting point arrow
-		if(unit->getType()->hasMeetingPoint()){
-			Vec2i pos= unit->getMeetingPos();
-			Vec3f arrowTarget= Vec3f( (float)pos.x, map->getCell(pos)->getHeight(), (float)pos.y );
+		// meeting point arrow
+		if (unit->getType()->hasMeetingPoint()) {
+			Vec2i pos = unit->getMeetingPos();
+			Vec3f arrowTarget = Vec3f( (float)pos.x, map->getCell(pos)->getHeight(), (float)pos.y );
 			renderArrow(unit->getCurrVectorFlat(), arrowTarget, Vec3f(0.f, 0.f, 1.f), 0.3f);
 		}
 
 	}
 
-	//render selection hightlights
-	for(int i=0; i<world->getFactionCount(); ++i){
-		for(int j=0; j<world->getFaction(i)->getUnitCount(); ++j){
-			const Unit *unit= world->getFaction(i)->getUnit(j);
-
+	// render selection hightlights
+	for (int i=0; i<world->getFactionCount(); ++i) {
+		for (int j=0; j<world->getFaction(i)->getUnitCount(); ++j) {
+			const Unit *unit = world->getFaction(i)->getUnit(j);
 			if (unit->isHighlighted() && !unit->isCarried()) {
-				float highlight= unit->getHightlight();
-				if(g_world.getThisFactionIndex()==unit->getFactionIndex()){
+				float highlight = unit->getHightlight();
+				if (g_world.getThisFactionIndex() == unit->getFactionIndex()) {
 					glColor4f(0.f, 1.f, 0.f, highlight);
-				}
-				else{
+				} else {
 					glColor4f(1.f, 0.f, 0.f, highlight);
 				}
-
 				RUNTIME_CHECK(!unit->isCarried() && unit->getPos().x >= 0 && unit->getPos().y >= 0);
-				Vec3f v= unit->getCurrVectorFlat();
-				v.y+= 0.3f;
+				Vec3f v = unit->getCurrVectorFlat();
+				v.y += 0.3f;
 				renderSelectionCircle(v, unit->getType()->getSize(), selectionCircleRadius);
 			}
 		}
 	}
-
 	glPopAttrib();
 }
 
@@ -1911,25 +1929,11 @@ void Renderer::renderUnitsForShadows() {
 
 	modelRenderer->begin(RenderMode::SHADOWS, false, 0);
 
-	vector<const Unit*> toRender[GameConstants::maxPlayers + 1];
-	set<const Unit*> unitsSeen;
-	for (SceneCuller::iterator it = culler.cell_begin(); it != culler.cell_end(); ++it ) {
-		const Vec2i &pos = *it;
-		if (!map->isInside(pos)) continue;
-		for (Zone z(0); z < Zone::COUNT; ++z) {
-			const Unit *unit = map->getCell(pos)->getUnit(z);
-			if (unit && thisFaction->canSee(unit) && unitsSeen.find(unit) == unitsSeen.end()) {
-				unitsSeen.insert(unit);
-				toRender[unit->getFactionIndex() + 1].push_back(unit);
-			}
- 		}
-	}
-
 	for (int i=0; i < GameConstants::maxPlayers + 1; ++i) {
-		if (toRender[i].empty()) continue;
+		if (m_unitsToRender[i].empty()) continue;
 
-		vector<const Unit *>::iterator it = toRender[i].begin();
-		for ( ; it != toRender[i].end(); ++it) {
+		vector<const Unit *>::iterator it = m_unitsToRender[i].begin();
+		for ( ; it != m_unitsToRender[i].end(); ++it) {
 			unit = *it;
 			if (unit->isCarried() || unit->isCloaked()) {
 				continue;
@@ -2009,21 +2013,16 @@ void Renderer::renderObjectsForShadows() {
 
 	int thisTeamIndex = world->getThisTeamIndex();
 
-	SceneCuller::iterator it = culler.tile_begin();
-	for ( ; it != culler.tile_end(); ++it) {
-		const Vec2i &pos = *it;
-		if (!map->isInside(pos)) {
-			continue;
-		}
-		Tile *sc = map->getTile(pos);
-		MapObject *o = sc->getObject();
-		if(o && sc->isExplored(thisTeamIndex)) {
-			Vec3f v = o->getPos();
+	foreach (ConstMapObjVector, it, m_objectsToRender) {
+		const MapObject *obj = *it;
+		Tile *tile = map->getTile(obj->getTilePos());
+		if(tile->isExplored(thisTeamIndex)) {
+			Vec3f v = obj->getPos();
 			glMatrixMode(GL_MODELVIEW);
 			glPushMatrix();
 				glTranslatef(v.x, v.y, v.z);
-				glRotatef(o->getRotation(), 0.f, 1.f, 0.f);
-				modelRenderer->render(o->getModel());
+				glRotatef(obj->getRotation(), 0.f, 1.f, 0.f);
+				modelRenderer->render(obj->getModel());
 			glPopMatrix();
 		}
 	}
@@ -2048,28 +2047,14 @@ void Renderer::renderUnitsForSelection() {
 
 	modelRenderer->begin(RenderMode::SELECTION, false, 0);
 
-	vector<const Unit*> toRender[GameConstants::maxPlayers + 1];
-	set<const Unit*> unitsSeen;
-	for (SceneCuller::iterator it = culler.cell_begin(); it != culler.cell_end(); ++it ) {
-		const Vec2i &pos = *it;
-		if (!map->isInside(pos)) continue;
-		for (Zone z(0); z < Zone::COUNT; ++z) {
-			const Unit *unit = map->getCell(pos)->getUnit(z);
-			if (unit && thisFaction->canSee(unit) && unitsSeen.find(unit) == unitsSeen.end()) {
-				unitsSeen.insert(unit);
-				toRender[unit->getFactionIndex() + 1].push_back(unit);
-			}
- 		}
-	}
-
 	for (int i=0; i < GameConstants::maxPlayers + 1; ++i) {
-		if (toRender[i].empty()) continue;
+		if (m_unitsToRender[i].empty()) continue;
 
 		glPushName(i);
-		vector<const Unit *>::iterator it = toRender[i].begin();
-		for ( ; it != toRender[i].end(); ++it) {
+		vector<const Unit *>::iterator it = m_unitsToRender[i].begin();
+		for ( ; it != m_unitsToRender[i].end(); ++it) {
 			unit = *it;
-			if (unit->isCarried()) {
+			if (unit->isDead() || unit->isCarried()) {
 				continue;
 			}
 			glPushName(unit->getId());
@@ -2112,24 +2097,19 @@ void Renderer::renderObjectsForSelection() {
 
 	int thisTeamIndex = world->getThisTeamIndex();
 
-	SceneCuller::iterator it = culler.tile_begin();
-	for ( ; it != culler.tile_end(); ++it) {
-		const Vec2i &pos = *it;
-		if (!map->isInside(pos)) {
-			continue;
-		}
-		Tile *sc = map->getTile(pos);
-		MapObject *o = sc->getObject();
-		if (o && sc->isExplored(thisTeamIndex) && o->getResource()) {
+	foreach (ConstMapObjVector, it, m_objectsToRender) {
+		const MapObject *obj = *it;
+		Tile *tile = map->getTile(obj->getTilePos());
+		if (tile->isExplored(thisTeamIndex) && obj->getResource()) {
 			glPushName(0x101);	// resource
-			glPushName(o->getId());	// obj id
+			glPushName(obj->getId());	// obj id
 
-			Vec3f v = o->getPos();
+			Vec3f v = obj->getPos();
 			glMatrixMode(GL_MODELVIEW);
 			glPushMatrix();
 				glTranslatef(v.x, v.y, v.z);
-				glRotatef(o->getRotation(), 0.f, 1.f, 0.f);
-				modelRenderer->render(o->getModel());
+				glRotatef(obj->getRotation(), 0.f, 1.f, 0.f);
+				modelRenderer->render(obj->getModel());
 			glPopMatrix();
 
 			glPopName();

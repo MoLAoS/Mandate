@@ -76,6 +76,9 @@ public:
 	void setResource(const ResourceType *resourceType, const Vec2i &pos);
 };
 
+typedef vector<MapObject*>          MapObjectVector;
+typedef vector<const MapObject*>    ConstMapObjVector;
+
 }}//end namespace
 
 #endif

@@ -146,6 +146,9 @@ private:
 	// helper object, determines visible scene
 	SceneCuller culler;
 
+	ConstMapObjVector m_objectsToRender;
+	ConstUnitVector   m_unitsToRender[GameConstants::maxPlayers + 1];
+
 	TerrainRenderer *m_terrainRenderer;
 
 private:
