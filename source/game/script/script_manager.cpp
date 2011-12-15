@@ -297,7 +297,8 @@ int getSubfaction(LuaHandle *luaHandle) {
 		if (ndx >= 0 && ndx < g_world.getFactionCount()) {
 			const Faction *f = g_world.getFaction(ndx);
 			const FactionType *ft = f->getType();
-			string name = ft->getSubfaction(f->getSubfaction());
+            const SubfactionType *subfaction= ft->getSubfaction(f->getSubfaction());
+            string name = subfaction->getName();
 			string res = "Faction " + intToStr(ndx) + " [" + ft->getName() + "] = '" + name + "'";
 			ScriptManager::luaConsole->addOutput(res);
 		} else {
@@ -320,7 +321,8 @@ int getSubfactionRestrictions(LuaHandle *luaHandle) {
 			} else {			
 				for (int i=0; i < ft->getSubfactionCount(); ++i) {
 					if (ut->isAvailableInSubfaction(i)) {
-						res += ft->getSubfaction(i) + " ";
+                        const SubfactionType *subfaction= ft->getSubfaction(i);
+                        res += subfaction->getName() + " ";
 					}
 				}
 			}

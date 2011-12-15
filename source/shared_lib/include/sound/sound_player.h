@@ -19,6 +19,12 @@ using Shared::Platform::uint32;
 
 namespace Shared{ namespace Sound{
 
+
+typedef StrSound *(*RequestNextStream)(); // callback function to request the next stream to play 
+                                          // for cases where the order is not fixed 
+                                          // (as with using StrSound::Next)
+
+
 // =====================================================
 //	class SoundPlayerParams
 // =====================================================
@@ -44,7 +50,7 @@ public:
 	virtual void init(const SoundPlayerParams *params)= 0;
 	virtual void end()= 0;
 	virtual void play(StaticSound *staticSound)= 0;
-	virtual	void play(StrSound *strSound, int64 fadeOn=0)= 0;	//delay and fade in miliseconds
+	virtual	void play(StrSound *strSound, bool loop, int64 fadeOn=0, RequestNextStream cbFunc=0)= 0;	//fade in miliseconds
 	virtual void stop(StrSound *strSound, int64 fadeOff=0)= 0;
 	virtual void stopAllSounds()= 0;
 	virtual void updateStreams()= 0;

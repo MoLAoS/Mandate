@@ -21,6 +21,7 @@
 #include "world.h"
 #include "program.h"
 #include "sim_interface.h"
+#include "music_playlist_type.h"
 
 #include "leak_dumper.h"
 
@@ -33,6 +34,26 @@ namespace Glest { namespace ProtoTypes {
 using Main::Program;
 
 // ======================================================
+//          Class SubfactionType
+// ======================================================
+SubfactionType::~SubfactionType()
+{
+    if(musicPlaylist) {
+        delete musicPlaylist;
+    }
+}
+
+void SubfactionType::setMusic(MusicPlaylistType *newMusic)
+{
+    if(musicPlaylist) {
+        delete musicPlaylist;
+    }
+
+    musicPlaylist= newMusic;
+}
+
+
+// ======================================================
 //          Class FactionType
 // ======================================================
 
@@ -43,8 +64,8 @@ FactionType::FactionType()
 		, attackNoticeDelay(0)
 		, enemyNoticeDelay(0)
 		, m_logoTeamColour(0)
-		, m_logoRgba(0) {
-	subfactions.push_back(string("base"));
+		, m_logoRgba(0)
+        , m_playlist(0) {
 }
 
 bool FactionType::preLoad(const string &dir, const TechTree *techTree) {
@@ -133,14 +154,29 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 	}
 
 	// 2. Read subfaction list
-	const XmlNode *subfactionsNode = factionNode->getChild("subfactions", 0, false);
+	subfactions.push_back(new SubfactionType("base"));
+
+    const XmlNode *subfactionsNode = factionNode->getChild("subfactions", 0, false);
 	if (subfactionsNode) {
 		for (int i = 0; i < subfactionsNode->getChildCount(); ++i) {
 			// can't have more subfactions than an int has bits
 			if (i >= sizeof(int) * 8) {
 				throw runtime_error("Too many goddam subfactions.  Go write some code. " + dir);
 			}
-			subfactions.push_back(subfactionsNode->getChild("subfaction", i)->getAttribute("name")->getRestrictedValue());
+
+            const XmlNode *subfactionNode= subfactionsNode->getChild("subfaction", i);
+            SubfactionType *newSubfaction= new SubfactionType(subfactionNode->getAttribute("name")->getRestrictedValue());
+			subfactions.push_back(newSubfaction);
+
+		    const XmlNode *musicPlaylistNode= subfactionNode->getChild("music-play-list", 0, false);
+            if(musicPlaylistNode) {
+		        bool value = musicPlaylistNode->getAttribute("enabled")->getBoolValue();
+		        if (value) {
+                    MusicPlaylistType *playlist = new MusicPlaylistType();
+                    playlist->preload( musicPlaylistNode, dir );
+                    newSubfaction->setMusic(playlist);
+                }
+            }
 		}
 	}
 
@@ -228,6 +264,8 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 	}
 
 	// 8. Read music
+    // Legacy Support for music, should be replaced with new music playlist
+    // XML is still legacy but code was changed to go through the new music system
 	try {
 		const XmlNode *musicNode= factionNode->getChild("music");
 		bool value = musicNode->getAttribute("value")->getBoolValue();
@@ -235,36 +273,29 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 			XmlAttribute *playListAttr = musicNode->getAttribute("play-list", false);
 			if (playListAttr) {
 				if (playListAttr->getBoolValue()) {
-					const XmlAttribute *shuffleAttrib = musicNode->getAttribute("shuffle", false);
-					bool shuffle = (shuffleAttrib && shuffleAttrib->getBoolValue() ? true : false);
+                    music = new MusicPlaylistType();
+                    music->setLoop(true);
 
-					vector<StrSound*> tracks;
+					const XmlAttribute *shuffleAttrib = musicNode->getAttribute("shuffle", false);
+                    music->setRandom( (shuffleAttrib && shuffleAttrib->getBoolValue() ? true : false) );
+
 					for (int i=0; i < musicNode->getChildCount(); ++i) {
 						StrSound *sound = new StrSound();
 						sound->open(dir+"/"+musicNode->getChild("music-file", i)->getAttribute("path")->getRestrictedValue());
-						tracks.push_back(sound);
+                        music->addTrack(sound);
 					}
-					if (tracks.empty()) {
+                    if (music->empty()) {
 						throw runtime_error("No tracks in play-list!");
 					}
-					if (shuffle) {
-						int seed = int(Chrono::getCurTicks());
-						Random random(seed);
-						Shared::Util::jumble(tracks, random);
-					}
-					vector<StrSound*>::iterator it = tracks.begin();
-					vector<StrSound*>::iterator it2 = it + 1;
-					while (it2 != tracks.end()) {
-						(*it)->setNext(*it2);
-						++it; ++it2;
-					}
-					music = tracks[0];
 				}
 			} else {
 				XmlAttribute *pathAttr = musicNode->getAttribute("path", false);
 				if (pathAttr) {
-					music = new StrSound();
-					music->open(dir + "/" + pathAttr->getRestrictedValue());
+                    music = new MusicPlaylistType();
+                    music->setLoop(true);
+					StrSound *sound = new StrSound();
+					sound->open(dir + "/" + pathAttr->getRestrictedValue());
+                    music->addTrack(sound);
 				} else {
 					g_logger.logXmlError(path, "'music' node must have either a 'path' or 'play-list' attribute");
 					loadOk = false;
@@ -273,7 +304,6 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 		}
 	} catch (runtime_error e) { 
 		g_logger.logXmlError(path, e.what());
-		loadOk = false;
 	}
 
 	// 9. Load faction logo pixmaps
@@ -350,7 +380,21 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 		g_logger.logXmlError(path, e.what());
 		loadOk = false;
 	}
-	return loadOk;
+
+    // 11. Music Playlist feature
+    try {
+		const XmlNode *musicPlaylistNode= factionNode->getChild("music-play-list");
+        if(musicPlaylistNode) {
+		    bool value = musicPlaylistNode->getAttribute("enabled")->getBoolValue();
+		    if (value) {
+                m_playlist = new MusicPlaylistType();
+                m_playlist->preload( musicPlaylistNode, dir );
+            }
+        }
+    } catch (runtime_error &e) {
+		g_logger.logXmlError(path, e.what());
+    }
+    return loadOk;
 }
 
 bool FactionType::loadGlestimals(const string &dir, const TechTree *techTree) {
@@ -393,16 +437,15 @@ void FactionType::doChecksum(Checksum &checksum) const {
 		checksum.add<int>(it->getAmount());
 	}
 	foreach_const (Subfactions, it, subfactions) {
-		checksum.add(*it);
+        checksum.add((*it)->getName());
 	}
 }
 
 FactionType::~FactionType() {
-	while (music) {
-		StrSound *delMusic = music;
-		music = music->getNext();
-		delete delMusic;
-	}
+    if(music)
+        delete music;
+    if(m_playlist)
+        delete m_playlist;
 	if (attackNotice) {
 		deleteValues(attackNotice->getSounds().begin(), attackNotice->getSounds().end());
 		delete attackNotice;
@@ -411,6 +454,13 @@ FactionType::~FactionType() {
 		deleteValues(enemyNotice->getSounds().begin(), enemyNotice->getSounds().end());
 		delete enemyNotice;
 	}
+    if(subfactions.size()>0) {
+        for(int i=0;i<subfactions.size();i++) {
+            delete subfactions[i];
+        }
+        subfactions.clear();
+    }
+
 	delete m_logoTeamColour;
 	delete m_logoRgba;
 }
@@ -419,7 +469,7 @@ FactionType::~FactionType() {
 
 int FactionType::getSubfactionIndex(const string &m_name) const {
     for (int i = 0; i < subfactions.size();i++) {
-		if (subfactions[i] == m_name) {
+		if (subfactions[i]->getName() == m_name) {
             return i;
 		}
     }

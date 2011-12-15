@@ -33,6 +33,8 @@
 #include "resource_bar.h"
 #include "mouse_cursor.h"
 #include "options.h"
+#include "music_playlist_type.h"
+
 
 #if _GAE_DEBUG_EDITION_
 #	include "debug_renderer.h"
@@ -262,10 +264,20 @@ void GameState::init() {
 
 	g_logger.logProgramEvent("Starting music stream", true);
 	if (g_world.getThisFaction()) {
-		StrSound *gameMusic = g_world.getThisFaction()->getType()->getMusic();
+        // for legacy reasons, the music set within the faction will override music playlists
+		MusicPlaylistType *gameMusic = g_world.getThisFaction()->getType()->getMusic();
 		if (gameMusic) {
-			g_soundRenderer.playMusic(gameMusic);
-		}
+            g_soundRenderer.addPlaylist(gameMusic);
+            g_soundRenderer.startMusicPlaylist();
+        } else {
+            MusicPlaylistType *techPlaylist = g_world.getTechTree()->getMusicPlaylist();
+            MusicPlaylistType *factionPlaylist = g_world.getThisFaction()->getType()->getMusicPlaylist();
+            if(techPlaylist)
+                g_soundRenderer.addPlaylist(techPlaylist);
+            if(factionPlaylist)
+                g_soundRenderer.addPlaylist(factionPlaylist);
+            g_soundRenderer.startMusicPlaylist();
+        }
 	}
 	delete simInterface->getSavedGame();
 	g_logger.logProgramEvent("Launching game");

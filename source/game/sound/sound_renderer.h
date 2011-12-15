@@ -16,15 +16,21 @@
 #include "sound_player.h"
 #include "window.h"
 #include "vec.h"
+#include "music_playlist_type.h"
+
 
 #include <set>
 
 namespace Glest { namespace Sound {
 
+
 using Shared::Sound::StrSound;
 using Shared::Sound::StaticSound;
 using Shared::Sound::SoundPlayer;
+using Shared::Sound::RequestNextStream;
 using Shared::Math::Vec3f;
+using Glest::ProtoTypes::MusicPlaylistType;
+
 
 // =====================================================
 // 	class SoundRenderer
@@ -47,6 +53,17 @@ private:
 
 	StrSound *musicStream;
 	std::set<StrSound*> ambientStreams;
+    typedef std::vector<const MusicPlaylistType*> vectorMusicPlaylist;
+    struct stMusic {
+        vectorMusicPlaylist musicList;
+        MusicPlaylistType *curPlaylist;
+
+        stMusic() {
+            curPlaylist=0;
+        }
+    };
+    typedef std::vector<stMusic> MusicPlaylistQueue;
+    MusicPlaylistQueue musicPlaylistQueue;
 
 private:
 	SoundRenderer();
@@ -59,17 +76,25 @@ public:
 	void update();
 	SoundPlayer *getSoundPlayer() const	{return soundPlayer;}
 
+    // streams
+	void playStream(StrSound *strSound, bool loop= true, int64 fadeOn=0, RequestNextStream cbFunc=0);
+	void stopStream(StrSound *strSound, int64 fadeOff=0);
+
 	//music
-	void playMusic(StrSound *strSound);
+	void playMusic(StrSound *strSound, bool loop= true, RequestNextStream cbFunc=0);
 	void stopMusic(StrSound *strSound);
-	
+    void addPlaylist(const MusicPlaylistType *playlist);
+    void startMusicPlaylist();
+    StrSound *getNextMusicTrack();
+    void removePlaylist(const MusicPlaylistType *playlist);
+
 	//fx
 	void playFx(StaticSound *staticSound, Vec3f soundPos, Vec3f camPos);
 	void playFx(StaticSound *staticSound);
 
 	//ambient
 	//void playAmbient(StaticSound *staticSound);
-	void playAmbient(StrSound *strSound);
+	void playAmbient(StrSound *strSound, bool loop = true);
 	void stopAmbient(StrSound *strSound);
 	
 	//volume

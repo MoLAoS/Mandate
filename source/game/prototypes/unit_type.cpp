@@ -25,6 +25,7 @@
 #include "renderer.h"
 #include "world.h"
 #include "sim_interface.h"
+#include "music_playlist_type.h"
 
 #include "leak_dumper.h"
 
@@ -101,11 +102,16 @@ UnitType::UnitType()
 		, halfSize(0), halfHeight(0)
 		, m_cellMap(0), m_colourMap(0)
 		, m_hasProjectileAttack(false)
-		, m_factionType(0) {
+		, m_factionType(0)
+        , musicPlaylist(0) {
 	reset();
 }
 
 UnitType::~UnitType(){
+    if(musicPlaylist) {
+        delete musicPlaylist;
+    }
+
 	deleteValues(selectionSounds.getSounds().begin(), selectionSounds.getSounds().end());
 	deleteValues(commandSounds.getSounds().begin(), commandSounds.getSounds().end());
 	delete m_cellMap;
@@ -359,6 +365,20 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 			g_logger.logXmlError(path, e.what());
 			loadOk = false;
 		}
+        // Music Playlist feature
+        try {
+		    const XmlNode *musicPlaylistNode= parametersNode->getChild("music-play-list");
+            if(musicPlaylistNode) {
+		        bool value = musicPlaylistNode->getAttribute("enabled")->getBoolValue();
+		        if (value) {
+                    musicPlaylist = new UnitMusicPlaylistType();
+                    musicPlaylist->preload( musicPlaylistNode, dir );
+                }
+            }
+        } catch (runtime_error &e) {
+		    g_logger.logXmlError(path, e.what());
+        }
+
 	} // !glestimal
 
 	try { // skills

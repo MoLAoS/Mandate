@@ -79,6 +79,11 @@ private:
 	State state;
 	Chrono chrono;	//delay-fade chrono
 	int64 fade;		//fade on fade off delay
+    bool loop;      // should it loop back to start when done?
+    bool lastDataSubmitted; // flag that indicates we've reched EOF
+    DWORD numberOfBytesBeforeEnd; // the number of samples the play cursor must still consumed 
+                                  // before we can consider the stream played out, not set for loop
+    RequestNextStream   nextStreamCallback; // callback function to request the next stream to play 
 
 public:
 	StrSoundBuffer();
@@ -86,7 +91,7 @@ public:
 	
 	void init(IDirectSound8 *dsObject, Sound *sound, uint32 strBufferSize);
 	void end();
-	void play(int64 fadeOn);
+	void play(int64 fadeOn, bool loop, RequestNextStream cbFunc);
 	void update();
 	void stop(int64 fadeOff);
 	
@@ -115,7 +120,7 @@ public:
 	virtual void init(const SoundPlayerParams *params);
 	virtual void end();
 	virtual void play(StaticSound *staticSound);
-	virtual void play(StrSound *strSound, int64 fadeOn=0);
+	virtual void play(StrSound *strSound, bool loop, int64 fadeOn=0, RequestNextStream cbFunc=0);
 	virtual void stop(StrSound *strSound, int64 fadeOff=0);
 	virtual void stopAllSounds();
 	virtual void updateStreams();	//updates str buffers if needed
