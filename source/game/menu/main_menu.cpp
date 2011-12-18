@@ -108,7 +108,7 @@ MainMenu::MainMenu(Program &program, bool setRootMenu)
 	if (setRootMenu) {
 		setState(new MenuStateRoot(program, this));
 	}
-	g_program.setTechTitle("");
+	program.setTechTitle("");
 }
 
 MainMenu::~MainMenu() {
@@ -123,14 +123,16 @@ void MainMenu::init() {
 
 // synchronous render update
 void MainMenu::renderBg() {
-	g_renderer.clearBuffers();
+	Renderer &renderer = g_renderer;
+	renderer.reset();
+	renderer.clearBuffers();
 
-	//3d
-	g_renderer.reset3dMenu();
-	g_renderer.clearZBuffer();
-	g_renderer.loadCameraMatrix(menuBackground.getCamera());
-	g_renderer.renderMenuBackground(&menuBackground);
-	g_renderer.renderParticleManager(ResourceScope::MENU);
+	// 3d
+	renderer.reset3dMenu();
+	renderer.clearZBuffer();
+	renderer.loadCameraMatrix(menuBackground.getCamera());
+	renderer.renderMenuBackground(&menuBackground);
+	renderer.renderParticleManager(ResourceScope::MENU);
 }
 
 void MainMenu::renderFg() {

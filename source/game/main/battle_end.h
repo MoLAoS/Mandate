@@ -2,6 +2,7 @@
 //	This file is part of Glest (www.glest.org)
 //
 //	Copyright (C) 2001-2008 Martiño Figueroa
+//                2009-2011 James McCulloch
 //
 //	You can redistribute this code and/or modify it under 
 //	the terms of the GNU General Public License as published 

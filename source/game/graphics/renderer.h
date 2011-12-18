@@ -101,6 +101,7 @@ private:
 	float shadowAlpha;
 	bool focusArrows;
 	bool textures3D;
+	int  m_glMajorVersion;
 	ShadowMode m_shadowMode;
 
 	// game
@@ -151,6 +152,11 @@ private:
 
 	TerrainRenderer *m_terrainRenderer;
 
+	// GL 3 stuff
+	GLuint m_fbHandle,       // FrameBuffer handle
+	       m_colourBuffer,   // Colour buffer handle
+		   m_depthBuffer;    // Depth (and stencil) buffer handle
+
 private:
 	Renderer();
 	~Renderer();
@@ -162,6 +168,7 @@ public:
 	bool init();
 	void initGame(GameState *game);
 	void initMenu(MainMenu *mm);
+	void reset();
 	void reset3d();
 	void reset2d();
 	void reset3dMenu();
@@ -210,6 +217,8 @@ public:
 
 	TerrainRenderer* getTerrainRenderer() { return m_terrainRenderer; }
 
+	GLuint getFrameBuffer() const { return m_fbHandle; }
+
 	void manageParticleSystem(ParticleSystem *particleSystem, ResourceScope rs);
 	void updateParticleManager(ResourceScope rs);
 	void renderParticleManager(ResourceScope rs);
@@ -254,6 +263,10 @@ public:
 	string getGlMoreInfo();
 	string getGlMoreInfo2();
 	void autoConfig();
+
+	bool isGl2() const { return m_glMajorVersion >= 2; }
+	bool isGl3() const { return m_glMajorVersion >= 3; }
+	bool isGl4() const { return m_glMajorVersion >= 4; }
 
 	//clear
     void clearBuffers();

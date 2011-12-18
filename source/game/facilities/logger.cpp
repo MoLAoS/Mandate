@@ -192,9 +192,11 @@ void ProgramLog::setLoading(bool v) {
 	loadingGame = v;
 }
 
-void ProgramLog::renderLoadingScreen(){
-	g_renderer.reset2d();
-	g_renderer.clearBuffers();
+void ProgramLog::renderLoadingScreen() {
+	Renderer &renderer = g_renderer;
+	renderer.reset();
+	renderer.reset2d();
+	renderer.clearBuffers();
 
 	const Font *normFont = g_widgetConfig.getMenuFont();
 	const Font *bigFont = g_widgetConfig.getTitleFont();
@@ -205,7 +207,7 @@ void ProgramLog::renderLoadingScreen(){
 	
 	Vec2i headerPos(g_metrics.getScreenW() / 4, 25 * g_metrics.getScreenH() / 100);
 	Vec4f colour(1.f);
-	g_renderer.renderText(state, bigFont, colour, headerPos.x, headerPos.y);
+	renderer.renderText(state, bigFont, colour, headerPos.x, headerPos.y);
 	int yStart = headerPos.y + int(bigFont->getMetrics()->getHeight()) + 6;
 
 	if (loadingGame) {
@@ -213,7 +215,7 @@ void ProgramLog::renderLoadingScreen(){
 		int step = int(normFont->getMetrics()->getHeight()) + 4;
 		for (Strings::reverse_iterator it = logLines.rbegin(); it != logLines.rend(); ++it) {
 			colour.a = 1.f - float(offset) / float(logLineCount + 1);
-			g_renderer.renderText(*it, normFont, colour, g_metrics.getScreenW() / 4,
+			renderer.renderText(*it, normFont, colour, g_metrics.getScreenW() / 4,
 				30 * g_metrics.getScreenH() / 100 + offset * step);
 			++offset;
 		}
@@ -222,13 +224,13 @@ void ProgramLog::renderLoadingScreen(){
 			progBarPos.x += int(bigFont->getMetrics()->getTextDiminsions(state).w) + 20;
 			int w = g_metrics.getScreenW() / 4 * 3 - progBarPos.x;
 			int h = int(normFont->getMetrics()->getHeight() + 2.f);
-			g_renderer.renderProgressBar(m_progress, progBarPos.x, progBarPos.y, w, h, normFont);
+			renderer.renderProgressBar(m_progress, progBarPos.x, progBarPos.y, w, h, normFont);
 		}
 	} else {
-		g_renderer.renderText(current, normFont, colour, g_metrics.getScreenW() / 4,
+		renderer.renderText(current, normFont, colour, g_metrics.getScreenW() / 4,
 			38 * g_metrics.getScreenH() / 100);
 	}
-	g_renderer.swapBuffers();
+	renderer.swapBuffers();
 }
 
 // =====================================================

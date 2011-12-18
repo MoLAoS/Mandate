@@ -650,13 +650,13 @@ void GameState::updateCamera() {
 // ==================== render ====================
 
 //render
-void GameState::renderBg(){
+void GameState::renderBg() {
 	SECTION_TIMER(RENDER_3D);
 	renderFps++;
 	render3d();
 }
 
-void GameState::renderFg(){
+void GameState::renderFg() {
 	SECTION_TIMER(RENDER_SWAP_BUFFERS);
 	render2d();
 	Renderer::getInstance().swapBuffers();
@@ -949,47 +949,48 @@ void GameState::quitGame() {
 
 // ==================== render ====================
 
-void GameState::render3d(){
+void GameState::render3d() {
 	_PROFILE_FUNCTION();
 	Renderer &renderer = g_renderer;
 
-	//init
+	// init
+	renderer.reset();
 	renderer.reset3d();
 
 	renderer.loadGameCameraMatrix();
 	renderer.computeVisibleArea();
 	renderer.setupLighting();
 
-	//shadow map
+	// shadow map
 	renderer.renderShadowsToTexture();
 
-	//clear buffers
+	// clear buffers
 	renderer.clearBuffers();
 
-	//surface
+	// surface
 	renderer.renderSurface();
 
-	//selection circles
+	// selection circles
 	renderer.renderSelectionEffects();
 
-	//units
+	// units
 	renderer.renderUnits();
 
-	//objects
+	// objects
 	renderer.renderObjects();
 
-	//water
+	// water
 	renderer.renderWater();
 	renderer.renderWaterEffects();
 
-	//particles
+	// particles
 	renderer.renderParticleManager(ResourceScope::GAME);
 
-	//mouse 3d
+	// mouse 3d
 	renderer.renderMouse3d();
 }
 
-void GameState::render2d(){
+void GameState::render2d() {
 	_PROFILE_FUNCTION();
 
 	// init

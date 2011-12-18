@@ -9,14 +9,13 @@
 //	License, or (at your option) any later version
 // ==============================================================
 
-
 #ifndef _SHARED_GRAPHICS_MODELRENDERER_H_
 #define _SHARED_GRAPHICS_MODELRENDERER_H_
 
 #include "model.h"
 #include "shader.h"
 
-namespace Shared{ namespace Graphics{
+namespace Shared { namespace Graphics {
 
 class Texture;
 
@@ -26,10 +25,10 @@ class Texture;
 /// This gets called before rendering mesh
 // =====================================================
 
-class MeshCallback{
+class MeshCallback {
 public:
-	virtual ~MeshCallback(){};
-	virtual void execute(const Mesh *mesh)= 0;
+	virtual ~MeshCallback() {}
+	virtual void execute(const Mesh *mesh) = 0;
 };
 
 WRAPPED_ENUM( RenderMode, 
@@ -51,7 +50,7 @@ protected:
 public:
 	ModelRenderer() {}
 
-	virtual ~ModelRenderer(){};
+	virtual ~ModelRenderer() {}
 
 	void setTeamColour(const Vec3f &colour) { teamColour = colour; }
 	const Vec3f& getTeamColour() const {return teamColour; }
@@ -61,13 +60,13 @@ public:
 
 	virtual void begin(RenderMode mode, bool fog, MeshCallback *meshCallback = 0) = 0;
 	virtual void end() = 0;
-	virtual void render(const Model *model, float fade = 1.f, int frame = 0, int id = 0, ShaderProgram *shaderProgram= 0) = 0;
+	virtual void render(const Model *model, float fade = 1.f, int frame = 0, int id = 0, ShaderProgram *shaderProgram = 0) = 0;
 	virtual void renderOutlined(const Model *model, int lineWidth, const Vec3f &colour, float fade = 1.f, int frame = 0, int id = 0, ShaderProgram *shaderProgram = 0) = 0;
 	virtual void renderNormalsOnly(const Model *model) = 0;
 	virtual void renderMesh(const Mesh *mesh, float fade = 1.f, int frame = 0, int id = 0, ShaderProgram *shaderProgram = 0) = 0;
 	virtual void renderMeshNormalsOnly(const Mesh *mesh) = 0;
 };
 
-}}//end namespace
+}} // end namespace
 
 #endif

@@ -35,6 +35,7 @@ using Util::intToStr;
 
 bool isGlExtensionSupported(const char *extensionName);
 bool isGlVersionSupported(int major, int minor, int release);
+void getGlVersion(int &major, int &minor, int &release);
 const char *getGlVersion();
 const char *getGlRenderer();
 const char *getGlVendor();

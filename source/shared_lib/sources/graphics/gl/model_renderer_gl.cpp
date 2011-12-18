@@ -156,9 +156,11 @@ const string& ModelRendererGl::getShaderName() {
 }
 
 void ModelRendererGl::begin(RenderMode mode, bool fog, MeshCallback *meshCallback) {
+	// assertions
 	assert(!m_rendering);
 	assertGl();
 
+	// init members
 	m_renderMode = mode;
 	m_useFog = fog;
 	m_meshCallback = meshCallback;
@@ -191,7 +193,7 @@ void ModelRendererGl::begin(RenderMode mode, bool fog, MeshCallback *meshCallbac
 		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 	}	
 
-	//assertions
+	// assertions
 	assertGl();
 }
 
@@ -262,12 +264,13 @@ void ModelRendererGl::renderOutlined(const Model *model, int lineWidth, const Ve
 		renderMeshOutline(model->getMesh(i));
 	}
 
+	// restore stuff
 	glDisable(GL_STENCIL_TEST);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	glEnable(GL_TEXTURE_2D);
 	glEnable(GL_LIGHTING);
 
-	//assertions
+	// assert GL
 	assertGl();
 }
 

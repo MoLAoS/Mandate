@@ -28,63 +28,49 @@ namespace Shared{ namespace Graphics{ namespace Gl{
 //	class Globals
 // =====================================================
 
-bool isGlExtensionSupported(const char *extensionName){
-    const char *s;
-	GLint len;
-	const GLubyte *extensionStr= glGetString(GL_EXTENSIONS);
+bool isGlExtensionSupported(const char *extensionName) {
+    const char *s = reinterpret_cast<const char *>(glGetString(GL_EXTENSIONS));
+	GLint len = strlen(extensionName);
 
-	s= reinterpret_cast<const char *>(extensionStr);
-	len= strlen(extensionName);
-
-	while ((s = strstr (s, extensionName)) != NULL) {
-		s+= len;
-
-		if((*s == ' ') || (*s == '\0')) {
+	while ((s = strstr(s, extensionName)) != NULL) {
+		s += len;
+		if (*s == ' ' || *s == '\0') {
 			return true;
 		}
 	}
-
 	return false;
 }
 
-bool isGlVersionSupported(int major, int minor, int release){
+void getGlVersion(int &major, int &minor, int &release) {
+	const char *strVersion = getGlVersion();
+	char *tokString = new char[strlen(strVersion) + 1];
+	strcpy(tokString, strVersion);
+	major = atoi(strtok(tokString, "."));
+	minor = atoi(strtok(0, "."));
+	release = atoi(strtok(0, "."));
+	delete [] tokString;
+}
 
-	const char *strVersion= getGlVersion();
+bool isGlVersionSupported(int major, int minor, int release) {
+	int majorVersion, minorVersion, releaseVersion;
+	getGlVersion(majorVersion, minorVersion, releaseVersion);
 
-	//major
-	const char *majorTok= strVersion;
-	int majorSupported= atoi(majorTok);
-
-	if(majorSupported<major){
+	// major
+	if (majorVersion < major) {
 		return false;
-	}
-	else if(majorSupported>major){
+	} else if (majorVersion > major) {
 		return true;
 	}
 
-	//minor
-	int i=0;
-	while(strVersion[i]!='.'){
-		++i;
-	}
-	const char *minorTok= &strVersion[i]+1;
-	int minorSupported= atoi(minorTok);
-
-	if(minorSupported<minor){
+	// minor
+	if (minorVersion < minor) {
 		return false;
-	}
-	else if(minorSupported>minor){
+	} else if (minorVersion > minor) {
 		return true;
 	}
 
-	//release
-	++i;
-	while(strVersion[i]!='.'){
-		++i;
-	}
-	const char *releaseTok= &strVersion[i]+1;
-
-	if(atoi(releaseTok)<release){
+	// release
+	if (releaseVersion < release) {
 		return false;
 	}
 
