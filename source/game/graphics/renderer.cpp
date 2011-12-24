@@ -251,11 +251,8 @@ bool Renderer::init() {
 			return false;
 		}
 	}
+
 	if (isGl3()) {
-		//Context *context = GraphicsInterface::getInstance().getCurrentContext();
-		//int cBits = context->getColorBits();
-		//int dBits = context->getDepthBits();
-		//int sBits = context->getStencilBits();
 		Vec2i windowSize = Vec2i(g_config.getDisplayWidth(), g_config.getDisplayHeight());
 		
 		// allocate buffer handles
@@ -265,7 +262,6 @@ bool Renderer::init() {
 	
 		// bind frame buffer
 		glBindFramebuffer(GL_FRAMEBUFFER, m_fbHandle);
-
 		assertGl();
 
 		// bind colour buffer, allocate storage and attach to frame buffer
@@ -282,9 +278,16 @@ bool Renderer::init() {
 		status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 		checkFramebufferStatus(status);
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	}
-	// load shader code (todo ?: do this in initGame(), so a shader-set can be selected in menu)
-	if (isGl2()) {
+
+		// load shader
+		//static_cast<ModelRendererGl*>(modelRenderer)->setShader("basic", true);
+		//while (mediaErrorLog.hasError()) {
+		//	MediaErrorLog::ErrorRecord rec = mediaErrorLog.popError();
+		//	g_logger.logError(rec.path, rec.msg);
+		//}
+
+	} /*else*/ if (isGl2()) {
+		// load shader code (todo ?: do this in initGame(), so a shader-set can be selected in menu)
 		if (g_config.getRenderTestingShaders()) {
 			ONE_TIME_TIMER(Renderer_Load_Test_Shaders, cout);
 			// some hacky stuff so we can test easier, get a list of shader 'sets' to load
@@ -629,17 +632,19 @@ void Renderer::setupLighting() {
 	// sun/moon light
 	Vec3f lightColour = computeLightColor(time);
 	Vec3f fogColor = world->getTileset()->getFogColor();
-	Vec4f lightPos = timeFlow->isDay()? computeSunPos(time): computeMoonPos(time);
+	Vec4f lightPos = timeFlow->isDay() ? computeSunPos(time) : computeMoonPos(time);
 	nearestLightPos = lightPos;
 
-	glLightfv(GL_LIGHT0, GL_POSITION, lightPos.ptr());
-	glLightfv(GL_LIGHT0, GL_AMBIENT, Vec4f(lightColour * lightAmbFactor, 1.f).ptr());
-	glLightfv(GL_LIGHT0, GL_DIFFUSE, Vec4f(lightColour, 1.f).ptr());
+	modelRenderer->setMainLight(Vec3f(lightPos), lightColour, lightColour * lightAmbFactor);
+	modelRenderer->setFogColour(fogColor * lightColour);
+	//glLightfv(GL_LIGHT0, GL_POSITION, lightPos.ptr());
+	//glLightfv(GL_LIGHT0, GL_AMBIENT, Vec4f(lightColour * lightAmbFactor, 1.f).ptr());
+	//glLightfv(GL_LIGHT0, GL_DIFFUSE, Vec4f(lightColour, 1.f).ptr());
 
 	///@todo add some spec!
-	glLightfv(GL_LIGHT0, GL_SPECULAR, Vec4f(0.0f, 0.0f, 0.f, 1.f).ptr());
+	//glLightfv(GL_LIGHT0, GL_SPECULAR, Vec4f(0.0f, 0.0f, 0.f, 1.f).ptr());
 
-	glFogfv(GL_FOG_COLOR, Vec4f(fogColor * lightColour, 1.f).ptr());
+	//glFogfv(GL_FOG_COLOR, Vec4f(fogColor * lightColour, 1.f).ptr());
 
 	++lightCount;
 
@@ -648,7 +653,7 @@ void Renderer::setupLighting() {
 		glDisable(GL_LIGHT0 + i);
 	}
 
-	//unit lights (not projectiles)
+	// unit lights (not projectiles)
 	if (timeFlow->isTotalNight()) {
 		for (int i=0; i < world->getFactionCount() && lightCount < maxLights; ++i) {
 			for (int j=0; j < world->getFaction(i)->getUnitCount() && lightCount < maxLights; ++j) {
@@ -660,12 +665,15 @@ void Renderer::setupLighting() {
 					pos.y += 4.f;
 					GLenum lightEnum = GL_LIGHT0 + lightCount;
 
-					glEnable(lightEnum);
-					glLightfv(lightEnum, GL_POSITION, pos.ptr());
-					glLightfv(lightEnum, GL_AMBIENT, Vec4f(unit->getType()->getLightColour()).ptr());
-					glLightfv(lightEnum, GL_DIFFUSE, Vec4f(unit->getType()->getLightColour()).ptr());
-					glLightfv(lightEnum, GL_SPECULAR, Vec4f(unit->getType()->getLightColour() * 0.3f).ptr());
-					glLightf(lightEnum, GL_QUADRATIC_ATTENUATION, 0.05f);
+					modelRenderer->setPointLight(lightCount - 1, Vec3f(pos), unit->getType()->getLightColour(), 
+						unit->getType()->getLightColour() * 0.3, Vec3f(1.f, 0.f, 0.05f));
+
+					//glEnable(lightEnum);
+					//glLightfv(lightEnum, GL_POSITION, pos.ptr());
+					//glLightfv(lightEnum, GL_AMBIENT, Vec4f(unit->getType()->getLightColour()).ptr());
+					//glLightfv(lightEnum, GL_DIFFUSE, Vec4f(unit->getType()->getLightColour()).ptr());
+					//glLightfv(lightEnum, GL_SPECULAR, Vec4f(unit->getType()->getLightColour() * 0.3f).ptr());
+					//glLightf(lightEnum, GL_QUADRATIC_ATTENUATION, 0.05f);
 
 					++lightCount;
 
@@ -690,6 +698,8 @@ void Renderer::loadGameCameraMatrix() {
 	glRotatef(gameCamera->getVAng(), -1, 0, 0);
 	glRotatef(gameCamera->getHAng(), 0, 1, 0);
 	glTranslatef(-gameCamera->getPos().x, -gameCamera->getPos().y, -gameCamera->getPos().z);
+
+
 }
 
 void Renderer::loadCameraMatrix(const Camera *camera) {
@@ -700,6 +710,8 @@ void Renderer::loadCameraMatrix(const Camera *camera) {
 	glLoadIdentity();
 	glMultMatrixf(orientation.toMatrix4().ptr());
 	glTranslatef(-position.x, -position.y, -position.z);
+
+
 }
 
 void Renderer::computeVisibleArea() {

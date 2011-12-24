@@ -63,7 +63,7 @@ public:
 	//void loadShader(const string &programName);
 	void loadShaders(const vector<string> &programNames);
 
-	void setShader(const string &programName);
+	void setShader(const string &programName, bool gl3 = false);
 
 	void deleteModelShader();
 
@@ -77,6 +77,9 @@ public:
 
 	virtual void setAlphaThreshold(float a) override;
 	virtual void setLightCount(int n) override;
+	virtual void setFogColour(const Vec3f &colour);
+	virtual void setMainLight(const Vec3f &direction, const Vec3f &diffuse, const Vec3f &ambient);
+	virtual void setPointLight(int i, const Vec3f &position, const Vec3f &colour, const Vec3f &spec, const Vec3f &attenuation);
 
 	void begin(RenderMode mode, bool fog, MeshCallback *meshCallback = 0) override;
 	void end() override;

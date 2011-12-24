@@ -57,6 +57,9 @@ public:
 
 	virtual void setAlphaThreshold(float a) = 0;
 	virtual void setLightCount(int n) = 0;
+	virtual void setFogColour(const Vec3f &colour) = 0;
+	virtual void setMainLight(const Vec3f &direction, const Vec3f &diffuse, const Vec3f &ambient) = 0;
+	virtual void setPointLight(int i, const Vec3f &position, const Vec3f &colour, const Vec3f &spec, const Vec3f &attenuation) = 0;
 
 	virtual void begin(RenderMode mode, bool fog, MeshCallback *meshCallback = 0) = 0;
 	virtual void end() = 0;
