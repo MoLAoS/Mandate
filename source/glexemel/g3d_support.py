@@ -576,9 +576,9 @@ def G3DSaver(filepath, context):
 		vertexCount = len(mesh.vertices) + len(newverts)
 		specularPower = 9.999999  # unused, same as old exporter
 		properties = 0
-		if mesh.show_double_sided:
-			properties |= 1
 		if textures==1 and mesh.materials[0].use_face_texture_alpha:
+			properties |= 1
+		if mesh.show_double_sided:
 			properties |= 2
 
 		#MeshData
