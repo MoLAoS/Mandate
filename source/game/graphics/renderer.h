@@ -103,6 +103,7 @@ private:
 	bool textures3D;
 	int  m_glMajorVersion;
 	ShadowMode m_shadowMode;
+	bool m_useFrameBufferObject;
 
 	// game
 	const GameState *game;
@@ -226,14 +227,14 @@ public:
 
 	ParticleManager* getParticleManager() { return particleManager[ResourceScope::GAME]; }
 
-	//lights and camera
+	// lights and camera
 	void setupLighting();
 	void loadGameCameraMatrix();
 	void loadCameraMatrix(const Camera *camera);
 	
 	void computeVisibleArea();
 
-    //basic rendering
+    // basic rendering
     void renderMouse3d();
     void renderBackground(const Texture2D *texture);
 	void renderTextureQuad(int x, int y, int w, int h, const Texture2D *texture, float alpha=1.f);
@@ -245,7 +246,7 @@ public:
 	void renderText(const string &text, const Font *font, const Vec4f &color, int x, int y);
 	void renderProgressBar(int size, int x, int y, int w, int h, const Font *font);
 
-    //complex rendering
+    // complex rendering
 	void renderSurface()	{m_terrainRenderer->render(culler);}
 	void renderObjects();
 	void renderWater();
@@ -254,11 +255,11 @@ public:
 	void renderWaterEffects();
 	void renderMenuBackground(const MenuBackground *menuBackground);
 
-	//computing
+	// computing
     bool computePosition(const Vec2i &screenPos, Vec2i &worldPos);
 	void computeSelected(UnitVector &units, const MapObject *&obj, const Vec2i &posDown, const Vec2i &posUp);
 
-    //gl wrap
+    // gl wrap
 	string getGlInfo();
 	string getGlMoreInfo();
 	string getGlMoreInfo2();
@@ -268,26 +269,28 @@ public:
 	bool isGl3() const { return m_glMajorVersion >= 3; }
 	bool isGl4() const { return m_glMajorVersion >= 4; }
 
-	//clear
+	bool useFrameBufferObject() const { return m_useFrameBufferObject; }
+
+	// clear
     void clearBuffers();
 	void clearZBuffer();
 
-	//shadows
+	// shadows
 	void renderShadowsToTexture();
 
-	//misc
+	// misc
 	void loadConfig();
 	void saveScreen(const string &path);
 
 	void loadProjectionMatrix();
 	void enableProjectiveTexturing();
 
-	//static
+	// static
 	static ShadowMode strToShadows(const string &s);
 	static string shadowsToStr(ShadowMode shadows);
 
 private:
-	//private misc
+	// private misc
 	float computeSunAngle(float time);
 	float computeMoonAngle(float time);
 	Vec4f computeSunPos(float time);
@@ -305,27 +308,27 @@ private:
 	//void renderObjectsFast(bool shadows = false);
 	//void renderUnitsFast(bool renderingShadows = false);
 
-	//gl requirements
+	// gl requirements
 	void checkGlCaps();
 	void checkGlOptionalCaps();
 
-	//gl init
+	// gl init
 	void init3dList();
 	void init3dListGLSL();
     void init2dList();
 	void init3dListMenu(MainMenu *mm);
 
-	//private aux drawing
+	// private aux drawing
 	void renderSelectionCircle(Vec3f v, int size, float radius);
 	void renderArrow(const Vec3f &pos1, const Vec3f &pos2, const Vec3f &color, float width);
 	void renderTile(const Vec2i &pos);
 	void renderQuad(int x, int y, int w, int h, const Texture2D *texture);
 
 public:
-	//static
+	// static
     static Texture2D::Filter strToTextureFilter(const string &s);
 };
 
-}} //end namespace
+}} // end namespace
 
 #endif

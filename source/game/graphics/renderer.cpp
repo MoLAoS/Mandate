@@ -147,7 +147,10 @@ const Vec4f Renderer::defColor          = Vec4f(1.f, 1.f, 1.f, 1.f);
 // ==================== constructor and destructor ====================
 
 Renderer::Renderer()
-		: m_fbHandle(0), m_colourBuffer(0), m_depthBuffer(0) {
+		: m_useFrameBufferObject(false)
+		, m_fbHandle(0)
+		, m_colourBuffer(0)
+		, m_depthBuffer(0) {
 	GraphicsInterface &gi= GraphicsInterface::getInstance();
 	FactoryRepository &fr= FactoryRepository::getInstance();
 	Config &config= Config::getInstance();
@@ -177,6 +180,17 @@ Renderer::Renderer()
 
 	int tmp1, tmp2;
 	getGlVersion(m_glMajorVersion, tmp1, tmp2);
+	
+	if (m_glMajorVersion >= 3) {
+		m_useFrameBufferObject = true;
+	} else {
+		if (isGlExtensionSupported("GL_EXT_framebuffer_object")
+		&&  isGlExtensionSupported("GL_EXT_packed_depth_stencil")
+		&&  isGlExtensionSupported("GL_EXT_framebuffer_blit")
+		&&  isGlExtensionSupported("GL_ARB_draw_buffers")) {
+			m_useFrameBufferObject = true;
+		}
+	}
 }
 
 Renderer::~Renderer(){
@@ -252,32 +266,39 @@ bool Renderer::init() {
 		}
 	}
 
-	if (isGl3()) {
+	if (useFrameBufferObject()) {
 		Vec2i windowSize = Vec2i(g_config.getDisplayWidth(), g_config.getDisplayHeight());
 		
 		// allocate buffer handles
-		glGenFramebuffers(1, &m_fbHandle);
-		glGenRenderbuffers(1, &m_colourBuffer);
-		glGenRenderbuffers(1, &m_depthBuffer);
+		glGenFramebuffersEXT(1, &m_fbHandle);
+		glGenRenderbuffersEXT(1, &m_colourBuffer);
+		glGenRenderbuffersEXT(1, &m_depthBuffer);
 	
 		// bind frame buffer
-		glBindFramebuffer(GL_FRAMEBUFFER, m_fbHandle);
-		assertGl();
+		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, m_fbHandle);
 
 		// bind colour buffer, allocate storage and attach to frame buffer
-		glBindRenderbuffer(GL_RENDERBUFFER, m_colourBuffer);
-		glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA8, windowSize.w, windowSize.h);
-		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, m_colourBuffer);
+		glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, m_colourBuffer);
+		glRenderbufferStorageEXT(GL_RENDERBUFFER_EXT, GL_RGBA8, windowSize.w, windowSize.h);
+		glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_RENDERBUFFER_EXT, m_colourBuffer);
+
+		assertGl();
 
 		// ditto for depth/stencil buffer
-		glBindRenderbuffer(GL_RENDERBUFFER, m_depthBuffer);
-		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, windowSize.w, windowSize.h);
-		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_depthBuffer);
+		glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, m_depthBuffer);
+		glRenderbufferStorageEXT(GL_RENDERBUFFER_EXT, GL_DEPTH24_STENCIL8_EXT, windowSize.w, windowSize.h);
+		//glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER_EXT, m_depthBuffer);
+		glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, m_depthBuffer);
+		glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_STENCIL_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, m_depthBuffer);
+		
+		assertGl();
 
 		GLenum status;
-		status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+		status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
 		checkFramebufferStatus(status);
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		glBindFramebuffer(GL_FRAMEBUFFER_EXT, 0);
+		
+		assertGl();
 
 		// load shader
 		//static_cast<ModelRendererGl*>(modelRenderer)->setShader("basic", true);
@@ -286,7 +307,8 @@ bool Renderer::init() {
 		//	g_logger.logError(rec.path, rec.msg);
 		//}
 
-	} /*else*/ if (isGl2()) {
+	}
+	if (isGl2()) {
 		// load shader code (todo ?: do this in initGame(), so a shader-set can be selected in menu)
 		if (g_config.getRenderTestingShaders()) {
 			ONE_TIME_TIMER(Renderer_Load_Test_Shaders, cout);
@@ -480,8 +502,8 @@ void Renderer::reset3d() {
 }
 
 void Renderer::reset() {
-	if (isGl3()) {
-		glBindFramebuffer(GL_FRAMEBUFFER, m_fbHandle);
+	if (useFrameBufferObject()) {
+		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, m_fbHandle);
 	}
 }
 
@@ -605,11 +627,12 @@ void Renderer::renderParticleManager(ResourceScope rs){
 
 void Renderer::swapBuffers() {
 	//_PROFILE_FUNCTION();
-	if (isGl3()) {
+	if (useFrameBufferObject()) {
 		Vec2i windowSize = Vec2i(g_config.getDisplayWidth(), g_config.getDisplayHeight());
-		glBindFramebuffer(GL_READ_FRAMEBUFFER, m_fbHandle);
-		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-		glBlitFramebuffer(0, 0, windowSize.w, windowSize.h, 0, 0, windowSize.w, windowSize.h, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+		glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, m_fbHandle);
+		glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, 0);
+		glBlitFramebufferEXT(0, 0, windowSize.w, windowSize.h, 0, 0, windowSize.w, windowSize.h, 
+			GL_COLOR_BUFFER_BIT, GL_NEAREST);
 	}
 	glFlush();
 	GraphicsInterface::getInstance().getCurrentContext()->swapBuffers();
