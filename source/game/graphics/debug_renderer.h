@@ -39,6 +39,8 @@ using Glest::Search::StoreMapKey;
 
 namespace Glest { namespace Debug {
 
+extern bool reportRenderUnitsFlag;
+
 class PathFinderTextureCallback {
 public:
 	set<Vec2i> pathSet, openSet, closedSet;

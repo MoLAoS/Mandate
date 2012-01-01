@@ -28,6 +28,8 @@ using Glest::Search::Cartographer;
 
 namespace Glest { namespace Debug {
 
+bool reportRenderUnitsFlag = false;
+
 // texture loading helper
 void _load_debug_tex(Texture2D* &texPtr, const char *fileName) {
 	texPtr = g_renderer.newTexture2D(ResourceScope::GAME);
@@ -234,8 +236,6 @@ void DebugRenderer::sceneEstablished(SceneCuller &culler) {
 		showFrustum = true;
 	}
 }
-
-extern bool reportRenderUnitsFlag;
 
 void DebugRenderer::commandLine(string &line) {
 	string key, val;

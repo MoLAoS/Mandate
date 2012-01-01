@@ -42,6 +42,19 @@ using namespace Shared::Util;
 
 namespace Glest { namespace Graphics {
 
+#if _GAE_DEBUG_EDITION_
+void reportRenderUnits(vector<const Unit*> *unitLists) {
+	cout << "renderUnitsReport ::\n";
+	for (int i=0; i < GameConstants::maxPlayers + 1; ++i) {
+		foreach_const (vector<const Unit*>, it, unitLists[i]) {
+			string unitType = (*it)->getType()->getName();
+			string factionType = i ? (*it)->getFaction()->getType()->getName() : "gaia";
+			cout << "\tUnit: " << unitType << " of faction " << (i - 1) << " (" << factionType << ")\n";
+		}
+	}
+}
+#endif
+
 // =====================================================
 // 	class MeshCallbackTeamColor
 // =====================================================
@@ -1134,31 +1147,6 @@ void Renderer::renderWater(){
 
 	assertGl();
 }
-
-#if _GAE_DEBUG_EDITION_
-
-} // end namespace Graphics
-
-namespace Debug {
-
-bool reportRenderUnitsFlag = false;
-
-} // end namespace Debug
-
-namespace Graphics {
-
-void reportRenderUnits(vector<const Unit*> *unitLists) {
-	cout << "renderUnitsReport ::\n";
-	for (int i=0; i < GameConstants::maxPlayers + 1; ++i) {
-		foreach_const (vector<const Unit*>, it, unitLists[i]) {
-			string unitType = (*it)->getType()->getName();
-			string factionType = i ? (*it)->getFaction()->getType()->getName() : "gaia";
-			cout << "\tUnit: " << unitType << " of faction " << (i - 1) << " (" << factionType << ")\n";
-		}
-	}
-}
-
-#endif
 
 void Renderer::renderUnits() {
 	SECTION_TIMER(RENDER_UNITS);
