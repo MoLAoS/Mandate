@@ -8,6 +8,10 @@
 # 2011/05/25: v0.1 alpha1
 # modified by William Zheng for Blender 2.57(loveheaven_zhengwei@hotmail.com)
 #
+# corrected by MrPostiga for Blender 2.58
+#
+# extended by Yggdrasil
+#
 # Started Date: 07 June 2005  Put Public 20 June 2005   
 #  Distributed under the GNU PUBLIC LICENSE
 #"""
@@ -76,8 +80,8 @@
 ##properties: property flags
 #Code:
 #enum MeshPropertyFlag{
-#   mpfTwoSided= 1,
-#		mpfCustomColor= 2,
+#		mpfCustomColor= 1,
+#		mpfTwoSided= 2
 #};
 #mpfTwoSided: meshes in this mesh are rendered by both sides, if this flag is not present only "counter clockwise" faces are rendered
 #mpfCustomColor: alpha in this model is replaced by a custom color, usually the player color
@@ -98,9 +102,9 @@
 
 bl_info = {
 	"name": "G3D Mesh Import/Export",
-	"author": "William Zheng (corrected by MrPostiga)",
-	"version": (0, 1, 1),
-	"blender": (2, 6, 0),
+	"author": "various, see head of script",
+	"version": (0, 2, 0),
+	"blender": (2, 6, 1),
 	"api": 36079,
 	"location": "File > Import-Export",
 	"description": "Import/Export .g3d file",
@@ -201,14 +205,14 @@ class G3DMeshHeaderv4:										 #Read Meshheader
 		self.opacity = data[74]					   #Opacity
 		self.properties= data[75]				  #Property flags
 		self.textures = data[76]					  #Texture flag
-		if self.properties & 1:					  #PropertyBit is Mesh TwoSided ?
-			self.istwosided = True
-		else:
-			self.istwosided = False
-		if self.properties & 2:					  #PropertyBit is Mesh Alpha Channel custom Color in Game ?
+		if self.properties & 1:					  #PropertyBit is Mesh Alpha Channel custom Color in Game ?
 			self.customalpha = True
 		else:
 			self.customalpha = False
+		if self.properties & 2:					  #PropertyBit is Mesh TwoSided ?
+			self.istwosided = True
+		else:
+			self.istwosided = False
 		if self.textures & 1:						#PropertyBit is Mesh Textured ?
 			temp = fileID.read(struct.calcsize(self.texname_format))
 			data = struct.unpack(self.texname_format,temp)
@@ -298,6 +302,7 @@ def createMesh(filename,header,data):						  #Create a Mesh inside Blender
 			uv.append([u2,v2])
 			faceuv.append([uv,0,0,0])
 		else:
+			uv = []
 			uv.append([0,0])
 			uv.append([0,0])
 			uv.append([0,0])
@@ -305,11 +310,12 @@ def createMesh(filename,header,data):						  #Create a Mesh inside Blender
 	mesh.faces.add(len(faces)//4)
 	mesh.faces.foreach_set("vertices_raw", faces)
 	mesh.faces.foreach_set("use_smooth", [True] * len(mesh.faces))
+	mesh.show_double_sided = header.istwosided
 	mesh.update_tag()
-	mesh.update()																   #Update changes to Mesh
+	mesh.update()   #Update changes to Mesh
 	#===================================================================================================
-#Material Setup
-#===================================================================================================
+	#Material Setup
+	#===================================================================================================
 	if header.hastexture:	   
 		materialname = "pskmat"
 		materials = []
@@ -323,6 +329,7 @@ def createMesh(filename,header,data):						  #Create a Mesh inside Blender
 			matdata.diffuse_color = (header.diffusecolor[0], header.diffusecolor[1],header.diffusecolor[2])
 			matdata.alpha = header.opacity
 			matdata.specular_color = (header.specularcolor[0], header.specularcolor[1],header.specularcolor[2])
+		matdata.use_face_texture_alpha = header.customalpha
 		materials.append(matdata)
 
 		for material in materials:
@@ -332,47 +339,38 @@ def createMesh(filename,header,data):						  #Create a Mesh inside Blender
 		countm = 0
 		psktexname="psk" + str(countm)
 		mesh.uv_textures.new(name=psktexname)
-		for countm in range(len(mesh.uv_textures)):
-			mesh.update()
-			uvtex = mesh.uv_textures[countm] #add one uv texture
-			mesh.update()
-			if (len(faceuv) > 0):
-				counttex = 0
-				countm = 0
-				for countm in range(len(mesh.uv_textures)):
-					mesh.update()
-					psktexname="psk" + str(countm)
-					uvtex = mesh.uv_textures[countm] #add one uv texture
-					mesh.update()
-					for i, face in enumerate(mesh.faces):
-						blender_tface = uvtex.data[i] #face
-						mfaceuv = faceuv[i]
-						#face.material_index = faceuv[i][1]
-						if countm == faceuv[i][1]:
-							face.material_index = faceuv[i][1]
-							blender_tface.uv1 = mfaceuv[0][0] #uv = (0,0)
-							blender_tface.uv2 = mfaceuv[0][1] #uv = (0,0)
-							blender_tface.uv3 = mfaceuv[0][2] #uv = (0,0)
-							blender_tface.image = image
-							#blender_tface.use_image = True
-							#blender_tface.blend_type = 'ALPHA'
-							#blender_tface.use_twoside = True
-						else:
-							blender_tface.uv1 = [0,0]
-							blender_tface.uv2 = [0,0]
-							blender_tface.uv3 = [0,0]
+		if (len(faceuv) > 0):
+			for countm in range(len(mesh.uv_textures)):
+				mesh.update()
+				uvtex = mesh.uv_textures[countm] #add one uv texture
+				mesh.update()
+				for i, face in enumerate(mesh.faces):
+					blender_tface = uvtex.data[i] #face
+					mfaceuv = faceuv[i]
+					if countm == faceuv[i][1]:
+						face.material_index = faceuv[i][1]
+						blender_tface.uv1 = mfaceuv[0][0] #uv = (0,0)
+						blender_tface.uv2 = mfaceuv[0][1] #uv = (0,0)
+						blender_tface.uv3 = mfaceuv[0][2] #uv = (0,0)
+						blender_tface.image = image
+					else:
+						blender_tface.uv1 = [0,0]
+						blender_tface.uv2 = [0,0]
+						blender_tface.uv3 = [0,0]
 	mesh.update()
-	imported.append(meshobj)						#Add to Imported Objects
-	for x in range(header.framecount):					  #Put in Vertex Positions for Keyanimation
-		print("Frame"+str(x))
+	imported.append(meshobj)			#Add to Imported Objects
+	sk = meshobj.shape_key_add()
+	#mesh.shape_keys.use_relative = False
+	#sk.interpolation = 'KEY_LINEAR'
+	for x in range(1,header.framecount):	#Put in Vertex Positions for Keyanimation
+		#print("Frame"+str(x))
+		sk = meshobj.shape_key_add()
 		for i in range(0,header.vertexcount*3,3):
-			print(str(i//3)+':\t'+str(data.vertices[x*header.vertexcount*3 + i])+'\t'+
-				str(data.vertices[x*header.vertexcount*3 + i +1])+'\t'+
-				str(data.vertices[x*header.vertexcount*3 + i +2]))
-			mesh.vertices[i//3].co[0]= data.vertices[x*header.vertexcount*3 + i]
-			mesh.vertices[i//3].co[1]= data.vertices[x*header.vertexcount*3 + i +1]
-			mesh.vertices[i//3].co[2]= data.vertices[x*header.vertexcount*3 + i +2]
-		meshobj.keyframe_insert("location",-1, frame=(x+1))
+			sk.data[i//3].co[0]= data.vertices[x*header.vertexcount*3 + i]
+			sk.data[i//3].co[1]= data.vertices[x*header.vertexcount*3 + i +1]
+			sk.data[i//3].co[2]= data.vertices[x*header.vertexcount*3 + i +2]
+		#meshobj.keyframe_insert("location",-1, frame=(x+1))
+		#meshobj.keyframe_insert(data_path="data.vertices", frame=(x+1))
 	mesh.update()
 	return
 ###########################################################################
