@@ -49,12 +49,6 @@ namespace Glest { namespace Main {
 class ExceptionHandler: public PlatformExceptionHandler {
 public:
 	virtual void log(const char *description, void *address, const char **backtrace, size_t count, const exception *e) {
-		try {
-			Renderer::getInstance().saveScreen("glestadv-crash_" + Logger::fileTimestamp() + ".png");
-		} catch(runtime_error &e) {
-			printf("%s", e.what());
-		}
-
 		ostream *ofs = FSFactory::getInstance()->getOStream("gae-crash.txt");
 
 		time_t t= time(NULL);
@@ -82,6 +76,12 @@ public:
 		*ofs << "\n=======================\n";
 
 		delete ofs;
+
+		try {
+			Renderer::getInstance().saveScreen("glestadv-crash_" + Logger::fileTimestamp() + ".png");
+		} catch(runtime_error &e) {
+			printf("%s", e.what());
+		}
 	}
 
 	virtual void notifyUser(bool pretty) {
