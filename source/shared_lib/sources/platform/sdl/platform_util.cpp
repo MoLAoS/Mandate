@@ -22,6 +22,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <execinfo.h>
+#include <sys/resource.h>
 
 #include <SDL.h>
 
@@ -30,6 +31,7 @@
 #include "sdl_private.h"
 #include "window.h"
 #include "noimpl.h"
+#include "FSFactory.hpp"
 
 #include "leak_dumper.h"
 
@@ -259,9 +261,27 @@ void PlatformExceptionHandler::handler(int signo, siginfo_t *info, void *context
 	// primative format.
 	singleton->notifyUser(recursionCount == 1);
 
-	--recursionCount;
+	--recursionCount; //???, we exit program below
 
-	exit(1);
+	// change working directory to get core dump there
+	chdir(g_fileFactory.getConfigDir().c_str());
+	// enable core dump for this process
+	struct rlimit rl;
+	rl.rlim_cur = RLIM_INFINITY;
+	rl.rlim_max = RLIM_INFINITY;
+	if(setrlimit(RLIMIT_CORE, &rl)==-1){
+		  fprintf(stderr, "setrlimit failed: %s\n", strerror(errno));
+		  exit(1);
+	}
+	// uninstall signal handler
+	struct sigaction action;
+	memset(&action, 0, sizeof(action));
+	action.sa_handler = SIG_DFL;
+	sigaction(signo, &action, NULL);
+	// resend signal so we get a core dump
+	raise(signo);
+
+	//exit(1);
 }
 
 
