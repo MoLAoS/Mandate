@@ -475,16 +475,21 @@ def G3DSaver(filepath, context):
 
 	# G3DHeader v4
 	fileID.write(struct.pack("<3cB", b'G', b'3', b'D', 4))
+
+	objs = context.selected_objects
+	if len(objs) == 0:
+		objs = bpy.data.objects
+
 	#get real meshcount as len(bpy.data.meshes) holds also old meshes
 	meshCount = 0
-	for obj in bpy.data.objects:#context.selected_objects:
+	for obj in objs:
 		if obj.type == 'MESH':
 			meshCount += 1
 	# G3DModelHeaderv4
 	fileID.write(struct.pack("<HB", meshCount, 0))
 	# meshes
 	#for mesh in bpy.data.meshes:
-	for obj in bpy.data.objects:#context.selected_objects:
+	for obj in objs:
 		if obj.type != 'MESH':
 			continue
 		mesh = obj.data
@@ -698,5 +703,7 @@ if __name__ == '__main__':
 #	main()
 
 	#G3DLoader("import.g3d")
+	#for obj in bpy.context.selected_objects:
+	#	obj.select = False  # deselect everything, so we get it all
 	#G3DSaver("test.g3d", bpy.context)
 
