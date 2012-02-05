@@ -590,19 +590,17 @@ def G3DSaver(filepath, context):
 		fcurrent = context.scene.frame_current
 		for i in range(context.scene.frame_start, context.scene.frame_end+1):
 			context.scene.frame_set(i)
-			#FIXME: this is hacky
-			if obj.find_armature() == None:
-				m = mesh.copy()
-				m.transform(obj.matrix_world)
-			else:
-				#FIXME: not sure what's better: PREVIEW or RENDER settings
-				m = obj.to_mesh(context.scene, True, 'RENDER')
+			#FIXME: not sure what's better: PREVIEW or RENDER settings
+			m = obj.to_mesh(context.scene, True, 'RENDER')
+			m.transform(obj.matrix_world)  # apply object-mode transformations
 			for vertex in m.vertices:
 				vertices.extend(vertex.co)
 				normals.extend(vertex.normal)
+
 			for nv in newverts:
 				vertices.extend(m.vertices[nv].co)
 				normals.extend(m.vertices[nv].normal)
+
 		context.scene.frame_set(fcurrent)
 
 		# MeshHeader
