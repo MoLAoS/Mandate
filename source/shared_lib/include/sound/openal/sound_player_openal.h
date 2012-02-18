@@ -91,7 +91,7 @@ public:
 	virtual void init(const SoundPlayerParams *params);
 	virtual void end();
 	virtual void play(StaticSound *staticSound);
-	virtual void play(StrSound *strSound, int64 fadeOn=0);
+	virtual void play(StrSound *strSound, bool loop, int64 fadeOn=0, RequestNextStream cbFunc=0);
 	virtual void stop(StrSound *strSound, int64 fadeOff=0);
 	virtual void stopAllSounds();
 	virtual void updateStreams();	//updates str buffers if needed
