@@ -171,7 +171,6 @@ int glestMain(int argc, char** argv) {
 			program.exit();
 			return 0;
 		}
-		showCursor(false);
 		//main loop
 		program.loop();
 #	else
@@ -182,7 +181,6 @@ int glestMain(int argc, char** argv) {
 				program.exit();
 				return 0;
 			}
-			showCursor(false);
 
 			try {
 				//main loop
@@ -208,7 +206,6 @@ int glestMain(int argc, char** argv) {
 			program.exit();
 			return 0;
 		}
-		showCursor(false);
 		program.loop();
 	}
 

@@ -78,6 +78,7 @@ private:
 	string renderInterpolationMethod;
 	int renderLightsMax;
 	string renderModelTestShaders;
+	string renderMouseCursorType;
 	float renderShadowAlpha;
 	int renderShadowFrameSkip;
 	int renderShadowTextureSize;
@@ -181,6 +182,7 @@ public:
 	string getRenderInterpolationMethod() const	{return renderInterpolationMethod;}
 	int getRenderLightsMax() const				{return renderLightsMax;}
 	string getRenderModelTestShaders() const	{return renderModelTestShaders;}
+	string getRenderMouseCursorType() const		{return renderMouseCursorType;}
 	float getRenderShadowAlpha() const			{return renderShadowAlpha;}
 	int getRenderShadowFrameSkip() const		{return renderShadowFrameSkip;}
 	int getRenderShadowTextureSize() const		{return renderShadowTextureSize;}
@@ -266,6 +268,7 @@ public:
 	void setRenderInterpolationMethod(string val){renderInterpolationMethod = val;}
 	void setRenderLightsMax(int val)			{renderLightsMax = val;}
 	void setRenderModelTestShaders(string val)	{renderModelTestShaders = val;}
+	void setRenderMouseCursorType(string val)	{renderMouseCursorType = val;}
 	void setRenderShadowAlpha(float val)		{renderShadowAlpha = val;}
 	void setRenderShadowFrameSkip(int val)		{renderShadowFrameSkip = val;}
 	void setRenderShadowTextureSize(int val)	{renderShadowTextureSize = val;}

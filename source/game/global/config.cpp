@@ -83,6 +83,7 @@ Config::Config(const char* fileName) {
 	renderInterpolationMethod = p->getString("RenderInterpolationMethod", "SIMD");
 	renderLightsMax = p->getInt("RenderLightsMax", 1, 0, 8);
 	renderModelTestShaders = p->getString("RenderModelTestShaders", "basic,bump_map");
+	renderMouseCursorType = p->getString("RenderMouseCursorType", "ImageSetMouseCursor");
 	renderShadowAlpha = p->getFloat("RenderShadowAlpha", 0.2f, 0.f, 1.f);
 	renderShadowFrameSkip = p->getInt("RenderShadowFrameSkip", 2);
 	renderShadowTextureSize = p->getInt("RenderShadowTextureSize", 512);
@@ -178,6 +179,7 @@ void Config::save(const char *path) {
 	p->setString("RenderInterpolationMethod", renderInterpolationMethod);
 	p->setInt("RenderLightsMax", renderLightsMax);
 	p->setString("RenderModelTestShaders", renderModelTestShaders);
+	p->setString("RenderMouseCursorType", renderMouseCursorType);
 	p->setFloat("RenderShadowAlpha", renderShadowAlpha);
 	p->setInt("RenderShadowFrameSkip", renderShadowFrameSkip);
 	p->setInt("RenderShadowTextureSize", renderShadowTextureSize);

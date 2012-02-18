@@ -56,6 +56,7 @@ renderFpsMax				int		60				0		1000000	Frames per second cap.
 renderGraphicsFactory		string	"OpenGL"		-		-		The graphics renderer used to render all graphics. Only OpenGL still supported.
 renderInterpolationMethod	string	"SIMD"			-		-		Allows rendering with a single instruction, multiple data processing.
 renderLightsMax				int		1				0		8		The maximum number of light sources there can be at one time.
+renderMouseCursorType		string	"ImageSetMouseCursor"	-	-	The type of mouse cursor to use: ImageSetMouseCursor, CodeMouseCursor, OSMouseCursor.
 renderShadowAlpha			float	0.2f			0.f		1.f		Transparency of shadow map shadows. This is a percentage in decimal form where 0 is fully transparent and 1 is fully opaque. Ignored if shadows are disabled.
 renderShadowFrameSkip		int		2				-		-		Frameskip for shadows. Lower will get smoother shadow movement, but use more system resources. Ignored if shadows are disabled.
 renderShadowTextureSize		int		512				-		-		Size of shadow maps, must be a power of 2 but always under the screen size, higher values result in more accurate shadows and slower performance. Ignored if shadows are disabled. If larger than the game's resolution, shadows become buggy and stretched.

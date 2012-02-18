@@ -12,8 +12,18 @@
 #include "widget_window.h"
 #include "renderer.h"
 #include "core_data.h"
+#include "platform_util.h"
 
 namespace Glest { namespace Widgets {
+
+// =====================================================
+// class CodeMouseCursor
+// =====================================================
+
+OSMouseCursor::OSMouseCursor(WidgetWindow *window) 
+		: MouseCursor(window) {
+	showCursor(true);
+}
 
 // =====================================================
 // class CodeMouseCursor
@@ -23,6 +33,7 @@ CodeMouseCursor::CodeMouseCursor(WidgetWindow *window)
 		: MouseCursor(window)
 		, m_app(MouseAppearance::DEFAULT), m_tex(0) {
 	DEBUG_HOOK();
+	showCursor(false);
 }
 
 CodeMouseCursor::~CodeMouseCursor() {
@@ -41,6 +52,10 @@ void CodeMouseCursor::setAppearance(MouseAppearance ma, const Texture2D *tex) {
 }
 
 void CodeMouseCursor::render() {
+	if (!Widget::isVisible()) {
+		return;
+	}
+
 	float color1, color2;
 	Vec2i points[4];
 	points[0] = getScreenPos();
@@ -99,6 +114,7 @@ ImageSetMouseCursor::ImageSetMouseCursor(WidgetWindow *window)
 		, m_app(MouseAppearance::DEFAULT)
 		, m_icon(0), m_mouseMain(0), m_mouseTexture(0) {
 	DEBUG_HOOK();
+	showCursor(false);
 }
 
 ImageSetMouseCursor::~ImageSetMouseCursor() {
@@ -121,6 +137,10 @@ void ImageSetMouseCursor::setAppearance(MouseAppearance ma, const Texture2D *tex
 }
 
 void ImageSetMouseCursor::render() {
+	if (!Widget::isVisible()) {
+		return;
+	}
+
 	float color1, color2;
 	Vec2i points[4];
 	points[0] = getScreenPos();

@@ -77,6 +77,7 @@ private:
 	void doMouseInto(Widget *widget);
 	void destroyFloater();
 	void setScissor(const Rect2i &rect);
+	MouseCursor *createMouseCursor(const std::string &type);
 
 public:
 	WidgetWindow();

@@ -125,17 +125,9 @@ WidgetWindow::WidgetWindow()
 		lastKeyDownWidget = 0;
 		keyboardFocused = m_keyboardWidget;
 
-		///@todo ImageSetMouseCursor ... & config option?
-		//if (false) {
-		//	m_mouseCursor = new CodeMouseCursor(this);
-		//} else {
-			m_mouseCursor = new ImageSetMouseCursor(this);
-			m_mouseCursor->initMouse();
-			registerUpdate(m_mouseCursor);
-		//}
+		m_mouseCursor = createMouseCursor(g_config.getRenderMouseCursorType());
 
 		textRendererFT = g_renderer.getFreeTypeRenderer();
-	
 	}
 } 
 
@@ -249,6 +241,23 @@ void WidgetWindow::setScissor(const Rect2i &rect) {
 	Vec2i pos(rect.p[0].x, g_config.getDisplayHeight() - rect.p[1].y);
 	Vec2i size(rect.p[1].x - rect.p[0].x, rect.p[1].y - rect.p[0].y);
 	glScissor(pos.x, pos.y, size.w, size.h);
+}
+
+MouseCursor *WidgetWindow::createMouseCursor(const std::string &type) {
+	MouseCursor *mouseCursor = 0;
+	if (type == "ImageSetMouseCursor") {
+		mouseCursor = new ImageSetMouseCursor(this);
+		mouseCursor->initMouse();
+		registerUpdate(mouseCursor);
+	} else if (type == "CodeMouseCursor") {
+		mouseCursor = new CodeMouseCursor(this);
+	} else if (type == "OSMouseCursor") {
+		mouseCursor = new OSMouseCursor(this);
+	} else {
+		g_logger.logError("MouseCursorType not valid. Using OS cursor.");
+		mouseCursor = new OSMouseCursor(this);
+	}
+	return mouseCursor;
 }
 
 void WidgetWindow::pushClipRect(const Vec2i &pos, const Vec2i &size) {

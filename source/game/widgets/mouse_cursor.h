@@ -16,6 +16,20 @@
 namespace Glest { namespace Widgets {
 
 // =====================================================
+// class OSMouseCursor
+// =====================================================
+
+class OSMouseCursor : public MouseCursor {
+public:
+	OSMouseCursor(WidgetWindow *window);
+	virtual ~OSMouseCursor() {}
+
+	virtual void setAppearance(MouseAppearance ma, const Texture2D *tex = 0) override {};
+	virtual void render() override {}
+	virtual string descType() const override { return "OSMouseCursor"; }
+};
+
+// =====================================================
 // class CodeMouseCursor
 // =====================================================
 
@@ -34,7 +48,7 @@ public:
 	virtual Vec2i getMinSize() const override { return Vec2i(32); }
 
 	virtual void render() override;
-	virtual string descType() const override { return "MouseCursor"; }
+	virtual string descType() const override { return "CodeMouseCursor"; }
 };
 
 // =====================================================
