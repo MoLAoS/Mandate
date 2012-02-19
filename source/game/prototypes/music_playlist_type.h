@@ -72,7 +72,7 @@ public:
     eActivationMode getActivationMode() const { return m_activation; }
 
     MusicTracks& getTrackList() { return m_tracks; }
-    void addTrack(StrSound* newTrack) { m_tracks.push_back(newTrack); }
+	void addTrack(const std::string &path);
     bool empty() const { return m_tracks.empty(); }
     StrSound* getNextTrack();
 };

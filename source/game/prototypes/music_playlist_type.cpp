@@ -10,6 +10,7 @@
 #include "xml_parser.h"
 #include "sound.h"
 #include "leak_dumper.h"
+#include "logger.h"
 
 using namespace Shared::Xml;
 using namespace Shared::Sound;
@@ -32,8 +33,9 @@ MusicPlaylistType::MusicPlaylistType()
 }
 
 MusicPlaylistType::~MusicPlaylistType() {
-    for(int i= 0; i < m_tracks.size(); i++)
+	for (int i = 0; i < m_tracks.size(); ++i) {
         delete m_tracks[i];
+	}
 }
 
 void MusicPlaylistType::preload( const XmlNode *pXMLNode, const string &dir ) {
@@ -70,51 +72,53 @@ void MusicPlaylistType::preload( const XmlNode *pXMLNode, const string &dir ) {
     }
 
     for (int i=0; i < pXMLNode->getChildCount(); ++i) {
-	    StrSound *sound = new StrSound();
-	    sound->open(dir + "/" + pXMLNode->getChild("music-file", i)->getAttribute("path")->getRestrictedValue());
-	    addTrack(sound);
+	    addTrack(dir + "/" + pXMLNode->getChild("music-file", i)->getAttribute("path")->getRestrictedValue());
     }
 	if (m_tracks.empty()) {
 		throw runtime_error("No tracks in play-list!");
 	}
 }
 
-StrSound* MusicPlaylistType::getNextTrack() { 
-    if(m_curTrackIndex == -1) {
+void MusicPlaylistType::addTrack(const std::string &path) {
+	StrSound *sound = new StrSound();
+	try	{
+		sound->open(path);
+		m_tracks.push_back(sound);
+	} catch (runtime_error e) {
+		g_logger.logError(e.what());
+		delete sound;
+	}
+}
+
+StrSound* MusicPlaylistType::getNextTrack() {
+	if (empty()) {
+		m_curTrackIndex = -1;
+	} else if (m_curTrackIndex == -1) {
         // playlist is starting up
         m_curTrackIndex = 0;
-        if(m_bRandom) {
+        if (m_bRandom) {
 		    int seed = int(Chrono::getCurTicks());
 		    Random random(seed);
 		    m_curTrackIndex = random.randRange(0, m_tracks.size() - 1);
         }
-    } 
-    else if(!m_bRandom) {
+    } else if (!m_bRandom) {
         // playlist in sequential order
         m_curTrackIndex++;
-        if(m_curTrackIndex == m_tracks.size()) {
-            if(m_bLooping) {
-                m_curTrackIndex = 0;
-            }
-            else {
-                m_curTrackIndex = -1;
-            }
+        if (m_curTrackIndex >= m_tracks.size()) {
+			m_curTrackIndex = m_bLooping ? 0 : -1;
         }
-    } 
-    else {
-       // random playlist
-        if(!m_bLooping) {
+    } else {
+		// random playlist
+        if (!m_bLooping) {
             m_curTrackIndex = -1;
-        }
-        else if(m_tracks.size() == 2) {
+        } else if (m_tracks.size() == 2) {
             m_curTrackIndex = !m_curTrackIndex;
-        } 
-        else {
+        } else {
             int seed = int(Chrono::getCurTicks());
 	        Random random(seed);
 
             int rndIndex = m_curTrackIndex;
-            while(rndIndex == m_curTrackIndex) {
+            while (rndIndex == m_curTrackIndex) {
 		        rndIndex = random.randRange(0, m_tracks.size() - 1);
             }
             m_curTrackIndex = rndIndex;

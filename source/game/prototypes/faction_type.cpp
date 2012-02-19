@@ -280,9 +280,7 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
                     music->setRandom( (shuffleAttrib && shuffleAttrib->getBoolValue() ? true : false) );
 
 					for (int i=0; i < musicNode->getChildCount(); ++i) {
-						StrSound *sound = new StrSound();
-						sound->open(dir+"/"+musicNode->getChild("music-file", i)->getAttribute("path")->getRestrictedValue());
-                        music->addTrack(sound);
+                        music->addTrack(dir+"/"+musicNode->getChild("music-file", i)->getAttribute("path")->getRestrictedValue());
 					}
                     if (music->empty()) {
 						throw runtime_error("No tracks in play-list!");
@@ -293,9 +291,7 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 				if (pathAttr) {
                     music = new MusicPlaylistType();
                     music->setLoop(true);
-					StrSound *sound = new StrSound();
-					sound->open(dir + "/" + pathAttr->getRestrictedValue());
-                    music->addTrack(sound);
+                    music->addTrack(dir + "/" + pathAttr->getRestrictedValue());
 				} else {
 					g_logger.logXmlError(path, "'music' node must have either a 'path' or 'play-list' attribute");
 					loadOk = false;
