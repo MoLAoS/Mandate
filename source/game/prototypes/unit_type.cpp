@@ -367,7 +367,7 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 		}
         // Music Playlist feature
         try {
-		    const XmlNode *musicPlaylistNode= parametersNode->getChild("music-play-list");
+		    const XmlNode *musicPlaylistNode = parametersNode->getChild("music-play-list", 0, false);
             if(musicPlaylistNode) {
 		        bool value = musicPlaylistNode->getAttribute("enabled")->getBoolValue();
 		        if (value) {

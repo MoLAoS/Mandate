@@ -135,7 +135,7 @@ bool TechTree::preload(const string &dir, const set<string> &factionNames){
 	}
 
     try { // music-play-list
-		const XmlNode *musicPlaylistNode= techTreeNode->getChild("music-play-list");
+		const XmlNode *musicPlaylistNode = techTreeNode->getChild("music-play-list", 0, false);
         if(musicPlaylistNode) {
 		    bool value = musicPlaylistNode->getAttribute("enabled")->getBoolValue();
 		    if (value) {

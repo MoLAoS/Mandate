@@ -383,7 +383,7 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 
     // 11. Music Playlist feature
     try {
-		const XmlNode *musicPlaylistNode= factionNode->getChild("music-play-list");
+		const XmlNode *musicPlaylistNode = factionNode->getChild("music-play-list", 0, false);
         if(musicPlaylistNode) {
 		    bool value = musicPlaylistNode->getAttribute("enabled")->getBoolValue();
 		    if (value) {
