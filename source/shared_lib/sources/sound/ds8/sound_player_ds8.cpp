@@ -152,27 +152,25 @@ void StaticSoundBuffer::fillDsBuffer(){
 
 // ===================== PUBLIC ========================
 
-StrSoundBuffer::StrSoundBuffer() 
-    : state(sFree)
-    , loop(false)
-    , lastDataSubmitted(false)
-    , numberOfBytesBeforeEnd(0)
-    , nextStreamCallback(0)
-{
+StrSoundBuffer::StrSoundBuffer(){
+	state= sFree;
 }
 
 void StrSoundBuffer::init(IDirectSound8 *dsObject, Sound *sound, uint32 strBufferSize){
-    state= sStopped;
-    loop= false;
-    lastDataSubmitted= false;
-    numberOfBytesBeforeEnd= 0;
-    nextStreamCallback= 0;
-
-    this->sound= sound;
-    this->size= strBufferSize;
-    if(dsBuffer==NULL)
-        createDsBuffer(dsObject);
-    dsBuffer->SetCurrentPosition(0);
+	state= sStopped;
+	if(this->sound==NULL){
+		this->sound= sound;
+		this->size= strBufferSize;
+		createDsBuffer(dsObject);
+		dsBuffer->SetCurrentPosition(0);
+		fillDsBuffer();
+	}
+	else if(this->sound!=sound){
+		this->sound= sound;
+		this->size= strBufferSize;
+		dsBuffer->SetCurrentPosition(0);
+		fillDsBuffer();
+	}
 }
 
 void StrSoundBuffer::end(){
@@ -181,17 +179,12 @@ void StrSoundBuffer::end(){
 	dsBuffer->Release();
 	dsBuffer= NULL;
 	sound= NULL;
-    nextStreamCallback= 0;  // just to make sure
 }
 
-void StrSoundBuffer::play(int64 fadeOn, bool loop, RequestNextStream cbFunc){
+void StrSoundBuffer::play(int64 fadeOn){
 	assert(state==sStopped);
 	lastPlayCursor= 0;
-    this->loop= loop;
-    nextStreamCallback= cbFunc;
-    fillDsBuffer();
-
-    if(fadeOn==0){
+	if(fadeOn==0){
 		state= sPlaying;
 		dsBuffer->SetVolume(dsVolume(sound->getVolume()));
 	}
@@ -241,12 +234,13 @@ void StrSoundBuffer::update(){
 }
 
 void StrSoundBuffer::stop(int64 fadeOff){
+
 	if(fadeOff==0){
 		dsBuffer->Stop();
 		state= sStopped;
 	}
 	else{
-        this->fade= fadeOff;
+		this->fade= fadeOff;
 		state= sFadingOff;
 		chrono.reset();
 		chrono.start();
@@ -292,25 +286,13 @@ void StrSoundBuffer::refreshDsBuffer(){
 		throw runtime_error("Failed to Lock query play position");
 	}
 
-    //compute bytes to lock
+	//compute bytes to lock
 	if(playCursor>=lastPlayCursor){
 		bytesToLock= playCursor - lastPlayCursor;
 	}
 	else{
 		bytesToLock= size - (lastPlayCursor - playCursor);
 	}
-
-    if(lastDataSubmitted) {
-        if( numberOfBytesBeforeEnd > bytesToLock ) {
-            numberOfBytesBeforeEnd -= bytesToLock;
-            bytesToLock = 0;
-        }
-        else {
-            numberOfBytesBeforeEnd = 0;
-            stop(0);
-            return;
-        }
-    }
 
 	//copy data
 	if(bytesToLock>0){
@@ -338,44 +320,14 @@ void StrSoundBuffer::refreshDsBuffer(){
 }
 
 void StrSoundBuffer::readChunk(void *writePointer, uint32 size){
-    StrSound *s= getStrSound();
+	StrSound *s= getStrSound();
 	uint32 readSize= s->read(static_cast<int8*>(writePointer), size);
-
-    if(readSize<size) {
-        // Can we get another sound? If it failed once(lastDataSubmitted==true), don't check again...
-        StrSound *nextSound= 0;
-        if(!lastDataSubmitted) {
-            if(loop) {
-                nextSound= s;   //can't be null
-            }
-            else if(s->getNext()) {
-                nextSound= s->getNext();    // can't be null
-            }
-            else if(nextStreamCallback) {
-                nextSound= nextStreamCallback();    // CAN be null
-            }
-        }
-
-        if(nextSound) {
-            // we got new sound, start it up!
-		    nextSound->restart();
-		    nextSound->read(&static_cast<int8*>(writePointer)[readSize], size-readSize);
-		    nextSound->setVolume(s->getVolume());
-            sound= (Sound*)nextSound;
-        }
-        else {
-            // No new sound, check for complete data consumption then. Sound will end.
-
-            // memset out the missing memory to zero to create silence
-            int8 *silenceAddr = &static_cast<int8*>(writePointer)[readSize];
-            memset(silenceAddr, 0, size-readSize);
-
-            // set lastDataSubmitted
-            if(!lastDataSubmitted) {
-                lastDataSubmitted= true;
-                numberOfBytesBeforeEnd= this->size - (size-readSize);
-            }
-        }
+	if(readSize<size){
+		StrSound *next= s->getNext()==NULL? s: s->getNext();
+		next->restart();
+		next->read(&static_cast<int8*>(writePointer)[readSize], size-readSize);
+		next->setVolume(s->getVolume());
+		sound= next;
 	}
 }
 
@@ -426,22 +378,20 @@ void SoundPlayerDs8::play(StaticSound *staticSound){
 
 }
 
-void SoundPlayerDs8::play(StrSound *strSound, bool loop, int64 fadeOn, RequestNextStream cbFunc){
+void SoundPlayerDs8::play(StrSound *strSound, int64 fadeOn){
 	int bufferIndex= -1;
 
 	//play sound if buffer found
 	if(findStrBuffer(strSound, &bufferIndex)){
 		strSoundBuffers[bufferIndex].init(dsObject, strSound, params.strBufferSize);
-		strSoundBuffers[bufferIndex].play(fadeOn, loop, cbFunc);
+		strSoundBuffers[bufferIndex].play(fadeOn);
 	}
 }
 
 void SoundPlayerDs8::stop(StrSound *strSound, int64 fadeOff){
-    Sound* snd=(Sound*)strSound;
-
 	//find the buffer with this sound and stop it
 	for(int i= 0; i<params.strBufferCount; ++i){
-		if(strSoundBuffers[i].getSound()==snd){
+		if(strSoundBuffers[i].getSound()==strSound){
 			strSoundBuffers[i].stop(fadeOff);
 		}
 	}

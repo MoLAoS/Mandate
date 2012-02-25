@@ -100,7 +100,8 @@ Intro::Intro(Program &program)
 	// make everything invisible
 	program.setFade(0.f);
 
-    g_soundRenderer.playMusic(g_coreData.getIntroMusic());
+	SoundRenderer &soundRenderer= SoundRenderer::getInstance();
+	soundRenderer.playMusic(CoreData::getInstance().getIntroMusic());
 }
 
 void Intro::update(){
@@ -157,7 +158,9 @@ void Intro::keyDown(const Key &key){
 }
 
 void Intro::mouseUpLeft(int x, int y){
-	g_soundRenderer.playMusic(g_coreData.getMenuMusic());
+	SoundRenderer &soundRenderer= SoundRenderer::getInstance();
+	soundRenderer.stopMusic(CoreData::getInstance().getIntroMusic());
+	soundRenderer.playMusic(CoreData::getInstance().getMenuMusic());
 	program.clear();
 	program.setState(new MainMenu(program));
 }

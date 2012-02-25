@@ -25,8 +25,6 @@ using std::string;
 namespace Glest { namespace ProtoTypes {
 
 class EffectType;
-class MusicPlaylistType;
-
 
 // =====================================================
 // 	class TechTree
@@ -64,9 +62,6 @@ private:
 
 	DamageMultiplierTable damageMultiplierTable;
 
-    MusicPlaylistType *m_playlist;
-
-
 public:
 	bool preload(const string &dir, const set<string> &factionNames);
 	bool load(const string &dir, const set<string> &factionNames);
@@ -76,7 +71,6 @@ public:
 	void doChecksumFaction(Checksum &checksum, int ndx) const;
 	void doChecksum(Checksum &checksum) const;
 
-    TechTree(): m_playlist(0) {}
 	~TechTree();
 
 	string getName() const			{ return name; }
@@ -147,7 +141,6 @@ public:
 	fixed getDamageMultiplier(const AttackType *att, const ArmourType *art) const {
 		return damageMultiplierTable.getDamageMultiplier(att, art);
 	}
-    MusicPlaylistType *getMusicPlaylist() const                 { return m_playlist; }
 
 	// misc
 	int addEffectType(EffectType *et);

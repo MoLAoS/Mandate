@@ -312,7 +312,7 @@ void SoundPlayerOpenAL::play(StaticSound* staticSound) {
 	}
 }
 
-void SoundPlayerOpenAL::play(StrSound* strSound, bool loop, int64 fadeOn, RequestNextStream cbFunc) {
+void SoundPlayerOpenAL::play(StrSound* strSound, int64 fadeOn) {
 	assert(strSound != 0);
 
 	try {

@@ -21,7 +21,6 @@
 #include "xml_parser.h"
 #include "platform_util.h"
 #include "program.h"
-#include "music_playlist_type.h"
 
 #include "leak_dumper.h"
 #include "profiler.h"
@@ -133,19 +132,6 @@ bool TechTree::preload(const string &dir, const set<string> &factionNames){
 		g_logger.logXmlError(path, e.what());
 		loadOk = false;
 	}
-
-    try { // music-play-list
-		const XmlNode *musicPlaylistNode = techTreeNode->getChild("music-play-list", 0, false);
-        if(musicPlaylistNode) {
-		    bool value = musicPlaylistNode->getAttribute("enabled")->getBoolValue();
-		    if (value) {
-                m_playlist = new MusicPlaylistType();
-                m_playlist->preload( musicPlaylistNode, dir );
-            }
-        }
-    } catch (runtime_error &e) {
-		g_logger.logXmlError(path, e.what());
-    }
 
 	//load factions
 	factionTypes.resize(factionNames.size());

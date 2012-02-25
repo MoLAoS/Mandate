@@ -28,8 +28,6 @@ using Shared::Util::MultiFactory;
 namespace Glest { namespace ProtoTypes {
 using namespace Search;
 
-class UnitMusicPlaylistType;
-
 // ===============================
 // 	class Level
 // ===============================
@@ -98,7 +96,6 @@ private:
 	//sounds
 	SoundContainer selectionSounds;
 	SoundContainer commandSounds;
-    UnitMusicPlaylistType *musicPlaylist;
 
 	//info
 	StoredResources storedResources;
@@ -233,7 +230,6 @@ public:
 	// sounds
 	StaticSound *getSelectionSound() const				{return selectionSounds.getRandSound();}
 	StaticSound *getCommandSound() const				{return commandSounds.getRandSound();}
-    UnitMusicPlaylistType *getMusicPlaylist() const     {return musicPlaylist;}
 
 	const SkillType *getSkillType(const string &skillName, SkillClass skillClass = SkillClass::COUNT) const;
 	const SkillType *getFirstStOfClass(SkillClass sc) const {

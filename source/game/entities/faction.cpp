@@ -926,27 +926,9 @@ void Faction::attackNotice(const Unit *u) {
 }
 
 void Faction::advanceSubfaction(int subfaction) {
-    if(this->subfaction==subfaction) return;
-
-    if(this->subfaction>=0) {
-        const SubfactionType *curSubfaction= factionType->getSubfaction(this->subfaction);
-        const MusicPlaylistType *playlist= curSubfaction->getMusic();
-        if(playlist) {
-            g_soundRenderer.removePlaylist(playlist);
-        }
-    }
-    
 	this->subfaction = subfaction;
 	//FIXME: We should probably play a sound, display a banner-type notice or
 	//something.
-
-    if(subfaction>=0) {
-        const SubfactionType *curSubfaction= factionType->getSubfaction(subfaction);
-        const MusicPlaylistType *playlist= curSubfaction->getMusic();
-        if(playlist) {
-            g_soundRenderer.addPlaylist(playlist);
-        }
-    }
 }
 
 void Faction::checkAdvanceSubfaction(const ProducibleType *pt, bool finished) {

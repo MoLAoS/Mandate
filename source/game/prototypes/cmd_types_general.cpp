@@ -624,19 +624,8 @@ void ProduceCommandType::update(Unit *unit) const {
 		unit->setCurrSkill(m_produceSkillType);
 		unit->getFaction()->checkAdvanceSubfaction(command->getProdType(), false);
 	} else {
-		const UnitType *prodType = static_cast<const UnitType*>(command->getProdType());
-		if (unit->getFactionIndex() == g_world.getThisFactionIndex()) {
-            if(unit->getProgress2()==0) {
-                // build just started, kick off music playlist if any
-                UnitMusicPlaylistType *music=prodType->getMusicPlaylist();
-                if(music && 
-                   music->getActivationTime()==UnitMusicPlaylistType::eActivationTime_UnitBuildStarted){
-                    g_soundRenderer.addPlaylist(music);
-                }
-            }
-        }
-
 		unit->update2();
+		const UnitType *prodType = static_cast<const UnitType*>(command->getProdType());
 		if (unit->getProgress2() > prodType->getProductionTime()) {
 			for (int i=0; i < getProducedNumber(prodType); ++i) {
 				Unit *produced = g_world.newUnit(Vec2i(0), prodType, unit->getFaction(),
@@ -657,18 +646,12 @@ void ProduceCommandType::update(Unit *unit) const {
 					}
 				}
 			}
-            // all the units have been produced, safe to finish command now
+			// all the units have been produced, safe to finish command now
 			unit->finishCommand();
 			if (unit->getFactionIndex() == g_world.getThisFactionIndex()) {
 				RUNTIME_CHECK(!unit->isCarried());
 				g_soundRenderer.playFx(getFinishedSound(), unit->getCurrVector(), 
 					g_gameState.getGameCamera()->getPos());
-
-                UnitMusicPlaylistType *music=prodType->getMusicPlaylist();
-                if(music && 
-                   music->getActivationTime()==UnitMusicPlaylistType::eActivationTime_UnitCreated){
-                    g_soundRenderer.addPlaylist(music);
-                }
 			}
 			unit->setCurrSkill(SkillClass::STOP);
 		}

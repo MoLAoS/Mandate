@@ -22,31 +22,19 @@ using Shared::Sound::StaticSound;
 namespace Glest{ namespace ProtoTypes {
 
 class TechTree;
-class MusicPlaylistType;
 
 // =====================================================
 // 	class SubfactionType
 //
 // =====================================================
-
+/*
+// TODO: Impelement
 class SubfactionType{
-public:
-    SubfactionType(string strName): name(strName), musicPlaylist(0) {}
-    ~SubfactionType();
-
-    string getName() const { return name; }
-
-    void setMusic(MusicPlaylistType *newMusic);
-    const MusicPlaylistType *getMusic() const { return musicPlaylist; }
-
 private:
 	string name;
-    MusicPlaylistType *musicPlaylist;
-
-	//FIXME: We should probably play a sound, display a banner-type notice or
-	//something.
-	//SoundContainer *advancementNotice;
+	SoundContainer *advancementNotice;
 };
+*/
 
 // =====================================================
 // 	class FactionType
@@ -62,7 +50,7 @@ private:
 	typedef vector<UpgradeType*> UpgradeTypes;
 	typedef vector<PairPUnitTypeInt> StartingUnits;
 	typedef vector<StoredResource> Resources;
-	typedef vector<SubfactionType*> Subfactions;
+	typedef vector<string> Subfactions;
 
 private:
 	UnitTypes unitTypes;
@@ -70,14 +58,13 @@ private:
 	StartingUnits startingUnits;
 	Resources startingResources;
 	Subfactions subfactions;
-	MusicPlaylistType *music;   // legacy music xml, converted under the hood to new musicplaylist runtime classes
+	StrSound *music;
 	SoundContainer *attackNotice;
 	SoundContainer *enemyNotice;
 	int attackNoticeDelay;
 	int enemyNoticeDelay;
 	UnitTypeSet loadableUnitTypes;
 	Pixmap2D *m_logoTeamColour, *m_logoRgba;
-    MusicPlaylistType *m_playlist;
 
 public:
 	//init
@@ -99,9 +86,9 @@ public:
 	int getSubfactionCount() const						{return subfactions.size();}
 	const UnitType *getUnitType(int i) const			{return unitTypes[i];}
 	const UpgradeType *getUpgradeType(int i) const		{return upgradeTypes[i];}
-	const SubfactionType *getSubfaction(int i) const	{return subfactions[i];}
+	const string &getSubfaction(int i) const			{return subfactions[i];}
 	int getSubfactionIndex(const string &name) const;
-	MusicPlaylistType *getMusic() const				    {return music;}
+	StrSound *getMusic() const							{return music;}
 	int getStartingUnitCount() const					{return startingUnits.size();}
 	const UnitType *getStartingUnit(int i) const		{return startingUnits[i].first;}
 	int getStartingUnitAmount(int i) const				{return startingUnits[i].second;}
@@ -110,7 +97,6 @@ public:
 	int getAttackNoticeDelay() const					{return attackNoticeDelay;}
 	const Pixmap2D* getLogoTeamColour() const			{return m_logoTeamColour;}
 	const Pixmap2D* getLogoRgba() const					{return m_logoRgba;}
-    MusicPlaylistType *getMusicPlaylist() const         {return m_playlist;}
 
 	int getEnemyNoticeDelay() const						{return enemyNoticeDelay;}
 
