@@ -480,7 +480,11 @@ void Display::renderProgressBar() {
 	const int h = int(m_fontMetrics->getHeight() + 2);
 	int w = getWidth() - 2 * m_imageSize;
 
-	int bw = m_progress;
+	///@TODO : make a progress bar widget for this and loading screen
+	///	so they share code. Also potential for caching with
+	/// widthFactor, pos, w and h - hailstone 3Mar2012
+	float widthFactor = w / 100.f;
+	int bw = m_progress * widthFactor;
 	Vec2i pos = getScreenPos() + m_progressPos;
 
 	// bar (green bit)
