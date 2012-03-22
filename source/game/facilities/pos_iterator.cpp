@@ -84,7 +84,7 @@ PosCircularIterator *PosCircularIteratorFactory::getIterator(bool reversed, unsi
 	const PosData *last = getLastOfDistance(maxDistance);
 	return reversed 
 			? new PosCircularIterator(last + 1, first, last, 0)
-			: new PosCircularIterator(first - 1, first, last, 7);
+			: new PosCircularIterator(first - 1, first, last, 3);
 }
 
 

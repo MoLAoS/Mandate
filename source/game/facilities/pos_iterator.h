@@ -30,9 +30,16 @@ struct PosData {
 	unsigned int off;
 	float fdist;
 	fixed dist;
+
+	unsigned int getMaxCycle() const {
+		return off > 0 && off < step ? 7 : 3;
+	}
+
+	bool operator< (const PosData &o) const {return fdist < o.fdist;}
 };
 
 class PosCircularIterator {
+	friend class PosCircularIteratorFactory;
 protected:
 	const PosData *next;
 	const PosData *first;
@@ -55,7 +62,7 @@ public:
 
 	bool getNext(Vec2i &result) {
 		assert(next <= last);
-		if(next < first || cycle == (next->off > 0 && next->off < next->step ? 7 : 3)) {
+		if(next < first || cycle == next->getMaxCycle()) {
 			if(next++ == last) {
 				return false;
 			}
@@ -73,7 +80,7 @@ public:
 			if(next-- == first) {
 				return false;
 			}
-			cycle = next->off ? 7 : 3;
+			cycle = next->getMaxCycle();
 		} else {
 			--cycle;
 		}
@@ -83,7 +90,7 @@ public:
 
 	bool getNext(Vec2i &result, fixed &dist) {
 		assert(next <= last);
-		if(next < first || cycle == (next->off ? 7 : 3)) {
+		if(next < first || cycle == next->getMaxCycle()) {
 			if(next++ == last) {
 				return false;
 			}
@@ -102,7 +109,7 @@ public:
 			if(next-- == first) {
 				return false;
 			}
-			cycle = next->off ? 7 : 3;
+			cycle = next->getMaxCycle();
 			dist = next->dist;
 		} else {
 			--cycle;
