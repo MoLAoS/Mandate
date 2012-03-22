@@ -26,8 +26,9 @@ using Shared::Math::Rect2i;
 using Shared::Math::fixed;
 
 struct PosData {
-	int step;
-	int off;
+	unsigned int step;
+	unsigned int off;
+	float fdist;
 	fixed dist;
 };
 
@@ -36,13 +37,13 @@ protected:
 	const PosData *next;
 	const PosData *first;
 	const PosData *last;
-	int cycle;
+	unsigned int cycle;
 
-public:
-	PosCircularIterator(const PosData *next, const PosData *first, const PosData *last, int cycle)
+	PosCircularIterator(const PosData *next, const PosData *first, const PosData *last, unsigned int cycle)
 			: next(next), first(first), last(last), cycle(cycle) {
 	}
 
+public:
 	Vec2i getPosForCycle() {
 		int step = next->step;
 		int off = next->off;
@@ -113,7 +114,7 @@ public:
 
 class PosCircularIteratorFactory {
 private:
-	int maxRadius;
+	unsigned int maxRadius;
 	size_t dataSize;
 	PosData *data;
 	const PosData *dataEnd;
@@ -124,29 +125,29 @@ private:
 	void operator=(PosCircularIteratorFactory&);
 
 public:
-	PosCircularIteratorFactory(int maxRadius);
+	PosCircularIteratorFactory(unsigned int maxRadius);
 	~PosCircularIteratorFactory();
-	int getMaxRadius() const {return maxRadius;}
-	int getBytesUsed() const {return dataSize * sizeof(PosData);}
+	unsigned int getMaxRadius() const {return maxRadius;}
+	unsigned int getBytesUsed() const {return dataSize * sizeof(PosData);}
 
-	PosCircularIterator *getInsideOutIterator(int minDistance, int maxDistance) const {
+	PosCircularIterator *getInsideOutIterator(unsigned int minDistance, unsigned int maxDistance) const {
 		return getIterator(false, maxDistance, minDistance);
 	}
 
-	PosCircularIterator *getOutsideInIterator(int minDistance, int maxDistance) const {
+	PosCircularIterator *getOutsideInIterator(unsigned int minDistance, unsigned int maxDistance) const {
 		return getIterator(true, maxDistance, minDistance);
 	}
 	
 private:
-	PosCircularIterator *getIterator(bool reversed, int maxDistance, int minDistance) const;
+	PosCircularIterator *getIterator(bool reversed, unsigned int maxDistance, unsigned int minDistance) const;
 	static int comparePosData(const void *p1, const void *p2);
 
-	const PosData *getFirstOfDistance(int distance) const {
+	const PosData *getFirstOfDistance(unsigned int distance) const {
 		assert(distance <= maxRadius);
 		return radiusIndex[distance];
 	}
 
-	const PosData *getLastOfDistance(int distance) const {
+	const PosData *getLastOfDistance(unsigned int distance) const {
 		assert(distance <= maxRadius);
 		const PosData *p;
 		for(p = radiusIndex[distance]; p != dataEnd; ++p) {
