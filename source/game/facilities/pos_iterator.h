@@ -43,27 +43,18 @@ public:
 			: next(next), first(first), last(last), cycle(cycle) {
 	}
 
-	Vec2i getPosForCycle() { 
-		const int &step = next->step;
-		const int &off = next->off;
-		switch(cycle) {
-			case 0: return Vec2i( off,   step);
-			case 1: return Vec2i( step,  off);
-			case 2: return Vec2i( off,  -step);
-			case 3: return Vec2i(-step,  off);
-			case 4: return Vec2i(-off,   step);
-			case 5: return Vec2i( step, -off);
-			case 6: return Vec2i(-off,  -step);
-			case 7: return Vec2i(-step, -off);
-			default: 
-				assert(false); 
-				return Vec2i(0);		
-		}
+	Vec2i getPosForCycle() {
+		int step = next->step;
+		int off = next->off;
+
+		step = cycle & 2 ? -step : step;
+		off = cycle & 4 ? -off : off;
+		return cycle & 1 ? Vec2i(step, off) : Vec2i(off, step);
 	}
 
 	bool getNext(Vec2i &result) {
 		assert(next <= last);
-		if(next < first || cycle == (next->off ? 7 : 3)) {
+		if(next < first || cycle == (next->off > 0 && next->off < next->step ? 7 : 3)) {
 			if(next++ == last) {
 				return false;
 			}
