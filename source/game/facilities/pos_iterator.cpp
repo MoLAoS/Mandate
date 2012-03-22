@@ -12,6 +12,8 @@
 #include "pch.h"
 #include "pos_iterator.h"
 
+#include <algorithm>
+
 #include "leak_dumper.h"
 
 namespace Glest { namespace Util {
@@ -34,7 +36,8 @@ PosCircularIteratorFactory::PosCircularIteratorFactory(unsigned int maxRadius) :
 		for(unsigned int off = 0; off <= step; ++off) {
 			p->step = step;
 			p->off = off;
-			p->dist = int(sqrtf(float(step * step + off * off)));
+			p->fdist = sqrtf(float(step * step + off * off));
+			p->dist = int(p->fdist);
 			++p;
 		}
 	}
@@ -43,7 +46,7 @@ PosCircularIteratorFactory::PosCircularIteratorFactory(unsigned int maxRadius) :
 	assert(dataEnd == &data[dataSize]);
 	
 	// Sort data by distance
-	qsort(data, dataSize, sizeof(PosData), PosCircularIteratorFactory::comparePosData);
+	std::sort(data, &data[dataSize]);
 
 	// Calculate radius index
 	unsigned int nextRadius = 0;
@@ -67,7 +70,7 @@ PosCircularIteratorFactory::~PosCircularIteratorFactory() {
 int PosCircularIteratorFactory::comparePosData(const void *p1, const void *p2) {
 	const PosData &pd1 = *reinterpret_cast<const PosData *>(p1);
 	const PosData &pd2 = *reinterpret_cast<const PosData *>(p2);
-	return pd1.dist == pd1.dist ? 0 : (pd1.dist > pd2.dist ? 1 : -1);
+	return pd1.fdist == pd1.fdist ? 0 : (pd1.fdist > pd2.fdist ? 1 : -1);
 }
 
 PosCircularIterator *PosCircularIteratorFactory::getIterator(bool reversed, unsigned int maxDistance, unsigned int minDistance) const {

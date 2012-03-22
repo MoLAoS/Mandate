@@ -38,6 +38,10 @@ struct PosData {
 	bool operator< (const PosData &o) const {return fdist < o.fdist;}
 };
 
+/**
+ * Circularly itereates through the coordinate of a square (x, y) system.  These are created via
+ * PosCircularIteratorFactory and utilize pre-generated location & distance data.
+ */
 class PosCircularIterator {
 	friend class PosCircularIteratorFactory;
 protected:
