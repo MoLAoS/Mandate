@@ -151,7 +151,6 @@ public:
 	
 private:
 	PosCircularIterator *getIterator(bool reversed, unsigned int maxDistance, unsigned int minDistance) const;
-	static int comparePosData(const void *p1, const void *p2);
 
 	const PosData *getFirstOfDistance(unsigned int distance) const {
 		assert(distance <= maxRadius);

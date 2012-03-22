@@ -67,12 +67,6 @@ PosCircularIteratorFactory::~PosCircularIteratorFactory() {
 	delete[] radiusIndex;
 }
 
-int PosCircularIteratorFactory::comparePosData(const void *p1, const void *p2) {
-	const PosData &pd1 = *reinterpret_cast<const PosData *>(p1);
-	const PosData &pd2 = *reinterpret_cast<const PosData *>(p2);
-	return pd1.fdist == pd1.fdist ? 0 : (pd1.fdist > pd2.fdist ? 1 : -1);
-}
-
 PosCircularIterator *PosCircularIteratorFactory::getIterator(bool reversed, unsigned int maxDistance, unsigned int minDistance) const {
 	assert(minDistance >= 0);
 	assert(maxDistance >= minDistance);
