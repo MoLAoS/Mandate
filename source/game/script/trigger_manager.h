@@ -42,7 +42,7 @@ using Entities::Unit;
 using Gui::Console;
 using Gui::GameState;
 using Sim::World;
-	
+
 namespace Script {
 
 // =====================================================
@@ -174,6 +174,8 @@ class TriggerManager {
 	TriggerMap		attackedTriggers;
 	TriggerMap		hpBelowTriggers;
 	TriggerMap		hpAboveTriggers;
+	TriggerMap		cpBelowTriggers;
+	TriggerMap		cpAboveTriggers;
 	TriggerMap		commandCallbacks;
 	TriggerMap		deathTriggers;
 
@@ -190,7 +192,7 @@ public:
 	/** register an event @param name unique event name */
 	int  registerEvent(const string &name);
 
-	/** get region by name */ 
+	/** get region by name */
 	const Region* getRegion(string &name) {
 		Regions::iterator it = regions.find(name);
 		if ( it == regions.end() ) return NULL;
@@ -201,7 +203,7 @@ public:
 	// Set Triggers...
 
 	/** set a position trigger on a unit
-	  * @param unitId id of unit to put trigger on 
+	  * @param unitId id of unit to put trigger on
 	  * @param region the name of a registered region
 	  * @param eventName name of the event to fire
 	  * @param userData optional extra data to send to the event handler
@@ -213,28 +215,44 @@ public:
 
 	/** set a position trigger for all units of a faction
 	  * @param ndx index of the faction to put the trigger on
-	  * @param region the name of a registered region 
+	  * @param region the name of a registered region
 	  * @param eventName name of the event to fire
 	  * @param userData optional extra data to send to the event handler */
 	SetTriggerRes addFactionPosTrigger(int ndx, const string &region, const string &eventName, int userData);
 
 	/** set a 'command complete trigger' on a unit
-	  * @param unitId id of unit to put trigger on 
+	  * @param unitId id of unit to put trigger on
 	  * @param eventName name of the event to fire when current command finishes
 	  * @param userData optional extra data to send to the event handler
 	  * @return 0 on success, -1 if unitId in not valid */
 	SetTriggerRes addCommandCallback(int unitId, const string &eventName, int userData=0);
 
 	/** set a 'hp below trigger' on a unit
-	  * @param unitId id of unit to put trigger on 
+	  * @param unitId id of unit to put trigger on
 	  * @param threshold event fires when the units hp falls to this or below
 	  * @param eventName name of the event to fire
 	  * @param userData optional extra data to send to the event handler
 	  * @return 0 on success, -1 if unitId in not valid, -2 if units hp is currently below threshold */
 	SetTriggerRes addHPBelowTrigger(int unitId, int threshold, const string &eventName, int userData=0);
 
+	/** set a 'cp above trigger' on a unit
+	  * @param unitId id of unit to put trigger on
+	  * @param threshold event fires when the units hp rises to this or above
+	  * @param eventName name of the event to fire
+	  * @param userData optional extra data to send to the event handler
+	  * @return 0 on success, -1 if unitId in not valid, -2 if units hp is currently above threshold */
+	SetTriggerRes addCPAboveTrigger(int unitId, int threshold, const string &eventName, int userData=0);
+
+	/** set a 'cp below trigger' on a unit
+	  * @param unitId id of unit to put trigger on
+	  * @param threshold event fires when the units hp falls to this or below
+	  * @param eventName name of the event to fire
+	  * @param userData optional extra data to send to the event handler
+	  * @return 0 on success, -1 if unitId in not valid, -2 if units hp is currently below threshold */
+	SetTriggerRes addCPBelowTrigger(int unitId, int threshold, const string &eventName, int userData=0);
+
 	/** set a 'hp above trigger' on a unit
-	  * @param unitId id of unit to put trigger on 
+	  * @param unitId id of unit to put trigger on
 	  * @param threshold event fires when the units hp rises to this or above
 	  * @param eventName name of the event to fire
 	  * @param userData optional extra data to send to the event handler
@@ -242,13 +260,13 @@ public:
 	SetTriggerRes addHPAboveTrigger(int unitId, int threshold, const string &eventName, int userData=0);
 
 	/** set an 'attacked trigger' on a unit
-	  * @param unitId id of unit to put trigger on 
+	  * @param unitId id of unit to put trigger on
 	  * @param eventName name of the event to fire when the unit is attacked
 	  * @param userData optional extra data to send to the event handler */
 	SetTriggerRes addAttackedTrigger(int unitId, const string &eventName, int userData=0);
 
 	/** set a 'death trigger' on a unit
-	  * @param unitId id of unit to put trigger on 
+	  * @param unitId id of unit to put trigger on
 	  * @param eventName name of the event to fire when current the unit dies
 	  * @param userData optional extra data to send to the event handler */
 	SetTriggerRes addDeathTrigger(int unitId, const string &eventName, int userData=0);
@@ -274,6 +292,12 @@ public:
 
 	/** called when a unit with a hp-above trigger set has its hp increased to or above the threshold  */
 	void onHPAbove(const Unit *unit) {checkTrigger(hpAboveTriggers, unit);}
+
+    /** called when a unit with a cp-below trigger set has its hp decreased to or below the threshold  */
+	void onCPBelow(const Unit *unit) {checkTrigger(cpBelowTriggers, unit);}
+
+	/** called when a unit with a cp-above trigger set has its hp increased to or above the threshold  */
+	void onCPAbove(const Unit *unit) {checkTrigger(cpAboveTriggers, unit);}
 
 	/** called when a unit with an attacked-trigger set takes damage from an attack */
 	void onAttacked(const Unit *unit) {checkTrigger(attackedTriggers, unit);}

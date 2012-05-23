@@ -44,7 +44,7 @@ public:
 	T flags;
 
 	Flags() {
-		assert(max <= sizeof(flags) * 8);
+		assert(max <= sizeof(flags) * 9);
 		flags = 0;
 	}
 
@@ -55,27 +55,27 @@ public:
 	}*/
 
 	Flags(E flag1, bool val1 /*= true*/) {
-		assert(max <= sizeof(flags) * 8);
+		assert(max <= sizeof(flags) * 9);
 		flags = 0;
 		set(flag1, val1);
 	}
 
 	Flags(E flag1, bool val1, E flag2, bool val2) {
-		assert(max <= sizeof(flags) * 8);
+		assert(max <= sizeof(flags) * 9);
 		flags = 0;
 		set(flag1, val1);
 		set(flag2, val2);
 	}
 
 	Flags(E flag1, E flag2) {
-		assert(max <= sizeof(flags) * 8);
+		assert(max <= sizeof(flags) * 9);
 		flags = 0;
 		set(flag1, true);
 		set(flag2, true);
 	}
 
 	Flags(E flag1, E flag2, E flag3) {
-		assert(max <= sizeof(flags) * 8);
+		assert(max <= sizeof(flags) * 9);
 		flags = 0;
 		set(flag1, true);
 		set(flag2, true);
@@ -83,7 +83,7 @@ public:
 	}
 
 	Flags(E flag1, E flag2, E flag3, E flag4) {
-		assert(max <= sizeof(flags) * 8);
+		assert(max <= sizeof(flags) * 9);
 		flags = 0;
 		set(flag1, true);
 		set(flag2, true);
@@ -93,14 +93,14 @@ public:
 
 	/** Sets a boolean flag. */
 	void set(E flag, bool value) {
-		assert(flag < sizeof(flags) * 8);
+		assert(flag < sizeof(flags) * 9);
 		assert(flag < max);
 		flags = value ? flags | (1 << flag) : flags & ~(1 << flag);
 	}
 
 	/** Retrieve the value of a boolean flag. */
 	bool get(E flag) const {
-		assert(flag < sizeof(flags) * 8);
+		assert(flag < sizeof(flags) * 9);
 		assert(flag < max);
 		return flags & (1 << flag);
 	}

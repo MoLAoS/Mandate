@@ -45,9 +45,9 @@ bool EffectType::load(const XmlNode *en, const string &dir, const TechTree *tt, 
 	string tmp;
 	const XmlAttribute *attr;
 	bool loadOk = true;
-	
+
 	try { // name
-		m_name = en->getAttribute("name")->getRestrictedValue(); 
+		m_name = en->getAttribute("name")->getRestrictedValue();
 	} catch (runtime_error e) {
 		g_logger.logXmlError(dir, e.what ());
 		loadOk = false;
@@ -258,7 +258,7 @@ void EffectType::doChecksum(Checksum &checksum) const {
 
 	checksum.add(soundStartTime);
 	checksum.add(loopSound);
-	
+
 	foreach_const (EffectTypes, it, recourse) {
 		(*it)->doChecksum(checksum);
 	}

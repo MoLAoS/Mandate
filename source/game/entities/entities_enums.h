@@ -17,7 +17,8 @@ namespace Glest { namespace Entities {
 /** Upgrade states */
 STRINGY_ENUM( UpgradeState,
 	UPGRADING,
-	UPGRADED
+	UPGRADED,
+	PARTIAL
 );
 
 /** Command properties */

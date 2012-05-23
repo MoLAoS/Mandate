@@ -70,6 +70,9 @@ protected:
 	MapObjectFactory   m_mapObjectFactory;
 
 public:
+
+    vector<const ResourceType*> m_resourceTypes;
+
 	MasterEntityFactory();
 
 	Effect* newEffect(const EffectType *type, Unit *source, Effect *root, fixed strength,
@@ -192,11 +195,11 @@ private:
 
 	// to UserInterface, code using these should ultimately be reimplemented
 	// by Connecting signals from 'this' factions/teams units to the UserInterface
-	int thisFactionIndex;	
+	int thisFactionIndex;
 	int thisTeamIndex;
 
 	int frameCount;
-	
+
 	//config
 	bool fogOfWar, shroudOfDarkness;
 	int fogOfWarSmoothingFrameSkip;  // GameGuiState
@@ -228,7 +231,7 @@ public:
 	~World();
 
 	void save(XmlNode *node) const;
-	
+
 	static World& getInstance() { return *singleton; }
 	static bool isConstructed() { return singleton != 0; }
 
@@ -286,12 +289,19 @@ public:
 	bool placeUnit(const Vec2i &startLoc, int radius, Unit *unit, bool spaciated= false);
 	Unit *nearestStore(const Vec2i &pos, int factionIndex, const ResourceType *rt);
 	void doKill(Unit *killer, Unit *killed);
-	
+	void doCapture(Unit *killer, Unit *killed); /**< Added by MoLAoS, used for the capturing system */
+
 	// attack
 	void hit(Unit *attacker);
 	void hit(Unit *attacker, const AttackSkillType* ast, const Vec2i &targetPos, Field targetField, Unit *attacked = NULL);
 	void damage(Unit *attacker, const AttackSkillType* ast, Unit *attacked, fixed distance);
 	void damage(Unit *unit, int hp);
+	void lifeleech(Unit *attacker, const AttackSkillType* ast, Unit *attacked, fixed distance); /**< Added by MoLAoS, lifesteal */
+	void lifeleech(Unit *unit, int hp); /**< Added by MoLAoS, lifesteal */
+	void manaburn(Unit *attacker, const AttackSkillType* ast, Unit *attacked, fixed distance); /**< Added by MoLAoS, manaburn */
+	void manaburn(Unit *unit, int ep); /**< Added by MoLAoS, manaburn */
+	void capture(Unit *attacker, const AttackSkillType* ast, Unit *attacked, fixed distance); /**< Added by MoLAoS, capturing */
+	void capture(Unit *unit, int cp); /**< Added by MoLAoS, capturing */
 
 	// effects
 	void applyEffects(Unit *source, const EffectTypes &effectTypes, const Vec2i &targetPos, Field targetField, int splashRadius);

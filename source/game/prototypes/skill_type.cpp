@@ -37,7 +37,7 @@ namespace Glest { namespace ProtoTypes {
 // 	class SkillType
 // =====================================================
 
-SkillType::SkillType(const char* typeName) 
+SkillType::SkillType(const char* typeName)
 		: NameIdPair()
 		, effectTypes()
 		, epCost(0)
@@ -123,7 +123,7 @@ void SkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, c
 				}
 			} else {
 				// error ?
-				g_logger.logXmlError(path, 
+				g_logger.logXmlError(path,
 					("Warning: In 'animation' node, child node '" + node->getName() + "' unknown.").c_str());
 			}
 		}
@@ -150,7 +150,7 @@ void SkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, c
 			sounds.add(sound);
 		}
 	}
-	
+
 	// particle systems
 	const XmlNode *particlesNode = sn->getOptionalChild("particle-systems");
 	if (particlesNode) {
@@ -176,7 +176,7 @@ void SkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, c
 			}
 		}
 	}
-	
+
 	//effects
 	const XmlNode *effectsNode = sn->getChild("effects", 0, false);
 	if (effectsNode) {
@@ -304,7 +304,7 @@ CycleInfo SkillType::calculateCycleTime() const {
 	if (getAnimSpeed() != 0) {
 		float animProgressSpeed = getAnimSpeed() * speedModifier;
 		animFrames = int(1.0000001f / animProgressSpeed);
-	
+
 		if (skillClass == SkillClass::ATTACK || skillClass == SkillClass::CAST_SPELL) {
 			systemOffset = clamp(int(startTime / animProgressSpeed), 1, animFrames - 1);
 			assert(systemOffset > 0 && systemOffset < 256);
@@ -398,8 +398,8 @@ void TargetBasedSkillType::getDesc(string &str, const Unit *unit, const char* ra
 // 	class AttackSkillType
 // =====================================================
 
-AttackSkillType::~AttackSkillType() { 
-//	delete earthquakeType; 
+AttackSkillType::~AttackSkillType() {
+//	delete earthquakeType;
 }
 
 void AttackSkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const UnitType *ut){
@@ -412,6 +412,9 @@ void AttackSkillType::load(const XmlNode *sn, const string &dir, const TechTree 
 		attackStrength = sn->getChild("attack-strength")->getAttribute("value")->getIntValue();
 	}
 	attackVar= sn->getChild("attack-var")->getAttribute("value")->getIntValue();
+    attackLifeLeech = sn->getOptionalIntValue("attack-life-leech"); //->getAttribute("value")->getIntValue(); //attempt to add lifeleech
+	attackManaBurn = sn->getOptionalIntValue("attack-mana-burn"); //->getAttribute("value")->getIntValue(); //attempt to add manaburn
+	attackCapture = sn->getOptionalIntValue("attack-capture"); //->getAttribute("value")->getIntValue(); //attempt to add capturing
 	maxRange= sn->getOptionalIntValue("attack-range");
 	string attackTypeName= sn->getChild("attack-type")->getAttribute("value")->getRestrictedValue();
 	attackType= tt->getAttackType(attackTypeName);
@@ -440,10 +443,13 @@ void AttackSkillType::doChecksum(Checksum &checksum) const {
 
 	checksum.add(attackStrength);
 	checksum.add(attackVar);
+    checksum.add(attackLifeLeech);
+	checksum.add(attackManaBurn);
+    checksum.add(attackCapture);
 	checksum.add(attackPctStolen);
 	checksum.add(attackPctVar);
 	attackType->doChecksum(checksum);
-	
+
 	// earthquakeType ??
 }
 
@@ -456,12 +462,43 @@ void AttackSkillType::getDesc(string &str, const Unit *unit) const {
 
 	//attack strength
 	str += lang.get("AttackStrength")+": ";
-	str += intToStr(attackStrength - attackVar);
+	str += intToStr(attackStrength);
+	//this section deals with the variable damage, which i don't like
+	/*str += intToStr(attackStrength - attackVar);
 	str += "...";
-	str += intToStr(attackStrength + attackVar);
+	str += intToStr(attackStrength + attackVar);*/
+
 	EnhancementType::describeModifier(str, unit->getAttackStrength(this) - attackStrength);
 	str += " ("+ attackType->getName() +")";
 	str += "\n";
+
+	str += lang.get("AttackLifeLeech")+": ";
+	str += intToStr(attackStrength * attackLifeLeech / 100);
+	//this section deals with the variable damage, which i don't like
+	/*str += intToStr(attackStrength * attackLifeLeech / 100 - attackVar);
+	str += "...";
+	str += intToStr(attackStrength * attackLifeLeech / 100 + attackVar);*/
+
+    EnhancementType::describeModifier(str, unit->getAttackLifeLeech(this) - attackLifeLeech);
+    str += "%";
+    str += "\n";
+
+	str += lang.get("AttackManaBurn")+": ";
+	str += intToStr(attackStrength * attackManaBurn / 100);
+	//this section deals with the variable damage, which i don't like
+	/*str += intToStr(attackStrength * attackManaBurn / 100 - attackVar);
+	str += "...";
+	str += intToStr(attackStrength * attackManaBurn / 100 + attackVar);*/
+
+    EnhancementType::describeModifier(str, unit->getAttackManaBurn(this) - attackManaBurn);
+    str += "%";
+    str += "\n";
+
+    str += lang.get("AttackCapture")+": ";
+	str += intToStr(attackCapture);
+
+    EnhancementType::describeModifier(str, unit->getAttackCapture(this) - attackCapture);
+    str += "\n";
 
 	TargetBasedSkillType::getDesc(str, unit, "AttackDistance");
 	descEffects(str, unit);
@@ -484,7 +521,7 @@ fixed BuildSkillType::getSpeed(const Unit *unit) const {
 // ===============================
 
 fixed HarvestSkillType::getSpeed(const Unit *unit) const {
-	return speed * unit->getHarvestSpeedMult() + unit->getHarvestSpeed();	
+	return speed * unit->getHarvestSpeedMult() + unit->getHarvestSpeed();
 }
 
 // ===============================

@@ -49,14 +49,15 @@ private:
 	typedef set<UnitType*> UnitTypeSet;
 	typedef vector<UpgradeType*> UpgradeTypes;
 	typedef vector<PairPUnitTypeInt> StartingUnits;
-	typedef vector<StoredResource> Resources;
+	typedef vector<StoredResource> SResources;
+    typedef vector<CreatedResource> CResources;
 	typedef vector<string> Subfactions;
 
 private:
 	UnitTypes unitTypes;
 	UpgradeTypes upgradeTypes;
 	StartingUnits startingUnits;
-	Resources startingResources;
+	SResources startingResources;
 	Subfactions subfactions;
 	StrSound *music;
 	SoundContainer *attackNotice;

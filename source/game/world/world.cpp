@@ -68,7 +68,7 @@ World *World::singleton = 0;
 
 // ===================== PUBLIC ========================
 
-World::World(SimulationInterface *simInterface) 
+World::World(SimulationInterface *simInterface)
 		: scenario(NULL)
 		, m_simInterface(simInterface)
 		, game(*simInterface->getGameState())
@@ -129,7 +129,7 @@ void World::init(const XmlNode *worldNode) {
 	// must be done after map.init()
 	routePlanner = new RoutePlanner(this);
 	cartographer = new Cartographer(this);
-	
+
 	if (worldNode) {
 		loadSaved(worldNode);
 		g_userInterface.initMinimap(fogOfWar, shroudOfDarkness, true);
@@ -336,7 +336,7 @@ void World::processFrame() {
 	//consumable resource (e.g., food) costs
 	for (int i = 0; i < techTree.getResourceTypeCount(); ++i) {
 		const ResourceType *rt = techTree.getResourceType(i);
-		if (rt->getClass() == ResourceClass::CONSUMABLE 
+		if (rt->getClass() == ResourceClass::CONSUMABLE
 		&& frameCount % (rt->getInterval() * WORLD_FPS) == 0) {
 			for (int i = 0; i < getFactionCount(); ++i) {
 				getFaction(i)->applyCostsOnInterval(rt);
@@ -347,7 +347,7 @@ void World::processFrame() {
 	//fow smoothing
 	if (fogOfWarSmoothing && ((frameCount + 1) % (fogOfWarSmoothingFrameSkip + 1)) == 0) {
 		float fogFactor = float(frameCount % WORLD_FPS) / WORLD_FPS;
-		
+
 		g_userInterface.getMinimap()->updateFowTex(clamp(fogFactor, 0.f, 1.f));
 	}
 
@@ -389,6 +389,9 @@ void World::hit(Unit *attacker, const AttackSkillType* ast, const Vec2i &targetP
 		}
 		if (attacked && attacked->isAlive()) {
 			damage(attacker, ast, attacked, 0);
+			lifeleech(attacker, ast, attacked, 0); /**< Added by MoLAoS, lifeleech */
+			manaburn(attacker, ast, attacked, 0); /**< Added by MoLAoS, manaburn */
+			capture(attacker, ast, attacked, 0); /**< Added by MoLAoS, capturing */
 			if (ast->hasEffects()) {
 				applyEffects(attacker, ast->getEffectTypes(), attacked, 0);
 			}
@@ -409,17 +412,20 @@ void World::damage(Unit *attacker, const AttackSkillType* ast, Unit *attacked, f
 	fixed fDamage = attacker->getAttackStrength(ast);
 	fDamage = ((fDamage + random.randRange(-var, var)) / (distance + 1) - armor) * damageMultiplier;
 	if (fDamage < 1) {
-		fDamage = 1;
+		fDamage = 0;
 	}
-	int damage = fDamage.intp();
+    int damage = fDamage.intp();
+    // decrements
 	if (attacked->decHp(damage)) {
 		doKill(attacker, attacked);
 	}
+
 	if (attacked->getFaction()->isThisFaction()
 	&& !g_renderer.getCuller().isInside(attacked->getPos())) {
 		attacked->getFaction()->attackNotice(attacked);
 	}
 }
+
 
 void World::damage(Unit *unit, int hp) {
 	if (unit->decHp(hp)) {
@@ -431,9 +437,113 @@ void World::damage(Unit *unit, int hp) {
 	}
 }
 
+void World::lifeleech(Unit *attacker, const AttackSkillType* ast, Unit *attacked, fixed distance) { /**< Added by MoLAoS, lifeleech */
+	int var = ast->getAttackVar();
+	int armor = attacked->getArmor();
+	int health = attacker->getHp();
+	int maxHealth = attacker->getMaxHp();
+	fixed damageMultiplier = getTechTree()->getDamageMultiplier(ast->getAttackType(),
+							 attacked->getType()->getArmourType());
+    // compute lifeleech
+    fixed fDamage = attacker->getAttackStrength(ast);
+    fixed fLifeLeech = attacker->getAttackLifeLeech(ast);
+    fDamage = ((fDamage + random.randRange(-var, var)) / (distance + 1) - armor) * damageMultiplier;
+	fLifeLeech = fDamage * (fLifeLeech / 100);
+	if (fLifeLeech < 1) {
+		fLifeLeech = 0;
+	}
+    if (health >= maxHealth) {
+        fLifeLeech=0;
+    }
+	int lifeleech = fLifeLeech.intp();
+	if (attacker->decHp(-lifeleech)) {
+	}
+    if (health > maxHealth) {
+        int fixHealth = health - maxHealth;
+        attacker->decHp(fixHealth);
+    }
+} /**< Added by MoLAoS, lifeleech */
+
+void World::lifeleech(Unit *unit, int hp) { /**< Added by MoLAoS, lifeleech */
+	if (unit->decHp(-hp)) {
+		ScriptManager::onUnitDied(unit);
+		unit->kill();
+		if (!unit->isMobile()) { // obstacle removed
+			cartographer->updateMapMetrics(unit->getPos(), unit->getSize());
+		}
+	}
+} /**< Added by MoLAoS, lifeleech */
+
+void World::manaburn(Unit *attacker, const AttackSkillType* ast, Unit *attacked, fixed distance) { /**< Added by MoLAoS, manaburn */
+    int var = ast->getAttackVar();
+    int ep = attacked->getEp();
+    int armor = attacked->getArmor();
+	fixed damageMultiplier = getTechTree()->getDamageMultiplier(ast->getAttackType(),
+							 attacked->getType()->getArmourType());
+    // compute manaburn
+    fixed fDamage = attacker->getAttackStrength(ast);
+    fixed fManaBurn = attacker->getAttackManaBurn(ast);
+    fDamage = ((fDamage + random.randRange(-var, var)) / (distance + 1) - armor) * damageMultiplier;
+	fManaBurn = fDamage * (fManaBurn / 100);
+	if (fManaBurn < 1) {
+		fManaBurn = 0;
+	}
+	int manaburn = fManaBurn.intp();
+		if (attacked->decEp(manaburn)) {
+	}
+} /**< Added by MoLAoS, manaburn */
+
+void World::manaburn(Unit *unit, int ep) { /**< Added by MoLAoS, manaburn */
+	if (unit->decEp(ep)) {
+		ScriptManager::onUnitDied(unit);
+		unit->kill();
+		if (!unit->isMobile()) { // obstacle removed
+			cartographer->updateMapMetrics(unit->getPos(), unit->getSize());
+		}
+	}
+} /**< Added by MoLAoS, manaburn */
+
+void World::capture(Unit *attacker, const AttackSkillType* ast, Unit *attacked, fixed distance) { /**< Added by MoLAoS, capturing */
+    int cp = attacked->getCp();
+    // compute capture
+    fixed fCapture = attacker->getAttackCapture(ast);
+	if (fCapture < 1) {
+		fCapture = 0;
+	}
+    int capture = fCapture.intp();
+    if (attacked->decCp(capture)) {
+    int testcapture = attacked->getCp();
+    if (testcapture == 0) {
+    int newFaction = attacker->getFactionIndex();
+    int testdie = attacked->getHp();
+    attacked->decHp(testdie);
+    doCapture(attacker, attacked);
+    string stype = attacked->getType()->getUnitName();
+    Vec2i spawn = attacked->getPos();
+    createUnit(stype, newFaction, spawn, true);
+    }
+    }
+} /**< Added by MoLAoS, capturing */
+
+void World::capture(Unit *unit, int cp) { /**< Added by MoLAoS, capturing */
+	if (unit->decCp(cp)) {
+		ScriptManager::onUnitDied(unit);
+        if (unit->getCp()== 0) {
+		unit->capture();
+        }
+		if (!unit->isMobile()) { // obstacle removed
+			cartographer->updateMapMetrics(unit->getPos(), unit->getSize());
+		}
+	}
+} /**< Added by MoLAoS, capturing */
+
 void World::doKill(Unit *killer, Unit *killed) {
 	killer->doKill(killed);
 }
+
+void World::doCapture(Unit *killer, Unit *killed) { /**< Added by MoLAoS, capturing */
+	killer->doCapture(killed);
+} /**< Added by MoLAoS, capturing */
 
 // Apply effects to a specific location, with or without splash
 void World::applyEffects(Unit *source, const EffectTypes &effectTypes,
@@ -506,6 +616,8 @@ void World::appyEffect(Unit *u, Effect *e) {
 	}
 }
 
+
+int resourceCount = 0; /**< Added by MoLAoS, hack for current limited automatic resource generation */
 /** Called every 40 (or whatever WORLD_FPS resolves as) world frames */
 void World::tick() {
 	if (!fogOfWarSmoothing) {
@@ -526,22 +638,17 @@ void World::tick() {
 			}
 		}
 	}
-
 	///@todo foreach(Factions, f, factions) { (*f)->computeResourceBalances(); }
-
 	//compute resources balance
 	for (int k = 0; k < getFactionCount(); ++k) {
 		Faction *faction = getFaction(k);
-
 		//for each resource
 		for (int i = 0; i < techTree.getResourceTypeCount(); ++i) {
 			const ResourceType *rt = techTree.getResourceType(i);
-
 			//if consumable
 			if (rt->getClass() == ResourceClass::CONSUMABLE) {
 				int balance = 0;
 				for (int j = 0; j < faction->getUnitCount(); ++j) {
-
 					//if unit operative and has this cost
 					const Unit *u =  faction->getUnit(j);
 					if (u->isOperative()) {
@@ -555,6 +662,30 @@ void World::tick() {
 			}
 		}
 	}
+    // apply resource generation
+	if (resourceCount == 60) { /**< Added by MoLAoS, resource generation */
+    for (int k = 0; k < getFactionCount(); ++k) {
+    Faction *faction = getFaction(k);
+        for (int j = 0; j < faction->getUnitCount(); ++j) {
+        const Unit *u =  faction->getUnit(j);
+            if (u->isOperative()) {
+                for (int i = 0; i < u->getType()->getCreatedResourceCount(); ++i) {
+                ResourceAmount cr = u->getType()->getCreatedResource(i, faction);
+                ResourceAmount sr = u->getType()->getStoredResource(i, faction);
+                const ResourceType* crt = cr.getType();
+                const ResourceType* srt = sr.getType();
+                    if (srt->getClass() == ResourceClass::TECHTREE) {
+                    int oldBalance = faction->getSResource(srt)->getAmount();
+                    int balance = cr.getAmount();
+                    u->getFaction()->incResourceAmount(srt, balance);
+					}
+				}
+			}
+		}
+	}
+	resourceCount = 0;
+	}
+	++resourceCount; /**< Added by MoLAoS, resource generation */
 }
 
 const UnitType* World::findUnitTypeById(const FactionType* factionType, int id) {
@@ -618,7 +749,7 @@ void World::moveUnitCells(Unit *unit) {
 		&& g_renderer.getCuller().isInside(newCentrePos)) {
 			for (int i = 0; i < 3; ++i) {
 				waterEffects.addWaterSplash(
-					Vec2f(unit->getLastPos().x + random.randRange(-0.4f, 0.4f), 
+					Vec2f(unit->getLastPos().x + random.randRange(-0.4f, 0.4f),
 						  unit->getLastPos().y + random.randRange(-0.4f, 0.4f))
 				);
 			}
@@ -835,7 +966,7 @@ int World::giveStopCommand(int unitId, const string &cmdName) {
 			return LuaCmdResult::NO_CAPABLE_COMMAND;
 		}
 	} else if (cmdName == "attack-stopped") {
-		const AttackStoppedCommandType *asct = 
+		const AttackStoppedCommandType *asct =
 			(AttackStoppedCommandType *)unit->getType()->getFirstCtOfClass(CmdClass::ATTACK_STOPPED);
 		if (asct) {
 			return unit->giveCommand(newCommand(asct, CmdFlags()));
@@ -904,7 +1035,7 @@ int World::getResourceAmount(const string &resourceName, int factionIndex) {
 		} catch (runtime_error e) {
 			return LuaCmdResult::RESOURCE_NOT_FOUND;
 		}
-		return faction->getResource(rt)->getAmount();
+		return faction->getSResource(rt)->getAmount();
 	} else {
 		return LuaCmdResult::INVALID_FACTION_INDEX;
 	}
@@ -939,7 +1070,7 @@ int World::getUnitCount(int factionIndex) {
 	if (factionIndex >= 0 && factionIndex < factions.size()) {
 		Faction* faction= &factions[factionIndex];
 		int count = 0;
-		
+
 		for (int i= 0; i<faction->getUnitCount(); ++i) {
 			const Unit* unit= faction->getUnit(i);
 			if (unit->isAlive()) {
@@ -952,7 +1083,7 @@ int World::getUnitCount(int factionIndex) {
 	}
 }
 
-/** @return number of units of type a faction has, -1 if faction index invalid, 
+/** @return number of units of type a faction has, -1 if faction index invalid,
   * -2 if unitType not found */
 int World::getUnitCountOfType(int factionIndex, const string &typeName) {
 	if (factionIndex >= 0 && factionIndex < factions.size()) {
@@ -981,10 +1112,10 @@ int World::getUnitCountOfType(int factionIndex, const string &typeName) {
 //creates each faction looking at each faction name contained in GameSettings
 void World::initFactions() {
 	g_logger.logProgramEvent("Faction types", true);
-	
+
 	glestimals.init(&tileset.getGlestimalFactionType(), ControlType::INVALID, "Glestimals",
 		&techTree, -1, -1, -1, -1, false, false);
-	
+
 	GameSettings &gs = m_simInterface->getGameSettings();
 	this->thisFactionIndex = gs.getThisFactionIndex();
 	if (!gs.getFactionCount()) {
@@ -1015,7 +1146,7 @@ void World::initFactions() {
 		//  m_simInterface->getStats()->setFactionTypeName(i, formatString(gs.getFactionTypeName(i)));
 		//  m_simInterface->getStats()->setControl(i, gs.getFactionControl(i));
 	}
-	thisTeamIndex = getFaction(thisFactionIndex)->getTeam();	
+	thisTeamIndex = getFaction(thisFactionIndex)->getTeam();
 }
 
 //place units randomly aroud start location
@@ -1143,18 +1274,18 @@ void World::exploreCells(const Vec2i &newPos, int sightRange, int teamIndex) {
 //computes the fog of war texture, contained in the minimap
 void World::computeFow() {
 	//GameSettings &gs = m_simInterface->getGameSettings();
-	
+
 	///@todo move to Minimap
 	//reset texture
 	Minimap *minimap = g_userInterface.getMinimap();
 	minimap->resetFowTex();
 
-	// reset visibility in cells		
+	// reset visibility in cells
 	for (int i = 0; i < map.getTileW(); ++i) {
 		for (int j = 0; j < map.getTileH(); ++j) {
 			Tile *tile = map.getTile(i, j);
 			for (int k = 0; k < GameConstants::maxPlayers; ++k) {
-				bool val =			// if no fog and no shroud, or no fog and shroud with this 
+				bool val =			// if no fog and no shroud, or no fog and shroud with this
 					(!fogOfWar		// tile seen previously, then set visible
 					&& (!shroudOfDarkness || (shroudOfDarkness && tile->isExplored(k))));
 				tile->setVisible(k, val);
@@ -1181,7 +1312,7 @@ void World::computeFow() {
 			}
 		}
 	}
-	
+
 	// compute texture
 	if (unfogActive) { // scripted map reveal
 		doUnfog();

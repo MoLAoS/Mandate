@@ -55,7 +55,7 @@ WRAPPED_ENUM( AutoCmdFlag,
 	FLEE
 )
 
-// AutoCmdState : describes an auto command category state of 
+// AutoCmdState : describes an auto command category state of
 // the selection (auto-repair, auto-attack & auto-flee)
 WRAPPED_ENUM( AutoCmdState,
 	NONE,
@@ -75,7 +75,7 @@ ostream& operator<<(ostream &stream,  Vec2iList &vec);
 // =====================================================
 // 	class UnitPath
 // =====================================================
-/** Holds the next cells of a Unit movement 
+/** Holds the next cells of a Unit movement
   * @extends std::list<Shared::Math::Vec2i>
   */
 class UnitPath : public Vec2iList {
@@ -96,7 +96,7 @@ public:
 	void resetBlockCount()	{blockCount = 0; }
 	void incBlockCount()	{blockCount++;}		   /**< increment block counter			   */
 	void push(Vec2i &pos)	{push_front(pos);}	  /**< push onto front of path			  */
-	Vec2i peek()			{return front();}	 /**< peek at the next position			 */	
+	Vec2i peek()			{return front();}	 /**< peek at the next position			 */
 	void pop()				{erase(begin());}	/**< pop the next position off the path */
 
 	int getBlockCount() const { return blockCount; }
@@ -144,11 +144,14 @@ private:
 	// basic stats
 	int id;					/**< unique identifier  */
 	int hp;					/**< current hit points */
+	int sp;                 /**< current shield points */
 	int ep;					/**< current energy points */
+    int cp;					/**< current capture points */
 	int loadCount;			/**< current 'load' (resources carried) */
 	int deadCount;			/**< how many frames this unit has been dead */
 	int progress2;			/**< 'secondary' skill progress counter (progress for Production) */
 	int kills;				/**< number of kills */
+	int exp;                /**< amount of experience */
 
 	// housed unit bits
 	UnitIdList	m_carriedUnits;
@@ -156,7 +159,7 @@ private:
 	UnitIdList	m_unitsToUnload;
 	UnitId		m_carrier;
 
-	// engine info	
+	// engine info
 	int lastAnimReset;			/**< the frame the current animation cycle was started */
 	int nextAnimReset;			/**< the frame the next animation cycle will begin */
 	int lastCommandUpdate;		/**< the frame this unit last updated its command */
@@ -165,7 +168,7 @@ private:
 	int soundStartFrame;		/**< the frame the sound for the current skill should be started */
 
 	// target info
-	UnitId targetRef; 
+	UnitId targetRef;
 	Field targetField;				/**< Field target travels in @todo replace with Zone ? */
 	bool faceTarget;				/**< If true and target is set, we continue to face target. */
 	bool useNearestOccupiedCell;	/**< If true, targetPos is set to target->getNearestOccupiedCell() */
@@ -188,6 +191,7 @@ private:
 
 	const UnitType *type;			/**< the UnitType of this unit */
 	const ResourceType *loadType;	/**< the type if resource being carried */
+
 	const SkillType *currSkill;		/**< the SkillType currently being executed */
 
 	// some flags
@@ -231,6 +235,8 @@ private:
 	int commandCallback;		// for script 'command callbacks'
 	int hp_below_trigger;		// if non-zero, call the Trigger manager when HP falls below this
 	int hp_above_trigger;		// if non-zero, call the Trigger manager when HP rises above this
+    int cp_below_trigger;		// if non-zero, call the Trigger manager when CP falls below this
+    int cp_above_trigger;		// if non-zero, call the Trigger manager when CP rises above this
 	bool attacked_trigger;
 
 public:
@@ -257,7 +263,7 @@ public:
 		CardinalDir face;
 		Unit* master;
 
-		CreateParams(const Vec2i &pos, const UnitType *type, Faction *faction, Map *map, 
+		CreateParams(const Vec2i &pos, const UnitType *type, Faction *faction, Map *map,
 				CardinalDir face = CardinalDir::NORTH, Unit* master = NULL)
 			: pos(pos), type(type), faction(faction), map(map), face(face), master(master) { }
 	};
@@ -308,11 +314,18 @@ public:
 	int getFactionIndex() const					{return faction->getIndex();}
 	int getTeam() const							{return faction->getTeam();}
 	int getHp() const							{return hp;}
+	int getSp() const							{return sp;}
 	int getEp() const							{return ep;}
+    int getCp() const							{return cp;}
+
+
 	int getProductionPercent() const;
 	float getHpRatio() const					{return clamp(float(hp) / getMaxHp(), 0.f, 1.f);}
 	fixed getHpRatioFixed() const				{ return fixed(hp) / getMaxHp(); }
+	float getSpRatio() const					{return clamp(float(sp) / getMaxSp(), 0.f, 1.f);}
+	fixed getSpRatioFixed() const				{ return fixed(sp) / getMaxSp(); }
 	float getEpRatio() const					{return !type->getMaxEp() ? 0.0f : clamp(float(ep)/getMaxEp(), 0.f, 1.f);}
+    float getCpRatio() const					{return clamp(float(cp) / getMaxCp(), 0.f, 1.f);}
 	bool getToBeUndertaken() const				{return toBeUndertaken;}
 	UnitId getTarget() const					{return targetRef;}
 	Vec2i getNextPos() const					{return nextPos;}
@@ -322,6 +335,8 @@ public:
 	Vec2i getMeetingPos() const					{return meetingPos;}
 	Faction *getFaction() const					{return faction;}
 	const ResourceType *getLoadType() const		{return loadType;}
+
+
 	const UnitType *getType() const				{return type;}
 	const SkillType *getCurrSkill() const		{return currSkill;}
 	const EnhancementType *getTotalUpgrade() const	{return &totalUpgrade;}
@@ -329,6 +344,8 @@ public:
 	Vec2f getVerticalRotation() const			{return Vec2f(0.f);}
 	ParticleSystem *getFire() const				{return fire;}
 	int getKills() const						{return kills;}
+	int getExp() const						    {return exp;}
+	virtual void setExp(int v)                  { exp = v; }
 	const Level *getLevel() const				{return level;}
 	const Level *getNextLevel() const;
 	string getFullName() const;
@@ -368,6 +385,8 @@ public:
 	const int getCommandCallback() const	{ return commandCallback; }
 	void setHPBelowTrigger(int i)				{ hp_below_trigger = i; }
 	void setHPAboveTrigger(int i)				{ hp_above_trigger = i; }
+	void setCPBelowTrigger(int i)				{ cp_below_trigger = i; }
+	void setCPAboveTrigger(int i)				{ cp_above_trigger = i; }
 	void setAttackedTrigger(bool val)			{ attacked_trigger = val; }
 	bool getAttackedTrigger() const				{ return attacked_trigger; }
 
@@ -377,6 +396,33 @@ public:
 	 */
 	int getAttackStrength(const AttackSkillType *ast) const	{
 		return (ast->getAttackStrength() * attackStrengthMult + attackStrength).intp();
+	}
+
+	// attempt to add lifeleech
+    /**
+	 * Returns the total life leech (base lifesteal) for this unit using the
+	 * supplied skill, taking into account all upgrades & effects.
+	 */
+		int getAttackLifeLeech(const AttackSkillType *ast) const	{
+		return (ast->getAttackLifeLeech() * attackLifeLeechMult + attackLifeLeech).intp();
+	}
+
+	// attempt to add manaburn
+    /**
+	 * Returns the total mana burn (base mana reduction) for this unit using the
+	 * supplied skill, taking into account all upgrades & effects.
+	 */
+		int getAttackManaBurn(const AttackSkillType *ast) const	{
+		return (ast->getAttackManaBurn() * attackManaBurnMult + attackManaBurn).intp();
+	}
+
+	// attempt to add capturing
+    /**
+	 * Returns the total capture amount (base capture damage) for this unit using the
+	 * supplied skill, taking into account all upgrades & effects.
+	 */
+		int getAttackCapture(const AttackSkillType *ast) const	{
+		return (ast->getAttackCapture() * attackCaptureMult + attackCapture).intp();
 	}
 
 	/**
@@ -418,7 +464,7 @@ public:
 	float getRenderAlpha() const;
 
 	// is
-	bool isIdle() const					{return currSkill->getClass() == SkillClass::STOP;}	
+	bool isIdle() const					{return currSkill->getClass() == SkillClass::STOP;}
 	bool isMoving() const				{return currSkill->getClass() == SkillClass::MOVE;}
 	bool isMobile ()					{ return type->isMobile(); }
 	bool isCarried() const				{return carried;}
@@ -442,12 +488,12 @@ public:
 			|| currSkill->getClass() == SkillClass::BUILD_SELF;
 	}
 	bool isBuilt() const				{return !isBeingBuilt();}
-
 	// set
 	void setCurrSkill(const SkillType *currSkill);
 	void setCurrSkill(SkillClass sc)					{setCurrSkill(getType()->getFirstStOfClass(sc));}
 	void setLoadCount(int loadCount)					{this->loadCount = loadCount;}
 	void setLoadType(const ResourceType *loadType)		{this->loadType = loadType;}
+
 	void setProgress2(int progress2)					{this->progress2 = progress2;}
 	void setPos(const Vec2i &pos);
 	void setNextPos(const Vec2i &nextPos)				{this->nextPos = nextPos; targetRef = -1;}
@@ -512,6 +558,7 @@ public:
 	void create(bool startingUnit = false);
 	void born(bool reborn = false);
 	void kill();
+	void capture();
 	void undertake();
 
 	//other
@@ -521,11 +568,13 @@ public:
 	string getShortDesc() const;
 	int getQueuedOrderCount() const { return (commands.size() > 1 ? commands.size() - 1 : 0); }
 	string getLongDesc() const;
-	
+
 	bool computeEp();
 	bool repair(int amount = 0, fixed multiplier = 1);
 	bool decHp(int i);
+	bool decSp(int i);
 	bool decEp(int i);
+    bool decCp(int i);
 	int update2()										{return ++progress2;}
 	TravelState travel(const Vec2i &pos, const MoveSkillType *moveSkill);
 	void stop() {setCurrSkill(SkillClass::STOP); }
@@ -541,6 +590,7 @@ public:
 	// World wrappers
 	void doUpdate();
 	void doKill(Unit *killed);
+	void doCapture(Unit *killed);
 
 	// update skill & animation cycles
 	void updateSkillCycle(int offset);
@@ -558,6 +608,7 @@ public:
 	void applyUpgrade(const UpgradeType *upgradeType);
 	void computeTotalUpgrade();
 	void incKills();
+	void incExp(int addExp);
 	bool morph(const MorphCommandType *mct, const UnitType *ut, Vec2i offset = Vec2i(0), bool reprocessCommands = true);
 	bool transform(const TransformCommandType *tct, const UnitType *ut, Vec2i pos, CardinalDir facing);
 	CmdResult checkCommand(const Command &command) const;
@@ -573,7 +624,7 @@ public:
 	bool add(Effect *e);
 	void remove(Effect *e);
 	void effectExpired(Effect *effect);
-	bool doRegen(int hpRegeneration, int epRegeneration);
+	bool doRegen(int hpRegeneration, int spRegeneration, int epRegeneration);
 
 	void cloak();
 	void deCloak();
@@ -614,7 +665,8 @@ public:
 	void deleteUnit(Unit *unit);	// should only be called to undo a creation
 
 	Units::const_iterator begin_dead() const { return m_deadList.begin(); }
-	Units::const_iterator end_dead() const { return m_deadList.end();}
+	Units::const_iterator end_dead() const { return m_deadList.end(); }
+
 };
 
 }}// end namespace

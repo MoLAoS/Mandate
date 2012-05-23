@@ -47,7 +47,8 @@ public:
 	struct CreateParams {
 		const UpgradeType *upgradeType;
 		int factionIndex;
-		CreateParams(const UpgradeType *type, int fNdx) : upgradeType(type), factionIndex(fNdx) {}
+		CreateParams(const UpgradeType *type, int fNdx) :
+		upgradeType(type), factionIndex(fNdx) {}
 	};
 	struct LoadParams {
 		const XmlNode *node;
@@ -98,6 +99,7 @@ public:
 	void startUpgrade(const UpgradeType *upgradeType, int factionIndex);
 	void cancelUpgrade(const UpgradeType *upgradeType);
 	void finishUpgrade(const UpgradeType *upgradeType);
+	void updateUpgrade(const Upgrade *upgrade);
 
 	bool isUpgraded(const UpgradeType *upgradeType) const;
 	bool isUpgrading(const UpgradeType *upgradeType) const;

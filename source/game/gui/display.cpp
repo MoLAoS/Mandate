@@ -331,7 +331,7 @@ void Display::setSize() {
 				sz = m_sizes.transportSize;
 			}
 		}
-	} 
+	}
 	setVisible(true);
 	Vec2i size = getSize();
 	if (size != sz) {
@@ -570,7 +570,7 @@ void Display::render() {
 			return;
 		}
 	}
-	
+
 	Widget::render();
 
 	ImageWidget::startBatch();
@@ -640,8 +640,8 @@ DisplayButton Display::computeIndex(Vec2i i_pos, bool screenPos) {
 	Vec2i pos = i_pos;
 	Vec2i offsets[3] = { m_portraitOffset, m_commandOffset, m_carryImageOffset };
 	int counts[3] = { selectionCellCount, commandCellCount, transportCellCount };
-	
-	for (int i=0; i < 3; ++i) {	
+
+	for (int i=0; i < 3; ++i) {
 		pos = i_pos - offsets[i];
 
 		if (pos.y >= 0 && pos.y < m_imageSize * cellHeightCount) {

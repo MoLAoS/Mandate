@@ -86,7 +86,7 @@ string RequirableType::getReqDesc(const Faction *f) const{
 
 bool RequirableType::load(const XmlNode *baseNode, const string &dir, const TechTree *tt, const FactionType *ft) {
 	bool loadOk = DisplayableType::load(baseNode, dir);
-	
+
 	try { // Unit requirements
 		const XmlNode *unitRequirementsNode = baseNode->getChild("unit-requirements", 0, false);
 		if(unitRequirementsNode) {
@@ -211,7 +211,7 @@ bool ProducibleType::load(const XmlNode *baseNode, const string &dir, const Tech
 	if (!RequirableType::load(baseNode, dir, techTree, factionType)) {
 		loadOk = false;
 	}
-	
+
 	// Production time
 	try { productionTime = baseNode->getChildIntValue("time"); }
 	catch (runtime_error e) {
@@ -243,7 +243,9 @@ bool ProducibleType::load(const XmlNode *baseNode, const string &dir, const Tech
 					const XmlNode *resourceNode = resourceRequirementsNode->getChild("resource", i);
 					string name = resourceNode->getAttribute("name")->getRestrictedValue();
 					int amount = resourceNode->getAttribute("amount")->getIntValue();
-					costs[i].init(techTree->getResourceType(name), amount);
+                    int amount_plus = resourceNode->getAttribute("plus")->getIntValue();
+                    float amount_multiply = resourceNode->getAttribute("multiply")->getFloatValue();
+                    costs[i].init(techTree->getResourceType(name), amount, amount_plus, amount_multiply);
 				} catch (runtime_error e) {
 					g_logger.logXmlError(dir, e.what());
 					loadOk = false;

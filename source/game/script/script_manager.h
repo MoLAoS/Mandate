@@ -136,6 +136,7 @@ public:
 	static void onResourceHarvested(const Unit *unit);
 	static void onUnitCreated(const Unit* unit);
 	static void onUnitDied(const Unit* unit);
+	static void onUnitCaptured(const Unit* unit);
 
 	static void update();
 
@@ -144,6 +145,8 @@ public:
 	static void commandCallback(const Unit *unit) { triggerManager.commandCallback(unit); }
 	static void onHPBelowTrigger(const Unit *unit) { triggerManager.onHPBelow(unit); }
 	static void onHPAboveTrigger(const Unit *unit) { triggerManager.onHPAbove(unit); }
+	static void onCPBelowTrigger(const Unit *unit) { triggerManager.onCPBelow(unit); }
+	static void onCPAboveTrigger(const Unit *unit) { triggerManager.onCPAbove(unit); }
 	static void onAttackedTrigger(const Unit *unit){ triggerManager.onAttacked(unit); }
 
 	static void addErrorMessage(const char *txt=NULL, bool quietly = true);

@@ -100,7 +100,7 @@ Command* CommandType::doAutoCommand(Unit *unit) const {
 	const UnitType *ut = unit->getType();
 	if (unit->isCarried()) {
 		Unit *carrier = g_world.getUnit(unit->getCarrier());
-		const LoadCommandType *lct = 
+		const LoadCommandType *lct =
 			static_cast<const LoadCommandType *>(carrier->getType()->getFirstCtOfClass(CmdClass::LOAD));
 		if (!lct->areProjectilesAllowed() || !unit->getType()->hasProjectileAttack()) {
 			return 0;
@@ -140,7 +140,7 @@ Command* CommandType::doAutoCommand(Unit *unit) const {
 	return 0;
 }
 
-/** 
+/**
  * Determines command arrow details and if it should be drawn
  * @param out_arrowTarget output for arrowTarget
  * @param out_arrowColor output for arrowColor
@@ -190,9 +190,9 @@ void CommandType::undo(Unit *unit, const Command &command) const {
 	}
 }
 
-/** 
+/**
  * replace references to dead units with their dying position prior to their
- * deletion for some commands 
+ * deletion for some commands
  * @param command the command to modify
  */
 void CommandType::replaceDeadReferences(Command &command) const {
@@ -308,7 +308,7 @@ bool MoveBaseCommandType::load(const XmlNode *n, const string &dir, const TechTr
 	bool loadOk = CommandType::load(n, dir, tt, ft);
 
 	//move
-	try { 
+	try {
 		string skillName = n->getChild("move-skill")->getAttribute("value")->getRestrictedValue();
 		const SkillType *st = unitType->getSkillType(skillName, SkillClass::MOVE);
 		m_moveSkillType = static_cast<const MoveSkillType*>(st);
@@ -486,7 +486,7 @@ bool ProduceCommandType::load(const XmlNode *n, const string &dir, const TechTre
 	bool loadOk = CommandType::load(n, dir, tt, ft);
 
 	//produce
-	try { 
+	try {
 		string skillName = n->getChild("produce-skill")->getAttribute("value")->getRestrictedValue();
 		m_produceSkillType = static_cast<const ProduceSkillType*>(unitType->getSkillType(skillName, SkillClass::PRODUCE));
 	} catch (runtime_error e) {
@@ -495,7 +495,7 @@ bool ProduceCommandType::load(const XmlNode *n, const string &dir, const TechTre
 	}
 
 	if (n->getOptionalChild("produced-unit")) {
-		try { 
+		try {
 			string producedUnitName = n->getChild("produced-unit")->getAttribute("name")->getRestrictedValue();
 			m_producedUnits.push_back(ft->getUnitType(producedUnitName));
 			if (const XmlAttribute *attrib = n->getChild("produced-unit")->getAttribute("number", false)) {
@@ -585,7 +585,7 @@ void ProduceCommandType::descSkills(const Unit *unit, CmdDescriptor *callback, P
 	if (!pt) {
 		m_produceSkillType->getDesc(msg, unit);
 	} else {
-		// do the time-to-produce calc... 
+		// do the time-to-produce calc...
 		int framesPerCycle = int(floorf((1.f / (float(unit->getSpeed(m_produceSkillType)) / 4000.f)) + 1.f));
 		int timeToBuild = pt->getProductionTime() * framesPerCycle / 40;
 		msg = g_lang.get("TimeToBuild") + ": " + intToStr(timeToBuild);
@@ -618,7 +618,7 @@ void ProduceCommandType::update(Unit *unit) const {
 	_PROFILE_COMMAND_UPDATE();
 	Command *command = unit->getCurrCommand();
 	assert(command->getType() == this);
-	
+
 	if (unit->getCurrSkill()->getClass() != SkillClass::PRODUCE) {
 		//if not producing
 		unit->setCurrSkill(m_produceSkillType);
@@ -650,7 +650,7 @@ void ProduceCommandType::update(Unit *unit) const {
 			unit->finishCommand();
 			if (unit->getFactionIndex() == g_world.getThisFactionIndex()) {
 				RUNTIME_CHECK(!unit->isCarried());
-				g_soundRenderer.playFx(getFinishedSound(), unit->getCurrVector(), 
+				g_soundRenderer.playFx(getFinishedSound(), unit->getCurrVector(),
 					g_gameState.getGameCamera()->getPos());
 			}
 			unit->setCurrSkill(SkillClass::STOP);
@@ -666,7 +666,7 @@ bool GenerateCommandType::load(const XmlNode *n, const string &dir, const TechTr
 	bool loadOk = CommandType::load(n, dir, tt, ft);
 
 	// produce skill
-	try { 
+	try {
 		string skillName= n->getChild("produce-skill")->getAttribute("value")->getRestrictedValue();
 		m_produceSkillType= static_cast<const ProduceSkillType*>(unitType->getSkillType(skillName, SkillClass::PRODUCE));
 	} catch (runtime_error e) {
@@ -729,7 +729,7 @@ void GenerateCommandType::descSkills(const Unit *unit, CmdDescriptor *callback, 
 	if (!pt) {
 		m_produceSkillType->getDesc(msg, unit);
 	} else {
-		// do the time-to-produce calc... 
+		// do the time-to-produce calc...
 		int framesPerCycle = int(floorf((1.f / (float(unit->getSpeed(m_produceSkillType)) / 4000.f)) + 1.f));
 		int timeToBuild = pt->getProductionTime() * framesPerCycle / 40;
 		msg = "\n" + g_lang.get("TimeToBuild") + ": " + intToStr(timeToBuild);
@@ -761,7 +761,7 @@ void GenerateCommandType::update(Unit *unit) const {
 	Command *command = unit->getCurrCommand();
 	assert(command->getType() == this);
 	Faction *faction = unit->getFaction();
-	
+
 	if (unit->getCurrSkill() != m_produceSkillType) {
 		// if not producing
 		unit->setCurrSkill(m_produceSkillType);
@@ -875,11 +875,13 @@ void UpgradeCommandType::descSkills(const Unit *unit, CmdDescriptor *callback, P
 	if (!pt) {
 		m_upgradeSkillType->getDesc(msg, unit);
 	} else {
-		// do the time-to-produce calc... 
+		// do the time-to-produce calc...
 		int framesPerCycle = int(floorf((1.f / (float(unit->getSpeed(m_upgradeSkillType)) / 4000.f)) + 1.f));
 		int timeToUpgrade = pt->getProductionTime() * framesPerCycle / 40;
 		msg = g_lang.get("TimeToResearch") + ": " + intToStr(timeToUpgrade);
 	}
+    string upgradeDescName = static_cast<const UpgradeType*>(pt)->getDescName(unit->getFaction());
+    callback->addElement(upgradeDescName);
 	callback->addElement(msg);
 }
 
@@ -920,7 +922,7 @@ void UpgradeCommandType::update(Unit *unit) const {
 			faction->checkAdvanceSubfaction(upgrade, true);
 			if (unit->getFactionIndex() == g_world.getThisFactionIndex()) {
 				RUNTIME_CHECK(!unit->isCarried());
-				g_soundRenderer.playFx(getFinishedSound(), unit->getCurrVector(), 
+				g_soundRenderer.playFx(getFinishedSound(), unit->getCurrVector(),
 					g_gameState.getGameCamera()->getPos());
 			}
 		}
@@ -1011,7 +1013,7 @@ bool MorphCommandType::load(const XmlNode *n, const string &dir, const TechTree 
 			const XmlAttribute *a = cmNode->getAttribute("discount", false);
 			if (a) {
 				m_discount = a->getIntValue();
-			} 
+			}
 			a = cmNode->getAttribute("refund", false);
 			if (a) {
 				m_refund = a->getIntValue();
@@ -1081,7 +1083,7 @@ void MorphCommandType::descSkills(const Unit *unit, CmdDescriptor *callback, Pro
 	if (!pt) {
 		m_morphSkillType->getDesc(msg, unit);
 	} else {
-		// do the time-to-produce calc... 
+		// do the time-to-produce calc...
 		int framesPerCycle = int(floorf((1.f / (float(unit->getSpeed(m_morphSkillType)) / 4000.f)) + 1.f));
 		int timeToBuild = pt->getProductionTime() * framesPerCycle / 40;
 		msg = g_lang.get("TimeToMorph") + ": " + intToStr(timeToBuild);
@@ -1151,7 +1153,7 @@ void MorphCommandType::update(Unit *unit) const {
 				}
 				if (unit->getFactionIndex() == g_world.getThisFactionIndex()) {
 					RUNTIME_CHECK(!unit->isCarried());
-					g_soundRenderer.playFx(getFinishedSound(), unit->getCurrVector(), 
+					g_soundRenderer.playFx(getFinishedSound(), unit->getCurrVector(),
 						g_gameState.getGameCamera()->getPos());
 				}
 			} else {
@@ -1238,7 +1240,7 @@ void TransformCommandType::update(Unit *unit) const {
 				g_world.getCartographer()->updateMapMetrics(unit->getPos(), biggerSize);
 				if (unit->getFactionIndex() == g_world.getThisFactionIndex()) {
 					RUNTIME_CHECK(!unit->isCarried());
-					g_soundRenderer.playFx(getFinishedSound(), unit->getCurrVector(), 
+					g_soundRenderer.playFx(getFinishedSound(), unit->getCurrVector(),
 						g_gameState.getGameCamera()->getPos());
 				}
 			} else {
@@ -1278,9 +1280,9 @@ void TransformCommandType::update(Unit *unit) const {
 
 bool LoadCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft){
 	bool loadOk = CommandType::load(n, dir, tt, ft);
-	
+
 	//move
-	try { 
+	try {
 		const XmlNode *moveSkillNode = n->getOptionalChild("move-skill");
 		if (moveSkillNode) {
 			string skillName = moveSkillNode->getAttribute("value")->getRestrictedValue();
@@ -1418,7 +1420,7 @@ void LoadCommandType::update(Unit *unit) const {
 
 	Vec2i pos = closest->getCenteredPos(); // else move toward closest
 	if (unit->travel(pos, moveSkillType) == TravelState::ARRIVED) {
-		//unit->finishCommand(); was in blocked which might be better to use since it should be within 
+		//unit->finishCommand(); was in blocked which might be better to use since it should be within
 		// load distance by the time it gets to arrived state anyway? - hailstone 21Dec2010
 		if (unit->getPath()->isBlocked() && !command->getUnit()) {
 			unit->finishCommand();
@@ -1452,7 +1454,7 @@ bool UnloadCommandType::load(const XmlNode *n, const string &dir, const TechTree
 	bool loadOk = CommandType::load(n, dir, tt, ft);
 
 	// move
-	try { 
+	try {
 		const XmlNode *moveSkillNode = n->getOptionalChild("move-skill");
 		if (moveSkillNode) {
 			string skillName = moveSkillNode->getAttribute("value")->getRestrictedValue();
@@ -1471,7 +1473,7 @@ bool UnloadCommandType::load(const XmlNode *n, const string &dir, const TechTree
 		g_logger.logXmlError(dir, e.what());
 		loadOk = false;
 	}
-	
+
 	return loadOk;
 }
 
@@ -1550,7 +1552,7 @@ void BeLoadedCommandType::update(Unit *unit) const {
 	_PROFILE_COMMAND_UPDATE();
 	Command *command = unit->getCurrCommand();
 	assert(command->getType() == this);
-	
+
 	if (!command->getUnit() || command->getUnit()->isDead()) {
 		unit->finishCommand();
 		return;
@@ -1569,13 +1571,13 @@ bool CastSpellCommandType::load(const XmlNode *n, const string &dir, const TechT
 	bool loadOk = CommandType::load(n, dir, tt, ft);
 
 	// cast skill
-	try { 
+	try {
 		const XmlNode *genSkillNode = n->getChild("cast-spell-skill");
 		m_cycle = genSkillNode->getOptionalBoolValue("cycle");
 		string skillName = genSkillNode->getAttribute("value")->getRestrictedValue();
 		const SkillType *st = unitType->getSkillType(skillName, SkillClass::CAST_SPELL);
 		m_castSpellSkillType = static_cast<const CastSpellSkillType*>(st);
-	
+
 		string str = n->getChild("affect")->getRestrictedValue();
 		m_affects = SpellAffectNames.match(str.c_str());
 		if (m_affects == SpellAffect::INVALID) {
@@ -1681,7 +1683,7 @@ CmdResult SetMeetingPointCommandType::check(const Unit *unit, const Command &com
   * @return true if the unit has any enemy in range, with results written to rangedPtr and past.
   *  false if no enemies in range, rangedPtr & past will be unchanged.
   */
-bool CommandType::unitInRange(const Unit *unit, int range, Unit **rangedPtr, 
+bool CommandType::unitInRange(const Unit *unit, int range, Unit **rangedPtr,
 					const AttackSkillTypes *asts, const AttackSkillType **past) {
 	_PROFILE_COMMAND_UPDATE();
 	Vec2i effectivePos;
@@ -1724,7 +1726,7 @@ bool CommandType::unitInRange(const Unit *unit, int range, Unit **rangedPtr,
 	} else {
 		Targets enemies;
 		Vec2i pos;
-		PosCircularIteratorOrdered pci(g_world.getMap()->getBounds(), effectivePos, 
+		PosCircularIteratorOrdered pci(g_world.getMap()->getBounds(), effectivePos,
 			g_world.getPosIteratorFactory().getInsideOutIterator(1, range + halfSize.intp()));
 
 		Map *map = g_world.getMap();
@@ -1752,17 +1754,17 @@ bool CommandType::unitInRange(const Unit *unit, int range, Unit **rangedPtr,
 				}
 			}
 		}
-	
+
 		if (!enemies.size()) {
 			return false;
 		}
-	
+
 		*rangedPtr = enemies.getNearest();
 		needDistance = true;
 	}
 unitOnRange_exitLoop:
 	assert(*rangedPtr);
-	
+
 	if (needDistance) {
 		const fixed &targetHalfSize = (*rangedPtr)->getType()->getHalfSize();
 		distance = fixedCentre.dist((*rangedPtr)->getFixedCenteredPos()) - targetHalfSize;
@@ -1779,13 +1781,13 @@ bool CommandType::attackerInSight(const Unit *unit, Unit **rangedPtr) {
 	return unitInRange(unit, unit->getSight(), rangedPtr, NULL, NULL);
 }
 
-bool CommandType::attackableInRange(const Unit *unit, Unit **rangedPtr, 
+bool CommandType::attackableInRange(const Unit *unit, Unit **rangedPtr,
 			const AttackSkillTypes *asts, const AttackSkillType **past) {
 	int range = min(unit->getMaxRange(asts), unit->getSight());
 	return unitInRange(unit, range, rangedPtr, asts, past);
 }
 
-bool CommandType::attackableInSight(const Unit *unit, Unit **rangedPtr, 
+bool CommandType::attackableInSight(const Unit *unit, Unit **rangedPtr,
 			const AttackSkillTypes *asts, const AttackSkillType **past) {
 	return unitInRange(unit, unit->getSight(), rangedPtr, asts, past);
 }

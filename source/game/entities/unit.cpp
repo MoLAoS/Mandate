@@ -112,7 +112,9 @@ MEMORY_CHECK_IMPLEMENTATION(Unit)
 Unit::Unit(CreateParams params)
 		: id(-1)
 		, hp(1)
+        , sp(0)
 		, ep(0)
+		, cp(-1)
 		, loadCount(0)
 		, deadCount(0)
 		, lastAnimReset(0)
@@ -123,6 +125,7 @@ Unit::Unit(CreateParams params)
 		, soundStartFrame(-1)
 		, progress2(0)
 		, kills(0)
+		, exp(0)
 		, m_carrier(-1)
 		, highlight(0.f)
 		, targetRef(-1)
@@ -155,6 +158,8 @@ Unit::Unit(CreateParams params)
 		, commandCallback(0)
 		, hp_below_trigger(0)
 		, hp_above_trigger(0)
+		, cp_below_trigger(0)
+		, cp_above_trigger(0)
 		, attacked_trigger(false) {
 	Random random(id);
 	currSkill = getType()->getFirstStOfClass(SkillClass::STOP);	//starting skill
@@ -166,6 +171,8 @@ Unit::Unit(CreateParams params)
 
 	computeTotalUpgrade();
 	hp = type->getMaxHp() / 20;
+	sp = type->getMaxSp() / 20;
+	cp = type->getMaxCp();
 
 	setModelFacing(m_facing);
 }
@@ -182,11 +189,12 @@ Unit::Unit(LoadParams params) //const XmlNode *node, Faction *faction, Map *map,
 	id = node->getChildIntValue("id");
 
 	string s;
-	//hp loaded after recalculateStats()
+	//hp and cp loaded after recalculateStats()
 	ep = node->getChildIntValue("ep");
 	loadCount = node->getChildIntValue("loadCount");
 	deadCount = node->getChildIntValue("deadCount");
 	kills = node->getChildIntValue("kills");
+	exp = node->getChildIntValue("exp");
 	type = faction->getType()->getUnitType(node->getChildStringValue("type"));
 
 	s = node->getChildStringValue("loadType");
@@ -254,6 +262,11 @@ Unit::Unit(LoadParams params) //const XmlNode *node, Faction *faction, Map *map,
 	computeTotalUpgrade();
 
 	hp = node->getChildIntValue("hp");
+	sp = node->getChildIntValue("sp");
+    cp = node->getChildIntValue("cp");
+    if (cp == 0) {
+        cp = -1;
+    }
 	fire = NULL;
 
 	n = node->getChild("units-carried");
@@ -306,7 +319,9 @@ void Unit::save(XmlNode *node) const {
 	XmlNode *n;
 	node->addChild("id", id);
 	node->addChild("hp", hp);
+	node->addChild("sp", sp);
 	node->addChild("ep", ep);
+	node->addChild("cp", cp);
 	node->addChild("loadCount", loadCount);
 	node->addChild("deadCount", deadCount);
 	node->addChild("nextCommandUpdate", nextCommandUpdate);
@@ -316,6 +331,7 @@ void Unit::save(XmlNode *node) const {
 	node->addChild("highlight", highlight);
 	node->addChild("progress2", progress2);
 	node->addChild("kills", kills);
+	node->addChild("exp", exp);
 	node->addChild("targetRef", targetRef);
 	node->addChild("targetField", targetField);
 	node->addChild("pos", pos);
@@ -566,7 +582,7 @@ void Unit::startSkillParticleSystems() {
 	Vec2i cPos = getCenteredPos();
 	Tile *tile = g_map.getTile(Map::toTileCoords(cPos));
 	bool visible = tile->isVisible(g_world.getThisTeamIndex()) && g_renderer.getCuller().isInside(cPos);
-	
+
 	for (unsigned i = 0; i < currSkill->getEyeCandySystemCount(); ++i) {
 		UnitParticleSystem *ups = currSkill->getEyeCandySystem(i)->createUnitParticleSystem(visible);
 		ups->setPos(getCurrVector());
@@ -650,7 +666,7 @@ Projectile* Unit::launchProjectile(ProjectileType *projType, const Vec3f &endPos
 	if (carrier) {
 		RUNTIME_CHECK(!carrier->isCarried() && carrier->getPos().x >= 0 && carrier->getPos().y >= 0);
 		startPos = carrier->getCurrVectorFlat();
-		const LoadCommandType *lct = 
+		const LoadCommandType *lct =
 			static_cast<const LoadCommandType *>(carrier->getType()->getFirstCtOfClass(CmdClass::LOAD));
 		assert(lct->areProjectilesAllowed());
 		Vec2f offsets = lct->getProjectileOffset();
@@ -702,7 +718,7 @@ Projectile* Unit::launchProjectile(ProjectileType *projType, const Vec3f &endPos
 }
 
 Splash* Unit::createSplash(SplashType *splashType, const Vec3f &pos) {
-	const Tile *tile = map->getTile(Map::toTileCoords(getTargetPos()));		
+	const Tile *tile = map->getTile(Map::toTileCoords(getTargetPos()));
 	bool visible = tile->isVisible(g_world.getThisTeamIndex())
 				&& g_renderer.getCuller().isInside(getTargetPos());
 	Splash *splash = splashType->createSplashParticleSystem(visible);
@@ -731,7 +747,7 @@ void Unit::startSpellSystems(const CastSpellSkillType *sst) {
 			target = g_world.getUnit(targetRef);
 		}
 		if (sst->getSplashRadius()) {
-			g_world.applyEffects(this, sst->getEffectTypes(), target->getCenteredPos(), 
+			g_world.applyEffects(this, sst->getEffectTypes(), target->getCenteredPos(),
 				target->getType()->getField(), sst->getSplashRadius());
 		} else {
 			g_world.applyEffects(this, sst->getEffectTypes(), target, 0);
@@ -884,7 +900,7 @@ CmdResult Unit::giveCommand(Command *command) {
 		// empty command queue
 		CMD_LOG( "incoming command is not marked to queue, Clear command queue" );
 
-		// HACK... The AI likes to re-issue the same commands, which stresses the pathfinder 
+		// HACK... The AI likes to re-issue the same commands, which stresses the pathfinder
 		// on big maps. If current and incoming are both attack and have same pos, then do
 		// not clear path... (route cache will still be good).
 		if (! (!commands.empty() && command->getType()->getClass() == CmdClass::ATTACK
@@ -905,7 +921,7 @@ CmdResult Unit::giveCommand(Command *command) {
 	bool energyRes = checkEnergy(command->getType());
 	if (result == CmdResult::SUCCESS && energyRes) {
 		applyCommand(*command);
-		
+
 		// start the command type
 		ct->start(this, command);
 
@@ -1037,7 +1053,7 @@ CmdResult Unit::cancelCommand() {
 
 		//clear routes
 		clearPath();
-		
+
 		//if (commands.empty()) {
 		//	CMD_UNIT_LOG( this, "current " << ct->getName() << " command cancelled.");
 		//} else {
@@ -1119,8 +1135,14 @@ void Unit::born(bool reborn) {
 
 	if (!reborn) {
 		faction->addStore(type);
+		faction->addCreate(type);
 		setCurrSkill(SkillClass::STOP);
 		hp = type->getMaxHp();
+		sp = type->getMaxSp();
+		cp = type->getMaxCp();
+		if (cp == 0) {
+		    cp= -1;
+		}
 		faction->checkAdvanceSubfaction(type, true);
 		g_world.getCartographer()->applyUnitVisibility(this);
 		g_simInterface.doUnitBorn(this);
@@ -1218,6 +1240,63 @@ void Unit::kill() {
 	}
 }
 
+/**
+ * Do everything that should happen when a unit dies, except remove them from the faction.  Should
+ * only be called when a unit's HPs are zero or less.
+ */
+void Unit::capture() {
+	assert(cp == 0);
+	ULC_UNIT_LOG( this, "captured." );
+	World &world = g_world;
+	if (!m_unitsToCarry.empty()) {
+		foreach (UnitIdList, it, m_unitsToCarry) {
+			Unit *unit = world.getUnit(*it);
+			if (unit->anyCommand() && unit->getCurrCommand()->getType()->getClass() == CmdClass::BE_LOADED) {
+				unit->cancelCurrCommand();
+			}
+		}
+		m_unitsToCarry.clear();
+	}
+	if (!m_carriedUnits.empty()) {
+		foreach (UnitIdList, it, m_carriedUnits) {
+			Unit *unit = world.getUnit(*it);
+			int hp = unit->getHp();
+			unit->decHp(hp);
+		}
+		m_carriedUnits.clear();
+	}
+	if (isCarried()) {
+		Unit *carrier = g_world.getUnit(getCarrier());
+		carrier->housedUnitDied(this);
+	}
+	if (fire) {
+		fire->fade();
+		fire = 0;
+	}
+	//REFACTOR Use signal, send this code to Faction::onUnitDied();
+	if (isBeingBuilt()) { // no longer needs static resources
+		faction->deApplyStaticConsumption(type);
+	} else {
+		faction->deApplyStaticCosts(type);
+		faction->removeStore(type);
+		faction->onUnitDeActivated(type);
+	}
+	Died(this);
+	clearCommands();
+	setCurrSkill(SkillClass::DIE);
+	deadCount = 1001; // random decay time
+	//REFACTOR use signal, send this to World/Cartographer/SimInterface
+	world.getCartographer()->removeUnitVisibility(this);
+	if (!isCarried()) { // if not in transport, clear cells
+		map->clearUnitCells(this, pos);
+	}
+	g_simInterface.doUpdateAnimOnDeath(this);
+	checkTargets(this); // hack... 'tracking' particle systems might reference this
+	if (type->isDetector()) {
+		world.getCartographer()->detectorDeactivated(this);
+	}
+}
+
 void Unit::housedUnitDied(Unit *unit) {
 	UnitIdList::iterator it;
 	if (Shared::Util::find(m_carriedUnits, unit->getId(), it)) {
@@ -1258,7 +1337,7 @@ void Unit::cloak() {
 		}
 		m_cloaking = true;
 		// sound ?
-		if (type->getCloakType()->getCloakSound() && g_world.getFrameCount() > 0 
+		if (type->getCloakType()->getCloakSound() && g_world.getFrameCount() > 0
 		&& g_renderer.getCuller().isInside(getCenteredPos())) {
 			g_soundRenderer.playFx(type->getCloakType()->getCloakSound());
 		}
@@ -1294,7 +1373,7 @@ TravelState Unit::travel(const Vec2i &pos, const MoveSkillType *moveSkill) {
 		case TravelState::MOVING:
 			setCurrSkill(moveSkill);
 			face(getNextPos());
-			//MOVE_LOG( g_world.getFrameCount() << "::Unit:" << unit->getId() << " updating move " 
+			//MOVE_LOG( g_world.getFrameCount() << "::Unit:" << unit->getId() << " updating move "
 			//	<< "Unit is at " << unit->getPos() << " now moving into " << unit->getNextPos() );
 			return TravelState::MOVING;
 
@@ -1476,7 +1555,7 @@ void Unit::doUpdateCommand() {
 void Unit::updateAnimDead() {
 	assert(currSkill->getClass() == SkillClass::DIE);
 
-	// when dead and have already played one complete anim cycle, set startFrame to last frame, endFrame 
+	// when dead and have already played one complete anim cycle, set startFrame to last frame, endFrame
 	// to this frame to keep the cycle at the 'end' so getAnimProgress() always returns 1.f
 	const int &frame = g_world.getFrameCount();
 	this->lastAnimReset = frame - 1;
@@ -1571,7 +1650,7 @@ void Unit::updateMoveSkillCycle() {
 	// reset lastCommandUpdate and calculate next skill cycle length
 	lastCommandUpdate = g_world.getFrameCount();
 	int frameOffset = clamp(int(1.0000001f / progressSpeed) + 1, 1, 4095);
-	nextCommandUpdate = g_world.getFrameCount() + frameOffset; 
+	nextCommandUpdate = g_world.getFrameCount() + frameOffset;
 }
 
 /** wrapper for World::updateUnits */
@@ -1605,7 +1684,33 @@ void Unit::doUpdate() {
 
 /** wrapper for World, from the point of view of the killer unit*/
 void Unit::doKill(Unit *killed) {
-	///@todo ?? 
+	///@todo ??
+	//if (killed->getCurrSkill()->getClass() == SkillClass::DIE) {
+	//	return;
+	//}
+
+	ScriptManager::onUnitDied(killed);
+	g_simInterface.getStats()->kill(getFactionIndex(), killed->getFactionIndex());
+	if (isAlive() && getTeam() != killed->getTeam()) {
+		incKills();
+		int addExp = killed->getExpGiven();
+		incExp(addExp);
+	}
+
+	///@todo after stats inc ??
+	if (killed->getCurrSkill()->getClass() != SkillClass::DIE) {
+		killed->kill();
+	}
+
+	if (!killed->isMobile()) {
+		// obstacle removed
+		g_cartographer.updateMapMetrics(killed->getPos(), killed->getSize());
+	}
+}
+
+/** wrapper for World, from the point of view of the capturing unit*/
+void Unit::doCapture(Unit *killed) {
+	///@todo ??
 	//if (killed->getCurrSkill()->getClass() == SkillClass::DIE) {
 	//	return;
 	//}
@@ -1616,9 +1721,9 @@ void Unit::doKill(Unit *killed) {
 		incKills();
 	}
 
-	///@todo after stats inc ?? 
+	///@todo after stats inc ??
 	if (killed->getCurrSkill()->getClass() != SkillClass::DIE) {
-		killed->kill();
+		killed->capture();
 	}
 
 	if (!killed->isMobile()) {
@@ -1686,7 +1791,7 @@ bool Unit::update() { ///@todo should this be renamed to hasFinishedCycle()?
 
 	// update target
 	updateTarget();
-	
+
 	// rotation
 	bool moved = currSkill->getClass() == SkillClass::MOVE;
 	bool rotated = false;
@@ -1755,7 +1860,7 @@ void Unit::updateEmanations() {
  *
  * @returns true if the unit dies
  */
-bool Unit::doRegen(int hpRegeneration, int epRegeneration) {
+bool Unit::doRegen(int hpRegeneration, int spRegeneration, int epRegeneration) {
 	if (hp < 1) {
 		// dead people don't regenerate
 		return true;
@@ -1770,6 +1875,13 @@ bool Unit::doRegen(int hpRegeneration, int epRegeneration) {
 		}
 	}
 
+	//sp regen/degen
+	sp += spRegeneration;
+	if (sp > getMaxSp()) {
+		sp = getMaxSp();
+	} else if(sp < 0) {
+		sp = 0;
+	}
 	//ep regen/degen
 	ep += epRegeneration;
 	if (ep > getMaxEp()) {
@@ -1797,13 +1909,12 @@ void Unit::checkEffectCloak() {
  */
 Unit* Unit::tick() {
 	Unit *killer = NULL;
-	
 	// tick command types
 	for (Commands::iterator i = commands.begin(); i != commands.end(); ++i) {
 		(*i)->getType()->tick(this, (**i));
 	}
 	if (isAlive()) {
-		if (doRegen(getHpRegeneration(), getEpRegeneration())) {
+		if (doRegen(getHpRegeneration(), getSpRegeneration(), getEpRegeneration())) {
 			if (!(killer = effects.getKiller())) {
 				// if no killer, then this had to have been natural degeneration
 				killer = this;
@@ -1893,6 +2004,20 @@ bool Unit::repair(int amount, fixed multiplier) {
 	return false;
 }
 
+/** Decrements CP by the specified amount
+  * @return true if there was sufficient cp, false otherwise */
+bool Unit::decCp(int i) {
+	if (cp >= i) {
+		cp -= i;
+		return true;
+	} else if (i > cp && cp > 0) {
+        cp = 0;
+		return true;
+	} else {
+	    return false;
+	}
+}
+
 /** Decrements EP by the specified amount
   * @return true if there was sufficient ep, false otherwise */
 bool Unit::decEp(int i) {
@@ -1909,6 +2034,13 @@ bool Unit::decEp(int i) {
   * @return true if unit is now dead
   */
 bool Unit::decHp(int i) {
+	if (sp >= i) {
+	    sp -= i;
+	    return true;
+	} else {
+	    sp = 0;
+	    i = i - sp;
+	}
 	assert(i >= 0);
 	// we shouldn't ever go negative
 	assert(hp > 0 || i == 0);
@@ -1953,11 +2085,20 @@ string Unit::getShortDesc() const {
 	if (getHpRegeneration()) {
 		ss << " (" << g_lang.get("Regeneration") << ": " << getHpRegeneration() << ")";
 	}
+    if (getMaxSp()) {
+        ss << g_lang.get("Sp") << ": " << sp << "/" << getMaxSp();
+	    if (getSpRegeneration()) {
+		    ss << " (" << g_lang.get("Regeneration") << ": " << getSpRegeneration() << ")";
+	    }
+	}
 	if (getMaxEp()) {
 		ss << endl << g_lang.get("Ep") << ": " << ep << "/" << getMaxEp();
 		if (getEpRegeneration()) {
 			ss << " (" << g_lang.get("Regeneration") << ": " << getEpRegeneration() << ")";
 		}
+	}
+    if (getMaxCp()) {
+		ss << endl << g_lang.get("Cp") << ": " << cp << "/" << getMaxCp();
 	}
 	if (!commands.empty()) { // Show current command being executed
 		string factionName = faction->getType()->getName();
@@ -1984,6 +2125,7 @@ string Unit::getLongDesc() const {
 	const string factionName = type->getFactionType()->getName();
 	int armorBonus = getArmor() - type->getArmor();
 	int sightBonus = getSight() - type->getSight();
+	int expGivenBonus = getExpGiven() - type->getExpGiven();
 
 	// armor
 	ss << endl << lang.get("Armor") << ": " << type->getArmor();
@@ -1995,6 +2137,12 @@ string Unit::getLongDesc() const {
 		armourName = formatString(armourName);
 	}
 	ss << " (" << armourName << ")";
+
+	// exp given
+	ss << endl << lang.get("ExpGiven") << ": " << type->getExpGiven();
+	if (expGivenBonus) {
+		ss << (expGivenBonus > 0 ? " +" : " ") << expGivenBonus;
+	}
 
 	// sight
 	ss << endl << lang.get("Sight") << ": " << type->getSight();
@@ -2032,7 +2180,7 @@ string Unit::getLongDesc() const {
 				list.push_back(gRes);
 			}
 			lang.lookUp("MultiDetector", factionName, list, res);
-		}		
+		}
 		ss << endl << res;
 	}
 
@@ -2049,8 +2197,19 @@ string Unit::getLongDesc() const {
 		}
 	}
 
+	if (exp > 0 || nextLevel) {
+		ss << endl << lang.get("Exp") << ": " << exp;
+		if (nextLevel) {
+			string levelName = lang.getFactionString(getFaction()->getType()->getName(), nextLevel->getName());
+			if (levelName == nextLevel->getName()) {
+				levelName = formatString(levelName);
+			}
+			ss << " (" << levelName << ": " << nextLevel->getExp() << ")";
+		}
+	}
+
 	// resource load
-	if (loadCount) {
+    if (loadCount) {
 		string resName = lang.getTechString(loadType->getName());
 		if (resName == loadType->getName()) {
 			resName = formatString(resName);
@@ -2082,6 +2241,19 @@ string Unit::getLongDesc() const {
 			ss << r.getAmount() << " " << resName;
 		}
 	}
+	// can create
+	if (type->getCreatedResourceCount() > 0) {
+		for (int i = 0; i < type->getCreatedResourceCount(); ++i) {
+			ResourceAmount r = type->getCreatedResource(i, getFaction());
+			string resName = lang.getTechString(r.getType()->getName());
+			if (resName == r.getType()->getName()) {
+				resName = formatString(resName);
+			}
+			ss << endl << lang.get("Create") << ": ";
+			ss << r.getAmount() << " " << resName;
+		}
+	}
+
 	// effects
 	effects.streamDesc(ss);
 
@@ -2095,7 +2267,7 @@ void Unit::applyUpgrade(const UpgradeType *upgradeType) {
 	if (et) {
 		totalUpgrade.sum(et);
 		recalculateStats();
-		doRegen(et->getHpBoost(), et->getEpBoost());
+		doRegen(et->getHpBoost(), et->getSpBoost(), et->getEpBoost());
 	}
 }
 
@@ -2105,7 +2277,13 @@ void Unit::computeTotalUpgrade() {
 	level = NULL;
 	for (int i = 0; i < type->getLevelCount(); ++i) {
 		const Level *level = type->getLevel(i);
-		if (kills >= level->getKills()) {
+		if (kills >= level->getKills() && level->getKills() >= 0) {
+			totalUpgrade.sum(level);
+			this->level = level;
+		} else {
+			break;
+		}
+		if (exp >= level->getExp() && level->getExp() >= 0) {
 			totalUpgrade.sum(level);
 			this->level = level;
 		} else {
@@ -2123,6 +2301,8 @@ void Unit::computeTotalUpgrade() {
 void Unit::recalculateStats() {
 	int oldMaxHp = getMaxHp();
 	int oldHp = hp;
+	int oldMaxSp = getMaxSp();
+	int oldSp = sp;
 	int oldSight = getSight();
 
 	EnhancementType::reset();
@@ -2142,6 +2322,7 @@ void Unit::recalculateStats() {
 
 		// take care of effect damage type
 		hpRegeneration += (*i)->getActualHpRegen() - (*i)->getType()->getHpRegeneration();
+		spRegeneration += (*i)->getActualSpRegen() - (*i)->getType()->getSpRegeneration();
 	}
 
 	effects.clearDirty();
@@ -2156,10 +2337,17 @@ void Unit::recalculateStats() {
 		hp = getMaxHp();
 	}
 
+	// adjust sp (if maxSp was modified)
+	if (getMaxSp() > oldMaxSp) {
+		sp += getMaxSp() - oldMaxSp;
+	} else if (sp > getMaxSp()) {
+		sp = getMaxSp();
+	}
+
 	if (oldSight != getSight() && type->getDetectorType()) {
 		g_cartographer.detectorSightModified(this, oldSight);
 	}
-	
+
 	// If this guy is dead, make sure they stay dead
 	if (oldHp < 1) {
 		hp = 0;
@@ -2183,7 +2371,7 @@ bool Unit::add(Effect *e) {
 	}
 
 	if (e->getType()->isTickImmediately()) {
-		if (doRegen(e->getType()->getHpRegeneration(), e->getType()->getEpRegeneration())) {
+		if (doRegen(e->getType()->getHpRegeneration(), e->getType()->getSpRegeneration(), e->getType()->getEpRegeneration())) {
 			g_world.getEffectFactory().deleteInstance(e);
 			return true;
 		}
@@ -2193,7 +2381,7 @@ bool Unit::add(Effect *e) {
 			return false;
 		}
 	}
-	if (type->getCloakClass() == CloakClass::EFFECT && e->getType()->isCauseCloak() 
+	if (type->getCloakClass() == CloakClass::EFFECT && e->getType()->isCauseCloak()
 	&& e->getType()->isEffectsAlly() && faction->reqsOk(type->getCloakType())) {
 		cloak();
 	}
@@ -2295,7 +2483,24 @@ void Unit::incKills() {
 	++kills;
 
 	const Level *nextLevel = getNextLevel();
-	if (nextLevel != NULL && kills >= nextLevel->getKills()) {
+	if (nextLevel != NULL && kills >= nextLevel->getKills() && nextLevel->getKills() >= 0) {
+		level = nextLevel;
+		totalUpgrade.sum(level);
+		recalculateStats();
+	}
+}
+
+/** Another one bites the dust. Increment 'exp' & check level */
+void Unit::incExp(int addExp) {
+    int i = 0;
+    int add = addExp;
+	while (i < add) {
+	    ++exp;
+	    ++i;
+	}
+
+	const Level *nextLevel = getNextLevel();
+	if (nextLevel != NULL && exp >= nextLevel->getExp() && nextLevel->getExp() >= 0) {
 		level = nextLevel;
 		totalUpgrade.sum(level);
 		recalculateStats();
@@ -2335,7 +2540,7 @@ bool Unit::morph(const MorphCommandType *mct, const UnitType *ut, Vec2i offset, 
 			Commands::const_iterator i;
 
 			// add current command, which should be the morph command
-			assert(commands.size() > 0 
+			assert(commands.size() > 0
 				&& (commands.front()->getType()->getClass() == CmdClass::MORPH
 				|| commands.front()->getType()->getClass() == CmdClass::TRANSFORM));
 			newCommands.push_back(commands.front());
@@ -2372,6 +2577,7 @@ bool Unit::transform(const TransformCommandType *tct, const UnitType *ut, Vec2i 
 	m_facing = facing; // needs to be set for putUnitCells() [happens in morph()]
 	const UnitType *oldType = type;
 	int oldHp = getHp();
+	int oldSp = getSp();
 	if (morph(tct, ut, offset, false)) {
 		rotation = facing * 90.f;
 		HpPolicy policy = tct->getHpPolicy();
@@ -2451,7 +2657,7 @@ void Unit::clearCommands() {
 		g_world.deleteCommand(commands.back());
 		commands.pop_back();
 	}
-}												
+}
 
 /** Check if a command can be executed
   * @param command the command to check
@@ -2551,12 +2757,12 @@ void UnitFactory::onUnitDied(Unit *unit) {
 }
 
 void UnitFactory::update() {
-	Units::iterator it = m_deadList.begin();
-	while (it != m_deadList.end()) {
-		if ((*it)->getToBeUndertaken()) {
-			(*it)->undertake();
-			deleteInstance((*it)->getId());
-			it = m_deadList.erase(it);
+	Units::iterator dit = m_deadList.begin();
+	while (dit != m_deadList.end()) {
+		if ((*dit)->getToBeUndertaken()) {
+			(*dit)->undertake();
+			deleteInstance((*dit)->getId());
+			dit = m_deadList.erase(dit);
 		} else {
 			return;
 		}
@@ -2568,7 +2774,7 @@ void UnitFactory::deleteUnit(Unit *unit) {
 	if (it != m_deadList.end()) {
 		m_deadList.erase(it);
 	}
-	deleteInstance(unit->getId());
+    deleteInstance(unit->getId());
 }
 
 }}//end namespace

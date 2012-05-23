@@ -33,29 +33,58 @@ using namespace Shared::Graphics;
 using namespace Shared::Util;
 
 namespace Glest { namespace ProtoTypes {
-	
+
 // ===============================
 // 	class Level
 // ===============================
 
 bool Level::load(const XmlNode *levelNode, const string &dir, const TechTree *tt, const FactionType *ft) {
 	bool loadOk = true;
-	try { 
+	try {
 		m_name = levelNode->getAttribute("name")->getRestrictedValue();
 	} catch (runtime_error e) {
 		g_logger.logXmlError(dir, e.what());
 		loadOk = false;
 	}
 
-	try { 
-		kills = levelNode->getAttribute("kills")->getIntValue(); 
+	try {
+		kills = levelNode->getOptionalIntValue("kills");
+		if (kills) {
 		const XmlAttribute *defaultsAtt = levelNode->getAttribute("defaults", 0);
-		if (defaultsAtt && !defaultsAtt->getBoolValue()) {
-			maxHpMult = 1;
-			maxEpMult = 1;
-			sightMult = 1;
-			armorMult = 1;
-			effectStrength = 0;
+		    if (defaultsAtt && !defaultsAtt->getBoolValue()) {
+			    maxHpMult = 1;
+			    maxSpMult = 1;
+			    maxEpMult = 1;
+                maxCpMult = 1;
+			    sightMult = 1;
+			    armorMult = 1;
+			    effectStrength = 0;
+		    }
+		}
+		if (kills == 0) {
+		    kills = -1;
+		}
+	}
+	catch (runtime_error e) {
+		g_logger.logXmlError(dir, e.what());
+		loadOk = false;
+	}
+	try {
+		exp = levelNode->getOptionalIntValue("exp");
+		if (exp) {
+		const XmlAttribute *defaultsAtt = levelNode->getAttribute("defaults", 0);
+		    if (defaultsAtt && !defaultsAtt->getBoolValue()) {
+			    maxHpMult = 1;
+			    maxSpMult = 1;
+			    maxEpMult = 1;
+                maxCpMult = 1;
+			    sightMult = 1;
+			    armorMult = 1;
+			    effectStrength = 0;
+		    }
+		}
+		if (exp == 0) {
+		    exp = -1;
 		}
 	}
 	catch (runtime_error e) {
@@ -122,6 +151,8 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 
 	m_factionType = factionType;
 	string path = dir + "/" + m_name + ".xml";
+
+	name = m_name;
 
 	XmlTree xmlTree;
 	try { xmlTree.load(path); }
@@ -309,13 +340,30 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 					const XmlNode *resourceNode= resourcesStoredNode->getChild("resource", i);
 					string name= resourceNode->getAttribute("name")->getRestrictedValue();
 					int amount= resourceNode->getAttribute("amount")->getIntValue();
-					storedResources[i].init(techTree->getResourceType(name), amount);
+					storedResources[i].init(techTree->getResourceType(name), amount, 0, 0);
 				}
 			}
 		} catch (runtime_error e) {
 			g_logger.logXmlError(path, e.what());
 			loadOk = false;
 		}
+
+        try { // Resources created
+			const XmlNode *resourcesCreatedNode= parametersNode->getChild("resources-created", 0, false);
+			if (resourcesCreatedNode) {
+				createdResources.resize(resourcesCreatedNode->getChildCount());
+				for(int i=0; i<createdResources.size(); ++i){
+					const XmlNode *resourceNode= resourcesCreatedNode->getChild("resource", i);
+					string name= resourceNode->getAttribute("name")->getRestrictedValue();
+					int amount= resourceNode->getAttribute("amount")->getIntValue();
+					createdResources[i].init(techTree->getResourceType(name), amount, 0, 0);
+				}
+			}
+		} catch (runtime_error e) {
+			g_logger.logXmlError(path, e.what());
+			loadOk = false;
+		}
+
 		try { // meeting point
 			const XmlNode *meetingPointNode= parametersNode->getChild("meeting-point");
 			meetingPoint= meetingPointNode->getAttribute("value")->getBoolValue();
@@ -420,7 +468,7 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 		loadOk = false;
 	}
 
-	try { 
+	try {
 		const XmlNode *tagsNode = parametersNode->getChild("tags", 0, false);
 		if (tagsNode) {
 			for (int i = 0; i < tagsNode->getChildCount(); ++i) {
@@ -478,7 +526,7 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 			}
 		}
 	}
-	return loadOk;   
+	return loadOk;
 }
 
 void UnitType::addBeLoadedCommand() {
@@ -503,6 +551,10 @@ void UnitType::doChecksum(Checksum &checksum) const {
 	checksum.add(multiSelect);
 
 	foreach_const (StoredResources, it, storedResources) {
+		checksum.add(it->getType()->getName());
+		checksum.add(it->getAmount());
+	}
+	foreach_const (CreatedResources, it, createdResources) {
 		checksum.add(it->getType()->getName());
 		checksum.add(it->getAmount());
 	}
@@ -576,6 +628,23 @@ ResourceAmount UnitType::getStoredResource(int i, const Faction *f) const {
 	return res;
 }
 
+int UnitType::getCreate(const ResourceType *rt, const Faction *f) const {
+	foreach_const (CreatedResources, it, createdResources) {
+		if (it->getType() == rt) {
+			Modifier mod = f->getCreateModifier(this, rt);
+			return (it->getAmount() * mod.getMultiplier()).intp() + mod.getAddition();
+		}
+	}
+	return 0;
+}
+
+ResourceAmount UnitType::getCreatedResource(int i, const Faction *f) const {
+	ResourceAmount res(createdResources[i]);
+	Modifier mod = f->getCreateModifier(this, res.getType());
+	res.setAmount((res.getAmount() * mod.getMultiplier()).intp() + mod.getAddition());
+	return res;
+}
+
 // only used for matching while loading commands
 const SkillType *UnitType::getSkillType(const string &skillName, SkillClass skillClass) const{
 	for (int i=0; i < skillTypes.size(); ++i) {
@@ -620,10 +689,10 @@ bool UnitType::hasSkillType(const SkillType *st) const {
 bool UnitType::isOfClass(UnitClass uc) const{
 	switch (uc) {
 		case UnitClass::WARRIOR:
-			return hasSkillClass(SkillClass::ATTACK) 
+			return hasSkillClass(SkillClass::ATTACK)
 				&& !hasSkillClass(SkillClass::HARVEST);
 		case UnitClass::WORKER:
-			return hasSkillClass(SkillClass::BUILD) 
+			return hasSkillClass(SkillClass::BUILD)
 				|| hasSkillClass(SkillClass::REPAIR)
 				|| hasSkillClass(SkillClass::HARVEST);
 		case UnitClass::BUILDING:

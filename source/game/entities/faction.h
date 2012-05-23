@@ -81,15 +81,20 @@ public:
 	typedef map<const ResourceType*, Modifier>         CostModifiers;
 	typedef map<const ProducibleType*, CostModifiers>  UnitCostModifiers;
 	typedef map<const UnitType*, CostModifiers>        StoreModifiers;
+    typedef map<const UnitType*, CostModifiers>        CreateModifiers;
 	typedef map<const UnitType*, int>                  UnitTypeCountMap;
 
 private:
-    typedef vector<StoredResource>	Resources;
+    typedef vector<StoredResource>	SResources;
+    typedef vector<CreatedResource>	CResources;
 	typedef vector<Product>			Products;
 
 	UpgradeManager upgradeManager;
+public:
+    SResources sresources;
+    CResources cresources;
 
-    Resources resources;
+private:
 	Units units;
 	UnitMap unitMap;
 	Products products;
@@ -102,6 +107,7 @@ private:
 	const FactionType *factionType;
 	UnitCostModifiers m_costModifiers;
 	StoreModifiers    m_storeModifiers;
+	CreateModifiers   m_createModifiers;
 
 	int teamIndex;
 	int startLocationIndex;
@@ -128,9 +134,13 @@ public:
 	void load(const XmlNode *node, World *world, const FactionType *ft, ControlType control, TechTree *tt);
 
 	//get
-	const StoredResource *getResource(const ResourceType *rt) const;
-	const StoredResource *getResource(int i) const  {assert(i < resources.size()); return &resources[i];}
+	const StoredResource *getSResource(const ResourceType *rt) const;
+	const StoredResource *getSResource(int i) const  {assert(i < sresources.size()); return &sresources[i];}
 	int getStoreAmount(const ResourceType *rt) const;
+
+    const CreatedResource *getCResource(const ResourceType *rt) const;
+	const CreatedResource *getCResource(int i) const  {assert(i < cresources.size()); return &cresources[i];}
+	int getCreateAmount(const ResourceType *rt) const;
 
 	int getCountOfUnitType(const UnitType *ut) const    { return m_unitCountMap.find(ut)->second; }
 
@@ -156,11 +166,12 @@ public:
 	int getSubfaction() const							{return subfaction;}
 	Vec3f getLastEventLoc() const						{return lastEventLoc;}
 	Modifier getCostModifier(const ProducibleType *pt, const ResourceType *rt) const;
-	Modifier getStoreModifier(const UnitType *ut, const ResourceType *rt) const;
-	
+    Modifier getStoreModifier(const UnitType *ut, const ResourceType *rt) const;
+	Modifier getCreateModifier(const UnitType *ut, const ResourceType *rt) const;
+
 	///@todo Remove this!
 	static const ResourceTypes &getNeededResources() 	{return neededResources;}
-	
+
 	bool isThisFaction() const							{return thisFaction;}
 
 	// set
@@ -231,6 +242,11 @@ public:
 	void addStore(const UnitType *unitType);
 	void removeStore(const UnitType *unitType);
 	void reEvaluateStore();
+
+    void addCreate(const ResourceType *rt, int amount);
+	void addCreate(const UnitType *unitType);
+	void removeCreate(const UnitType *unitType);
+	void reEvaluateCreate();
 
 	void setLastEventLoc(Vec3f lastEventLoc)	{this->lastEventLoc = lastEventLoc;}
 	void attackNotice(const Unit *u);

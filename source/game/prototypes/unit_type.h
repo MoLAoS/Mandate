@@ -35,12 +35,15 @@ using namespace Search;
 class Level: public EnhancementType, public NameIdPair {
 private:
 	int kills;
+	int exp;
 
 public:
 	Level() : EnhancementType() {
 		const fixed onePointFive = fixed(3) / 2;
 		maxHpMult = onePointFive;
+		maxSpMult = onePointFive;
 		maxEpMult = onePointFive;
+        maxCpMult = onePointFive;
 		sightMult = fixed(6) / 5;
 		armorMult = onePointFive;
 		effectStrength = fixed(1) / 10;
@@ -52,6 +55,7 @@ public:
 		EnhancementType::doChecksum(checksum);
 	}
 	int getKills() const			{return kills;}
+	int getExp() const			    {return exp;}
 };
 
 Vec2i rotateCellOffset(const Vec2i &offsetconst, const int unitSize, const CardinalDir facing);
@@ -68,6 +72,7 @@ private:
 	typedef vector<SkillType*>          SkillTypes;
 	typedef vector<CommandType*>        CommandTypes;
 	typedef vector<ResourceAmount>      StoredResources;
+	typedef vector<ResourceAmount>      CreatedResources;
 	typedef vector<Level>               Levels;
 	typedef vector<ParticleSystemType*> ParticleSystemTypes;
 
@@ -76,6 +81,8 @@ private:
 
 private:
 	//basic
+	string name;
+
 	bool multiBuild;
 	bool multiSelect;
 
@@ -99,6 +106,9 @@ private:
 
 	//info
 	StoredResources storedResources;
+public:
+	CreatedResources createdResources;
+private:
 	Levels levels;
 	Emanations emanations;
 
@@ -154,6 +164,7 @@ public:
 	bool isDetector() const                      { return m_detectorType ? true : false; }
 
 	//get
+	string getUnitName() const              {return name;}
 	const Model *getIdleAnimation() const	{return getFirstStOfClass(SkillClass::STOP)->getAnimation();}
 	bool getMultiSelect() const				{return multiSelect;}
 	const ArmourType *getArmourType() const	{return armourType;}
@@ -173,7 +184,7 @@ public:
 	int getSkillTypeCount() const						{return skillTypes.size();}
 	const SkillType *getSkillType(int i) const			{return skillTypes[i];}
 	const MoveSkillType *getFirstMoveSkill() const			{
-		return skillTypesByClass[SkillClass::MOVE].empty() ? 0 
+		return skillTypesByClass[SkillClass::MOVE].empty() ? 0
 			: static_cast<const MoveSkillType *>(skillTypesByClass[SkillClass::MOVE].front());
 	}
 
@@ -181,7 +192,7 @@ public:
 	const CommandType *getCommandType(int i) const		{return commandTypes[i];}
 
 	const CommandType *getCommandType(const string &name) const;
-	
+
 	template <typename ConcreteType>
 	int getCommandTypeCount() const {
 		return commandTypesByClass[ConcreteType::typeClass()].size();
@@ -218,10 +229,15 @@ public:
 
 	const PatchMap<1>& getMinimapFootprint() const { return *m_colourMap; }
 
-	// resources
+	// resources stored
 	int getStoredResourceCount() const					{return storedResources.size();}
 	ResourceAmount getStoredResource(int i, const Faction *f) const;
 	int getStore(const ResourceType *rt, const Faction *f) const;
+
+    // resources created
+	int getCreatedResourceCount() const					{return createdResources.size();}
+	ResourceAmount getCreatedResource(int i, const Faction *f) const;
+	int getCreate(const ResourceType *rt, const Faction *f) const;
 
 	// meeting point
 	bool hasMeetingPoint() const						{return meetingPoint;}

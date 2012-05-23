@@ -62,6 +62,8 @@ void TriggerManager::reset() {
 	attackedTriggers.clear();
 	hpBelowTriggers.clear();
 	hpAboveTriggers.clear();
+	cpBelowTriggers.clear();
+	cpAboveTriggers.clear();
 	commandCallbacks.clear();
 }
 
@@ -104,6 +106,26 @@ SetTriggerRes TriggerManager::addHPAboveTrigger(int unitId, int threshold, const
 	unit->setHPAboveTrigger(threshold);
 	hpAboveTriggers[unit->getId()].evnt = eventName;
 	hpAboveTriggers[unit->getId()].user_dat = userData;
+	return SetTriggerRes::OK;
+}
+
+SetTriggerRes TriggerManager::addCPBelowTrigger(int unitId, int threshold, const string &eventName, int userData) {
+	Unit *unit = g_world.findUnitById(unitId);
+	if (!unit || !unit->isAlive()) return SetTriggerRes::BAD_UNIT_ID;
+	if (unit->getCp() < threshold) return SetTriggerRes::INVALID_THRESHOLD;
+	unit->setCPBelowTrigger(threshold);
+	cpBelowTriggers[unit->getId()].evnt = eventName;
+	cpBelowTriggers[unit->getId()].user_dat = userData;
+	return SetTriggerRes::OK;
+}
+
+SetTriggerRes TriggerManager::addCPAboveTrigger(int unitId, int threshold, const string &eventName, int userData) {
+	Unit *unit = g_world.findUnitById(unitId);
+	if (!unit || !unit->isAlive()) return SetTriggerRes::BAD_UNIT_ID;
+	if (unit->getCp() > threshold) return SetTriggerRes::INVALID_THRESHOLD;
+	unit->setHPAboveTrigger(threshold);
+	cpAboveTriggers[unit->getId()].evnt = eventName;
+	cpAboveTriggers[unit->getId()].user_dat = userData;
 	return SetTriggerRes::OK;
 }
 

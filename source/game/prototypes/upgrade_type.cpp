@@ -41,7 +41,9 @@ namespace Glest { namespace ProtoTypes {
 // ==================== misc ====================
 
 UpgradeType::UpgradeType()
-		: m_factionType(0) {
+		: m_factionType(0)
+		, upgradeStage(0)
+		, maxStage(1) {
 }
 
 void UpgradeType::loadResourceModifier(const XmlNode *node, ResModifierMap &map, const TechTree *techTree) {
@@ -69,6 +71,7 @@ void UpgradeType::loadResourceModifier(const XmlNode *node, ResModifierMap &map,
 bool UpgradeType::loadNewStyle(const XmlNode *node, const string &dir, const TechTree *techTree,
 							   const FactionType *factionType) {
 	bool loadOk = true;
+
 	m_enhancements.resize(node->getChildCount());
 	m_unitsAffected.resize(node->getChildCount()); // one vector per enhancement
 	for (int i=0; i < m_enhancements.size(); ++i) {
@@ -90,6 +93,9 @@ bool UpgradeType::loadNewStyle(const XmlNode *node, const string &dir, const Tec
 			}
 			if (const XmlNode *storeModsNode = enhancementNode->getOptionalChild("store-modifiers")) {
 				loadResourceModifier(storeModsNode, m_enhancements[i].m_storeModifiers, techTree);
+			}
+			if (const XmlNode *createModsNode = enhancementNode->getOptionalChild("create-modifiers")) {
+				loadResourceModifier(createModsNode, m_enhancements[i].m_createModifiers, techTree);
 			}
 		} catch (runtime_error e) {
 			g_logger.logXmlError(dir, e.what());
@@ -120,7 +126,7 @@ bool UpgradeType::loadNewStyle(const XmlNode *node, const string &dir, const Tec
 					loadOk = false;
 				}
 			}
-		} catch (runtime_error e) { 
+		} catch (runtime_error e) {
 			g_logger.logXmlError(dir, e.what());
 			loadOk = false;
 		}
@@ -139,14 +145,32 @@ bool UpgradeType::loadOldStyle(const XmlNode *node, const string &dir, const Tec
 	// values
 	// maintain backward compatibility using legacy format
 	EnhancementType &e = m_enhancements[0].m_enhancement;
+	//const XmlNode *statNode = node->getChild("stats", 0, false);
+
+    //const XmlNode *maxHpNode = statNode->getChild("max-hp");
+	//int hpBase = maxHpNode->getOptionalIntValue("base");
+	//int hpAdd = maxHpNode->getOptionalIntValue("additive");
+	//float hpMult = maxHpNode->getOptionalFloatValue("multiplier");
+	//int hpTotal = hpBase*(1+hpMult)+hpAdd;
 	e.setMaxHp(node->getOptionalIntValue("max-hp"));
+
+	//const XmlNode *maxEpNode = statNode->getChild("max-ep");
+	//int epBase = maxEpNode->getOptionalIntValue("base");
+	//int epAdd = maxEpNode->getOptionalIntValue("additive");
+	//float epMult = maxEpNode->getOptionalFloatValue("multiplier");
+	//int epTotal = epBase*(1+epMult)+epAdd;
 	e.setMaxEp(node->getOptionalIntValue("max-ep"));
+
+	e.setMaxSp(node->getOptionalIntValue("max-sp"));
 	e.setSight(node->getOptionalIntValue("sight"));
 	if (node->getOptionalChild("attack-strenght")) { // support vanilla-glest typo
 		e.setAttackStrength(node->getOptionalIntValue("attack-strenght"));
 	} else {
 		e.setAttackStrength(node->getOptionalIntValue("attack-strength"));
 	}
+    e.setAttackLifeLeech(node->getOptionalIntValue("attack-life-leech"));
+    e.setAttackManaBurn(node->getOptionalIntValue("attack-mana-burn"));
+    e.setAttackCapture(node->getOptionalIntValue("attack-capture"));
 	e.setAttackRange(node->getOptionalIntValue("attack-range"));
 	e.setArmor(node->getOptionalIntValue("armor"));
 	e.setMoveSpeed(node->getOptionalIntValue("move-speed"));
@@ -170,7 +194,7 @@ bool UpgradeType::loadOldStyle(const XmlNode *node, const string &dir, const Tec
 				m_unitsAffected[0].push_back(name);
 			}
 		}
-	} catch (runtime_error e) { 
+	} catch (runtime_error e) {
 		g_logger.logXmlError ( dir, e.what() );
 		loadOk = false;
 	}
@@ -187,13 +211,45 @@ bool UpgradeType::load(const string &dir, const TechTree *techTree, const Factio
 
 	XmlTree xmlTree;
 	const XmlNode *upgradeNode;
-	try { 
+	try {
 		xmlTree.load(path);
-		upgradeNode= xmlTree.getRootNode();
+		upgradeNode = xmlTree.getRootNode();
 	}
-	catch (runtime_error e) { 
+	catch (runtime_error e) {
 		g_logger.logXmlError(dir, e.what());
 		g_logger.logError("Fatal Error: could not load " + path);
+		return false;
+	}
+
+    // Amount producible(upgrades only)
+    const XmlNode *countNode;
+    try { countNode = upgradeNode->getOptionalChild("stage"); }
+    catch (runtime_error &e) {
+		g_logger.logXmlError(dir, e.what());
+		return false;
+	}
+    if (countNode) {
+        try { maxStage = countNode->getChildIntValue("max-stage");
+        } catch (runtime_error &e) {
+		    g_logger.logXmlError(dir, e.what());
+		    return false;
+	    }
+    }
+
+    // Names for upgrade set
+	const XmlNode *namesNode;
+    try { namesNode = upgradeNode->getOptionalChild("names");
+    if(namesNode) {
+        for (int i = 0; i < namesNode->getChildCount(); ++i) {
+            const XmlNode *nameNode = namesNode->getChild(i);
+            if (nameNode->getName() == "stage-name") {
+                string name = nameNode->getAttribute("name")->getRestrictedValue();
+                m_names.push_back(name);
+            }
+        }
+    }
+    } catch (runtime_error &e) {
+		g_logger.logXmlError(dir, e.what());
 		return false;
 	}
 
@@ -201,6 +257,8 @@ bool UpgradeType::load(const string &dir, const TechTree *techTree, const Factio
 	if (!ProducibleType::load(upgradeNode, dir, techTree, factionType)) {
 		loadOk = false;
 	}
+
+    int iUStage = getUpgradeStage();
 
 	// enhancements...
 	const XmlNode *enhancementsNode = upgradeNode->getChild("enhancements", 0, false);
@@ -258,6 +316,22 @@ void descResourceModifier(pair<const ResourceType*, Modifier> i_mod, string &io_
 	}
 }
 
+string UpgradeType::getDescName(const Faction *f) const {
+	Lang &lang = Lang::getInstance();
+	string str;// = getReqDesc(f);
+    int select = getUpgradeStage();
+    if(!m_names.empty()) {
+        for (int i = 0; i < m_names.size(); ++i) {
+            if (i == select) {
+                str += lang.get("Name") + ": ";
+                str += (i == 0 ? "" : i == (m_names.size()-1) ? " " : " ");
+                str += lang.getFactionString(f->getType()->getName(), m_names[i]);
+            }
+        }
+    }
+    return str;
+}
+
 string UpgradeType::getDesc(const Faction *f) const {
 	Lang &lang = Lang::getInstance();
 	string str;// = getReqDesc(f);
@@ -279,6 +353,12 @@ string UpgradeType::getDesc(const Faction *f) const {
 			if (!m_enhancements[i].m_storeModifiers.empty()) {
 				str += "\n" + lang.get("StoreModifiers") + ":";
 				foreach_const (ResModifierMap, it, m_enhancements[i].m_storeModifiers) {
+					descResourceModifier(*it, str);
+				}
+			}
+			if (!m_enhancements[i].m_createModifiers.empty()) {
+				str += "\n" + lang.get("CreateModifiers") + ":";
+				foreach_const (ResModifierMap, it, m_enhancements[i].m_createModifiers) {
 					descResourceModifier(*it, str);
 				}
 			}
@@ -314,6 +394,17 @@ Modifier UpgradeType::getStoreModifier(const UnitType *ut, const ResourceType *r
 	if (uit != m_enhancementMap.end()) {
 		ResModifierMap::const_iterator rit = uit->second->m_storeModifiers.find(rt);
 		if (rit != uit->second->m_storeModifiers.end()) {
+			return rit->second;
+		}
+	}
+	return Modifier(0, 1);
+}
+
+Modifier UpgradeType::getCreateModifier(const UnitType *ut, const ResourceType *rt) const {
+	EnhancementMap::const_iterator uit = m_enhancementMap.find(ut);
+	if (uit != m_enhancementMap.end()) {
+		ResModifierMap::const_iterator rit = uit->second->m_createModifiers.find(rt);
+		if (rit != uit->second->m_createModifiers.end()) {
 			return rit->second;
 		}
 	}

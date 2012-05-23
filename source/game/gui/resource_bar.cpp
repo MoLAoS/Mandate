@@ -181,14 +181,14 @@ void ResourceBar::reInit(int iconSize) {
 			setImageX(0, i, Vec2i(x_pos, y_pos), Vec2i(m_iconSize, m_iconSize));
 			setTextPos(Vec2i(x_pos + imgAndPad, y_pos), i);
 			setTextFont(fontIndex, i);
-			x_pos += reqWidths[i];			
+			x_pos += reqWidths[i];
 		}
 		x_pos = 5, y_pos = padding / 2;
 		for (int i=stopAt; i < reqWidths.size(); ++i) {
 			setImageX(0, i, Vec2i(x_pos, y_pos), Vec2i(m_iconSize, m_iconSize));
 			setTextPos(Vec2i(x_pos + imgAndPad, y_pos), i);
 			setTextFont(fontIndex, i);
-			x_pos += reqWidths[i];			
+			x_pos += reqWidths[i];
 		}
 	}
 	Vec2i pos;
@@ -258,8 +258,9 @@ void ResourceBar::update() {
 	if (m_updateCounter % 10 == 0) {
 		for (int i=0; i < m_resourceTypes.size(); ++i) {
 			stringstream ss;
+			stringstream css;
 			const ResourceType* &rt = m_resourceTypes[i];
-			const StoredResource *res = m_faction->getResource(rt); // amount & balance
+			const StoredResource *res = m_faction->getSResource(rt); // amount & balance
 			if (g_config.getUiResourceNames()) {
 				ss << m_headerStrings[i];
 			}

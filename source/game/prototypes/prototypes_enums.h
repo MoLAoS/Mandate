@@ -14,7 +14,7 @@ using Shared::Util::EnumNames;
 
 namespace Glest { namespace ProtoTypes {
 
-//NOTE: try not to use these in a switch or if/elseif situation if 
+//NOTE: try not to use these in a switch or if/elseif situation if
 //	it represents a class since polymorphism (ie virtual methods)
 //	makes it easier to create new ones.
 
@@ -48,7 +48,8 @@ STRINGY_ENUM( SkillClass,
 	LOAD,
 	UNLOAD,
 	CAST_SPELL,
-	DIE
+	DIE,
+	CAPTURE
 );
 
 /** command classes

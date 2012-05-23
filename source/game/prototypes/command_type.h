@@ -123,11 +123,11 @@ public:
 
 	/** tip key for this command, from the tip attribute of the command name node */
 	const string& getTipKey() const						{return m_tipKey;}
-	
+
 	/** tip key for a producible this command makes, from the tip attribute of the producible node */
 	virtual string getTipKey(const string &name) const  {return emptyString;}
 
-	/** sub-heading, for two-click production commands, is the heading used on the tip for a 
+	/** sub-heading, for two-click production commands, is the heading used on the tip for a
 	  * 'sub-selection', if the lang entry this points to included '%s' it will be replaced
 	  * by the translated producible name */
 	virtual string getSubHeader() const                 {return m_tipHeaderKey;}
@@ -192,10 +192,10 @@ protected:
 
 	static bool attackerInSight(const Unit *unit, Unit **rangedPtr);
 
-	static bool attackableInRange(const Unit *unit, Unit **rangedPtr, 
+	static bool attackableInRange(const Unit *unit, Unit **rangedPtr,
 								const AttackSkillTypes *asts, const AttackSkillType **past);
 
-	static bool attackableInSight(const Unit *unit, Unit **rangedPtr, 
+	static bool attackableInSight(const Unit *unit, Unit **rangedPtr,
 								const AttackSkillTypes *asts, const AttackSkillType **past);
 };
 
@@ -496,10 +496,10 @@ public:
 	static CmdClass typeClass() { return CmdClass::REPAIR; }
 
 protected:
-	///@todo move to Cartographer, generalise so that the same code can be used for searching 
+	///@todo move to Cartographer, generalise so that the same code can be used for searching
 	// for bad guys to kill/run-from and looking for friendlies to repair.
-	static bool repairableInRange(const Unit *unit, Vec2i centre, int centreSize, Unit **rangedPtr, 
-			const RepairCommandType *rct, const RepairSkillType *rst, int range, 
+	static bool repairableInRange(const Unit *unit, Vec2i centre, int centreSize, Unit **rangedPtr,
+			const RepairCommandType *rct, const RepairSkillType *rst, int range,
 			bool allowSelf, bool militaryOnly, bool damagedOnly);
 
 	static bool repairableInRange(const Unit *unit, Unit **rangedPtr, const RepairCommandType *rct,
@@ -533,7 +533,7 @@ public:
 	virtual void descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt = 0) const override;
 	virtual void update(Unit *unit) const;
 	virtual string getReqDesc(const Faction *f) const;
-	
+
 	int getProducedNumber(const UnitType*) const;
 
 	// get
@@ -673,7 +673,7 @@ public:
 	virtual string getReqDesc(const Faction *f) const;
 	virtual void descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt = 0) const override;
 	virtual void subDesc(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const override;
-	
+
 	// get
 	virtual int getProducedCount() const	{return m_morphUnits.size();}
 	virtual const ProducibleType* getProduced(int i) const;
@@ -744,7 +744,7 @@ private:
 	// OR ... add a unit 'space' param...
 */
 public:
-	LoadCommandType() 
+	LoadCommandType()
 			: CommandType("Load", Clicks::TWO)
 			, loadSkillType(0), moveSkillType(0), m_loadCapacity(0), m_allowProjectiles(false) {
 		queuable = true;

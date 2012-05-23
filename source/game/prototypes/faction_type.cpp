@@ -54,8 +54,8 @@ bool FactionType::preLoad(const string &dir, const TechTree *techTree) {
 	string unitsPath = dir + "/units/*.";
 	vector<string> unitFilenames;
 	bool loadOk = true;
-	try { 
-		findAll(unitsPath, unitFilenames); 
+	try {
+		findAll(unitsPath, unitFilenames);
 	} catch (runtime_error e) {
 		g_logger.logError(e.what());
 		loadOk = false;
@@ -69,8 +69,8 @@ bool FactionType::preLoad(const string &dir, const TechTree *techTree) {
 	// a2) preload upgrades
 	string upgradesPath= dir + "/upgrades/*.";
 	vector<string> upgradeFilenames;
-	try { 
-		findAll(upgradesPath, upgradeFilenames); 
+	try {
+		findAll(upgradesPath, upgradeFilenames);
 	} catch (runtime_error e) {
 		g_logger.logError(e.what());
 		// allow no upgrades
@@ -91,8 +91,8 @@ bool FactionType::preLoadGlestimals(const string &dir, const TechTree *techTree)
 	string unitsPath = dir + "/glestimals/*.";
 	vector<string> unitFilenames;
 	bool loadOk = true;
-	try { 
-		findAll(unitsPath, unitFilenames); 
+	try {
+		findAll(unitsPath, unitFilenames);
 	} catch (runtime_error e) {
 		g_logger.logError(e.what());
 		loadOk = false;
@@ -106,7 +106,7 @@ bool FactionType::preLoadGlestimals(const string &dir, const TechTree *techTree)
 	return loadOk;
 }
 
-/// load a faction, given a directory @param ndx faction index, and hence id 
+/// load a faction, given a directory @param ndx faction index, and hence id
 /// @param dir path to faction directory @param techTree pointer to TechTree
 bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 	m_id = ndx;
@@ -271,7 +271,7 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 				}
 			}
 		}
-	} catch (runtime_error e) { 
+	} catch (runtime_error e) {
 		g_logger.logXmlError(path, e.what());
 		loadOk = false;
 	}
@@ -388,7 +388,7 @@ void FactionType::doChecksum(Checksum &checksum) const {
 		checksum.add(it->first->getName());
 		checksum.add<int>(it->second);
 	}
-	foreach_const (Resources, it, startingResources) {
+	foreach_const (SResources, it, startingResources) {
 		checksum.add(it->getType()->getName());
 		checksum.add<int>(it->getAmount());
 	}

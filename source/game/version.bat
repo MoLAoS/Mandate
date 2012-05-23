@@ -2,11 +2,11 @@
 setlocal enableextensions
 
 REM set the git command depending on where git is installed
-IF EXIST "C:\Program Files (x86)\Git\bin\git.exe" (
-	SET git_command="C:\Program Files (x86)\Git\bin\git" describe
+IF EXIST "C:\Git\bin\git.exe" (
+	SET git_command="C:\Git\bin\git" describe
 ) ELSE (
-	IF EXIST "C:\Program Files\Git\bin\git.exe" (
-		SET git_command="C:\Program Files\Git\bin\git" describe
+	IF EXIST "C:\Git\bin\git.exe" (
+		SET git_command="C:\Git\bin\git" describe
 	) ELSE (
 		ECHO Git is not installed in the expected location. Check source/game/version.bat
 		exit /b 1

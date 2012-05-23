@@ -43,7 +43,7 @@ private:
 	/** If this is a recourse effect, the primary effect that this is a recourse of, NULL otherwise. */
 	Effect *root;
 
-	/** A modifier that adjusts how powerful this effect, based upon the type, should be. Each value of 
+	/** A modifier that adjusts how powerful this effect, based upon the type, should be. Each value of
 	  * this effect will be multiplied by strength before being applied to the Unit or any other modifiers. */
 	fixed strength;
 
@@ -54,6 +54,7 @@ private:
 	bool recourse;
 
 	int actualHpRegen;
+	int actualSpRegen;
 
 public:
 	struct CreateParams {
@@ -91,6 +92,7 @@ public:
 	int getDuration() const			{return duration;}
 	bool isRecourse() const			{return recourse;}
 	int getActualHpRegen() const	{return actualHpRegen;}
+	int getActualSpRegen() const	{return actualSpRegen;}
 
 	void clearSource()				{source = -1;}
 	void clearRoot()				{root = 0;}

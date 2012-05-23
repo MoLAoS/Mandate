@@ -98,6 +98,7 @@ namespace Glest {
 		class ResourceAmount;
 		class MapResource;
 		class StoredResource;
+        class CreatedResource; /**< added by MoLAoS, for setting automatic resource production in the XML */
 		class Command;
 		class Effect;
 		class EffectState;
@@ -127,7 +128,7 @@ namespace Glest {
 	}
 
 	namespace Script {
-		class ScriptManager; 
+		class ScriptManager;
 	}
 
 	namespace Menu {

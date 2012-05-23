@@ -58,7 +58,7 @@ int64 DebugStats::avg(const TickRecords &records) {
 }
 
 DebugStats::DebugStats() {
-	loadConfig();	
+	loadConfig();
 	m_lastRenderFps = 0;
 	m_lastWorldFps = 0;
 	foreach_enum (TimerSection, s) {
@@ -186,7 +186,7 @@ void DebugStats::report(ostream &stream) {
 		for (int i=0; i < world.getFactionCount(); ++i) {
 			stream << "   Player " << i << " res: ";
 			for (int j=0; j < world.getTechTree()->getResourceTypeCount(); ++j) {
-				stream << world.getFaction(i)->getResource(j)->getAmount() << " ";
+				stream << world.getFaction(i)->getSResource(j)->getAmount() << " ";
 			}
 			stream << endl;
 		}

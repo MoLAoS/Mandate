@@ -49,7 +49,7 @@ namespace ProtoTypes {
 // 	class SkillType
 //
 ///	A basic action that an unit can perform
-///@todo revise, these seem to hold data/properties for 
+///@todo revise, these seem to hold data/properties for
 /// actions rather than the actions themselves.
 // =====================================================
 
@@ -254,6 +254,9 @@ class AttackSkillType: public TargetBasedSkillType {
 private:
 	int attackStrength;
 	int attackVar;
+	int attackLifeLeech; // attempt to add lifeleech
+	int attackManaBurn; // attempt to add manaburn
+    int attackCapture; // attempt to add capturing
 	fixed attackPctStolen;
 	fixed attackPctVar;
 	const AttackType *attackType;
@@ -261,7 +264,8 @@ private:
 
 public:
 	AttackSkillType() : TargetBasedSkillType("Attack"), attackStrength(0),
-		attackVar(0), attackType(0)/*, earthquakeType(NULL)*/ {}
+		attackVar(0), attackType(0), attackLifeLeech(0), attackManaBurn(0),
+		attackCapture(0)/*, earthquakeType(NULL)*/ {}
 	virtual ~AttackSkillType();
 
 	virtual void load(const XmlNode *sn, const string &dir, const TechTree *tt, const UnitType *ut) override;
@@ -272,6 +276,9 @@ public:
 	virtual fixed getSpeed(const Unit *unit) const override;
 	int getAttackStrength() const				{return attackStrength;}
 	int getAttackVar() const					{return attackVar;}
+	int getAttackLifeLeech() const				{return attackLifeLeech;} // attempt to add lifeleech
+	int getAttackManaBurn() const				{return attackManaBurn;} // attempt to add manaburn
+	int getAttackCapture() const				{return attackCapture;} // attempt to add capturing
 	//fixed getAttackPctStolen() const			{return attackPctStolen;}
 	//fixed getAttackPctVar() const				{return attackPctVar;}
 	const AttackType *getAttackType() const		{return attackType;}

@@ -36,7 +36,7 @@ namespace Glest { namespace Plan {
 
 GlestAiInterface::GlestAiInterface(Faction *faction, int32 randomSeed) {
 	LOG_AI(
-		faction->getIndex(), AiComponent::GENERAL, 1,		
+		faction->getIndex(), AiComponent::GENERAL, 1,
 		"GlestAiInterface::GlestAiInterface: Faction index: " << faction->getIndex() << ", Type:"
 		<< faction->getType()->getName() << " Random seed: " << randomSeed
 	);
@@ -120,7 +120,7 @@ void GlestAiInterface::findEnemies(ConstUnitVector &out_list, ConstUnitPtr &out_
 
 	for (int i=0; i < world->getFactionCount(); ++i) {
 		Faction *f = world->getFaction(i);
-		if (faction == f || faction->getTeam() == f->getTeam()) { 
+		if (faction == f || faction->getTeam() == f->getTeam()) {
 			// don't care about our own or allies units
 			continue;
 		}
@@ -142,7 +142,7 @@ void GlestAiInterface::findEnemies(ConstUnitVector &out_list, ConstUnitPtr &out_
 }
 
 const StoredResource *GlestAiInterface::getResource(const ResourceType *rt){
-	return faction->getResource(rt);
+	return faction->getSResource(rt);
 }
 
 const Unit *GlestAiInterface::getMyUnit(int unitIndex){

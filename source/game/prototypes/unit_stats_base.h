@@ -85,33 +85,73 @@ class UnitStats {
 
 	friend class UpgradeType; // hack, needed to support old style Upgrades in a new style world :(
 
-protected:
-	int maxHp;
-	int hpRegeneration;
-    int maxEp;
-	int epRegeneration;
-    int sight;
-	int armor;
+public:
+	mutable int maxHp;
+	mutable int hpRegeneration;
+	mutable int maxSp;
+	mutable int spRegeneration;
+    mutable int maxEp;
+	mutable int epRegeneration;
+    mutable int maxCp;
+    mutable int sight;
+	mutable int armor;
+	mutable int expGiven;
+
+	// for layered upgrades
+    mutable int layerMaxHp;
+	mutable int layerHpRegeneration;
+	mutable int layerMaxSp;
+	mutable int layerSpRegeneration;
+    mutable int layerMaxEp;
+	mutable int layerEpRegeneration;
+    mutable int layerMaxCp;
+    mutable int layerSight;
+	mutable int layerArmor;
+	mutable int layerExpGiven;
 
 	// skill mods
-	int attackStrength;
-	fixed effectStrength;
-	fixed attackPctStolen;
-	int attackRange;
-	int moveSpeed;
-	int attackSpeed;
-	int prodSpeed;
-	int repairSpeed;
-	int harvestSpeed;
+	mutable int attackStrength;
+	mutable int attackLifeLeech;
+	mutable int attackManaBurn;
+	mutable int attackCapture;
+	mutable fixed effectStrength;
+	mutable fixed attackPctStolen;
+	mutable int attackRange;
+	mutable int moveSpeed;
+	mutable int attackSpeed;
+	mutable int prodSpeed;
+	mutable int repairSpeed;
+	mutable int harvestSpeed;
+
+	// for layered upgrades
+    mutable int layerAttackStrength;
+	mutable int layerAttackLifeLeech;
+	mutable int layerAttackManaBurn;
+	mutable int layerAttackCapture;
+	mutable fixed layerEffectStrength;
+	mutable fixed layerAttackPctStolen;
+	mutable int layerAttackRange;
+	mutable int layerMoveSpeed;
+	mutable int layerAttackSpeed;
+	mutable int layerProdSpeed;
+	mutable int layerRepairSpeed;
+	mutable int layerHarvestSpeed;
 
 	void setMaxHp(int v)				{maxHp = v;}
 	void setHpRegeneration(int v) 		{hpRegeneration = v;}
+	void setMaxSp(int v)				{maxSp = v;}
+	void setSpRegeneration(int v) 		{spRegeneration = v;}
 	void setMaxEp(int v) 				{maxEp = v;}
 	void setEpRegeneration(int v) 		{epRegeneration = v;}
+	void setMaxCp(int v) 				{maxCp = v;}
 	void setSight(int v) 				{sight = v;}
 	void setArmor(int v) 				{armor = v;}
+	void setExpGiven(int v) 			{expGiven = v;}
 
 	void setAttackStrength(int v) 		{attackStrength = v;}
+    void setAttackLifeLeech(int v) 		{attackLifeLeech = v;}
+    void setAttackManaBurn(int v) 		{attackManaBurn = v;}
+    void setAttackCapture(int v) 		{attackCapture = v;}
 	void setEffectStrength(fixed v) 	{effectStrength = v;}
 	void setAttackPctStolen(fixed v)	{attackPctStolen = v;}
 	void setAttackRange(int v) 			{attackRange = v;}
@@ -120,7 +160,6 @@ protected:
 	void setProdSpeed(int v) 			{prodSpeed = v;}
 	void setRepairSpeed(int v)			{repairSpeed = v;}
 	void setHarvestSpeed(int v)			{harvestSpeed = v;}
-
 
 public:
 	UnitStats()          { memset(this, 0, sizeof(*this)); }
@@ -132,12 +171,19 @@ public:
 
 	int getMaxHp() const					{return maxHp;}
 	int getHpRegeneration() const			{return hpRegeneration;}
+	int getMaxSp() const					{return maxSp;}
+	int getSpRegeneration() const			{return spRegeneration;}
 	int getMaxEp() const					{return maxEp;}
 	int getEpRegeneration() const			{return epRegeneration;}
+	int getMaxCp() const					{return maxCp;}
 	int getSight() const					{return sight;}
 	int getArmor() const					{return armor;}
+	int getExpGiven() const					{return expGiven;}
 
 	int getAttackStrength() const			{return attackStrength;}
+    int getAttackLifeLeech() const			{return attackLifeLeech;}
+    int getAttackManaBurn() const			{return attackManaBurn;}
+    int getAttackCapture() const			{return attackCapture;}
 	fixed getEffectStrength() const			{return effectStrength;}
 	fixed getAttackPctStolen() const		{return attackPctStolen;}
 	int getAttackRange() const				{return attackRange;}
@@ -188,27 +234,64 @@ public:
   * for each of those stats.  This is the base class for both UpgradeType and
   * EffectType. */
 class EnhancementType : public UnitStats {
-protected:
-	fixed maxHpMult;
-	fixed hpRegenerationMult;
-	fixed maxEpMult;
-	fixed epRegenerationMult;
-	fixed sightMult;
-	fixed armorMult;
+public:
+	mutable fixed maxHpMult;
+	mutable fixed hpRegenerationMult;
+	mutable fixed maxSpMult;
+	mutable fixed spRegenerationMult;
+	mutable fixed maxEpMult;
+	mutable fixed epRegenerationMult;
+	mutable fixed maxCpMult;
+	mutable fixed sightMult;
+	mutable fixed armorMult;
+	mutable fixed expGivenMult;
 
-	fixed attackStrengthMult;
-	fixed effectStrengthMult;
-	fixed attackPctStolenMult;
-	fixed attackRangeMult;
+	mutable fixed attackStrengthMult;
+    mutable fixed attackLifeLeechMult;
+    mutable fixed attackManaBurnMult;
+    mutable fixed attackCaptureMult;
+	mutable fixed effectStrengthMult;
+	mutable fixed attackPctStolenMult;
+	mutable fixed attackRangeMult;
 
-	fixed moveSpeedMult;
-	fixed attackSpeedMult;
-	fixed prodSpeedMult;
-	fixed repairSpeedMult;
-	fixed harvestSpeedMult;
+	mutable fixed moveSpeedMult;
+	mutable fixed attackSpeedMult;
+	mutable fixed prodSpeedMult;
+	mutable fixed repairSpeedMult;
+	mutable fixed harvestSpeedMult;
 
-	int hpBoost;
-	int epBoost;
+	mutable int hpBoost;
+	mutable int spBoost;
+	mutable int epBoost;
+
+    mutable fixed layerMaxHpMult;
+	mutable fixed layerHpRegenerationMult;
+	mutable fixed layerMaxSpMult;
+	mutable fixed layerSpRegenerationMult;
+	mutable fixed layerMaxEpMult;
+	mutable fixed layerEpRegenerationMult;
+	mutable fixed layerMaxCpMult;
+	mutable fixed layerSightMult;
+	mutable fixed layerArmorMult;
+	mutable fixed layerExpGivenMult;
+
+	mutable fixed layerAttackStrengthMult;
+    mutable fixed layerAttackLifeLeechMult;
+    mutable fixed layerAttackManaBurnMult;
+    mutable fixed layerAttackCaptureMult;
+	mutable fixed layerEffectStrengthMult;
+	mutable fixed layerAttackPctStolenMult;
+	mutable fixed layerAttackRangeMult;
+
+	mutable fixed layerMoveSpeedMult;
+	mutable fixed layerAttackSpeedMult;
+	mutable fixed layerProdSpeedMult;
+	mutable fixed layerRepairSpeedMult;
+	mutable fixed layerHarvestSpeedMult;
+
+	mutable int layerHpBoost;
+	mutable int layerSpBoost;
+	mutable int layerEpBoost;
 
 public:
 	EnhancementType() {
@@ -218,12 +301,20 @@ public:
 	fixed getMaxHpMult() const			{return maxHpMult;}
 	fixed getHpRegenerationMult() const	{return hpRegenerationMult;}
 	int   getHpBoost() const			{return hpBoost;}
+	fixed getMaxSpMult() const			{return maxSpMult;}
+	fixed getSpRegenerationMult() const	{return spRegenerationMult;}
+	int   getSpBoost() const			{return spBoost;}
 	fixed getMaxEpMult() const			{return maxEpMult;}
 	fixed getEpRegenerationMult() const	{return epRegenerationMult;}
 	int   getEpBoost() const			{return epBoost;}
+	fixed getMaxCpMult() const			{return maxCpMult;}
 	fixed getSightMult() const			{return sightMult;}
 	fixed getArmorMult() const			{return armorMult;}
+	fixed getExpGivenMult() const		{return expGivenMult;}
 	fixed getAttackStrengthMult() const	{return attackStrengthMult;}
+    fixed getAttackLifeLeechMult() const{return attackLifeLeechMult;}
+    fixed getAttackManaBurnMult() const	{return attackManaBurnMult;}
+    fixed getAttackCaptureMult() const	{return attackCaptureMult;}
 	fixed getEffectStrengthMult() const	{return effectStrengthMult;}
 	fixed getAttackPctStolenMult() const{return attackPctStolenMult;}
 	fixed getAttackRangeMult() const	{return attackRangeMult;}

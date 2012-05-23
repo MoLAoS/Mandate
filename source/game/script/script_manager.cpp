@@ -207,13 +207,13 @@ void ScriptManager::initGame() {
 	DEBUG_FUNC(setFarClip);
 
 	LUA_FUNC(dofile);
-	
+
 	LUA_FUNC(disableAi);
 	LUA_FUNC(enableAi);
 	LUA_FUNC(disableConsume);
 	LUA_FUNC(enableConsume);
 	LUA_FUNC(increaseStore);
-	
+
 	IF_DEBUG_EDITION(
 		luaScript.luaDoLine("dofile('dev_edition.lua')");
 	)
@@ -242,6 +242,7 @@ void ScriptManager::initGame() {
 	set<string> funcNames;
 	funcNames.insert("startup");
 	funcNames.insert("unitDied");
+	funcNames.insert("unitCaptured");
 	funcNames.insert("unitCreated");
 	funcNames.insert("resourceHarvested");
 	for (int i=0; i < g_world.getFactionCount(); ++i) {
@@ -317,7 +318,7 @@ int getSubfactionRestrictions(LuaHandle *luaHandle) {
 			const UpgradeType *ut = ft->getUpgradeType(reqName);
 			if (ut->getSubfactionsReqs() == -1) {
 				res = "all";
-			} else {			
+			} else {
 				for (int i=0; i < ft->getSubfactionCount(); ++i) {
 					if (ut->isAvailableInSubfaction(i)) {
 						res += ft->getSubfaction(i) + " ";
@@ -417,6 +418,17 @@ void ScriptManager::onUnitDied(const Unit* unit) {
 	latestCasualty.id = unit->getId();
 	if (definedEvents.find("unitDied") != definedEvents.end()) {
 		if (!luaScript.luaCall("unitDied")) {
+			addErrorMessage();
+		}
+	}
+	triggerManager.unitDied(unit);
+}
+
+void ScriptManager::onUnitCaptured(const Unit* unit) {
+	latestCasualty.name = unit->getType()->getName();
+	latestCasualty.id = unit->getId();
+	if (definedEvents.find("unitCaptured") != definedEvents.end()) {
+		if (!luaScript.luaCall("unitCaptured")) {
 			addErrorMessage();
 		}
 	}

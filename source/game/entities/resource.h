@@ -36,16 +36,21 @@ class ResourceAmount {
 protected:
 	const ResourceType  *m_type;
 	int	                 m_amount;
+	int	                 m_amount_plus;
+	float	             m_amount_multiply;
 
 public:
-	ResourceAmount() : m_type(0), m_amount(0) {}
-	ResourceAmount(const ResourceAmount &that) : m_type(that.m_type), m_amount(that.m_amount) {}
+	ResourceAmount() : m_type(0), m_amount(0), m_amount_plus(0), m_amount_multiply(0) {}
+	ResourceAmount(const ResourceAmount &that) : m_type(that.m_type), m_amount(that.m_amount),
+	m_amount_plus(that.m_amount_plus), m_amount_multiply(that.m_amount_multiply) {}
 
 	void init(const XmlNode *n, const TechTree *tt);
-	void init(const ResourceType *rt, const int amount);
+	void init(const ResourceType *rt, const int amount, const int amount_plus, const float amount_multiply);
 
 	virtual void setAmount(int v) { m_amount = v; }
 	int  getAmount() const { return m_amount; }
+	int  getAmountPlus() const { return m_amount_plus; }
+	float  getAmountMultiply() const { return m_amount_multiply; }
 	const ResourceType *getType() const { return m_type; }
 
 	void save(XmlNode *node) const;
@@ -82,7 +87,7 @@ ostream& operator<<(ostream &stream, const MapResource &res);
 // =====================================================
 // 	class StoredResource
 //
-/// amount, balance & storage capacity of a given ResourceType 
+/// amount, balance & storage capacity of a given ResourceType
 /// stored by a faction
 // =====================================================
 
@@ -100,6 +105,20 @@ public:
 
 	int getStorage() const { return m_storage; }
 	void setStorage(int storage) { m_storage = storage; }
+
+	void save(XmlNode *node) const;
+};
+
+class CreatedResource : public ResourceAmount {
+private:
+	int m_creation;
+
+public:
+	void init(const XmlNode *node, const TechTree *tt);
+    void init(const ResourceType *rt, int amount);
+
+    int getCreation() const { return m_creation; }
+	void setCreation(int creation) { m_creation = creation; }
 
 	void save(XmlNode *node) const;
 };

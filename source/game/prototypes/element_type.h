@@ -34,7 +34,7 @@ using namespace Shared::Xml;
 using Shared::Graphics::Texture2D;
 using Shared::Util::SingleTypeFactory;
 
-namespace Glest { 
+namespace Glest {
 
 namespace Entities {
 	typedef vector<Unit*> Units;
@@ -68,7 +68,7 @@ struct Modifier {
 // =====================================================
 // 	class NameIdPair
 //
-/// Base class for anything that has both a name and id 
+/// Base class for anything that has both a name and id
 // =====================================================
 
 class NameIdPair {
@@ -257,7 +257,7 @@ public:
 
 	bool isCostMet() const { return m_cost <= m_store; }
 	int  getCost() const { return m_cost; }
-	int  getDifference() const { assert(m_cost > m_store); return m_cost - m_store; }
+	int  getDifference() const { assert (m_cost > m_store); return m_cost - m_store; }
 	const ResourceType* getResourceType() const { return m_type; }
 };
 
