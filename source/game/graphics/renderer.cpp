@@ -193,7 +193,7 @@ Renderer::Renderer()
 
 	int tmp1, tmp2;
 	getGlVersion(m_glMajorVersion, tmp1, tmp2);
-	
+
 	if (m_glMajorVersion >= 3) {
 		m_useFrameBufferObject = true;
 	} else {
@@ -281,12 +281,12 @@ bool Renderer::init() {
 
 	if (useFrameBufferObject()) {
 		Vec2i windowSize = Vec2i(g_config.getDisplayWidth(), g_config.getDisplayHeight());
-		
+
 		// allocate buffer handles
 		glGenFramebuffersEXT(1, &m_fbHandle);
 		glGenRenderbuffersEXT(1, &m_colourBuffer);
 		glGenRenderbuffersEXT(1, &m_depthBuffer);
-	
+
 		// bind frame buffer
 		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, m_fbHandle);
 
@@ -303,14 +303,14 @@ bool Renderer::init() {
 		//glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER_EXT, m_depthBuffer);
 		glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, m_depthBuffer);
 		glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_STENCIL_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, m_depthBuffer);
-		
+
 		assertGl();
 
 		GLenum status;
 		status = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
 		checkFramebufferStatus(status);
 		glBindFramebuffer(GL_FRAMEBUFFER_EXT, 0);
-		
+
 		assertGl();
 
 		// load shader
@@ -475,7 +475,7 @@ void Renderer::initGame(GameState *game) {
 	}
 
 	IF_DEBUG_EDITION(
-		Debug::getDebugRenderer().init(); 
+		Debug::getDebugRenderer().init();
 	)
 
 	// texture init
@@ -644,7 +644,7 @@ void Renderer::swapBuffers() {
 		Vec2i windowSize = Vec2i(g_config.getDisplayWidth(), g_config.getDisplayHeight());
 		glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, m_fbHandle);
 		glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, 0);
-		glBlitFramebufferEXT(0, 0, windowSize.w, windowSize.h, 0, 0, windowSize.w, windowSize.h, 
+		glBlitFramebufferEXT(0, 0, windowSize.w, windowSize.h, 0, 0, windowSize.w, windowSize.h,
 			GL_COLOR_BUFFER_BIT, GL_NEAREST);
 	}
 	glFlush();
@@ -694,14 +694,14 @@ void Renderer::setupLighting() {
 		for (int i=0; i < world->getFactionCount() && lightCount < maxLights; ++i) {
 			for (int j=0; j < world->getFaction(i)->getUnitCount() && lightCount < maxLights; ++j) {
 				Unit *unit = world->getFaction(i)->getUnit(j);
-				if (thisFaction->canSee(unit) && !unit->isCarried()
+				if (thisFaction->canSee(unit) && !unit->isCarried() && !unit->isGarrisoned()
 				&& unit->getType()->getLight() && unit->isOperative()
 				&& unit->getCurrVector().dist(gameCamera->getPos()) < maxLightDist) {
 					Vec4f pos = Vec4f(unit->getCurrVector());
 					pos.y += 4.f;
 					GLenum lightEnum = GL_LIGHT0 + lightCount;
 
-					modelRenderer->setPointLight(lightCount - 1, Vec3f(pos), unit->getType()->getLightColour(), 
+					modelRenderer->setPointLight(lightCount - 1, Vec3f(pos), unit->getType()->getLightColour(),
 						unit->getType()->getLightColour() * 0.3, Vec3f(1.f, 0.f, 0.05f));
 
 					//glEnable(lightEnum);
@@ -796,8 +796,8 @@ void Renderer::computeVisibleArea() {
 			m_unitsToRender[(*it)->getFactionIndex() + 1].push_back(*it);
 		}
 	}
-	IF_DEBUG_EDITION( 
-		Debug::getDebugRenderer().sceneEstablished(culler); 
+	IF_DEBUG_EDITION(
+		Debug::getDebugRenderer().sceneEstablished(culler);
 		if (Debug::reportRenderUnitsFlag) {
 			reportRenderUnits(m_unitsToRender);
 			Debug::reportRenderUnitsFlag = false;
@@ -1157,7 +1157,7 @@ void Renderer::renderUnits() {
 	MeshCallbackTeamColor meshCallbackTeamColor;
 
 	assertGl();
-	
+
 	glPushAttrib(GL_ENABLE_BIT | GL_FOG_BIT | GL_LIGHTING_BIT | GL_TEXTURE_BIT);
 	glEnable(GL_COLOR_MATERIAL);
 
@@ -1194,6 +1194,9 @@ void Renderer::renderUnits() {
 		foreach (ConstUnitVector, it, m_unitsToRender[i]) {
 			unit = *it;
 			if (unit->isCarried()) {
+				continue;
+			}
+			if (unit->isGarrisoned()) {
 				continue;
 			}
 			RUNTIME_CHECK(unit->getPos().x >= 0 && unit->getPos().y >= 0);
@@ -1292,7 +1295,7 @@ void Renderer::renderSelectionEffects() {
 	// units
 	for (int i=0; i < selection->getCount(); ++i) {
 		const Unit *unit = selection->getUnit(i);
-		RUNTIME_CHECK(!unit->isCarried() && unit->getPos().x >= 0 && unit->getPos().y >= 0);
+		RUNTIME_CHECK(!unit->isCarried() && !unit->isGarrisoned() && unit->getPos().x >= 0 && unit->getPos().y >= 0);
 
 		// translate
 		Vec3f currVec = unit->getCurrVectorFlat();
@@ -1323,7 +1326,7 @@ void Renderer::renderSelectionEffects() {
 			currVec.y += 0.3f;
 			glColor4f(ratio, ratio / 2.f, 0.f, 0.3f);
 			renderSelectionCircle(currVec, GameConstants::cellScale, selectionCircleRadius);
-		}		
+		}
 	}
 
 	// target arrow
@@ -1338,7 +1341,7 @@ void Renderer::renderSelectionEffects() {
 		if (focusArrows && cmd && !cmd->isAuto()) {
 			Vec3f arrowTarget, arrowColor;
 			if (cmd->getType()->getArrowDetails(cmd, arrowTarget, arrowColor)) {
-				RUNTIME_CHECK(!unit->isCarried() && unit->getPos().x >= 0 && unit->getPos().y >= 0);
+				RUNTIME_CHECK(!unit->isCarried() && !unit->isGarrisoned() && unit->getPos().x >= 0 && unit->getPos().y >= 0);
 				renderArrow(unit->getCurrVectorFlat(), arrowTarget, arrowColor, 0.3f);
 			}
 		}
@@ -1356,14 +1359,14 @@ void Renderer::renderSelectionEffects() {
 	for (int i=0; i<world->getFactionCount(); ++i) {
 		for (int j=0; j<world->getFaction(i)->getUnitCount(); ++j) {
 			const Unit *unit = world->getFaction(i)->getUnit(j);
-			if (unit->isHighlighted() && !unit->isCarried()) {
+			if (unit->isHighlighted() && !unit->isCarried() && !unit->isGarrisoned()) {
 				float highlight = unit->getHightlight();
 				if (g_world.getThisFactionIndex() == unit->getFactionIndex()) {
 					glColor4f(0.f, 1.f, 0.f, highlight);
 				} else {
 					glColor4f(1.f, 0.f, 0.f, highlight);
 				}
-				RUNTIME_CHECK(!unit->isCarried() && unit->getPos().x >= 0 && unit->getPos().y >= 0);
+				RUNTIME_CHECK(!unit->isCarried() && !unit->isGarrisoned() && unit->getPos().x >= 0 && unit->getPos().y >= 0);
 				Vec3f v = unit->getCurrVectorFlat();
 				v.y += 0.3f;
 				renderSelectionCircle(v, unit->getType()->getSize(), selectionCircleRadius);
@@ -1429,13 +1432,13 @@ void Renderer::renderMenuBackground(const MenuBackground *menuBackground){
 	assertGl();
 	Vec3f cameraPosition = menuBackground->getCamera()->getPosition();
 	glPushAttrib(GL_LIGHTING_BIT | GL_ENABLE_BIT | GL_CURRENT_BIT | GL_DEPTH_BUFFER_BIT);
-	
+
 	// clear
 	Vec4f fogColor = Vec4f(0.4f, 0.4f, 0.4f, 1.f) * menuBackground->getFade();
 	glClearColor(fogColor.r, fogColor.g, fogColor.b, 1.f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glFogfv(GL_FOG_COLOR, fogColor.ptr());
-	
+
 	// light
 	Vec4f lightPos  = Vec4f(-1.f, -1.f, -1.f, 0.f)/* * menuBackground->getFade()*/;
 	Vec4f diffLight = Vec4f(0.9f, 0.9f, 0.9f, 1.f) * menuBackground->getFade();
@@ -1447,18 +1450,18 @@ void Renderer::renderMenuBackground(const MenuBackground *menuBackground){
 	glLightfv(GL_LIGHT0, GL_AMBIENT,  ambLight.ptr());
 	glLightfv(GL_LIGHT0, GL_SPECULAR, specLight.ptr());
 	modelRenderer->setLightCount(1);
-	
+
 	// main model
 	modelRenderer->setTeamColour(Vec3f(0.f));
 	modelRenderer->setAlphaThreshold(0.5f);
 	glColor3f(1.f, 1.f, 1.f);
-	
+
 	ModelRendererGl *mr = static_cast<ModelRendererGl*>(modelRenderer);
 	modelRenderer->begin(RenderMode::OBJECTS, menuBackground->getFog());
 	modelRenderer->render(menuBackground->getMainModel());
 	modelRenderer->end();
 	glDisable(GL_ALPHA_TEST);
-	
+
 	// characters
 	float dist = menuBackground->getAboutPosition().dist(cameraPosition);
 	float minDist = 3.f;
@@ -1502,7 +1505,7 @@ void Renderer::renderMenuBackground(const MenuBackground *menuBackground){
 			}
 			glEnd();
 		}
-		
+
 		// raindrops
 		if (menuBackground->getRain()) {
 			const float maxRaindropAlpha = 0.5f;
@@ -1653,7 +1656,7 @@ void Renderer::computeSelected(UnitVector &units, const MapObject *&obj, const V
 	units.clear();
 	obj = 0;
 	if (unitHits.empty()) { // no units, check objects
-		if (!objectHits.empty()) { 
+		if (!objectHits.empty()) {
 			foreach_const (set<PickHit>, it, objectHits) {
 				if (it->name1 == 0x101) { // closest resource hit
 					obj = g_world.getMapObj(it->name2);
@@ -1791,7 +1794,7 @@ string Renderer::getGlInfo(){
 	infoStr += intToStr(getGlMaxLights())+"\n";
 	infoStr += "   "+lang.get("OpenGlMaxTextureSize")+": ";
 	infoStr += intToStr(getGlMaxTextureSize())+"\n";
-	
+
 	infoStr += "   "+lang.get("OpenGlMaxConventionalTextureUnits")+": ";
 	infoStr += intToStr(getGlMaxTextureUnits())+"\n";
 
@@ -1808,7 +1811,7 @@ string Renderer::getGlInfo(){
 string Renderer::getGlMoreInfo() {
 	stringstream ss;
 	Lang &lang= Lang::getInstance();
-	
+
 	// gl extensions
 	ss << lang.get("OpenGlExtensions")+":\n";
 	string extensions= getGlExtensions();
@@ -1832,7 +1835,7 @@ string Renderer::getGlMoreInfo() {
 string Renderer::getGlMoreInfo2() {
 	stringstream ss;
 	Lang &lang= Lang::getInstance();
-	
+
 	//platform extensions
 	ss << lang.get("OpenGlPlatformExtensions")+":\n";
 	string platformExtensions= getGlPlatformExtensions();
@@ -2029,12 +2032,12 @@ void Renderer::renderUnitsForShadows() {
 		vector<const Unit *>::iterator it = m_unitsToRender[i].begin();
 		for ( ; it != m_unitsToRender[i].end(); ++it) {
 			unit = *it;
-			if (unit->isCarried() || unit->isCloaked()) {
+			if (unit->isCarried() || unit->isGarrisoned() || unit->isCloaked()) {
 				continue;
 			}
 			glMatrixMode(GL_MODELVIEW);
 			glPushMatrix();
-			RUNTIME_CHECK(!unit->isCarried() && unit->getPos().x >= 0 && unit->getPos().y >= 0);
+			RUNTIME_CHECK(!unit->isCarried() && !unit->isGarrisoned() && unit->getPos().x >= 0 && unit->getPos().y >= 0);
 
 			// translate
 			Vec3f currVec = unit->getCurrVectorFlat();
@@ -2045,7 +2048,7 @@ void Renderer::renderUnitsForShadows() {
 
 			// faded shadows
 			float color = 1.0f - shadowAlpha;
-				
+
 			// dead/cloak alpha
 			float alpha = unit->getRenderAlpha();
 			float fade = alpha < 1.0;
@@ -2148,13 +2151,13 @@ void Renderer::renderUnitsForSelection() {
 		vector<const Unit *>::iterator it = m_unitsToRender[i].begin();
 		for ( ; it != m_unitsToRender[i].end(); ++it) {
 			unit = *it;
-			if (unit->isDead() || unit->isCarried()) {
+			if (unit->isDead() || unit->isCarried() || unit->isGarrisoned()) {
 				continue;
 			}
 			glPushName(unit->getId());
 			glMatrixMode(GL_MODELVIEW);
 			glPushMatrix();
-			RUNTIME_CHECK(!unit->isCarried() && unit->getPos().x >= 0 && unit->getPos().y >= 0);
+			RUNTIME_CHECK(!unit->isCarried() && !unit->isGarrisoned() && unit->getPos().x >= 0 && unit->getPos().y >= 0);
 
 			//translate
 			Vec3f currVec = unit->getCurrVectorFlat();

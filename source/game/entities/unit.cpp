@@ -127,6 +127,7 @@ Unit::Unit(CreateParams params)
 		, kills(0)
 		, exp(0)
 		, m_carrier(-1)
+		, m_garrison(-1)
 		, highlight(0.f)
 		, targetRef(-1)
 		, targetField(Field::LAND)
@@ -148,6 +149,7 @@ Unit::Unit(CreateParams params)
 		, currSkill(0)
 		, toBeUndertaken(false)
 		, carried(false)
+		, garrisoned(false)
 		, m_cloaked(false)
 		, m_cloaking(false)
 		, m_deCloaking(false)
@@ -175,13 +177,24 @@ Unit::Unit(CreateParams params)
 	cp = type->getMaxCp();
 
 	setModelFacing(m_facing);
+
+	currentSteps.resize(type->getCreatedResourceCount());
+	for (int i = 0; i < currentSteps.size(); ++i) {
+	currentSteps[i].currentStep = 0;
+	}
+
+	currentUnitSteps.resize(type->getCreatedUnitCount());
+	for (int i = 0; i < currentUnitSteps.size(); ++i) {
+	currentUnitSteps[i].currentStep = 0;
+	}
 }
 
 Unit::Unit(LoadParams params) //const XmlNode *node, Faction *faction, Map *map, const TechTree *tt, bool putInWorld)
 		: targetRef(params.node->getOptionalIntValue("targetRef", -1))
 		, effects(params.node->getChild("effects"))
 		, effectsCreated(params.node->getChild("effectsCreated"))
-        , carried(false) {
+        , carried(false)
+        , garrisoned(false) {
 	const XmlNode *node = params.node;
 	this->faction = params.faction;
 	this->map = params.map;
@@ -287,9 +300,27 @@ Unit::Unit(LoadParams params) //const XmlNode *node, Faction *faction, Map *map,
 		carried = true;
 	}
 
+	n = node->getChild("units-garrisoned");
+	for(int i = 0; i < n->getChildCount(); ++i) {
+		m_garrisonedUnits.push_back(n->getChildIntValue("unit", i));
+	}
+	n = node->getChild("units-to-garrison");
+	for(int i = 0; i < n->getChildCount(); ++i) {
+		m_unitsToGarrison.push_back(n->getChildIntValue("unit", i));
+	}
+
+	n = node->getChild("units-to-degarrison");
+	for(int i = 0; i < n->getChildCount(); ++i) {
+		m_unitsToDegarrison.push_back(n->getChildIntValue("unit", i));
+	}
+	m_garrison = node->getChildIntValue("unit-garrison");
+	if (m_garrison != -1) {
+		garrisoned = true;
+	}
+
 	faction->add(this);
 	if (hp) {
-		if (!carried) {
+		if (!carried && !garrisoned) {
 			map->putUnitCells(this, pos);
 			meetingPos = node->getChildVec2iValue("meetingPos"); // putUnitCells sets this, so we reset it here
 		}
@@ -381,7 +412,7 @@ void Unit::save(XmlNode *node) const {
 		n->addChild("unit", *it);
 	}
 	n = node->addChild("units-to-carry");
-	foreach_const (UnitIdList, it, m_unitsToCarry ) {
+	foreach_const (UnitIdList, it, m_unitsToCarry) {
 		n->addChild("unit", *it);
 	}
 	n = node->addChild("units-to-unload");
@@ -389,6 +420,20 @@ void Unit::save(XmlNode *node) const {
 		n->addChild("unit", *it);
 	}
 	node->addChild("unit-carrier", m_carrier);
+
+	n = node->addChild("units-garrisoned");
+	foreach_const (UnitIdList, it, m_garrisonedUnits) {
+		n->addChild("unit", *it);
+	}
+	n = node->addChild("units-to-garrison");
+	foreach_const (UnitIdList, it, m_unitsToGarrison) {
+		n->addChild("unit", *it);
+	}
+	n = node->addChild("units-to-degarrison");
+	foreach_const (UnitIdList, it, m_unitsToDegarrison) {
+		n->addChild("unit", *it);
+	}
+	node->addChild("unit-garrison", m_garrison);
 }
 
 
@@ -540,7 +585,7 @@ bool Unit::isTargetUnitVisible(int teamIndex) const {
 }
 
 bool Unit::isActive() const {
-	return (getCurrSkill()->getClass() != SkillClass::DIE && !isCarried());
+	return (getCurrSkill()->getClass() != SkillClass::DIE && !isCarried() && !isGarrisoned());
 }
 
 bool Unit::isBuilding() const {
@@ -617,7 +662,7 @@ void Unit::setCurrSkill(const SkillType *newSkill) {
 	progress2 = 0;
 	currSkill = newSkill;
 
-	if (!isCarried()) {
+	if (!isCarried() && !isGarrisoned()) {
 		startSkillParticleSystems();
 	}
 }
@@ -661,15 +706,34 @@ void Unit::setModelFacing(CardinalDir value) {
 
 Projectile* Unit::launchProjectile(ProjectileType *projType, const Vec3f &endPos) {
 	Unit *carrier = isCarried() ? g_world.getUnit(getCarrier()) : 0;
-	Vec2i effectivePos = (carrier ? carrier->getCenteredPos() : getCenteredPos());
 	Vec3f startPos;
+    Vec2i effectivePos = (carrier ? carrier->getCenteredPos() : getCenteredPos());
 	if (carrier) {
-		RUNTIME_CHECK(!carrier->isCarried() && carrier->getPos().x >= 0 && carrier->getPos().y >= 0);
+		RUNTIME_CHECK(!carrier->isCarried() && !carrier->isGarrisoned() && carrier->getPos().x >= 0 && carrier->getPos().y >= 0);
 		startPos = carrier->getCurrVectorFlat();
 		const LoadCommandType *lct =
 			static_cast<const LoadCommandType *>(carrier->getType()->getFirstCtOfClass(CmdClass::LOAD));
 		assert(lct->areProjectilesAllowed());
 		Vec2f offsets = lct->getProjectileOffset();
+		startPos.y += offsets.y;
+		int seed = int(Chrono::getCurMicros());
+		Random random(seed);
+		float rad = degToRad(float(random.randRange(0, 359)));
+		startPos.x += cosf(rad) * offsets.x;
+		startPos.z += sinf(rad) * offsets.x;
+	} else {
+		startPos = getCurrVector();
+	}
+	Unit *garrison = isGarrisoned() ? g_world.getUnit(getGarrison()) : 0;
+
+	if (garrison) {
+        effectivePos = (garrison ? garrison->getCenteredPos() : getCenteredPos());
+		RUNTIME_CHECK(!garrison->isGarrisoned() && !garrison->isCarried() && garrison->getPos().x >= 0 && garrison->getPos().y >= 0);
+		startPos = garrison->getCurrVectorFlat();
+		const GarrisonCommandType *gct =
+			static_cast<const GarrisonCommandType *>(garrison->getType()->getFirstCtOfClass(CmdClass::GARRISON));
+		assert(gct->areProjectilesAllowed());
+		Vec2f offsets = gct->getProjectileOffset();
 		startPos.y += offsets.y;
 		int seed = int(Chrono::getCurMicros());
 		Random random(seed);
@@ -978,6 +1042,74 @@ void Unit::unloadUnitInit(Command *command) {
 	}
 }
 
+void Faction::loadFactionUnitInit(Command *command) {
+	if (std::find(m_unitsToTransit.begin(), m_unitsToTransit.end(), command->getUnitRef()) == m_unitsToTransit.end()) {
+		m_unitsToTransit.push_back(command->getUnitRef());
+		CMD_LOG( "adding unit to load list " << *command->getUnit() )
+		///@bug causes crash at Unit::tick when more than one unit attempts to load at the same time
+		/// while doing multiple loads increases the queue count but it decreases afterwards.
+		/// Furious clicking to make queued commands causes a crash in AnnotatedMap::annotateLocal.
+		/// - hailstone 2Feb2011
+		/*if (!commands.empty() && commands.front()->getType()->getClass() == CmdClass::LOAD) {
+			CMD_LOG( "deleting load command, already loading.")
+			g_world.deleteCommand(command);
+			command = 0;
+		}*/
+	}
+}
+
+void Faction::unloadFactionUnitInit(Command *command) {
+	if (command->getUnit()) {
+		if (std::find(m_unitsToDetransit.begin(), m_unitsToDetransit.end(), command->getUnitRef()) == m_unitsToDetransit.end()) {
+			assert(std::find(m_transitingUnits.begin(), m_transitingUnits.end(), command->getUnitRef()) != m_transitingUnits.end());
+			m_unitsToDetransit.push_back(command->getUnitRef());
+			CMD_LOG( "adding unit to unload list " << *command->getUnit() )
+			if (!commands.empty() && commands.front()->getType()->getClass() == CmdClass::FACTIONUNLOAD) {
+				CMD_LOG( "deleting unload command, already unloading.")
+				g_world.deleteCommand(command);
+				command = 0;
+			}
+		}
+	} else {
+		m_unitsToDetransit.clear();
+		m_unitsToDetransit = m_transitingUnits;
+	}
+}
+
+void Unit::garrisonUnitInit(Command *command) {
+	if (std::find(m_unitsToGarrison.begin(), m_unitsToGarrison.end(), command->getUnitRef()) == m_unitsToGarrison.end()) {
+		m_unitsToGarrison.push_back(command->getUnitRef());
+		CMD_LOG( "adding unit to load list " << *command->getUnit() )
+		///@bug causes crash at Unit::tick when more than one unit attempts to load at the same time
+		/// while doing multiple loads increases the queue count but it decreases afterwards.
+		/// Furious clicking to make queued commands causes a crash in AnnotatedMap::annotateLocal.
+		/// - hailstone 2Feb2011
+		/*if (!commands.empty() && commands.front()->getType()->getClass() == CmdClass::LOAD) {
+			CMD_LOG( "deleting load command, already loading.")
+			g_world.deleteCommand(command);
+			command = 0;
+		}*/
+	}
+}
+
+void Unit::degarrisonUnitInit(Command *command) {
+	if (command->getUnit()) {
+		if (std::find(m_unitsToDegarrison.begin(), m_unitsToDegarrison.end(), command->getUnitRef()) == m_unitsToDegarrison.end()) {
+			assert(std::find(m_garrisonedUnits.begin(), m_garrisonedUnits.end(), command->getUnitRef()) != m_garrisonedUnits.end());
+			m_unitsToDegarrison.push_back(command->getUnitRef());
+			CMD_LOG( "adding unit to unload list " << *command->getUnit() )
+			if (!commands.empty() && commands.front()->getType()->getClass() == CmdClass::DEGARRISON) {
+				CMD_LOG( "deleting unload command, already unloading.")
+				g_world.deleteCommand(command);
+				command = 0;
+			}
+		}
+	} else {
+		m_unitsToDegarrison.clear();
+		m_unitsToDegarrison = m_garrisonedUnits;
+	}
+}
+
 /** removes current command (and any queued Set meeting point commands)
   * @return the command now at the head of the queue (the new current command) */
 Command *Unit::popCommand() {
@@ -1153,7 +1285,7 @@ void Unit::born(bool reborn) {
 			Command *cmd = g_world.newCommand(CmdDirective::SET_AUTO_REPAIR, cmdFlags, invalidPos, this);
 			g_simInterface.getCommander()->pushCommand(cmd);
 		}
-		if (!isCarried()) {
+		if (!isCarried() && !isGarrisoned()) {
 			startSkillParticleSystems();
 		}
 	}
@@ -1208,6 +1340,29 @@ void Unit::kill() {
 		carrier->housedUnitDied(this);
 	}
 
+	if (!m_unitsToGarrison.empty()) {
+		foreach (UnitIdList, it, m_unitsToGarrison) {
+			Unit *unit = world.getUnit(*it);
+			if (unit->anyCommand() && unit->getCurrCommand()->getType()->getClass() == CmdClass::BE_LOADED) {
+				unit->cancelCurrCommand();
+			}
+		}
+		m_unitsToGarrison.clear();
+	}
+
+	if (!m_garrisonedUnits.empty()) {
+		foreach (UnitIdList, it, m_garrisonedUnits) {
+			Unit *unit = world.getUnit(*it);
+			int hp = unit->getHp();
+			unit->decHp(hp);
+		}
+		m_garrisonedUnits.clear();
+	}
+	if (isGarrisoned()) {
+		Unit *garrison = g_world.getUnit(getGarrison());
+		garrison->housedUnitDied(this);
+	}
+
 	if (fire) {
 		fire->fade();
 		fire = 0;
@@ -1230,7 +1385,7 @@ void Unit::kill() {
 
 	//REFACTOR use signal, send this to World/Cartographer/SimInterface
 	world.getCartographer()->removeUnitVisibility(this);
-	if (!isCarried()) { // if not in transport, clear cells
+	if (!isCarried() && !isGarrisoned()) { // if not in transport, clear cells
 		map->clearUnitCells(this, pos);
 	}
 	g_simInterface.doUpdateAnimOnDeath(this);
@@ -1269,6 +1424,29 @@ void Unit::capture() {
 		Unit *carrier = g_world.getUnit(getCarrier());
 		carrier->housedUnitDied(this);
 	}
+
+	if (!m_unitsToGarrison.empty()) {
+		foreach (UnitIdList, it, m_unitsToGarrison) {
+			Unit *unit = world.getUnit(*it);
+			if (unit->anyCommand() && unit->getCurrCommand()->getType()->getClass() == CmdClass::BE_LOADED) {
+				unit->cancelCurrCommand();
+			}
+		}
+		m_unitsToGarrison.clear();
+	}
+	if (!m_garrisonedUnits.empty()) {
+		foreach (UnitIdList, it, m_garrisonedUnits) {
+			Unit *unit = world.getUnit(*it);
+			int hp = unit->getHp();
+			unit->decHp(hp);
+		}
+		m_garrisonedUnits.clear();
+	}
+	if (isGarrisoned()) {
+		Unit *garrison = g_world.getUnit(getGarrison());
+		garrison->housedUnitDied(this);
+	}
+
 	if (fire) {
 		fire->fade();
 		fire = 0;
@@ -1287,7 +1465,7 @@ void Unit::capture() {
 	deadCount = 1001; // random decay time
 	//REFACTOR use signal, send this to World/Cartographer/SimInterface
 	world.getCartographer()->removeUnitVisibility(this);
-	if (!isCarried()) { // if not in transport, clear cells
+	if (!isCarried() && !isGarrisoned()) { // if not in transport, clear cells
 		map->clearUnitCells(this, pos);
 	}
 	g_simInterface.doUpdateAnimOnDeath(this);
@@ -1301,6 +1479,9 @@ void Unit::housedUnitDied(Unit *unit) {
 	UnitIdList::iterator it;
 	if (Shared::Util::find(m_carriedUnits, unit->getId(), it)) {
 		m_carriedUnits.erase(it);
+	}
+	if (Shared::Util::find(m_garrisonedUnits, unit->getId(), it)) {
+		m_garrisonedUnits.erase(it);
 	}
 }
 
@@ -1420,15 +1601,29 @@ const CommandType *Unit::computeCommandType(const Vec2i &pos, const Unit *target
 			commandType = type->getAttackCommand(targetUnit->getCurrZone());
 		} else if (targetUnit->getFactionIndex() == getFactionIndex()) {
 			const UnitType *tType = targetUnit->getType();
-			if (tType->isOfClass(UnitClass::CARRIER)
-			&& tType->getCommandType<LoadCommandType>(0)->canCarry(type)) {
+			if (tType->isOfClass(UnitClass::CARRIER)) {
+                if (tType->getCommandType<LoadCommandType>(0)->canCarry(type)) {
 				//move to be loaded
 				commandType = type->getFirstCtOfClass(CmdClass::BE_LOADED);
-			} else if (getType()->isOfClass(UnitClass::CARRIER)
-			&& type->getCommandType<LoadCommandType>(0)->canCarry(tType)) {
-			//load
-			commandType = type->getFirstCtOfClass(CmdClass::LOAD);
-		} else {
+                } else if (tType->getCommandType<FactionLoadCommandType>(0)->canCarry(type)) {
+                //move to be loaded
+				commandType = type->getFirstCtOfClass(CmdClass::BE_LOADED);
+                } else {
+                //move to be loaded
+				commandType = type->getFirstCtOfClass(CmdClass::BE_LOADED);
+                }
+			} else if (getType()->isOfClass(UnitClass::CARRIER)) {
+			    if (type->getCommandType<LoadCommandType>(0)->canCarry(tType)) {
+			    //load
+			    commandType = type->getFirstCtOfClass(CmdClass::LOAD);
+			    } else if (type->getCommandType<FactionLoadCommandType>(0)->canCarry(tType)) {
+			    //load
+			    commandType = type->getFirstCtOfClass(CmdClass::FACTIONLOAD);
+			    } else {
+			    //load
+			    commandType = type->getFirstCtOfClass(CmdClass::GARRISON);
+			    }
+        } else {
 				// repair
 			commandType = getRepairCommandType(targetUnit);
 		}
@@ -1670,7 +1865,6 @@ void Unit::doUpdate() {
 				}
 			}
 		}
-
 		if (getCurrSkill()->getClass() == SkillClass::MOVE) {
 			// move unit in cells
 			g_world.moveUnitCells(this);
@@ -1739,9 +1933,23 @@ bool Unit::update() { ///@todo should this be renamed to hasFinishedCycle()?
 
 	// start skill sound ?
 	if (currSkill->getSound() && frame == getSoundStartFrame()) {
-		Unit *carrier = (m_carrier != -1 ? g_world.getUnit(m_carrier) : 0);
-		Vec2i cellPos = carrier ? carrier->getCenteredPos() : getCenteredPos();
-		Vec3f vec = carrier ? carrier->getCurrVector() : getCurrVector();
+
+	    Vec2i cellPos;
+        Vec3f vec;
+
+		if (isCarried()) {
+        Unit *carrier = (m_carrier != -1 ? g_world.getUnit(m_carrier) : 0);
+		cellPos = carrier ? carrier->getCenteredPos() : getCenteredPos();
+		vec = carrier ? carrier->getCurrVector() : getCurrVector();
+        } else if (isGarrisoned()) {
+        Unit *garrison = (m_garrison != -1 ? g_world.getUnit(m_garrison) : 0);
+		cellPos = garrison ? garrison->getCenteredPos() : getCenteredPos();
+		vec = garrison ? garrison->getCurrVector() : getCurrVector();
+        } else {
+        cellPos = getCenteredPos();
+        vec = getCurrVector();
+        }
+
 		if (map->getTile(Map::toTileCoords(cellPos))->isVisible(g_world.getThisTeamIndex())) {
 			g_soundRenderer.playFx(currSkill->getSound(), vec, g_gameState.getGameCamera()->getPos());
 		}
@@ -1811,7 +2019,7 @@ bool Unit::update() { ///@todo should this be renamed to hasFinishedCycle()?
 		}
 	}
 
-	if (!carried) {
+	if (!carried && !garrisoned) {
 	// update particle system location/orientation
 	if (fire && moved) {
 		fire->setPos(getCurrVector());
@@ -2052,7 +2260,7 @@ bool Unit::decHp(int i) {
 
 	// fire
 	if (type->getProperty(Property::BURNABLE) && hp < type->getMaxHp() / 2
-	&& fire == NULL && m_carrier == -1) {
+	&& fire == NULL && m_carrier == -1  && m_garrison == -1) {
 		FireParticleSystem *fps;
 		Vec2i cPos = getCenteredPos();
 		Tile *tile = g_map.getTile(Map::toTileCoords(cPos));
@@ -2241,16 +2449,41 @@ string Unit::getLongDesc() const {
 			ss << r.getAmount() << " " << resName;
 		}
 	}
-	// can create
+	// can create resources
 	if (type->getCreatedResourceCount() > 0) {
 		for (int i = 0; i < type->getCreatedResourceCount(); ++i) {
 			ResourceAmount r = type->getCreatedResource(i, getFaction());
 			string resName = lang.getTechString(r.getType()->getName());
+			Timer tR = type->getCreatedResourceTimer(i, getFaction());
+			int cStep = currentSteps[i].currentStep;
 			if (resName == r.getType()->getName()) {
 				resName = formatString(resName);
 			}
 			ss << endl << lang.get("Create") << ": ";
-			ss << r.getAmount() << " " << resName;
+			ss << r.getAmount() << " " << resName << " " <<lang.get("Timer") << ": " << cStep << "/" << tR.getTimerValue();
+		}
+	}
+
+	// can create units
+	if (type->getCreatedUnitCount() > 0) {
+		for (int i = 0; i < type->getCreatedUnitCount(); ++i) {
+			CreatedUnit u = type->getCreatedUnit(i, getFaction());
+			string unitName = lang.getTechString(u.getType()->getName());
+			Timer tR = type->getCreatedUnitTimer(i, getFaction());
+			int cUStep = currentUnitSteps[i].currentStep;
+			if (unitName == u.getType()->getName()) {
+				unitName = formatString(unitName);
+			}
+			ss << endl << lang.get("Create") << ": ";
+			ss << u.getAmount() << " " << unitName << "s " <<lang.get("Timer") << ": " << cUStep << "/" << tR.getTimerValue();
+		}
+	}
+
+	if (type->loadBonuses.size() > 0) {
+		for (int i = 0; i < type->loadBonuses.size(); ++i) {
+			const LoadBonus lb = type->loadBonuses[i];
+			ss << endl << "Bonus: " << "Max-Hp: " << lb.m_enhancement.m_enhancement.getMaxHp();
+			ss << endl << "Source: " << lb.getSource();
 		}
 	}
 
@@ -2259,16 +2492,54 @@ string Unit::getLongDesc() const {
 
 	return (shortDesc + ss.str());
 }
+void Unit::applyGarrison() {
+    totalUpgrade.reset();
+    World &world = g_world;
+	if (!m_garrisonedUnits.empty()) {
+		foreach (UnitIdList, it, m_garrisonedUnits) {
+        string unitName = world.getUnit(*it)->getType()->getName();
+            for (int l = 0; l < type->loadBonuses.size(); ++l) {
+            string bonusName = type->loadBonuses[l].getSource();
+                if (unitName == bonusName) {
+                const EnhancementType *et = &type->loadBonuses[l].m_enhancement.m_enhancement;
+                    if (et) {
+                    totalUpgrade.sum(et);
+                    recalculateStats();
+                    }
+                }
+            }
+	    }
+	}
+}
 
 /** Apply effects of an UpgradeType
   * @param upgradeType the type describing the Upgrade to apply*/
 void Unit::applyUpgrade(const UpgradeType *upgradeType) {
-	const EnhancementType *et = upgradeType->getEnhancement(type);
+    Faction *f = getFaction();
+    Faction::UpgradeStages::iterator fit;
+	for(fit=f->upgradeStages.begin(); fit!=f->upgradeStages.end(); ++fit){
+		if((*fit).getUpgradeType()==upgradeType){
+			break;
+		}
+	}
+
+    int ii = 0;
+    for (ii = 0; ii < f->upgradeStages.size(); ++ii) {
+        if (f->upgradeStages[ii].getUpgradeType() == (*fit).getUpgradeType()) {
+            break;
+        }
+    }
+    UpgradeStage *us = &f->upgradeStages[ii];
+
+
+	for (int i = 0; i < us->m_enhancements.size(); ++i) {
+	const EnhancementType *et = &us->m_enhancements[i].m_enhancement;
 	if (et) {
 		totalUpgrade.sum(et);
 		recalculateStats();
 		doRegen(et->getHpBoost(), et->getSpBoost(), et->getEpBoost());
 	}
+    }
 }
 
 /** recompute stats, re-evaluate upgrades & level and recalculate totalUpgrade */
@@ -2280,16 +2551,14 @@ void Unit::computeTotalUpgrade() {
 		if (kills >= level->getKills() && level->getKills() >= 0) {
 			totalUpgrade.sum(level);
 			this->level = level;
-		} else {
-			break;
-		}
-		if (exp >= level->getExp() && level->getExp() >= 0) {
+		} else if (exp >= level->getExp() && level->getExp() >= 0) {
 			totalUpgrade.sum(level);
 			this->level = level;
 		} else {
 			break;
 		}
 	}
+	applyGarrison();
 	recalculateStats();
 }
 
@@ -2392,6 +2661,8 @@ bool Unit::add(Effect *e) {
 	if (effects.add(e)) {
 		if (isCarried()) {
 			startParticles = false;
+		} else if (isGarrisoned()) {
+		    startParticles = false;
 		} else {
 			foreach (Effects, it, effects) {
 				if (e->getType() == (*it)->getType()) {
@@ -2636,6 +2907,9 @@ void Unit::updateTarget(const Unit *target) {
 	if (target) {
 		if (target->isCarried()) {
 			target = g_world.getUnit(target->getCarrier());
+		}
+		if (target->isGarrisoned()) {
+			target = g_world.getUnit(target->getGarrison());
 		}
 		targetPos = useNearestOccupiedCell
 				? target->getNearestOccupiedCell(pos)

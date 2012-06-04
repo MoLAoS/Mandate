@@ -710,15 +710,13 @@ void EnhancementType::initMultiplier(const XmlNode *node, const string &dir) {
 }
 
 bool EnhancementType::load(const XmlNode *baseNode, const string &dir, const TechTree *tt, const FactionType *ft) {
-	const XmlNode *node;
 	bool loadOk = true;
-
 	// static modifiers
 	try {
-		node = baseNode->getChild("static-modifiers", 0, false);
-		if(node) {
-			for (int i = 0; i < node->getChildCount(); ++i) {
-				initStaticModifier(node->getChild(i), dir);
+        const XmlNode *addNode = baseNode->getChild("static-modifiers", 0, false);
+		if(addNode) {
+			for (int i = 0; i < addNode->getChildCount(); ++i) {
+				initStaticModifier(addNode->getChild(i), dir);
 			}
 		}
 	} catch (runtime_error e) {
@@ -727,10 +725,10 @@ bool EnhancementType::load(const XmlNode *baseNode, const string &dir, const Tec
 	}
 	// multipliers
 	try {
-		node = baseNode->getChild("multipliers", 0, false);
-		if (node) {
-			for (int i = 0; i < node->getChildCount(); ++i) {
-				initMultiplier(node->getChild(i), dir);
+        const XmlNode *multNode = baseNode->getChild("multipliers", 0, false);
+		if (multNode) {
+			for (int i = 0; i < multNode->getChildCount(); ++i) {
+				initMultiplier(multNode->getChild(i), dir);
 			}
 		}
 	} catch (runtime_error e) {
@@ -739,7 +737,7 @@ bool EnhancementType::load(const XmlNode *baseNode, const string &dir, const Tec
 	}
 	// stat boost
 	try {
-		node = baseNode->getChild("point-boosts", 0, false);
+        const XmlNode *node = baseNode->getChild("point-boosts", 0, false);
 		if (node) {
 			hpBoost = node->getOptionalIntValue("hp-boost");
 			epBoost = node->getOptionalIntValue("ep-boost");

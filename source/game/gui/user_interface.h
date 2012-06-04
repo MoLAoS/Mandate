@@ -15,6 +15,7 @@
 #include "resource.h"
 #include "command_type.h"
 #include "display.h"
+#include "faction_display.h"
 #include "commander.h"
 #include "console.h"
 #include "lua_console.h"
@@ -92,7 +93,7 @@ public:
 	static const int cellHeightCount = Display::cellHeightCount;
 	static const int maxSelBuff = 128 * 5;
 	static const int upgradeDisplayIndex = cellWidthCount * 2;
-	
+
 	static const int autoRepairPos = cellWidthCount * cellHeightCount - 6;
 	static const int autoAttackPos = cellWidthCount * cellHeightCount - 5;
 	static const int autoFleePos = cellWidthCount * cellHeightCount - 4;
@@ -121,6 +122,7 @@ private:
 	Console *m_dialogConsole;
 	Minimap *m_minimap;
 	Display *m_display;
+	FactionDisplay *m_factionDisplay;
 	ResourceBar *m_resourceBar;
 	LuaConsole *m_luaConsole;
 
@@ -185,8 +187,10 @@ public:
 	const Mouse3d*        getMouse3d() const         { return &mouse3d;         }
 	Console*              getRegularConsole()        { return m_console;        }
 	Console*              getDialogConsole()         { return m_dialogConsole;  }
-	const Display*        getDisplay()	const        { return m_display;        }
 	Display*              getDisplay()	             { return m_display;        }
+	const Display*        getDisplay()	const        { return m_display;        }
+	FactionDisplay*       getFactionDisplay()	     { return m_factionDisplay; }
+	const FactionDisplay* getFactionDisplay() const  { return m_factionDisplay; }
 	const Selection*      getSelection()	const    { return selection;        }
 	Selection*            getSelection()             { return selection;        }
 	const SelectionQuad*  getSelectionQuad() const   { return &selectionQuad;   }
@@ -213,10 +217,12 @@ public:
 	void onSelectionUpdated() {
 		currentGroup = invalidGroupIndex;
 		m_display->setSize();
+		m_factionDisplay->setSize();
 	}
 
 	void commandButtonPressed(int posDisplay);
 	void unloadRequest(int carryIndex);
+	void degarrisonRequest(int carryIndex);
 
 	void mouseDownLeft(int x, int y);
 	void mouseDownRight(int x, int y);
@@ -287,6 +293,7 @@ private:
 	void computeBuildPositions(const Vec2i &end);
 	void computeSelectionPanel();
 	void computeHousedUnitsPanel();
+	void computeGarrisonedUnitsPanel();
 	void computeCommandPanel();
 	void computeCommandTip(const CommandType *ct, const ProducibleType *pt = 0);
 	void selectAllUnitsOfType(UnitVector &out_units, const Unit *refUnit, int radius);

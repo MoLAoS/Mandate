@@ -100,12 +100,27 @@ Command* CommandType::doAutoCommand(Unit *unit) const {
 	const UnitType *ut = unit->getType();
 	if (unit->isCarried()) {
 		Unit *carrier = g_world.getUnit(unit->getCarrier());
-		const LoadCommandType *lct =
-			static_cast<const LoadCommandType *>(carrier->getType()->getFirstCtOfClass(CmdClass::LOAD));
-		if (!lct->areProjectilesAllowed() || !unit->getType()->hasProjectileAttack()) {
+		if (const LoadCommandType *lct =
+		    static_cast<const LoadCommandType *>(carrier->getType()->getFirstCtOfClass(CmdClass::LOAD))) {
+            if (!lct->areProjectilesAllowed() || !unit->getType()->hasProjectileAttack()) {
 			return 0;
-		}
+            }
+        } else if (const FactionLoadCommandType *flct =
+		    static_cast<const FactionLoadCommandType *>(carrier->getType()->getFirstCtOfClass(CmdClass::FACTIONLOAD))) {
+            if (!flct->areProjectilesAllowed() || !unit->getType()->hasProjectileAttack()) {
+			return 0;
+            }
+        } else {
+        }
 	}
+	if (unit->isGarrisoned()) {
+		Unit *garrison = g_world.getUnit(unit->getGarrison());
+        const GarrisonCommandType *gct =
+        static_cast<const GarrisonCommandType *>(garrison->getType()->getFirstCtOfClass(CmdClass::GARRISON));
+        if (!gct->areProjectilesAllowed() || !unit->getType()->hasProjectileAttack()) {
+            return 0;
+        }
+    }
 	// can we attack any enemy ? ///@todo check all attack commands
 	const AttackCommandType *act = ut->getAttackCommand(Zone::LAND);
 	if (act && (autoCmd = act->doAutoAttack(unit))) {
@@ -117,6 +132,9 @@ Command* CommandType::doAutoCommand(Unit *unit) const {
 		return autoCmd;
 	}
 	if (unit->isCarried()) {
+		return 0;
+	}
+	if (unit->isGarrisoned()) {
 		return 0;
 	}
 	// can we repair any ally ? ///@todo check all repair commands
@@ -153,7 +171,7 @@ bool CommandType::getArrowDetails(const Command *cmd, Vec3f &out_arrowTarget, Ve
 
 		// arrow target
 		if (cmd->getUnit() != NULL) {
-			if (!cmd->getUnit()->isCarried()) {
+			if (!cmd->getUnit()->isCarried() && !cmd->getUnit()->isGarrisoned()) {
 				RUNTIME_CHECK(cmd->getUnit()->getPos().x >= 0 && cmd->getUnit()->getPos().y >= 0);
 				out_arrowTarget = cmd->getUnit()->getCurrVectorFlat();
 				return true;
@@ -255,6 +273,8 @@ void CommandType::describe(const Unit *unit, CmdDescriptor *callback, ProdTypePt
 		callback->addItem(pt, g_lang.get("AlreadyUpgraded"));
 	} else if (cmdCheckResult.m_upgradingAlready) {
 		callback->addItem(pt, g_lang.get("Upgrading"));
+	} else if (cmdCheckResult.m_partiallyUpgraded) {
+		callback->addItem(pt, g_lang.get("Incomplete"));
 	} else if (!cmdCheckResult.m_availableInSubFaction) {
 		callback->addItem(this, g_lang.get("NotAvailableInSubfaction"));
 	} else {
@@ -649,7 +669,7 @@ void ProduceCommandType::update(Unit *unit) const {
 			// all the units have been produced, safe to finish command now
 			unit->finishCommand();
 			if (unit->getFactionIndex() == g_world.getThisFactionIndex()) {
-				RUNTIME_CHECK(!unit->isCarried());
+				RUNTIME_CHECK(!unit->isCarried() && !unit->isGarrisoned());
 				g_soundRenderer.playFx(getFinishedSound(), unit->getCurrVector(),
 					g_gameState.getGameCamera()->getPos());
 			}
@@ -775,7 +795,7 @@ void GenerateCommandType::update(Unit *unit) const {
 			unit->setCurrSkill(SkillClass::STOP);
 			unit->finishCommand();
 			if (unit->getFactionIndex() == g_world.getThisFactionIndex()) {
-				RUNTIME_CHECK(!unit->isCarried());
+				RUNTIME_CHECK(!unit->isCarried() && !unit->isGarrisoned());
 				g_soundRenderer.playFx(getFinishedSound(), unit->getCurrVector(),
 						g_gameState.getGameCamera()->getPos());
 			}
@@ -921,7 +941,7 @@ void UpgradeCommandType::update(Unit *unit) const {
 			faction->finishUpgrade(upgrade);
 			faction->checkAdvanceSubfaction(upgrade, true);
 			if (unit->getFactionIndex() == g_world.getThisFactionIndex()) {
-				RUNTIME_CHECK(!unit->isCarried());
+				RUNTIME_CHECK(!unit->isCarried() && !unit->isGarrisoned());
 				g_soundRenderer.playFx(getFinishedSound(), unit->getCurrVector(),
 					g_gameState.getGameCamera()->getPos());
 			}
@@ -950,7 +970,7 @@ void UpgradeCommandType::undo(Unit *unit, const Command &command) const {
 
 CmdResult UpgradeCommandType::check(const Unit *unit, const Command &command) const {
 	const UpgradeType *upgrade = static_cast<const UpgradeType*>(command.getProdType());
-	if (unit->getFaction()->getUpgradeManager()->isUpgradingOrUpgraded(upgrade)) {
+	if (unit->getFaction()->getUpgradeManager()->isUpgradingOrUpgraded(upgrade, unit->getFaction())) {
 		return CmdResult::FAIL_UNDEFINED;
 	}
 	return CmdResult::SUCCESS;
@@ -1152,7 +1172,7 @@ void MorphCommandType::update(Unit *unit) const {
 					g_world.getCartographer()->updateMapMetrics(unit->getPos(), biggerSize);
 				}
 				if (unit->getFactionIndex() == g_world.getThisFactionIndex()) {
-					RUNTIME_CHECK(!unit->isCarried());
+					RUNTIME_CHECK(!unit->isCarried() && !unit->isGarrisoned());
 					g_soundRenderer.playFx(getFinishedSound(), unit->getCurrVector(),
 						g_gameState.getGameCamera()->getPos());
 				}
@@ -1239,7 +1259,7 @@ void TransformCommandType::update(Unit *unit) const {
 				// obstacle added, update annotated maps
 				g_world.getCartographer()->updateMapMetrics(unit->getPos(), biggerSize);
 				if (unit->getFactionIndex() == g_world.getThisFactionIndex()) {
-					RUNTIME_CHECK(!unit->isCarried());
+                    RUNTIME_CHECK(!unit->isCarried() && !unit->isGarrisoned());
 					g_soundRenderer.playFx(getFinishedSound(), unit->getCurrVector(),
 						g_gameState.getGameCamera()->getPos());
 				}
@@ -1545,6 +1565,542 @@ void UnloadCommandType::start(Unit *unit, Command *command) const {
 }
 
 // =====================================================
+// 	class FactionLoadCommandType
+// =====================================================
+
+bool FactionLoadCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft){
+	bool loadOk = CommandType::load(n, dir, tt, ft);
+
+	//move
+	try {
+		const XmlNode *moveSkillNode = n->getOptionalChild("move-skill");
+		if (moveSkillNode) {
+			string skillName = moveSkillNode->getAttribute("value")->getRestrictedValue();
+			const SkillType *st = unitType->getSkillType(skillName, SkillClass::MOVE);
+			moveSkillType= static_cast<const MoveSkillType*>(st);
+		}
+	} catch (runtime_error e) {
+		g_logger.logXmlError(dir, e.what());
+		loadOk = false;
+	}
+
+	//load skill
+	try {
+		string skillName= n->getChild("load-skill")->getAttribute("value")->getRestrictedValue();
+		loadSkillType= static_cast<const LoadSkillType*>(unitType->getSkillType(skillName, SkillClass::LOAD));
+	} catch (runtime_error e) {
+		g_logger.logXmlError(dir, e.what());
+		loadOk = false;
+	}
+	try {
+		const XmlNode *canLoadNode = n->getChild("units-carried");
+		for (int i=0; i < canLoadNode->getChildCount(); ++i) {
+			string unitName = canLoadNode->getChild("unit", i)->getStringValue();
+			const UnitType *ut = ft->getUnitType(unitName);
+			m_canLoadList.push_back(ut);
+		}
+	} catch (const runtime_error &e) {
+		g_logger.logXmlError(dir, e.what());
+		loadOk = false;
+	}
+	try {
+		m_loadCapacity = n->getChild("load-capacity")->getIntValue();
+	} catch (const runtime_error &e) {
+		g_logger.logXmlError(dir, e.what());
+		loadOk = false;
+	}
+	const XmlNode *projNode = n->getOptionalChild("allow-projectiles");
+	if (projNode && projNode->getBoolValue()) {
+		m_allowProjectiles = true;
+		try {
+			m_projectileOffsets.x = projNode->getChild("horizontal-offset")->getFloatValue();
+			m_projectileOffsets.y = projNode->getChild("vertical-offset")->getFloatValue();
+		} catch (runtime_error &e) {
+			g_logger.logXmlError(dir, e.what());
+			loadOk = false;
+		}
+	}
+	return loadOk;
+}
+
+void FactionLoadCommandType::doChecksum(Checksum &checksum) const {
+	CommandType::doChecksum(checksum);
+	checksum.add(loadSkillType->getName());
+}
+
+void FactionLoadCommandType::getDesc(string &str, const Unit *unit) const {
+	str+= "\n" + loadSkillType->getName();
+}
+
+string FactionLoadCommandType::getReqDesc(const Faction *f) const {
+	return RequirableType::getReqDesc(f);
+}
+
+void FactionLoadCommandType::descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const {
+	string msg;
+	if (moveSkillType) {
+		moveSkillType->getDesc(msg, unit);
+	}
+	loadSkillType->getDesc(msg, unit);
+	callback->addElement(msg);
+}
+
+void FactionLoadCommandType::subDesc(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const {
+	Lang &lang = g_lang;
+	const string factionName = unit->getFaction()->getType()->getName();
+	callback->addElement(g_lang.get("CanLoad") + ":");
+	foreach_const (vector<const UnitType*>, it, m_canLoadList) {
+		callback->addItem(*it, lang.getTranslatedFactionName(factionName, (*it)->getName()));
+	}
+}
+
+void FactionLoadCommandType::update(Unit *unit) const {
+	_PROFILE_COMMAND_UPDATE();
+	Command *command = unit->getCurrCommand();
+	assert(command->getType() == this);
+	UnitIdList &unitsToTransit = unit->getFaction()->getUnitsToTransit();
+
+	if (unitsToTransit.empty()) { // if no one to load, finished
+		unit->finishCommand();
+		unit->setCurrSkill(SkillClass::STOP);
+		return;
+	}
+
+	Unit *closest = 0; // else find closest
+	fixed dist = fixed::max_int();
+	foreach (UnitIdList, it, unitsToTransit) {
+		Unit *target = g_world.getUnit(*it);
+		fixed d = fixedDist(target->getCenteredPos(), unit->getCenteredPos());
+		if (d < dist) {
+			closest = target;
+			dist = d;
+		}
+	}
+	assert(closest);
+	if (dist < loadSkillType->getMaxRange() + unit->getSize()) { // if in load range, load 'em
+		closest->removeCommands();
+		closest->setCurrSkill(SkillClass::STOP);
+		g_map.clearUnitCells(closest, closest->getPos());
+		closest->setCarried(unit);
+		closest->setPos(Vec2i(-1));
+		g_userInterface.getSelection()->unSelect(closest);
+		unit->getFaction()->getTransitingUnits().push_back(closest->getId());
+		unitsToTransit.erase(std::find(unitsToTransit.begin(), unitsToTransit.end(), closest->getId()));
+		unit->setCurrSkill(loadSkillType);
+		unit->clearPath();
+		if (unit->getCarriedCount() == m_loadCapacity && !unitsToTransit.empty()) {
+			foreach (UnitIdList, it, unitsToTransit) {
+				Unit *unit = g_world.getUnit(*it);
+				if (unit->getType()->getFirstCtOfClass(CmdClass::MOVE)) {
+					assert(unit->getCurrCommand());
+					assert(unit->getCurrCommand()->getType()->getClass() == CmdClass::BE_LOADED);
+					unit->cancelCommand();
+				}
+			}
+			unitsToTransit.clear();
+		}
+		unit->StateChanged(unit);
+		return;
+	}
+	if (!moveSkillType) {
+		// can't move, just wait
+		unit->setCurrSkill(SkillClass::STOP);
+		return;
+	}
+
+	Vec2i pos = closest->getCenteredPos(); // else move toward closest
+	if (unit->travel(pos, moveSkillType) == TravelState::ARRIVED) {
+		//unit->finishCommand(); was in blocked which might be better to use since it should be within
+		// load distance by the time it gets to arrived state anyway? - hailstone 21Dec2010
+		if (unit->getPath()->isBlocked() && !command->getUnit()) {
+			unit->finishCommand();
+		} else {
+			unit->setCurrSkill(SkillClass::STOP);
+		}
+	}
+}
+
+void FactionLoadCommandType::start(Unit *unit, Command *command) const {
+	unit->getFaction()->loadFactionUnitInit(command);
+}
+
+CmdResult FactionLoadCommandType::check(const Unit *unit, const Command &command) const {
+    if (canCarry(command.getUnit()->getType())) {
+        if (command.getUnit()->getFactionIndex() == unit->getFactionIndex()) {
+            return CmdResult::SUCCESS;
+        }
+    }
+    return CmdResult::FAIL_INVALID_LOAD;
+}
+
+// =====================================================
+// 	class FactionUnloadCommandType
+// =====================================================
+
+bool FactionUnloadCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft){
+	bool loadOk = CommandType::load(n, dir, tt, ft);
+
+	// move
+	try {
+		const XmlNode *moveSkillNode = n->getOptionalChild("move-skill");
+		if (moveSkillNode) {
+			string skillName = moveSkillNode->getAttribute("value")->getRestrictedValue();
+			const SkillType *st = unitType->getSkillType(skillName, SkillClass::MOVE);
+			moveSkillType= static_cast<const MoveSkillType*>(st);
+		}
+	} catch (runtime_error e) {
+		g_logger.logXmlError(dir, e.what());
+		loadOk = false;
+	}
+	// unload skill
+	try {
+		string skillName= n->getChild("unload-skill")->getAttribute("value")->getRestrictedValue();
+		unloadSkillType= static_cast<const UnloadSkillType*>(unitType->getSkillType(skillName, SkillClass::UNLOAD));
+	} catch (runtime_error e) {
+		g_logger.logXmlError(dir, e.what());
+		loadOk = false;
+	}
+
+	return loadOk;
+}
+
+void FactionUnloadCommandType::doChecksum(Checksum &checksum) const {
+	CommandType::doChecksum(checksum);
+	checksum.add(unloadSkillType->getName());
+}
+
+void FactionUnloadCommandType::getDesc(string &str, const Unit *unit) const {
+	str+= "\n" + unloadSkillType->getName();
+}
+
+string FactionUnloadCommandType::getReqDesc(const Faction *f) const {
+	return RequirableType::getReqDesc(f) /*+ "\n" + getProduced()->getReqDesc()*/;
+}
+
+void FactionUnloadCommandType::descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const {
+	string msg;
+	if (moveSkillType) {
+		moveSkillType->getDesc(msg, unit);
+	}
+	unloadSkillType->getDesc(msg, unit);
+	callback->addElement(msg);
+}
+
+void FactionUnloadCommandType::update(Unit *unit) const {
+	_PROFILE_COMMAND_UPDATE();
+	Command *command = unit->getCurrCommand();
+	assert(command->getType() == this);
+
+	if (unit->getFaction()->getUnitsToDetransit().empty()) {
+		// no more units to deal with
+		unit->finishCommand();
+		unit->setCurrSkill(SkillClass::STOP);
+		return;
+	}
+	if (command->getPos() != Command::invalidPos && moveSkillType) {
+		if (unit->travel(command->getPos(), moveSkillType) == TravelState::ARRIVED) {
+			command->setPos(Command::invalidPos);
+		}
+	} else {
+		if (unit->getCurrSkill()->getClass() != SkillClass::UNLOAD) {
+			unit->setCurrSkill(SkillClass::UNLOAD);
+		} else {
+			Unit *targetUnit = g_world.getUnit(unit->getFaction()->getUnitsToDetransit().front());
+			int maxRange = unloadSkillType->getMaxRange() + unit->getSize();
+			if (g_world.placeUnit(unit->getCenteredPos(), maxRange, targetUnit)) {
+				// pick a free space to put the unit
+				g_map.putUnitCells(targetUnit, targetUnit->getPos());
+				targetUnit->setCarried(0);
+				unit->getFaction()->getUnitsToDetransit().pop_front();
+                unit->getFaction()->getTransitingUnits().erase(std::find(unit->getFaction()->getTransitingUnits().begin(),
+                unit->getFaction()->getTransitingUnits().end(), targetUnit->getId()));
+				unit->StateChanged(unit);
+				// keep unloading, curr skill is ok
+			} else {
+				// must be crowded, stop unloading
+				g_console.addLine("too crowded to unload"); /// @todo change with localised version
+				unit->setCurrSkill(SkillClass::STOP);
+				// cancel?
+				// auto-move if in different field? (ie, air transport would move to find space to unload land units)
+				// should check it has moveskill first - hailstone 3Feb2011
+			}
+		}
+	}
+}
+
+void FactionUnloadCommandType::start(Unit *unit, Command *command) const {
+	unit->getFaction()->unloadFactionUnitInit(command);
+}
+
+// =====================================================
+// 	class GarrisonCommandType
+// =====================================================
+
+bool GarrisonCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft){
+	bool loadOk = CommandType::load(n, dir, tt, ft);
+
+	//move
+	try {
+		const XmlNode *moveSkillNode = n->getOptionalChild("move-skill");
+		if (moveSkillNode) {
+			string skillName = moveSkillNode->getAttribute("value")->getRestrictedValue();
+			const SkillType *st = unitType->getSkillType(skillName, SkillClass::MOVE);
+			moveSkillType= static_cast<const MoveSkillType*>(st);
+		}
+	} catch (runtime_error e) {
+		g_logger.logXmlError(dir, e.what());
+		loadOk = false;
+	}
+
+	//load skill
+	try {
+		string skillName= n->getChild("load-skill")->getAttribute("value")->getRestrictedValue();
+		loadSkillType= static_cast<const LoadSkillType*>(unitType->getSkillType(skillName, SkillClass::LOAD));
+	} catch (runtime_error e) {
+		g_logger.logXmlError(dir, e.what());
+		loadOk = false;
+	}
+	try {
+		const XmlNode *canLoadNode = n->getChild("units-carried");
+		for (int i=0; i < canLoadNode->getChildCount(); ++i) {
+			string unitName = canLoadNode->getChild("unit", i)->getStringValue();
+			const UnitType *ut = ft->getUnitType(unitName);
+			m_canLoadList.push_back(ut);
+		}
+	} catch (const runtime_error &e) {
+		g_logger.logXmlError(dir, e.what());
+		loadOk = false;
+	}
+	try {
+		m_loadCapacity = n->getChild("load-capacity")->getIntValue();
+	} catch (const runtime_error &e) {
+		g_logger.logXmlError(dir, e.what());
+		loadOk = false;
+	}
+
+	const XmlNode *projNode = n->getOptionalChild("allow-projectiles");
+	if (projNode && projNode->getBoolValue()) {
+		m_allowProjectiles = true;
+		try {
+			m_projectileOffsets.x = projNode->getChild("horizontal-offset")->getFloatValue();
+			m_projectileOffsets.y = projNode->getChild("vertical-offset")->getFloatValue();
+		} catch (runtime_error &e) {
+			g_logger.logXmlError(dir, e.what());
+			loadOk = false;
+		}
+	}
+	return loadOk;
+}
+
+void GarrisonCommandType::doChecksum(Checksum &checksum) const {
+	CommandType::doChecksum(checksum);
+	checksum.add(loadSkillType->getName());
+}
+
+void GarrisonCommandType::getDesc(string &str, const Unit *unit) const {
+	str+= "\n" + loadSkillType->getName();
+}
+
+string GarrisonCommandType::getReqDesc(const Faction *f) const {
+	return RequirableType::getReqDesc(f);
+}
+
+void GarrisonCommandType::descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const {
+	string msg;
+	if (moveSkillType) {
+		moveSkillType->getDesc(msg, unit);
+	}
+	loadSkillType->getDesc(msg, unit);
+	callback->addElement(msg);
+}
+
+void GarrisonCommandType::subDesc(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const {
+	Lang &lang = g_lang;
+	const string factionName = unit->getFaction()->getType()->getName();
+	callback->addElement(g_lang.get("CanLoad") + ":");
+	foreach_const (vector<const UnitType*>, it, m_canLoadList) {
+		callback->addItem(*it, lang.getTranslatedFactionName(factionName, (*it)->getName()));
+	}
+}
+
+void GarrisonCommandType::update(Unit *unit) const {
+	_PROFILE_COMMAND_UPDATE();
+	Command *command = unit->getCurrCommand();
+	assert(command->getType() == this);
+	UnitIdList &unitsToGarrison = unit->getUnitsToGarrison();
+
+	if (unitsToGarrison.empty()) { // if no one to load, finished
+		unit->finishCommand();
+		unit->setCurrSkill(SkillClass::STOP);
+		return;
+	}
+
+	Unit *closest = 0; // else find closest
+	fixed dist = fixed::max_int();
+	foreach (UnitIdList, it, unitsToGarrison) {
+		Unit *target = g_world.getUnit(*it);
+		fixed d = fixedDist(target->getCenteredPos(), unit->getCenteredPos());
+		if (d < dist) {
+			closest = target;
+			dist = d;
+		}
+	}
+	assert(closest);
+	if (dist < loadSkillType->getMaxRange() + unit->getSize()) { // if in load range, load 'em
+		closest->removeCommands();
+		closest->setCurrSkill(SkillClass::STOP);
+		g_map.clearUnitCells(closest, closest->getPos());
+		closest->setGarrisoned(unit);
+		closest->setPos(Vec2i(-1));
+		g_userInterface.getSelection()->unSelect(closest);
+		unit->getGarrisonedUnits().push_back(closest->getId());
+		unitsToGarrison.erase(std::find(unitsToGarrison.begin(), unitsToGarrison.end(), closest->getId()));
+		unit->setCurrSkill(loadSkillType);
+		unit->clearPath();
+		if (unit->getGarrisonedCount() == m_loadCapacity && !unitsToGarrison.empty()) {
+			foreach (UnitIdList, it, unitsToGarrison) {
+				Unit *unit = g_world.getUnit(*it);
+				if (unit->getType()->getFirstCtOfClass(CmdClass::MOVE)) {
+					assert(unit->getCurrCommand());
+					assert(unit->getCurrCommand()->getType()->getClass() == CmdClass::BE_LOADED);
+					unit->cancelCommand();
+				}
+			}
+			unitsToGarrison.clear();
+		}
+		unit->StateChanged(unit);
+		return;
+	}
+	if (!moveSkillType) {
+		// can't move, just wait
+		unit->setCurrSkill(SkillClass::STOP);
+		return;
+	}
+
+	Vec2i pos = closest->getCenteredPos(); // else move toward closest
+	if (unit->travel(pos, moveSkillType) == TravelState::ARRIVED) {
+		//unit->finishCommand(); was in blocked which might be better to use since it should be within
+		// load distance by the time it gets to arrived state anyway? - hailstone 21Dec2010
+		if (unit->getPath()->isBlocked() && !command->getUnit()) {
+			unit->finishCommand();
+		} else {
+			unit->setCurrSkill(SkillClass::STOP);
+		}
+	}
+}
+
+void GarrisonCommandType::start(Unit *unit, Command *command) const {
+	unit->garrisonUnitInit(command);
+}
+
+CmdResult GarrisonCommandType::check(const Unit *unit, const Command &command) const {
+    if (canCarry(command.getUnit()->getType())) {
+        if (command.getUnit()->getFactionIndex() == unit->getFactionIndex()) {
+            return CmdResult::SUCCESS;
+        }
+    }
+    return CmdResult::FAIL_INVALID_LOAD;
+}
+
+// =====================================================
+// 	class DegarrisonCommandType
+// =====================================================
+
+bool DegarrisonCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft){
+	bool loadOk = CommandType::load(n, dir, tt, ft);
+
+	// move
+	try {
+		const XmlNode *moveSkillNode = n->getOptionalChild("move-skill");
+		if (moveSkillNode) {
+			string skillName = moveSkillNode->getAttribute("value")->getRestrictedValue();
+			const SkillType *st = unitType->getSkillType(skillName, SkillClass::MOVE);
+			moveSkillType= static_cast<const MoveSkillType*>(st);
+		}
+	} catch (runtime_error e) {
+		g_logger.logXmlError(dir, e.what());
+		loadOk = false;
+	}
+	// unload skill
+	try {
+		string skillName= n->getChild("unload-skill")->getAttribute("value")->getRestrictedValue();
+		unloadSkillType= static_cast<const UnloadSkillType*>(unitType->getSkillType(skillName, SkillClass::UNLOAD));
+	} catch (runtime_error e) {
+		g_logger.logXmlError(dir, e.what());
+		loadOk = false;
+	}
+
+	return loadOk;
+}
+
+void DegarrisonCommandType::doChecksum(Checksum &checksum) const {
+	CommandType::doChecksum(checksum);
+	checksum.add(unloadSkillType->getName());
+}
+
+void DegarrisonCommandType::getDesc(string &str, const Unit *unit) const {
+	str+= "\n" + unloadSkillType->getName();
+}
+
+string DegarrisonCommandType::getReqDesc(const Faction *f) const {
+	return RequirableType::getReqDesc(f) /*+ "\n" + getProduced()->getReqDesc()*/;
+}
+
+void DegarrisonCommandType::descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const {
+	string msg;
+	if (moveSkillType) {
+		moveSkillType->getDesc(msg, unit);
+	}
+	unloadSkillType->getDesc(msg, unit);
+	callback->addElement(msg);
+}
+
+void DegarrisonCommandType::update(Unit *unit) const {
+	_PROFILE_COMMAND_UPDATE();
+	Command *command = unit->getCurrCommand();
+	assert(command->getType() == this);
+
+	if (unit->getUnitsToDegarrison().empty()) {
+		// no more units to deal with
+		unit->finishCommand();
+		unit->setCurrSkill(SkillClass::STOP);
+		return;
+	}
+	if (command->getPos() != Command::invalidPos && moveSkillType) {
+		if (unit->travel(command->getPos(), moveSkillType) == TravelState::ARRIVED) {
+			command->setPos(Command::invalidPos);
+		}
+	} else {
+		if (unit->getCurrSkill()->getClass() != SkillClass::UNLOAD) {
+			unit->setCurrSkill(SkillClass::UNLOAD);
+		} else {
+			Unit *targetUnit = g_world.getUnit(unit->getUnitsToDegarrison().front());
+			int maxRange = unloadSkillType->getMaxRange() + unit->getSize();
+			if (g_world.placeUnit(unit->getCenteredPos(), maxRange, targetUnit)) {
+				// pick a free space to put the unit
+				g_map.putUnitCells(targetUnit, targetUnit->getPos());
+				targetUnit->setGarrisoned(0);
+				unit->getUnitsToDegarrison().pop_front();
+            unit->getGarrisonedUnits().erase(std::find(unit->getGarrisonedUnits().begin(), unit->getGarrisonedUnits().end(), targetUnit->getId()));
+				unit->StateChanged(unit);
+				// keep unloading, curr skill is ok
+			} else {
+				// must be crowded, stop unloading
+				g_console.addLine("too crowded to unload"); /// @todo change with localised version
+				unit->setCurrSkill(SkillClass::STOP);
+				// cancel?
+				// auto-move if in different field? (ie, air transport would move to find space to unload land units)
+				// should check it has moveskill first - hailstone 3Feb2011
+			}
+		}
+	}
+}
+
+void DegarrisonCommandType::start(Unit *unit, Command *command) const {
+	unit->degarrisonUnitInit(command);
+}
+
+// =====================================================
 // 	class BeLoadedCommandType
 // =====================================================
 
@@ -1694,6 +2250,11 @@ bool CommandType::unitInRange(const Unit *unit, int range, Unit **rangedPtr,
 		effectivePos = carrier->getCenteredPos();
 		fixedCentre = carrier->getFixedCenteredPos();
 		halfSize = carrier->getType()->getHalfSize();
+	} else if (unit->isGarrisoned()) {
+		Unit *garrison = g_world.getUnit(unit->getGarrison());
+		effectivePos = garrison->getCenteredPos();
+		fixedCentre = garrison->getFixedCenteredPos();
+		halfSize = garrison->getType()->getHalfSize();
 	} else {
 		effectivePos = unit->getCenteredPos();
 		fixedCentre = unit->getFixedCenteredPos();

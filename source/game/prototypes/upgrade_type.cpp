@@ -42,7 +42,6 @@ namespace Glest { namespace ProtoTypes {
 
 UpgradeType::UpgradeType()
 		: m_factionType(0)
-		, upgradeStage(0)
 		, maxStage(1) {
 }
 
@@ -204,11 +203,9 @@ bool UpgradeType::loadOldStyle(const XmlNode *node, const string &dir, const Tec
 bool UpgradeType::load(const string &dir, const TechTree *techTree, const FactionType *factionType) {
 	string path;
 	m_factionType = factionType;
-
 	g_logger.logProgramEvent("Upgrade type: "+ dir, true);
 	path = dir + "/" + m_name + ".xml";
 	bool loadOk = true;
-
 	XmlTree xmlTree;
 	const XmlNode *upgradeNode;
 	try {
@@ -220,7 +217,6 @@ bool UpgradeType::load(const string &dir, const TechTree *techTree, const Factio
 		g_logger.logError("Fatal Error: could not load " + path);
 		return false;
 	}
-
     // Amount producible(upgrades only)
     const XmlNode *countNode;
     try { countNode = upgradeNode->getOptionalChild("stage"); }
@@ -235,7 +231,6 @@ bool UpgradeType::load(const string &dir, const TechTree *techTree, const Factio
 		    return false;
 	    }
     }
-
     // Names for upgrade set
 	const XmlNode *namesNode;
     try { namesNode = upgradeNode->getOptionalChild("names");
@@ -252,17 +247,12 @@ bool UpgradeType::load(const string &dir, const TechTree *techTree, const Factio
 		g_logger.logXmlError(dir, e.what());
 		return false;
 	}
-
 	// ProducibleType parameters (unit/upgrade reqs, resource reqs, prod time ...)
 	if (!ProducibleType::load(upgradeNode, dir, techTree, factionType)) {
 		loadOk = false;
 	}
-
-    int iUStage = getUpgradeStage();
-
 	// enhancements...
 	const XmlNode *enhancementsNode = upgradeNode->getChild("enhancements", 0, false);
-
 	if (enhancementsNode) { // Nu skool.
 		loadOk = loadNewStyle(enhancementsNode, dir, techTree, factionType) && loadOk;
 	} else { // Old skool.
@@ -271,24 +261,26 @@ bool UpgradeType::load(const string &dir, const TechTree *techTree, const Factio
 	return loadOk;
 }
 
-void UpgradeType::doChecksum(Checksum &checksum) const {
-	ProducibleType::doChecksum(checksum);
-	foreach_const (Enhancements, it, m_enhancements) {
-		it->m_enhancement.doChecksum(checksum);
-	}
-	///@todo resource mods
+string UpgradeType::getDescName(Faction *f) const{
+	Lang &lang = Lang::getInstance();
+	string str;// = getReqDesc(f);
 
-	// iterating over a std::map is not the same as std::set !!
-	vector<int> enhanceIds;
-	foreach_const (EnhancementMap, it, m_enhancementMap) {
-		enhanceIds.push_back(it->first->getId());
-		///@todo add EnhancementType index (it->second->getEnhancement()) ?
+    Faction::UpgradeStages::iterator fit;
+	for(fit=f->upgradeStages.begin(); fit!=f->upgradeStages.end(); ++fit){
+		if((*fit).getUpgradeType()==this){
+			break;
+		}
 	}
-	// sort first
-	std::sort(enhanceIds.begin(), enhanceIds.end());
-	foreach (vector<int>, it, enhanceIds) {
-		checksum.add(*it);
-	}
+    if(!(*fit).m_names.empty()) {
+        for (int i = 0; i < (*fit).m_names.size(); ++i) {
+            if (i == (*fit).getUpgradeStage()) {
+                str += lang.get("Name") + ": ";
+                str += (i == 0 ? "" : i == ((*fit).m_names.size()-1) ? " " : " ");
+                str += lang.getFactionString(f->getType()->getName(), (*fit).m_names[i]);
+            }
+        }
+    }
+    return str;
 }
 
 void descResourceModifier(pair<const ResourceType*, Modifier> i_mod, string &io_res) {
@@ -316,99 +308,73 @@ void descResourceModifier(pair<const ResourceType*, Modifier> i_mod, string &io_
 	}
 }
 
-string UpgradeType::getDescName(const Faction *f) const {
+string UpgradeType::getDesc(Faction *f) const {
 	Lang &lang = Lang::getInstance();
-	string str;// = getReqDesc(f);
-    int select = getUpgradeStage();
-    if(!m_names.empty()) {
-        for (int i = 0; i < m_names.size(); ++i) {
-            if (i == select) {
-                str += lang.get("Name") + ": ";
-                str += (i == 0 ? "" : i == (m_names.size()-1) ? " " : " ");
-                str += lang.getFactionString(f->getType()->getName(), m_names[i]);
-            }
-        }
-    }
-    return str;
-}
+	string str;
+    Faction::UpgradeStages::iterator fit;
+	for(fit=f->upgradeStages.begin(); fit!=f->upgradeStages.end(); ++fit){
+		if((*fit).getUpgradeType()==this){
+			break;
+		}
+	}
 
-string UpgradeType::getDesc(const Faction *f) const {
-	Lang &lang = Lang::getInstance();
-	string str;// = getReqDesc(f);
-
-	if (!m_enhancements.empty()) {
-		for (int i=0; i < m_enhancements.size(); ++i) {
+	if (!(*fit).m_enhancements.empty()) {
+		for (int i=0; i < (*fit).m_enhancements.size(); ++i) {
 			str += "\n" + lang.get("Affects") + ":";
-			for (int j=0; j < m_unitsAffected[i].size(); ++j) {
-				str += (j == 0 ? " " : j == (m_unitsAffected[i].size() - 1) ? " & " : ", ");
-				str += lang.getFactionString(f->getType()->getName(), m_unitsAffected[i][j]);
+			for (int j=0; j < (*fit).m_unitsAffected[i].size(); ++j) {
+				str += (j == 0 ? " " : j == ((*fit).m_unitsAffected[i].size() - 1) ? " & " : ", ");
+				str += lang.getFactionString(f->getType()->getName(), (*fit).m_unitsAffected[i][j]);
 			}
-			m_enhancements[i].m_enhancement.getDesc(str, "\n");
-			if (!m_enhancements[i].m_costModifiers.empty()) {
+			(*fit).m_enhancements[i].m_enhancement.getDesc(str, "\n");
+			if (!(*fit).m_enhancements[i].m_costModifiers.empty()) {
 				str += "\n" + lang.get("CostModifiers") + ":";
-				foreach_const (ResModifierMap, it, m_enhancements[i].m_costModifiers) {
+				foreach_const (ResModifierMap, it, (*fit).m_enhancements[i].m_costModifiers) {
 					descResourceModifier(*it, str);
 				}
 			}
-			if (!m_enhancements[i].m_storeModifiers.empty()) {
+			if (!(*fit).m_enhancements[i].m_storeModifiers.empty()) {
 				str += "\n" + lang.get("StoreModifiers") + ":";
-				foreach_const (ResModifierMap, it, m_enhancements[i].m_storeModifiers) {
+				foreach_const (ResModifierMap, it, (*fit).m_enhancements[i].m_storeModifiers) {
 					descResourceModifier(*it, str);
 				}
 			}
-			if (!m_enhancements[i].m_createModifiers.empty()) {
+			if (!(*fit).m_enhancements[i].m_createModifiers.empty()) {
 				str += "\n" + lang.get("CreateModifiers") + ":";
-				foreach_const (ResModifierMap, it, m_enhancements[i].m_createModifiers) {
+				foreach_const (ResModifierMap, it, (*fit).m_enhancements[i].m_createModifiers) {
 					descResourceModifier(*it, str);
 				}
 			}
-			if (i != m_enhancements.size() - 1) {
+			if (i != (*fit).m_enhancements.size() - 1) {
 				str += "\n";
 			}
 		}
+        stringstream ss;
+		ss << (*fit).getUpgradeStage();
+		string string;
+		ss >> string;
+        str += "\n" + string;
 	}
 	return str;
 }
 
-const EnhancementType* UpgradeType::getEnhancement(const UnitType *ut) const {
-	EnhancementMap::const_iterator it = m_enhancementMap.find(ut);
-	if (it != m_enhancementMap.end()) {
-		return it->second->getEnhancement();
+void UpgradeType::doChecksum(Checksum &checksum) const {
+	ProducibleType::doChecksum(checksum);
+	foreach_const (Enhancements, it, m_enhancements) {
+		it->m_enhancement.doChecksum(checksum);
 	}
-	return 0;
-}
+	///@todo resource mods
 
-Modifier UpgradeType::getCostModifier(const UnitType *ut, const ResourceType *rt) const {
-	EnhancementMap::const_iterator uit = m_enhancementMap.find(ut);
-	if (uit != m_enhancementMap.end()) {
-		ResModifierMap::const_iterator rit = uit->second->m_costModifiers.find(rt);
-		if (rit != uit->second->m_costModifiers.end()) {
-			return rit->second;
-		}
+	// iterating over a std::map is not the same as std::set !!
+	vector<int> enhanceIds;
+	foreach_const (EnhancementMap, it, m_enhancementMap) {
+		enhanceIds.push_back(it->first->getId());
+		///@todo add EnhancementType index (it->second->getEnhancement()) ?
 	}
-	return Modifier(0, 1);
-}
-
-Modifier UpgradeType::getStoreModifier(const UnitType *ut, const ResourceType *rt) const {
-	EnhancementMap::const_iterator uit = m_enhancementMap.find(ut);
-	if (uit != m_enhancementMap.end()) {
-		ResModifierMap::const_iterator rit = uit->second->m_storeModifiers.find(rt);
-		if (rit != uit->second->m_storeModifiers.end()) {
-			return rit->second;
-		}
+	// sort first
+	std::sort(enhanceIds.begin(), enhanceIds.end());
+	foreach (vector<int>, it, enhanceIds) {
+		checksum.add(*it);
 	}
-	return Modifier(0, 1);
-}
-
-Modifier UpgradeType::getCreateModifier(const UnitType *ut, const ResourceType *rt) const {
-	EnhancementMap::const_iterator uit = m_enhancementMap.find(ut);
-	if (uit != m_enhancementMap.end()) {
-		ResModifierMap::const_iterator rit = uit->second->m_createModifiers.find(rt);
-		if (rit != uit->second->m_createModifiers.end()) {
-			return rit->second;
-		}
-	}
-	return Modifier(0, 1);
 }
 
 }}//end namespace

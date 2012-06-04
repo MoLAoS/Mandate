@@ -110,10 +110,10 @@ const AttackSkillType * AttackCommandTypeBase::getAttackSkillType(Field field) c
 
 /** Update helper for attack based commands that includes a move skill (sub classes of AttackCommandType).
   * @returns true when completed */
-bool AttackCommandType::updateGeneric(Unit *unit, Command *command, const AttackCommandType *act, 
-									  Unit* target, const Vec2i &targetPos) const {	
+bool AttackCommandType::updateGeneric(Unit *unit, Command *command, const AttackCommandType *act,
+									  Unit* target, const Vec2i &targetPos) const {
 	if (target && target->getHp() <= 0) {
-		// the target is dead, finish command so the unit doesn't 
+		// the target is dead, finish command so the unit doesn't
 		// wander to the target pos
 		unit->setCurrSkill(SkillClass::STOP);
 		return true;
@@ -135,7 +135,7 @@ bool AttackCommandType::updateGeneric(Unit *unit, Command *command, const Attack
 		}
 		return false;
 	}
-	if (unit->isCarried()) { // if housed, dont try to wander off!
+	if (unit->isCarried() || unit->isGarrisoned()) { // if housed, dont try to wander off!
 		unit->setCurrSkill(SkillClass::STOP);
 		return true;
 	}
@@ -245,7 +245,7 @@ Command *AttackStoppedCommandType::doAutoAttack(Unit *unit) const {
 
 void AttackStoppedCommandType::descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const {
 	string msg;
-	attackSkillTypes.getDesc(msg, unit);	
+	attackSkillTypes.getDesc(msg, unit);
 	callback->addElement(msg);
 }
 
@@ -266,7 +266,7 @@ void PatrolCommandType::update(Unit *unit) const {
 			pos = target->getCenteredPos();
 			command->setUnit(NULL);
 			command->setPos(pos);
-		} else { // if target not dead calc nearest pos with patrol range 
+		} else { // if target not dead calc nearest pos with patrol range
 			pos = Map::getNearestPos(unit->getPos(), target->getPos(), 1, getMaxDistance());
 		}
 	} else { // no target unit, use command pos
@@ -324,7 +324,7 @@ void GuardCommandType::update(Unit *unit) const {
 		pos = Map::getNearestPos(unit->getPos(), command->getPos(), 1, getMaxDistance());
 	}
 	// if within 'guard range' and no bad guys to attack
-	if (updateGeneric(unit, command, this, NULL, pos)) { 
+	if (updateGeneric(unit, command, this, NULL, pos)) {
 		unit->clearPath();
 		unit->setCurrSkill(SkillClass::STOP);  // just hang-ten
 	}

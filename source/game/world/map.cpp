@@ -56,7 +56,7 @@ void Tile::deleteResource() {
 
 // ===================== PUBLIC ========================
 
-Map::Map() 
+Map::Map()
 		: title()
 		, waterLevel(0.f)
 		, heightFactor(0.f)
@@ -179,7 +179,7 @@ void Map::load(const string &path, TechTree *techTree, Tileset *tileset) {
 
 		//read header
 		MapFileHeader header;
-		
+
 		// FIXME: Better error handling starting here: report bad map instead of partially loading,
 		// etc.
 		f->read(&header, sizeof(MapFileHeader), 1);
@@ -351,7 +351,7 @@ bool Map::isResourceNear(const Vec2i &pos, int size, const ResourceType *rt, Vec
 // ==================== free cells ====================
 bool Map::fieldsCompatible(Cell *cell, Field mf) const {
 	if (mf == Field::AIR || mf == Field::AMPHIBIOUS
-	|| (mf == Field::LAND && !cell->isDeepSubmerged()) 
+	|| (mf == Field::LAND && !cell->isDeepSubmerged())
 	|| (mf == Field::ANY_WATER && cell->isSubmerged())
 	|| (mf == Field::DEEP_WATER && cell->isDeepSubmerged())) {
 		return true;
@@ -366,7 +366,7 @@ bool Map::isFreeCell(const Vec2i &pos, Field field) const {
 	if (field != Field::AIR && !getTile(toTileCoords(pos))->isFree()) {
 		return false;
 	}
-	return g_cartographer.getMasterMap()->canOccupy(pos, 1, field); 
+	return g_cartographer.getMasterMap()->canOccupy(pos, 1, field);
 }
 
 bool Map::isFreeCellOrHasUnit(const Vec2i &pos, Field field, const Unit *unit) const {
@@ -660,9 +660,9 @@ inline void Map::findNearestFree(Vec2i &result, const Vec2i &start, int size, Fi
  */
 Vec2i Map::getNearestAdjacentPos(const Vec2i &start, int size, const Vec2i &target, Field field, int targetSize) {
 	int sideSize = targetSize + size;
-	
+
 	Vec2i result(0);
-	
+
 	fixed minDistance = fixed::max_int();
 
 	int topY = target.y - size;
@@ -723,7 +723,7 @@ void panic(Vec2i currPos, Unit *unit, Unit *other) {
 
 	stringstream ss;
 	ss << "Error: " << ut->getName() << " [id:" << unit->getId() << "] putting in cell ("
-		<< currPos << "{" << ZoneNames[zone] << "}" << " cell is already occupied by a " 
+		<< currPos << "{" << ZoneNames[zone] << "}" << " cell is already occupied by a "
 		<< other->getType()->getName() << " [id:" << other->getId() << "] {"
 		<< ZoneNames[o_zone] << "}";
 	g_logger.logError(ss.str());
@@ -880,7 +880,7 @@ void Map::computeInterpolatedHeights() {
 							(getTileHeight(i, j) + getTileHeight(i, j + 1)) / 2.f);
 					} else {
 						getCell(tl + Vec2i(k, l))->setHeight(
-							(getTileHeight(i, j) + getTileHeight(i + 1, j) + 
+							(getTileHeight(i, j) + getTileHeight(i + 1, j) +
 							 getTileHeight(i, j + 1) + getTileHeight(i + 1, j + 1)) / 4.f);
 					}
 				}
@@ -1042,7 +1042,12 @@ void Map::assertUnitCells(const Unit * unit) {
 			}
 		}
 	} else {
+	    if (unit->isCarried()) {
 		assert(unit->isCarried());
+	    }
+        if (unit->isGarrisoned()) {
+		assert(unit->isGarrisoned());
+	    }
 	}
 }
 

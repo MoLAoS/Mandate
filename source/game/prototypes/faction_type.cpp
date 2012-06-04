@@ -173,6 +173,20 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 		}
 
 	}
+
+	foreach_const (UnitTypes, uit, unitTypes) {
+		const UnitType *ut = *uit;
+		for (int i=0; i < ut->getCommandTypeCount<FactionLoadCommandType>(); ++i) {
+			const FactionLoadCommandType *lct = ut->getCommandType<FactionLoadCommandType>(i);
+			foreach (UnitTypes, luit, unitTypes) {
+				UnitType *lut = *luit;
+				if (lct->canCarry(lut) && lut->getFirstCtOfClass(CmdClass::MOVE)) {
+					loadableUnitTypes.insert(lut);
+				}
+			}
+		}
+
+	}
 	// 4b. Give mobile housable unit types a be-loaded command type
 	foreach (UnitTypeSet, it, loadableUnitTypes) {
 		(*it)->addBeLoadedCommand();

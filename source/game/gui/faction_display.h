@@ -64,12 +64,12 @@ struct DisplayButton {
 };
 
 // =====================================================
-// 	class Display
+// 	class FactionDisplay
 //
 ///	Display for unit commands, and unit selection
 // =====================================================
 
-class Display : public Widget, public MouseWidget, public ImageWidget, public TextWidget {
+class FactionDisplay : public Widget, public MouseWidget, public ImageWidget, public TextWidget {
 public:
 	// portrait and command sub-panel width and height, in 'cells'
 	static const int cellWidthCount = 6;
@@ -78,8 +78,6 @@ public:
 
 	static const int selectionCellCount = cellWidthCount * cellHeightCount;
 	static const int commandCellCount = cellWidthCount * cellHeightCount;
-	static const int transportCellCount = cellWidthCount * cellHeightCount / 2;
-	static const int garrisonCellCount = cellWidthCount * cellHeightCount / 2;
 
 	static const int invalidIndex = -1;
 
@@ -92,10 +90,6 @@ private:
 	int m_progress;    // 0-100 to show progress bar at that percentage, -1 == no progress bar.
 	int m_selectedCommandIndex; // index of command (in commnadTypes and/or commandClasses) used to identify original command in two-tier selects
 	int m_logo;                 // index of logo image (in ImageWidget::textures)
-	// image indices (in ImageWidget::textures) for auto command flag icons
-	int m_autoRepairOn, m_autoRepairOff, m_autoRepairMixed;
-	int m_autoAttackOn, m_autoAttackOff, m_autoAttackMixed;
-	int m_autoFleeOn, m_autoFleeOff, m_autoFleeMixed;
 
 	int m_imageSize;
 
@@ -103,17 +97,13 @@ private:
 		Vec2i portraitSize;
 		Vec2i logoSize;
 		Vec2i commandSize;
-		Vec2i transportSize;
-		Vec2i garrisonSize;
 	};
-	SizeCollection m_sizes;//[5];
+	SizeCollection m_sizes;
 
 	FuzzySize m_fuzzySize;
 
 	Vec2i	m_portraitOffset,       // x,y offset for selected unit portrait(s)
 			m_commandOffset,        // x,y offset for command buttons
-			m_carryImageOffset,     // x,y offset for loaded unit portrait(s)
-			m_garrisonImageOffset,     // x,y offset for garrisoned unit portrait(s)
 			m_progressPos;          // x,y offset for progress bar
 
 	int     m_progPrecentPos;       // x offset to draw progress bar percentage text (and -1 when no progress bar)
@@ -130,15 +120,13 @@ private:
 	int getImageOverlayIndex(AutoCmdFlag f, AutoCmdState s);
 
 public:
-	Display(Container *parent, UserInterface *ui, Vec2i pos);
+	FactionDisplay(Container *parent, UserInterface *ui, Vec2i pos);
 
 	//get
 	FuzzySize getFuzzySize() const                  {return m_fuzzySize;}
 	string getPortraitTitle() const					{return TextWidget::getText(0);}
 	string getPortraitText() const					{return TextWidget::getText(1);}
 	string getOrderQueueText() const				{return TextWidget::getText(2);}
-	string getTransportedLabel() const				{return TextWidget::getText(4);}
-	string getGarrisonedLabel() const				{return TextWidget::getText(5);}
 	int getIndex(int i)								{return index[i];}
 	bool getDownLighted(int index) const			{return downLighted[index];}
 	const CommandType *getCommandType(int i)        {return commandTypes[i];}
@@ -156,13 +144,9 @@ public:
 	void setToolTipText2(const string &hdr, const string &tip, DisplaySection i_section = DisplaySection::COMMANDS);
 	void addToolTipReq(const DisplayableType *dt, bool ok, const string &txt);
 	//void setToolTipText(const string &i_txt, DisplaySection i_section = DisplaySection::COMMANDS);
-	void setTransportedLabel(bool v);
-	void setGarrisonedLabel(bool v);
 
 	void setUpImage(int i, const Texture2D *image) 		 {setImage(image, i);}
 	void setDownImage(int i, const Texture2D *image)	 {setImage(image, selectionCellCount + i);}
-	void setCarryImage(int i, const Texture2D *image)	 {setImage(image, selectionCellCount + commandCellCount + i);}
-	void setGarrisonImage(int i, const Texture2D *image) {setImage(image, selectionCellCount + commandCellCount + transportCellCount + i);}
 	void setCommandType(int i, const CommandType *ct)	 {commandTypes[i]= ct;}
 	void setCommandClass(int i, const CmdClass cc)	     {commandClasses[i]= cc;}
 	void setDownLighted(int i, bool lighted)			 {downLighted[i]= lighted;}
@@ -181,7 +165,7 @@ public:
 	void reset();
 
 	virtual void render() override;
-	virtual string descType() const override { return "DisplayPanel"; }
+	virtual string descType() const override { return "FactionDisplayPanel"; }
 
 	virtual bool mouseDown(MouseButton btn, Vec2i pos) override;
 	virtual bool mouseUp(MouseButton btn, Vec2i pos) override;
@@ -191,12 +175,12 @@ public:
 };
 
 // =====================================================
-//  class DisplayFrame
+//  class FactionDisplayFrame
 // =====================================================
 
-class DisplayFrame : public Frame {
+class FactionDisplayFrame : public Frame {
 private:
-	Display *m_display;
+	FactionDisplay *m_factionDisplay;
 	UserInterface *m_ui;
 
 public:
@@ -204,8 +188,8 @@ public:
 	void onShrink(Widget*);
 
 public:
-	DisplayFrame(UserInterface *ui, Vec2i pos);
-	Display* getDisplay() {return m_display;}
+	FactionDisplayFrame(UserInterface *ui, Vec2i pos);
+	FactionDisplay* getFactionDisplay() {return m_factionDisplay;}
 
 	void resetSize();
 

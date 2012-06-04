@@ -137,7 +137,7 @@ public:
 	mutable int layerRepairSpeed;
 	mutable int layerHarvestSpeed;
 
-	void setMaxHp(int v)				{maxHp = v;}
+	void setMaxHp(int v)		        {maxHp = v;}
 	void setHpRegeneration(int v) 		{hpRegeneration = v;}
 	void setMaxSp(int v)				{maxSp = v;}
 	void setSpRegeneration(int v) 		{spRegeneration = v;}

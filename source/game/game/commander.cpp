@@ -38,14 +38,30 @@ namespace Glest { namespace Sim {
 // ===================== PUBLIC ========================
 
 CmdResult Commander::tryUnloadCommand(Unit *unit, CmdFlags flags, const Vec2i &pos, Unit *targetUnit) const {
-	const CommandType *ct = unit->getFirstAvailableCt(CmdClass::UNLOAD);
-	if (!ct) {
-		assert(false);
-		return CmdResult::FAIL_UNDEFINED;
-	}
-	return pushCommand(g_world.newCommand(ct, CmdFlags(), targetUnit, unit));
+    if (const CommandType *ct = unit->getFirstAvailableCt(CmdClass::UNLOAD)) {
+	    if (!ct) {
+		    assert(false);
+		    return CmdResult::FAIL_UNDEFINED;
+	    }
+	    return pushCommand(g_world.newCommand(ct, CmdFlags(), targetUnit, unit));
+    } else {
+        assert(false);
+        return CmdResult::FAIL_UNDEFINED;
+    }
 }
 
+CmdResult Commander::tryDegarrisonCommand(Unit *unit, CmdFlags flags, const Vec2i &pos, Unit *targetUnit) const {
+    if (const CommandType *ct = unit->getFirstAvailableCt(CmdClass::DEGARRISON)) {
+	    if (!ct) {
+		    assert(false);
+		    return CmdResult::FAIL_UNDEFINED;
+	    }
+	    return pushCommand(g_world.newCommand(ct, CmdFlags(), targetUnit, unit));
+    } else {
+        assert(false);
+        return CmdResult::FAIL_UNDEFINED;
+    }
+}
 
 CmdResult Commander::tryGiveCommand(const Selection *selection, CmdFlags flags,
 		const CommandType *ct, CmdClass cc, const Vec2i &pos, Unit *targetUnit,
@@ -102,6 +118,26 @@ CmdResult Commander::tryGiveCommand(const Selection *selection, CmdFlags flags,
 							pushCommand(g_world.newCommand(effectiveCt, CmdFlags(), *i, targetUnit));
 						}
 					}
+				} else if (effectiveCt->getClass() == CmdClass::FACTIONLOAD) {
+					if (*i != targetUnit) {
+						// give *i a command to load targetUnit
+						result = pushCommand(g_world.newCommand(effectiveCt, flags, targetUnit, *i));
+						if (result == CmdResult::SUCCESS) {
+							// if load is ok, give targetUnit a command to be-loaded by *i
+							effectiveCt = targetUnit->getFirstAvailableCt(CmdClass::BE_LOADED);
+							pushCommand(g_world.newCommand(effectiveCt, CmdFlags(), *i, targetUnit));
+						}
+					}
+				} else if (effectiveCt->getClass() == CmdClass::GARRISON) {
+					if (*i != targetUnit) {
+						// give *i a command to load targetUnit
+						result = pushCommand(g_world.newCommand(effectiveCt, flags, targetUnit, *i));
+						if (result == CmdResult::SUCCESS) {
+							// if load is ok, give targetUnit a command to be-loaded by *i
+							effectiveCt = targetUnit->getFirstAvailableCt(CmdClass::BE_LOADED);
+							pushCommand(g_world.newCommand(effectiveCt, CmdFlags(), *i, targetUnit));
+						}
+					}
 				} else if (effectiveCt->getClass() == CmdClass::BE_LOADED) {
 					// a carrier unit was right clicked
 					result = pushCommand(g_world.newCommand(targetUnit->getFirstAvailableCt(CmdClass::LOAD), CmdFlags(), *i, targetUnit));
@@ -112,8 +148,10 @@ CmdResult Commander::tryGiveCommand(const Selection *selection, CmdFlags flags,
 				} else {
 					result = pushCommand(g_world.newCommand(effectiveCt, flags, targetUnit, *i));
 				}
-			} else if (effectiveCt->getClass() == CmdClass::LOAD) {
-				// the player has tried to load nothing, it shouldn't get here if it has 
+			} else if (effectiveCt->getClass() == CmdClass::LOAD ||
+              effectiveCt->getClass() == CmdClass::FACTIONLOAD ||
+              effectiveCt->getClass() == CmdClass::GARRISON) {
+				// the player has tried to load nothing, it shouldn't get here if it has
 				// a targetUnit
 				result = CmdResult::FAIL_UNDEFINED;
 			} else if(pos != Command::invalidPos) { // 'position' based command
@@ -238,7 +276,7 @@ CmdResult Commander::pushCommand(Command *command) const {
 	RUNTIME_CHECK(command);
 	RUNTIME_CHECK(command->getCommandedUnit());
 	CmdResult result = command->getCommandedUnit()->checkCommand(*command);
-	//COMMAND_LOG( __FUNCTION__ << "(): " << *command->getCommandedUnit() << ", " << *command 
+	//COMMAND_LOG( __FUNCTION__ << "(): " << *command->getCommandedUnit() << ", " << *command
 	//	<< ", Result=" << CmdResultNames[result] );
 	if (result == CmdResult::SUCCESS) {
 		iSim->requestCommand(command);

@@ -52,6 +52,7 @@ public:
 	void updateNetwork();
 
 	CmdResult tryUnloadCommand(Unit *unit, CmdFlags flags, const Vec2i &pos, Unit *targetUnit) const;
+	CmdResult tryDegarrisonCommand(Unit *unit, CmdFlags flags, const Vec2i &pos, Unit *targetUnit) const;
 
 	// give command(s) to a target pos (move, attack, patrol, guard, harvest, repair ..?)
 	// CmdResult tryPosition(UnitVector &units, CmdFlags flags, CmdType commandType, const Vec2i &pos);

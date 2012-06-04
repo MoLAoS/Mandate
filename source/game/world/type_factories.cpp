@@ -50,6 +50,10 @@ PrototypeFactory::PrototypeFactory() {
 	m_commandTypeFactory.registerClass<TransformCommandType>();
 	m_commandTypeFactory.registerClass<LoadCommandType>();
 	m_commandTypeFactory.registerClass<UnloadCommandType>();
+	m_commandTypeFactory.registerClass<FactionLoadCommandType>();
+	m_commandTypeFactory.registerClass<FactionUnloadCommandType>();
+	m_commandTypeFactory.registerClass<GarrisonCommandType>();
+	m_commandTypeFactory.registerClass<DegarrisonCommandType>();
 	m_commandTypeFactory.registerClass<BeLoadedCommandType>();
 	m_commandTypeFactory.registerClass<GuardCommandType>();
 	m_commandTypeFactory.registerClass<PatrolCommandType>();

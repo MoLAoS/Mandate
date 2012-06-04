@@ -288,6 +288,7 @@ struct CommandCheckResult {
 	ResourceMadeResults   m_resourceMadeResults;
 	bool                  m_upgradedAlready;
 	bool                  m_upgradingAlready;
+	bool                  m_partiallyUpgraded;
 	bool                  m_availableInSubFaction;
 };
 

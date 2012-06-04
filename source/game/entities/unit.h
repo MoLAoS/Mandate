@@ -124,6 +124,19 @@ typedef list<Unit*>         UnitList;
 typedef list<UnitId>        UnitIdList;
 
 // ===============================
+// 	class TimerStep
+// ===============================
+
+class TimerStep {
+
+public:
+    mutable int currentStep;
+    int getCurrentStep() {return currentStep;}
+};
+
+typedef vector<TimerStep> CurrentStep;
+
+// ===============================
 // 	class Unit
 //
 ///	A game unit or building
@@ -132,7 +145,7 @@ typedef list<UnitId>        UnitIdList;
 /** Represents a single game unit or building. The Unit class inherits from
   * EnhancementType as a mechanism to maintain a cache of it's current
   * stat values. These values are only recalculated when an effect is added
-  * or removed, an upgrade is applied or the unit levels up. */
+  * or removed, an upgrade is applied or the unit levels up or garrisons a unit. */
 class Unit : public EnhancementType {
 	friend class EntityFactory<Unit>;
 
@@ -152,12 +165,20 @@ private:
 	int progress2;			/**< 'secondary' skill progress counter (progress for Production) */
 	int kills;				/**< number of kills */
 	int exp;                /**< amount of experience */
-
+public:
+    CurrentStep currentSteps;
+    CurrentStep currentUnitSteps;
+private:
 	// housed unit bits
 	UnitIdList	m_carriedUnits;
 	UnitIdList	m_unitsToCarry;
 	UnitIdList	m_unitsToUnload;
 	UnitId		m_carrier;
+
+	UnitIdList	m_garrisonedUnits;
+	UnitIdList	m_unitsToGarrison;
+	UnitIdList	m_unitsToDegarrison;
+	UnitId		m_garrison;
 
 	// engine info
 	int lastAnimReset;			/**< the frame the current animation cycle was started */
@@ -201,6 +222,7 @@ private:
 	//bool autoRepairEnabled;			/**< is auto repair enabled */
 
 	bool carried;					/**< is the unit being carried */
+	bool garrisoned;                /**< is the unit being garrisoned */
 	//bool visible;
 
 	bool	m_cloaked;
@@ -213,7 +235,7 @@ private:
 
 	Effects effects;				/**< Effects (spells, etc.) currently effecting unit. */
 	Effects effectsCreated;			/**< All effects created by this unit. */
-	EnhancementType totalUpgrade;	/**< All stat changes from upgrades, level ups and effects */
+	EnhancementType totalUpgrade;	/**< All stat changes from upgrades, level ups, garrisoned units and effects */
 
 	// is this really needed here? maybe keep faction (but change to an index), ditch map
 	Faction *faction;
@@ -371,12 +393,22 @@ public:
 	UnitIdList& getUnitsToCarry()				{return m_unitsToCarry;}
 	UnitIdList& getUnitsToUnload()				{return m_unitsToUnload;}
 	UnitId getCarrier() const					{return m_carrier;}
+
+	const UnitIdList& getGarrisonedUnits() const	{return m_garrisonedUnits;}
+	UnitIdList& getGarrisonedUnits()				{return m_garrisonedUnits;}
+	UnitIdList& getUnitsToGarrison()				{return m_unitsToGarrison;}
+	UnitIdList& getUnitsToDegarrison()				{return m_unitsToDegarrison;}
+	UnitId getGarrison() const					    {return m_garrison;}
+
 	void housedUnitDied(Unit *unit);
 
 	//bool isVisible() const					{return carried;}
 	void setCarried(Unit *host)				{carried = (host != 0); m_carrier = (host ? host->getId() : -1);}
+	void setGarrisoned(Unit *host)			{garrisoned = (host != 0); m_garrison = (host ? host->getId() : -1);}
 	void loadUnitInit(Command *command);
 	void unloadUnitInit(Command *command);
+	void garrisonUnitInit(Command *command);
+	void degarrisonUnitInit(Command *command);
 	//----
 
 	///@todo move to a helper of ScriptManager, connect signals...
@@ -468,6 +500,7 @@ public:
 	bool isMoving() const				{return currSkill->getClass() == SkillClass::MOVE;}
 	bool isMobile ()					{ return type->isMobile(); }
 	bool isCarried() const				{return carried;}
+	bool isGarrisoned() const           {return garrisoned;}
 	bool isHighlighted() const			{return highlight > 0.f;}
 	bool isPutrefacting() const			{return deadCount;}
 	bool isAlly(const Unit *unit) const	{return faction->isAlly(unit->getFaction());}
@@ -606,6 +639,7 @@ public:
 
 	Unit *tick();
 	void applyUpgrade(const UpgradeType *upgradeType);
+	void applyGarrison();
 	void computeTotalUpgrade();
 	void incKills();
 	void incExp(int addExp);
@@ -620,6 +654,7 @@ public:
 	Splash* createSplash(SplashType *splashType, const Vec3f &pos);
 
 	int getCarriedCount() const { return m_carriedUnits.size(); }
+	int getGarrisonedCount() const { return m_garrisonedUnits.size(); }
 
 	bool add(Effect *e);
 	void remove(Effect *e);

@@ -616,8 +616,6 @@ void World::appyEffect(Unit *u, Effect *e) {
 	}
 }
 
-
-int resourceCount = 0; /**< Added by MoLAoS, hack for current limited automatic resource generation */
 /** Called every 40 (or whatever WORLD_FPS resolves as) world frames */
 void World::tick() {
 	if (!fogOfWarSmoothing) {
@@ -663,29 +661,66 @@ void World::tick() {
 		}
 	}
     // apply resource generation
-	if (resourceCount == 60) { /**< Added by MoLAoS, resource generation */
-    for (int k = 0; k < getFactionCount(); ++k) {
+    for (int k = 0; k < getFactionCount(); ++k) { /**< Added by MoLAoS, resource generation */
     Faction *faction = getFaction(k);
         for (int j = 0; j < faction->getUnitCount(); ++j) {
         const Unit *u =  faction->getUnit(j);
             if (u->isOperative()) {
-                for (int i = 0; i < u->getType()->getCreatedResourceCount(); ++i) {
-                ResourceAmount cr = u->getType()->getCreatedResource(i, faction);
-                ResourceAmount sr = u->getType()->getStoredResource(i, faction);
-                const ResourceType* crt = cr.getType();
+                for (int s = 0; s < u->getType()->getCreatedResourceCount(); ++s) {
+                ResourceAmount sr = u->getType()->getStoredResource(s, faction);
                 const ResourceType* srt = sr.getType();
-                    if (srt->getClass() == ResourceClass::TECHTREE) {
-                    int oldBalance = faction->getSResource(srt)->getAmount();
-                    int balance = cr.getAmount();
-                    u->getFaction()->incResourceAmount(srt, balance);
-					}
-				}
+                    for (int i = 0; i < u->getType()->getCreatedResourceCount(); ++i) {
+                    ResourceAmount cr = u->getType()->getCreatedResource(i, faction);
+                    const ResourceType* crt = cr.getType();
+                        if (srt == crt) {
+                        Timer cTime = u->getType()->getCreatedResourceTimer(i, faction);
+                        int cTimeStep = u->currentSteps[i].currentStep;
+                        int cTimeValue = cTime.getTimerValue();
+                        int newStep = cTimeStep + 1;
+                        u->currentSteps[i].currentStep = newStep;
+                        int cRNewTime = u->currentSteps[i].currentStep;
+                            if (cRNewTime == cTimeValue) {
+                                if (srt->getClass() == ResourceClass::TECHTREE || srt->getClass() == ResourceClass::TILESET) {
+                                int oldBalance = faction->getSResource(srt)->getAmount();
+                                int balance = cr.getAmount();
+                                u->getFaction()->incResourceAmount(srt, balance);
+                                }
+                            u->currentSteps[i].currentStep = 0;
+                            }
+					    }
+				    }
+                }
 			}
 		}
-	}
-	resourceCount = 0;
-	}
-	++resourceCount; /**< Added by MoLAoS, resource generation */
+	} /**< Added by MoLAoS, resource generation */
+
+
+    for (int k = 0; k < getFactionCount(); ++k) { /**< Added by MoLAoS, unit generation */
+    Faction *faction = getFaction(k);
+        for (int j = 0; j < faction->getUnitCount(); ++j) {
+        const Unit *u =  faction->getUnit(j);
+            if (u->isOperative()) {
+                for (int i = 0; i < u->getType()->getCreatedUnitCount(); ++i) {
+                Timer cTime = u->getType()->getCreatedUnitTimer(i, faction);
+                int cTimeStep = u->currentUnitSteps[i].currentStep;
+                int newStep = cTimeStep + 1;
+                u->currentUnitSteps[i].currentStep = newStep;
+                int cTimeValue = cTime.getTimerValue();
+                int cRNewTime = u->currentUnitSteps[i].currentStep;
+                    if (cRNewTime == cTimeValue) {
+                    const CreatedUnit cu = u->getType()->getCreatedUnit(i, faction);
+                    string name = cu.getType()->getName();
+                    Vec2i locate = u->getPos();
+                    int cua = cu.getAmount();
+                        for (int n = 0; n < cua; ++n) {
+                        createUnit(name, k, locate, false);
+                        }
+                        u->currentUnitSteps[i].currentStep = 0;
+                    }
+                }
+            }
+        }
+	} /**< Added by MoLAoS, unit generation */
 }
 
 const UnitType* World::findUnitTypeById(const FactionType* factionType, int id) {
@@ -1296,7 +1331,7 @@ void World::computeFow() {
 	for (int i = 0; i < getFactionCount(); ++i) {
 		for (int j = 0; j < getFaction(i)->getUnitCount(); ++j) {
 			Unit *unit = getFaction(i)->getUnit(j);
-			if (unit->isOperative() && !unit->isCarried()) {
+			if (unit->isOperative() && !unit->isCarried()  && !unit->isGarrisoned()) {
 				exploreCells(unit->getCenteredPos(), unit->getSight(), unit->getTeam());
 			}
 		}
@@ -1327,7 +1362,7 @@ void World::computeFow() {
 		}
 		for (int j = 0; j < faction->getUnitCount(); ++j) {
 			const Unit *unit = faction->getUnit(j);
-			if (unit->isOperative() && !unit->isCarried()) {
+			if (unit->isOperative() && !unit->isCarried()  && !unit->isGarrisoned()) {
 				int sightRange = unit->getSight();
 				Vec2i pos;
 				float distance;

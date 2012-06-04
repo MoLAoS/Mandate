@@ -23,8 +23,10 @@
 #include "game_constants.h"
 #include "element_type.h"
 #include "vec.h"
+#include "unit_stats_base.h"
 #include "prototypes_enums.h"
 #include "simulation_enums.h"
+#include "upgrade_type.h"
 
 using std::map;
 using std::vector;
@@ -70,6 +72,68 @@ extern Colour factionColoursOutline[GameConstants::maxColours];
 Vec3f getFactionColour(int ndx);
 
 // =====================================================
+// 	class UpgradeStage
+// =====================================================
+/*typedef map<const ResourceType*, Modifier> ResModifierMap;
+
+struct UpgradeEffect {
+	EnhancementType  m_enhancement;
+	ResModifierMap   m_costModifiers;
+	ResModifierMap   m_storeModifiers;
+	ResModifierMap   m_createModifiers;
+
+	const EnhancementType* getEnhancement() const { return &m_enhancement; }
+};*/
+
+class UpgradeStage : public ProducibleType {
+
+private:
+	typedef vector<UpgradeEffect> Enhancements;
+	typedef map<const UnitType*, const UpgradeEffect*> EnhancementMap;
+	typedef vector< vector<string> > AffectedUnits;
+    typedef vector<string> Names;
+
+	EnhancementMap     m_enhancementMap;
+	const FactionType *m_factionType;
+
+public:
+    Names              m_names;
+    Enhancements       m_enhancements;
+	AffectedUnits      m_unitsAffected;
+
+
+    mutable int upgradeStage;
+    mutable int maxStage;
+    const UpgradeType *upgradeType;
+
+    int getUpgradeStage() const { return upgradeStage; }
+    const UpgradeType *getUpgradeType() const { return upgradeType; }
+    void setUpgradeStage(int v) { upgradeStage = v; }
+    int getMaxStage() const { return maxStage; }
+    void setMaxStage(int v) { maxStage = v; }
+
+	static ProducibleClass typeClass() { return ProducibleClass::UPGRADE; }
+    ProducibleClass getClass() const override                       { return typeClass(); }
+	const FactionType* getFactionType() const                       { return m_factionType; }
+	const EnhancementType* getEnhancement(const UnitType *ut) const;
+	Modifier getCostModifier(const UnitType *ut, const ResourceType *rt) const;
+	Modifier getStoreModifier(const UnitType *ut, const ResourceType *rt) const;
+    Modifier getCreateModifier(const UnitType *ut, const ResourceType *rt) const;
+
+	bool isAffected(const UnitType *unitType) const {
+		return m_enhancementMap.find(unitType) != m_enhancementMap.end();
+	}
+
+	virtual void doChecksum(Checksum &checksum) const;
+
+    UpgradeStage();
+    ~UpgradeStage();
+
+    void init(const UpgradeType *upgradeType, int upgradeStage, int maxStage, Names m_names,
+        const Enhancements m_enhancements, AffectedUnits m_unitsAffected, EnhancementMap m_enhancementMap);
+};
+
+// =====================================================
 // 	class Faction
 //
 ///	Each of the game players
@@ -83,6 +147,8 @@ public:
 	typedef map<const UnitType*, CostModifiers>        StoreModifiers;
     typedef map<const UnitType*, CostModifiers>        CreateModifiers;
 	typedef map<const UnitType*, int>                  UnitTypeCountMap;
+	typedef map<const UnitType*, Modifier>             CreateUnitModifiers;
+	typedef map<const UnitType*, CreateUnitModifiers>  CreatedUnitModifiers;
 
 private:
     typedef vector<StoredResource>	SResources;
@@ -91,14 +157,49 @@ private:
 
 	UpgradeManager upgradeManager;
 public:
-    SResources sresources;
-    CResources cresources;
+    SResources    sresources;
+    CResources    cresources;
+typedef vector<UpgradeStage>    UpgradeStages;
+               UpgradeStages    upgradeStages;
+
+    UpgradeStage *getUpgradeStage(const UpgradeType *ut);
+	UpgradeStage *getUpgradeStage(int i) {assert(i < upgradeStages.size()); return &upgradeStages[i];}
+	int getCurrentStage(const UpgradeType *ut);
 
 private:
 	Units units;
 	UnitMap unitMap;
 	Products products;
 	UnitTypeCountMap  m_unitCountMap;  // count of each 'operative' UnitType in factionType.
+
+typedef int                 UnitId;
+typedef list<UnitId>        UnitIdList;
+
+	// housed unit bits
+	UnitIdList	            m_transitingUnits;
+	UnitIdList	            m_unitsToTransit;
+	UnitIdList	            m_unitsToDetransit;
+	UnitId		            m_carrierFaction;
+
+public:
+	//-- for carry units
+	const UnitIdList& getCarriedUnits() const	{return m_transitingUnits;}
+	UnitIdList& getTransitingUnits()			{return m_transitingUnits;}
+	UnitIdList& getUnitsToTransit()				{return m_unitsToTransit;}
+	UnitIdList& getUnitsToDetransit()			{return m_unitsToDetransit;}
+	UnitId getCarrierFaction() const			{return m_carrierFaction;}
+	void housedUnitDied(Unit *unit);
+
+typedef list<Command*> Commands;
+	Commands commands;
+
+	//bool isVisible() const					{return carried;}
+	void setCarried(Faction *host)				{bool carried = (host != 0); m_carrierFaction = (host ? host->m_id : -1);}
+	void loadFactionUnitInit(Command *command);
+	void unloadFactionUnitInit(Command *command);
+	//----
+
+private:
 
 	ControlType control;
 
@@ -108,8 +209,13 @@ private:
 	UnitCostModifiers m_costModifiers;
 	StoreModifiers    m_storeModifiers;
 	CreateModifiers   m_createModifiers;
+	CreatedUnitModifiers m_createdUnitModifiers;
 
 	int teamIndex;
+
+	typedef vector<int> Allies;
+	Allies allies;
+
 	int startLocationIndex;
 	int colourIndex;
 
@@ -147,6 +253,7 @@ public:
 	const FactionType *getType() const					{return factionType;}
 	int getIndex() const								{return m_id;}
 	int getTeam() const									{return teamIndex;}
+    Allies getAllies() const                            {return allies;}
 	bool isDefeated() const								{return defeated;}
 	bool getCpuControl() const							{return control >= ControlType::CPU_EASY;}
 	bool getCpuUltraControl() const						{return control == ControlType::CPU_ULTRA;}
@@ -168,6 +275,7 @@ public:
 	Modifier getCostModifier(const ProducibleType *pt, const ResourceType *rt) const;
     Modifier getStoreModifier(const UnitType *ut, const ResourceType *rt) const;
 	Modifier getCreateModifier(const UnitType *ut, const ResourceType *rt) const;
+	Modifier getCreatedUnitModifier(const UnitType *ut, const UnitType *sut) const;
 
 	///@todo Remove this!
 	static const ResourceTypes &getNeededResources() 	{return neededResources;}

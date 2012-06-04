@@ -23,6 +23,7 @@
 #include "metrics.h"
 #include "display.h"
 #include "resource_bar.h"
+#include "faction_display.h"
 #include "platform_util.h"
 #include "sound_renderer.h"
 #include "util.h"
@@ -111,6 +112,7 @@ UserInterface::UserInterface(GameState &game)
 		, m_minimap(0)
 		, m_display(0)
 		, m_resourceBar(0)
+		, m_factionDisplay(0)
 		, m_luaConsole(0)
 		, selection(0)
 		, m_selectingSecond(false)
@@ -211,11 +213,31 @@ void UserInterface::init() {
 
 	if (g_config.getUiLastDisplaySize() >= 2) {
 		displayFrame->onExpand(0);
-	} 
+	}
 	if (g_config.getUiLastDisplaySize() == 3) {
 		displayFrame->onExpand(0);
 	}
+	if (g_config.getUiLastDisplaySize() == 4) {
+		displayFrame->onExpand(0);
+	}
+	if (g_config.getUiLastDisplaySize() == 5) {
+		displayFrame->onExpand(0);
+	}
+
+    // Faction Display Panel
+    FactionDisplayFrame *factionDisplayFrame = new FactionDisplayFrame(this, Vec2i(x,y));
+    m_factionDisplay = factionDisplayFrame->getDisplay();
+	m_factionDisplay->setSize();
+
+	if (g_config.getUiLastDisplaySize() >= 2) {
+		factionDisplayFrame->onExpand(0);
+	}
+	if (g_config.getUiLastDisplaySize() == 3) {
+		factionDisplayFrame->onExpand(0);
+	}
+
 	//m_minimap->getParent()->setPos(Vec2i(20, y));
+
 }
 
 void UserInterface::initMinimap(bool fow, bool sod, bool resuming) {
@@ -249,7 +271,7 @@ const UnitType *UserInterface::getBuilding() const {
 
 bool UserInterface::isPlacingBuilding() const {
 	return isSelectingPos() && activeCommandType
-		&& (activeCommandType->getClass() == CmdClass::BUILD 
+		&& (activeCommandType->getClass() == CmdClass::BUILD
 		|| activeCommandType->getClass() == CmdClass::TRANSFORM);
 }
 
@@ -279,7 +301,7 @@ static void calculateNearest(UnitVector &units, const Vec3f &pos) {
 		float minDist = numeric_limits<float>::infinity();
 		Unit *nearest = 0;
 		foreach_const (UnitVector, i, units) {
-			RUNTIME_CHECK(!(*i)->isCarried());
+			RUNTIME_CHECK(!(*i)->isCarried() && !(*i)->isGarrisoned());
 			float dist = pos.dist((*i)->getCurrVector());
 			if (dist < minDist) {
 				minDist = dist;
@@ -378,6 +400,31 @@ void UserInterface::unloadRequest(int carryIndex) {
 	}
 }
 
+void UserInterface::degarrisonRequest(int carryIndex) {
+	WIDGET_LOG( __FUNCTION__ << "( " << carryIndex << " )");
+	int i=0;
+	Unit *transportUnit = 0, *unloadUnit = 0;
+	for (int ndx = 0; !unloadUnit && ndx < selection->getCount(); ++ndx) {
+		if (selection->getUnit(ndx)->getType()->isOfClass(UnitClass::CARRIER)) {
+            const Unit *unit = selection->getUnit(ndx);
+            UnitIdList garrisonedUnits = unit->getGarrisonedUnits();
+            foreach (UnitIdList, it, garrisonedUnits) {
+                if (carryIndex == i) {
+                unloadUnit = g_world.getUnit(*it);
+                transportUnit = const_cast<Unit*>(unit);
+                break;
+                }
+                ++i;
+            }
+		}
+    }
+    assert(transportUnit && unloadUnit);
+    CmdResult dres = commander->tryDegarrisonCommand(transportUnit, CmdFlags(), Command::invalidPos, unloadUnit);
+    if (dres != CmdResult::SUCCESS) {
+        addOrdersResultToConsole(CmdClass::DEGARRISON, dres);
+    }
+}
+
 // ==================== events ====================
 
 void UserInterface::mouseDownLeft(int x, int y) {
@@ -423,11 +470,11 @@ void UserInterface::mouseDownLeft(int x, int y) {
 }
 
 void UserInterface::mouseDownRight(int x, int y) {
-	WIDGET_LOG( __FUNCTION__ << "( " << x << ", " << y << " )");	
+	WIDGET_LOG( __FUNCTION__ << "( " << x << ", " << y << " )");
 }
 
 void UserInterface::mouseUpLeft(int x, int y) {
-	WIDGET_LOG( __FUNCTION__ << "( " << x << ", " << y << " )");	
+	WIDGET_LOG( __FUNCTION__ << "( " << x << ", " << y << " )");
 	if (!selectingPos && !selectingMeetingPoint && selectionQuad.isEnabled()) {
 		selectionQuad.setPosUp(Vec2i(x, y));
 		if (selection->isComandable() && random.randRange(0, 1)) {
@@ -461,7 +508,7 @@ void UserInterface::mouseUpRight(int x, int y) {
 			const MapObject *obj = 0;
 			if (computeTarget(Vec2i(x, y), worldPos, units, obj)) {
 				Unit *targetUnit = units.empty() ? 0 : units.front();
-				Vec2i pos = targetUnit ? targetUnit->getPos() 
+				Vec2i pos = targetUnit ? targetUnit->getPos()
 					: obj ? obj->getResource()->getPos() : worldPos;
 				giveDefaultOrders(pos, targetUnit);
 			} else {
@@ -474,7 +521,7 @@ void UserInterface::mouseUpRight(int x, int y) {
 }
 
 void UserInterface::mouseDoubleClickLeft(int x, int y) {
-	WIDGET_LOG( __FUNCTION__ << "( " << x << ", " << y << " )");	
+	WIDGET_LOG( __FUNCTION__ << "( " << x << ", " << y << " )");
 	if (!selectingPos && !selectingMeetingPoint) {
 		UnitVector units;
 		Vec2i pos(x, y);
@@ -489,13 +536,13 @@ void UserInterface::mouseDoubleClickLeft(int x, int y) {
 }
 
 void UserInterface::mouseMove(int x, int y) {
-	WIDGET_LOG( __FUNCTION__ << "( " << x << ", " << y << " )");	
+	WIDGET_LOG( __FUNCTION__ << "( " << x << ", " << y << " )");
 	//compute selection
 	if (selectionQuad.isEnabled()) {
 		selectionQuad.setPosUp(Vec2i(x, y));
 		UnitVector units;
 		if (computeSelection) {
-			g_renderer.computeSelected(units, selectedObject, 
+			g_renderer.computeSelected(units, selectedObject,
 				selectionQuad.getPosDown(), selectionQuad.getPosUp());
 			//g_gameState.lastPick(units, selectedObject);
 			computeSelection = false;
@@ -1058,7 +1105,7 @@ void UserInterface::computeSelectionPanel() {
 					if (resName == unit->getLoadType()->getName()) {
 						resName = formatString(resName);
 					}
-					m_display->setLoadInfo(g_lang.get("Load") + ": " + intToStr(unit->getLoadCount()) 
+					m_display->setLoadInfo(g_lang.get("Load") + ": " + intToStr(unit->getLoadCount())
 						+  " " + resName);
 				} else {
 					m_display->setLoadInfo("");
@@ -1100,6 +1147,27 @@ void UserInterface::computeHousedUnitsPanel() {
 		}
 	}
 	m_display->setTransportedLabel(transported);
+}
+
+void UserInterface::computeGarrisonedUnitsPanel() {
+	bool transported = false;
+	int i = 0;
+	for (int ndx = 0; ndx < selection->getCount(); ++ndx) {
+		if (selection->getUnit(ndx)->getType()->isOfClass(UnitClass::CARRIER)) {
+			const Unit *unit = selection->getUnit(ndx);
+			UnitIdList garrisonedUnits = unit->getGarrisonedUnits();
+			if (!garrisonedUnits.empty()) {
+				transported = true;
+				foreach (UnitIdList, it, garrisonedUnits) {
+					if (i < Display::garrisonCellCount) {
+						Unit *unit = g_world.getUnit(*it);
+						m_display->setGarrisonImage(i++, unit->getType()->getImage());
+					}
+				}
+			}
+		}
+	}
+	m_display->setGarrisonedLabel(transported);
 }
 
 void UserInterface::computeCommandPanel() {
@@ -1208,9 +1276,10 @@ void UserInterface::computeDisplay() {
 
 	// === Housed Units Panel ===
 	computeHousedUnitsPanel();
-	
+	computeGarrisonedUnitsPanel();
+
 	// === Command Panel ===
-	computeCommandPanel();	
+	computeCommandPanel();
 }
 
 ///@todo move parts to CommandType classes (hmmm... CommandTypes that need to know about Console ?!? Nope.)

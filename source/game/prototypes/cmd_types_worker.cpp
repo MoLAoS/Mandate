@@ -56,7 +56,7 @@ bool RepairCommandType::repairableInRange(const Unit *unit, Vec2i centre, int ce
 	_PROFILE_COMMAND_UPDATE();
 	REPAIR_LOG2( unit,
 		__FUNCTION__ << "(): with unit: " << *unit << " @ " << unit->getPos() << ", "
-		<< " centre: " << centre << ", centreSize: " << centreSize;		
+		<< " centre: " << centre << ", centreSize: " << centreSize;
 	);
 
 	Targets repairables;
@@ -92,9 +92,9 @@ bool RepairCommandType::repairableInRange(const Unit *unit, Vec2i centre, int ce
 			}
 			const Command *cmd = candidate->anyCommand() ? candidate->getCurrCommand() : 0;
 			CmdClass cc = cmd ? (CmdClass::Enum)cmd->getType()->getClass() : CmdClass::INVALID;
-			const BuildSelfCommandType *bsct = cc == CmdClass::BUILD_SELF 
+			const BuildSelfCommandType *bsct = cc == CmdClass::BUILD_SELF
 				? static_cast<const BuildSelfCommandType*>(cmd->getType()) : 0;
-	
+
 			//is it a repairable?
 			if ((allowSelf || candidate != unit)
 			&& (!rst->isSelfOnly() || candidate == unit)
@@ -115,7 +115,7 @@ bool RepairCommandType::repairableInRange(const Unit *unit, Vec2i centre, int ce
 		return false;
 	} else if (repairables.size() == 1) {
 		*rangedPtr = repairables.begin()->first;
-		REPAIR_LOG2( unit, "\tSearch found single possible target. Unit: " 
+		REPAIR_LOG2( unit, "\tSearch found single possible target. Unit: "
 			<< **rangedPtr << " @ " << (*rangedPtr)->getPos() );
 		return true;
 	}
@@ -130,18 +130,18 @@ bool RepairCommandType::repairableInRange(const Unit *unit, Vec2i centre, int ce
 		// getNearest() will always return something for us...
 		return false;
 	}
-	REPAIR_LOG2( unit, "\tSearch found " << repairables.size() << " possible targets. Selected Unit: " 
+	REPAIR_LOG2( unit, "\tSearch found " << repairables.size() << " possible targets. Selected Unit: "
 		<< **rangedPtr << " @ " << (*rangedPtr)->getPos() );
 	return true;
 }
 
-bool RepairCommandType::repairableInRange(const Unit *unit, Unit **rangedPtr, 
+bool RepairCommandType::repairableInRange(const Unit *unit, Unit **rangedPtr,
 		const RepairCommandType *rct, int range, bool allowSelf, bool militaryOnly, bool damagedOnly) {
 	return repairableInRange(unit, unit->getPos(), unit->getType()->getSize(),
 			rangedPtr, rct, rct->getRepairSkillType(), range, allowSelf, militaryOnly, damagedOnly);
 }
 
-bool RepairCommandType::repairableInSight(const Unit *unit, Unit **rangedPtr, 
+bool RepairCommandType::repairableInSight(const Unit *unit, Unit **rangedPtr,
 							const RepairCommandType *rct, bool allowSelf) {
 	return repairableInRange(unit, rangedPtr, rct, unit->getSight(), allowSelf);
 }
@@ -252,7 +252,7 @@ void RepairCommandType::update(Unit *unit) const {
 	Unit *repaired = command->getUnit();
 
 	// If the unit I was supposed to repair died or is already fixed or not ally then finish
-	if (repaired && (repaired->isDead() || !repaired->isDamaged() 
+	if (repaired && (repaired->isDead() || !repaired->isDamaged()
 			|| !unit->isAlly(repaired))) {
 		unit->setCurrSkill(SkillClass::STOP);
 		unit->finishCommand();
@@ -355,7 +355,7 @@ void RepairCommandType::update(Unit *unit) const {
 			//shiney
 			if (rst->getSplashParticleType()) {
 				const Tile *sc = g_world.getMap()->getTile(Map::toTileCoords(repaired->getCenteredPos()));
-				bool visible = sc->isVisible(g_world.getThisTeamIndex()) 
+				bool visible = sc->isVisible(g_world.getThisTeamIndex())
 					&& g_renderer.getCuller().isInside(repaired->getCenteredPos());
 
 				Splash *psSplash = rst->getSplashParticleType()->createSplashParticleSystem(visible);
@@ -376,8 +376,8 @@ void RepairCommandType::update(Unit *unit) const {
 						// try to find finish build sound
 						BuildCommandType *bct = (BuildCommandType *)unit->getType()->getFirstCtOfClass(CmdClass::BUILD);
 						if (bct) {
-							RUNTIME_CHECK(!unit->isCarried());
-							g_soundRenderer.playFx(bct->getBuiltSound(), 
+							RUNTIME_CHECK(!unit->isCarried() && !unit->isGarrisoned());
+							g_soundRenderer.playFx(bct->getBuiltSound(),
 								unit->getCurrVector(), g_gameState.getGameCamera()->getPos());
 						}
 					}
@@ -402,7 +402,7 @@ Command *RepairCommandType::doAutoRepair(Unit *unit) const {
 		REPAIR_LOG( unit, __FUNCTION__ << "(): Unit:" << *unit << " @ " << unit->getPos()
 			<< ", found someone (" << *sighted << ") to repair @ " << sighted->getPos() );
 		Command *newCommand;
-		
+
 		Vec2i pos = Map::getNearestPos(unit->getPos(), sighted, repairSkillType->getMinRange(), repairSkillType->getMaxRange());
 		REPAIR_LOG( unit, "\tMap::getNearestPos(): " << pos );
 
@@ -452,7 +452,7 @@ bool BuildCommandType::load(const XmlNode *n, const string &dir, const TechTree 
 	}
 
 	//start sound
-	try { 
+	try {
 		const XmlNode *startSoundNode = n->getChild("start-sound");
 		if(startSoundNode->getAttribute("enabled")->getBoolValue()){
 			m_startSounds.resize(startSoundNode->getChildCount());
@@ -527,7 +527,7 @@ void BuildCommandType::update(Unit *unit) const {
 	assert(command->getType() == this);
 	const UnitType *builtUnitType = static_cast<const UnitType*>(command->getProdType());
 
-	BUILD_LOG( unit, 
+	BUILD_LOG( unit,
 		__FUNCTION__ << " : Updating unit " << unit->getId() << ", building type = " << builtUnitType->getName()
 		<< ", command target = " << command->getPos();
 	);
@@ -546,7 +546,7 @@ void BuildCommandType::update(Unit *unit) const {
 			// there are no free cells
 			vector<Unit *> occupants;
 			map->getOccupants(occupants, command->getPos(), builtUnitType->getSize(), Zone::LAND);
-			
+
 			// is construction already under way?
 			Unit *builtUnit = occupants.size() == 1 ? occupants[0] : NULL;
 			if (builtUnit && builtUnit->getType() == builtUnitType && !builtUnit->isBuilt()) {
@@ -564,13 +564,13 @@ void BuildCommandType::update(Unit *unit) const {
 
 bool BuildCommandType::isBlocked(const UnitType *builtUnitType, const Vec2i &pos, CardinalDir face) const {
 	bool blocked = false;
-	
+
 	Map *map = g_world.getMap();
 	if (!map->canOccupy(pos, builtUnitType->getField(), builtUnitType, face)) {
 		// there are no free cells
 		vector<Unit *> occupants;
 		map->getOccupants(occupants, pos, builtUnitType->getSize(), Zone::LAND);
-		
+
 		// if no existing construction and can't move units then is blocked
 		Unit *builtUnit = occupants.size() == 1 ? occupants[0] : NULL;
 		if (builtUnit && builtUnit->getType() == builtUnitType && !builtUnit->isBuilt()) {
@@ -595,7 +595,7 @@ CmdResult BuildCommandType::check(const Unit *unit, const Command &command) cons
 
 void BuildCommandType::undo(Unit *unit, const Command &command) const {
 	// return building cost if we reserved resources and are not already building it or dead
-	if (command.isReserveResources() 
+	if (command.isReserveResources()
 			&& unit->getCurrSkill()->getClass() != SkillClass::BUILD
 			&& unit->getCurrSkill()->getClass() != SkillClass::DIE) {
 		unit->getFaction()->deApplyCosts(command.getProdType());
@@ -714,7 +714,7 @@ void BuildCommandType::acceptBuild(Unit *unit, Command *command, const UnitType 
 	unit->getFaction()->checkAdvanceSubfaction(builtUnit->getType(), false);
 
 	Vec2i tilePos = Map::toTileCoords(builtUnit->getCenteredPos());
-	if (builtUnitType->getField() == Field::LAND 
+	if (builtUnitType->getField() == Field::LAND
 	|| (builtUnitType->getField() == Field::AMPHIBIOUS && !map->isTileSubmerged(tilePos))) {
 		map->prepareTerrain(builtUnit);
 	}
@@ -723,10 +723,10 @@ void BuildCommandType::acceptBuild(Unit *unit, Command *command, const UnitType 
 	if (!builtUnit->isMobile()) {
 		g_world.getCartographer()->updateMapMetrics(builtUnit->getPos(), builtUnit->getSize());
 	}
-	
+
 	//play start sound
 	if (unit->getFaction()->isThisFaction()) {
-		RUNTIME_CHECK(!unit->isCarried());
+		RUNTIME_CHECK(!unit->isCarried() && !unit->isGarrisoned());
 		g_soundRenderer.playFx(getStartSound(), unit->getCurrVector(), g_gameState.getGameCamera()->getPos());
 	}
 }
@@ -747,7 +747,7 @@ void BuildCommandType::continueBuild(Unit *unit, const Command *command, const U
 		unit->getFaction()->checkAdvanceSubfaction(builtUnit->getType(), true);
 		ScriptManager::onUnitCreated(builtUnit);
 		if (unit->getFactionIndex() == g_world.getThisFactionIndex()) {
-			RUNTIME_CHECK(!unit->isCarried());
+			RUNTIME_CHECK(!unit->isCarried() && !unit->isGarrisoned());
 			g_soundRenderer.playFx(getBuiltSound(), unit->getCurrVector(), g_gameState.getGameCamera()->getPos());
 		}
 	}
@@ -771,7 +771,7 @@ bool HarvestCommandType::load(const XmlNode *n, const string &dir, const TechTre
 		loadOk = false;
 	}
 	//stop loaded
-	try { 
+	try {
 		skillName = n->getChild("stop-loaded-skill")->getAttribute("value")->getRestrictedValue();
 		m_stopLoadedSkillType = static_cast<const StopSkillType*>(unitType->getSkillType(skillName, SkillClass::STOP));
 	} catch (runtime_error e) {
@@ -788,7 +788,7 @@ bool HarvestCommandType::load(const XmlNode *n, const string &dir, const TechTre
 		loadOk = false;
 	}
 	//resources can harvest
-	try { 
+	try {
 		const XmlNode *resourcesNode = n->getChild("harvested-resources");
 		for(int i = 0; i < resourcesNode->getChildCount(); ++i){
 			const XmlNode *resourceNode = resourcesNode->getChild("resource", i);
@@ -965,7 +965,7 @@ void HarvestCommandType::update(Unit *unit) const {
 					}
 				}
 			}
-		} 
+		}
 		// if load is wrong type, or more than half loaded, or no more resource to harvest, return to store
 		Unit *store = g_world.nearestStore(unit->getPos(), unit->getFaction()->getIndex(), unit->getLoadType());
 		if (store) {
@@ -981,7 +981,7 @@ void HarvestCommandType::update(Unit *unit) const {
 					unit->setCurrSkill(SkillClass::STOP);
 					unit->cancelCurrCommand();
 					return;
-				case TravelState::ARRIVED: 
+				case TravelState::ARRIVED:
 					break;
 			}
 			// update resources

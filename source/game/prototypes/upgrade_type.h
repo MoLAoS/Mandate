@@ -57,12 +57,11 @@ private:
 	typedef vector< vector<string> > AffectedUnits; // just names, used only in getDesc()
     typedef vector<string> Names; // just names, used only in getNameDesc()
 
-private:
+public:
 	EnhancementMap     m_enhancementMap;
 	const FactionType *m_factionType;
     Names              m_names;
-    mutable int        upgradeStage;
-public:
+
 	Enhancements       m_enhancements;
 	AffectedUnits      m_unitsAffected;
 
@@ -89,18 +88,14 @@ public:
 	Modifier getStoreModifier(const UnitType *ut, const ResourceType *rt) const;
     Modifier getCreateModifier(const UnitType *ut, const ResourceType *rt) const;
     int getMaxStage() const { return maxStage; }
-    int getUpgradeStage() const { return upgradeStage; }
 
 	bool isAffected(const UnitType *unitType) const {
 		return m_enhancementMap.find(unitType) != m_enhancementMap.end();
 	}
 
 	virtual void doChecksum(Checksum &checksum) const;
-	string getDesc(const Faction *f) const;
-    string getDescName(const Faction *f) const;
-
-    //set
-    virtual void setUpgradeStage(int v) const { upgradeStage = v; }
+	string getDesc(Faction *f) const;
+    string getDescName(Faction *f) const;
 };
 
 }} // namespace Glest::ProtoTypes

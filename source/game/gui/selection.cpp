@@ -36,7 +36,8 @@ void Selection::init(UserInterface *m_gui, int m_factionIndex) {
 	m_empty = true;
 	m_uniform = false;
 	m_commandable = false;
-	m_tranported = false;
+	m_transported = false;
+	m_garrisoned = false;
 	m_cancelable = false;
 	m_meetable = false;
 	m_canRepair = false;
@@ -220,7 +221,8 @@ void Selection::update() {
 		m_enemy = false;
 		m_uniform = false;
 		m_commandable = false;
-		m_tranported = false;
+		m_transported = false;
+		m_garrisoned = false;
 		m_cancelable = false;
 		m_meetable = false;
 		m_canRepair = false;
@@ -232,7 +234,8 @@ void Selection::update() {
 		m_enemy = true;
 		m_uniform = true;
 		m_commandable = false;
-		m_tranported = false;
+		m_transported = false;
+		m_garrisoned = false;
 		m_cancelable = false;
 		m_meetable = false;
 		m_canRepair = false;
@@ -245,7 +248,8 @@ void Selection::update() {
 		m_enemy = false;
 		m_uniform = true;
 		m_commandable = false;
-		m_tranported = false;
+		m_transported = false;
+		m_garrisoned = false;
 		m_cancelable = false;
 		m_canAttack = true;
 		m_canMove = true;
@@ -288,7 +292,10 @@ void Selection::update() {
 				m_uniform = false;
 			}
 			if ((*i)->getCarriedCount()) {
-				m_tranported = true;
+				m_transported = true;
+			}
+			if ((*i)->getGarrisonedCount()) {
+				m_garrisoned = true;
 			}
 			if (ut->hasCommandClass(CmdClass::REPAIR)) {
 				if (((*i)->isAutoCmdEnabled(AutoCmdFlag::REPAIR))) {
@@ -377,6 +384,17 @@ void Selection::removeCarried() {
 	UnitVector::iterator i = m_selectedUnits.begin();
 	while (i != m_selectedUnits.end()) {
 		if ((*i)->isCarried()) {
+			i = m_selectedUnits.erase(i);
+		} else {
+			++i;
+		}
+	}
+}
+
+void Selection::removeGarrisoned() {
+	UnitVector::iterator i = m_selectedUnits.begin();
+	while (i != m_selectedUnits.end()) {
+		if ((*i)->isGarrisoned()) {
 			i = m_selectedUnits.erase(i);
 		} else {
 			++i;

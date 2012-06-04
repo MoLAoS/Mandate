@@ -45,7 +45,8 @@ private:
 	bool			m_enemy;
 	bool			m_uniform;
 	bool			m_commandable;
-	bool            m_tranported;
+	bool            m_transported;
+	bool            m_garrisoned;
 	bool			m_cancelable;
 	bool			m_meetable;
 	bool			m_canRepair;
@@ -81,7 +82,8 @@ public:
 	bool isUniform() const				{return m_uniform;}
 	bool isEnemy() const				{return m_enemy;}
 	bool isComandable() const			{return m_commandable;}
-	bool hasTransported() const         {return m_tranported;}
+	bool hasTransported() const         {return m_transported;}
+	bool hasGarrisoned() const          {return m_garrisoned;}
 	bool isCancelable() const			{return m_cancelable;}
 	bool isMeetable() const				{return m_meetable;}
 	bool canRepair() const				{return m_canRepair;}
@@ -96,11 +98,11 @@ public:
 		}
 		return false;
 	}
-	
+
 	bool cloakAvailable() const {
 		foreach_const (UnitVector, it, m_selectedUnits) {
 			if ((*it)->getType()->getCloakType()) {
-				if ((*it)->getFaction()->reqsOk((*it)->getType()->getCloakType())) {	
+				if ((*it)->getFaction()->reqsOk((*it)->getType()->getCloakType())) {
 					return true;
 				}
 			}
@@ -128,6 +130,7 @@ public:
 
 	void update();
 	void removeCarried();
+	void removeGarrisoned();
 
 	void load(const XmlNode *node);
 	void save(XmlNode *node) const;

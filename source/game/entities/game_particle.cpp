@@ -118,7 +118,7 @@ void FireParticleSystem::updateParticle(Particle *p) {
 // ===========================================================================
 
 DirectedParticleSystem::DirectedParticleSystem(ParticleUse use, bool visible, const ParticleSystemBase &protoType, int particleCount)
-		: GameParticleSystem(use, visible, protoType, particleCount) 
+		: GameParticleSystem(use, visible, protoType, particleCount)
 		, direction(1.0f, 0.0f, 0.0f) {
 	fog = g_world.getTileset()->getFog();
 }
@@ -182,6 +182,10 @@ void Projectile::update() {
 			if (target->isCarried()) { // if target got into another unit, switch target to carrier
 				target = g_world.getUnit(target->getCarrier());
 				RUNTIME_CHECK(!target->isCarried());
+			}
+			if (target->isGarrisoned()) {
+			    target = g_world.getUnit(target->getCarrier());
+			    RUNTIME_CHECK(!target->isGarrisoned());
 			}
 			endPos = target->getCurrVector();
 		}
@@ -409,7 +413,7 @@ void Splash::updateParticle(Particle *p) {
 UnitParticleSystem::UnitParticleSystem(bool visible, const UnitParticleSystemType &protoType, int particleCount)
 		: GameParticleSystem(ParticleUse::UNIT, visible, protoType, particleCount) {
 	type = &protoType;
-	
+
 	rotation = 0.0f;
 	cRotation = Vec3f(1.f, 1.f, 1.f);
 	fixedAddition = Vec3f(0.f, 0.f, 0.f);
@@ -470,21 +474,21 @@ void UnitParticleSystem::initParticle(Particle *p, int particleIndex) {
 
 	if (!relative) {
 		p->pos = Vec3f(
-			pos.x + x + offset.x, 
-			pos.y + random.randRange(-radius / 2.f, radius / 2.f) + offset.y, 
+			pos.x + x + offset.x,
+			pos.y + random.randRange(-radius / 2.f, radius / 2.f) + offset.y,
 			pos.z + y + offset.z
 		);
 	} else { // rotate it according to rotation
 		float rad = degToRad(rotation);
 		p->pos = Vec3f(
 				pos.x + x + offset.z * sinf(rad) + offset.x * cosf(rad),
-				pos.y + random.randRange(-radius / 2, radius / 2) + offset.y, 
+				pos.y + random.randRange(-radius / 2, radius / 2) + offset.y,
 				pos.z + y + (offset.z * cosf(rad) - offset.x * sinf(rad))
-		); 
+		);
 		if (relativeDirection) {
 			p->speed = Vec3f(
-				p->speed.z * sinf(rad) + p->speed.x * cosf(rad), 
-				p->speed.y, 
+				p->speed.z * sinf(rad) + p->speed.x * cosf(rad),
+				p->speed.y,
 				(p->speed.z * cosf(rad) - p->speed.x * sinf(rad))
 			);
 		}

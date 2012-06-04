@@ -48,7 +48,8 @@ public:
 		const UpgradeType *upgradeType;
 		int factionIndex;
 		CreateParams(const UpgradeType *type, int fNdx) :
-		upgradeType(type), factionIndex(fNdx) {}
+		upgradeType(type), factionIndex(fNdx)
+        {}
 	};
 	struct LoadParams {
 		const XmlNode *node;
@@ -65,7 +66,7 @@ public:
 public:
 	//get
 	int getId() const { return m_id; }
-	const UpgradeType * getType() const;
+	const UpgradeType *getType() const;
 	UpgradeState getState() const;
 
 	void save(XmlNode *node) const;
@@ -98,12 +99,14 @@ public:
 
 	void startUpgrade(const UpgradeType *upgradeType, int factionIndex);
 	void cancelUpgrade(const UpgradeType *upgradeType);
-	void finishUpgrade(const UpgradeType *upgradeType);
-	void updateUpgrade(const Upgrade *upgrade);
+	void finishUpgrade(const UpgradeType *upgradeType, Faction *f);
+    void wrapUpdateUpgrade(const UpgradeType *upgradeType, Faction *f);
+	void updateUpgrade(const Upgrade *upgrade, Faction *f);
 
 	bool isUpgraded(const UpgradeType *upgradeType) const;
 	bool isUpgrading(const UpgradeType *upgradeType) const;
-	bool isUpgradingOrUpgraded(const UpgradeType *upgradeType) const;
+	bool isPartial(const UpgradeType *upgradeType) const;
+	bool isUpgradingOrUpgraded(const UpgradeType *upgradeType, const Faction *f) const;
 	void computeTotalUpgrade(const Unit *unit, EnhancementType *totalUpgrade) const;
 	void addPointBoosts(Unit *unit) const;
 
