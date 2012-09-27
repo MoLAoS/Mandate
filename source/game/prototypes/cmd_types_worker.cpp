@@ -1049,4 +1049,329 @@ void HarvestCommandType::update(Unit *unit) const {
 	}
 }
 
+// =====================================================
+// 	class TransportCommandType
+// =====================================================
+
+bool TransportCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft){
+	bool loadOk = MoveBaseCommandType::load(n, dir, tt, ft);
+
+	string skillName;
+	//harvest
+	try {
+		skillName = n->getChild("transport-skill")->getAttribute("value")->getRestrictedValue();
+		m_transportSkillType = static_cast<const TransportSkillType*>(unitType->getSkillType(skillName, SkillClass::TRANSPORT));
+	} catch (runtime_error e) {
+		g_logger.logXmlError(dir, e.what());
+		loadOk = false;
+	}
+	//stop loaded
+	try {
+		skillName = n->getChild("stop-loaded-skill")->getAttribute("value")->getRestrictedValue();
+		m_stopLoadedSkillType = static_cast<const StopSkillType*>(unitType->getSkillType(skillName, SkillClass::STOP));
+	} catch (runtime_error e) {
+		g_logger.logXmlError(dir, e.what());
+		loadOk = false;
+	}
+
+	//move loaded
+	try {
+		skillName = n->getChild("move-loaded-skill")->getAttribute("value")->getRestrictedValue();
+		m_moveLoadedSkillType = static_cast<const MoveSkillType*>(unitType->getSkillType(skillName, SkillClass::MOVE));
+	} catch (runtime_error e) {
+		g_logger.logXmlError(dir, e.what());
+		loadOk = false;
+	}
+	//resources can harvest
+	try {
+		const XmlNode *resourcesNode = n->getChild("transported-resources");
+		for(int i = 0; i < resourcesNode->getChildCount(); ++i){
+			const XmlNode *resourceNode = resourcesNode->getChild("resource", i);
+			m_transportedResources.push_back(tt->getResourceType(resourceNode->getAttribute("name")->getRestrictedValue()));
+		}
+	} catch (runtime_error e) {
+		g_logger.logXmlError(dir, e.what());
+		loadOk = false;
+	}
+	return loadOk;
+}
+
+void TransportCommandType::doChecksum(Checksum &checksum) const {
+	MoveBaseCommandType::doChecksum(checksum);
+	checksum.add(m_moveLoadedSkillType->getName());
+	checksum.add(m_transportSkillType->getName());
+	checksum.add(m_stopLoadedSkillType->getName());
+	for (int i=0; i < m_transportedResources.size(); ++i) {
+		checksum.add(m_transportedResources[i]->getName());
+	}
+}
+
+void TransportCommandType::getDesc(string &str, const Unit *unit) const{
+	Lang &lang= Lang::getInstance();
+	m_transportSkillType->descEpCost(str, unit);
+	str += lang.get("LoadedSpeed") + ": " + intToStr(m_moveLoadedSkillType->getBaseSpeed()) + "\n";
+}
+
+void TransportCommandType::descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const {
+	string msg;
+	getDesc(msg, unit);
+	callback->addElement(msg);
+}
+
+void TransportCommandType::subDesc(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const {
+	Lang &lang = g_lang;
+	callback->addElement(g_lang.get("Transported") + ":");
+	foreach_const (vector<const ResourceType*>, it, m_transportedResources) {
+		callback->addItem(*it, lang.getTranslatedTechName((*it)->getName()));
+	}
+}
+
+void TransportCommandType::goToStore(Unit *unit, Unit *store, Unit *producer) const {
+    for (int i = 0; i < producer->getType()->processes.size(); ++i) {
+    for (int j = 0; j < producer->getType()->processes[i].costs.size(); ++j) {
+        const ResourceType *transportType = producer->getType()->processes[i].costs[j].getType();
+        for (int k = 0; k < store->getType()->getStoredResourceCount(); ++k) {
+        const ResourceType *storeType = store->getType()->getStoredResource(k, store->getFaction()).getType();
+            if (transportType == storeType) {
+            int resourceAmount = producer->getType()->processes[i].costs[j].getAmount()*4;
+                if (unit->getFaction()->getCpuControl()) {
+                const float &mult = g_simInterface.getGameSettings().getResourceMultilpier(unit->getFactionIndex());
+                resourceAmount = int(resourceAmount * mult);
+                }
+                if (store->getSResource(storeType)->getAmount() >= resourceAmount) {
+                store->incResourceAmount(storeType, -resourceAmount);
+                unit->incResourceAmount(storeType, resourceAmount);
+                } else {
+                resourceAmount = store->getSResource(storeType)->getAmount();
+                store->incResourceAmount(storeType, -resourceAmount);
+                unit->incResourceAmount(storeType, resourceAmount);
+                }
+            }
+        }
+    }
+    }
+    for (int i = 0; i < unit->getType()->getStoredResourceCount(); ++i) {
+        const ResourceType *transportType = unit->getType()->getStoredResource(i, store->getFaction()).getType();
+        for (int k = 0; k < store->getType()->getStoredResourceCount(); ++k) {
+        const ResourceType *storeType = store->getType()->getStoredResource(k, store->getFaction()).getType();
+            if (transportType == storeType) {
+            int resourceAmount = unit->getSResource(storeType)->getAmount();
+                if (unit->getFaction()->getCpuControl()) {
+                const float &mult = g_simInterface.getGameSettings().getResourceMultilpier(unit->getFactionIndex());
+                resourceAmount = int(resourceAmount * mult);
+                }
+                if (unit->getSResource(storeType)->getAmount() >= resourceAmount) {
+                unit->incResourceAmount(storeType, -resourceAmount);
+                store->incResourceAmount(storeType, resourceAmount);
+                } else {
+                resourceAmount = unit->getSResource(storeType)->getAmount();
+                unit->incResourceAmount(storeType, -resourceAmount);
+                store->incResourceAmount(storeType, resourceAmount);
+                }
+            }
+        }
+    }
+}
+
+void TransportCommandType::goToProducer(Unit *unit, Unit *store, Unit *producer) const {
+    for (int i = 0; i < producer->getType()->processes.size(); ++i) {
+    for (int j = 0; j < producer->getType()->processes[i].costs.size(); ++j) {
+        const ResourceType *transportType = producer->getType()->processes[i].costs[j].getType();
+        for (int k = 0; k < store->getType()->getStoredResourceCount(); ++k) {
+        const ResourceType *storeType = store->getType()->getStoredResource(k, store->getFaction()).getType();
+            if (transportType == storeType) {
+            int resourceAmount = producer->getType()->processes[i].costs[j].getAmount()*4;
+                if (unit->getFaction()->getCpuControl()) {
+                const float &mult = g_simInterface.getGameSettings().getResourceMultilpier(unit->getFactionIndex());
+                resourceAmount = int(resourceAmount * mult);
+                }
+                if (store->getSResource(storeType)->getAmount() >= resourceAmount) {
+                unit->incResourceAmount(storeType, -resourceAmount);
+                producer->incResourceAmount(storeType, resourceAmount);
+                } else {
+                resourceAmount = unit->getSResource(storeType)->getAmount();
+                unit->incResourceAmount(storeType, -resourceAmount);
+                producer->incResourceAmount(storeType, resourceAmount);
+                }
+            }
+        }
+    }
+    }
+    for (int i = 0; i < producer->getType()->processes.size(); ++i) {
+    for (int j = 0; j < producer->getType()->processes[i].products.size(); ++j) {
+        const ResourceType *transportType = producer->getType()->processes[i].products[j].getType();
+        for (int k = 0; k < store->getType()->getStoredResourceCount(); ++k) {
+        const ResourceType *storeType = store->getType()->getStoredResource(k, store->getFaction()).getType();
+        if (transportType == storeType) {
+        for (int l = 0; l < producer->getType()->getStoredResourceCount(); ++l) {
+        const ResourceType *produceType = producer->getType()->getStoredResource(l, producer->getFaction()).getType();
+            if (storeType == produceType) {
+            int resourceAmount = producer->getSResource(produceType)->getAmount();
+                if (unit->getFaction()->getCpuControl()) {
+                const float &mult = g_simInterface.getGameSettings().getResourceMultilpier(unit->getFactionIndex());
+                resourceAmount = int(resourceAmount * mult);
+                }
+            unit->incResourceAmount(produceType, resourceAmount);
+            producer->incResourceAmount(produceType, -resourceAmount);
+            }
+        }
+        }
+        }
+    }
+    }
+    for (int i = 0; i < producer->getType()->createdResources.size(); ++i) {
+    const ResourceType *transportType = producer->getType()->createdResources[i].getType();
+    for (int k = 0; k < store->getType()->getStoredResourceCount(); ++k) {
+    const ResourceType *storeType = store->getType()->getStoredResource(k, store->getFaction()).getType();
+        if (transportType == storeType) {
+        int resourceAmount = producer->getSResource(storeType)->getAmount();
+            if (unit->getFaction()->getCpuControl()) {
+            const float &mult = g_simInterface.getGameSettings().getResourceMultilpier(unit->getFactionIndex());
+            resourceAmount = int(resourceAmount * mult);
+            }
+        unit->incResourceAmount(storeType, resourceAmount);
+        producer->incResourceAmount(storeType, -resourceAmount);
+        }
+    }
+    }
+}
+
+void TransportCommandType::update(Unit *unit) const {
+	_PROFILE_COMMAND_UPDATE();
+	Command *command = unit->getCurrCommand();
+	assert(command->getType() == this);
+	Vec2i targetPos;
+	Map *map = g_world.getMap();
+	if (unit->productionRoute.getStoreId() != 0 && unit->productionRoute.getProducerId()) {
+	    Unit *store = g_world.getUnit(unit->productionRoute.getStoreId());
+	    Unit *producer = g_world.getUnit(unit->productionRoute.getProducerId());
+        if (unit->productionRoute.getDestination() == store->getPos()) {
+            if (unit->travel(unit->productionRoute.getDestination(), m_moveLoadedSkillType) == TravelState::ARRIVED) {
+            goToStore(unit, store, producer);
+            unit->productionRoute.setDestination(producer->getPos());
+            }
+        }
+        if (unit->productionRoute.getDestination() == producer->getPos()) {
+            if (unit->travel(unit->productionRoute.getDestination(), m_moveLoadedSkillType) == TravelState::ARRIVED) {
+            goToProducer(unit, store, producer);
+            unit->productionRoute.setDestination(store->getPos());
+            }
+        }
+	} else {
+	    unit->finishCommand();
+	}
+}
+
+// =====================================================
+// 	class SetStoreCommandType
+// =====================================================
+
+bool SetStoreCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft){
+	bool loadOk = StopBaseCommandType::load(n, dir, tt, ft);
+
+	string skillName;
+	// set structure
+	try {
+		skillName = n->getChild("set-structure-skill")->getAttribute("value")->getRestrictedValue();
+		m_setStructureSkillType = static_cast<const SetStructureSkillType*>(unitType->getSkillType(skillName, SkillClass::SET_STRUCTURE));
+	} catch (runtime_error e) {
+		g_logger.logXmlError(dir, e.what());
+		loadOk = false;
+	}
+
+	return loadOk;
+}
+
+void SetStoreCommandType::doChecksum(Checksum &checksum) const {
+	StopBaseCommandType::doChecksum(checksum);
+	checksum.add(m_setStructureSkillType->getName());
+}
+
+void SetStoreCommandType::getDesc(string &str, const Unit *unit) const{
+	Lang &lang= Lang::getInstance();
+	m_setStructureSkillType->descEpCost(str, unit);
+}
+
+void SetStoreCommandType::descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const {
+	string msg;
+	getDesc(msg, unit);
+	callback->addElement(msg);
+}
+
+void SetStoreCommandType::subDesc(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const {
+	Lang &lang = g_lang;
+}
+
+void SetStoreCommandType::update(Unit *unit) const {
+	_PROFILE_COMMAND_UPDATE();
+	Command *command = unit->getCurrCommand();
+	assert(command->getType() == this);
+	Vec2i targetPos;
+	Map *map = g_world.getMap();
+	Unit *target = command->getUnit();
+	if (target) {
+        if (target != unit) {
+        unit->productionRoute.setStoreId(target->getId());
+        unit->productionRoute.setDestination(target->getPos());
+        }
+	}
+    unit->finishCommand();
+}
+
+// =====================================================
+// 	class SetProducerCommandType
+// =====================================================
+
+bool SetProducerCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft){
+	bool loadOk = StopBaseCommandType::load(n, dir, tt, ft);
+
+	string skillName;
+	// set structure
+	try {
+		skillName = n->getChild("set-structure-skill")->getAttribute("value")->getRestrictedValue();
+		m_setStructureSkillType = static_cast<const SetStructureSkillType*>(unitType->getSkillType(skillName, SkillClass::SET_STRUCTURE));
+	} catch (runtime_error e) {
+		g_logger.logXmlError(dir, e.what());
+		loadOk = false;
+	}
+
+	return loadOk;
+}
+
+void SetProducerCommandType::doChecksum(Checksum &checksum) const {
+	StopBaseCommandType::doChecksum(checksum);
+	checksum.add(m_setStructureSkillType->getName());
+}
+
+void SetProducerCommandType::getDesc(string &str, const Unit *unit) const{
+	Lang &lang= Lang::getInstance();
+	m_setStructureSkillType->descEpCost(str, unit);
+}
+
+void SetProducerCommandType::descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const {
+	string msg;
+	getDesc(msg, unit);
+	callback->addElement(msg);
+}
+
+void SetProducerCommandType::subDesc(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const {
+	Lang &lang = g_lang;
+}
+
+void SetProducerCommandType::update(Unit *unit) const {
+	_PROFILE_COMMAND_UPDATE();
+	Command *command = unit->getCurrCommand();
+	assert(command->getType() == this);
+	Vec2i targetPos;
+	Map *map = g_world.getMap();
+	Unit *target = command->getUnit();
+	if (target) {
+        if (target != unit) {
+        unit->productionRoute.setProducerId(target->getId());
+        //unit->productionRoute.setDestination(target->getPos());
+        }
+	}
+    unit->finishCommand();
+}
+
 }}

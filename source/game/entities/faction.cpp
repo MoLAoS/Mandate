@@ -225,6 +225,18 @@ void Faction::init(const FactionType *factionType, ControlType control, string p
 			}
 		}
 
+		tradeCommands.resize(sresources.size()*4);
+		int init = 0;
+		int inita[] = {100, 500, 1000, 2000};
+		for (int i = 0; i < sresources.size(); ++i) {
+			const ResourceType *rt = sresources[i].getType();
+			for (int j = 0; j < 4; ++j) {
+			int value = inita[j];
+			tradeCommands[init].init(value, rt, Clicks::TWO);
+			++init;
+			}
+		}
+
         upgradeStages.resize(factionType->getUpgradeTypeCount());
 		for (int i = 0; i < factionType->getUpgradeTypeCount(); ++i) {
 			const UpgradeType *ut = factionType->getUpgradeType(i);
@@ -383,6 +395,19 @@ void Faction::load(const XmlNode *node, World *world, const FactionType *ft, Con
 	pixmap->setPixel(0, 0, factionColours[colourIndex].ptr());
 
 	assert(units.size() == unitMap.size());
+
+    for (int i = 0; i < getType()->getGuiFileNamesCount(); ++i) {
+	    Rocket::Core::String fileName;
+	    for(int j = 0; j < getType()->getGuiFileName(i).size(); j++) {
+            char c = getType()->getGuiFileName(i)[j];
+            fileName += c;
+        }
+        Rocket::Core::ElementDocument* document = world->getGame().getContext()->LoadDocument(fileName);
+        if (document != NULL) {
+            document->Show();
+            document->RemoveReference();
+        }
+	}
 }
 
 // ================== get ==================
@@ -577,6 +602,11 @@ bool Faction::reqsOk(const CommandType *ct, const ProducibleType *pt) const {
 
 	if (ct->getClass() == CmdClass::SET_MEETING_POINT
 	|| ct->getClass() == CmdClass::BE_LOADED) {
+		return true;
+	}
+
+	if (ct->getClass() == CmdClass::CREATE_SQUAD
+	|| ct->getClass() == CmdClass::EXPAND_SQUAD) {
 		return true;
 	}
 
@@ -1186,6 +1216,10 @@ void Faction::checkAdvanceSubfaction(const ProducibleType *pt, bool finished) {
 			advanceSubfaction(advance);
 		}
 	}
+}
+
+void Faction::applyTrade(const ResourceType *rt, int tradeAmount) {
+    incResourceAmount(rt, tradeAmount);
 }
 
 }}//end namespace

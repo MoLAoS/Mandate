@@ -237,6 +237,7 @@ public:
 
 	ModelFactory& getModelFactory()						{return m_modelFactory;}
 
+	GameState &getGame()                            {return game;}
 	int getMaxPlayers() const						{return map.getMaxPlayers();}
 	int getThisFactionIndex() const					{return thisFactionIndex;}
 	int getThisTeamIndex() const					{return thisTeamIndex;}

@@ -19,6 +19,7 @@
 #include "lang.h"
 #include "flags.h"
 #include "factory.h"
+#include "abilities.h"
 #include <set>
 using std::set;
 
@@ -35,7 +36,6 @@ using Shared::Util::MultiFactory;
 #include "simulation_enums.h"
 #include "entities_enums.h"
 #include "particle_type.h"	// forward decs
-
 
 namespace Glest {
 using namespace Sound;
@@ -252,6 +252,8 @@ public:
 
 class AttackSkillType: public TargetBasedSkillType {
 private:
+    typedef vector<DamageType> DamageTypes;
+
 	int attackStrength;
 	int attackVar;
 	int attackLifeLeech; // attempt to add lifeleech
@@ -263,9 +265,10 @@ private:
 //	EarthquakeType *earthquakeType;
 
 public:
-	AttackSkillType() : TargetBasedSkillType("Attack"), attackStrength(0),
-		attackVar(0), attackType(0), attackLifeLeech(0), attackManaBurn(0),
-		attackCapture(0)/*, earthquakeType(NULL)*/ {}
+    DamageTypes damageTypes;
+
+	AttackSkillType() : TargetBasedSkillType("Attack"), attackStrength(0), attackVar(0),
+	attackType(0), attackLifeLeech(0), attackManaBurn(0), attackCapture(0), damageTypes(0) /*, earthquakeType(NULL)*/ {}
 	virtual ~AttackSkillType();
 
 	virtual void load(const XmlNode *sn, const string &dir, const TechTree *tt, const UnitType *ut) override;
@@ -286,6 +289,23 @@ public:
 
 	virtual SkillClass getClass() const override { return typeClass(); }
 	static SkillClass typeClass() { return SkillClass::ATTACK; }
+};
+
+// ===============================
+// 	class ConstructSkillType
+// ===============================
+
+class ConstructSkillType: public SkillType{
+public:
+	ConstructSkillType() : SkillType("Construct") {}
+	void getDesc(string &str, const Unit *unit) const {
+		descSpeed(str, unit, "ConstructSpeed");
+		descEpCost(str, unit);
+	}
+
+	virtual fixed getSpeed(const Unit *unit) const override;
+	virtual SkillClass getClass() const override { return typeClass(); }
+	static SkillClass typeClass() { return SkillClass::CONSTRUCT; }
 };
 
 // ===============================
@@ -321,6 +341,32 @@ public:
 };
 
 // ===============================
+// 	class TransportSkillType
+// ===============================
+
+class TransportSkillType: public SkillType{
+public:
+	TransportSkillType() : SkillType("Transport") {}
+	virtual void getDesc(string &str, const Unit *unit) const override {
+	}
+	virtual SkillClass getClass() const override { return typeClass(); }
+	static SkillClass typeClass() { return SkillClass::TRANSPORT; }
+};
+
+// ===============================
+// 	class SetStructureSkillType
+// ===============================
+
+class SetStructureSkillType: public SkillType{
+public:
+	SetStructureSkillType() : SkillType("SetStructure") {}
+	virtual void getDesc(string &str, const Unit *unit) const override {
+	}
+	virtual SkillClass getClass() const override { return typeClass(); }
+	static SkillClass typeClass() { return SkillClass::SET_STRUCTURE; }
+};
+
+// ===============================
 // 	class RepairSkillType
 // ===============================
 
@@ -351,6 +397,38 @@ public:
 
 	virtual SkillClass getClass() const override { return typeClass(); }
 	static SkillClass typeClass() { return SkillClass::REPAIR; }
+};
+
+// ===============================
+// 	class MaintainSkillType
+// ===============================
+
+class MaintainSkillType: public SkillType {
+private:
+	int amount;
+	fixed multiplier;
+	bool petOnly;
+	bool selfOnly;
+	bool selfAllowed;
+
+public:
+	MaintainSkillType();
+	virtual ~MaintainSkillType(){}
+
+	virtual void load(const XmlNode *sn, const string &dir, const TechTree *tt, const UnitType *ut) override;
+	virtual void doChecksum(Checksum &checksum) const override;
+	virtual void getDesc(string &str, const Unit *unit) const override;
+
+	virtual fixed getSpeed(const Unit *unit) const override;
+	int getAmount() const		{return amount;}
+	fixed getMultiplier() const	{return multiplier;}
+
+	bool isPetOnly() const		{return petOnly;}
+	bool isSelfOnly() const		{return selfOnly;}
+	bool isSelfAllowed() const	{return selfAllowed;}
+
+	virtual SkillClass getClass() const override { return typeClass(); }
+	static SkillClass typeClass() { return SkillClass::MAINTAIN; }
 };
 
 // ===============================

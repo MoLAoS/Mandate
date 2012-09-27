@@ -27,6 +27,7 @@
 #include "prototypes_enums.h"
 #include "simulation_enums.h"
 #include "upgrade_type.h"
+#include "trade_command.h"
 
 using std::map;
 using std::vector;
@@ -39,6 +40,7 @@ using Glest::Sim::ControlType;
 
 namespace Glest { namespace Entities {
 
+using namespace Glest::Gui_Mandate;
 class Unit;
 
 // =====================================================
@@ -74,16 +76,6 @@ Vec3f getFactionColour(int ndx);
 // =====================================================
 // 	class UpgradeStage
 // =====================================================
-/*typedef map<const ResourceType*, Modifier> ResModifierMap;
-
-struct UpgradeEffect {
-	EnhancementType  m_enhancement;
-	ResModifierMap   m_costModifiers;
-	ResModifierMap   m_storeModifiers;
-	ResModifierMap   m_createModifiers;
-
-	const EnhancementType* getEnhancement() const { return &m_enhancement; }
-};*/
 
 class UpgradeStage : public ProducibleType {
 
@@ -156,9 +148,15 @@ private:
 	typedef vector<Product>			Products;
 
 	UpgradeManager upgradeManager;
+
 public:
     SResources    sresources;
     CResources    cresources;
+
+typedef vector<TradeCommand>    TradeCommands;
+               TradeCommands    tradeCommands;
+
+
 typedef vector<UpgradeStage>    UpgradeStages;
                UpgradeStages    upgradeStages;
 
@@ -373,6 +371,8 @@ public:
 private:
 	void limitResourcesToStore();
 	void resetResourceAmount(const ResourceType *rt);
+
+	void applyTrade(const ResourceType *rt, int tradeAmount);
 };
 
 }}//end namespace

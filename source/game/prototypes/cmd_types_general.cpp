@@ -373,6 +373,38 @@ void MoveCommandType::update(Unit *unit) const {
 	}
 
 	if (unit->travel(pos, m_moveSkillType) == TravelState::ARRIVED) {
+	    /*if (command->getUnit()) {
+	        Unit *check = command->getUnit();
+	        /*if (check->getType()->getProperty(Property::STAIR)) {
+	            if (unit->getField() == Field::LAND) {
+                        unit->setField(Field::AIR);
+                        unit->setZone(Zone::AIR);
+                        //unit->setField(Field::STAIR);
+                        //unit->setZone(Zone::WALL);
+	            } else if (unit->getField() == Field::WALL) {
+	                unit->setField(Field::STAIR);
+	                unit->setZone(Zone::WALL);
+	            } else if (unit->getField() == Field::STAIR) {
+	                unit->setField(Field::LAND);
+	                unit->setZone(Zone::LAND);
+	            } else if (unit->getField() == Field::AIR) {
+                    //if (g_world.placeUnit(command->getUnit()->getCenteredPos(), 1, unit)) {
+                        //g_map.putUnitCells(unit, unit->getPos());
+                        unit->setField(Field::LAND);
+                        unit->setZone(Zone::LAND);
+                    //} else {
+                        //g_console.addLine("too crowded to unload");
+                        //unit->setCurrSkill(SkillClass::STOP);
+                    //}
+	            } else {
+	            }
+	        } else if (check->getType()->getProperty(Property::WALL)) {
+                if (unit->getField() == Field::STAIR) {
+                    unit->setField(Field::WALL);
+                    unit->setZone(Zone::WALL);
+	            }
+	        }
+	    }*/
 		unit->finishCommand();
 	}
 
@@ -428,7 +460,7 @@ void TeleportCommandType::update(Unit *unit) const {
 		unit->setCurrSkill(SkillClass::STOP);
 		unit->finishCommand();
 		return;
-	} else if (g_map.areFreeCellsOrHasUnit(pos, unit->getSize(), unit->getType()->getField(), unit)) {
+	} else if (g_map.areFreeCellsOrHasUnit(pos, unit->getSize(), unit->getField(), unit)) {
 		// set-up for the move, the actual moving will be done in World::updateUnits(),
 		// after SimInterface::doUpdateUnitCommand() checks EP
 		unit->face(pos);
@@ -638,7 +670,6 @@ void ProduceCommandType::update(Unit *unit) const {
 	_PROFILE_COMMAND_UPDATE();
 	Command *command = unit->getCurrCommand();
 	assert(command->getType() == this);
-
 	if (unit->getCurrSkill()->getClass() != SkillClass::PRODUCE) {
 		//if not producing
 		unit->setCurrSkill(m_produceSkillType);
@@ -646,26 +677,44 @@ void ProduceCommandType::update(Unit *unit) const {
 	} else {
 		unit->update2();
 		const UnitType *prodType = static_cast<const UnitType*>(command->getProdType());
+		bool limitReached = false;
+        for (int l = 0; l < unit->ownedUnits.size(); ++l) {
+            if (prodType == unit->ownedUnits[l].getType()) {
+                int limit = unit->ownedUnits[l].getLimit();
+                int owned = unit->ownedUnits[l].getOwned();
+                if (owned >= limit) {
+                    limitReached = true;
+                }
+                break;
+            }
+        }
+        if (limitReached == false) {
 		if (unit->getProgress2() > prodType->getProductionTime()) {
 			for (int i=0; i < getProducedNumber(prodType); ++i) {
-				Unit *produced = g_world.newUnit(Vec2i(0), prodType, unit->getFaction(),
-													g_world.getMap(), CardinalDir::NORTH);
+				Unit *produced = g_world.newUnit(Vec2i(0), prodType, unit->getFaction(), g_world.getMap(), CardinalDir::NORTH);
 				if (!g_world.placeUnit(unit->getCenteredPos(), 10, produced)) {
 					unit->cancelCurrCommand();
 					g_world.getUnitFactory().deleteUnit(unit);
 					return;
 				} else {
-					unit->getFaction()->checkAdvanceSubfaction(command->getProdType(), true);
-					produced->create();
-					produced->born();
-					ScriptManager::onUnitCreated(produced);
-					g_simInterface.getStats()->produce(unit->getFactionIndex());
-					const CommandType *ct = produced->computeCommandType(unit->getMeetingPos());
-					if (ct) {
-						produced->giveCommand(g_world.newCommand(ct, CmdFlags(), unit->getMeetingPos()));
-					}
-				}
-			}
+                    unit->getFaction()->checkAdvanceSubfaction(command->getProdType(), true);
+                    produced->setOwner(unit);
+                    for (int z = 0; z < unit->ownedUnits.size(); ++z) {
+                        if (unit->ownedUnits[z].getType() == produced->getType()) {
+                            unit->ownedUnits[z].incOwned();
+                        }
+                    }
+                    produced->create();
+                    produced->born();
+                    ScriptManager::onUnitCreated(produced);
+                    g_simInterface.getStats()->produce(unit->getFactionIndex());
+                    const CommandType *ct = produced->computeCommandType(unit->getMeetingPos());
+                    if (ct) {
+                        produced->giveCommand(g_world.newCommand(ct, CmdFlags(), unit->getMeetingPos()));
+                    }
+                }
+            }
+
 			// all the units have been produced, safe to finish command now
 			unit->finishCommand();
 			if (unit->getFactionIndex() == g_world.getThisFactionIndex()) {
@@ -675,6 +724,9 @@ void ProduceCommandType::update(Unit *unit) const {
 			}
 			unit->setCurrSkill(SkillClass::STOP);
 		}
+        } else {
+            unit->finishCommand();
+        }
 	}
 }
 

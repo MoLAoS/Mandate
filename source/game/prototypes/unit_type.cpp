@@ -99,80 +99,6 @@ bool Level::load(const XmlNode *levelNode, const string &dir, const TechTree *tt
 }
 
 // ===============================
-// 	class Load Bonus
-// ===============================
-
-
-LoadBonus::LoadBonus()
-{
-}
-
-void LoadBonus::loadResourceModifier(const XmlNode *node, ResModifierMap &map, const TechTree *techTree) {
-	for (int i=0; i < node->getChildCount(); ++i) {
-		const XmlNode *resNode = node->getChild(i);
-		if (resNode->getName() == "resource") {
-			string resName = resNode->getAttribute("name")->getRestrictedValue();
-			int addition = 0;
-			if (const XmlAttribute *addAttrib = resNode->getAttribute("addition", false)) {
-				addition = addAttrib->getIntValue();
-			}
-			fixed mult = 1;
-			if (const XmlAttribute *multAttrib = resNode->getAttribute("multiplier", false)) {
-				mult = multAttrib->getFixedValue();
-			}
-			const ResourceType *rt = techTree->getResourceType(resName);
-			if (map.find(rt) != map.end()) {
-				throw runtime_error("duplicate resource node '" + resName + "'");
-			}
-			map[rt] = Modifier(addition, mult);
-		}
-	}
-}
-
-bool LoadBonus::loadNewStyle(const XmlNode *node, const string &dir, const TechTree *techTree,
-							   const FactionType *factionType) {
-	bool loadOk = true;
-		const XmlNode *enhanceNode, *enhancementNode;
-		try {
-			enhanceNode = node->getChild("enhancement", 0, false);
-			enhancementNode = enhanceNode->getChild("effects");
-		} catch (runtime_error &e) {
-			g_logger.logXmlError(dir, e.what());
-			loadOk = false;
-		}
-		if (!m_enhancement.m_enhancement.load(enhancementNode, dir, techTree, factionType)) {
-			loadOk = false;
-		}
-		try { // creation and storage modifiers
-			if (const XmlNode *costModsNode = enhancementNode->getOptionalChild("cost-modifiers")) {
-				loadResourceModifier(costModsNode, m_enhancement.m_costModifiers, techTree);
-			}
-			if (const XmlNode *storeModsNode = enhancementNode->getOptionalChild("store-modifiers")) {
-				loadResourceModifier(storeModsNode, m_enhancement.m_storeModifiers, techTree);
-			}
-			if (const XmlNode *createModsNode = enhancementNode->getOptionalChild("create-modifiers")) {
-				loadResourceModifier(createModsNode, m_enhancement.m_createModifiers, techTree);
-			}
-		} catch (runtime_error e) {
-			g_logger.logXmlError(dir, e.what());
-			loadOk = false;
-		}
-	return loadOk;
-}
-
-bool LoadBonus::load(const XmlNode *loadBonusNode, const string &dir, const TechTree *techTree, const FactionType *factionType) {
-	bool loadOk = true;
-    const XmlNode *sourceNode = loadBonusNode->getChild("source");
-    const XmlNode *loadableUnitNode = sourceNode->getChild("loadable-unit");
-    source = loadableUnitNode->getAttribute("name")->getRestrictedValue();
-    const XmlNode *enhancementsNode = loadBonusNode->getChild("enhancements", 0, false);
-    if (enhancementsNode) {
-    loadOk = loadNewStyle(enhancementsNode, dir, techTree, factionType) && loadOk;
-    }
-	return loadOk;
-}
-
-// ===============================
 // 	class PetRule
 // ===============================
 /*
@@ -182,50 +108,6 @@ void PetRule::load(const XmlNode *prn, const string &dir, const TechTree *tt, co
 	count = prn->getAttribute("count")->getIntValue();
 }
 */
-
-// =====================================================
-// 	class Timer
-// =====================================================
-
-void Timer::init(const XmlNode *node, const TechTree *tt) {
-	timerValue = node->getChildIntValue("timer");
-	currentStep = node->getChildIntValue("step");
-}
-
-void Timer::save(XmlNode *node) const {
-	node->addChild("timer", timerValue);
-	node->addChild("step", currentStep);
-}
-
-void Timer::init(int timer, int step) {
-    timerValue = timer;
-    currentStep = step;
-}
-
-// =====================================================
-// 	class CreatedUnit
-// =====================================================
-
-void CreatedUnit::init(const XmlNode *node, const Faction *f) {
-	m_type = f->getType()->getUnitType(node->getChildStringValue("type"));
-	m_amount = node->getChildIntValue("amount");
-	m_amount_plus = node->getChildIntValue("plus");
-	m_amount_multiply = node->getChildFloatValue("multiply");
-}
-
-void CreatedUnit::save(XmlNode *node) const {
-	node->addChild("type", m_type->getName());
-	node->addChild("amount", m_amount);
-	node->addChild("plus", m_amount_plus);
-	node->addChild("multiply", m_amount_multiply);
-}
-
-void CreatedUnit::init(const UnitType *ut, int amount, int amount_plus, float amount_multiply) {
-    m_type = ut;
-    m_amount = amount;
-    m_amount_plus = amount_plus;
-    m_amount_multiply = amount_multiply;
-}
 
 // =====================================================
 // 	class UnitType
@@ -248,7 +130,8 @@ UnitType::UnitType()
 		, halfSize(0), halfHeight(0)
 		, m_cellMap(0), m_colourMap(0)
 		, m_hasProjectileAttack(false)
-		, m_factionType(0) {
+		, m_factionType(0)
+		, display(true) {
 	reset();
 }
 
@@ -294,6 +177,28 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 	if (!UnitStats::load(parametersNode, dir, techTree, factionType)) {
 		loadOk = false;
 	}
+	/*try {
+	const XmlNode *heroNode = parametersNode->getChild("mage", 0, false);
+	if (heroNode) {
+    isHero = true;
+
+	}
+	}
+	catch (runtime_error e) {
+		g_logger.logXmlError(path, e.what());
+		return false; // bail out
+	}
+	try {
+	const XmlNode *mageNode = parametersNode->getChild("hero", 0, false);
+	if (mageNode) {
+    isMage = true;
+
+	}
+	}
+	catch (runtime_error e) {
+		g_logger.logXmlError(path, e.what());
+		return false; // bail out
+	}*/
 	// armor type string
 	try {
 		string armorTypeName = parametersNode->getChildRestrictedValue("armor-type");
@@ -303,6 +208,58 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 		g_logger.logXmlError(dir, e.what());
 		loadOk = false;
 	}
+	// load resistances
+	try {
+	    const XmlNode *resistancesNode = parametersNode->getChild("resistances", 0, false);
+	    if (resistancesNode) {
+	        resistances.resize(resistancesNode->getChildCount());
+            for (int i = 0; i < resistancesNode->getChildCount(); ++i) {
+                const XmlNode *resistanceNode = resistancesNode->getChild("resistance", i);
+                string resistanceTypeName = resistanceNode->getAttribute("type")->getRestrictedValue();
+                int amount = resistanceNode->getAttribute("value")->getIntValue();
+                resistances[i].init(resistanceTypeName, amount);
+            }
+	    }
+	}
+	catch (runtime_error e) {
+		g_logger.logXmlError(dir, e.what());
+		loadOk = false;
+	}
+
+	// mage
+	try {
+	    const XmlNode *mageNode = parametersNode->getChild("mage", 0, false);
+	    if (mageNode) {
+	        isMage = true;
+	    }
+	}
+	catch (runtime_error e) {
+		g_logger.logXmlError(dir, e.what());
+		loadOk = false;
+	}
+	// leader
+	try {
+	    const XmlNode *leaderNode = parametersNode->getChild("leader", 0, false);
+	    if (leaderNode) {
+	        isLeader = true;
+	    }
+	}
+	catch (runtime_error e) {
+		g_logger.logXmlError(dir, e.what());
+		loadOk = false;
+	}
+	// hero
+	try {
+	    const XmlNode *heroNode = parametersNode->getChild("hero", 0, false);
+	    if (heroNode) {
+	        isHero = true;
+	    }
+	}
+	catch (runtime_error e) {
+		g_logger.logXmlError(dir, e.what());
+		loadOk = false;
+	}
+
 	// size
 	try { size = parametersNode->getChildIntValue("size"); }
 	catch (runtime_error e) {
@@ -405,7 +362,13 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 	if (fieldNode) {
 		try {
 			field = FieldNames.match(fieldNode->getRestrictedValue().c_str());
-			zone = field == Field::AIR ? Zone::AIR : Zone::LAND;
+            if (field == Field::AIR) {
+            zone = Zone::AIR;
+            } else if (field == Field::LAND) {
+            zone = Zone::LAND;
+            } else if (field == Field::WALL || field == Field::STAIR) {
+            zone = Zone::WALL;
+            }
 		} catch (runtime_error &e) {
 			g_logger.logXmlError(path, e.what());
 			loadOk = false;
@@ -481,17 +444,65 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 			loadOk = false;
 		}
 
+        try { // resources processed
+			const XmlNode *processesNode= parametersNode->getChild("processes", 0, false);
+			if (processesNode) {
+				processes.resize(processesNode->getChildCount());
+                processTimers.resize(processesNode->getChildCount());
+				for(int i = 0; i < processes.size(); ++i){
+					const XmlNode *processNode = processesNode->getChild("process", i);
+					string range = processNode->getAttribute("scope")->getRestrictedValue();
+					bool scope;
+					if (range == "local") {
+					    scope = true;
+					} else {
+					    scope = false;
+					}
+					processes[i].setScope(scope);
+					const XmlNode *costsNode = processNode->getChild("costs");
+					processes[i].costs.resize(costsNode->getChildCount());
+					for (int j = 0; j < processes[i].costs.size(); ++j) {
+                    const XmlNode *costNode = costsNode->getChild("cost", j);
+                    string name = costNode->getAttribute("name")->getRestrictedValue();
+					int amount = costNode->getAttribute("amount")->getIntValue();
+					processes[i].costs[j].init(techTree->getResourceType(name), name, amount, 0, 0);
+					}
+					const XmlNode *productsNode = processNode->getChild("products");
+					processes[i].products.resize(productsNode->getChildCount());
+					for (int k = 0; k < processes[i].products.size(); ++k) {
+                    const XmlNode *productNode = productsNode->getChild("product", k);
+                    string name = productNode->getAttribute("name")->getRestrictedValue();
+					int amount = productNode->getAttribute("amount")->getIntValue();
+                    processes[i].products[k].init(techTree->getResourceType(name), name, amount, 0, 0);
+					}
+					int steps = processNode->getAttribute("timer")->getIntValue();
+					processTimers[i].init(steps, 0);
+				}
+			}
+		} catch (runtime_error e) {
+			g_logger.logXmlError(path, e.what());
+			loadOk = false;
+		}
+
         try { // Resources created
 			const XmlNode *resourcesCreatedNode= parametersNode->getChild("resources-created", 0, false);
 			if (resourcesCreatedNode) {
 				createdResources.resize(resourcesCreatedNode->getChildCount());
                 createdResourceTimers.resize(resourcesCreatedNode->getChildCount());
-				for(int i = 0; i<createdResources.size(); ++i){
+				for(int i = 0; i < createdResources.size(); ++i){
 					const XmlNode *resourceNode = resourcesCreatedNode->getChild("resource", i);
+					string range = resourceNode->getAttribute("scope")->getRestrictedValue();
+					bool scope;
+					if (range == "local") {
+					    scope = true;
+					} else if (range == "faction") {
+					    scope = false;
+					}
+					createdResources[i].setScope(scope);
 					string name = resourceNode->getAttribute("name")->getRestrictedValue();
 					int amount = resourceNode->getAttribute("amount")->getIntValue();
 					int steps = resourceNode->getAttribute("timer")->getIntValue();
-					createdResources[i].init(techTree->getResourceType(name), amount, 0, 0);
+					createdResources[i].init(techTree->getResourceType(name), amount);
 					createdResourceTimers[i].init(steps, 0);
 				}
 			}
@@ -510,8 +521,24 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 					string name = unitNode->getAttribute("name")->getRestrictedValue();
 					int amount = unitNode->getAttribute("amount")->getIntValue();
 					int steps = unitNode->getAttribute("timer")->getIntValue();
-					createdUnits[i].init(factionType->getUnitType(name), amount, 0, 0);
+					createdUnits[i].init(factionType->getUnitType(name), amount, 0, 0, -1);
 					createdUnitTimers[i].init(steps, 0);
+				}
+			}
+		} catch (runtime_error e) {
+			g_logger.logXmlError(path, e.what());
+			loadOk = false;
+		}
+
+        try { // units owned
+			const XmlNode *unitsOwnedNode= parametersNode->getChild("units-owned", 0, false);
+			if (unitsOwnedNode) {
+				ownedUnits.resize(unitsOwnedNode->getChildCount());
+				for(int i = 0; i<ownedUnits.size(); ++i){
+					const XmlNode *ownedNode = unitsOwnedNode->getChild("unit", i);
+					string name = ownedNode->getAttribute("name")->getRestrictedValue();
+					int limit = ownedNode->getAttribute("limit")->getIntValue();
+					ownedUnits[i].init(factionType->getUnitType(name), 0, limit);
 				}
 			}
 		} catch (runtime_error e) {
@@ -609,6 +636,25 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 		g_prototypeFactory.setChecksum(smpct);
 	}
 
+    try {
+	const XmlNode *leaderNode = unitNode->getChild("leader", 0, false);
+	if (leaderNode) {
+	    isLeader = true;
+        if (!leader.load(leaderNode, dir, techTree, factionType, this, path)) {
+            loadOk = false;
+        }
+	}
+	}
+	catch (runtime_error e) {
+		g_logger.logXmlError(path, e.what());
+		return false;
+	}
+
+	for (int i = 0; i < leader.squadCommands.size(); ++i) {
+        squadCommands.push_back(leader.squadCommands[i]);
+        commandTypes.push_back(leader.squadCommands[i]);
+	}
+
 	sortCommandTypes();
 
 	try { // Logger::logXmlError() expects a char*, so it's easier just to throw & catch ;)
@@ -681,6 +727,7 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 			}
 		}
 	}
+	display = true;
 	return loadOk;
 }
 
@@ -809,6 +856,28 @@ Timer UnitType::getCreatedResourceTimer(int i, const Faction *f) const {
 	return timer;
 }
 
+int UnitType::getProcessing(const ResourceType *rt, const Faction *f) const {
+	foreach_const (Processes, it, processes) {
+		//if (it->getType() == rt) {
+			//Modifier mod = f->getCreateModifier(this, rt);
+			//return (it->getAmount() * mod.getMultiplier()).intp() + mod.getAddition();
+		//}
+	}
+	return 0;
+}
+
+Process UnitType::getProcess(int i, const Faction *f) const {
+	Process proc(processes[i]);
+	//Modifier mod = f->getCreateModifier(this, res.getType());
+	//proc.setAmount((proc.getAmount() * mod.getMultiplier()).intp() + mod.getAddition());
+	return proc;
+}
+
+Timer UnitType::getProcessTimer(int i, const Faction *f) const {
+	Timer timer(processTimers[i]);
+	return timer;
+}
+
 int UnitType::getCreateUnit(const UnitType *ut, const Faction *f) const {
 	foreach_const (CreatedUnits, it, createdUnits) {
 		if (it->getType() == ut) {
@@ -878,7 +947,7 @@ bool UnitType::isOfClass(UnitClass uc) const{
 			return hasSkillClass(SkillClass::ATTACK)
 				&& !hasSkillClass(SkillClass::HARVEST);
 		case UnitClass::WORKER:
-			return hasSkillClass(SkillClass::BUILD)
+			return hasSkillClass(SkillClass::BUILD) || hasSkillClass(SkillClass::CONSTRUCT)
 				|| hasSkillClass(SkillClass::REPAIR)
 				|| hasSkillClass(SkillClass::HARVEST);
 		case UnitClass::BUILDING:

@@ -61,21 +61,21 @@ bool TechTree::preload(const string &dir, const set<string> &factionNames){
 
 	//attack types
 	const XmlNode *attackTypesNode;
-	try { 
+	try {
 		attackTypesNode= techTreeNode->getChild("attack-types");
 		attackTypes.resize(attackTypesNode->getChildCount());
 		for(int i=0; i<attackTypes.size(); ++i){
 			const XmlNode *attackTypeNode= attackTypesNode->getChild("attack-type", i);
 			string name;
-			try { 
-				name = attackTypeNode->getAttribute("name")->getRestrictedValue(); 
+			try {
+				name = attackTypeNode->getAttribute("name")->getRestrictedValue();
 				attackTypes[i].setName(name);
 				attackTypes[i].setId(i);
 				attackTypeMap[name] = &attackTypes[i];
 			}
-			catch (runtime_error &e) { 
+			catch (runtime_error &e) {
 				g_logger.logXmlError(path, e.what());
-				loadOk = false; 
+				loadOk = false;
 			}
 		}
 	}
@@ -86,22 +86,22 @@ bool TechTree::preload(const string &dir, const set<string> &factionNames){
 
 	//armor types
 	const XmlNode *armorTypesNode;
-	try { 
-		armorTypesNode= techTreeNode->getChild("armor-types"); 
+	try {
+		armorTypesNode= techTreeNode->getChild("armor-types");
 		armorTypes.resize(armorTypesNode->getChildCount());
 		for(int i=0; i<armorTypes.size(); ++i){
 			string name ;
-			try { 
-				name = armorTypesNode->getChild("armor-type", i)->getRestrictedAttribute("name"); 
+			try {
+				name = armorTypesNode->getChild("armor-type", i)->getRestrictedAttribute("name");
 				armorTypes[i].setName(name);
 				armorTypes[i].setId(i);
 				armorTypeMap[name] = &armorTypes[i];
 			}
-			catch (runtime_error &e) { 
+			catch (runtime_error &e) {
 				g_logger.logXmlError(path, e.what());
-				loadOk = false; 
+				loadOk = false;
 			}
-		}  
+		}
 	}
 	catch (runtime_error &e) {
 		g_logger.logXmlError(path, e.what());
@@ -119,9 +119,9 @@ bool TechTree::preload(const string &dir, const set<string> &factionNames){
 
 				fixed fixedMult = dmNode->getFixedAttribute("value");
 				//float multiplier= dmNode->getFloatAttribute("value");
-				
+
 				//cout << "Damage Multiplier as float: " << multiplier << ", as fixed " << fixedMult << endl;
-								
+
 				damageMultiplierTable.setDamageMultiplier(attackType, armourType, fixedMult);
 			} catch (runtime_error e) {
 				g_logger.logXmlError(path, e.what());
@@ -145,6 +145,9 @@ bool TechTree::preload(const string &dir, const set<string> &factionNames){
 		} else {
 			numUnitTypes += factionTypes[i].getUnitTypeCount();
 		}
+		if (!factionTypes[i].guiPreLoad(dir + "/factions/" + *fn, this)) {
+			loadOk = false;
+		}
 	}
 	logger.getProgramLog().addUnitCount(numUnitTypes);
 
@@ -158,10 +161,10 @@ bool TechTree::load(const string &dir, const set<string> &factionNames){
 	int i;
 	set<string>::const_iterator fn;
 	bool loadOk=true;
-	
+
 	Logger &logger = Logger::getInstance();
 	logger.logProgramEvent("TechTree: "+ dir, true);
-	
+
 	//load resources
 	vector<string> filenames;
 	string str= dir + "/resources/*.";
@@ -169,7 +172,7 @@ bool TechTree::load(const string &dir, const set<string> &factionNames){
 	try {
 		findAll(str, filenames);
 		resourceTypes.resize(filenames.size());
-	} 
+	}
 	catch(const exception &e) {
 		throw runtime_error("Error loading Resource Types: "+ dir + "\n" + e.what());
 	}
@@ -215,10 +218,10 @@ void TechTree::doChecksumDamageMult(Checksum &checksum) const {
 		it->doChecksum(checksum);
 	}
 	foreach_const (ArmorTypes, armourIt, armorTypes) {
-		const ArmourType *armourType 
+		const ArmourType *armourType
 			= (*const_cast<ArmorTypeMap*>(&armorTypeMap))[armourIt->getName()];
 		foreach_const (AttackTypes, attackIt, attackTypes) {
-			const AttackType *attackType 
+			const AttackType *attackType
 				= (*const_cast<AttackTypeMap*>(&attackTypeMap))[attackIt->getName()];
 			checksum.add(damageMultiplierTable.getDamageMultiplier(attackType, armourType));
 		}

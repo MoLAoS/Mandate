@@ -23,8 +23,12 @@ PrototypeFactory::PrototypeFactory() {
 	m_skillTypeFactory.registerClass<AttackSkillType>();
 	m_skillTypeFactory.registerClass<BuildSkillType>();
 	m_skillTypeFactory.registerClass<BeBuiltSkillType>();
+	m_skillTypeFactory.registerClass<ConstructSkillType>();
 	m_skillTypeFactory.registerClass<HarvestSkillType>();
+	m_skillTypeFactory.registerClass<TransportSkillType>();
+	m_skillTypeFactory.registerClass<SetStructureSkillType>();
 	m_skillTypeFactory.registerClass<RepairSkillType>();
+	m_skillTypeFactory.registerClass<MaintainSkillType>();
 	m_skillTypeFactory.registerClass<ProduceSkillType>();
 	m_skillTypeFactory.registerClass<UpgradeSkillType>();
 	m_skillTypeFactory.registerClass<MorphSkillType>();
@@ -41,9 +45,20 @@ PrototypeFactory::PrototypeFactory() {
 	m_commandTypeFactory.registerClass<AttackCommandType>();
 	m_commandTypeFactory.registerClass<AttackStoppedCommandType>();
 	m_commandTypeFactory.registerClass<BuildCommandType>();
+	m_commandTypeFactory.registerClass<ConstructCommandType>();
 	m_commandTypeFactory.registerClass<HarvestCommandType>();
+	m_commandTypeFactory.registerClass<TransportCommandType>();
+	m_commandTypeFactory.registerClass<SetStoreCommandType>();
+	m_commandTypeFactory.registerClass<SetProducerCommandType>();
+	m_commandTypeFactory.registerClass<CreateSettlementCommandType>();
+	m_commandTypeFactory.registerClass<ExpandSettlementCommandType>();
+	m_commandTypeFactory.registerClass<CreateSquadCommandType>();
+	m_commandTypeFactory.registerClass<ExpandSquadCommandType>();
+	m_commandTypeFactory.registerClass<SquadMoveCommandType>();
 	m_commandTypeFactory.registerClass<RepairCommandType>();
+	m_commandTypeFactory.registerClass<MaintainCommandType>();
 	m_commandTypeFactory.registerClass<ProduceCommandType>();
+	m_commandTypeFactory.registerClass<CreateItemCommandType>();
 	m_commandTypeFactory.registerClass<GenerateCommandType>();
 	m_commandTypeFactory.registerClass<UpgradeCommandType>();
 	m_commandTypeFactory.registerClass<MorphCommandType>();
@@ -65,6 +80,7 @@ PrototypeFactory::PrototypeFactory() {
 	m_prodTypeFactory.registerClass<GeneratedType>();
 	m_prodTypeFactory.registerClass<UpgradeType>();
 	m_prodTypeFactory.registerClass<UnitType>();
+	m_prodTypeFactory.registerClass<ItemType>();
 
 	// Register Effect and Emanation Types
 	m_effectTypeFactory.registerClass<EffectType>();

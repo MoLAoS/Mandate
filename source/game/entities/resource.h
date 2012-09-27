@@ -109,11 +109,20 @@ public:
 	void save(XmlNode *node) const;
 };
 
+// =====================================================
+// 	class CreatedResource
+// =====================================================
+
 class CreatedResource : public ResourceAmount {
 private:
 	int m_creation;
 
 public:
+
+    bool local;
+
+    void setScope(bool scope) { local = scope; }
+
 	void init(const XmlNode *node, const TechTree *tt);
     void init(const ResourceType *rt, int amount);
 
@@ -121,6 +130,62 @@ public:
 	void setCreation(int creation) { m_creation = creation; }
 
 	void save(XmlNode *node) const;
+};
+
+// =====================================================
+// 	Helper Classes For Process
+// =====================================================
+
+class ResMade : public ResourceAmount {
+private:
+	int m_product;
+	string m_name;
+
+public:
+	void init(const XmlNode *node, const TechTree *tt);
+    void init(const ResourceType *rt, string name, int product, int add, int mult);
+
+    int getProduct() const { return m_product; }
+	void setProduct(int product) { m_product = product; }
+
+    string getName() const { return m_name; }
+	void setName(string name) { m_name = name; }
+
+	void save(XmlNode *node) const;
+};
+
+class ResCost : public ResourceAmount {
+private:
+	int m_cost;
+	string m_name;
+
+public:
+	void init(const XmlNode *node, const TechTree *tt);
+    void init(const ResourceType *rt, string name, int cost, int add, int mult);
+
+    int getCost() const { return m_cost; }
+	void setCost(int cost) { m_cost = cost; }
+
+    string getName() const { return m_name; }
+	void setName(string name) { m_name = name; }
+
+	void save(XmlNode *node) const;
+};
+
+typedef	vector<ResMade> Products;
+typedef vector<ResCost> Costs;
+
+// =====================================================
+// 	class Process
+// =====================================================
+
+class Process {
+public:
+    Costs costs;
+    Products products;
+    bool local;
+
+    void setScope(bool scope) { local = scope; }
 };
 
 }}// end namespace

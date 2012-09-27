@@ -11,10 +11,10 @@
 
 #ifndef _GLEST_GAME_GUI_H_
 #define _GLEST_GAME_GUI_H_
-
 #include "resource.h"
 #include "command_type.h"
 #include "display.h"
+#include "item_display.h"
 #include "faction_display.h"
 #include "commander.h"
 #include "console.h"
@@ -30,8 +30,11 @@ using Shared::Util::Random;
 
 namespace Glest { namespace Gui {
 
+using namespace Gui_Mandate;
 class GameState;
 class ResourceBar;
+class UnitBar;
+class TradeBar;
 
 // =====================================================
 //	class Mouse3d
@@ -122,8 +125,11 @@ private:
 	Console *m_dialogConsole;
 	Minimap *m_minimap;
 	Display *m_display;
+	ItemWindow *m_itemWindow;
 	FactionDisplay *m_factionDisplay;
 	ResourceBar *m_resourceBar;
+	TradeBar *m_tradeBar;
+	UnitBar *m_unitBar;
 	LuaConsole *m_luaConsole;
 
 	Random random;
@@ -177,6 +183,8 @@ public:
 	Minimap*              getMinimap()               { return m_minimap;        }
 	const Minimap*        getMinimap() const         { return m_minimap;        }
 	ResourceBar*          getResourceBar()           { return m_resourceBar;    }
+	UnitBar*              getUnitBar()               { return m_unitBar;        }
+	TradeBar*             getTradeBar()              { return m_tradeBar;       }
 	const Input&          getInput() const           { return input;            }
 	LuaConsole*           getLuaConsole()            { return m_luaConsole;     }
 	Vec2i                 getPosObjWorld() const     { return posObjWorld;      }
@@ -189,6 +197,8 @@ public:
 	Console*              getDialogConsole()         { return m_dialogConsole;  }
 	Display*              getDisplay()	             { return m_display;        }
 	const Display*        getDisplay()	const        { return m_display;        }
+	ItemWindow*           getItemWindow()	         { return m_itemWindow;     }
+	const ItemWindow*     getItemWindow()	const    { return m_itemWindow;        }
 	FactionDisplay*       getFactionDisplay()	     { return m_factionDisplay; }
 	const FactionDisplay* getFactionDisplay() const  { return m_factionDisplay; }
 	const Selection*      getSelection()	const    { return selection;        }
@@ -217,12 +227,15 @@ public:
 	void onSelectionUpdated() {
 		currentGroup = invalidGroupIndex;
 		m_display->setSize();
-		m_factionDisplay->setSize();
+		m_itemWindow->setSize();
 	}
 
 	void commandButtonPressed(int posDisplay);
 	void unloadRequest(int carryIndex);
 	void degarrisonRequest(int carryIndex);
+
+    void formationButtonPressed(int posDisplay);
+    void hierarchyButtonPressed(int posDisplay);
 
 	void mouseDownLeft(int x, int y);
 	void mouseDownRight(int x, int y);
@@ -277,6 +290,9 @@ private:
 	// handle producible button-click / hotkey(?)
 	void onSecondTierSelect(int posDisplay);
 
+    void onFormationSelect(int posDisplay);
+    void onHierarchySelect(int posDisplay);
+
 	// misc
 	void addOrdersResultToConsole(CmdClass cc, CmdResult rr);
 	bool isSharedCommandClass(CmdClass commandClass);
@@ -286,6 +302,8 @@ public:
 	void computeDisplay();
 	void computePortraitInfo(int posDisplay);
 	void computeCommandInfo(int posDisplay);
+	void computeFormationInfo(int posDisplay);
+	void computeHierarchyInfo(int posDisplay);
 	void updateSelection(bool doubleClick, UnitVector &units);
 
 private:
@@ -295,7 +313,11 @@ private:
 	void computeHousedUnitsPanel();
 	void computeGarrisonedUnitsPanel();
 	void computeCommandPanel();
+	void computeFormationPanel();
+	void computeHierarchyPanel();
 	void computeCommandTip(const CommandType *ct, const ProducibleType *pt = 0);
+	void computeFormationTip(FormationCommand fc);
+	void computeHierarchyTip(const CommandType *hc);
 	void selectAllUnitsOfType(UnitVector &out_units, const Unit *refUnit, int radius);
 };
 

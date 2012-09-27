@@ -67,7 +67,7 @@ Command::Command(CreateParamsUnit params)//const CommandType *type, CmdFlags fla
 		, commandedUnit(params.commandedUnit) {
 	unitRef = params.unit ? params.unit->getId() : -1;
 	unitRef2 = -1;
-	
+
 	if (params.unit) {
 		pos = params.unit->getCenteredPos();
 	}
@@ -77,7 +77,7 @@ Command::Command(CreateParamsUnit params)//const CommandType *type, CmdFlags fla
 }
 
 
-Command::Command(CreateParamsProd params)//const CommandType *type, CmdFlags flags, const Vec2i &pos, 
+Command::Command(CreateParamsProd params)//const CommandType *type, CmdFlags flags, const Vec2i &pos,
 				 //const ProducibleType *prodType, CardinalDir facing, Unit *commandedUnit)
 		: m_id(-1)
 		, archetype(CmdDirective::GIVE_COMMAND)

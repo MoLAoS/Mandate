@@ -13,6 +13,7 @@
 #include "factory.h"
 #include "unit_type.h"
 #include "upgrade_type.h"
+#include "item_type.h"
 #include "command_type.h"
 #include "skill_type.h"
 
@@ -156,7 +157,7 @@ public:
 //  class DynamicTypeFactory
 // ===============================
 /** Dynamic Type Factory, for load once never write (non-transient) ProtoType classes,
-  * Enum describes the derived class set, all of which must derive from (or be) 
+  * Enum describes the derived class set, all of which must derive from (or be)
   * BaseType, derived types must implement a static function 'Enum typeClass()' */
 template<typename Enum, typename BaseType> class DynamicTypeFactory {
 private:
@@ -277,6 +278,9 @@ public:	// create objects
 	UnitType*	newUnitType() {
 		return static_cast<UnitType*>(m_prodTypeFactory.newInstance(ProducibleClass::UNIT));
  	}
+	ItemType*	newItemType() {
+		return static_cast<ItemType*>(m_prodTypeFactory.newInstance(ProducibleClass::ITEM));
+ 	}
 
 	// skills
 	SkillType*		newSkillType(SkillClass sc)		{ return m_skillTypeFactory.newInstance(sc); }
@@ -290,7 +294,7 @@ public:	// create objects
 
 	// Effects
 	EffectType*		newEffectType()		{ return m_effectTypeFactory.newInstance(EffectClass::EFFECT); }
-	EmanationType*	newEmanationType()	{ 
+	EmanationType*	newEmanationType()	{
 		return static_cast<EmanationType*>(m_effectTypeFactory.newInstance(EffectClass::EMANATION));
  	}
 
@@ -303,6 +307,7 @@ public:
 	bool isGeneratedType(const ProducibleType *pt) { return pt->getClass() == ProducibleClass::GENERATED;}
 	bool isUpgradeType(const ProducibleType *pt) { return pt->getClass() == ProducibleClass::UPGRADE;}
 	bool isUnitType(const ProducibleType *pt) { return pt->getClass() == ProducibleClass::UNIT;}
+	bool isItemType(const ProducibleType *pt) { return pt->getClass() == ProducibleClass::ITEM;}
 
 	// get checksums
 	int32 getChecksum(const ProducibleType *pt) { return m_prodTypeFactory.getChecksum(pt); }
@@ -330,6 +335,7 @@ public:
 	// get proto-types by id
 	const ProducibleType* getProdType(int id) { return m_prodTypeFactory.getType(id); }
 	const UnitType* getUnitType(int id) { return m_prodTypeFactory.getTypeById<UnitType>(id); }
+	const ItemType* getItemType(int id) { return m_prodTypeFactory.getTypeById<ItemType>(id); }
 	const SkillType* getSkillType(int id) { return m_skillTypeFactory.getType(id); }
 	const CommandType* getCommandType(int id) { return m_commandTypeFactory.getType(id); }
 	const CloakType* getCloakType(int i) { return m_cloakTypeFactory.getType(i); }

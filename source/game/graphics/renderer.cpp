@@ -375,6 +375,7 @@ bool Renderer::init() {
 	}
 	g_logger.logProgramEvent("\tinit 2d display lists.");
 	init2dList();
+
 	return true;
 }
 
@@ -417,7 +418,6 @@ void Renderer::initGame(GameState *game) {
 	ONE_TIME_TIMER(Renderer_Init_Game, cout);
 	this->game= game;
 	m_mainMenu = 0;
-
 	// check gl caps
 	checkGlOptionalCaps();
 

@@ -139,7 +139,7 @@ private:
 
 	// water
 	float waterAnim;
-	
+
 	// perspective values
 	float perspFov;
 	float perspNearPlane;
@@ -212,7 +212,7 @@ public:
 
 	//Font *newFont(ResourceScope rs);
 	Font *newFreeTypeFont(ResourceScope rs);
-	
+
 	//TextRenderer *getTextRenderer() const	{return textRenderer;}
 	TextRenderer *getFreeTypeRenderer() const	{return textRendererFT;}
 
@@ -231,7 +231,7 @@ public:
 	void setupLighting();
 	void loadGameCameraMatrix();
 	void loadCameraMatrix(const Camera *camera);
-	
+
 	void computeVisibleArea();
 
     // basic rendering

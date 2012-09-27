@@ -21,7 +21,6 @@
 #include "factory.h"
 #include "xml_parser.h"
 #include "sound_container.h"
-#include "skill_type.h"
 #include "upgrade_type.h"
 #include "game_constants.h"
 
@@ -68,7 +67,6 @@ using Glest::Gui::Clicks;
 
 namespace Glest { namespace ProtoTypes {
 using Search::CardinalDir;
-
 
 class CmdDescriptor {
 public:
@@ -428,6 +426,104 @@ private:
 	void continueBuild(Unit *unit, const Command *command, const UnitType *builtUnitType) const;
 };
 
+// ===============================
+//  class ConstructCommandType
+// ===============================
+
+class ConstructCommandType: public MoveBaseCommandType {
+private:
+	const ConstructSkillType*	m_constructSkillType;
+	vector<const UnitType*> m_buildings;
+	map<string, string>		m_tipKeys;
+	SoundContainer			m_startSounds;
+	SoundContainer			m_builtSounds;
+
+public:
+	ConstructCommandType() : MoveBaseCommandType("Construct", Clicks::TWO), m_constructSkillType(0) {}
+	~ConstructCommandType();
+	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
+	virtual void doChecksum(Checksum &checksum) const;
+	virtual void subDesc(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const override;
+	virtual void descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt = 0) const override;
+	virtual void getDesc(string &str, const Unit *unit) const {
+		m_constructSkillType->getDesc(str, unit);
+	}
+	virtual void update(Unit *unit) const;
+
+	// prechecks
+	/** @param builtUnitType the unitType to build
+	  * @param pos the position to put the unit */
+	bool isBlocked(const UnitType *builtUnitType, const Vec2i &pos, CardinalDir facing) const;
+	virtual CmdResult check(const Unit *unit, const Command &command) const;
+	virtual void undo(Unit *unit, const Command &command) const;
+
+	//get
+	const ConstructSkillType *getConstructSkillType() const	{return m_constructSkillType;}
+
+	virtual int getProducedCount() const					{return m_buildings.size();}
+	virtual ProdTypePtr getProduced(int i) const;
+
+	bool canBuild(const UnitType *ut) const		{
+		return std::find(m_buildings.begin(), m_buildings.end(), ut) != m_buildings.end();
+	}
+
+	int getBuildingCount() const					{return m_buildings.size();}
+	const UnitType * getBuilding(int i) const		{return m_buildings[i];}
+
+	string getTipKey(const string &name) const  {
+		map<string,string>::const_iterator it = m_tipKeys.find(name);
+		return it->second;
+	}
+
+	StaticSound *getStartSound() const				{return m_startSounds.getRandSound();}
+	StaticSound *getBuiltSound() const				{return m_builtSounds.getRandSound();}
+
+	virtual CmdClass getClass() const { return typeClass(); }
+	static CmdClass typeClass() { return CmdClass::CONSTRUCT; }
+
+private:
+	bool hasArrived(Unit *unit, const Command *command, const UnitType *builtUnitType) const;
+	void existingBuild(Unit *unit, Command *command, Unit *builtUnit) const;
+	/** @returns true if successful */
+	bool attemptMoveUnits(const vector<Unit *> &occupants) const;
+	void blockedBuild(Unit *unit) const;
+	void acceptBuild(Unit *unit, Command *command, const UnitType *builtUnitType) const;
+};
+
+// ===============================
+//  class MaintainCommandType
+// ===============================
+
+class MaintainCommandType: public MoveBaseCommandType {
+private:
+	const MaintainSkillType* maintainSkillType;
+	vector<const UnitType*>  maintainableUnits;
+
+public:
+	MaintainCommandType() : MoveBaseCommandType("Maintain", Clicks::TWO), maintainSkillType(0) {}
+	~MaintainCommandType() {}
+	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
+	virtual void doChecksum(Checksum &checksum) const;
+	virtual void subDesc(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const override;
+	virtual void descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt = 0) const override;
+	virtual void getDesc(string &str, const Unit *unit) const;
+	virtual void update(Unit *unit) const;
+	virtual CmdResult check(const Unit *unit, const Command &command) const;
+	const MaintainSkillType *getMaintainSkillType() const {return maintainSkillType;}
+	virtual void tick(const Unit *unit, Command &command) const;
+	bool canMaintain(const UnitType *unitType) const;
+	virtual CmdClass getClass() const { return typeClass(); }
+	static CmdClass typeClass() { return CmdClass::MAINTAIN; }
+protected:
+	static bool maintainableInRange(const Unit *unit, Vec2i centre, int centreSize, Unit **rangedPtr,
+			const MaintainCommandType *rct, const MaintainSkillType *rst, int range,
+			bool allowSelf, bool militaryOnly, bool damagedOnly);
+	static bool maintainableInRange(const Unit *unit, Unit **rangedPtr, const MaintainCommandType *rct,
+			int range, bool allowSelf = false, bool militaryOnly = false, bool damagedOnly = true);
+	static bool maintainableInSight(const Unit *unit, Unit **rangedPtr, const MaintainCommandType *rct, bool allowSelf);
+public:
+	Command* doAutoMaintain(Unit *unit) const;
+};
 
 // ===============================
 //  class HarvestCommandType
@@ -465,6 +561,140 @@ public:
 
 	virtual CmdClass getClass() const { return typeClass(); }
 	static CmdClass typeClass() { return CmdClass::HARVEST; }
+};
+
+// ===============================
+//  class TransportCommandType
+// ===============================
+
+class TransportCommandType: public MoveBaseCommandType {
+private:
+	const MoveSkillType*		m_moveLoadedSkillType;
+	const TransportSkillType*	m_transportSkillType;
+	const StopSkillType*		m_stopLoadedSkillType;
+	vector<const ResourceType*> m_transportedResources;
+
+public:
+	TransportCommandType() : MoveBaseCommandType("Transport", Clicks::ONE)
+		, m_moveLoadedSkillType(0), m_transportSkillType(0), m_stopLoadedSkillType(0) {}
+	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
+	virtual void doChecksum(Checksum &checksum) const;
+	virtual void getDesc(string &str, const Unit *unit) const;
+	virtual void subDesc(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const override;
+	virtual void descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt = 0) const override;
+	virtual void update(Unit *unit) const;
+	void goToStore(Unit* unit, Unit* store, Unit *producer) const;
+	void goToProducer(Unit* unit, Unit* store, Unit *producer) const;
+
+	//get
+	const MoveSkillType *getMoveLoadedSkillType() const		        {return m_moveLoadedSkillType;}
+	const TransportSkillType *getTransportSkillType() const	        {return m_transportSkillType;}
+	const StopSkillType *getStopLoadedSkillType() const		        {return m_stopLoadedSkillType;}
+	int getTransportedResourceCount() const					        {return m_transportedResources.size();}
+	const ResourceType* getTransportedResource(int i) const	        {return m_transportedResources[i];}
+
+	virtual CmdClass getClass() const { return typeClass(); }
+	static CmdClass typeClass() { return CmdClass::TRANSPORT; }
+};
+
+// ===============================
+//  class SetStoreCommandType
+// ===============================
+
+class SetStoreCommandType: public StopBaseCommandType {
+private:
+	const SetStructureSkillType*	m_setStructureSkillType;
+
+public:
+	SetStoreCommandType() : StopBaseCommandType("SetStore", Clicks::TWO),
+		m_setStructureSkillType(0) {}
+	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
+	virtual void doChecksum(Checksum &checksum) const;
+	virtual void getDesc(string &str, const Unit *unit) const;
+	virtual void subDesc(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const override;
+	virtual void descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt = 0) const override;
+	virtual void update(Unit *unit) const;
+
+	//get
+	const SetStructureSkillType *getProductionRouteSkillType() const	{return m_setStructureSkillType;}
+
+	virtual CmdClass getClass() const { return typeClass(); }
+	static CmdClass typeClass() { return CmdClass::SET_STORE; }
+};
+
+// ===============================
+//  class SetProducerCommandType
+// ===============================
+
+class SetProducerCommandType: public StopBaseCommandType {
+private:
+	const SetStructureSkillType*	m_setStructureSkillType;
+
+public:
+	SetProducerCommandType() : StopBaseCommandType("SetProducer", Clicks::TWO),
+		m_setStructureSkillType(0) {}
+	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
+	virtual void doChecksum(Checksum &checksum) const;
+	virtual void getDesc(string &str, const Unit *unit) const;
+	virtual void subDesc(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const override;
+	virtual void descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt = 0) const override;
+	virtual void update(Unit *unit) const;
+
+	//get
+	const SetStructureSkillType *getProductionRouteSkillType() const	{return m_setStructureSkillType;}
+
+	virtual CmdClass getClass() const { return typeClass(); }
+	static CmdClass typeClass() { return CmdClass::SET_PRODUCER; }
+};
+
+// ==================================
+//  class CreateSettlementCommandType
+// ==================================
+
+class CreateSettlementCommandType: public StopBaseCommandType {
+private:
+	const SetStructureSkillType*	m_setStructureSkillType;
+
+public:
+	CreateSettlementCommandType() : StopBaseCommandType("CreateSettlement", Clicks::TWO),
+		m_setStructureSkillType(0) {}
+	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
+	virtual void doChecksum(Checksum &checksum) const;
+	virtual void getDesc(string &str, const Unit *unit) const;
+	virtual void subDesc(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const override;
+	virtual void descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt = 0) const override;
+	virtual void update(Unit *unit) const;
+
+	//get
+	const SetStructureSkillType *getSettlementSkillType() const	{return m_setStructureSkillType;}
+
+	virtual CmdClass getClass() const { return typeClass(); }
+	static CmdClass typeClass() { return CmdClass::CREATE_SETTLEMENT; }
+};
+
+// ==================================
+//  class ExpandSettlementCommandType
+// ==================================
+
+class ExpandSettlementCommandType: public StopBaseCommandType {
+private:
+	const SetStructureSkillType*	m_setStructureSkillType;
+
+public:
+	ExpandSettlementCommandType() : StopBaseCommandType("ExpandSettlement", Clicks::TWO),
+		m_setStructureSkillType(0) {}
+	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
+	virtual void doChecksum(Checksum &checksum) const;
+	virtual void getDesc(string &str, const Unit *unit) const;
+	virtual void subDesc(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const override;
+	virtual void descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt = 0) const override;
+	virtual void update(Unit *unit) const;
+
+	//get
+	const SetStructureSkillType *getSettlmentSkillType() const	{return m_setStructureSkillType;}
+
+	virtual CmdClass getClass() const { return typeClass(); }
+	static CmdClass typeClass() { return CmdClass::EXPAND_SETTLEMENT; }
 };
 
 // ===============================
@@ -534,7 +764,7 @@ public:
 	virtual void update(Unit *unit) const;
 	virtual string getReqDesc(const Faction *f) const;
 
-	int getProducedNumber(const UnitType*) const;
+	int getProducedNumber(const UnitType* ut) const;
 
 	// get
 	virtual int getProducedCount() const	{return m_producedUnits.size();}
@@ -555,6 +785,51 @@ public:
 
 	virtual CmdClass getClass() const { return typeClass(); }
 	static CmdClass typeClass() { return CmdClass::PRODUCE; }
+};
+
+// ===============================
+//  class CreateItemCommandType
+// ===============================
+
+class CreateItemCommandType: public CommandType {
+private:
+	const ProduceSkillType* m_produceSkillType;
+	vector<const ItemType*> m_createdItems;
+	vector<int>             m_createdNumbers;
+	map<string, string>		m_tipKeys;
+	SoundContainer			m_finishedSounds;
+
+public:
+	CreateItemCommandType() : CommandType("CreateItem", Clicks::ONE, true), m_produceSkillType(0) {}
+	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
+	virtual void doChecksum(Checksum &checksum) const;
+	virtual void getDesc(string &str, const Unit *unit) const;
+	virtual void subDesc(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const override;
+	virtual void descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt = 0) const override;
+	virtual void update(Unit *unit) const;
+	virtual string getReqDesc(const Faction *f) const;
+
+	int getCreatedNumber(const ItemType* it) const;
+
+	// get
+	virtual int getCreatedCount() const	{return m_createdItems.size();}
+	virtual const ProducibleType* getCreated(int i) const;
+
+	const ItemType *getCreatedItem(int i) const		{return m_createdItems[i];}
+	int getCreatedUnitCount() const		{return m_createdItems.size();}
+
+	string getTipKey(const string &name) const  {
+		map<string,string>::const_iterator it = m_tipKeys.find(name);
+		return it->second;
+	}
+
+	StaticSound *getFinishedSound() const	{return m_finishedSounds.getRandSound();}
+
+	const ProduceSkillType *getProduceSkillType() const	{return m_produceSkillType;}
+	virtual Clicks getClicks() const	{ return m_createdItems.size() == 1 ? Clicks::ONE : Clicks::TWO; }
+
+	virtual CmdClass getClass() const { return typeClass(); }
+	static CmdClass typeClass() { return CmdClass::CREATE_ITEM; }
 };
 
 // ===============================

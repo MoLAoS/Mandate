@@ -38,8 +38,12 @@ STRINGY_ENUM( SkillClass,
 	MOVE,
 	ATTACK,
 	BUILD,
+	CONSTRUCT,
 	HARVEST,
+	TRANSPORT,
+    SET_STRUCTURE,
 	REPAIR,
+	MAINTAIN,
 	BE_BUILT,
 	BUILD_SELF,
 	PRODUCE,
@@ -61,10 +65,22 @@ STRINGY_ENUM( CmdClass,
 	ATTACK,
 	ATTACK_STOPPED,
 	HARVEST,
+	TRANSPORT,
+	SET_STORE,
+	SET_PRODUCER,
+	CREATE_SETTLEMENT,
+	EXPAND_SETTLEMENT,
+	CREATE_SQUAD,
+	EXPAND_SQUAD,
+	MOVE_SQUAD,
 	REPAIR,
+	MAINTAIN,
 	BUILD,
+	CONSTRUCT,
 	PRODUCE,
+	CREATE_ITEM,
 	GENERATE,
+    TRADE,
 	UPGRADE,
 	MORPH,
 	TRANSFORM,
@@ -84,7 +100,7 @@ STRINGY_ENUM( CmdClass,
 );
 
 inline bool isProductionCmdClass(CmdClass cc) {
-	return cc >= CmdClass::BUILD && cc <= CmdClass::TRANSFORM;
+	return cc >= CmdClass::BUILD && cc >= CmdClass::CONSTRUCT && cc <= CmdClass::TRANSFORM;
 }
 
 /** HpPolicy - for transform command,  */
@@ -97,8 +113,10 @@ STRINGY_ENUM( HpPolicy,
 WRAPPED_ENUM ( ProducibleClass,
 	NONE,
 	GENERATED,
+	TRADE,
 	UPGRADE,
-	UNIT
+	UNIT,
+	ITEM
 );
 
 WRAPPED_ENUM( EffectClass,

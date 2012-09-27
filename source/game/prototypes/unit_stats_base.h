@@ -47,6 +47,8 @@ inline Field dominantField(const Fields &fields) {
 	Field f = Field::INVALID;
 	if (fields.get(Field::LAND)) f = Field::LAND;
 	else if (fields.get(Field::AIR)) f = Field::AIR;
+	else if (fields.get(Field::STAIR)) f = Field::STAIR;
+	else if (fields.get(Field::WALL)) f = Field::WALL;
 	if (fields.get(Field::AMPHIBIOUS)) f = Field::AMPHIBIOUS;
 	else if (fields.get(Field::ANY_WATER)) f = Field::ANY_WATER;
 	else if (fields.get(Field::DEEP_WATER)) f = Field::DEEP_WATER;
@@ -96,6 +98,7 @@ public:
     mutable int sight;
 	mutable int armor;
 	mutable int expGiven;
+	mutable int morale;
 
 	// for layered upgrades
     mutable int layerMaxHp;
@@ -108,6 +111,7 @@ public:
     mutable int layerSight;
 	mutable int layerArmor;
 	mutable int layerExpGiven;
+	mutable int layerMorale;
 
 	// skill mods
 	mutable int attackStrength;
@@ -147,6 +151,7 @@ public:
 	void setSight(int v) 				{sight = v;}
 	void setArmor(int v) 				{armor = v;}
 	void setExpGiven(int v) 			{expGiven = v;}
+	void setMorale(int v) 			    {morale = v;}
 
 	void setAttackStrength(int v) 		{attackStrength = v;}
     void setAttackLifeLeech(int v) 		{attackLifeLeech = v;}
@@ -179,6 +184,7 @@ public:
 	int getSight() const					{return sight;}
 	int getArmor() const					{return armor;}
 	int getExpGiven() const					{return expGiven;}
+	int getMorale() const					{return morale;}
 
 	int getAttackStrength() const			{return attackStrength;}
     int getAttackLifeLeech() const			{return attackLifeLeech;}
@@ -245,6 +251,7 @@ public:
 	mutable fixed sightMult;
 	mutable fixed armorMult;
 	mutable fixed expGivenMult;
+	mutable fixed moraleMult;
 
 	mutable fixed attackStrengthMult;
     mutable fixed attackLifeLeechMult;
@@ -274,6 +281,7 @@ public:
 	mutable fixed layerSightMult;
 	mutable fixed layerArmorMult;
 	mutable fixed layerExpGivenMult;
+	mutable fixed layerMoraleMult;
 
 	mutable fixed layerAttackStrengthMult;
     mutable fixed layerAttackLifeLeechMult;
@@ -311,6 +319,7 @@ public:
 	fixed getSightMult() const			{return sightMult;}
 	fixed getArmorMult() const			{return armorMult;}
 	fixed getExpGivenMult() const		{return expGivenMult;}
+	fixed getMoraleMult() const		    {return moraleMult;}
 	fixed getAttackStrengthMult() const	{return attackStrengthMult;}
     fixed getAttackLifeLeechMult() const{return attackLifeLeechMult;}
     fixed getAttackManaBurnMult() const	{return attackManaBurnMult;}

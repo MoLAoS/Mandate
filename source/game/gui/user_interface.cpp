@@ -22,8 +22,9 @@
 #include "unit.h"
 #include "metrics.h"
 #include "display.h"
-#include "resource_bar.h"
 #include "faction_display.h"
+#include "resource_bar.h"
+#include "trade_bar.h"
 #include "platform_util.h"
 #include "sound_renderer.h"
 #include "util.h"
@@ -111,8 +112,11 @@ UserInterface::UserInterface(GameState &game)
 		, m_dialogConsole(0)
 		, m_minimap(0)
 		, m_display(0)
-		, m_resourceBar(0)
+		, m_itemWindow(0)
 		, m_factionDisplay(0)
+		, m_resourceBar(0)
+		, m_tradeBar(0)
+		, m_unitBar(0)
 		, m_luaConsole(0)
 		, selection(0)
 		, m_selectingSecond(false)
@@ -184,6 +188,17 @@ void UserInterface::init() {
 		m_resourceBar = barFrame->getResourceBar();
 		m_resourceBar->init(fac, displayResources);
 
+		set<const UnitType*> displayUnits;
+		for (int i = 0; i < ft->getUnitTypeCount(); ++i) {
+			const UnitType *ut = ft->getUnitType(i);
+            displayUnits.insert(ut);
+		}
+
+		// create UnitBar, connect thisFactions Units to it...
+		UnitBarFrame *unitFrame = new UnitBarFrame();
+		m_unitBar = unitFrame->getUnitBar();
+		m_unitBar->init(fac, displayUnits);
+
 		m_luaConsole = new LuaConsole(this, &g_program);
 		m_luaConsole->setPos(Vec2i(200,200));
 		m_luaConsole->setSize(Vec2i(500, 300));
@@ -204,6 +219,13 @@ void UserInterface::init() {
 			y = 20;
 			x = g_metrics.getScreenW() - 20 - 195;
 		}
+		if (m_unitBar) {
+			y = m_unitBar->getParent()->getPos().y + m_unitBar->getParent()->getHeight() + 10;
+			x = g_metrics.getScreenW() - 20 - 195;
+		} else {
+			y = 20;
+			x = g_metrics.getScreenW() - 20 - 195;
+		}
 	}
 
 	// Display Panel
@@ -217,27 +239,39 @@ void UserInterface::init() {
 	if (g_config.getUiLastDisplaySize() == 3) {
 		displayFrame->onExpand(0);
 	}
-	if (g_config.getUiLastDisplaySize() == 4) {
-		displayFrame->onExpand(0);
-	}
-	if (g_config.getUiLastDisplaySize() == 5) {
-		displayFrame->onExpand(0);
-	}
 
-    // Faction Display Panel
-    FactionDisplayFrame *factionDisplayFrame = new FactionDisplayFrame(this, Vec2i(x,y));
-    m_factionDisplay = factionDisplayFrame->getDisplay();
-	m_factionDisplay->setSize();
+    x = 100;
+    y = 250;
 
-	if (g_config.getUiLastDisplaySize() >= 2) {
-		factionDisplayFrame->onExpand(0);
+    /*TradeBarFrame *tradeFrame = new TradeBarFrame(Vec2i(x,y));
+    m_tradeBar = tradeFrame->getTradeBar();
+    m_tradeBar->setSize();
+
+    if (g_config.getUiLastTradeBarSize() >= 2) {
+		tradeFrame->onExpand(0);
 	}
-	if (g_config.getUiLastDisplaySize() == 3) {
-		factionDisplayFrame->onExpand(0);
+	if (g_config.getUiLastTradeBarSize() == 3) {
+		tradeFrame->onExpand(0);
+	}*/
+
+    set<const UnitType*> buildings;
+	if (fac) {
+        const FactionType *ft = fac->getType();
+        for (int j = 0; j < ft->getUnitTypeCount(); ++j) {
+            const UnitType *ut = ft->getUnitType(j);
+            buildings.insert(ut);
+        }
 	}
+    FactionDisplayFrame *displayFactionFrame = new FactionDisplayFrame(this, Vec2i(x,y));
+    m_factionDisplay = displayFactionFrame->getFactionDisplay();
+    m_factionDisplay->setSize();
+    m_factionDisplay->init(fac, buildings);
+
+	ItemDisplayFrame *itemWindow = new ItemDisplayFrame(this, Vec2i(x,y));
+	m_itemWindow = itemWindow->getItemDisplay();
+	m_itemWindow->setSize();
 
 	//m_minimap->getParent()->setPos(Vec2i(20, y));
-
 }
 
 void UserInterface::initMinimap(bool fow, bool sod, bool resuming) {
@@ -263,7 +297,8 @@ void UserInterface::initMinimap(bool fow, bool sod, bool resuming) {
 const UnitType *UserInterface::getBuilding() const {
 	RUNTIME_CHECK(activeCommandType);
 	RUNTIME_CHECK(activeCommandType->getClass() == CmdClass::BUILD
-		|| activeCommandType->getClass() == CmdClass::TRANSFORM);
+		|| activeCommandType->getClass() == CmdClass::TRANSFORM
+        || activeCommandType->getClass() == CmdClass::CONSTRUCT);
 	return choosenBuildingType;
 }
 
@@ -272,7 +307,8 @@ const UnitType *UserInterface::getBuilding() const {
 bool UserInterface::isPlacingBuilding() const {
 	return isSelectingPos() && activeCommandType
 		&& (activeCommandType->getClass() == CmdClass::BUILD
-		|| activeCommandType->getClass() == CmdClass::TRANSFORM);
+		|| activeCommandType->getClass() == CmdClass::TRANSFORM
+        || activeCommandType->getClass() == CmdClass::CONSTRUCT);
 }
 
 // ==================== reset state ====================
@@ -336,6 +372,12 @@ void UserInterface::update() {
 	mouse3d.update();
 	selection->clearDeadUnits();
 
+    /*m_tradeBar->computeTradePanel();
+    TradeDisplayButton tbtn = m_tradeBar->getHoverButton();
+	if (tbtn.m_section == TradeDisplaySection::TRADE) {
+		m_tradeBar->computeTradeInfo(tbtn.m_index);
+	}*/
+
 	if (m_selectionDirty) {
 		tick();
 	}
@@ -371,6 +413,38 @@ void UserInterface::commandButtonPressed(int posDisplay) {
 		computeCommandInfo(activePos);
 	} else { // m_selectingSecond || m_selectingPos
 		// if they clicked on a button again, they must have changed their mind
+		resetState();
+	}
+}
+
+void UserInterface::formationButtonPressed(int posDisplay) {
+	WIDGET_LOG( __FUNCTION__ << "( " << posDisplay << " )");
+	if (!selectingPos && !selectingMeetingPoint) {
+		if (selection->isComandable()) {
+            onFormationSelect(posDisplay);
+			computeDisplay();
+		} else {
+			resetState();
+		}
+		activePos = posDisplay;
+		computeFormationInfo(activePos);
+	} else {
+		resetState();
+	}
+}
+
+void UserInterface::hierarchyButtonPressed(int posDisplay) {
+	WIDGET_LOG( __FUNCTION__ << "( " << posDisplay << " )");
+	if (!selectingPos && !selectingMeetingPoint) {
+		if (selection->isComandable()) {
+            onHierarchySelect(posDisplay);
+			computeDisplay();
+		} else {
+			resetState();
+		}
+		activePos = posDisplay;
+		computeHierarchyInfo(activePos);
+	} else {
 		resetState();
 	}
 }
@@ -743,12 +817,13 @@ void UserInterface::giveTwoClickOrders(const Vec2i &targetPos, Unit *targetUnit)
 			result = commander->tryGiveCommand(selection, flags, 0, activeCommandClass, targetPos, targetUnit);
 		}
 	} else {
-		if (activeCommandClass == CmdClass::BUILD || activeCommandClass == CmdClass::TRANSFORM) {
+		if (activeCommandClass == CmdClass::BUILD || activeCommandClass == CmdClass::TRANSFORM
+        || activeCommandType->getClass() == CmdClass::CONSTRUCT) {
 			// selecting pos for building
 			assert(isPlacingBuilding());
 
 			// if this is a multi-build (ie. walls) then start dragging and wait for mouse up
-			if (activeCommandClass == CmdClass::BUILD && choosenBuildingType->isMultiBuild() && !dragging) {
+			if ((activeCommandClass == CmdClass::BUILD || activeCommandClass == CmdClass::CONSTRUCT) && choosenBuildingType->isMultiBuild() && !dragging) {
 				dragging = true;
 				dragStartPos = posObjWorld;
 				return;
@@ -898,6 +973,11 @@ void UserInterface::onFirstTierSelect(int posDisplay) {
 		const Unit *unit= selection->getFrontUnit();
 
 		if (selection->isUniform()) { // uniform selection, use activeCommandType
+        if (posDisplay >= 24) {
+            int displayPos = posDisplay - 24;
+            activeCommandType = m_display->getHierarchyCommand(displayPos);
+            activeCommandClass = activeCommandType->getClass();
+        } else {
 			if (unit->getFaction()->reqsOk(m_display->getCommandType(posDisplay))) {
 				activeCommandType = m_display->getCommandType(posDisplay);
 				activeCommandClass = activeCommandType->getClass();
@@ -907,6 +987,7 @@ void UserInterface::onFirstTierSelect(int posDisplay) {
 				activeCommandClass = CmdClass::STOP;
 				return;
 			}
+        }
 		} else { // non uniform selection, use activeCommandClass
 			activeCommandType = 0;
 			activeCommandClass = m_display->getCommandClass(posDisplay);
@@ -915,6 +996,10 @@ void UserInterface::onFirstTierSelect(int posDisplay) {
 		// give orders depending on command type
 		const CommandType *ct = selection->getUnit(0)->getFirstAvailableCt(activeCommandClass);
 		if (activeCommandType && activeCommandType->getClass() == CmdClass::BUILD) {
+			assert(selection->isUniform());
+			m_selectedFacing = CardinalDir::NORTH;
+			m_selectingSecond = true;
+		} else if (activeCommandType && activeCommandType->getClass() == CmdClass::CONSTRUCT) {
 			assert(selection->isUniform());
 			m_selectedFacing = CardinalDir::NORTH;
 			m_selectingSecond = true;
@@ -962,7 +1047,7 @@ void UserInterface::onSecondTierSelect(int posDisplay) {
 		RUNTIME_CHECK(ndx >= 0 && ndx < activeCommandType->getProducedCount());
 		const ProducibleType *pt = activeCommandType->getProduced(ndx);
 
-		if (activeCommandType->getClass() == CmdClass::BUILD
+		if (activeCommandType->getClass() == CmdClass::BUILD || activeCommandType->getClass() == CmdClass::CONSTRUCT
 		|| activeCommandType->getClass() == CmdClass::TRANSFORM) {
 			if (world->getFaction(factionIndex)->reqsOk(pt)) {
 				choosenBuildingType = static_cast<const UnitType*>(pt);
@@ -980,6 +1065,37 @@ void UserInterface::onSecondTierSelect(int posDisplay) {
 			}
 		}
 	}
+	computeDisplay();
+}
+
+void UserInterface::onFormationSelect(int posDisplay) {
+	WIDGET_LOG( __FUNCTION__ << "( " << posDisplay << " )");
+	if (selection->isEmpty()) {
+		return;
+	}
+	if (posDisplay == cancelPos) {
+        resetState(false);
+	} else {
+        FormationCommand fc = m_display->getFormationCommand(posDisplay);
+        const Squad *squad = &selection->getFrontUnit()->getType()->leader.squad;
+        fc.issue(fc.formation, squad);
+    }
+	computeDisplay();
+}
+
+void UserInterface::onHierarchySelect(int posDisplay) {
+	WIDGET_LOG( __FUNCTION__ << "( " << posDisplay << " )");
+	if (selection->isEmpty()) {
+		return;
+	}
+	if (posDisplay == cancelPos) {
+        resetState(false);
+	} else {
+        const CommandType *hc = m_display->getHierarchyCommand(posDisplay);
+        const Unit *leader = selection->getFrontUnit();
+        posDisplay += 24;
+        onFirstTierSelect(posDisplay);
+    }
 	computeDisplay();
 }
 
@@ -1067,6 +1183,55 @@ void UserInterface::computeCommandInfo(int posDisplay) {
 		const ProducibleType *pt = activeCommandType->getProduced(m_display->getIndex(posDisplay));
 		computeCommandTip(activeCommandType, pt);
 	}
+}
+
+void UserInterface::computeFormationTip(FormationCommand fc) {
+	//m_display->getFormationTip()->clearItems();
+	fc.describe(fc.formation, m_display->getFormationTip());
+	string formation = fc.formation.title;
+	stringstream ss;
+	ss << endl << "Lines: " << endl;
+	for (int i = 0; i < fc.formation.lines.size(); ++i) {
+	ss << fc.formation.lines[i].name << endl;
+	ss << fc.formation.lines[i].line.size() << endl;
+	}
+	string lines = ss.str();
+	m_display->setToolTipText2(formation, lines);
+	m_display->resetTipPos();
+}
+
+void UserInterface::computeFormationInfo(int posDisplay) {
+	WIDGET_LOG( __FUNCTION__ << "( " << posDisplay << " )");
+	if (!selection->isComandable() || posDisplay == invalidPos) {
+		m_display->setToolTipText2("", "");
+		return;
+	}
+    if (posDisplay == cancelPos) {
+        m_display->setToolTipText2("", g_lang.get("Cancel"));
+    } else {
+        FormationCommand fc = m_display->getFormationCommand(posDisplay);
+        computeFormationTip(fc);
+    }
+}
+
+void UserInterface::computeHierarchyTip(const CommandType *hc) {
+	m_display->getCommandTip()->clearItems();
+	hc->describe(selection->getFrontUnit(), m_display->getCommandTip());
+	m_display->resetTipPos();
+}
+
+void UserInterface::computeHierarchyInfo(int posDisplay) {
+	WIDGET_LOG( __FUNCTION__ << "( " << posDisplay << " )");
+	if (!selection->isComandable() || posDisplay == invalidPos) {
+		m_display->setToolTipText2("", "");
+		return;
+	}
+    if (posDisplay == cancelPos) {
+        m_display->setToolTipText2("", g_lang.get("Cancel"));
+    } else {
+        const CommandType *hc = m_display->getHierarchyCommand(posDisplay);
+        computeHierarchyTip(hc);
+    }
 }
 
 void UserInterface::computeSelectionPanel() {
@@ -1170,10 +1335,44 @@ void UserInterface::computeGarrisonedUnitsPanel() {
 	m_display->setGarrisonedLabel(transported);
 }
 
+void UserInterface::computeFormationPanel() {
+    /*if (selectingPos) {
+		assert(!selection->isEmpty());
+		m_display->setSelectedFormationPos(activePos);
+	}*/
+
+    if (selection->isComandable()) {
+        const Unit *u = selection->getFrontUnit();
+        const UnitType *ut = u->getType();
+        for (int i = 0; i < ut->leader.formationCommands.size(); ++i) {
+            const FormationCommand fc = ut->leader.formationCommands[i];
+            m_display->setFormationImage(i, fc.formation.getImage());
+            m_display->setFormationCommand(i, fc);
+        }
+    }
+}
+
+void UserInterface::computeHierarchyPanel() {
+    if (selection->isComandable()) {
+        const Unit *u = selection->getFrontUnit();
+        const UnitType *ut = u->getType();
+        for (int i = 0; i < ut->leader.squadCommands.size(); ++i) {
+            const CommandType *newSquad = ut->getSquadCommand(i);
+            m_display->setHierarchyImage(i, newSquad->getImage());
+            m_display->setHierarchyCommand(i, newSquad);
+        }
+    }
+}
+
 void UserInterface::computeCommandPanel() {
 	if (selectingPos || selectingMeetingPoint) {
 		assert(!selection->isEmpty());
 		m_display->setSelectedCommandPos(activePos);
+        const Unit *test = selection->getFrontUnit();
+        const UnitType *utest = test->getType();
+		if (m_display->getSelectedCommandIndex() > utest->getCommandTypeCount() - utest->leader.squadCommands.size()) {
+            m_display->setSelectedCommandPos(m_display->invalidIndex);
+		}
 	}
 
 	if (selection->isComandable()) {
@@ -1220,7 +1419,7 @@ void UserInterface::computeCommandPanel() {
 			if (selection->isUniform()) { // uniform selection
 				if (u->isBuilt()) {
 					int morphPos = cellWidthCount * 2;
-					for (int i = 0, j = 0; i < ut->getCommandTypeCount(); ++i) {
+					for (int i = 0, j = 0; i < ut->getCommandTypeCount() - ut->leader.squadCommands.size(); ++i) {
 						const CommandType *ct = ut->getCommandType(i);
 						int displayPos = ct->getClass() == CmdClass::MORPH ? morphPos++ : j;
 						if (u->getFaction()->isAvailable(ct) && !ct->isInvisible()) {
@@ -1278,8 +1477,18 @@ void UserInterface::computeDisplay() {
 	computeHousedUnitsPanel();
 	computeGarrisonedUnitsPanel();
 
-	// === Command Panel ===
+	// === Command Panels ===
 	computeCommandPanel();
+    computeFormationPanel();
+	computeHierarchyPanel();
+
+    // === Item Panels ===
+    m_itemWindow->computeSelectionPanel();
+	m_itemWindow->computeEquipmentPanel();
+	m_itemWindow->computeButtonsPanel();
+
+	// === Faction Panel ===
+	m_factionDisplay->computeBuildPanel();
 }
 
 ///@todo move parts to CommandType classes (hmmm... CommandTypes that need to know about Console ?!? Nope.)

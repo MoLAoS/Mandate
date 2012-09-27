@@ -50,6 +50,7 @@ void UnitStats::reset() {
 	sight = 0;
 	armor = 0;
 	expGiven = 0;
+	morale = 0;
 
 	attackStrength = 0;
     attackLifeLeech = 0;
@@ -74,6 +75,7 @@ void UnitStats::reset() {
 	layerSight = 0;
 	layerArmor = 0;
 	layerExpGiven = 0;
+	layerMorale = 0;
 
 	layerAttackStrength = 0;
     layerAttackLifeLeech = 0;
@@ -100,6 +102,7 @@ void UnitStats::setValues(const UnitStats &o) {
 	sight = o.sight;
 	armor = o.armor;
 	expGiven = o.expGiven;
+	morale = o.morale;
 
 	attackStrength = o.attackStrength;
     attackLifeLeech = o.attackLifeLeech;
@@ -126,6 +129,7 @@ void UnitStats::addStatic(const EnhancementType &e, fixed strength) {
 	sight += (e.getSight() * strength).intp();
 	armor += (e.getArmor() * strength).intp();
 	expGiven += (e.getExpGiven() * strength).intp();
+	morale += (e.getMorale() * strength).intp();
 	attackStrength += (e.getAttackStrength() * strength).intp();
     attackLifeLeech += (e.getAttackLifeLeech() * strength).intp();
     attackManaBurn += (e.getAttackManaBurn() * strength).intp();
@@ -151,6 +155,7 @@ void UnitStats::applyMultipliers(const EnhancementType &e) {
 	sight = std::max((sight * e.getSightMult()).intp(), 1);
 	armor = (armor * e.getArmorMult()).intp();
 	expGiven = (expGiven * e.getExpGivenMult()).intp();
+	morale = (morale * e.getMoraleMult()).intp();
 	attackStrength = (attackStrength * e.getAttackStrengthMult()).intp();
     attackLifeLeech = (attackLifeLeech * e.getAttackLifeLeechMult()).intp();
     attackManaBurn = (attackManaBurn * e.getAttackManaBurnMult()).intp();
@@ -173,6 +178,7 @@ void UnitStats::sanitiseUnitStats() {
 	if (sight < 0) sight = 0;
 	if (armor < 0) armor = 0;
 	if (expGiven < 0) expGiven = 0;
+	if (morale < 0) morale = 0;
 	if (attackStrength < 0) attackStrength = 0;
     if (attackLifeLeech < 0) attackLifeLeech = 0;
     if (attackManaBurn < 0) attackManaBurn = 0;
@@ -256,6 +262,12 @@ bool UnitStats::load(const XmlNode *baseNode, const string &dir, const TechTree 
 		g_logger.logXmlError(dir, e.what());
 		loadOk = false;
 	}
+	//morale
+	try { morale = baseNode->getOptionalIntValue("morale"); }
+	catch (runtime_error e) {
+		g_logger.logXmlError(dir, e.what());
+		loadOk = false;
+	}
 	return loadOk;
 }
 
@@ -270,6 +282,7 @@ void UnitStats::doChecksum(Checksum &checksum) const {
 	checksum.add(sight);
 	checksum.add(armor);
 	checksum.add(expGiven);
+	checksum.add(morale);
 
 	checksum.add(attackStrength);
     checksum.add(attackLifeLeech);
@@ -296,6 +309,7 @@ void UnitStats::save(XmlNode *node) const {
 	node->addChild("sight", sight);
 	node->addChild("armor", armor);
 	node->addChild("exp-given", expGiven);
+	node->addChild("morale", morale);
 	node->addChild("attack-strength", attackStrength);
     node->addChild("attack-life-leech", attackLifeLeech);
     node->addChild("attack-mana-burn", attackManaBurn);
@@ -328,6 +342,7 @@ void EnhancementType::reset() {
 	sightMult = 1;
 	armorMult = 1;
 	expGivenMult = 1;
+	moraleMult = 1;
 	attackStrengthMult = 1;
     attackLifeLeechMult = 1;
     attackManaBurnMult = 1;
@@ -352,6 +367,7 @@ void EnhancementType::reset() {
 	layerSightMult = 1;
 	layerArmorMult = 1;
 	layerExpGivenMult = 1;
+	layerMoraleMult = 1;
 	layerAttackStrengthMult = 1;
     layerAttackLifeLeechMult = 1;
     layerAttackManaBurnMult = 1;
@@ -383,6 +399,7 @@ void EnhancementType::save(XmlNode *node) const {
 	m->addChild("sight", sightMult);
 	m->addChild("armor", armorMult);
 	m->addChild("exp-given", expGivenMult);
+	m->addChild("morale", moraleMult);
 
 	m->addChild("attack-strength", attackStrengthMult);
     m->addChild("attack-life-leech", attackLifeLeechMult);
@@ -409,6 +426,7 @@ void EnhancementType::addMultipliers(const EnhancementType &e, fixed strength){
 	sightMult += (e.getSightMult() - 1) * strength;
 	armorMult += (e.getArmorMult() - 1) * strength;
 	expGivenMult += (e.getExpGivenMult() - 1) * strength;
+	moraleMult += (e.getMoraleMult() - 1) * strength;
 	attackStrengthMult += (e.getAttackStrengthMult() - 1) * strength;
     attackLifeLeechMult += (e.getAttackLifeLeechMult() - 1) * strength;
     attackManaBurnMult += (e.getAttackManaBurnMult() - 1) * strength;
@@ -455,6 +473,9 @@ void EnhancementType::clampMultipliers() {
 	}
 	if (expGivenMult <= 0) {
 		expGivenMult = low;
+	}
+	if (moraleMult <= 0) {
+		moraleMult = low;
 	}
 	if (attackStrengthMult <= 0) {
 		attackStrengthMult = low;
@@ -550,6 +571,7 @@ void EnhancementType::getDesc(string &str, const char *pre) const {
 	formatModifier(str, pre, "AttackDistance", attackRange, attackRangeMult);
 	formatModifier(str, pre, "Armor", armor, armorMult);
 	formatModifier(str, pre, "ExpGiven", expGiven, expGivenMult);
+	formatModifier(str, pre, "Morale", morale, moraleMult);
 	formatModifier(str, pre, "WalkSpeed", moveSpeed, moveSpeedMult);
 	formatModifier(str, pre, "ProductionSpeed", prodSpeed, prodSpeedMult);
 	formatModifier(str, pre, "RepairSpeed", repairSpeed, repairSpeedMult);
@@ -592,6 +614,9 @@ void EnhancementType::initStaticModifier(const XmlNode *node, const string &dir)
 	} else if (name == "exp-given") {
 		expGiven = value;
 		layerExpGiven = additive;
+	} else if (name == "morale") {
+		morale = value;
+		layerMorale = additive;
 	} else if (name == "attack-strength") {
         attackStrength = value;
         layerAttackStrength = additive;
@@ -668,6 +693,9 @@ void EnhancementType::initMultiplier(const XmlNode *node, const string &dir) {
 	} else if (name == "exp-given") {
 		expGivenMult = value;
 		layerExpGivenMult = multiplier;
+	} else if (name == "morale") {
+		moraleMult = value;
+		layerMoraleMult = multiplier;
 	} else if (name == "attack-strength") {
 		attackStrengthMult = value;
 		layerAttackStrengthMult = multiplier;
@@ -764,6 +792,7 @@ void EnhancementType::doChecksum(Checksum &checksum) const {
 	checksum.add(sightMult);
 	checksum.add(armorMult);
 	checksum.add(expGivenMult);
+	checksum.add(moraleMult);
 	checksum.add(attackStrengthMult);
 	checksum.add(attackLifeLeechMult);
 	checksum.add(attackManaBurnMult);

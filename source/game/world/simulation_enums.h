@@ -20,7 +20,7 @@ namespace Glest { namespace Sim {
   *		<li><b>CLIENT</b> Network client.</li>
   * </ul>
   */
-STRINGY_ENUM( GameRole, 
+STRINGY_ENUM( GameRole,
 	LOCAL,
 	SERVER,
 	CLIENT
@@ -44,7 +44,7 @@ STRINGY_ENUM( GameSpeed,
   *		<li><b>NETWORK</b> Network player</li>
   *		<li><b>HUMAN</b> Local Player</li></ul>
   */
-STRINGY_ENUM( ControlType, 
+STRINGY_ENUM( ControlType,
 	CLOSED,
 	HUMAN,
 	NETWORK,
@@ -66,7 +66,9 @@ STRINGY_ENUM( Field,
 	AIR,
 	ANY_WATER,
 	DEEP_WATER,
-	AMPHIBIOUS
+	AMPHIBIOUS,
+	WALL,
+	STAIR
 );
 
 /** surface type for cells
@@ -75,8 +77,8 @@ STRINGY_ENUM( Field,
   *		<li><b>DEEP_WATER</b> deep (non-fordable) water</li></ul>
   */
 STRINGY_ENUM( SurfaceType,
-	LAND, 
-	FORDABLE, 
+	LAND,
+	FORDABLE,
 	DEEP_WATER
 );
 
@@ -88,7 +90,8 @@ STRINGY_ENUM( SurfaceType,
 STRINGY_ENUM( Zone,
 //	SURFACE_PROP,
 	LAND,
-	AIR
+	AIR,
+	WALL
 );
 
 /** unit properties
@@ -99,7 +102,8 @@ STRINGY_ENUM( Zone,
 STRINGY_ENUM( Property,
 	BURNABLE,
 	ROTATED_CLIMB,
-	WALL
+	WALL,
+	STAIR
 );
 
 /** unit classes [could be WRAPPED_ENUM in Unit ?]

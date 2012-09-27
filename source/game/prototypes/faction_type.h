@@ -14,6 +14,7 @@
 
 #include "unit_type.h"
 #include "upgrade_type.h"
+#include "item_type.h"
 #include "sound.h"
 
 using Shared::Sound::StrSound;
@@ -52,10 +53,17 @@ private:
 	typedef vector<StoredResource> SResources;
     typedef vector<CreatedResource> CResources;
 	typedef vector<string> Subfactions;
+	typedef vector<ItemType*> ItemTypes;
+	typedef vector<Texture2D*> ItemImages;
+	typedef vector<string> GuiFileNames;
 
 private:
+    string guiDirectory;
+    GuiFileNames guiFileNames;
 	UnitTypes unitTypes;
 	UpgradeTypes upgradeTypes;
+	ItemImages itemImages;
+	ItemTypes itemTypes;
 	StartingUnits startingUnits;
 	SResources startingResources;
 	Subfactions subfactions;
@@ -74,6 +82,8 @@ public:
 	bool preLoad(const string &dir, const TechTree *techTree);
 	bool load(int ndx, const string &dir, const TechTree *techTree);
 
+	bool guiPreLoad(const string &dir, const TechTree *techTree);
+
 	bool preLoadGlestimals(const string &dir, const TechTree *techTree);
 	bool loadGlestimals(const string &dir, const TechTree *techTree);
 
@@ -82,10 +92,16 @@ public:
 	~FactionType();
 
 	//get
+	int getGuiFileNamesCount() const                    {return guiFileNames.size();}
+	string getGuiFileName(int i) const                  {return guiFileNames[i];}
 	int getUnitTypeCount() const						{return unitTypes.size();}
 	int getUpgradeTypeCount() const						{return upgradeTypes.size();}
+	int getItemImagesCount() const                      {return itemImages.size();}
+	Texture2D *getItemImage(int i) const                {return itemImages[i];}
+    int getItemTypeCount() const						{return itemTypes.size();}
 	int getSubfactionCount() const						{return subfactions.size();}
 	const UnitType *getUnitType(int i) const			{return unitTypes[i];}
+	const ItemType *getItemType(int i) const			{return itemTypes[i];}
 	const UpgradeType *getUpgradeType(int i) const		{return upgradeTypes[i];}
 	const string &getSubfaction(int i) const			{return subfactions[i];}
 	int getSubfactionIndex(const string &name) const;
@@ -102,6 +118,7 @@ public:
 	int getEnemyNoticeDelay() const						{return enemyNoticeDelay;}
 
 	const UnitType *getUnitType(const string &name) const;
+	const ItemType *getItemType(const string &name) const;
 	const UpgradeType *getUpgradeType(const string &name) const;
 	int getStartingResourceAmount(const ResourceType *resourceType) const;
 };

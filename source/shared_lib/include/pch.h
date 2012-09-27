@@ -36,8 +36,9 @@
 #	endif
 // new stuff
 #define _CRTDBG_MAP_ALLOC
-#include <malloc.h>
 #include <stdlib.h>
+#include <crtdbg.h>
+#include <malloc.h>
 //----
 #	if _GAE_USE_XAUDIO2_
 #		include <xaudio2.h>

@@ -14,7 +14,6 @@
 #define _GLEST_GAME_DISPLAY_H_
 
 #include <string>
-
 #include "texture.h"
 #include "util.h"
 #include "game_util.h"
@@ -40,7 +39,7 @@ using Entities::Faction;
 
 class UserInterface;
 
-WRAPPED_ENUM( DisplaySection, SELECTION, COMMANDS, TRANSPORTED, GARRISONED )
+WRAPPED_ENUM( DisplaySection, SELECTION, COMMANDS, FORMATION, HIERARCHY, TRANSPORTED, GARRISONED )
 
 struct DisplayButton {
 	DisplaySection	        m_section;
@@ -78,8 +77,11 @@ public:
 
 	static const int selectionCellCount = cellWidthCount * cellHeightCount;
 	static const int commandCellCount = cellWidthCount * cellHeightCount;
+	static const int formationCellCount = cellWidthCount * cellHeightCount;
+	static const int hierarchyCellCount = cellWidthCount * (cellHeightCount + 1);
 	static const int transportCellCount = cellWidthCount * cellHeightCount / 2;
 	static const int garrisonCellCount = cellWidthCount * cellHeightCount / 2;
+
 
 	static const int invalidIndex = -1;
 
@@ -89,6 +91,11 @@ private:
 	int index[commandCellCount];        // index per command cell, identifies producibles in two tier selections
 	const CommandType *commandTypes[commandCellCount]; // CommandType per command cell, only valid if selection.isUniform()
 	CmdClass commandClasses[commandCellCount];         // CommandClass per command cell, use when !selection.isUniform()
+
+    int m_selectedFormationIndex;
+    FormationCommand formationCommands[formationCellCount];
+    const CommandType *hierarchyCommands[hierarchyCellCount];
+
 	int m_progress;    // 0-100 to show progress bar at that percentage, -1 == no progress bar.
 	int m_selectedCommandIndex; // index of command (in commnadTypes and/or commandClasses) used to identify original command in two-tier selects
 	int m_logo;                 // index of logo image (in ImageWidget::textures)
@@ -103,15 +110,18 @@ private:
 		Vec2i portraitSize;
 		Vec2i logoSize;
 		Vec2i commandSize;
+		Vec2i hierarchySize;
 		Vec2i transportSize;
 		Vec2i garrisonSize;
 	};
-	SizeCollection m_sizes;//[5];
+	SizeCollection m_sizes;//[6];
 
 	FuzzySize m_fuzzySize;
 
 	Vec2i	m_portraitOffset,       // x,y offset for selected unit portrait(s)
 			m_commandOffset,        // x,y offset for command buttons
+			m_formationOffset,      // x,y offset for formation commands
+			m_hierarchyOffset,      // x,y offset for hierarchy commands
 			m_carryImageOffset,     // x,y offset for loaded unit portrait(s)
 			m_garrisonImageOffset,     // x,y offset for garrisoned unit portrait(s)
 			m_progressPos;          // x,y offset for progress bar
@@ -122,6 +132,7 @@ private:
 					m_pressedBtn;   // section/index of button that received a mouse down event
 
 	CommandTip  *m_toolTip;
+	FormationTip *m_displayTip;
 	const FontMetrics *m_fontMetrics;
 
 private:
@@ -142,10 +153,13 @@ public:
 	int getIndex(int i)								{return index[i];}
 	bool getDownLighted(int index) const			{return downLighted[index];}
 	const CommandType *getCommandType(int i)        {return commandTypes[i];}
+	FormationCommand getFormationCommand(int i)     {return formationCommands[i];}
+	const CommandType *getHierarchyCommand(int i)          {return hierarchyCommands[i];}
 	CmdClass getCommandClass(int i)                 {return commandClasses[i];}
 	int getProgressBar() const                      {return m_progress;}
 	int getSelectedCommandIndex() const             {return m_selectedCommandIndex;}
 	CommandTip* getCommandTip()                     {return m_toolTip;}
+	FormationTip* getFormationTip()                 {return m_displayTip;}
 
 	//set
 	void setSize();
@@ -159,17 +173,24 @@ public:
 	void setTransportedLabel(bool v);
 	void setGarrisonedLabel(bool v);
 
-	void setUpImage(int i, const Texture2D *image) 		 {setImage(image, i);}
-	void setDownImage(int i, const Texture2D *image)	 {setImage(image, selectionCellCount + i);}
-	void setCarryImage(int i, const Texture2D *image)	 {setImage(image, selectionCellCount + commandCellCount + i);}
-	void setGarrisonImage(int i, const Texture2D *image) {setImage(image, selectionCellCount + commandCellCount + transportCellCount + i);}
-	void setCommandType(int i, const CommandType *ct)	 {commandTypes[i]= ct;}
-	void setCommandClass(int i, const CmdClass cc)	     {commandClasses[i]= cc;}
-	void setDownLighted(int i, bool lighted)			 {downLighted[i]= lighted;}
-	void setIndex(int i, int value)						 {index[i] = value;}
+	void setUpImage(int i, const Texture2D *image) 		        {setImage(image, i);}
+	void setDownImage(int i, const Texture2D *image)	        {setImage(image, selectionCellCount + i);}
+	void setFormationImage(int i, const Texture2D *image)       {setImage(image, selectionCellCount + commandCellCount + i);}
+	void setHierarchyImage(int i, const Texture2D *image)       {setImage(image, selectionCellCount + commandCellCount + formationCellCount + i);}
+	void setCarryImage(int i, const Texture2D *image)	        {setImage(image, selectionCellCount + commandCellCount +
+                                                                 formationCellCount + hierarchyCellCount + i);}
+	void setGarrisonImage(int i, const Texture2D *image)        {setImage(image, selectionCellCount + commandCellCount +
+                                                                 formationCellCount + hierarchyCellCount + transportCellCount + i);}
+	void setCommandType(int i, const CommandType *ct)	        {commandTypes[i] = ct;}
+    void setFormationCommand(int i, FormationCommand fc)	    {formationCommands[i] = fc;}
+    void setHierarchyCommand(int i, const CommandType *hc)	    {hierarchyCommands[i] = hc;}
+	void setCommandClass(int i, const CmdClass cc)	            {commandClasses[i] = cc;}
+	void setDownLighted(int i, bool lighted)			        {downLighted[i] = lighted;}
+	void setIndex(int i, int value)						        {index[i] = value;}
 	void setProgressBar(int i);
 	void setLoadInfo(const string &txt);
 	void setSelectedCommandPos(int i);
+    void setSelectedFormationPos(int i);
 
 	//misc
 	void clear();

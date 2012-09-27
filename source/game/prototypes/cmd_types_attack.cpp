@@ -21,6 +21,7 @@
 #include "command.h"
 #include "upgrade_type.h"
 #include "unit_type.h"
+#include "settlement.h"
 #include "sound.h"
 #include "util.h"
 #include "leak_dumper.h"
@@ -390,6 +391,118 @@ Unit* Targets::getNearestHpRatio(fixed hpRatio) {
 		}
 	}
 	return NULL;
+}
+
+// =====================================================
+// 	class CreateSettlementCommandType
+// =====================================================
+
+bool CreateSettlementCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft){
+	bool loadOk = StopBaseCommandType::load(n, dir, tt, ft);
+
+	string skillName;
+	// set structure
+	try {
+		skillName = n->getChild("set-structure-skill")->getAttribute("value")->getRestrictedValue();
+		m_setStructureSkillType = static_cast<const SetStructureSkillType*>(unitType->getSkillType(skillName, SkillClass::SET_STRUCTURE));
+	} catch (runtime_error e) {
+		g_logger.logXmlError(dir, e.what());
+		loadOk = false;
+	}
+
+	return loadOk;
+}
+
+void CreateSettlementCommandType::doChecksum(Checksum &checksum) const {
+	StopBaseCommandType::doChecksum(checksum);
+	checksum.add(m_setStructureSkillType->getName());
+}
+
+void CreateSettlementCommandType::getDesc(string &str, const Unit *unit) const{
+	Lang &lang= Lang::getInstance();
+	m_setStructureSkillType->descEpCost(str, unit);
+}
+
+void CreateSettlementCommandType::descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const {
+	string msg;
+	getDesc(msg, unit);
+	callback->addElement(msg);
+}
+
+void CreateSettlementCommandType::subDesc(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const {
+	Lang &lang = g_lang;
+}
+
+void CreateSettlementCommandType::update(Unit *unit) const {
+	_PROFILE_COMMAND_UPDATE();
+	Command *command = unit->getCurrCommand();
+	assert(command->getType() == this);
+	Vec2i targetPos;
+	Map *map = g_world.getMap();
+	Unit *target = command->getUnit();
+	if (target) {
+        if (target != unit) {
+        unit->settlement.setCenter(g_world.getUnit(target->getId()));
+        unit->settlement.structures.push_back(g_world.getUnit(target->getId()));
+        }
+	}
+    unit->finishCommand();
+}
+
+// =====================================================
+// 	class ExpandSettlementCommandType
+// =====================================================
+
+bool ExpandSettlementCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft){
+	bool loadOk = StopBaseCommandType::load(n, dir, tt, ft);
+
+	string skillName;
+	// set structure
+	try {
+		skillName = n->getChild("set-structure-skill")->getAttribute("value")->getRestrictedValue();
+		m_setStructureSkillType = static_cast<const SetStructureSkillType*>(unitType->getSkillType(skillName, SkillClass::SET_STRUCTURE));
+	} catch (runtime_error e) {
+		g_logger.logXmlError(dir, e.what());
+		loadOk = false;
+	}
+
+	return loadOk;
+}
+
+void ExpandSettlementCommandType::doChecksum(Checksum &checksum) const {
+	StopBaseCommandType::doChecksum(checksum);
+	checksum.add(m_setStructureSkillType->getName());
+}
+
+void ExpandSettlementCommandType::getDesc(string &str, const Unit *unit) const{
+	Lang &lang= Lang::getInstance();
+	m_setStructureSkillType->descEpCost(str, unit);
+}
+
+void ExpandSettlementCommandType::descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const {
+	string msg;
+	getDesc(msg, unit);
+	callback->addElement(msg);
+}
+
+void ExpandSettlementCommandType::subDesc(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const {
+	Lang &lang = g_lang;
+}
+
+void ExpandSettlementCommandType::update(Unit *unit) const {
+	_PROFILE_COMMAND_UPDATE();
+	Command *command = unit->getCurrCommand();
+	assert(command->getType() == this);
+	Vec2i targetPos;
+	Map *map = g_world.getMap();
+	Unit *target = command->getUnit();
+	if (target) {
+        if (target != unit) {
+        unit->settlement.peripherals.push_back(g_world.getUnit(target->getId()));
+        unit->settlement.structures.push_back(g_world.getUnit(target->getId()));
+        }
+	}
+    unit->finishCommand();
 }
 
 }} // end namespace Glest::Game

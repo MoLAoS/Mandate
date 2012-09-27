@@ -3,16 +3,21 @@
 set(folders
 	.
 	ai
+	ai_mandate
 	entities
 	facilities
 	game
 	global
 	graphics
 	gui
+	gui_mandate
+	hierarchy
+	html_interface
 	main
 	menu
 	network
 	prototypes
+	Rocket
 	script
 	search
 	sound

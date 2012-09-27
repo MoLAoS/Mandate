@@ -148,7 +148,7 @@ void WidgetConfig::setDefaultFont(const string &type, const string &name) {
 	FontUsage fu = FontUsageNames.match(type);
 	if (fu == FontUsage::INVALID) {
 		std::stringstream ss;
-		ss << "Error loading widget.cfg, setDefaultFont(): font type '" << type << "'" 
+		ss << "Error loading widget.cfg, setDefaultFont(): font type '" << type << "'"
 			<< " is not valid (must be 'menu', 'game' or 'fancy').";
 		WIDGET_LOG( ss.str() );
 		g_logger.logError(ss.str());
@@ -157,7 +157,7 @@ void WidgetConfig::setDefaultFont(const string &type, const string &name) {
 	int ndx = getFontIndex(name);
 	if (ndx == -1) {
 		std::stringstream ss;
-		ss << "Error loading widget.cfg, setDefaultFont(): font named '" << name << "'" 
+		ss << "Error loading widget.cfg, setDefaultFont(): font named '" << name << "'"
 			<< " has not been loaded, or load failed.";
 		WIDGET_LOG( ss.str() );
 		g_logger.logError(ss.str());
@@ -171,7 +171,7 @@ void WidgetConfig::setMouseTexture(const string &name) {
 	int ndx = getTextureIndex(name);
 	if (ndx == -1) {
 		std::stringstream ss;
-		ss << "Error loading widget.cfg, setMouseTexture(): texture named '" << name << "'" 
+		ss << "Error loading widget.cfg, setMouseTexture(): texture named '" << name << "'"
 			<< " has not been loaded, or load failed.";
 		WIDGET_LOG( ss.str() );
 		g_logger.logError(ss.str());
@@ -185,7 +185,7 @@ void WidgetConfig::setOverlayTexture(const string &type, const string &name) {
 	OverlayUsage ou = OverlayUsageNames.match(type);
 	if (ou == OverlayUsage::INVALID) {
 		std::stringstream ss;
-		ss << "Error loading widget.cfg, setDefaultTexture(): texture type '" << type << "'" 
+		ss << "Error loading widget.cfg, setDefaultTexture(): texture type '" << type << "'"
 			<< " is not valid (must be 'tick', 'cross' or 'question').";
 		WIDGET_LOG( ss.str() );
 		g_logger.logError(ss.str());
@@ -195,7 +195,7 @@ void WidgetConfig::setOverlayTexture(const string &type, const string &name) {
 	int ndx = getTextureIndex(name);
 	if (ndx == -1) {
 		std::stringstream ss;
-		ss << "Error loading widget.cfg, setDefaultTexture(): texture named '" << name << "'" 
+		ss << "Error loading widget.cfg, setDefaultTexture(): texture named '" << name << "'"
 			<< " has not been loaded, or load failed.";
 		WIDGET_LOG( ss.str() );
 		g_logger.logError(ss.str());
@@ -216,7 +216,7 @@ void WidgetConfig::loadFont(const string &name, const string &path, int size, in
 	m_requestedFontSizes[font] = size;
 	m_fonts.push_back(font);
 	m_namedFonts[name] = m_fonts.size() - 1;
-	WIDGET_LOG( "adding font named '" << name << "' from path '" << path << "' @ size (requested): " << size 
+	WIDGET_LOG( "adding font named '" << name << "' from path '" << path << "' @ size (requested): " << size
 		<< " (scaled size = " << scaled_size << ")" );
 }
 
@@ -238,7 +238,7 @@ int WidgetConfig::loadTexture(const string &name, const string &path, bool mipma
 		tex->load(path);
 		tex->init();
 		addGlestTexture(name, tex);
-		WIDGET_LOG( "loaded texture named '" << name << "' from path '" << path << "' @ ndx " 
+		WIDGET_LOG( "loaded texture named '" << name << "' from path '" << path << "' @ ndx "
 			<< (m_textures.size() - 1));
 		return m_textures.size() - 1;
 	} catch (const runtime_error &e) {
@@ -268,7 +268,7 @@ void WidgetConfig::addGlestColour(const string &name, Colour colour) {
 	}
 	m_colours.push_back(colour);
 	m_namedColours[name] = m_colours.size() - 1;
-	WIDGET_LOG( "added colour named '" << name << "' (" << colourString(colour) 
+	WIDGET_LOG( "added colour named '" << name << "' (" << colourString(colour)
 		<< ") @ ndx " << m_namedColours[name]);
 }
 
@@ -289,7 +289,7 @@ int WidgetConfig::computeFontSize(int size) {
 void WidgetConfig::loadBorderStyle(WidgetType widgetType, BorderStyle &style, BorderStyle *src) {
 	if (luaScript.getTable("Borders")) {
 		WIDGET_LOG("\tLoading BorderStyle.");
-		string errorPreamble("\t\tWhile loading border style for widget type '" 
+		string errorPreamble("\t\tWhile loading border style for widget type '"
 			+ string(WidgetTypeNames[widgetType]) + "'\n\t\t\t");
 		string type;
 		BorderType bt = BorderType::INVALID;
@@ -410,7 +410,7 @@ void WidgetConfig::loadBorderStyle(WidgetType widgetType, BorderStyle &style, Bo
 				} else {
 					style.setNone();
 					g_logger.logError(errorPreamble + " texture '" + tex + "' is not known.");
-				}	
+				}
 			}
 		}
 		luaScript.popTable();
@@ -428,7 +428,7 @@ void WidgetConfig::loadBorderStyle(WidgetType widgetType, BorderStyle &style, Bo
 void WidgetConfig::loadBackgroundStyle(WidgetType widgetType, BackgroundStyle &style, BackgroundStyle *src) {
 	if (luaScript.getTable("Background")) {
 		WIDGET_LOG("\tLoading BackgroundStyle.");
-		string errorPreamble("\t\tWhile loading background style for widget type '" 
+		string errorPreamble("\t\tWhile loading background style for widget type '"
 			+ string(WidgetTypeNames[widgetType]) + "'\n\t\t\t");
 		string bType;
 		BackgroundType bt(BackgroundType::INVALID);
@@ -592,7 +592,7 @@ void WidgetConfig::loadTextStyle(WidgetType widgetType, TextStyle &style, TextSt
 		StringSet fontSet;
 
 		// font(s)
-		if (luaScript.getStringSet("Font", fontSet)) { 
+		if (luaScript.getStringSet("Font", fontSet)) {
 			style.m_smallFontIndex = getFontIndex(fontSet[0]);
 			if (style.m_smallFontIndex == -1) {
 				WIDGET_LOG( "\t\tError: font named '" << fontSet[0] << "' not found" );
@@ -786,7 +786,7 @@ bool WidgetConfig::loadStyles(const char *tableName, WidgetType type, bool glob)
 				}
 			}
 			luaScript.popTable();
-		} else { // no States specified, just copy default to all others			
+		} else { // no States specified, just copy default to all others
 			WIDGET_LOG( "No 'States' table found for widget type '" << tableName << "'."
 				<< " Using 'Default' for all states." );
 			for (WidgetState state(1); state < WidgetState::COUNT; ++state) {
@@ -819,7 +819,7 @@ void WidgetConfig::load() {
 
 	luaScript.startUp();
 	luaScript.atPanic(ScriptManager::panicFunc);
-	
+
 #	define GUI_FUNC(x) luaScript.registerFunction(GuiScript::x, #x)
 	GUI_FUNC(setDefaultFont);
 	GUI_FUNC(setOverlayTexture);
@@ -915,6 +915,7 @@ void WidgetConfig::load() {
 	loadStyles("CodeView", WidgetType::CODE_VIEW);
 	loadStyles("CodeEdit", WidgetType::CODE_EDIT);
 	loadStyles("ResourceBar", WidgetType::RESOURCE_BAR);
+	loadStyles("UnitBar", WidgetType::UNIT_BAR);
 	loadStyles("MiniMap", WidgetType::MINIMAP);
 	loadStyles("Display", WidgetType::DISPLAY);
 	loadStyles("Console", WidgetType::CONSOLE);

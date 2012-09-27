@@ -414,12 +414,31 @@ void World::damage(Unit *attacker, const AttackSkillType* ast, Unit *attacked, f
 	if (fDamage < 1) {
 		fDamage = 0;
 	}
-    int damage = fDamage.intp();
-    // decrements
+    /**< Added by MoLAoS, magic damage and resistances */
+    fixed totalDamage = 0 + fDamage;
+    const UnitType *uType = attacked->getType();
+    for (int t = 0; t < ast->damageTypes.size(); ++t) {
+    const DamageType dType = ast->damageTypes[t];
+    string damageType = dType.getTypeName();
+    int mDamage = dType.getValue();
+        for (int i = 0; i < uType->resistances.size(); ++i) {
+        const DamageType rType = uType->resistances[i];
+        string resistType = rType.getTypeName();
+            if (damageType==resistType) {
+                int resist = rType.getValue();
+                mDamage -= resist;
+                if (mDamage < 0) {
+                    mDamage = 0;
+                }
+            }
+        }
+    totalDamage += mDamage;
+    }
+    /**< Added by MoLAoS, magic damage and resistances */
+    int damage = totalDamage.intp();
 	if (attacked->decHp(damage)) {
 		doKill(attacker, attacked);
 	}
-
 	if (attacked->getFaction()->isThisFaction()
 	&& !g_renderer.getCuller().isInside(attacked->getPos())) {
 		attacked->getFaction()->attackNotice(attacked);
@@ -664,13 +683,14 @@ void World::tick() {
     for (int k = 0; k < getFactionCount(); ++k) { /**< Added by MoLAoS, resource generation */
     Faction *faction = getFaction(k);
         for (int j = 0; j < faction->getUnitCount(); ++j) {
-        const Unit *u =  faction->getUnit(j);
+        const Unit *u = faction->getUnit(j);
             if (u->isOperative()) {
+                Unit *unit = u->getFaction()->getUnit(j);
                 for (int s = 0; s < u->getType()->getCreatedResourceCount(); ++s) {
                 ResourceAmount sr = u->getType()->getStoredResource(s, faction);
                 const ResourceType* srt = sr.getType();
                     for (int i = 0; i < u->getType()->getCreatedResourceCount(); ++i) {
-                    ResourceAmount cr = u->getType()->getCreatedResource(i, faction);
+                    CreatedResource cr = u->getType()->createdResources[i];
                     const ResourceType* crt = cr.getType();
                         if (srt == crt) {
                         Timer cTime = u->getType()->getCreatedResourceTimer(i, faction);
@@ -681,9 +701,12 @@ void World::tick() {
                         int cRNewTime = u->currentSteps[i].currentStep;
                             if (cRNewTime == cTimeValue) {
                                 if (srt->getClass() == ResourceClass::TECHTREE || srt->getClass() == ResourceClass::TILESET) {
-                                int oldBalance = faction->getSResource(srt)->getAmount();
-                                int balance = cr.getAmount();
-                                u->getFaction()->incResourceAmount(srt, balance);
+                                    int balance = cr.getAmount();
+                                    if (cr.local == false) {
+                                    u->getFaction()->incResourceAmount(srt, balance);
+                                    } else {
+                                    unit->incResourceAmount(srt, balance);
+                                    }
                                 }
                             u->currentSteps[i].currentStep = 0;
                             }
@@ -694,6 +717,75 @@ void World::tick() {
 		}
 	} /**< Added by MoLAoS, resource generation */
 
+    // apply processing
+    for (int k = 0; k < getFactionCount(); ++k) { /**< Added by MoLAoS, resource processing */
+    Faction *faction = getFaction(k);
+        for (int j = 0; j < faction->getUnitCount(); ++j) {
+        const Unit *u =  faction->getUnit(j);
+            if (u->isOperative()) {
+                for (int s = 0; s < u->getType()->getProcessCount(); ++s) {
+                    Process process = u->getType()->getProcess(s, faction);
+                    Timer cTime = u->getType()->getProcessTimer(s, faction);
+                    int cTimeStep = u->currentProcessSteps[s].currentStep;
+                    int cTimeValue = cTime.getTimerValue();
+                    int newStep = cTimeStep + 1;
+                    u->currentProcessSteps[s].currentStep = newStep;
+                    int cRNewTime = u->currentProcessSteps[s].currentStep;
+                    if (cRNewTime == cTimeValue) {
+                        bool check = true;
+                        for (int t = 0; t < process.costs.size(); ++t) {
+                        const ResourceType *costsRT = process.costs[t].getType();
+                            for (int i = 0; i < u->getFaction()->sresources.size(); ++i) {
+                                if (costsRT == u->getFaction()->sresources[i].getType()) {
+                                    int expended = process.costs[t].getAmount();
+                                    int stockpile = 0;
+                                    if (process.local == false) {
+                                    stockpile = u->getFaction()->getSResource(costsRT)->getAmount();
+                                    } else {
+                                    stockpile = u->getSResource(costsRT)->getAmount();
+                                    }
+                                    if (expended > stockpile) {
+                                        check = false;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                        if (check == true) {
+                            Unit *unit = u->getFaction()->getUnit(j);
+                            for (int c = 0; c < process.costs.size(); ++c) {
+                            const ResourceType *costsRT = process.costs[c].getType();
+                                for (int i = 0; i < u->getFaction()->sresources.size(); ++i) {
+                                    if (costsRT == u->getFaction()->sresources[i].getType()) {
+                                    int expended = process.costs[c].getAmount();
+                                        if (process.local == false) {
+                                        u->getFaction()->incResourceAmount(costsRT, -expended);
+                                        } else {
+                                        unit->incResourceAmount(costsRT, -expended);
+                                        }
+                                    }
+                                }
+                            }
+                            for (int p = 0; p < process.products.size(); ++p) {
+                            const ResourceType *productsRT = process.products[p].getType();
+                                for (int i = 0; i < u->getFaction()->sresources.size(); ++i) {
+                                    if (productsRT == u->getFaction()->sresources[i].getType()) {
+                                    int produced = process.products[p].getAmount();
+                                        if (process.local == false) {
+                                        u->getFaction()->incResourceAmount(productsRT, produced);
+                                        } else {
+                                        unit->incResourceAmount(productsRT, produced);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    u->currentProcessSteps[s].currentStep = 0;
+                    }
+                }
+            }
+        }
+	} /**< Added by MoLAoS, resource processing */
 
     for (int k = 0; k < getFactionCount(); ++k) { /**< Added by MoLAoS, unit generation */
     Faction *faction = getFaction(k);
@@ -712,10 +804,29 @@ void World::tick() {
                     string name = cu.getType()->getName();
                     Vec2i locate = u->getPos();
                     int cua = cu.getAmount();
-                        for (int n = 0; n < cua; ++n) {
-                        createUnit(name, k, locate, false);
+                    int cucap = cu.getCap();
+                        if (cucap != -1) {
+                            if (cucap < cua) {
+                                cua = cucap;
+                            }
                         }
-                        u->currentUnitSteps[i].currentStep = 0;
+                        for (int l = 0; l < u->ownedUnits.size(); ++l) {
+                            const UnitType *kind = u->ownedUnits[l].getType();
+                            if (kind == cu.getType()) {
+                                int limit = u->ownedUnits[l].getLimit();
+                                int owned = u->ownedUnits[l].getOwned();
+                                if (owned == limit) {
+                                    cua = 0;
+                                } else {
+                                    cua = limit - owned;
+                                }
+                                break;
+                            }
+                        }
+                        for (int n = 0; n < cua; ++n) {
+                            createUnit(name, k, locate, false);
+                        }
+                    u->currentUnitSteps[i].currentStep = 0;
                     }
                 }
             }
@@ -1470,7 +1581,7 @@ void SpellDeliverer::projectileArrived(ParticleSystem *particleSystem) {
 
 	if (m_castSkill->getSplashRadius()) {
 		g_world.applyEffects(caster, m_castSkill->getEffectTypes(), target->getCenteredPos(),
-			target->getType()->getField(), m_castSkill->getSplashRadius());
+			target->getField(), m_castSkill->getSplashRadius());
 	} else {
 		g_world.applyEffects(caster, m_castSkill->getEffectTypes(), target, 0);
 	}

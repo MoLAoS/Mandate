@@ -38,7 +38,7 @@ NetworkCommand::NetworkCommand(Command *command) {
 	positionY = command->getPos().y;
 	prodTypeId = command->getProdType() ? command->getProdType()->getId() : -1;
 
-	if (command->getType()->getClass() == CmdClass::BUILD
+	if (command->getType()->getClass() == CmdClass::BUILD || command->getType()->getClass() == CmdClass::CONSTRUCT
 	|| command->getType()->getClass() == CmdClass::TRANSFORM) {
 		targetId = command->getFacing();
 	} else {
@@ -127,7 +127,7 @@ Command *NetworkCommand::toCommand() const {
 	// get target, the target might be dead due to lag, cope with it
 	Unit* target = NULL;
 	CardinalDir facing = CardinalDir::NORTH;
-	if (ct->getClass() == CmdClass::BUILD || ct->getClass() == CmdClass::TRANSFORM) {
+	if (ct->getClass() == CmdClass::BUILD || ct->getClass() == CmdClass::CONSTRUCT || ct->getClass() == CmdClass::TRANSFORM) {
 		facing = enum_cast<CardinalDir>(targetId);
 	} else {
 		if (targetId != GameConstants::invalidId) {
@@ -139,12 +139,13 @@ Command *NetworkCommand::toCommand() const {
 	if (prodTypeId != -1) {
 		prodType = g_prototypeFactory.getProdType(prodTypeId);
 
-		// sanity check... 
+		// sanity check...
 		assert((g_prototypeFactory.isGeneratedType(prodType) && ct->getClass() == CmdClass::GENERATE)
 			|| (g_prototypeFactory.isUpgradeType(prodType) && ct->getClass() == CmdClass::UPGRADE)
 			|| (g_prototypeFactory.isUnitType(prodType)
 				&& (ct->getClass() == CmdClass::PRODUCE || ct->getClass() == CmdClass::MORPH
-					|| ct->getClass() == CmdClass::BUILD || ct->getClass() == CmdClass::TRANSFORM)));
+					|| ct->getClass() == CmdClass::BUILD || ct->getClass() == CmdClass::CONSTRUCT
+                    || ct->getClass() == CmdClass::TRANSFORM)));
 	}
 
 	// create command

@@ -105,6 +105,9 @@ Config::Config(const char* fileName) {
 	uiLastDisplayPosX = p->getInt("UiLastDisplayPosX", -1);
 	uiLastDisplayPosY = p->getInt("UiLastDisplayPosY", -1);
 	uiLastDisplaySize = p->getInt("UiLastDisplaySize", 1, 1, 3);
+	uiLastTradeBarPosX = p->getInt("UiLastTradeBarPosX", -1);
+	uiLastTradeBarPosY = p->getInt("UiLastTradeBarPosY", -1);
+	uiLastTradeBarSize = p->getInt("UiLastTradeBarSize", 1, 1, 3);
 	uiLastMinimapPosX = p->getInt("UiLastMinimapPosX", -1);
 	uiLastMinimapPosY = p->getInt("UiLastMinimapPosY", -1);
 	uiLastMinimapSize = p->getInt("UiLastMinimapSize", 2, 1, 3);
@@ -112,6 +115,9 @@ Config::Config(const char* fileName) {
 	uiLastResourceBarPosX = p->getInt("UiLastResourceBarPosX", -1);
 	uiLastResourceBarPosY = p->getInt("UiLastResourceBarPosY", -1);
 	uiLastResourceBarSize = p->getInt("UiLastResourceBarSize", 1, 1, 3);
+	uiLastUnitBarPosX = p->getInt("UiLastUnitBarPosX", -1);
+	uiLastUnitBarPosY = p->getInt("UiLastUnitBarPosY", -1);
+	uiLastUnitBarSize = p->getInt("UiLastUnitBarSize", 1, 1, 3);
 	uiLastScenario = p->getString("UiLastScenario", "glest_classic/anarchy");
 	uiLastScenarioCatagory = p->getString("UiLastScenarioCatagory", "glest_classic");
 	uiLocale = p->getString("UiLocale", "en");
@@ -119,6 +125,7 @@ Config::Config(const char* fileName) {
 	uiPhotoMode = p->getBool("UiPhotoMode", false);
 	uiPinWidgets = p->getBool("UiPinWidgets", false);
 	uiResourceNames = p->getBool("UiResourceNames", true);
+	uiUnitNames = p->getBool("UiUnitNames", true);
 	uiScrollSpeed = p->getFloat("UiScrollSpeed", 1.5f);
 	uiTeamColourMode = p->getInt("UiTeamColourMode", 1, 1, 3);
 
@@ -201,6 +208,9 @@ void Config::save(const char *path) {
 	p->setInt("UiLastDisplayPosX", uiLastDisplayPosX);
 	p->setInt("UiLastDisplayPosY", uiLastDisplayPosY);
 	p->setInt("UiLastDisplaySize", uiLastDisplaySize);
+	p->setInt("UiLastTradeBarPosX", uiLastTradeBarPosX);
+	p->setInt("UiLastTradeBarPosY", uiLastTradeBarPosY);
+	p->setInt("UiLastTradeBarSize", uiLastTradeBarSize);
 	p->setInt("UiLastMinimapPosX", uiLastMinimapPosX);
 	p->setInt("UiLastMinimapPosY", uiLastMinimapPosY);
 	p->setInt("UiLastMinimapSize", uiLastMinimapSize);
@@ -208,6 +218,9 @@ void Config::save(const char *path) {
 	p->setInt("UiLastResourceBarPosX", uiLastResourceBarPosX);
 	p->setInt("UiLastResourceBarPosY", uiLastResourceBarPosY);
 	p->setInt("UiLastResourceBarSize", uiLastResourceBarSize);
+	p->setInt("UiLastUnitBarPosX", uiLastUnitBarPosX);
+	p->setInt("UiLastUnitBarPosY", uiLastUnitBarPosY);
+	p->setInt("UiLastUnitBarSize", uiLastUnitBarSize);
 	p->setString("UiLastScenario", uiLastScenario);
 	p->setString("UiLastScenarioCatagory", uiLastScenarioCatagory);
 	p->setString("UiLocale", uiLocale);
@@ -215,6 +228,7 @@ void Config::save(const char *path) {
 	p->setBool("UiPhotoMode", uiPhotoMode);
 	p->setBool("UiPinWidgets", uiPinWidgets);
 	p->setBool("UiResourceNames", uiResourceNames);
+	p->setBool("UiUnitNames", uiUnitNames);
 	p->setFloat("UiScrollSpeed", uiScrollSpeed);
 	p->setInt("UiTeamColourMode", uiTeamColourMode);
 

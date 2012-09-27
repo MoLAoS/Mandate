@@ -35,6 +35,12 @@
 
 #include "interpolation.h"
 
+#include "core.h"
+#include "debugger.h"
+#include "system_interface.h"
+#include "render_interface.h"
+
+using namespace Rocket;
 using namespace Glest::Net;
 
 using namespace Shared::Util;
@@ -45,7 +51,7 @@ namespace Glest { namespace Main {
 
 // Program widget event logging...
 #define ENABLE_WIDGET_LOGGING 0
-// widget logging still needs to be turned on (in logger.h), this just disables 
+// widget logging still needs to be turned on (in logger.h), this just disables
 // the logging macros in this file.
 #if !ENABLE_WIDGET_LOGGING
 #	undef WIDGET_LOG
@@ -118,7 +124,7 @@ Program::Program(CmdArgs &args)
 		, keymap(getInput(), "keymap.ini") {
 	// lang
 	g_lang.setLocale(g_config.getUiLocale());
-	
+
 	if (!fileExists("keymap.ini")) {
 		keymap.save("keymap.ini");
 	}
@@ -139,7 +145,7 @@ Program::Program(CmdArgs &args)
 	Vec2i sz = m_fpsLabel->getTextDimensions();
 	m_fpsLabel->setPos(Vec2i(g_metrics.getScreenW() - sz.w - 5,  5));
 	m_fpsLabel->setSize(sz);
-	m_fpsLabel->setText("FPS: 0");	
+	m_fpsLabel->setText("FPS: 0");
 	m_fpsLabel->setAlignment(Alignment::FLUSH_RIGHT);
 	m_fpsLabel->setPermanent();
 	if (!g_config.getMiscDebugMode()) {
@@ -172,7 +178,7 @@ bool Program::init() {
 		MainMenu* mainMenu = new MainMenu(*this, false);
 		setState(mainMenu);
 		mainMenu->setState(new MenuStateJoinGame(*this, mainMenu, true, Ip(cmdArgs.getClientIP())));
-	
+
 	// load map and tileset without players
 	} else if (!cmdArgs.getLoadmap().empty()) {
 		GameSettings &gs = simulationInterface->getGameSettings();
@@ -237,7 +243,7 @@ bool Program::init() {
 			return false;
 		}
 		setState(new GameState(*this));
-	
+
 	} else if (cmdArgs.isTest("gui")) {
 		setState(new TestPane(*this));
 
@@ -307,6 +313,9 @@ void Program::loop() {
 		while (guiUpdateTimer.isTime()) {
 			_PROFILE_SCOPE("Program::loop() : Update Gui");
 			WidgetWindow::update();
+            if (m_programState->isGameState()) {
+                static_cast<GameState*>(m_programState)->getContext()->Update();
+            }
 		}
 
 		// tick timer
@@ -449,7 +458,7 @@ void Program::setState(ProgramState *programState) try {
 	crash(&e);
 	///@bug I think this causes a crash in Renderer::swapBuffers() on exit - hailstone 17March2011
 	///@todo has been fixed by reworking Program::loop() so ProgramState::update() is the last thing.
-	/// The whole CrashProgramState thing, and ending up with Program::loop on the call stack twice, is 
+	/// The whole CrashProgramState thing, and ending up with Program::loop on the call stack twice, is
 	/// not very nice... Should seek alt solution. - silnarm 10May2011
 }
 

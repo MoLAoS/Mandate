@@ -20,7 +20,7 @@ namespace Glest { namespace Widgets {
 // class CodeMouseCursor
 // =====================================================
 
-OSMouseCursor::OSMouseCursor(WidgetWindow *window) 
+OSMouseCursor::OSMouseCursor(WidgetWindow *window)
 		: MouseCursor(window) {
 	showCursor(true);
 }
@@ -216,7 +216,7 @@ bool ImageSetMouseCursor::loadMouse(const string &dir) {
 	} else {
 		return false;
 	}
-	
+
 	Texture2D *tex = g_renderer.newTexture2D(ResourceScope::GLOBAL);
 	tex->setMipmap(false);
 	tex->load(path);
@@ -240,7 +240,7 @@ void ImageSetMouseCursor::initMouse() {
 
 	m_mouseMain = new Imageset(m_mouseTexture, 32, 32);
 	m_mouseMain->setSize(32, 32);
-	m_mouseTexture = 0; // custom mouse is only applied once
+	m_mouseTexture = 0;
 
 	//mouseAnimations = new Animset(this, mouseMain, 30);
 }

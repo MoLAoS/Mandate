@@ -52,6 +52,8 @@ using namespace Shared::Graphics;
 using namespace Shared::Util;
 using namespace Shared::Platform;
 
+using namespace Rocket;
+
 namespace Glest { namespace Gui {
 
 // =====================================================
@@ -137,7 +139,7 @@ void GameState::load() {
 	// 4. use defaults
 	ProgramLog &log = g_logger.getProgramLog();
 
-	if (!scenarioName.empty() 
+	if (!scenarioName.empty()
 		&& log.setupLoadingScreen(scenarioPath)) {
 	} else if (log.setupLoadingScreen(techName + "/factions/" + thisFactionName)) {
 	} else if (log.setupLoadingScreen(techName)) {
@@ -198,7 +200,7 @@ void GameState::init() {
 
 	int wh = g_widgetConfig.getDefaultItemHeight();
 
-	m_gameMenu = new GameMenu(); 
+	m_gameMenu = new GameMenu();
 	m_gameMenu->setVisible(false);
 
 	///@todo StaticText (?) for script message
@@ -207,6 +209,17 @@ void GameState::init() {
 	// init world, and place camera
 	simInterface->initWorld();
 	gui.init();
+
+	Rocket::Core::SetRenderInterface(&opengl_renderer);
+	Rocket::Core::SetSystemInterface(&system_interface);
+	Rocket::Core::Initialise();
+
+    context = Rocket::Core::CreateContext("default", Rocket::Core::Vector2i(1024, 768));
+    if (context == NULL) {
+		Rocket::Core::Shutdown();
+	}
+	Rocket::Debugger::Initialise(context);
+
 	gameCamera.init(g_map.getW(), g_map.getH());
 	Vec2i v(g_map.getW() / 2, g_map.getH() / 2);
 	if (g_world.getThisFaction()) {  // e.g. -loadmap has no players
@@ -485,7 +498,7 @@ void GameState::onSaveSelected(Widget*) {
 	saveGame(name);
 	program.removeFloatingWidget(m_modalDialog);
 	m_modalDialog = 0;
-	
+
 	string msg = g_lang.get("YourGameWasSaved");
 	string::size_type pos = msg.find("%s");
 	if (pos != string::npos) {
@@ -527,7 +540,9 @@ void GameState::togglePinWidgets(Widget*) {
 	g_config.setUiPinWidgets(pin);
 	static_cast<MinimapFrame*>(gui.getMinimap()->getParent())->setPinned(pin);
 	static_cast<ResourceBarFrame*>(gui.getResourceBar()->getParent())->setPinned(pin);
+	static_cast<UnitBarFrame*>(gui.getUnitBar()->getParent())->setPinned(pin);
 	static_cast<DisplayFrame*>(gui.getDisplay()->getParent())->setPinned(pin);
+	static_cast<FactionDisplayFrame*>(gui.getFactionDisplay()->getParent())->setPinned(pin);
 }
 
 void GameState::rejigWidgets() {
@@ -1005,6 +1020,10 @@ void GameState::render2d() {
 		//g_renderer.renderText(m_scriptDisplay, g_widgetConfig.getMenuFont()[FontSize::NORMAL];,
 		//	gui.getDisplay()->getColor(), m_scriptDisplayPos.x, m_scriptDisplayPos.y, false);
 	}
+
+	context->Render();
+
+
 }
 
 

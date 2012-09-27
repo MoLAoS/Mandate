@@ -27,6 +27,7 @@ using namespace Widgets;
 using namespace ProtoTypes;
 using Entities::Faction;
 using Glest::ProtoTypes::ResourceType;
+using Glest::ProtoTypes::UnitType;
 
 // =====================================================
 // 	class ResourceBar
@@ -83,6 +84,67 @@ private:
 public:
 	ResourceBarFrame();
 	ResourceBar * getResourceBar() {return m_resourceBar;}
+
+	void setPinned(bool v);
+
+	virtual void render() override;
+};
+
+// =====================================================
+// 	class UnitBar
+//
+///	A bar that displays the units
+// =====================================================
+
+class UnitBar : public Widget, public MouseWidget, public ImageWidget, public TextWidget {
+private:
+	const Faction*              m_faction;
+	vector<const UnitType*>     m_unitTypes;
+	vector<string>              m_headerStrings;
+
+	int   m_iconSize;
+	bool  m_draggingWidget;
+	Vec2i m_moveOffset;
+	int   m_updateCounter;
+
+public:
+	UnitBar(Container *parent); ///@todo (UnitBarFrame *parent)
+	~UnitBar();
+
+	void init(const Faction *faction, std::set<const UnitType*> &types);
+	void reInit(int iconSize);
+
+	int getIconSize() const { return m_iconSize; }
+
+	virtual void update() override;
+	virtual void render() override;
+	virtual string descType() const override { return "UnitBar"; }
+
+	virtual bool mouseDown(MouseButton btn, Vec2i pos) override;
+	virtual bool mouseUp(MouseButton btn, Vec2i pos) override;
+	virtual bool mouseMove(Vec2i pos) override;
+
+	void persist();
+	void reset();
+};
+
+// =====================================================
+// 	class UnitBarFrame
+// =====================================================
+
+class UnitBarFrame : public Frame {
+private:
+	UnitBar *m_unitBar;
+
+private:
+	void doEnableShrinkExpand(int sz);
+
+	void onExpand(Widget*);
+	void onShrink(Widget*);
+
+public:
+	UnitBarFrame();
+	UnitBar * getUnitBar() {return m_unitBar;}
 
 	void setPinned(bool v);
 

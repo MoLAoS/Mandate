@@ -20,6 +20,7 @@
 #include "skill_type.h"
 #include "effect.h"
 #include "unit_type.h"
+#include "settlement.h"
 #include "stats.h"
 #include "math_util.h"
 #include "timer.h"
@@ -43,6 +44,7 @@ using namespace Shared::Graphics;
 using Shared::Platform::Chrono;
 using Shared::Util::SingleTypeFactory;
 
+using namespace Hierarchy;
 using namespace ProtoTypes;
 using Sim::Map;
 
@@ -51,6 +53,7 @@ class UnitFactory;
 
 WRAPPED_ENUM( AutoCmdFlag,
 	REPAIR,
+	MAINTAIN,
 	ATTACK,
 	FLEE
 )
@@ -124,19 +127,6 @@ typedef list<Unit*>         UnitList;
 typedef list<UnitId>        UnitIdList;
 
 // ===============================
-// 	class TimerStep
-// ===============================
-
-class TimerStep {
-
-public:
-    mutable int currentStep;
-    int getCurrentStep() {return currentStep;}
-};
-
-typedef vector<TimerStep> CurrentStep;
-
-// ===============================
 // 	class Unit
 //
 ///	A game unit or building
@@ -153,6 +143,24 @@ public:
 	typedef list<Command*> Commands;
 	//typedef list<UnitId> Pets;
 
+	typedef vector<UnitsOwned> OwnedUnits;
+
+/**< system for localized resources */
+private:
+    typedef vector<StoredResource> SResources;
+public:
+    SResources sresources;
+
+    const StoredResource *getSResource(const ResourceType *rt) const;
+	const StoredResource *getSResource(int i) const  {assert(i < sresources.size()); return &sresources[i];}
+	int getStoreAmount(const ResourceType *rt) const;
+    void incResourceAmount(const ResourceType *rt, int amount);
+	void setResourceBalance(const ResourceType *rt, int balance);
+	void addStore(const ResourceType *rt, int amount);
+	void addStore(const UnitType *unitType);
+
+/**< system for localized resources */
+
 private:
 	// basic stats
 	int id;					/**< unique identifier  */
@@ -165,9 +173,29 @@ private:
 	int progress2;			/**< 'secondary' skill progress counter (progress for Production) */
 	int kills;				/**< number of kills */
 	int exp;                /**< amount of experience */
+
+	/**< new system to enable walls */
+	Zone zone;
+	Field field;
 public:
-    CurrentStep currentSteps;
-    CurrentStep currentUnitSteps;
+    Field getField() const		  {return field;}
+	void setField(Field newField) { field = newField; }
+	Zone getZone() const		  {return zone;}
+	void setZone(Zone newZone)    { zone = newZone; }
+	/**< new system to enable walls */
+
+    CurrentStep currentSteps; /**< current timer step for resource creation */
+    CurrentStep currentUnitSteps; /**< current timer step for unit creation */
+    CurrentStep currentOwnedSteps; /**< current timer step for unit creation */
+    CurrentStep currentProcessSteps; /**< current timer step for resource processes */
+
+    ProductionRoute productionRoute;
+    Settlement settlement;
+
+    Unit *owner;
+    void setOwner(Unit *unit) {owner = unit;}
+    OwnedUnits ownedUnits;
+
 private:
 	// housed unit bits
 	UnitIdList	m_carriedUnits;
@@ -175,6 +203,7 @@ private:
 	UnitIdList	m_unitsToUnload;
 	UnitId		m_carrier;
 
+    // garrisoned unit list
 	UnitIdList	m_garrisonedUnits;
 	UnitIdList	m_unitsToGarrison;
 	UnitIdList	m_unitsToDegarrison;
@@ -318,8 +347,8 @@ public:
 
 	//queries
 	int getId() const							{return id;}
-	Field getCurrField() const					{return type->getField();}
-	Zone getCurrZone() const					{return type->getZone();}
+	Field getCurrField() const					{return getField();}
+	Zone getCurrZone() const					{return getZone();}
 	int getLoadCount() const					{return loadCount;}
 	int getSize() const							{return type->getSize();}
 	float getProgress() const;
@@ -591,6 +620,7 @@ public:
 	void create(bool startingUnit = false);
 	void born(bool reborn = false);
 	void kill();
+	void replace();
 	void capture();
 	void undertake();
 

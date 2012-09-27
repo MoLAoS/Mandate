@@ -102,7 +102,7 @@ void Options::buildGameTab() {
 	// Invert axis
 	m_cameraInvertXAxisCheckBox = rightPnl->addCheckBox(lang.get("CameraInvertXAxis"), config.getCameraInvertXAxis());
 	m_cameraInvertXAxisCheckBox->Clicked.connect(this, &Options::onCheckBoxCahnged);
-	
+
 	m_cameraInvertYAxisCheckBox = rightPnl->addCheckBox(lang.get("CameraInvertYAxis"), config.getCameraInvertYAxis());
 	m_cameraInvertYAxisCheckBox->Clicked.connect(this, &Options::onCheckBoxCahnged);
 
@@ -121,8 +121,11 @@ void Options::buildGameTab() {
 
 	rightPnl->addHeading(leftPnl, g_lang.get("Interface"));
 
-	m_resoureNamesCheckBox = rightPnl->addCheckBox(lang.get("ResourceNames"), g_config.getUiResourceNames());
-	m_resoureNamesCheckBox->Clicked.connect(this, &Options::onCheckBoxCahnged);
+	m_resourceNamesCheckBox = rightPnl->addCheckBox(lang.get("ResourceNames"), g_config.getUiResourceNames());
+	m_resourceNamesCheckBox->Clicked.connect(this, &Options::onCheckBoxCahnged);
+
+	m_unitNamesCheckBox = rightPnl->addCheckBox(lang.get("UnitNames"), g_config.getUiUnitNames());
+	m_unitNamesCheckBox->Clicked.connect(this, &Options::onCheckBoxCahnged);
 
 	// max console lines
 	m_consoleMaxLinesSpinner = rightPnl->addSpinner(lang.get("ConsoleMaxLines"));
@@ -156,7 +159,7 @@ void Options::buildVideoTab() {
 	rightPnl->setSplitDistance(40);*/
 
 	rightPnl->addHeading(leftPnl, g_lang.get("General"));
-	
+
 	// Video Mode
 	m_resolutionList = rightPnl->addDropList(lang.get("Resolution"));
 	m_resolutionList->setDropBoxHeight(280);
@@ -210,7 +213,7 @@ void Options::buildVideoTab() {
 	m_terrainRendererList->addItem("Terrain Renderer 2");
 	m_terrainRendererList->setSelected(config.getRenderTerrainRenderer() - 1);
 	m_terrainRendererList->SelectionChanged.connect(this, &Options::onDropListSelectionChanged);
-	
+
 	// Water Shader
 	m_waterRendererList = rightPnl->addDropList(lang.get("WaterShader"));
 	m_waterRendererList->addItem(lang.get("Opaque"));
@@ -435,10 +438,15 @@ void Options::onCheckBoxCahnged(Widget *src) {
 		g_config.setUiMoveCameraAtScreenEdge(m_cameraMoveAtEdgesCheckBox->isChecked());
 	} else if (cb == m_focusArrowsCheckBox) {
 		g_config.setUiFocusArrows(m_focusArrowsCheckBox->isChecked());
-	} else if (cb == m_resoureNamesCheckBox) {
-		g_config.setUiResourceNames(m_resoureNamesCheckBox->isChecked());
+	} else if (cb == m_resourceNamesCheckBox) {
+		g_config.setUiResourceNames(m_resourceNamesCheckBox->isChecked());
 		if (!m_optionsMenu) {
 			g_userInterface.getResourceBar()->reInit(-1);
+		}
+	} else if (cb == m_unitNamesCheckBox) {
+		g_config.setUiUnitNames(m_unitNamesCheckBox->isChecked());
+		if (!m_optionsMenu) {
+			g_userInterface.getUnitBar()->reInit(-1);
 		}
 	}
 }
@@ -555,7 +563,7 @@ void Options::setupListBoxLang() {
 
 	const string langListPath = langDir + "langlist.txt";
 	istream *fp = FSFactory::getInstance()->getIStream(langListPath.c_str());
-	
+
 	// insert values into table from file (all possible lang codes)
 	map<string,string> langTable;
 	char buf[128];
@@ -613,7 +621,7 @@ OptionsFrame::OptionsFrame(Container* parent)
 }
 
 void OptionsFrame::init() {
-	
+
 	delete m_options;
 
 	// apply/cancel buttons

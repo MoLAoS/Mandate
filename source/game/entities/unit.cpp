@@ -187,6 +187,48 @@ Unit::Unit(CreateParams params)
 	for (int i = 0; i < currentUnitSteps.size(); ++i) {
 	currentUnitSteps[i].currentStep = 0;
 	}
+
+	currentOwnedSteps.resize(type->ownedUnits.size());
+	for (int i = 0; i < currentOwnedSteps.size(); ++i) {
+	currentOwnedSteps[i].currentStep = 0;
+	}
+
+
+    ownedUnits.resize(type->ownedUnits.size());
+    for(int i = 0; i<ownedUnits.size(); ++i){
+        const UnitType *type = getType()->ownedUnits[i].getType();
+        int limit = getType()->ownedUnits[i].getLimit();
+        ownedUnits[i].init(type, 0, limit);
+    }
+
+    owner = this;
+
+	currentProcessSteps.resize(type->getProcessCount());
+	for (int i = 0; i < currentProcessSteps.size(); ++i) {
+	currentProcessSteps[i].currentStep = 0;
+	}
+
+    sresources.resize(getType()->getStoredResourceCount());
+    for (int i = 0; i < getType()->getStoredResourceCount(); ++i) {
+        const ResourceType *rt = getType()->getStoredResource(i, getFaction()).getType();
+        sresources[i].init(rt, 0);
+    }
+
+	productionRoute.setStoreId(0);
+	productionRoute.setProducerId(0);
+
+	field = getType()->getField();
+	zone = getType()->getZone();
+
+	if (getType()->isMage == true) {
+	}
+
+	if (getType()->isLeader == true) {
+	}
+
+	if (getType()->isHero == true) {
+	}
+
 }
 
 Unit::Unit(LoadParams params) //const XmlNode *node, Faction *faction, Map *map, const TechTree *tt, bool putInWorld)
@@ -439,6 +481,78 @@ void Unit::save(XmlNode *node) const {
 
 // ====================================== get ======================================
 
+/**< system for localized resources */
+const StoredResource *Unit::getSResource(const ResourceType *rt) const {
+	for (int i = 0; i < sresources.size(); ++i) {
+		if (rt == sresources[i].getType()) {
+			return &sresources[i];
+		}
+	}
+	assert(false);
+	return NULL;
+}
+
+int Unit::getStoreAmount(const ResourceType *rt) const {
+	for (int i = 0; i < sresources.size(); ++i) {
+		if (rt == sresources[i].getType()) {
+			return sresources[i].getStorage();
+		}
+	}
+	assert(false);
+	return 0;
+}
+
+void Unit::incResourceAmount(const ResourceType *rt, int amount) {
+	for (int i = 0; i < sresources.size(); ++i) {
+		StoredResource *r = &sresources[i];
+		if (r->getType() == rt) {
+			r->setAmount(r->getAmount() + amount);
+			if (r->getType()->getClass() != ResourceClass::STATIC
+			&& r->getType()->getClass() != ResourceClass::CONSUMABLE
+			&& r->getAmount() > getStoreAmount(rt)) {
+				r->setAmount(getStoreAmount(rt));
+			}
+			return;
+		}
+	}
+	assert(false);
+}
+
+void Unit::setResourceBalance(const ResourceType *rt, int balance) {
+	if (!ScriptManager::getPlayerModifiers(getFaction()->getId())->getConsumeEnabled()) {
+		return;
+	}
+	for (int i = 0; i < sresources.size(); ++i) {
+		StoredResource *r = &sresources[i];
+		if (r->getType() == rt) {
+			r->setBalance(balance);
+			return;
+		}
+	}
+	assert(false);
+}
+
+void Unit::addStore(const ResourceType *rt, int amount) {
+	for (int j = 0; j < sresources.size(); ++j) {
+		if (sresources[j].getType() == rt) {
+			sresources[j].setStorage(sresources[j].getStorage() + amount);
+		}
+	}
+}
+
+void Unit::addStore(const UnitType *unitType) {
+	for (int i = 0; i < unitType->getStoredResourceCount(); ++i) {
+		ResourceAmount r = unitType->getStoredResource(i, getFaction());
+		for (int j = 0; j < sresources.size(); ++j) {
+			if (sresources[j].getType() == r.getType()) {
+				sresources[j].setStorage(sresources[j].getStorage() + r.getAmount());
+			}
+		}
+	}
+}
+/**< system for localized resources */
+
+
 /** @param from position to search from
   * @return nearest cell to 'from' that is occuppied
   */
@@ -474,8 +588,9 @@ Vec2i Unit::getNearestOccupiedCell(const Vec2i &from) const {
 int Unit::getProductionPercent() const {
 	if (anyCommand()) {
 		CmdClass cmdClass = commands.front()->getType()->getClass();
-		if (cmdClass == CmdClass::PRODUCE || cmdClass == CmdClass::MORPH
-		|| cmdClass == CmdClass::GENERATE || cmdClass == CmdClass::UPGRADE) {
+		if (cmdClass == CmdClass::PRODUCE || cmdClass == CmdClass::CREATE_ITEM
+        || cmdClass == CmdClass::MORPH ||cmdClass == CmdClass::GENERATE
+        || cmdClass == CmdClass::UPGRADE) {
 			const ProducibleType *produced = commands.front()->getProdType();
 			if (produced) {
 				return clamp(progress2 * 100 / produced->getProductionTime(), 0, 100);
@@ -590,7 +705,9 @@ bool Unit::isActive() const {
 
 bool Unit::isBuilding() const {
 	return ((getType()->hasSkillClass(SkillClass::BE_BUILT) || getType()->hasSkillClass(SkillClass::BUILD_SELF))
-		&& isAlive() && !getType()->getProperty(Property::WALL));
+		&& isAlive()
+        //&& !getType()->getProperty(Property::WALL)
+        );
 }
 
 /** find a repair command type that can repair a unit with
@@ -812,7 +929,7 @@ void Unit::startSpellSystems(const CastSpellSkillType *sst) {
 		}
 		if (sst->getSplashRadius()) {
 			g_world.applyEffects(this, sst->getEffectTypes(), target->getCenteredPos(),
-				target->getType()->getField(), sst->getSplashRadius());
+				target->getField(), sst->getSplashRadius());
 		} else {
 			g_world.applyEffects(this, sst->getEffectTypes(), target, 0);
 		}
@@ -1267,13 +1384,23 @@ void Unit::born(bool reborn) {
 
 	if (!reborn) {
 		faction->addStore(type);
+		addStore(type);
 		faction->addCreate(type);
+
+        if (!owner->getId() == this->getId()) {
+            for (int i = 0; i < owner->ownedUnits.size(); ++i) {
+                if (owner->ownedUnits[i].getType() == getType()) {
+                    owner->ownedUnits[i].incOwned();
+                }
+            }
+        }
+
 		setCurrSkill(SkillClass::STOP);
 		hp = type->getMaxHp();
 		sp = type->getMaxSp();
 		cp = type->getMaxCp();
 		if (cp == 0) {
-		    cp= -1;
+		    cp = -1;
 		}
 		faction->checkAdvanceSubfaction(type, true);
 		g_world.getCartographer()->applyUnitVisibility(this);
@@ -1379,6 +1506,15 @@ void Unit::kill() {
 
 	Died(this);
 
+	if (!owner->getId() == this->getId()) {
+	    for (int i = 0; i < owner->ownedUnits.size(); ++i) {
+            if (owner->ownedUnits[i].getType() == getType()) {
+                owner->ownedUnits[i].decOwned();
+                break;
+            }
+	    }
+	}
+
 	clearCommands();
 	setCurrSkill(SkillClass::DIE);
 	deadCount = Random(id).randRange(-256, 256); // random decay time
@@ -1390,6 +1526,88 @@ void Unit::kill() {
 	}
 	g_simInterface.doUpdateAnimOnDeath(this);
 	checkTargets(this); // hack... 'tracking' particle systems might reference this
+	if (type->isDetector()) {
+		world.getCartographer()->detectorDeactivated(this);
+	}
+}
+
+void Unit::replace() {
+	assert(hp <= 0);
+	ULC_UNIT_LOG( this, "killed." );
+	hp = 0;
+	World &world = g_world;
+
+	if (!m_unitsToCarry.empty()) {
+		foreach (UnitIdList, it, m_unitsToCarry) {
+			Unit *unit = world.getUnit(*it);
+			if (unit->anyCommand() && unit->getCurrCommand()->getType()->getClass() == CmdClass::BE_LOADED) {
+				unit->cancelCurrCommand();
+			}
+		}
+		m_unitsToCarry.clear();
+	}
+
+	if (!m_carriedUnits.empty()) {
+		foreach (UnitIdList, it, m_carriedUnits) {
+			Unit *unit = world.getUnit(*it);
+			int hp = unit->getHp();
+			unit->decHp(hp);
+		}
+		m_carriedUnits.clear();
+	}
+	if (isCarried()) {
+		Unit *carrier = g_world.getUnit(getCarrier());
+		carrier->housedUnitDied(this);
+	}
+
+	if (!m_unitsToGarrison.empty()) {
+		foreach (UnitIdList, it, m_unitsToGarrison) {
+			Unit *unit = world.getUnit(*it);
+			if (unit->anyCommand() && unit->getCurrCommand()->getType()->getClass() == CmdClass::BE_LOADED) {
+				unit->cancelCurrCommand();
+			}
+		}
+		m_unitsToGarrison.clear();
+	}
+
+	if (!m_garrisonedUnits.empty()) {
+		foreach (UnitIdList, it, m_garrisonedUnits) {
+			Unit *unit = world.getUnit(*it);
+			int hp = unit->getHp();
+			unit->decHp(hp);
+		}
+		m_garrisonedUnits.clear();
+	}
+	if (isGarrisoned()) {
+		Unit *garrison = g_world.getUnit(getGarrison());
+		garrison->housedUnitDied(this);
+	}
+
+	if (fire) {
+		fire->fade();
+		fire = 0;
+	}
+
+	if (isBeingBuilt()) {
+		faction->deApplyStaticConsumption(type);
+	} else {
+		faction->deApplyStaticCosts(type);
+		faction->removeStore(type);
+		faction->onUnitDeActivated(type);
+	}
+
+	Died(this);
+
+	clearCommands();
+	setCurrSkill(SkillClass::DIE);
+	deadCount = 1001;
+
+	world.getCartographer()->removeUnitVisibility(this);
+	if (!isCarried() && !isGarrisoned()) {
+		map->clearUnitCells(this, pos);
+	}
+	g_simInterface.doUpdateAnimOnDeath(this);
+	checkTargets(this);
 	if (type->isDetector()) {
 		world.getCartographer()->detectorDeactivated(this);
 	}
@@ -1651,7 +1869,7 @@ const CommandType *Unit::computeCommandType(const Vec2i &pos, const Unit *target
 }
 
 const Model* Unit::getCurrentModel() const {
-	if (type->getField() == Field::AIR){
+	if (getField() == Field::AIR){
 		return getCurrSkill()->getAnimation();
 	}
 	if (getCurrSkill()->getClass() == SkillClass::MOVE) {
@@ -2184,9 +2402,7 @@ bool Unit::repair(int amount, fixed multiplier) {
 		amount = getType()->getMaxHp() / type->getProductionTime() + 1;
 	}
 	amount = (amount * multiplier).intp();
-
-	//increase hp
-	hp += amount;
+    hp += amount;
 	if (hp_above_trigger && hp > hp_above_trigger) {
 		hp_above_trigger = 0;
 		ScriptManager::onHPAboveTrigger(this);
@@ -2244,7 +2460,7 @@ bool Unit::decEp(int i) {
 bool Unit::decHp(int i) {
 	if (sp >= i) {
 	    sp -= i;
-	    return true;
+	    return false;
 	} else {
 	    sp = 0;
 	    i = i - sp;
@@ -2294,15 +2510,15 @@ string Unit::getShortDesc() const {
 		ss << " (" << g_lang.get("Regeneration") << ": " << getHpRegeneration() << ")";
 	}
     if (getMaxSp()) {
-        ss << g_lang.get("Sp") << ": " << sp << "/" << getMaxSp();
+    ss << endl << g_lang.get("Sp") << ": " << sp << "/" << getMaxSp();
 	    if (getSpRegeneration()) {
-		    ss << " (" << g_lang.get("Regeneration") << ": " << getSpRegeneration() << ")";
-	    }
+        ss << " (" << g_lang.get("Regeneration") << ": " << getSpRegeneration() << ")";
+        }
 	}
 	if (getMaxEp()) {
-		ss << endl << g_lang.get("Ep") << ": " << ep << "/" << getMaxEp();
+    ss << endl << g_lang.get("Ep") << ": " << ep << "/" << getMaxEp();
 		if (getEpRegeneration()) {
-			ss << " (" << g_lang.get("Regeneration") << ": " << getEpRegeneration() << ")";
+        ss << " (" << g_lang.get("Regeneration") << ": " << getEpRegeneration() << ")";
 		}
 	}
     if (getMaxCp()) {
@@ -2345,6 +2561,15 @@ string Unit::getLongDesc() const {
 		armourName = formatString(armourName);
 	}
 	ss << " (" << armourName << ")";
+
+	if (getType()->resistances.size() > 0) {
+	ss << endl << lang.get("Resistances") << ":";
+	for (int i = 0; i < getType()->resistances.size(); ++i) {
+	ss << endl << lang.get(getType()->resistances[i].getTypeName()) << ": ";
+	ss << getType()->resistances[i].getValue();
+	}
+	ss << endl;
+	}
 
 	// exp given
 	ss << endl << lang.get("ExpGiven") << ": " << type->getExpGiven();
@@ -2460,7 +2685,56 @@ string Unit::getLongDesc() const {
 				resName = formatString(resName);
 			}
 			ss << endl << lang.get("Create") << ": ";
-			ss << r.getAmount() << " " << resName << " " <<lang.get("Timer") << ": " << cStep << "/" << tR.getTimerValue();
+			ss << r.getAmount() << " " << resName << " " << lang.get("Timer") << ": " << cStep << "/" << tR.getTimerValue();
+		}
+	}
+
+	// can process
+    if (type->getProcessCount() > 0) {
+		for (int i = 0; i < type->getProcessCount(); ++i) {
+        ss << endl << lang.get("Process") << ": ";
+        Timer tR = type->getProcessTimer(i, getFaction());
+        int cStep = currentProcessSteps[i].currentStep;
+        ss << endl << lang.get("Timer") << ": " << cStep << "/" << tR.getTimerValue();
+        string scope;
+        if (type->processes[i].local == true) {
+        scope = lang.get("local");
+        } else {
+        scope = lang.get("faction");
+        }
+        ss << endl << lang.get("Scope") << ": " << scope;
+        ss << endl << lang.get("Costs") << ": ";
+            for (int c = 0; c < type->processes[i].costs.size(); ++c) {
+            const ResourceType *costsRT = type->processes[i].costs[c].getType();
+            string resName = lang.getTechString(costsRT->getName());
+            if (resName == costsRT->getName()) {
+            resName = formatString(resName);
+			}
+        ss << endl << type->processes[i].costs[c].getAmount() << " " << resName;
+            }
+        ss << endl << lang.get("Products") << ": ";
+            for (int p = 0; p < type->processes[i].products.size(); ++p) {
+            const ResourceType *productsRT = type->processes[i].products[p].getType();
+            string resName = lang.getTechString(productsRT->getName());
+            if (resName == productsRT->getName()) {
+            resName = formatString(resName);
+			}
+        ss << endl << type->processes[i].products[p].getAmount() << " " << resName;
+            }
+		}
+	}
+
+	if (type->getStoredResourceCount() > 0) {
+    ss << endl << lang.get("Storage") << ": ";
+		for (int i = 0; i < type->getStoredResourceCount(); ++i) {
+        ResourceAmount r = type->getStoredResource(i, getFaction());
+        const StoredResource *res = getSResource(i);
+        string resName = lang.getTechString(r.getType()->getName());
+			if (resName == r.getType()->getName()) {
+            resName = formatString(resName);
+			}
+        ss << endl << lang.get("Stored") << ": ";
+        ss << res->getAmount() << "/" << r.getAmount() << " " << resName;
 		}
 	}
 
@@ -2479,10 +2753,25 @@ string Unit::getLongDesc() const {
 		}
 	}
 
+	if (ownedUnits.size() > 0) {
+		for (int i = 0; i < ownedUnits.size(); ++i) {
+			UnitsOwned uo = ownedUnits[i];
+			const UnitType *uot = uo.getType();
+			string unitName = lang.getTechString(uot->getName());
+			int owned = uo.getOwned();
+			int limit = uo.getLimit();
+			if (unitName == uo.getType()->getName()) {
+				unitName = formatString(unitName);
+			}
+			ss << endl << lang.get("Owned") << ": ";
+			ss << endl << unitName << ": " << uo.getOwned() << "/" << uo.getLimit();
+		}
+	}
+
 	if (type->loadBonuses.size() > 0) {
 		for (int i = 0; i < type->loadBonuses.size(); ++i) {
 			const LoadBonus lb = type->loadBonuses[i];
-			ss << endl << "Bonus: " << "Max-Hp: " << lb.m_enhancement.m_enhancement.getMaxHp();
+			ss << endl << "Load Bonus: " << "Max-Hp: " << lb.m_enhancement.m_enhancement.getMaxHp();
 			ss << endl << "Source: " << lb.getSource();
 		}
 	}
@@ -2492,6 +2781,7 @@ string Unit::getLongDesc() const {
 
 	return (shortDesc + ss.str());
 }
+
 void Unit::applyGarrison() {
     totalUpgrade.reset();
     World &world = g_world;
@@ -2879,11 +3169,27 @@ bool Unit::transform(const TransformCommandType *tct, const UnitType *ut, Vec2i 
   */
 float Unit::computeHeight(const Vec2i &pos) const {
 	const Cell *const &cell = map->getCell(pos);
-	switch (type->getField()) {
+	float height = 0.0f;
+
+	if (cell->getUnit(Zone::LAND)) {
+        Unit *unit = cell->getUnit(Zone::LAND);
+        const UnitType *uType = unit->getType();
+        if (uType->getProperty(Property::STAIR)) {
+	        height = uType->getHeight();
+	        if (height < 5.0f) {
+	            height = 5.0f;
+	        }
+        }
+	}
+	switch (getField()) {
 		case Field::LAND:
 			return cell->getHeight();
 		case Field::AIR:
 			return cell->getHeight() + World::airHeight;
+        case Field::STAIR:
+            return cell->getHeight() + 5.f;
+        case Field::WALL:
+            return cell->getHeight() + 5.f;
 		case Field::AMPHIBIOUS:
 			if (!cell->isSubmerged()) {
 				return cell->getHeight();
@@ -2959,6 +3265,9 @@ CmdResult Unit::checkCommand(const Command &command) const {
 	if (produced) {
 		if (!faction->reqsOk(produced)) {
 			return CmdResult::FAIL_REQUIREMENTS;
+		}
+		if (command.getType()->getClass() == CmdClass::CONSTRUCT) {
+            return CmdResult::SUCCESS;
 		}
 		if (!command.getFlags().get(CmdProps::DONT_RESERVE_RESOURCES)
 		&& !faction->checkCosts(produced)) {

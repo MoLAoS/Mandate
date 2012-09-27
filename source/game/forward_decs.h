@@ -47,6 +47,7 @@ namespace Glest {
 		struct EffectBias;
 		struct EffectStacking;
 		class UnitType;
+		class DamageType;
 		class SkillType;
 		class StopSkillType;
 		class MoveSkillType;
@@ -54,6 +55,8 @@ namespace Glest {
 		class AttackSkillType;
 		class BuildSkillType;
 		class HarvestSkillType;
+		class TransportSkillType;
+		class SetStructureSkillType;
 		class RepairSkillType;
 		class ProduceSkillType;
 		class UpgradeSkillType;
@@ -70,7 +73,12 @@ namespace Glest {
 		class TechTree;
 		class FactionType;
 		class Level;
+		class ItemType;
 		class CommandType;
+		class LeaderStats;
+		class Leader;
+		class Mage;
+		class Hero;
 	}
 
 	namespace Sim {
@@ -107,6 +115,7 @@ namespace Glest {
 		class UnitPath;
 		class WaypointPath;
 		class Unit;
+		class Item;
 		class Upgrade;
 		class UpgradeManager;
 		class Faction;
@@ -125,6 +134,15 @@ namespace Glest {
 		class GameCamera;
 		class Console;
 		class ChatManager;
+	}
+
+	namespace Gui_Mandate {
+        class TradeCommand;
+        class FactionDisplay;
+	}
+
+	namespace Hierarchy {
+        class Settlement;
 	}
 
 	namespace Script {

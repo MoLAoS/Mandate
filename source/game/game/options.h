@@ -5,9 +5,9 @@
 //				  2010 James McCulloch <silnarm at gmail>
 //				  2011 Nathan Turner <hailstone3 at sourceforge>
 //
-//	You can redistribute this code and/or modify it under 
-//	the terms of the GNU General Public License as published 
-//	by the Free Software Foundation; either version 2 of the 
+//	You can redistribute this code and/or modify it under
+//	the terms of the GNU General Public License as published
+//	by the Free Software Foundation; either version 2 of the
 //	License, or (at your option) any later version
 // ==============================================================
 
@@ -53,9 +53,10 @@ private:
 				*m_cameraInvertXAxisCheckBox,
 				*m_cameraInvertYAxisCheckBox,
 				*m_cameraMoveAtEdgesCheckBox,
-				*m_resoureNamesCheckBox,
+				*m_resourceNamesCheckBox,
+				*m_unitNamesCheckBox,
 				*m_focusArrowsCheckBox;
-	
+
 	Slider2		*m_volFxSlider,
 				*m_volAmbientSlider,
 				*m_volMusicSlider;

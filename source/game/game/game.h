@@ -32,6 +32,11 @@
 #include "debug_widgets.h"
 #include "game_menu.h"
 
+#include "core.h"
+#include "debugger.h"
+#include "system_interface.h"
+#include "render_interface.h"
+
 // weather system not yet ready
 //#include "../physics/weather.h"
 
@@ -53,6 +58,8 @@ struct ScriptMessage {
 	ScriptMessage(const string &header, const string &text) : header(header), text(text) {}
 };
 
+using namespace Rocket;
+
 // =====================================================
 // 	class GameState
 //
@@ -73,6 +80,11 @@ protected:
 	const Config &config;
 	UserInterface gui;
 	GameCamera gameCamera;
+
+    //rocket
+    ShellRenderInterfaceOpenGL opengl_renderer;
+    MandateSystemInterface system_interface;
+    Rocket::Core::Context* context;
 
 	//misc
 	Checksum checksum;
@@ -120,7 +132,9 @@ public:
 	UserInterface *getGui()					{return &gui;}
 	DebugStats* getDebugStats()             {return &m_debugStats;}
 	Vec2i getMousePos() const				{return Vec2i(mouseX, mouseY);}
-	
+
+    Rocket::Core::Context* getContext() const {return context;}
+
 	// ProgramState implementation
 
 	// init
@@ -184,12 +198,12 @@ protected:
 	// render
 	void render3d();
 	virtual void render2d();
-	
+
 	// show messages
 	void showLoseMessageBox();
 	void showWinMessageBox();
 	string controllerTypeToStr(ControlType ct);
-	
+
 	//char getStringFromFile(ifstream *fileStream, string *str);
 	void saveGame(string name) const;
 	void onSaveSelected(Widget*);

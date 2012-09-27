@@ -40,7 +40,15 @@ using Glest::Gui::Selection;
 namespace Glest { namespace Sim {
 
 inline Zone fieldZone(Field f) {
-	return f == Field::AIR ? Zone::AIR : Zone::LAND;
+    Zone freeCell;
+    if (f == Field::AIR) {
+    freeCell = Zone::AIR;
+    } else if (f == Field::LAND) {
+    freeCell = Zone::LAND;
+    } else if (f == Field::WALL || f == Field::STAIR) {
+    freeCell = Zone::WALL;
+    }
+	return freeCell;
 }
 
 // =====================================================
@@ -54,7 +62,7 @@ private:
 	Unit *units[Zone::COUNT];	//units on this cell
 	float height;
 	SurfaceType surfaceType;
-	
+
 	Cell(Cell&);
 	void operator=(Cell&);
 
@@ -131,7 +139,7 @@ public:
 	void setColor(const Vec3f &color)               { this->color= color;        }
 	void setTileType(int tileType)                  { this->tileType= tileType;  }
 	void setTexId(int id)                           { this->texId = id;          }
-	void setObject(MapObject *object)               { this->object= object;      }	
+	void setObject(MapObject *object)               { this->object= object;      }
 	void setExplored(int teamIndex, bool explored)	{
 		ASSERT_RANGE(teamIndex, GameConstants::maxPlayers);
 		this->explored[teamIndex]= explored;
@@ -259,7 +267,7 @@ public:
 		return &tiles[sy * m_tileSize.w + sx];
 	}
 	Tile *getTile(const Vec2i &sPos) const { return getTile(sPos.x, sPos.y); }
-	
+
 	Tile *getTileFromCellPos(int x, int y) const {
 		return getTile(x / GameConstants::cellScale, y / GameConstants::cellScale);
 	}
@@ -276,7 +284,7 @@ public:
 	Rect2i getBounds() const					{ return Rect2i(Vec2i(0), m_cellSize); }
 	Vec2i getStartLocation(int locNdx) const	{
 		assert(locNdx >= 0 && locNdx < GameConstants::maxPlayers && "invalid faction index");
-		return startLocations[locNdx]; 
+		return startLocations[locNdx];
 	}
 
 	bool isTileSubmerged(const Vec2i &tilePos) const {
@@ -347,7 +355,7 @@ public:
 	//unit placement
     void putUnitCells(Unit *unit, const Vec2i &pos);
 	void clearUnitCells(Unit *unit, const Vec2i &pos);
-	
+
 	//misc
 	bool isNextTo(const Vec2i &pos, const Unit *unit) const;
 	void clampPos(Vec2i &pos) const;

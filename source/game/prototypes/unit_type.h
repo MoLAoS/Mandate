@@ -14,10 +14,13 @@
 
 #include "cloak_type.h"
 #include "command_type.h"
+
 #include "damage_multiplier.h"
 #include "sound_container.h"
 #include "checksum.h"
 #include "particle_type.h"
+#include "abilities.h"
+#include "hero.h"
 #include <set>
 using std::set;
 
@@ -61,87 +64,6 @@ public:
 Vec2i rotateCellOffset(const Vec2i &offsetconst, const int unitSize, const CardinalDir facing);
 
 // ===============================
-// 	class Load Bonus
-// ===============================
-/** resource amount modifier */
-typedef map<const ResourceType*, Modifier> ResModifierMap;
-/** A unit type enhancement, an EnhancementType + resource cost modifiers + resource storage modifiers + resource creation modifiers */
-struct GarrisonEffect {
-	EnhancementType  m_enhancement;
-	ResModifierMap   m_costModifiers;
-	ResModifierMap   m_storeModifiers;
-	ResModifierMap   m_createModifiers;
-	const EnhancementType* getEnhancement() const { return &m_enhancement; }
-};
-
-class LoadBonus {
-public:
-    string source;
-    typedef GarrisonEffect Enhancement;
-    Enhancement m_enhancement;
-	LoadBonus();
-	virtual bool load(const XmlNode *loadBonusNode, const string &dir, const TechTree *tt, const FactionType *ft);
-    bool loadNewStyle(const XmlNode *node, const string &dir, const TechTree *techTree, const FactionType *factionType);
-	void loadResourceModifier(const XmlNode *node, ResModifierMap &map, const TechTree *techTree);
-	const Enhancement getEnhancement() const {return m_enhancement;}
-	string getSource() const {return source;}
-};
-
-// ===============================
-// 	class Timer
-// ===============================
-
-class Timer {
-public:
-    int timerValue;
-    int currentStep;
-
-    Timer() : timerValue(0), currentStep(0) {}
-	Timer(const Timer &that) : timerValue(that.timerValue), currentStep(that.currentStep) {}
-
-	void init(const XmlNode *n, const TechTree *tt);
-	void init(int timerValue, int currentStep);
-
-    int getTimerValue() {return timerValue;}
-    int getCurrentStep() {return currentStep;}
-
-    virtual void setTimerValue(int v) { currentStep = v; }
-    virtual void setCurrentStep(int v) { currentStep = v; }
-
-	void save(XmlNode *node) const;
-};
-
-// =====================================================
-// 	class CreatedUnit
-//
-/// Amount of a given ResourceType
-// =====================================================
-
-class CreatedUnit {
-protected:
-	const UnitType       *m_type;
-	int	                 m_amount;
-	int	                 m_amount_plus;
-	float	             m_amount_multiply;
-
-public:
-	CreatedUnit() : m_type(0), m_amount(0), m_amount_plus(0), m_amount_multiply(0) {}
-	CreatedUnit(const CreatedUnit &that) : m_type(that.m_type), m_amount(that.m_amount),
-	m_amount_plus(that.m_amount_plus), m_amount_multiply(that.m_amount_multiply) {}
-
-	void init(const XmlNode *n, const Faction *f);
-	void init(const UnitType *ut, const int amount, const int amount_plus, const float amount_multiply);
-
-	virtual void setAmount(int v) { m_amount = v; }
-	int  getAmount() const { return m_amount; }
-	int  getAmountPlus() const { return m_amount_plus; }
-	float  getAmountMultiply() const { return m_amount_multiply; }
-	const UnitType *getType() const { return m_type; }
-
-	void save(XmlNode *node) const;
-};
-
-// ===============================
 // 	class UnitType
 //
 ///	A unit or building type
@@ -152,13 +74,24 @@ private:
 	typedef vector<SkillType*>          SkillTypes;
 	typedef vector<CommandType*>        CommandTypes;
 	typedef vector<ResourceAmount>      StoredResources;
-	typedef vector<ResourceAmount>      CreatedResources;
-	typedef vector<CreatedUnit>         CreatedUnits;
+
+	typedef vector<CreatedResource>     CreatedResources;
 	typedef vector<Timer>               CreatedResourceTimers;
+
+	typedef vector<CreatedUnit>         CreatedUnits;
 	typedef vector<Timer>               CreatedUnitTimers;
+
+	typedef vector<UnitsOwned>         OwnedUnits;
+	typedef vector<Timer>               OwnedUnitTimers;
+
+	typedef vector<Process>             Processes;
+	typedef vector<Timer>               ProcessTimers;
+
 	typedef vector<Level>               Levels;
-	typedef vector<LoadBonus>          LoadBonuses;
+	typedef vector<LoadBonus>           LoadBonuses;
 	typedef vector<ParticleSystemType*> ParticleSystemTypes;
+
+	typedef vector<DamageType>          Resistances;
 
 	//typedef vector<PetRule*> PetRules;
 	//typedef map<int, const CommandType*> CommandTypeMap;
@@ -176,6 +109,12 @@ private:
     int size;
     int height;
 
+public:
+    Hero hero;
+    Mage mage;
+    Leader leader;
+
+private:
 	bool light;
     Vec3f lightColour;
 
@@ -193,13 +132,24 @@ private:
 public:
 	CreatedResources createdResources;
 	mutable CreatedResourceTimers createdResourceTimers;
+
 	CreatedUnits createdUnits;
 	mutable CreatedUnitTimers createdUnitTimers;
+
+    OwnedUnits ownedUnits;
+	mutable OwnedUnitTimers ownedUnitTimers;
+
+	Processes processes;
+	ProcessTimers processTimers;
+
+	LoadBonuses loadBonuses;
+    Resistances resistances;
+
+    bool isMage;
+    bool isLeader;
+    bool isHero;
 private:
 	Levels levels;
-public:
-	LoadBonuses loadBonuses;
-private:
 	Emanations emanations;
 
 	//meeting point
@@ -207,6 +157,7 @@ private:
 	Texture2D *meetingPointImage;
 
 	CommandTypes commandTypes;
+	CommandTypes squadCommands;
 	CommandTypes commandTypesByClass[CmdClass::COUNT]; // command types mapped by CmdClass
 
 	SkillTypes skillTypes;
@@ -280,6 +231,7 @@ public:
 
 	int getCommandTypeCount() const						{return commandTypes.size();}
 	const CommandType *getCommandType(int i) const		{return commandTypes[i];}
+	const CommandType *getSquadCommand(int i) const		{return squadCommands[i];}
 
 	const CommandType *getCommandType(const string &name) const;
 
@@ -335,6 +287,16 @@ public:
 	Timer getCreatedResourceTimer(int i, const Faction *f) const;
 	int getCreateTimer(const ResourceType *rt, const Faction *f) const;
 
+    // processes
+	int getProcessCount() const					{return processes.size();}
+	Process getProcess(int i, const Faction *f) const;
+	int getProcessing(const ResourceType *rt, const Faction *f) const;
+
+	// process timers
+	int getProcessTimerCount()                 {return processTimers.size();}
+	Timer getProcessTimer(int i, const Faction *f) const;
+	int getProcessingTimer(const ResourceType *rt, const Faction *f) const;
+
     // units created
 	int getCreatedUnitCount() const					{return createdUnits.size();}
 	CreatedUnit getCreatedUnit(int i, const Faction *f) const;
@@ -368,6 +330,9 @@ public:
 
 	// is
 	bool isOfClass(UnitClass uc) const;
+
+	bool display;
+    bool isDisplay() const			{return display;}
 
 private:
 	void setDeCloakSkills(const vector<string> &names, const vector<SkillClass> &classes);

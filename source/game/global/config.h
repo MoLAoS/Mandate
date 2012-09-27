@@ -100,6 +100,9 @@ private:
 	int uiLastDisplayPosX;
 	int uiLastDisplayPosY;
 	int uiLastDisplaySize;
+	int uiLastTradeBarPosX;
+	int uiLastTradeBarPosY;
+	int uiLastTradeBarSize;
 	int uiLastMinimapPosX;
 	int uiLastMinimapPosY;
 	int uiLastMinimapSize;
@@ -107,18 +110,22 @@ private:
 	int uiLastResourceBarPosX;
 	int uiLastResourceBarPosY;
 	int uiLastResourceBarSize;
+	int uiLastUnitBarPosX;
+	int uiLastUnitBarPosY;
+	int uiLastUnitBarSize;
 	string uiLastScenario;
 	string uiLastScenarioCatagory;
 	string uiLocale;
 	bool uiMoveCameraAtScreenEdge;
 	bool uiPhotoMode;
 	bool uiPinWidgets;
+	bool uiUnitNames;
 	bool uiResourceNames;
 	float uiScrollSpeed;
 	int uiTeamColourMode;
 
 	Config(const char* fileName);
-	
+
 	static bool isWindows() {
 #		ifdef WIN32
 			return true;
@@ -204,6 +211,9 @@ public:
 	int getUiLastDisplayPosX() const			{return uiLastDisplayPosX;}
 	int getUiLastDisplayPosY() const			{return uiLastDisplayPosY;}
 	int getUiLastDisplaySize() const			{return uiLastDisplaySize;}
+	int getUiLastTradeBarPosX() const			{return uiLastTradeBarPosX;}
+	int getUiLastTradeBarPosY() const			{return uiLastTradeBarPosY;}
+	int getUiLastTradeBarSize() const			{return uiLastTradeBarSize;}
 	int getUiLastMinimapPosX() const			{return uiLastMinimapPosX;}
 	int getUiLastMinimapPosY() const			{return uiLastMinimapPosY;}
 	int getUiLastMinimapSize() const			{return uiLastMinimapSize;}
@@ -211,6 +221,9 @@ public:
 	int getUiLastResourceBarPosX() const		{return uiLastResourceBarPosX;}
 	int getUiLastResourceBarPosY() const		{return uiLastResourceBarPosY;}
 	int getUiLastResourceBarSize() const		{return uiLastResourceBarSize;}
+	int getUiLastUnitBarPosX() const		    {return uiLastUnitBarPosX;}
+	int getUiLastUnitBarPosY() const		    {return uiLastUnitBarPosY;}
+	int getUiLastUnitBarSize() const		    {return uiLastUnitBarSize;}
 	string getUiLastScenario() const			{return uiLastScenario;}
 	string getUiLastScenarioCatagory() const	{return uiLastScenarioCatagory;}
 	string getUiLocale() const					{return uiLocale;}
@@ -218,6 +231,7 @@ public:
 	bool getUiPhotoMode() const					{return uiPhotoMode;}
 	bool getUiPinWidgets() const				{return uiPinWidgets;}
 	bool getUiResourceNames() const				{return uiResourceNames;}
+	bool getUiUnitNames() const				    {return uiUnitNames;}
 	float getUiScrollSpeed() const				{return uiScrollSpeed;}
 	int getUiTeamColourMode() const				{return uiTeamColourMode;}
 
@@ -290,6 +304,9 @@ public:
 	void setUiLastDisplayPosX(int val)			{uiLastDisplayPosX = val;}
 	void setUiLastDisplayPosY(int val)			{uiLastDisplayPosY = val;}
 	void setUiLastDisplaySize(int val)			{uiLastDisplaySize = val;}
+	void setUiLastTradeBarPosX(int val)			{uiLastTradeBarPosX = val;}
+	void setUiLastTradeBarPosY(int val)			{uiLastTradeBarPosY = val;}
+	void setUiLastTradeBarSize(int val)			{uiLastTradeBarSize = val;}
 	void setUiLastMinimapPosX(int val)			{uiLastMinimapPosX = val;}
 	void setUiLastMinimapPosY(int val)			{uiLastMinimapPosY = val;}
 	void setUiLastMinimapSize(int val)			{uiLastMinimapSize = val;}
@@ -297,6 +314,9 @@ public:
 	void setUiLastResourceBarPosX(int val)		{uiLastResourceBarPosX = val;}
 	void setUiLastResourceBarPosY(int val)		{uiLastResourceBarPosY = val;}
 	void setUiLastResourceBarSize(int val)		{uiLastResourceBarSize = val;}
+	void setUiLastUnitBarPosX(int val)		    {uiLastUnitBarPosX = val;}
+	void setUiLastUnitBarPosY(int val)		    {uiLastUnitBarPosY = val;}
+	void setUiLastUnitBarSize(int val)		    {uiLastUnitBarSize = val;}
 	void setUiLastScenario(string val)			{uiLastScenario = val;}
 	void setUiLastScenarioCatagory(string val)	{uiLastScenarioCatagory = val;}
 	void setUiLocale(string val)				{uiLocale = val;}
@@ -304,6 +324,7 @@ public:
 	void setUiPhotoMode(bool val)				{uiPhotoMode = val;}
 	void setUiPinWidgets(bool val)				{uiPinWidgets = val;}
 	void setUiResourceNames(bool val)			{uiResourceNames = val;}
+	void setUiUnitNames(bool val)			    {uiUnitNames = val;}
 	void setUiScrollSpeed(float val)			{uiScrollSpeed = val;}
 	void setUiTeamColourMode(int val)			{uiTeamColourMode = val;}
 };

@@ -52,18 +52,18 @@ namespace Glest { namespace Search {
 	void collectOpenClosed(NodeStorage *ns) {
 		list<Vec2i> *nodes = ns->getOpenNodes();
 		list<Vec2i>::iterator nit = nodes->begin();
-		for ( ; nit != nodes->end(); ++nit ) 
+		for ( ; nit != nodes->end(); ++nit )
 			g_debugRenderer.getPFCallback().openSet.insert(*nit);
 		delete nodes;
 		nodes = ns->getClosedNodes();
 		for ( nit = nodes->begin(); nit != nodes->end(); ++nit )
 			g_debugRenderer.getPFCallback().closedSet.insert(*nit);
-		delete nodes;					
+		delete nodes;
 	}
 
 	void collectPath(const Unit *unit) {
 		const UnitPath &path = *unit->getPath();
-		for (UnitPath::const_iterator pit = path.begin(); pit != path.end(); ++pit) 
+		for (UnitPath::const_iterator pit = path.begin(); pit != path.end(); ++pit)
 			g_debugRenderer.getPFCallback().pathSet.insert(*pit);
 	}
 
@@ -146,7 +146,14 @@ bool RoutePlanner::isLegalMove(Unit *unit, const Vec2i &pos2) const {
 	const Vec2i &pos1 = unit->getPos();
 	const int &size = unit->getSize();
 	const Field &field = unit->getCurrField();
-	Zone zone = field == Field::AIR ? Zone::AIR : Zone::LAND;
+	Zone zone;
+    if (field == Field::AIR) {
+    zone = Zone::AIR;
+    } else if (field == Field::LAND) {
+    zone = Zone::LAND;
+    } else if (field == Field::WALL || field == Field::STAIR) {
+    zone = Zone::WALL;
+    }
 
 	AnnotatedMap *annotatedMap = world->getCartographer()->getMasterMap();
 	if (!annotatedMap->canOccupy(pos2, size, field)) {
@@ -203,7 +210,7 @@ HAAStarResult RoutePlanner::setupHierarchicalOpenList(Unit *unit, const Vec2i &t
 	nsgSearchEngine->getNeighbourFunc().setSearchCluster(startCluster);
 
 	bool startTrap = true;
-	// attempt quick path from unit->pos to each transition, 
+	// attempt quick path from unit->pos to each transition,
 	// if successful add transition to open list
 
 	AnnotatedMap *aMap = world->getCartographer()->getMasterMap();
@@ -252,7 +259,7 @@ HAAStarResult RoutePlanner::setupHierarchicalSearch(Unit *unit, const Vec2i &des
 	nsgSearchEngine->getNeighbourFunc().setSearchCluster(cluster);
 
 	bool goalTrap = true;
-	// attempt quick path from dest to each transition, 
+	// attempt quick path from dest to each transition,
 	// if successful add transition to goal set
 	for (Transitions::iterator it = transitions.begin(); it != transitions.end(); ++it) {
 		float cost = quickSearch(unit->getCurrField(), unit->getSize(), dest, (*it)->nwPos);
@@ -261,8 +268,8 @@ HAAStarResult RoutePlanner::setupHierarchicalSearch(Unit *unit, const Vec2i &des
 			goalTrap = false;
 		}
 	}
-	return startTrap ? HAAStarResult::START_TRAP 
-		  : goalTrap ? HAAStarResult::GOAL_TRAP 
+	return startTrap ? HAAStarResult::START_TRAP
+		  : goalTrap ? HAAStarResult::GOAL_TRAP
 					 : HAAStarResult::COMPLETE;
 }
 
@@ -347,7 +354,7 @@ public:
 		if (it == t->edges.end()) {
 			throw runtime_error("bad connection in ClusterMap.");
 		}
-		if ((*it)->maxClear() >= size 
+		if ((*it)->maxClear() >= size
 		&& g_map.getTile(Map::toTileCoords((*it)->transition()->nwPos))->isExplored(team)) {
 			return (*it)->cost(size);
 		}
@@ -396,7 +403,7 @@ bool RoutePlanner::refinePath(Unit *unit) {
 	const Vec2i &startPos = path.empty() ? unit->getPos() : path.back();
 	const Vec2i &destPos = wpPath.front();
 	AnnotatedMap *aMap = world->getCartographer()->getAnnotatedMap(unit);
-	
+
 	MoveCost cost(unit, aMap);
 	DiagonalDistance dd(destPos);
 	PosGoal posGoal(destPos);
@@ -431,9 +438,9 @@ void RoutePlanner::smoothPath(Unit *unit) {
 		return;
 	}
 	AnnotatedMap* const &aMap = world->getCartographer()->getMasterMap();
-	int min_x = numeric_limits<int>::max(), 
-		max_x = -1, 
-		min_y = numeric_limits<int>::max(), 
+	int min_x = numeric_limits<int>::max(),
+		max_x = -1,
+		min_y = numeric_limits<int>::max(),
 		max_y = -1;
 	set<Vec2i> onPath;
 	UnitPath::iterator it = unit->getPath()->begin();
@@ -843,7 +850,7 @@ TravelState RoutePlanner::findPathToGoal(Unit *unit, PMap1Goal &goal, const Vec2
 	RUNTIME_CHECK(wpPath.size() > 1);
 	wpPath.pop();
 	IF_DEBUG_EDITION( clearOpenClosed(unit->getPos(), target); )
-	// cull destination and waypoints close to it, when we get to the last remaining 
+	// cull destination and waypoints close to it, when we get to the last remaining
 	// waypoint we'll do a 'customGoalSearch' to the target
 	while (wpPath.size() > 1 && wpPath.back().dist(target) < 32.f) {
 		wpPath.pop_back();
@@ -874,13 +881,13 @@ TravelState RoutePlanner::findPathToGoal(Unit *unit, PMap1Goal &goal, const Vec2
 }
 
 /** repair a blocked path
-  * @param unit unit whose path is blocked 
+  * @param unit unit whose path is blocked
   * @return true if repair succeeded */
 bool RoutePlanner::repairPath(Unit *unit) {
 	SECTION_TIMER(PATHFINDER_LOWLEVEL);
 	UnitPath &path = *unit->getPath();
 	WaypointPath &wpPath = *unit->getWaypointPath();
-	
+
 	Vec2i dest;
 	if (path.size() < 10 && !wpPath.empty()) {
 		dest = wpPath.front();
@@ -909,8 +916,8 @@ bool RoutePlanner::repairPath(Unit *unit) {
 	}
 	aMap->clearLocalAnnotations(unit);
 	if (!path.empty()) {
-		IF_DEBUG_EDITION ( 
-			collectOpenClosed<NodePool>(nsgSearchEngine->getStorage()); 
+		IF_DEBUG_EDITION (
+			collectOpenClosed<NodePool>(nsgSearchEngine->getStorage());
 			collectPath(unit);
 		)
 		return true;
@@ -943,7 +950,7 @@ TravelState RoutePlanner::doFullLowLevelAStar(Unit *unit, const Vec2i &dest) {
 	se->setStart(unit->getPos(), dd(unit->getPos()));
 	AStarResult res = se->aStar(goal,cost,dd);
 	list<Vec2i>::iterator it;
-	IF_DEBUG_EDITION ( 
+	IF_DEBUG_EDITION (
 		list<Vec2i> *nodes = NULL;
 		NodeMap* nm = se->getStorage();
 	)
@@ -957,7 +964,7 @@ TravelState RoutePlanner::doFullLowLevelAStar(Unit *unit, const Vec2i &dest) {
 				pos = se->getPreviousPos(pos);
 			}
 			if (!path.empty()) path.pop();
-			IF_DEBUG_EDITION ( 
+			IF_DEBUG_EDITION (
 				collectOpenClosed<NodeMap>(se->getStorage());
 				collectPath(unit);
 			)
@@ -986,10 +993,10 @@ TravelState RoutePlanner::doFullLowLevelAStar(Unit *unit, const Vec2i &dest) {
 // return finalPos if free, else a nearest free pos within maxFreeSearchRadius
 // cells, or unit's current position if none found
 //
-/** find nearest free position a unit can occupy 
+/** find nearest free position a unit can occupy
   * @param unit the unit in question
   * @param finalPos the position unit wishes to be
-  * @return finalPos if free and occupyable by unit, else the closest such position, or the unit's 
+  * @return finalPos if free and occupyable by unit, else the closest such position, or the unit's
   * current position if none found
   * @todo reimplement with Dijkstra search
   */

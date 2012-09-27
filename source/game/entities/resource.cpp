@@ -127,4 +127,44 @@ void CreatedResource::save(XmlNode *n) const {
 	n->addChild("creation", m_creation);
 }
 
+// =====================================================
+// 	Helper Classes For Process
+// =====================================================
+
+void ResMade::init(const XmlNode *n, const TechTree *tt) {
+	ResourceAmount::init(n, tt);
+	m_product = n->getChildIntValue("product");
+}
+
+void ResMade::init(const ResourceType *rt, string n, int v, int a, int b) {
+	ResourceAmount::init(rt, v, 0, 0);
+    m_product = 0;
+    m_name = n;
+}
+
+void ResMade::save(XmlNode *n) const {
+	ResourceAmount::save(n);
+	n->addChild("product", m_product);
+}
+
+void ResCost::init(const XmlNode *n, const TechTree *tt) {
+	ResourceAmount::init(n, tt);
+	m_cost = n->getChildIntValue("cost");
+}
+
+void ResCost::init(const ResourceType *rt, string n, int v, int a, int b) {
+	ResourceAmount::init(rt, v, 0, 0);
+	m_cost = 0;
+	m_name = n;
+}
+
+void ResCost::save(XmlNode *n) const {
+	ResourceAmount::save(n);
+	n->addChild("cost", m_cost);
+}
+
+// =====================================================
+// 	class Process
+// =====================================================
+
 }} // end namespace

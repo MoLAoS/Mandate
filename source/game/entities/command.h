@@ -80,14 +80,14 @@ public:
 		CreateParamsArch(CmdDirective archetype, CmdFlags flags, const Vec2i &pos = invalidPos, Unit *commandedUnit = NULL)
 			: archetype(archetype), flags(flags), pos(pos), commandedUnit(commandedUnit) { }
 	};
-	
+
 	struct CreateParamsPos { // create params for order with target position
 		const CommandType *type;
 		CmdFlags flags;
 		Vec2i pos;
 		Unit *commandedUnit;
 
-		CreateParamsPos(const CommandType *type, CmdFlags flags, const Vec2i &pos = invalidPos, Unit *commandedUnit = NULL) 
+		CreateParamsPos(const CommandType *type, CmdFlags flags, const Vec2i &pos = invalidPos, Unit *commandedUnit = NULL)
 			: type(type), flags(flags), pos(pos), commandedUnit(commandedUnit) { }
 	};
 
@@ -97,7 +97,7 @@ public:
 		Unit *unit;
 		Unit *commandedUnit;
 
-		CreateParamsUnit(const CommandType *type, CmdFlags flags, Unit *unit, Unit *commandedUnit = NULL) 
+		CreateParamsUnit(const CommandType *type, CmdFlags flags, Unit *unit, Unit *commandedUnit = NULL)
 			: type(type), flags(flags), unit(unit), commandedUnit(commandedUnit) { }
 	};
 
@@ -109,7 +109,7 @@ public:
 		CardinalDir facing;
 		Unit *commandedUnit;
 
-		CreateParamsProd(const CommandType *type, CmdFlags flags, const Vec2i &pos, const ProducibleType *prodType, CardinalDir facing, Unit *commandedUnit = NULL) 
+		CreateParamsProd(const CommandType *type, CmdFlags flags, const Vec2i &pos, const ProducibleType *prodType, CardinalDir facing, Unit *commandedUnit = NULL)
 			: type(type), flags(flags), pos(pos), prodType(prodType), facing(facing), commandedUnit(commandedUnit) { }
 	};
 
@@ -118,7 +118,7 @@ public:
 		const UnitType *ut;
 		const FactionType *ft;
 
-		CreateParamsLoad(const XmlNode *node, const UnitType *ut, const FactionType *ft) 
+		CreateParamsLoad(const XmlNode *node, const UnitType *ut, const FactionType *ft)
 			: node(node), ut(ut), ft(ft) { }
 	};
 
@@ -169,7 +169,7 @@ public:
 	void setPos2(const Vec2i &pos2)						{this->pos2 = pos2;}
 
 	void setUnit(Unit *unit)							{this->unitRef = unit ? unit->getId() : 0;}
-	void setUnit2(Unit *unit2)							{this->unitRef2 = unit2 ? unit2->getId() : 0;}	
+	void setUnit2(Unit *unit2)							{this->unitRef2 = unit2 ? unit2->getId() : 0;}
 	void setProdType(const ProducibleType* pType)		{this->prodType = pType;}
 	void setCommandedUnit(Unit *commandedUnit)			{this->commandedUnit = commandedUnit;}
 
@@ -184,13 +184,13 @@ inline ostream& operator<<(ostream &stream, const Command &command) {
 	if (command.getArchetype() == CmdDirective::CANCEL_COMMAND) {
 		stream << "Cancel command]";
 	} else if (command.getArchetype() == CmdDirective::SET_AUTO_REPAIR) {
-		stream << "set auto repair(" << 
+		stream << "set auto repair(" <<
 			(command.getFlags().get(CmdProps::MISC_ENABLE) ? "true" : "false") << ")]";
 	} else if (command.getArchetype() == CmdDirective::SET_AUTO_ATTACK) {
-		stream << "set auto attack(" << 
+		stream << "set auto attack(" <<
 			(command.getFlags().get(CmdProps::MISC_ENABLE) ? "true" : "false") << ")]";
 	} else if (command.getArchetype() == CmdDirective::SET_AUTO_FLEE) {
-		stream << "set auto flee(" << 
+		stream << "set auto flee(" <<
 			(command.getFlags().get(CmdProps::MISC_ENABLE) ? "true" : "false") << ")]";
 	} else {
 		stream << command.getType()->getName() << "]";

@@ -1,0 +1,14 @@
+The gong sounds used for attack notices for the magic faction are all 
+from http://www.freesound.org.
+
+gong1 is by 'Rodcencko'
+http://www.freesound.org/samplesViewSingle.php?id=16594
+
+gong2 is by 'gezortenplotz'
+http://www.freesound.org/samplesViewSingle.php?id=20134
+
+gong3 id by 'SuperDaveOsbourne'
+http://www.freesound.org/samplesViewSingle.php?id=63643
+
+The bugle calls used for attack notice sounds in the tech faction are all recordings
+of various US Military bands, and are in public domain.

@@ -420,6 +420,17 @@ void AttackSkillType::load(const XmlNode *sn, const string &dir, const TechTree 
 	attackType= tt->getAttackType(attackTypeName);
 	startTime= sn->getOptionalFloatValue("attack-start-time");
 
+    const XmlNode *damageTypesNode = sn->getChild("damage-types", 0, false);
+	if (damageTypesNode) {
+	    damageTypes.resize(damageTypesNode->getChildCount());
+	    for (int i = 0; i < damageTypesNode->getChildCount(); ++i) {
+            const XmlNode *damageTypeNode = damageTypesNode->getChild("damage-type", i);
+            string damageTypeName = damageTypeNode->getAttribute("type")->getRestrictedValue();
+            int amount = damageTypeNode->getAttribute("value")->getIntValue();
+            damageTypes[i].init(damageTypeName, amount);
+	    }
+	}
+
 	const XmlNode *attackPctStolenNode= sn->getChild("attack-percent-stolen", 0, false);
 	if(attackPctStolenNode) {
 		attackPctStolen = attackPctStolenNode->getAttribute("value")->getFixedValue() / 100;
@@ -472,6 +483,16 @@ void AttackSkillType::getDesc(string &str, const Unit *unit) const {
 	str += " ("+ attackType->getName() +")";
 	str += "\n";
 
+	if (damageTypes.size() > 0) {
+    str += lang.get("Magic Damage")+": ";
+    str += "\n";
+	for (int i = 0; i < damageTypes.size(); ++i) {
+	str += lang.get(damageTypes[i].getTypeName())+": ";
+	str += intToStr(damageTypes[i].getValue());
+	}
+    str += "\n";
+	}
+
 	str += lang.get("AttackLifeLeech")+": ";
 	str += intToStr(attackStrength * attackLifeLeech / 100);
 	//this section deals with the variable damage, which i don't like
@@ -517,12 +538,28 @@ fixed BuildSkillType::getSpeed(const Unit *unit) const {
 }
 
 // ===============================
+// 	class ConstructSkillType
+// ===============================
+
+fixed ConstructSkillType::getSpeed(const Unit *unit) const {
+	return speed * unit->getRepairSpeedMult() + unit->getRepairSpeed();
+}
+
+// ===============================
 // 	class HarvestSkillType
 // ===============================
 
 fixed HarvestSkillType::getSpeed(const Unit *unit) const {
 	return speed * unit->getHarvestSpeedMult() + unit->getHarvestSpeed();
 }
+
+// ===============================
+// 	class TransportSkillType
+// ===============================
+
+// ===============================
+// 	class SetStructureSkillType
+// ===============================
 
 // ===============================
 // 	class DieSkillType
@@ -619,6 +656,89 @@ void RepairSkillType::getDesc(string &str, const Unit *unit) const {
 }
 
 fixed RepairSkillType::getSpeed(const Unit *unit) const {
+	return speed * unit->getRepairSpeedMult() + unit->getRepairSpeed();
+}
+
+// ===============================
+// 	class MaintainSkillType
+// ===============================
+
+MaintainSkillType::MaintainSkillType() : SkillType("Maintain") {
+	amount = 0;
+	multiplier = 1;
+	petOnly = false;
+	selfAllowed = true;
+	selfOnly = false;
+}
+
+void MaintainSkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const UnitType *ut) {
+	minRange = 1;
+	maxRange = 1;
+	SkillType::load(sn, dir, tt, ut);
+
+	XmlNode *n;
+
+	if((n = sn->getChild("amount", 0, false))) {
+		amount = n->getAttribute("value")->getIntValue();
+	}
+
+	if((n = sn->getChild("multiplier", 0, false))) {
+		multiplier = n->getAttribute("value")->getFixedValue();
+	}
+
+	if((n = sn->getChild("pet-only", 0, false))) {
+		petOnly = n->getAttribute("value")->getBoolValue();
+	}
+
+	if((n = sn->getChild("self-only", 0, false))) {
+		selfOnly = n->getAttribute("value")->getBoolValue();
+		selfAllowed = true;
+	}
+
+	if((n = sn->getChild("self-allowed", 0, false))) {
+		selfAllowed = n->getAttribute("value")->getBoolValue();
+	}
+
+	if(selfOnly && !selfAllowed) {
+		throw runtime_error("Repair skill can't specify self-only as true and self-allowed as false (dork).");
+	}
+
+	if(petOnly && selfOnly) {
+		throw runtime_error("Maintain skill can't specify pet-only with self-only.");
+	}
+
+	//splash particle
+	const XmlNode *particleNode= sn->getChild("particle", 0, false);
+	if(particleNode && particleNode->getAttribute("value")->getBoolValue()){
+		string path= particleNode->getAttribute("path")->getRestrictedValue();
+		splashParticleSystemType= new SplashType();
+		splashParticleSystemType->load(dir,  dir + "/" + path);
+	}
+}
+
+void MaintainSkillType::doChecksum(Checksum &checksum) const {
+	SkillType::doChecksum(checksum);
+	checksum.add(amount);
+	checksum.add(multiplier);
+	checksum.add(petOnly);
+	checksum.add(selfOnly);
+	checksum.add(selfAllowed);
+}
+
+void MaintainSkillType::getDesc(string &str, const Unit *unit) const {
+	Lang &lang= Lang::getInstance();
+	descSpeed(str, unit, "MaintainSpeed");
+	descEpCost(str, unit);
+
+	if(amount) {
+		str+= "\n" + lang.get("HpRestored")+": "+ intToStr(amount);
+	}
+	if(maxRange > 1){
+		str+= "\n" + lang.get("Range")+": "+ intToStr(maxRange);
+	}
+}
+
+fixed MaintainSkillType::getSpeed(const Unit *unit) const {
 	return speed * unit->getRepairSpeedMult() + unit->getRepairSpeed();
 }
 

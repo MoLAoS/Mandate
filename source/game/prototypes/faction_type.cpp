@@ -22,11 +22,13 @@
 #include "program.h"
 #include "sim_interface.h"
 
-#include "leak_dumper.h"
+#include "core.h"
 
+#include "leak_dumper.h"
 
 using namespace Shared::Util;
 using namespace Shared::Xml;
+using namespace Rocket;
 
 namespace Glest { namespace ProtoTypes {
 
@@ -49,11 +51,11 @@ FactionType::FactionType()
 
 bool FactionType::preLoad(const string &dir, const TechTree *techTree) {
 	m_name = basename(dir);
+    bool loadOk = true;
 
 	// a1) preload units
 	string unitsPath = dir + "/units/*.";
 	vector<string> unitFilenames;
-	bool loadOk = true;
 	try {
 		findAll(unitsPath, unitFilenames);
 	} catch (runtime_error e) {
@@ -66,6 +68,22 @@ bool FactionType::preLoad(const string &dir, const TechTree *techTree) {
 		unitTypes.push_back(ut);
 		unitTypes.back()->preLoad(path);
 	}
+    // a1.5) preload items
+	string itemsPath = dir + "/items/*.";
+	vector<string> itemFilenames;
+	try {
+		findAll(itemsPath, itemFilenames);
+	} catch (runtime_error e) {
+		g_logger.logError(e.what());
+		loadOk = false;
+	}
+	for (int i = 0; i < itemFilenames.size(); ++i) {
+		string path = dir + "/items/" + itemFilenames[i];
+		ItemType *it = g_prototypeFactory.newItemType();
+		itemTypes.push_back(it);
+		itemTypes.back()->preLoad(path);
+	}
+
 	// a2) preload upgrades
 	string upgradesPath= dir + "/upgrades/*.";
 	vector<string> upgradeFilenames;
@@ -80,6 +98,24 @@ bool FactionType::preLoad(const string &dir, const TechTree *techTree) {
 		UpgradeType *ut = g_prototypeFactory.newUpgradeType();
 		upgradeTypes.push_back(ut);
 		upgradeTypes.back()->preLoad(path);
+	}
+
+	return loadOk;
+}
+
+bool FactionType::guiPreLoad(const string &dir, const TechTree *techTree) {
+    bool loadOk = true;
+    string guiPath = dir + "/gui/*.";
+    vector<string> guiFilenames;
+	try {
+		findAll(guiPath, guiFilenames);
+	} catch (runtime_error e) {
+		g_logger.logError(e.what());
+		loadOk = false;
+	}
+	for (int i = 0; i < guiFilenames.size(); ++i) {
+		string path = dir + "/gui/" + guiFilenames[i];
+        guiFileNames.push_back(path);
 	}
 	return loadOk;
 }
@@ -144,8 +180,7 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 		}
 	}
 
-	// progress : 0 - unitFileNames.size()
-
+    // progress : 0 - unitFileNames.size()
 	// 3. Load units
 	for (int i = 0; i < unitTypes.size(); ++i) {
 		string str = dir + "/units/" + unitTypes[i]->getName();
@@ -156,7 +191,16 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 		}
 		logger.getProgramLog().unitLoaded();
 	}
-
+	// 3.5. Load items
+	for (int i = 0; i < itemTypes.size(); ++i) {
+		string str = dir + "/items/" + itemTypes[i]->getName();
+		if (itemTypes[i]->load(str, techTree, this)) {
+			g_prototypeFactory.setChecksum(itemTypes[i]);
+		} else {
+			loadOk = false;
+		}
+		logger.getProgramLog().itemLoaded();
+	}
 	// 4. Add BeLoadedCommandType to units that need them
 
 	// 4a. Discover which mobile unit types can be loaded(/housed) in other units
@@ -217,6 +261,24 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 				loadOk = false;
 			}
 		}
+	} catch (runtime_error e) {
+		g_logger.logXmlError(path, e.what());
+		loadOk = false;
+	}
+
+    try {
+        const XmlNode *itemImagesNode = factionNode->getChild("item-images");
+        for (int i = 0; i < itemImagesNode->getChildCount(); ++i) {
+            try {
+                const XmlNode *itemImageNode = itemImagesNode->getChild("item-image", i);
+                string itemImgPath = dir + "/" + itemImageNode->getAttribute("image-path")->getRestrictedValue();
+				Texture2D *itemImage = g_renderer.getTexture2D(ResourceScope::GAME, itemImgPath);
+				itemImages.push_back(itemImage);
+            } catch (runtime_error e) {
+            g_logger.logXmlError(path, e.what());
+            loadOk = false;
+            }
+        }
 	} catch (runtime_error e) {
 		g_logger.logXmlError(path, e.what());
 		loadOk = false;
@@ -395,6 +457,9 @@ void FactionType::doChecksum(Checksum &checksum) const {
 	foreach_const (UnitTypes, it, unitTypes) {
 		(*it)->doChecksum(checksum);
 	}
+	/*foreach_const (ItemTypes, it, itemTypes) {
+		(*it)->doChecksum(checksum);
+	}*/
 	foreach_const (UpgradeTypes, it, upgradeTypes) {
 		(*it)->doChecksum(checksum);
 	}
@@ -447,6 +512,15 @@ const UnitType *FactionType::getUnitType(const string &m_name) const{
 		}
     }
 	throw runtime_error("Unit not found: " + m_name);
+}
+
+const ItemType *FactionType::getItemType(const string &m_name) const{
+    for (int i = 0; i < itemTypes.size(); ++i) {
+		if (itemTypes[i]->getName() == m_name) {
+            return itemTypes[i];
+		}
+    }
+	throw runtime_error("Item not found: " + m_name);
 }
 
 const UpgradeType *FactionType::getUpgradeType(const string &m_name) const{

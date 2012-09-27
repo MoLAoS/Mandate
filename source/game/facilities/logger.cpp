@@ -84,7 +84,7 @@ void LogFile::logMediaError(const string &xmlPath, const string &mediaPath, cons
 void LogFile::addNetworkMsg(const string &msg) {
 	stringstream ss;
 	if (World::isConstructed()) {
-		ss << "Frame: " << g_world.getFrameCount(); 
+		ss << "Frame: " << g_world.getFrameCount();
 	} else {
 		ss << "Frame: 0";
 	}
@@ -101,6 +101,8 @@ ProgramLog::ProgramLog()
 		, loadingGame(true)
 		, totalUnits(0)
 		, unitsLoaded(0)
+		, totalItems(0)
+		, itemsLoaded(0)
 		, m_progressBar(false)
 		, m_progress(0)
 		, m_backgroundTexture(0) {
@@ -133,6 +135,12 @@ void ProgramLog::unitLoaded() {
 	m_progress = int(pcnt);
 }
 
+void ProgramLog::itemLoaded() {
+	++itemsLoaded;
+	float pcnt = ((float)itemsLoaded) / ((float)totalItems) * 100.f;
+	m_progress = int(pcnt);
+}
+
 void ProgramLog::useLoadingScreenDefaults() {
 	m_backgroundTexture = g_coreData.getBackgroundTexture();
 }
@@ -145,16 +153,16 @@ bool ProgramLog::setupLoadingScreen(const string &dir) {
 
 	//open xml file
 	XmlTree xmlTree;
-	try { 
-		xmlTree.load(path); 
-	} catch (runtime_error e) { 
+	try {
+		xmlTree.load(path);
+	} catch (runtime_error e) {
 		g_logger.logXmlError(path, "File missing or wrongly named.");
 		return false; // bail
 	}
 	const XmlNode *rootNode;
-	try { 
-		rootNode = xmlTree.getRootNode(); 
-	} catch (runtime_error e) { 
+	try {
+		rootNode = xmlTree.getRootNode();
+	} catch (runtime_error e) {
 		g_logger.logXmlError(path, "File appears to lack contents.");
 		return false; // bail
 	}
@@ -162,7 +170,7 @@ bool ProgramLog::setupLoadingScreen(const string &dir) {
 	const XmlNode *loadingScreenNode = rootNode->getChild("loading-screen", 0, false);
 
 	if (loadingScreenNode) {
-		// could randomly choose from multiple or choose 
+		// could randomly choose from multiple or choose
 		// based on resolution - hailstone 21Jan2011
 
 		// background texture
@@ -172,7 +180,7 @@ bool ProgramLog::setupLoadingScreen(const string &dir) {
 			// load background image from faction.xml
 			m_backgroundTexture = g_renderer.newTexture2D(ResourceScope::GLOBAL);
 			m_backgroundTexture->setMipmap(false);
-			m_backgroundTexture->getPixmap()->load(dir + "/" + 
+			m_backgroundTexture->getPixmap()->load(dir + "/" +
 				backgroundImageNode->getAttribute("path")->getValue());
 			try {
 				m_backgroundTexture->init(Texture::fBilinear);
@@ -188,7 +196,7 @@ bool ProgramLog::setupLoadingScreen(const string &dir) {
 	return false;
 }
 
-void ProgramLog::setLoading(bool v) { 
+void ProgramLog::setLoading(bool v) {
 	loadingGame = v;
 }
 
@@ -204,7 +212,7 @@ void ProgramLog::renderLoadingScreen() {
 	if (m_backgroundTexture) {
 		g_renderer.renderBackground(m_backgroundTexture);
 	}
-	
+
 	Vec2i headerPos(g_metrics.getScreenW() / 4, 25 * g_metrics.getScreenH() / 100);
 	Vec4f colour(1.f);
 	renderer.renderText(state, bigFont, colour, headerPos.x, headerPos.y);
@@ -256,7 +264,7 @@ void AiLogFile::add(int f, AiComponent c, int level, const string &msg) {
 
 	//if (m_flags[f].m_enabled && level <= m_flags[f].m_level	&& m_flags[f].m_components[c]) {
 		stringstream ss;
-		ss << "AI: " << f << " [" << AiComponentNames[c] << "] Frame: " 
+		ss << "AI: " << f << " [" << AiComponentNames[c] << "] Frame: "
 			<< g_world.getFrameCount() << " : " << msg;
 		LogFile::add(ss.str());
 	//}
@@ -291,7 +299,7 @@ Logger::Logger()
 		, m_networkLog(0)
 		, m_widgetLog(0)
 		, m_worldLog(0) {
-	
+
 	// always enabled
 	m_programLog = new ProgramLog();
 	m_errorLog = new LogFile("glestadv-error.log", "Error", TimeStampType::NONE);

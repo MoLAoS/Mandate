@@ -351,20 +351,31 @@ bool Map::isResourceNear(const Vec2i &pos, int size, const ResourceType *rt, Vec
 // ==================== free cells ====================
 bool Map::fieldsCompatible(Cell *cell, Field mf) const {
 	if (mf == Field::AIR || mf == Field::AMPHIBIOUS
+    ||  mf == Field::WALL || mf == Field::STAIR
 	|| (mf == Field::LAND && !cell->isDeepSubmerged())
 	|| (mf == Field::ANY_WATER && cell->isSubmerged())
-	|| (mf == Field::DEEP_WATER && cell->isDeepSubmerged())) {
+	|| (mf == Field::DEEP_WATER && cell->isDeepSubmerged())){
 		return true;
 	}
 	return false;
 }
 
 bool Map::isFreeCell(const Vec2i &pos, Field field) const {
-	if (!isInside(pos) || !getCell(pos)->isFree(field == Field::AIR ? Zone::AIR : Zone::LAND)) {
+    Zone freeCell;
+    if (field == Field::AIR) {
+    freeCell = Zone::AIR;
+    } else if (field == Field::LAND) {
+    freeCell = Zone::LAND;
+    } else if (field == Field::WALL || field == Field::STAIR) {
+    freeCell = Zone::WALL;
+    }
+	if (!isInside(pos) || !getCell(pos)->isFree(freeCell)) {
 		return false;
 	}
 	if (field != Field::AIR && !getTile(toTileCoords(pos))->isFree()) {
 		return false;
+	} else if (field != Field::WALL && !getTile(toTileCoords(pos))->isFree()) {
+	    return false;
 	}
 	return g_cartographer.getMasterMap()->canOccupy(pos, 1, field);
 }
@@ -762,7 +773,7 @@ void Map::clearUnitCells(Unit *unit, const Vec2i &pos){
 	assert(unit);
 	const UnitType *ut = unit->getType();
 	int size = ut->getSize();
-	Zone zone = unit->getCurrZone ();
+	Zone zone = unit->getCurrZone();
 
 	for(int x = 0; x < size; ++x) {
 		for(int y = 0; y < size; ++y) {
@@ -770,8 +781,10 @@ void Map::clearUnitCells(Unit *unit, const Vec2i &pos){
 			assert(isInside(currPos));
 
 			if (!ut->hasCellMap() || ut->getCellMapCell(x, y, unit->getModelFacing())) {
-				assert(getCell(currPos)->getUnit(zone) == unit);
-				getCell(currPos)->setUnit(zone, NULL);
+			    //if (getCell(currPos)->getUnit(zone) == unit) {
+                    assert(getCell(currPos)->getUnit(zone) == unit);
+                    getCell(currPos)->setUnit(zone, NULL);
+			    //}
 			}
 		}
 	}
@@ -1017,7 +1030,7 @@ void Map::computeTileColors() {
 
 #ifdef DEBUG
 //makes sure a unit is in cells if alive or not if not alive
-void Map::assertUnitCells(const Unit * unit) {
+void Map::assertUnitCells(const Unit *unit) {
 	assert(unit);
 	// make sure alive/dead is sane
 	assert((unit->getHp() == 0 && unit->isDead()) || (unit->getHp() > 0 && unit->isAlive()));
@@ -1033,8 +1046,12 @@ void Map::assertUnitCells(const Unit * unit) {
 				assert(isInside(currPos));
 				if(!ut->hasCellMap() || ut->getCellMapCell(x, y, unit->getModelFacing())) {
 					if(unit->isActive()) {
-						Unit *testUnit = getCell(currPos)->getUnit(field);
-						assert(testUnit == unit);
+					    if (getCell(currPos)->getUnit(field)) {
+                            Unit *testUnit = getCell(currPos)->getUnit(field);
+                            assert(testUnit == unit);
+					    } else {
+                            assert(getCell(currPos)->getUnit(field) != unit);
+					    }
 					} else {
 						assert(getCell(currPos)->getUnit(field) != unit);
 					}
