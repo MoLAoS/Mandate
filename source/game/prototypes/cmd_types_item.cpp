@@ -49,7 +49,7 @@ namespace Glest { namespace ProtoTypes {
 // 	class CreateItemCommandType
 // =====================================================
 
-//varios
+
 bool CreateItemCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft){
 	bool loadOk = CommandType::load(n, dir, tt, ft);
 
@@ -189,11 +189,14 @@ void CreateItemCommandType::update(Unit *unit) const {
 		unit->setCurrSkill(m_produceSkillType);
 	} else {
 		unit->update2();
-		//const ItemType *prodType = static_cast<const ItemType*>(command->getProdType());
+		//const ItemType *item = m_createdItems[0];
 		const FactionType *ft = unit->getFaction()->getType();
 		const ItemType *prodType = ft->getItemType("sword");
 		if (unit->getProgress2() > prodType->getProductionTime()) {
 			for (int i=0; i < getCreatedNumber(prodType); ++i) {
+                Item item;
+                item.init(prodType, unit->getFaction());
+                unit->accessStorageAdd(item);
             }
         unit->finishCommand();
         unit->setCurrSkill(SkillClass::STOP);

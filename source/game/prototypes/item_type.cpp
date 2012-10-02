@@ -77,6 +77,16 @@ bool ItemType::load(const string &dir, const TechTree *techTree, const FactionTy
 		g_logger.logXmlError(path, e.what());
 		return false; // bail out
 	}
+	try {
+        const XmlNode *typeTagNode = parametersNode->getChild("type-tag");
+        if (typeTagNode) {
+            string typeTag = typeTagNode->getAttribute("type")->getRestrictedValue();
+        }
+    }
+    catch (runtime_error e) {
+		g_logger.logXmlError(dir, e.what());
+		loadOk = false;
+	}
 	if (!UnitStats::load(parametersNode, dir, techTree, factionType)) {
 		loadOk = false;
 	}
@@ -256,6 +266,28 @@ CreatedUnit ItemType::getCreatedUnit(int i, const Faction *f) const {
 
 Timer ItemType::getCreatedUnitTimer(int i, const Faction *f) const {
 	Timer timer(createdUnitTimers[i]);
+	return timer;
+}
+
+int ItemType::getCreateItem(const ItemType *it, const Faction *f) const {
+	foreach_const (CreatedItems, it, createdItems) {
+		//if (it->getType() == it) {
+			//Modifier mod = f->getCreatedItemModifier(this, ut);
+			//return (it->getAmount() * mod.getMultiplier()).intp() + mod.getAddition();
+		//}
+	}
+	return 0;
+}
+
+CreatedItem ItemType::getCreatedItem(int i, const Faction *f) const {
+	CreatedItem item(createdItems[i]);
+	//Modifier mod = f->getCreatedItemModifier(this, item.getType());
+	//item.setAmount((item.getAmount() * mod.getMultiplier()).intp() + mod.getAddition());
+	return item;
+}
+
+Timer ItemType::getCreatedItemTimer(int i, const Faction *f) const {
+	Timer timer(createdItemTimers[i]);
 	return timer;
 }
 

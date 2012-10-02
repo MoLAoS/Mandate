@@ -779,6 +779,23 @@ void World::tick() {
                                     }
                                 }
                             }
+                            for (int t = 0; t < process.items.size(); ++t) {
+                            const ItemType *itemsIT = process.items[t].getType();
+                                //for (int i = 0; i < u->getFaction()->sresources.size(); ++i) {
+                                    //if (productsRT == u->getFaction()->sresources[i].getType()) {
+                                    int items = process.items[t].getAmount();
+                                        if (process.local == false) {
+                                        //u->getFaction()->incResourceAmount(productsRT, produced);
+                                        } else {
+                                            for (int s = 0; s < items; ++s) {
+                                                Item item;
+                                                item.init(process.items[t].getType(), unit->getFaction());
+                                                unit->accessStorageAdd(item);
+                                            }
+                                        }
+                                    //}
+                                //}
+                            }
                         }
                     u->currentProcessSteps[s].currentStep = 0;
                     }
@@ -786,6 +803,40 @@ void World::tick() {
             }
         }
 	} /**< Added by MoLAoS, resource processing */
+
+    for (int k = 0; k < getFactionCount(); ++k) { /**< Added by MoLAoS, item generation */
+    Faction *faction = getFaction(k);
+        for (int j = 0; j < faction->getUnitCount(); ++j) {
+        const Unit *u =  faction->getUnit(j);
+            if (u->isOperative()) {
+                Unit *unit = u->getFaction()->getUnit(j);
+                for (int i = 0; i < u->getType()->getCreatedItemCount(); ++i) {
+                Timer cTime = u->getType()->getCreatedItemTimer(i, faction);
+                int cTimeStep = u->currentItemSteps[i].currentStep;
+                int newStep = cTimeStep + 1;
+                u->currentItemSteps[i].currentStep = newStep;
+                int cTimeValue = cTime.getTimerValue();
+                int cRNewTime = u->currentItemSteps[i].currentStep;
+                    if (cRNewTime == cTimeValue) {
+                    const CreatedItem iu = u->getType()->getCreatedItem(i, faction);
+                    int iua = iu.getAmount();
+                    int iucap = iu.getCap();
+                        if (iucap != -1) {
+                            if (iucap < iua) {
+                                iua = iucap;
+                            }
+                        }
+                        for (int n = 0; n < iua; ++n) {
+                            Item item;
+                            item.init(iu.getType(), u->getFaction());
+                            unit->accessStorageAdd(item);
+                        }
+                    u->currentItemSteps[i].currentStep = 0;
+                    }
+                }
+            }
+        }
+	} /**< Added by MoLAoS, item generation */
 
     for (int k = 0; k < getFactionCount(); ++k) { /**< Added by MoLAoS, unit generation */
     Faction *faction = getFaction(k);

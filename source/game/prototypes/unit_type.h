@@ -81,7 +81,10 @@ private:
 	typedef vector<CreatedUnit>         CreatedUnits;
 	typedef vector<Timer>               CreatedUnitTimers;
 
-	typedef vector<UnitsOwned>         OwnedUnits;
+	typedef vector<CreatedItem>         CreatedItems;
+	typedef vector<Timer>               CreatedItemTimers;
+
+	typedef vector<UnitsOwned>          OwnedUnits;
 	typedef vector<Timer>               OwnedUnitTimers;
 
 	typedef vector<Process>             Processes;
@@ -138,6 +141,9 @@ public:
 
     OwnedUnits ownedUnits;
 	mutable OwnedUnitTimers ownedUnitTimers;
+
+	CreatedItems createdItems;
+	mutable CreatedItemTimers createdItemTimers;
 
 	Processes processes;
 	ProcessTimers processTimers;
@@ -306,6 +312,16 @@ public:
 	int getUnitTimerCount()                 {return createdUnitTimers.size();}
 	Timer getCreatedUnitTimer(int i, const Faction *f) const;
 	int getCreateUnitTimer(const UnitType *ut, const Faction *f) const;
+
+    // items created
+	int getCreatedItemCount() const					{return createdItems.size();}
+	CreatedItem getCreatedItem(int i, const Faction *f) const;
+	int getCreateItem(const ItemType *it, const Faction *f) const;
+
+	// items created timers
+	int getItemTimerCount()                 {return createdItemTimers.size();}
+	Timer getCreatedItemTimer(int i, const Faction *f) const;
+	int getCreateItemTimer(const ItemType *it, const Faction *f) const;
 
 	// meeting point
 	bool hasMeetingPoint() const						{return meetingPoint;}

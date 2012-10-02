@@ -179,7 +179,11 @@ public:
 	void init();
 	void initMinimap(bool fow, bool sod, bool resuming);
 
+	int                   setActivePos(int i)        {activePos = i;}
+	bool                  setSelectingPos(bool b)    {selectingPos = b;}
+
 	//get
+	int                   getActivePos()             { return activePos;        }
 	Minimap*              getMinimap()               { return m_minimap;        }
 	const Minimap*        getMinimap() const         { return m_minimap;        }
 	ResourceBar*          getResourceBar()           { return m_resourceBar;    }

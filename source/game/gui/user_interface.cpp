@@ -241,7 +241,7 @@ void UserInterface::init() {
 	}
 
     x = 100;
-    y = 250;
+    y = 200;
 
     /*TradeBarFrame *tradeFrame = new TradeBarFrame(Vec2i(x,y));
     m_tradeBar = tradeFrame->getTradeBar();
@@ -266,6 +266,8 @@ void UserInterface::init() {
     m_factionDisplay = displayFactionFrame->getFactionDisplay();
     m_factionDisplay->setSize();
     m_factionDisplay->init(fac, buildings);
+
+    y += 250;
 
 	ItemDisplayFrame *itemWindow = new ItemDisplayFrame(this, Vec2i(x,y));
 	m_itemWindow = itemWindow->getItemDisplay();
@@ -526,9 +528,11 @@ void UserInterface::mouseDownLeft(int x, int y) {
 		worldPos = targetUnit->getPos();
 	}
 
-	if (selectingPos) { // give standard orders
+    if (m_factionDisplay->building == true) {
+        m_factionDisplay->currentFactionBuild.build(m_factionDisplay->getFaction(), worldPos);
+    } else
+    if (selectingPos) { // give standard orders
 		giveTwoClickOrders(worldPos, (Unit *)targetUnit);
-
 	} else if (selectingMeetingPoint) { // set meeting point
 		if (selection->isComandable()) {
 			commander->tryGiveCommand(selection, CmdFlags(), 0, CmdClass::SET_MEETING_POINT, worldPos);
@@ -571,7 +575,7 @@ void UserInterface::mouseUpRight(int x, int y) {
 
 	if (!g_camera.isMoving()) {
 		Vec2i worldPos;
-
+        m_factionDisplay->building = false;
 		if (selectingPos || selectingMeetingPoint) {
 			resetState();
 			return;

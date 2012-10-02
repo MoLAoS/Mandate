@@ -188,6 +188,11 @@ Unit::Unit(CreateParams params)
 	currentUnitSteps[i].currentStep = 0;
 	}
 
+	currentItemSteps.resize(type->getCreatedItemCount());
+	for (int i = 0; i < currentItemSteps.size(); ++i) {
+	currentItemSteps[i].currentStep = 0;
+	}
+
 	currentOwnedSteps.resize(type->ownedUnits.size());
 	for (int i = 0; i < currentOwnedSteps.size(); ++i) {
 	currentOwnedSteps[i].currentStep = 0;
@@ -2066,6 +2071,24 @@ void Unit::updateMoveSkillCycle() {
 	nextCommandUpdate = g_world.getFrameCount() + frameOffset;
 }
 
+void Unit::accessStorageAdd(Item item) {
+    storedItems.push_back(item);
+}
+
+void Unit::accessStorageExchange() {
+
+}
+
+void Unit::equipItem(Item *item) {
+    for (int i = 0; i < storedItems.size(); ++i) {
+        Item *equipment = &storedItems[i];
+        if (equipment == item) {
+            equippedItems.push_back(storedItems[i]);
+            storedItems.erase(storedItems.begin()+i);
+        }
+    }
+}
+
 /** wrapper for World::updateUnits */
 void Unit::doUpdate() {
 	if (update()) {
@@ -2546,6 +2569,8 @@ string Unit::getLongDesc() const {
 	string shortDesc = getShortDesc();
 	stringstream ss;
 
+    ss << endl << "Stored Items: " << storedItems.size();
+
 	const string factionName = type->getFactionType()->getName();
 	int armorBonus = getArmor() - type->getArmor();
 	int sightBonus = getSight() - type->getSight();
@@ -2721,6 +2746,15 @@ string Unit::getLongDesc() const {
 			}
         ss << endl << type->processes[i].products[p].getAmount() << " " << resName;
             }
+        ss << endl << lang.get("Items") << ": ";
+            for (int t = 0; t < type->processes[i].items.size(); ++t) {
+            const ItemType *itemsIT = type->processes[i].items[t].getType();
+            string itemName = lang.getTechString(itemsIT->getName());
+            if (itemName == itemsIT->getName()) {
+            itemName = formatString(itemName);
+			}
+        ss << endl << type->processes[i].items[t].getAmount() << " " << itemName;
+            }
 		}
 	}
 
@@ -2750,6 +2784,21 @@ string Unit::getLongDesc() const {
 			}
 			ss << endl << lang.get("Create") << ": ";
 			ss << u.getAmount() << " " << unitName << "s " <<lang.get("Timer") << ": " << cUStep << "/" << tR.getTimerValue();
+		}
+	}
+
+	// can create items
+	if (type->getCreatedItemCount() > 0) {
+		for (int i = 0; i < type->getCreatedItemCount(); ++i) {
+			CreatedItem item = type->getCreatedItem(i, getFaction());
+			string itemName = lang.getTechString(item.getType()->getName());
+			Timer tR = type->getCreatedItemTimer(i, getFaction());
+			int cIStep = currentItemSteps[i].currentStep;
+			if (itemName == item.getType()->getName()) {
+				itemName = formatString(itemName);
+			}
+			ss << endl << lang.get("Create") << ": ";
+			ss << item.getAmount() << " " << itemName << "s " <<lang.get("Timer") << ": " << cIStep << "/" << tR.getTimerValue();
 		}
 	}
 
@@ -2783,7 +2832,6 @@ string Unit::getLongDesc() const {
 }
 
 void Unit::applyGarrison() {
-    totalUpgrade.reset();
     World &world = g_world;
 	if (!m_garrisonedUnits.empty()) {
 		foreach (UnitIdList, it, m_garrisonedUnits) {
@@ -2794,7 +2842,6 @@ void Unit::applyGarrison() {
                 const EnhancementType *et = &type->loadBonuses[l].m_enhancement.m_enhancement;
                     if (et) {
                     totalUpgrade.sum(et);
-                    recalculateStats();
                     }
                 }
             }
@@ -2847,6 +2894,11 @@ void Unit::computeTotalUpgrade() {
 		} else {
 			break;
 		}
+	}
+	for (int i = 0; i < getEquippedItems().size(); ++i) {
+	    StoredItems si = getEquippedItems();
+	    const EnhancementType *et = static_cast<const EnhancementType*>(&si[i]);
+        totalUpgrade.sum(et);
 	}
 	applyGarrison();
 	recalculateStats();

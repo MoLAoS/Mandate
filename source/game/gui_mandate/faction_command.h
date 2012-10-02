@@ -48,6 +48,7 @@ class FactionBuild {
 private:
     const UnitType *unitType;
     string name;
+    Vec2i pos;
 
 protected:
     Clicks     clicks;
@@ -58,12 +59,14 @@ protected:
 public:
     const UnitType *getUnitType() const {return unitType;}
     virtual Clicks getClicks() const {return clicks;}
+    Vec2i setPos(Vec2i newPos) {pos = newPos;}
     void describe(const Faction *faction, TradeDescriptor *callback, const UnitType *ut) const;
 	virtual void subDesc(const Faction *faction, TradeDescriptor *callback, const UnitType *ut) const;
     const string& getTipKey() const	{return m_tipKey;}
     const string getTipKey(const string &name) const {return emptyString;}
     const string getSubHeaderKey() const {return m_tipHeaderKey;}
     void init(const UnitType* ut, Clicks cl);
+    void build(const Faction *faction, const Vec2i &pos) const;
 };
 
 }}//end namespace

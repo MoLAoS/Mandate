@@ -46,7 +46,11 @@ using namespace ProtoTypes;
 // 	class Item
 // =====================================================
 
-	/*currentSteps.resize(type->getCreatedResourceCount());
+void Item::init(const ItemType *newType, Faction *f) {
+    type = newType;
+    faction = f;
+
+    currentSteps.resize(type->getCreatedResourceCount());
 	for (int i = 0; i < currentSteps.size(); ++i) {
 	currentSteps[i].currentStep = 0;
 	}
@@ -56,10 +60,16 @@ using namespace ProtoTypes;
 	currentUnitSteps[i].currentStep = 0;
 	}
 
+	currentItemSteps.resize(type->getCreatedItemCount());
+	for (int i = 0; i < currentItemSteps.size(); ++i) {
+	currentItemSteps[i].currentStep = 0;
+	}
+
 	currentProcessSteps.resize(type->getProcessCount());
 	for (int i = 0; i < currentProcessSteps.size(); ++i) {
 	currentProcessSteps[i].currentStep = 0;
-	}*/
+	}
+}
 
 string Item::getShortDesc() const {
 	stringstream ss;

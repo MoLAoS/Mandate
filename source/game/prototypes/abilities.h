@@ -79,6 +79,8 @@ public:
     int getCurrentStep() {return currentStep;}
 };
 
+typedef vector<TimerStep> CurrentStep;
+
 // =====================================================
 // 	class CreatedUnit
 //
@@ -180,7 +182,37 @@ public:
 
 };
 
-typedef vector<TimerStep> CurrentStep;
+// =====================================================
+// 	class CreatedItem
+//
+/// Amount of a given ItemType
+// =====================================================
+
+class CreatedItem {
+protected:
+	const ItemType       *m_type;
+	int	                 m_amount;
+	int	                 m_amount_plus;
+	float	             m_amount_multiply;
+	int                  m_cap;
+
+public:
+	CreatedItem() : m_type(0), m_amount(0), m_amount_plus(0), m_amount_multiply(0), m_cap(0) {}
+	CreatedItem(const CreatedItem &that) : m_type(that.m_type), m_amount(that.m_amount),
+	m_amount_plus(that.m_amount_plus), m_amount_multiply(that.m_amount_multiply), m_cap(that.m_cap) {}
+
+	void init(const XmlNode *n, const Faction *f);
+	void init(const ItemType *it, const int amount, const int amount_plus, const float amount_multiply, const int cap);
+
+	virtual void setAmount(int v) { m_amount = v; }
+	int  getAmount() const { return m_amount; }
+	int  getAmountPlus() const { return m_amount_plus; }
+	float  getAmountMultiply() const { return m_amount_multiply; }
+	int  getCap() const { return m_cap; }
+	const ItemType *getType() const { return m_type; }
+
+	void save(XmlNode *node) const;
+};
 
 }}//end namespace
 

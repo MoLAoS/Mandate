@@ -126,7 +126,7 @@ void CreatedUnit::init(const XmlNode *node, const Faction *f) {
 	m_amount = node->getChildIntValue("amount");
 	m_amount_plus = node->getChildIntValue("plus");
 	m_amount_multiply = node->getChildFloatValue("multiply");
-	m_cap = node->getChildFloatValue("cap");
+	m_cap = node->getChildIntValue("cap");
 }
 
 void CreatedUnit::save(XmlNode *node) const {
@@ -151,7 +151,7 @@ void CreatedUnit::init(const UnitType *ut, int amount, int amount_plus, float am
 
 void UnitsOwned::init(const XmlNode *node, const Faction *f) {
 	m_type = f->getType()->getUnitType(node->getChildStringValue("type"));
-	m_limit = node->getChildFloatValue("limit");
+	m_limit = node->getChildIntValue("limit");
 }
 
 void UnitsOwned::save(XmlNode *node) const {
@@ -164,6 +164,34 @@ void UnitsOwned::init(const UnitType *ut, int owned, int limit) {
     m_type = ut;
     m_owned = owned;
     m_limit = limit;
+}
+
+// =====================================================
+// 	class CreatedItem
+// =====================================================
+
+void CreatedItem::init(const XmlNode *node, const Faction *f) {
+	m_type = f->getType()->getItemType(node->getChildStringValue("type"));
+	m_amount = node->getChildIntValue("amount");
+	m_amount_plus = node->getChildIntValue("plus");
+	m_amount_multiply = node->getChildFloatValue("multiply");
+	m_cap = node->getChildIntValue("cap");
+}
+
+void CreatedItem::save(XmlNode *node) const {
+	node->addChild("type", m_type->getName());
+	node->addChild("amount", m_amount);
+	node->addChild("plus", m_amount_plus);
+	node->addChild("multiply", m_amount_multiply);
+	node->addChild("cap", m_cap);
+}
+
+void CreatedItem::init(const ItemType *it, int amount, int amount_plus, float amount_multiply, int cap) {
+    m_type = it;
+    m_amount = amount;
+    m_amount_plus = amount_plus;
+    m_amount_multiply = amount_multiply;
+    m_cap = cap;
 }
 
 }}//end namespace

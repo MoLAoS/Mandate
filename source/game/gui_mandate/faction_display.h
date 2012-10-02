@@ -80,7 +80,7 @@ public:
 private:
     const Faction*            m_faction;
     vector<const UnitType*> m_unitTypes;
-    vector<FactionBuild*> m_factionBuilds;
+    vector<FactionBuild> m_factionBuilds;
 
     int   m_iconSize;
 	bool  m_draggingWidget;
@@ -109,6 +109,7 @@ private:
 					        m_pressedBtn;
 
 	CommandTip  *m_toolTip;
+    TradeTip  *m_buildTip;
 	const FontMetrics *m_fontMetrics;
 
 private:
@@ -118,12 +119,16 @@ private:
 public:
 	FactionDisplay(Container *parent, UserInterface *ui, Vec2i pos);
 
+    bool building;
+    FactionBuild currentFactionBuild;
+
 	//get
 	const Faction *getFaction() const               {return m_faction;}
 	int getBuildingCount() const                    {return m_unitTypes.size();}
 	const UnitType *getBuilding(int i) const        {return m_unitTypes[i];}
 	int getBuildCount() const                       {return m_factionBuilds.size();}
-	FactionBuild *getFactionBuild(int i) const      {return m_factionBuilds[i];}
+	FactionBuild getFactionBuild(int i) const       {return m_factionBuilds[i];}
+	TradeTip *getBuildTip() const                    {return m_buildTip;}
 	FuzzySize getFuzzySize() const                  {return m_fuzzySize;}
 	string getPortraitTitle() const					{return TextWidget::getText(0);}
 	string getPortraitText() const					{return TextWidget::getText(1);}
@@ -152,6 +157,11 @@ public:
 
 	//misc
 	void init(const Faction *faction, std::set<const UnitType*> &types);
+
+	void computeBuildTip(FactionBuild fb);
+	void computeBuildInfo(int posDisplay);
+	void onFirstTierSelect(int posBuild);
+    void buildButtonPressed(int posDisplay);
 
 	void clear();
 	void resetTipPos(Vec2i i_offset);

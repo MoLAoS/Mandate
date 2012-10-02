@@ -163,6 +163,25 @@ void ResCost::save(XmlNode *n) const {
 	n->addChild("cost", m_cost);
 }
 
+void ItemMade::init(const XmlNode *n, const TechTree *tt) {
+	m_item = n->getChildIntValue("item");
+}
+
+void ItemMade::init(const ItemType *it, string n, int v, int a, float b) {
+	m_type = it;
+	m_amount = v;
+    m_item = 0;
+    m_name = n;
+}
+
+void ItemMade::save(XmlNode *n) const {
+	n->addChild("type", m_type);
+	n->addChild("amount", m_amount);
+	n->addChild("plus", m_amount_plus);
+	n->addChild("multiply", m_amount_multiply);
+	n->addChild("item", m_item);
+}
+
 // =====================================================
 // 	class Process
 // =====================================================

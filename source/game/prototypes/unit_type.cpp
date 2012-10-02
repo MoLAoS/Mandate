@@ -444,7 +444,7 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 			loadOk = false;
 		}
 
-        try { // resources processed
+        try { // resources and items processed
 			const XmlNode *processesNode= parametersNode->getChild("processes", 0, false);
 			if (processesNode) {
 				processes.resize(processesNode->getChildCount());
@@ -474,6 +474,14 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
                     string name = productNode->getAttribute("name")->getRestrictedValue();
 					int amount = productNode->getAttribute("amount")->getIntValue();
                     processes[i].products[k].init(techTree->getResourceType(name), name, amount, 0, 0);
+					}
+					const XmlNode *itemsNode = processNode->getChild("items");
+					processes[i].items.resize(itemsNode->getChildCount());
+					for (int l = 0; l < processes[i].items.size(); ++l) {
+                    const XmlNode *itemNode = productsNode->getChild("item", l);
+                    string name = itemNode->getAttribute("name")->getRestrictedValue();
+					int amount = itemNode->getAttribute("amount")->getIntValue();
+                    processes[i].items[l].init(factionType->getItemType(name), name, amount, 0, 0);
 					}
 					int steps = processNode->getAttribute("timer")->getIntValue();
 					processTimers[i].init(steps, 0);
@@ -523,6 +531,25 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 					int steps = unitNode->getAttribute("timer")->getIntValue();
 					createdUnits[i].init(factionType->getUnitType(name), amount, 0, 0, -1);
 					createdUnitTimers[i].init(steps, 0);
+				}
+			}
+		} catch (runtime_error e) {
+			g_logger.logXmlError(path, e.what());
+			loadOk = false;
+		}
+
+        try { // items created
+			const XmlNode *itemsCreatedNode= parametersNode->getChild("items-created", 0, false);
+			if (itemsCreatedNode) {
+				createdItems.resize(itemsCreatedNode->getChildCount());
+                createdItemTimers.resize(itemsCreatedNode->getChildCount());
+				for(int i = 0; i<createdItems.size(); ++i){
+					const XmlNode *itemNode = itemsCreatedNode->getChild("item", i);
+					string name = itemNode->getAttribute("name")->getRestrictedValue();
+					int amount = itemNode->getAttribute("amount")->getIntValue();
+					int steps = itemNode->getAttribute("timer")->getIntValue();
+					createdItems[i].init(factionType->getItemType(name), amount, 0, 0, -1);
+					createdItemTimers[i].init(steps, 0);
 				}
 			}
 		} catch (runtime_error e) {
@@ -897,6 +924,28 @@ CreatedUnit UnitType::getCreatedUnit(int i, const Faction *f) const {
 
 Timer UnitType::getCreatedUnitTimer(int i, const Faction *f) const {
 	Timer timer(createdUnitTimers[i]);
+	return timer;
+}
+
+int UnitType::getCreateItem(const ItemType *it, const Faction *f) const {
+	foreach_const (CreatedItems, it, createdItems) {
+		//if (it->getType() == it) {
+			//Modifier mod = f->getCreatedItemModifier(this, ut);
+			//return (it->getAmount() * mod.getMultiplier()).intp() + mod.getAddition();
+		//}
+	}
+	return 0;
+}
+
+CreatedItem UnitType::getCreatedItem(int i, const Faction *f) const {
+	CreatedItem item(createdItems[i]);
+	//Modifier mod = f->getCreatedItemModifier(this, item.getType());
+	//item.setAmount((item.getAmount() * mod.getMultiplier()).intp() + mod.getAddition());
+	return item;
+}
+
+Timer UnitType::getCreatedItemTimer(int i, const Faction *f) const {
+	Timer timer(createdItemTimers[i]);
 	return timer;
 }
 

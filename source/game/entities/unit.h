@@ -18,6 +18,7 @@
 #include "upgrade_type.h"
 #include "particle.h"
 #include "skill_type.h"
+#include "item.h"
 #include "effect.h"
 #include "unit_type.h"
 #include "settlement.h"
@@ -161,6 +162,25 @@ public:
 
 /**< system for localized resources */
 
+/**< system for items */
+private:
+    typedef vector<Item> StoredItems;
+
+    StoredItems equippedItems;
+    StoredItems storedItems;
+    int itemLimit;
+
+public:
+    int getItemLimit() const {return itemLimit;}
+	void setItemLimit(int expand) {itemLimit = expand;}
+	StoredItems getStoreItems() const {return storedItems;}
+    void accessStorageAdd(Item item);
+    void accessStorageExchange();
+    StoredItems getEquippedItems() const {return equippedItems;}
+    void equipItem(Item *item);
+
+/**< system for items */
+
 private:
 	// basic stats
 	int id;					/**< unique identifier  */
@@ -186,7 +206,8 @@ public:
 
     CurrentStep currentSteps; /**< current timer step for resource creation */
     CurrentStep currentUnitSteps; /**< current timer step for unit creation */
-    CurrentStep currentOwnedSteps; /**< current timer step for unit creation */
+    CurrentStep currentItemSteps; /**< current timer step for item creation */
+    CurrentStep currentOwnedSteps; /**< current timer step for owned unit creation */
     CurrentStep currentProcessSteps; /**< current timer step for resource processes */
 
     ProductionRoute productionRoute;

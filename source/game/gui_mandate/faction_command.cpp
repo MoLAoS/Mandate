@@ -40,16 +40,32 @@ void FactionBuild::init(const UnitType* ut, Clicks cl) {
 }
 
 void FactionBuild::subDesc(const Faction *faction, TradeDescriptor *callback, const UnitType *ut) const {
-    Lang &lang = g_lang;
-    callback->addElement("Build: ");
-    callback->addItem(ut, getUnitType()->getName());
+    //Lang &lang = g_lang;
+    //callback->addElement("Build: ");
+    //callback->addItem(ut, getUnitType()->getName());
 }
 
 void FactionBuild::describe(const Faction *faction, TradeDescriptor *callback, const UnitType *ut) const {
-	callback->setHeader("");
-	callback->setTipText("");
-	callback->addItem(ut, "");
+	//callback->setHeader("");
+	//callback->setTipText("");
+	//callback->addItem(ut, "");
 	subDesc(faction, callback, ut);
+}
+
+
+
+void FactionBuild::build(const Faction *faction, const Vec2i &pos) const {
+    Faction *fac = faction->getUnit(0)->getFaction();
+    Map *map = g_world.getMap();
+    if (map->canOccupy(pos, unitType->getField(), unitType, CardinalDir::NORTH)) {
+        Unit *builtUnit = NULL;
+        builtUnit = g_world.newUnit(pos, unitType, fac, map, CardinalDir::NORTH);
+        builtUnit->create();
+    } else {
+        if (fac->getIndex() == g_world.getThisFactionIndex()) {
+            g_console.addStdMessage("BuildingNoPlace");
+        }
+    }
 }
 
 }}//end namespace

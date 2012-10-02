@@ -115,7 +115,7 @@ void ItemDisplayFrame::setPinned(bool v) {
 // =====================================================
 
 ItemWindow::ItemWindow(Container *parent, UserInterface *ui, Vec2i pos)
-		: Widget(parent, pos, Vec2i(192, 500))
+		: Widget(parent, pos, Vec2i(192, 850))
 		, MouseWidget(this)
 		, ImageWidget(this)
 		, TextWidget(this)
