@@ -106,7 +106,32 @@ void GoalSystem::computeAction(Unit *unit, Focus focus) {
     } else if (goal == "build") {
         if (goal != unit->getCurrentFocus()) {
             unit->setCurrentFocus(goal);
-
+            Faction *f = unit->getFaction();
+            vector<Unit*> buildingsList;
+            for (int i = 0; i < f->getUnitCount(); ++i) {
+                Unit *building = f->getUnit(i);
+                if (building->getType()->hasTag("building")) {
+                    if (!building->isBuilt()) {
+                        buildingsList.push_back(building);
+                    }
+                }
+            }
+            int distance = 1000;
+            Vec2i uPos = unit->getCenteredPos();
+            Unit *finalPick;
+            Vec2i tPos;
+            for (int i = 0; i < buildingsList.size(); ++i) {
+                Unit *building = buildingsList[i];
+                Vec2i bPos = building->getCenteredPos();
+                int newDistance = sqrt(pow(float(abs(uPos.x - bPos.x)), 2) + pow(float(abs(uPos.y - bPos.y)), 2));
+                if (newDistance < distance) {
+                    distance = newDistance;
+                    finalPick = building;
+                    tPos = bPos;
+                }
+            }
+            const CommandType *ct = unit->getType()->getFirstCtOfClass(CmdClass::REPAIR);
+            unit->giveCommand(g_world.newCommand(ct, CmdFlags(), tPos));
         } else {
 
         }
