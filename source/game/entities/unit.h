@@ -149,6 +149,7 @@ public:
 /**< system for localized resources */
 private:
     typedef vector<StoredResource> SResources;
+    typedef vector<DamageType> Resistances;
 public:
     SResources sresources;
 
@@ -164,20 +165,31 @@ public:
 
 /**< system for items */
 private:
-    typedef vector<Item> StoredItems;
+    typedef vector<Equipment> Storage;
+    typedef vector<int> StoredItems;
 
     StoredItems equippedItems;
     StoredItems storedItems;
     int itemLimit;
+    int itemsStored;
+    Storage storage;
+    Storage equipment;
 
 public:
     int getItemLimit() const {return itemLimit;}
-	void setItemLimit(int expand) {itemLimit = expand;}
-	StoredItems getStoreItems() const {return storedItems;}
-    void accessStorageAdd(Item item);
-    void accessStorageExchange();
+    int getItemsStored() const {return itemsStored;}
+    void setItemLimit(int expand) {itemLimit = itemLimit + expand;}
+    void setItemsStored(int amount) {itemsStored = itemsStored + amount;}
+	StoredItems getStoredItems() const {return storedItems;}
+	Item *getStoredItem(int i) const {return &getFaction()->items[storedItems[i]];}
+    void accessStorageAdd(int ident);
+    void accessStorageExchange(Unit *unit);
     StoredItems getEquippedItems() const {return equippedItems;}
-    void equipItem(Item *item);
+    Item *getEquippedItem(int i) const {return &getFaction()->items[equippedItems[i]];}
+    void equipItem(int ident);
+    void unequipItem(int ident);
+    Storage getStorage() const {return storage;}
+    Storage getEquipment() const {return equipment;}
 
 /**< system for items */
 
@@ -197,12 +209,17 @@ private:
 	/**< new system to enable walls */
 	Zone zone;
 	Field field;
+
+	string currentFocus;
 public:
     Field getField() const		  {return field;}
 	void setField(Field newField) { field = newField; }
 	Zone getZone() const		  {return zone;}
 	void setZone(Zone newZone)    { zone = newZone; }
 	/**< new system to enable walls */
+
+	string getCurrentFocus() const {return currentFocus;}
+	void setCurrentFocus(string newFocus) {currentFocus = newFocus;}
 
     CurrentStep currentSteps; /**< current timer step for resource creation */
     CurrentStep currentUnitSteps; /**< current timer step for unit creation */
@@ -216,6 +233,10 @@ public:
     Unit *owner;
     void setOwner(Unit *unit) {owner = unit;}
     OwnedUnits ownedUnits;
+
+    Resistances resistances;
+
+    bool garrisonTest;
 
 private:
 	// housed unit bits
@@ -690,7 +711,6 @@ public:
 
 	Unit *tick();
 	void applyUpgrade(const UpgradeType *upgradeType);
-	void applyGarrison();
 	void computeTotalUpgrade();
 	void incKills();
 	void incExp(int addExp);

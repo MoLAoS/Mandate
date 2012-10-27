@@ -1,13 +1,9 @@
 // ==============================================================
-//	This file is part of Glest (www.glest.org)
+//	This file is part of The Mandate Engine
 //
-//	Copyright (C) 2001-2008 Martiño Figueroa
-//				  2008 Daniel Santos <daniel.santos@pobox.com>
+//	Copyright (C) 2012	Matt Shafer-skelton <taomastercu@yahoo.com>
 //
-//	You can redistribute this code and/or modify it under
-//	the terms of the GNU General Public License as published
-//	by the Free Software Foundation; either version 2 of the
-//	License, or (at your option) any later version
+//  GPL V3, see source/licence.txt
 // ==============================================================
 
 #ifndef _GLEST_GAME_FACTIONCOMMAND_H_

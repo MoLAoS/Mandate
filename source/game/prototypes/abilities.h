@@ -1,12 +1,9 @@
 // ==============================================================
-//	This file is part of Glest (www.glest.org)
+//	This file is part of The Mandate Engine
 //
-//	Copyright (C) 2001-2008 Martiño Figueroa
+//	Copyright (C) 2012	Matt Shafer-skelton <taomastercu@yahoo.com>
 //
-//	You can redistribute this code and/or modify it under
-//	the terms of the GNU General Public License as published
-//	by the Free Software Foundation; either version 2 of the
-//	License, or (at your option) any later version
+//  GPL V3, see source/licence.txt
 // ==============================================================
 
 #ifndef _GLEST_GAME_ABILITIES_H_
@@ -39,7 +36,7 @@ public:
 	virtual bool load(const XmlNode *loadBonusNode, const string &dir, const TechTree *tt, const FactionType *ft);
     bool loadNewStyle(const XmlNode *node, const string &dir, const TechTree *techTree, const FactionType *factionType);
 	void loadResourceModifier(const XmlNode *node, ResModifierMap &map, const TechTree *techTree);
-	const Enhancement getEnhancement() const {return m_enhancement;}
+	const Enhancement* getEnhancement() const {return &m_enhancement;}
 	string getSource() const {return source;}
 };
 
@@ -77,6 +74,7 @@ class TimerStep {
 public:
     mutable int currentStep;
     int getCurrentStep() {return currentStep;}
+    void setCurrentStep(int i) {currentStep = i;}
 };
 
 typedef vector<TimerStep> CurrentStep;
@@ -177,6 +175,7 @@ private:
 public:
     string getTypeName() const {return type_name;}
     int getValue() const {return value;}
+    void setValue(int i) {value = value + i;}
 
     void init(const string name, const int amount);
 
@@ -212,6 +211,28 @@ public:
 	const ItemType *getType() const { return m_type; }
 
 	void save(XmlNode *node) const;
+};
+
+// =====================================================
+// 	class Equipment
+// =====================================================
+class Equipment {
+private:
+    int max;
+    int current;
+    string name;
+    string typeTag;
+
+public:
+    int getMax() const {return max;}
+    void setMax(int i) {max = max + i;}
+    int getCurrent() const {return current;}
+    void setCurrent(int i) {current = current + i;}
+    string getName() const {return name;}
+    void setName(string newName) {name = newName;}
+    string getTypeTag() const {return typeTag;}
+
+    void init(int max, int current, string name, string typeTag);
 };
 
 }}//end namespace

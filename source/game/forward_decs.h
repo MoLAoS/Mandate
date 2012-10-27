@@ -154,6 +154,12 @@ namespace Glest {
 		class MenuBackground;
 	}
 
+	namespace Plan {
+        //class Focus;
+        //class Personality;
+        //class MandateAISim;
+	}
+
 }
 
 #endif

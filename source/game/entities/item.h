@@ -1,12 +1,9 @@
 // ==============================================================
-//	This file is part of Glest (www.glest.org)
+//	This file is part of The Mandate Engine
 //
-//	Copyright (C) 2001-2008 Martiño Figueroa
+//	Copyright (C) 2012	Matt Shafer-skelton <taomastercu@yahoo.com>
 //
-//	You can redistribute this code and/or modify it under
-//	the terms of the GNU General Public License as published
-//	by the Free Software Foundation; either version 2 of the
-//	License, or (at your option) any later version
+//  GPL V3, see source/licence.txt
 // ==============================================================
 
 #ifndef _GLEST_GAME_ITEM_H_
@@ -26,7 +23,6 @@
 #include "logger.h"
 #include "factory.h"
 #include "type_factories.h"
-#include "unit.h"
 #include "vec.h"
 #include "prototypes_enums.h"
 #include "simulation_enums.h"
@@ -47,11 +43,10 @@ using namespace ProtoTypes;
 class Item : public EnhancementType {
 	friend class EntityFactory<Item>;
 
-private:
+public:
 	int id;	/**< unique identifier  */
 	Faction *faction;
 
-public:
     CurrentStep currentSteps; /**< current timer step for resource creation */
     CurrentStep currentUnitSteps; /**< current timer step for unit creation */
     CurrentStep currentItemSteps; /**< current timer step for unit creation */
@@ -66,7 +61,7 @@ public:
     string getShortDesc() const;
     string getLongDesc() const;
 
-    void init(const ItemType* type, Faction *faction);
+    void init(int ident, const ItemType* type, Faction *faction);
 };
 
 }}// end namespace

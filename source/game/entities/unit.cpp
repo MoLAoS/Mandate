@@ -178,9 +178,16 @@ Unit::Unit(CreateParams params)
 
 	setModelFacing(m_facing);
 
+	garrisonTest = false;
+
 	currentSteps.resize(type->getCreatedResourceCount());
 	for (int i = 0; i < currentSteps.size(); ++i) {
 	currentSteps[i].currentStep = 0;
+	}
+
+	currentProcessSteps.resize(type->getProcessCount());
+	for (int i = 0; i < currentProcessSteps.size(); ++i) {
+	currentProcessSteps[i].currentStep = 0;
 	}
 
 	currentUnitSteps.resize(type->getCreatedUnitCount());
@@ -208,10 +215,21 @@ Unit::Unit(CreateParams params)
 
     owner = this;
 
-	currentProcessSteps.resize(type->getProcessCount());
-	for (int i = 0; i < currentProcessSteps.size(); ++i) {
-	currentProcessSteps[i].currentStep = 0;
-	}
+    resistances.resize(getType()->resistances.size());
+    for (int i = 0; i < getType()->resistances.size(); ++i) {
+        resistances[i] = getType()->resistances[i];
+    }
+
+    itemLimit = getType()->itemLimit;
+    itemsStored = 0;
+
+    for (int i = 0; i < getType()->equipment.size(); ++i) {
+        for (int j = 0; j < getType()->equipment[i].getMax(); ++j) {
+            Equipment newEquipment;
+            newEquipment.init(1, 0, "", getType()->equipment[i].getTypeTag());
+            equipment.push_back(newEquipment);
+        }
+    }
 
     sresources.resize(getType()->getStoredResourceCount());
     for (int i = 0; i < getType()->getStoredResourceCount(); ++i) {
@@ -2071,22 +2089,122 @@ void Unit::updateMoveSkillCycle() {
 	nextCommandUpdate = g_world.getFrameCount() + frameOffset;
 }
 
-void Unit::accessStorageAdd(Item item) {
-    storedItems.push_back(item);
+void Unit::accessStorageAdd(int ident) {
+    storedItems.push_back(ident);
+    Item *item = getStoredItem(storedItems.size()-1);
+    itemsStored = getItemsStored() + 1;
+    if (storage.size() > 0) {
+        bool found = false;
+        for (int i = 0; i < storage.size(); ++i) {
+            if (storage[i].getName() == item->getType()->getName()) {
+                //if (storage[i].getCurrent() == storage[i].getMax()) {
+                    storage[i].setCurrent(1);
+                //}
+                found = true;
+                break;
+            }
+        }
+        if (found == false) {
+            Equipment newEquipment;
+            newEquipment.init(0, 1, item->getType()->getName(), item->getType()->getTypeTag());
+            storage.push_back(newEquipment);
+        }
+    } else {
+        Equipment newEquipment;
+        newEquipment.init(0, 1, item->getType()->getName(), item->getType()->getTypeTag());
+        storage.push_back(newEquipment);
+    }
 }
 
-void Unit::accessStorageExchange() {
+void Unit::accessStorageExchange(Unit *storage) {
+    Storage gear = getType()->equipment;
+    StoredItems armory = getStoredItems();
+    for (int i = 0; i < armory.size(); ++i) {
+        for (int l = 0; l < gear.size(); ++l) {
+            if (gear[l].getTypeTag() == getStoredItem(armory[i])->getType()->getTypeTag()) {
+                //if (getQualityTier() == getQualityTier()) {
 
-}
-
-void Unit::equipItem(Item *item) {
-    for (int i = 0; i < storedItems.size(); ++i) {
-        Item *equipment = &storedItems[i];
-        if (equipment == item) {
-            equippedItems.push_back(storedItems[i]);
-            storedItems.erase(storedItems.begin()+i);
+                //}
+            }
         }
     }
+}
+
+void Unit::equipItem(int ident) {
+    bool doEquip = false;
+    Item *item = getStoredItem(ident);
+    for (int n = 0; n < getType()->equipment.size(); ++n) {
+        if (item->getType()->getTypeTag() == getType()->equipment[n].getTypeTag()) {
+            int equippedAmount = 0;
+            for (int m = 0; m < equippedItems.size(); ++m) {
+                if (item->getType()->getTypeTag() == getEquippedItem(m)->getType()->getTypeTag()) {
+                    ++equippedAmount;
+                }
+            }
+            if (equippedAmount < getType()->equipment[n].getMax()) {
+                doEquip = true;
+                break;
+            }
+        }
+    }
+    if (doEquip == false) {
+        return;
+    }
+    for (int i = 0; i < storedItems.size(); ++i) {
+        if (getStoredItem(i)->getType()->getTypeTag() == item->getType()->getTypeTag()) {
+            equippedItems.push_back(storedItems[i]);
+            for (int k = 0; k < getEquippedItems().size(); ++k) {
+                for (int j = 0; j < equipment.size(); ++j) {
+                    if (getEquippedItem(k)->getType()->getTypeTag() == equipment[j].getTypeTag()) {
+                        if (equipment[j].getCurrent() == 0) {
+                            equipment[j].setCurrent(1);
+                            equipment[j].setName(getEquippedItem(k)->getType()->getName());
+                            break;
+                        }
+                    }
+                }
+            }
+            storedItems.erase(storedItems.begin()+i);
+            for (int l = 0; l < storage.size(); ++l) {
+                if (storage[l].getTypeTag() == item->getType()->getTypeTag()) {
+                    storage[l].setCurrent(-1);
+                }
+            }
+            setItemsStored(-1);
+            break;
+        }
+    }
+    computeTotalUpgrade();
+}
+
+void Unit::unequipItem(int ident) {
+    Item *item = getEquippedItem(ident);
+    for (int i = 0; i < equippedItems.size(); ++i) {
+        if (equippedItems[i] == equippedItems[ident]) {
+            storedItems.push_back(equippedItems[i]);
+            for (int j = 0; j < equipment.size(); ++j) {
+                if (getEquippedItem(i)->getType()->getTypeTag() == equipment[j].getTypeTag()) {
+                    if (equipment[j+1].getTypeTag() == equipment[j].getTypeTag() && equipment[j+1].getCurrent() == 1) {
+
+                    } else {
+                        if (equipment[j].getCurrent() == 1) {
+                            equipment[j].setCurrent(-1);
+                            equipment[j].setName(getEquippedItem(i)->getType()->getTypeTag());
+                            break;
+                        }
+                    }
+                }
+            }
+            equippedItems.erase(equippedItems.begin()+i);
+            for (int l = 0; l < storage.size(); ++l) {
+                if (storage[l].getTypeTag() == item->getType()->getTypeTag()) {
+                    storage[l].setCurrent(1);
+                }
+            }
+            setItemsStored(1);
+        }
+    }
+    computeTotalUpgrade();
 }
 
 /** wrapper for World::updateUnits */
@@ -2126,10 +2244,13 @@ void Unit::doKill(Unit *killed) {
 
 	ScriptManager::onUnitDied(killed);
 	g_simInterface.getStats()->kill(getFactionIndex(), killed->getFactionIndex());
+
 	if (isAlive() && getTeam() != killed->getTeam()) {
-		incKills();
-		int addExp = killed->getExpGiven();
-		incExp(addExp);
+        if (getFaction()->getType()->getOnHitExp() == false) {
+            incKills();
+            int addExp = killed->getExpGiven();
+            incExp(addExp);
+		}
 	}
 
 	///@todo after stats inc ??
@@ -2481,13 +2602,14 @@ bool Unit::decEp(int i) {
   * @return true if unit is now dead
   */
 bool Unit::decHp(int i) {
-	if (sp >= i) {
-	    sp -= i;
-	    return false;
-	} else {
-	    sp = 0;
-	    i = i - sp;
-	}
+    if (sp >= i) {
+        sp -= i;
+        return false;
+    } else {
+        sp = 0;
+        i = i - sp;
+    }
+
 	assert(i >= 0);
 	// we shouldn't ever go negative
 	assert(hp > 0 || i == 0);
@@ -2569,7 +2691,13 @@ string Unit::getLongDesc() const {
 	string shortDesc = getShortDesc();
 	stringstream ss;
 
-    ss << endl << "Stored Items: " << storedItems.size();
+	ss << endl << "Unit Position: " << this->getCenteredPos();
+	if (anyCommand()) {
+	ss << endl << "Goal Position: " << this->getCurrCommand()->getPos();
+	}
+
+    ss << endl << "Stored Items: " << itemsStored << "/" << itemLimit;
+    ss << endl << "Equipped Items: " << getEquippedItems().size();
 
 	const string factionName = type->getFactionType()->getName();
 	int armorBonus = getArmor() - type->getArmor();
@@ -2587,11 +2715,20 @@ string Unit::getLongDesc() const {
 	}
 	ss << " (" << armourName << ")";
 
-	if (getType()->resistances.size() > 0) {
+	//ss << endl << "Garrisoned Units: " << getGarrisonedCount();
+	//ss << endl << garrisonTest;
+	//if (getGarrisonedCount() > 0) {
+    //UnitIdList garrisonedUnits = getGarrisonedUnits();
+    //foreach (UnitIdList, it, garrisonedUnits) {
+	//ss << endl << g_world.getUnit(*it)->getType()->getName();
+    //}
+	//}
+
+	if (resistances.size() > 0) {
 	ss << endl << lang.get("Resistances") << ":";
-	for (int i = 0; i < getType()->resistances.size(); ++i) {
-	ss << endl << lang.get(getType()->resistances[i].getTypeName()) << ": ";
-	ss << getType()->resistances[i].getValue();
+	for (int i = 0; i < resistances.size(); ++i) {
+	ss << endl << lang.get(resistances[i].getTypeName()) << ": ";
+	ss << resistances[i].getValue();
 	}
 	ss << endl;
 	}
@@ -2600,6 +2737,17 @@ string Unit::getLongDesc() const {
 	ss << endl << lang.get("ExpGiven") << ": " << type->getExpGiven();
 	if (expGivenBonus) {
 		ss << (expGivenBonus > 0 ? " +" : " ") << expGivenBonus;
+	}
+
+	//personality check
+	if (getType()->personality != "") {
+	ss << endl << getType()->personality;
+	for (int i = 0; i < getFaction()->getMandateAiSim().getPersonalities().size(); ++i) {
+        if (getFaction()->getMandateAiSim().getPersonality(i).getPersonalityName() == getType()->personality) {
+            ss << endl << "Found: " << getFaction()->getMandateAiSim().getPersonality(i).getPersonalityName();
+        }
+	}
+	ss << endl << "Current Focus: " << getCurrentFocus();
 	}
 
 	// sight
@@ -2655,7 +2803,7 @@ string Unit::getLongDesc() const {
 		}
 	}
 
-	if (exp > 0 || nextLevel) {
+	if (exp >= 0 || nextLevel) {
 		ss << endl << lang.get("Exp") << ": " << exp;
 		if (nextLevel) {
 			string levelName = lang.getFactionString(getFaction()->getType()->getName(), nextLevel->getName());
@@ -2831,24 +2979,6 @@ string Unit::getLongDesc() const {
 	return (shortDesc + ss.str());
 }
 
-void Unit::applyGarrison() {
-    World &world = g_world;
-	if (!m_garrisonedUnits.empty()) {
-		foreach (UnitIdList, it, m_garrisonedUnits) {
-        string unitName = world.getUnit(*it)->getType()->getName();
-            for (int l = 0; l < type->loadBonuses.size(); ++l) {
-            string bonusName = type->loadBonuses[l].getSource();
-                if (unitName == bonusName) {
-                const EnhancementType *et = &type->loadBonuses[l].m_enhancement.m_enhancement;
-                    if (et) {
-                    totalUpgrade.sum(et);
-                    }
-                }
-            }
-	    }
-	}
-}
-
 /** Apply effects of an UpgradeType
   * @param upgradeType the type describing the Upgrade to apply*/
 void Unit::applyUpgrade(const UpgradeType *upgradeType) {
@@ -2882,6 +3012,54 @@ void Unit::applyUpgrade(const UpgradeType *upgradeType) {
 /** recompute stats, re-evaluate upgrades & level and recalculate totalUpgrade */
 void Unit::computeTotalUpgrade() {
 	faction->getUpgradeManager()->computeTotalUpgrade(this, &totalUpgrade);
+
+	for (int i = 0; i < getEquippedItems().size(); ++i) {
+	    const EnhancementType *et = static_cast<const EnhancementType*>(getEquippedItem(i)->getType());
+        totalUpgrade.sum(et);
+	}
+
+    resistances.clear();
+    resistances.resize(getType()->resistances.size());
+    for (int i = 0; i < getType()->resistances.size(); ++i) {
+        resistances[i] = getType()->resistances[i];
+    }
+
+	for (int i = 0; i < getEquippedItems().size(); ++i) {
+	    Resistances resists = getEquippedItem(i)->getType()->resistances;
+	    for (int j = 0; j < resists.size(); ++j) {
+	        if (resistances.size() == 0) {
+                resistances.push_back(resists[j]);
+	        } else {
+                for (int k = 0; k < resistances.size(); ++k) {
+                    if (resistances[k].getTypeName() == resists[j].getTypeName()) {
+                        resistances[k].setValue(resists[j].getValue());
+                        break;
+                    }
+                    if (k == resistances.size()-1) {
+                        resistances.push_back(resists[j]);
+                        break;
+                    }
+                }
+	        }
+	    }
+	}
+
+    UnitIdList garrisonedUnits = getGarrisonedUnits();
+    garrisonTest = false;
+    if (getGarrisonedCount() > 0) {
+        foreach (UnitIdList, it, garrisonedUnits) {
+            Unit *garUnit = g_world.getUnit(*it);
+            string unitName = garUnit->getType()->getName();
+            for (int l = 0; l < type->loadBonuses.size(); ++l) {
+                string bonusName = type->loadBonuses[l].getSource();
+                if (unitName == bonusName) {
+                    const EnhancementType *et = getType()->loadBonuses[l].getEnhancement()->getEnhancement();
+                    totalUpgrade.sum(et);
+                    garrisonTest = true;
+                }
+            }
+        }
+    }
 	level = NULL;
 	for (int i = 0; i < type->getLevelCount(); ++i) {
 		const Level *level = type->getLevel(i);
@@ -2895,12 +3073,6 @@ void Unit::computeTotalUpgrade() {
 			break;
 		}
 	}
-	for (int i = 0; i < getEquippedItems().size(); ++i) {
-	    StoredItems si = getEquippedItems();
-	    const EnhancementType *et = static_cast<const EnhancementType*>(&si[i]);
-        totalUpgrade.sum(et);
-	}
-	applyGarrison();
 	recalculateStats();
 }
 
@@ -3105,12 +3277,7 @@ void Unit::incKills() {
 
 /** Another one bites the dust. Increment 'exp' & check level */
 void Unit::incExp(int addExp) {
-    int i = 0;
-    int add = addExp;
-	while (i < add) {
-	    ++exp;
-	    ++i;
-	}
+    exp += addExp;
 
 	const Level *nextLevel = getNextLevel();
 	if (nextLevel != NULL && exp >= nextLevel->getExp() && nextLevel->getExp() >= 0) {

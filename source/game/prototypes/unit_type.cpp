@@ -128,6 +128,7 @@ UnitType::UnitType()
 		, meetingPoint(false), meetingPointImage(0)
 		, startSkill(0)
 		, halfSize(0), halfHeight(0)
+		, inhuman(0)
 		, m_cellMap(0), m_colourMap(0)
 		, m_hasProjectileAttack(false)
 		, m_factionType(0)
@@ -200,6 +201,27 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 		return false; // bail out
 	}*/
 	// armor type string
+
+    // nodes and traits relating to player owned ai units, mainly for majesty style games
+	try {
+	    const XmlNode *inhumanNode = parametersNode->getChild("control", 0, false);
+	    if (inhumanNode) {
+            string control = inhumanNode->getAttribute("type")->getRestrictedValue();
+            if (control == "inhuman") {
+                inhuman = true;
+            } else {
+                inhuman = false;
+            }
+            const XmlNode *personalityNode = inhumanNode->getChild("personality", 0, false);
+            if (personalityNode) {
+                personality = personalityNode->getAttribute("type")->getRestrictedValue();
+            }
+	    }
+	}
+	catch (runtime_error e) {
+		g_logger.logXmlError(dir, e.what());
+		loadOk = false;
+	}
 	try {
 		string armorTypeName = parametersNode->getChildRestrictedValue("armor-type");
 		armourType = techTree->getArmourType(armorTypeName);
@@ -218,6 +240,37 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
                 string resistanceTypeName = resistanceNode->getAttribute("type")->getRestrictedValue();
                 int amount = resistanceNode->getAttribute("value")->getIntValue();
                 resistances[i].init(resistanceTypeName, amount);
+            }
+	    }
+	}
+	catch (runtime_error e) {
+		g_logger.logXmlError(dir, e.what());
+		loadOk = false;
+	}
+
+	try {
+	    const XmlNode *itemLimitNode = parametersNode->getChild("item-limit", 0, false);
+	    if (itemLimitNode) {
+            itemLimit = itemLimitNode->getAttribute("limit")->getIntValue();
+	    } else {
+            itemLimit = 0;
+	    }
+	}
+	catch (runtime_error e) {
+		g_logger.logXmlError(dir, e.what());
+		loadOk = false;
+	}
+
+	//equipment slots
+	try {
+        const XmlNode *equipmentNode = parametersNode->getChild("equipment", 0, false);
+	    if (equipmentNode) {
+	        equipment.resize(equipmentNode->getChildCount());
+            for (int i = 0; i < equipmentNode->getChildCount(); ++i) {
+                const XmlNode *typeNode = equipmentNode->getChild("type", i);
+                string type = typeNode->getAttribute("type")->getRestrictedValue();
+                int amount = typeNode->getAttribute("value")->getIntValue();
+                equipment[i].init(amount, 0, "", type);
             }
 	    }
 	}

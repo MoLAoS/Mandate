@@ -237,6 +237,9 @@ void Faction::init(const FactionType *factionType, ControlType control, string p
 			}
 		}
 
+        World *world = &g_world;
+		mandateAISim.init(world, this);
+
         upgradeStages.resize(factionType->getUpgradeTypeCount());
 		for (int i = 0; i < factionType->getUpgradeTypeCount(); ++i) {
 			const UpgradeType *ut = factionType->getUpgradeType(i);
@@ -396,7 +399,7 @@ void Faction::load(const XmlNode *node, World *world, const FactionType *ft, Con
 
 	assert(units.size() == unitMap.size());
 
-    for (int i = 0; i < getType()->getGuiFileNamesCount(); ++i) {
+    /*for (int i = 0; i < getType()->getGuiFileNamesCount(); ++i) {
 	    Rocket::Core::String fileName;
 	    for(int j = 0; j < getType()->getGuiFileName(i).size(); j++) {
             char c = getType()->getGuiFileName(i)[j];
@@ -407,7 +410,7 @@ void Faction::load(const XmlNode *node, World *world, const FactionType *ft, Con
             document->Show();
             document->RemoveReference();
         }
-	}
+	}*/
 }
 
 // ================== get ==================

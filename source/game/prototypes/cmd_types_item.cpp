@@ -1,15 +1,9 @@
 // ==============================================================
-//	This file is part of Glest (www.glest.org)
+//	This file is part of The Mandate Engine
 //
-//	Copyright (C) 2001-2008 Martiño Figueroa
-//                2008-2009 Daniel Santos
-//                2009-2010 Nathan Turner
-//                2009-2010 James McCulloch
+//	Copyright (C) 2012	Matt Shafer-skelton <taomastercu@yahoo.com>
 //
-//	You can redistribute this code and/or modify it under
-//	the terms of the GNU General Public License as published
-//	by the Free Software Foundation; either version 2 of the
-//	License, or (at your option) any later version
+//  GPL V3, see source/licence.txt
 // ==============================================================
 
 #include "pch.h"
@@ -189,14 +183,20 @@ void CreateItemCommandType::update(Unit *unit) const {
 		unit->setCurrSkill(m_produceSkillType);
 	} else {
 		unit->update2();
-		//const ItemType *item = m_createdItems[0];
 		const FactionType *ft = unit->getFaction()->getType();
-		const ItemType *prodType = ft->getItemType("sword");
+		const ItemType *prodType = m_createdItems[0];
 		if (unit->getProgress2() > prodType->getProductionTime()) {
 			for (int i=0; i < getCreatedNumber(prodType); ++i) {
                 Item item;
-                item.init(prodType, unit->getFaction());
-                unit->accessStorageAdd(item);
+                item.init(unit->getFaction()->items.size(), prodType, unit->getFaction());
+                if (unit->getItemLimit() > unit->getItemsStored()) {
+                    unit->getFaction()->items.push_back(item);
+                    unit->accessStorageAdd(unit->getFaction()->items.size()-1);
+                    for (int c = 0; c < item.getType()->ProducibleType::getCostCount(); ++c) {
+                        ResourceAmount ra = item.getType()->ProducibleType::getCost(c, unit->getFaction());
+                        unit->incResourceAmount(ra.getType(), -ra.getAmount());
+                    }
+                }
             }
         unit->finishCommand();
         unit->setCurrSkill(SkillClass::STOP);

@@ -313,9 +313,9 @@ void Program::loop() {
 		while (guiUpdateTimer.isTime()) {
 			_PROFILE_SCOPE("Program::loop() : Update Gui");
 			WidgetWindow::update();
-            if (m_programState->isGameState()) {
-                static_cast<GameState*>(m_programState)->getContext()->Update();
-            }
+            //if (m_programState->isGameState()) {
+                //static_cast<GameState*>(m_programState)->getContext()->Update();
+            //}
 		}
 
 		// tick timer

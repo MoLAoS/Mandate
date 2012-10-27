@@ -28,6 +28,7 @@
 #include "simulation_enums.h"
 #include "upgrade_type.h"
 #include "trade_command.h"
+#include "mandate_ai_sim.h"
 
 using std::map;
 using std::vector;
@@ -38,9 +39,11 @@ using namespace Glest::ProtoTypes;
 using Glest::Sim::World;
 using Glest::Sim::ControlType;
 
+using namespace Glest::Gui_Mandate;
+using namespace Glest::Plan;
+
 namespace Glest { namespace Entities {
 
-using namespace Glest::Gui_Mandate;
 class Unit;
 
 // =====================================================
@@ -133,6 +136,7 @@ public:
 
 class Faction : public NameIdPair {
 public:
+    typedef vector<Item>                               Items;
 	typedef vector<const ResourceType *>               ResourceTypes;
 	typedef map<const ResourceType*, Modifier>         CostModifiers;
 	typedef map<const ProducibleType*, CostModifiers>  UnitCostModifiers;
@@ -149,7 +153,11 @@ private:
 
 	UpgradeManager upgradeManager;
 
+	MandateAISim mandateAISim;
+
 public:
+    MandateAISim getMandateAiSim() const {return mandateAISim;}
+
     SResources    sresources;
     CResources    cresources;
 
@@ -163,6 +171,8 @@ typedef vector<UpgradeStage>    UpgradeStages;
     UpgradeStage *getUpgradeStage(const UpgradeType *ut);
 	UpgradeStage *getUpgradeStage(int i) {assert(i < upgradeStages.size()); return &upgradeStages[i];}
 	int getCurrentStage(const UpgradeType *ut);
+
+	Items items;
 
 private:
 	Units units;

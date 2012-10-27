@@ -96,6 +96,8 @@ private:
 
 	typedef vector<DamageType>          Resistances;
 
+	typedef vector<Equipment>           Equipments;
+
 	//typedef vector<PetRule*> PetRules;
 	//typedef map<int, const CommandType*> CommandTypeMap;
 
@@ -116,6 +118,8 @@ public:
     Hero hero;
     Mage mage;
     Leader leader;
+    bool inhuman;
+    string personality;
 
 private:
 	bool light;
@@ -150,6 +154,10 @@ public:
 
 	LoadBonuses loadBonuses;
     Resistances resistances;
+
+    Equipments equipment;
+
+    int itemLimit;
 
     bool isMage;
     bool isLeader;

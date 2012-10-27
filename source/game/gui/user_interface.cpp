@@ -267,8 +267,8 @@ void UserInterface::init() {
     m_factionDisplay->setSize();
     m_factionDisplay->init(fac, buildings);
 
-    y += 250;
 
+    y += 250;
 	ItemDisplayFrame *itemWindow = new ItemDisplayFrame(this, Vec2i(x,y));
 	m_itemWindow = itemWindow->getItemDisplay();
 	m_itemWindow->setSize();
@@ -351,6 +351,12 @@ static void calculateNearest(UnitVector &units, const Vec3f &pos) {
 	}
 }
 
+void UserInterface::onSelectionUpdated() {
+    currentGroup = invalidGroupIndex;
+    m_display->setSize();
+    m_itemWindow->setSize();
+}
+
 void UserInterface::onLeftClickOrder(Vec2i cellPos) {
 	giveTwoClickOrders(cellPos, 0);
 }
@@ -395,6 +401,7 @@ void UserInterface::tick() {
 			computePortraitInfo(btn.m_index);
 		}
 	}
+	m_itemWindow->tick();
 	m_selectionDirty = false;
 }
 ///@todo move to Display
@@ -1473,6 +1480,7 @@ void UserInterface::computeDisplay() {
 
 	// init
 	m_display->clear();
+	m_itemWindow->clear();
 
 	// === Selection Panel ===
 	computeSelectionPanel();
@@ -1487,9 +1495,9 @@ void UserInterface::computeDisplay() {
 	computeHierarchyPanel();
 
     // === Item Panels ===
-    m_itemWindow->computeSelectionPanel();
 	m_itemWindow->computeEquipmentPanel();
 	m_itemWindow->computeButtonsPanel();
+	m_itemWindow->computeInventoryPanel();
 
 	// === Faction Panel ===
 	m_factionDisplay->computeBuildPanel();

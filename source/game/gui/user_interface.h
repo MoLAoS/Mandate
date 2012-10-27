@@ -179,7 +179,7 @@ public:
 	void init();
 	void initMinimap(bool fow, bool sod, bool resuming);
 
-	int                   setActivePos(int i)        {activePos = i;}
+	void                   setActivePos(int i)        {activePos = i;}
 	bool                  setSelectingPos(bool b)    {selectingPos = b;}
 
 	//get
@@ -228,11 +228,7 @@ public:
 
 	void tick();
 
-	void onSelectionUpdated() {
-		currentGroup = invalidGroupIndex;
-		m_display->setSize();
-		m_itemWindow->setSize();
-	}
+	void onSelectionUpdated();
 
 	void commandButtonPressed(int posDisplay);
 	void unloadRequest(int carryIndex);

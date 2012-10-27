@@ -28,7 +28,6 @@
 
 using namespace Shared::Util;
 using namespace Shared::Xml;
-using namespace Rocket;
 
 namespace Glest { namespace ProtoTypes {
 
@@ -180,6 +179,32 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 		}
 	}
 
+
+    personalityDirectory = dir + "/ai/" + "personalities.xml";
+    XmlTree personalityXmlTree;
+	try { personalityXmlTree.load(personalityDirectory); }
+	catch (runtime_error e) {
+		g_logger.logXmlError(personalityDirectory, e.what());
+		g_logger.logError("Fatal Error: could not load " + personalityDirectory);
+		return false; // bail
+	}
+	const XmlNode *behaviorNode;
+	try {
+	    behaviorNode = personalityXmlTree.getRootNode();
+    } catch (runtime_error e) {
+		g_logger.logXmlError(personalityDirectory, e.what());
+		return false;
+	}
+	const XmlNode *personalitiesNode = behaviorNode->getChild("personalities", 0, false);
+	if (personalitiesNode) {
+	    personalities.resize(personalitiesNode->getChildCount());
+		for (int i = 0; i < personalitiesNode->getChildCount(); ++i) {
+		    const XmlNode *personalityNode = personalitiesNode->getChild("personality", i);
+		    personalities[i].load(personalityNode, techTree, this);
+
+		}
+	}
+
     // progress : 0 - unitFileNames.size()
 	// 3. Load units
 	for (int i = 0; i < unitTypes.size(); ++i) {
@@ -231,6 +256,21 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 		}
 
 	}
+
+	foreach_const (UnitTypes, uit, unitTypes) {
+		const UnitType *ut = *uit;
+		for (int i=0; i < ut->getCommandTypeCount<GarrisonCommandType>(); ++i) {
+			const GarrisonCommandType *lct = ut->getCommandType<GarrisonCommandType>(i);
+			foreach (UnitTypes, luit, unitTypes) {
+				UnitType *lut = *luit;
+				if (lct->canCarry(lut) && lut->getFirstCtOfClass(CmdClass::MOVE)) {
+					loadableUnitTypes.insert(lut);
+				}
+			}
+		}
+
+	}
+
 	// 4b. Give mobile housable unit types a be-loaded command type
 	foreach (UnitTypeSet, it, loadableUnitTypes) {
 		(*it)->addBeLoadedCommand();
@@ -298,6 +338,19 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 				loadOk = false;
 			}
 		}
+	} catch (runtime_error e) {
+		g_logger.logXmlError(path, e.what());
+		loadOk = false;
+	}
+
+    try {
+        const XmlNode *expTypeNode = factionNode->getChild("exp-type");
+        string expType = expTypeNode->getAttribute("type")->getRestrictedValue();
+        if (expType == "hit") {
+            onHitExp = true;
+        } else if (expType == "kill") {
+            onHitExp = false;
+        }
 	} catch (runtime_error e) {
 		g_logger.logXmlError(path, e.what());
 		loadOk = false;

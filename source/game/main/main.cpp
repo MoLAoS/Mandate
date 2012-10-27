@@ -10,7 +10,6 @@
 // ==============================================================
 
 #include "pch.h"
-
 #include "leak_dumper.h"
 #include "main.h"
 

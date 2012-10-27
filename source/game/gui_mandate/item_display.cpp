@@ -1,13 +1,9 @@
 // ==============================================================
-//	This file is part of Glest (www.glest.org)
+//	This file is part of The Mandate Engine
 //
-//	Copyright (C) 2001-2008 Martiño Figueroa
-//				  2010 James McCulloch
+//	Copyright (C) 2012	Matt Shafer-skelton <taomastercu@yahoo.com>
 //
-//	You can redistribute this code and/or modify it under
-//	the terms of the GNU General Public License as published
-//	by the Free Software Foundation; either version 2 of the
-//	License, or (at your option) any later version
+//  GPL V3, see source/licence.txt
 // ==============================================================
 
 #include "pch.h"
@@ -128,28 +124,22 @@ ItemWindow::ItemWindow(Container *parent, UserInterface *ui, Vec2i pos)
 		, m_toolTip(0) {
 	CHECK_HEAP();
 	setWidgetStyle(WidgetType::DISPLAY);
-	for (int i = 0; i < selectionCellCount; ++i) {
-		ImageWidget::addImageX(0, Vec2i(0), Vec2i(m_imageSize));
-	}
 	TextWidget::setAlignment(Alignment::NONE);
-	TextWidget::setText("");
-	TextWidget::addText("");
-
-	TextWidget::addText("");
-	TextWidget::addText("");
-	TextWidget::addText("");
-	TextWidget::addText("");
-	TextWidget::addText("");
-    TextWidget::addText("");
-	TextWidget::addText("");
-	TextWidget::addText("");
-	TextWidget::addText("");
 
 	for (int i = 0; i < buttonCellCount; ++i) {
 		ImageWidget::addImageX(0, Vec2i(0), Vec2i(m_imageSize));
+        if (i < 1) {
+            buttonNames[i] = "equip";
+        } else {
+            buttonNames[i] = "unequip";
+        }
 	}
 
-	for (int i = 0; i < 9; ++i) {
+	for (int i = 0; i < equipmentCellCount; ++i) {
+        ImageWidget::addImageX(0, Vec2i(0), Vec2i(m_imageSize));
+	}
+
+	for (int i = 0; i < inventoryCellCount; ++i) {
         ImageWidget::addImageX(0, Vec2i(0), Vec2i(m_imageSize));
 	}
 
@@ -163,7 +153,6 @@ ItemWindow::ItemWindow(Container *parent, UserInterface *ui, Vec2i pos)
 		m_logo = ImageWidget::addImageX(logoTex, Vec2i(0, 0), Vec2i(192,192));
 	}
 	layout();
-	m_selectedCommandIndex = invalidIndex;
 	clear();
 	m_toolTip = new CommandTip(WidgetWindow::getInstance());
 	m_toolTip->setVisible(false);
@@ -193,62 +182,45 @@ void ItemWindow::layout() {
 	m_fontMetrics = font->getMetrics();
 
 	m_sizes.logoSize = Vec2i(m_imageSize * 6, m_imageSize * 6);
-	m_portraitOffset = Vec2i(x, y);
-	for (int i = 0; i < selectionCellCount; ++i) {
-		if (i && i % cellWidthCount == 0) {
-			y += m_imageSize;
-			x = 0;
-		}
-		ImageWidget::setImageX(0, i, Vec2i(x, y), Vec2i(m_imageSize));
-		x += m_imageSize;
-	}
-	y += m_imageSize;
-	m_sizes.portraitSize = Vec2i(x, y);
-
-	int titleYpos = std::max((m_imageSize - int(m_fontMetrics->getHeight() + 1.f)) / 2, 0);
-	TextWidget::setTextPos(Vec2i(m_imageSize * 5 / 4, titleYpos), 0);
 
 	x = 0;
-	y = m_imageSize + m_imageSize / 4 + int(m_fontMetrics->getHeight()) * 6;
-	m_commandOffset = Vec2i(x, y);
+	y = 0;
+	m_buttonOffset = Vec2i(x, y);
 	for (int i = 0; i < buttonCellCount; ++i) {
 		if (i && i % cellWidthCount == 0) {
 			y += m_imageSize;
 			x = 0;
 		}
-		ImageWidget::setImageX(0, selectionCellCount + i, Vec2i(x,y), Vec2i(m_imageSize));
+		ImageWidget::setImageX(0, i, Vec2i(x,y), Vec2i(m_imageSize));
 		x += m_imageSize;
 	}
-	y += m_imageSize;
 	m_sizes.commandSize = Vec2i(x, y+32+(m_imageSize*7));
 
-    x = 40;
-    y = 72;
-    TextWidget::setTextPos(Vec2i(x, y), 2);
-    ImageWidget::setImageX(0, selectionCellCount + buttonCellCount + 0, Vec2i(x-40,y), Vec2i(m_imageSize));
-    y += m_imageSize;
-    TextWidget::setTextPos(Vec2i(x, y), 3);
-    ImageWidget::setImageX(0, selectionCellCount + buttonCellCount + 1, Vec2i(x-40,y), Vec2i(m_imageSize));
-    y += m_imageSize;
-    TextWidget::setTextPos(Vec2i(x, y), 4);
-    ImageWidget::setImageX(0, selectionCellCount + buttonCellCount + 2, Vec2i(x-40,y), Vec2i(m_imageSize));
-    y += m_imageSize;
-    TextWidget::setTextPos(Vec2i(x, y), 5);
-    ImageWidget::setImageX(0, selectionCellCount + buttonCellCount + 3, Vec2i(x-40,y), Vec2i(m_imageSize));
-    y += m_imageSize;
-    TextWidget::setTextPos(Vec2i(x, y), 6);
-    ImageWidget::setImageX(0, selectionCellCount + buttonCellCount + 4, Vec2i(x-40,y), Vec2i(m_imageSize));
-    y += m_imageSize;
-    TextWidget::setTextPos(Vec2i(x, y), 7);
-    ImageWidget::setImageX(0, selectionCellCount + buttonCellCount + 5, Vec2i(x-40,y), Vec2i(m_imageSize));
-    y += m_imageSize;
-    TextWidget::setTextPos(Vec2i(x, y), 8);
-    ImageWidget::setImageX(0, selectionCellCount + buttonCellCount + 6, Vec2i(x-40,y), Vec2i(m_imageSize));
-    y += m_imageSize;
-    TextWidget::setTextPos(Vec2i(x, y), 9);
-    ImageWidget::setImageX(0, selectionCellCount + buttonCellCount + 7, Vec2i(x-40,y), Vec2i(m_imageSize));
+	x = 0;
+	y += m_imageSize;
+    m_equipmentOffset = Vec2i(x, y);
+	for (int i = 0; i < equipmentCellCount; ++i) {
+		if (i && i % cellWidthCount == 0) {
+			y += m_imageSize;
+			x = 0;
+		}
+		ImageWidget::setImageX(0, buttonCellCount + i, Vec2i(x,y), Vec2i(m_imageSize));
+		x += m_imageSize;
+	}
 
-	for (int i=0; i < 10; ++i) {
+    x = 0;
+    y += m_imageSize;
+	m_inventoryOffset = Vec2i(x, y);
+	for (int i = 0; i < inventoryCellCount; ++i) {
+		if (i && i % cellWidthCount == 0) {
+			y += m_imageSize;
+			x = 0;
+		}
+		ImageWidget::setImageX(0, equipmentCellCount + buttonCellCount + i, Vec2i(x,y), Vec2i(m_imageSize));
+		x += m_imageSize;
+	}
+
+	for (int i=0; i < 0; ++i) {
 		setTextFont(fontIndex, i);
 	}
 
@@ -285,30 +257,10 @@ void ItemWindow::setFuzzySize(FuzzySize fuzzySize) {
 	m_fuzzySize = fuzzySize;
 	layout();
 	setSize();
-	setPortraitText(getPortraitText());
 }
 
 void ItemWindow::setSize() {
 	Vec2i sz = m_sizes.commandSize;
-	if (m_ui->getSelection()->isEmpty()) {
-		if (m_ui->getSelectedObject()) {
-			sz = m_sizes.portraitSize;
-		} else {
-			if (m_logo != invalidIndex) {
-				sz = m_sizes.logoSize;
-			} else {
-				setVisible(false);
-				static_cast<ItemDisplayFrame*>(m_parent)->resetSize();
-				return;
-			}
-		}
-	} else {
-		if (!m_ui->getSelection()->isComandable()) {
-			sz = m_sizes.portraitSize;
-		} else {
-            sz = m_sizes.commandSize;
-		}
-	}
 	setVisible(true);
 	Vec2i size = getSize();
 	if (size != sz) {
@@ -317,117 +269,23 @@ void ItemWindow::setSize() {
 	static_cast<ItemDisplayFrame*>(m_parent)->resetSize();
 }
 
-void ItemWindow::setSelectedCommandPos(int i) {
-	if (m_selectedCommandIndex == i) {
-		return;
-	}
-	if (m_selectedCommandIndex != invalidIndex) {
-		// shrink
-		int ndx = m_selectedCommandIndex + selectionCellCount;
-		Vec2i pos = getImagePos(ndx);
-		Vec2i size = getImageSize(ndx);
-		pos += Vec2i(3);
-		size -= Vec2i(6);
-		ImageWidget::setImageX(0, ndx, pos, size);
-	}
-	m_selectedCommandIndex = i;
-	if (m_selectedCommandIndex != invalidIndex) {
-		assert(!m_ui->getSelection()->isEmpty());
-		// enlarge
-		int ndx = m_selectedCommandIndex + selectionCellCount;
-		Vec2i pos = getImagePos(ndx);
-		Vec2i size = getImageSize(ndx);
-		pos -= Vec2i(3);
-		size += Vec2i(6);
-		ImageWidget::setImageX(0, ndx, pos, size);
-	}
-}
-
-void ItemWindow::setPortraitTitle(const string title) {
-	if (TextWidget::getText(0).empty() && title.empty()) {
-		return;
-	}
-	TextWidget::setText(title, 0);
-}
-
-void ItemWindow::setPortraitText(const string &text) {
-	if (TextWidget::getText(1).empty() && text.empty()) {
-		return;
-	}
-	string str = formatString(text);
-
-	int lines = 1;
-	foreach_const (string, it, str) {
-		if (*it == '\n') ++lines;
-	}
-	int yPos = m_imageSize * 5 / 4;
-	TextWidget::setTextPos(Vec2i(5, yPos), 1);
-	TextWidget::setText(str, 1);
-}
-
-/*void ItemWindow::setHelmetLabel(bool v) {
-	TextWidget::setText((v ? g_lang.get("Helmet") : ""), 2);
-}
-void ItemWindow::setPauldronsLabel(bool v) {
-	TextWidget::setText((v ? g_lang.get("Pauldrons") : ""), 3);
-}
-void ItemWindow::setCuirassLabel(bool v) {
-	TextWidget::setText((v ? g_lang.get("Cuirass") : ""), 4);
-}
-void ItemWindow::setGauntletsLabel(bool v) {
-	TextWidget::setText((v ? g_lang.get("Gauntlets") : ""), 5);
-}
-void ItemWindow::setRightHandLabel(bool v) {
-	TextWidget::setText((v ? g_lang.get("RightHand") : ""), 6);
-}
-void ItemWindow::setLeftHandLabel(bool v) {
-	TextWidget::setText((v ? g_lang.get("LeftHand") : ""), 7);
-}
-void ItemWindow::setGreavesLabel(bool v) {
-	TextWidget::setText((v ? g_lang.get("Greaves") : ""), 8);
-}
-void ItemWindow::setBootsLabel(bool v) {
-	TextWidget::setText((v ? g_lang.get("Boots") : ""), 9);
-}*/
-
-void ItemWindow::setHelmetLabel(bool v) {
-	TextWidget::setText("Helmet", 2);
-}
-void ItemWindow::setPauldronsLabel(bool v) {
-	TextWidget::setText("Pauldrons", 3);
-}
-void ItemWindow::setCuirassLabel(bool v) {
-	TextWidget::setText("Cuirass", 4);
-}
-void ItemWindow::setGauntletsLabel(bool v) {
-	TextWidget::setText("Gauntlets", 5);
-}
-void ItemWindow::setRightHandLabel(bool v) {
-	TextWidget::setText("RightHand", 6);
-}
-void ItemWindow::setLeftHandLabel(bool v) {
-	TextWidget::setText("LeftHand", 7);
-}
-void ItemWindow::setGreavesLabel(bool v) {
-	TextWidget::setText("Greaves", 8);
-}
-void ItemWindow::setBootsLabel(bool v) {
-	TextWidget::setText("Boots", 9);
-}
-
 void ItemWindow::clear() {
 	WIDGET_LOG( __FUNCTION__ << "()" );
-	for (int i=0; i < selectionCellCount; ++i) {
-		ImageWidget::setImage(0, i);
-	}
 
 	for (int i=0; i < buttonCellCount; ++i) {
 		downLighted[i]= true;
-		ImageWidget::setImage(0, selectionCellCount + i);
+		ImageWidget::setImage(0, i);
 	}
-	setSelectedCommandPos(invalidIndex);
-	setPortraitTitle("");
-	setPortraitText("");
+
+	for (int i=0; i < equipmentCellCount; ++i) {
+		downLighted[i + buttonCellCount]= true;
+		ImageWidget::setImage(0, i + buttonCellCount);
+	}
+
+	for (int i=0; i < inventoryCellCount; ++i) {
+		downLighted[i + buttonCellCount + equipmentCellCount]= true;
+		ImageWidget::setImage(0, i + buttonCellCount + equipmentCellCount);
+	}
 }
 
 void ItemWindow::render() {
@@ -454,115 +312,189 @@ void ItemWindow::render() {
 	}
 
 	Vec4f light(1.f), dark(0.3f, 0.3f, 0.3f, 1.f);
-	for (int i = 0; i < selectionCellCount; ++i) {
-		if (ImageWidget::getImage(i)) {
-			ImageWidget::renderImage(i, light);
-		}
-	}
+
 	for (int i=0; i < buttonCellCount; ++i) {
-		if (ImageWidget::getImage(i + selectionCellCount) && i != m_selectedCommandIndex) {
-			ImageWidget::renderImage(i + selectionCellCount, downLighted[i] ? light : dark);
-			int ndx = -1;
-			if (ndx != -1) {
-				ImageWidget::renderImage(ndx);
-			}
+		if (ImageWidget::getImage(i)) {
+			ImageWidget::renderImage(i, downLighted[i] ? light : dark);
 		}
-	}
-	if (m_selectedCommandIndex != invalidIndex) {
-		assert(ImageWidget::getImage(m_selectedCommandIndex + selectionCellCount));
-		ImageWidget::renderImage(m_selectedCommandIndex + selectionCellCount, light);
 	}
 
-	for (int i=0; i < 8; ++i) {
-		if (ImageWidget::getImage(i + selectionCellCount + buttonCellCount) && i != m_selectedCommandIndex) {
-			ImageWidget::renderImage(i + selectionCellCount + buttonCellCount, downLighted[i] ? light : dark);
-			int ndx = -1;
-			if (ndx != -1) {
-				ImageWidget::renderImage(ndx);
-			}
+	for (int i=0; i < equipmentCellCount; ++i) {
+		if (ImageWidget::getImage(i + buttonCellCount)) {
+			ImageWidget::renderImage(i + buttonCellCount, downLighted[i] ? light : dark);
+		}
+	}
+
+	for (int i=0; i < inventoryCellCount; ++i) {
+		if (ImageWidget::getImage(i + buttonCellCount + equipmentCellCount)) {
+			ImageWidget::renderImage(i + buttonCellCount + equipmentCellCount, downLighted[i] ? light : dark);
 		}
 	}
 
 	ImageWidget::endBatch();
-	if (!TextWidget::getText(0).empty()) {
-		TextWidget::renderTextShadowed(0);
-	}
-	if (!TextWidget::getText(1).empty()) {
-		TextWidget::renderTextShadowed(1);
-	}
-	if (!TextWidget::getText(2).empty()) {
-		TextWidget::renderTextShadowed(2);
-	}
-	if (!TextWidget::getText(3).empty()) {
-		TextWidget::renderTextShadowed(3);
-	}
-	if (!TextWidget::getText(4).empty()) {
-		TextWidget::renderTextShadowed(4);
-	}
-	if (!TextWidget::getText(5).empty()) {
-		TextWidget::renderTextShadowed(5);
-	}
-	if (!TextWidget::getText(6).empty()) {
-		TextWidget::renderTextShadowed(6);
-	}
-	if (!TextWidget::getText(7).empty()) {
-		TextWidget::renderTextShadowed(7);
-	}
-	if (!TextWidget::getText(8).empty()) {
-		TextWidget::renderTextShadowed(8);
-	}
-	if (!TextWidget::getText(9).empty()) {
-		TextWidget::renderTextShadowed(9);
-	}
+}
+
+void ItemWindow::computeButtonsPanel() {
+    if (m_ui->getSelection()->isComandable()) {
+        const Unit *u = m_ui->getSelection()->getFrontUnit();
+        const FactionType *ft = u->getFaction()->getType();
+        if (u->isBuilt()) {
+            for (int i = 0; i < 2; ++i) {
+                setDownImage(i, ft->getItemImage(0));
+                setDownLighted(i, true);
+            }
+        }
+    }
+}
+
+void ItemWindow::computeButtonInfo(int posDisplay) {
+    string name = buttonNames[posDisplay];
+    if (equipping == true && posDisplay == 0) {
+        name = name + " 0" + " equipping";
+    }
+    if (unequiping == true && posDisplay == 1) {
+        name = name + " 1" + " unequiping";
+    }
+    setToolTipText2(name, "", ItemDisplaySection::BUTTONS);
+}
+
+void ItemWindow::equipButtonPressed(int posDisplay) {
+    if (posDisplay == 0) {
+        equipping = true;
+        unequiping = false;
+    } else if (posDisplay == 1) {
+        unequiping = true;
+        equipping = false;
+    } else {
+
+    }
 }
 
 void ItemWindow::computeEquipmentPanel() {
     if (m_ui->getSelection()->isComandable()) {
-        setHelmetLabel(true);
-        setPauldronsLabel(true);
-        setCuirassLabel(true);
-        setGauntletsLabel(true);
-        setRightHandLabel(true);
-        setLeftHandLabel(true);
-        setGreavesLabel(true);
-        setBootsLabel(true);
+        const Unit *u = m_ui->getSelection()->getFrontUnit();
+        const FactionType *ft = u->getFaction()->getType();
+        if (u->isBuilt()) {
+            for (int i = 0, j = 0; i < u->getType()->equipment.size(); ++i) {
+                for (int n = 0; n < u->getType()->equipment[i].getMax(); ++n) {
+                    const Texture2D *image = ft->getItemImage(0);
+                    int counter = 0;
+                    for (int l = 0; l < u->getEquippedItems().size(); ++l) {
+                        if (u->getEquippedItem(l)->getType()->getTypeTag() == u->getType()->equipment[i].getTypeTag()) {
+                            if (n > 0) {
+                                if (counter == n) {
+                                    image = u->getEquippedItem(l)->getType()->getImage();
+                                } else {
+                                    ++counter;
+                                }
+                            } else {
+                                image = u->getEquippedItem(l)->getType()->getImage();
+                            }
+                        }
+                    }
+                    setDownImage(j + buttonCellCount, image);
+                    setDownLighted(j + buttonCellCount, true);
+                    ++j;
+                }
+            }
+        }
     }
+}
+
+void ItemWindow::computeEquipmentInfo(int posDisplay) {
+    const Unit *u = m_ui->getSelection()->getFrontUnit();
+    int displayPos = posDisplay;
+    for (int i = 0; i < u->getType()->equipment.size(); ++i) {
+        for (int j = 0; j < u->getType()->equipment[i].getMax()-1; ++j) {
+            if (displayPos == 0) {
+                displayPos = i;
+                break;
+            } else {
+                --displayPos;
+            }
+        }
+    }
+    string name = u->getType()->equipment[displayPos].getTypeTag();
+    string body = "";
+    if (u->getEquipment()[posDisplay].getCurrent() == 1) {
+        name = u->getEquipment()[posDisplay].getName();
+        for (int i = 0; i < u->getEquippedItems().size(); ++i) {
+            if (u->getEquipment()[posDisplay].getName() == u->getEquippedItem(i)->getType()->getName()) {
+                body = u->getEquippedItem(i)->getLongDesc();
+                break;
+            }
+        }
+    }
+    setToolTipText2(name, body, ItemDisplaySection::EQUIPMENT);
+}
+
+void ItemWindow::equipmentButtonPressed(int posDisplay) {
+    if (unequiping == true) {
+        if (m_ui->getSelection()->isComandable()) {
+            const Unit *u = m_ui->getSelection()->getFrontUnit();
+            int displayPos = posDisplay;
+            for (int i = 0; i < u->getType()->equipment.size(); ++i) {
+                for (int j = 0; j < u->getType()->equipment[i].getMax()-1; ++j) {
+                    if (displayPos == 0) {
+                        displayPos = i;
+                        break;
+                    } else {
+                        --displayPos;
+                    }
+                }
+            }
+            string tagType = u->getType()->equipment[displayPos].getTypeTag();
+            Unit *unit = g_world.findUnitById(u->getId());
+            for (int i = 0; i < u->getEquippedItems().size(); ++i) {
+                if (u->getEquippedItem(i)->getType()->getTypeTag() == tagType) {
+                    unit->unequipItem(i);
+                    break;
+                }
+            }
+        }
+    }
+    unequiping = false;
+}
+
+void ItemWindow::inventoryButtonPressed(int posDisplay) {
+    if (equipping == true) {
+        if (m_ui->getSelection()->isComandable()) {
+            const Unit *u = m_ui->getSelection()->getFrontUnit();
+            string tagType = u->getStorage()[posDisplay].getTypeTag();
+            Unit *unit = g_world.findUnitById(u->getId());
+            for (int i = 0; i < u->getStoredItems().size(); ++i) {
+                if (u->getStoredItem(i)->getType()->getTypeTag() == tagType) {
+                    unit->equipItem(i);
+                    break;
+                }
+            }
+        }
+    }
+    equipping = false;
+}
+
+void ItemWindow::computeInventoryPanel() {
     if (m_ui->getSelection()->isComandable()) {
         const Unit *u = m_ui->getSelection()->getFrontUnit();
-        const FactionType *ft = u->getFaction()->getType();
         if (u->isBuilt()) {
-            for (int i = 0; i < ft->getItemImagesCount(); ++i) {
-                setDownImage(i + selectionCellCount + buttonCellCount, ft->getItemImage(i));
-                setDownLighted(i, true);
+            for (int i = 0; i < u->getStorage().size(); ++i) {
+                if (i < 24) {
+                const ItemType *type = u->getFaction()->getType()->getItemType(u->getStorage()[i].getName());
+                setDownImage(i + buttonCellCount + equipmentCellCount, type->getImage());
+                setDownLighted(i + buttonCellCount + equipmentCellCount, true);
+                }
             }
         }
     }
 }
 
-void ItemWindow::computeButtonsPanel() {
-    /*if (m_ui->getSelection()->isComandable()) {
-        const Unit *u = m_ui->getSelection()->getFrontUnit();
-        const FactionType *ft = u->getFaction()->getType();
-        if (u->isBuilt()) {
-            for (int i = 0; i < ft->getItemImagesCount(); ++i) {
-                setDownImage(i, ft->getItemImage(i));
-                setDownLighted(i, true);
-            }
-        }
-    }*/
-}
-
-void ItemWindow::computeSelectionPanel() {
-	if (m_ui->getSelection()->getCount() == 1) {
-		const Unit *unit = m_ui->getSelection()->getFrontUnit();
-		string name = unit->getFullName();
-		name = g_lang.getTranslatedFactionName(unit->getFaction()->getType()->getName(), name);
-		IF_DEBUG_EDITION(
-			name += ": " + intToStr(unit->getId());
-		)
-		setPortraitTitle(name);
-		setUpImage(0, m_ui->getSelection()->getUnit(0)->getType()->getImage());
-	}
+void ItemWindow::computeInventoryInfo(int posDisplay) {
+    const Unit *u = m_ui->getSelection()->getFrontUnit();
+    const ItemType *type = u->getFaction()->getType()->getItemType(u->getStorage()[posDisplay].getName());
+    stringstream ss;
+    ss << u->getStorage()[posDisplay].getCurrent();
+    string name = type->getName()+ " (" + u->getStorage()[posDisplay].getTypeTag() + ") " + ": " + ss.str();
+    setToolTipText2(name, "", ItemDisplaySection::INVENTORY);
 }
 
 ItemDisplayButton ItemWindow::computeIndex(Vec2i i_pos, bool screenPos) {
@@ -570,18 +502,20 @@ ItemDisplayButton ItemWindow::computeIndex(Vec2i i_pos, bool screenPos) {
 		i_pos = i_pos - getScreenPos();
 	}
 	Vec2i pos = i_pos;
-	Vec2i offsets[2] = { m_portraitOffset, m_commandOffset };
-	int counts[2] = { selectionCellCount, buttonCellCount };
-
-	for (int i=0; i < 5; ++i) {
+	Vec2i offsets[4] = { m_buttonOffset, m_equipmentOffset, m_inventoryOffset, m_descriptionOffset };
+	int counts[4] = { buttonCellCount, equipmentCellCount, inventoryCellCount, descriptionCellCount };
+	for (int i=0; i < 4; ++i) {
 		pos = i_pos - offsets[i];
-
-		if (pos.y >= 0 && pos.y < m_imageSize * cellHeightCount) {
+		if (pos.y >= 0 && pos.y < m_imageSize * (counts[i]/6)) {
 			int cellX = pos.x / m_imageSize;
-			int cellY = (pos.y / m_imageSize) % cellHeightCount;
+			int cellY = (pos.y / m_imageSize) % (counts[i]/6);
 			int index = cellY * cellWidthCount + cellX;
 			if (index >= 0 && index < counts[i]) {
-				if (ImageWidget::getImage(i * cellHeightCount * cellWidthCount + index)) {
+                int totalCells = 0;
+			    for (int l = i - 1; l >= 0; --l) {
+                    totalCells += counts[l];
+			    }
+				if (ImageWidget::getImage(totalCells + index)) {
 					return ItemDisplayButton(ItemDisplaySection(i), index);
 				}
 				return ItemDisplayButton(ItemDisplaySection::INVALID, invalidIndex);
@@ -589,6 +523,33 @@ ItemDisplayButton ItemWindow::computeIndex(Vec2i i_pos, bool screenPos) {
 		}
 	}
 	return ItemDisplayButton(ItemDisplaySection::INVALID, invalidIndex);
+}
+
+void ItemWindow::setToolTipText2(const string &hdr, const string &tip, ItemDisplaySection i_section) {
+	m_toolTip->setHeader(hdr);
+	m_toolTip->setTipText(tip);
+	m_toolTip->clearItems();
+	m_toolTip->setVisible(true);
+	Vec2i a_offset;
+	if (i_section == ItemDisplaySection::BUTTONS) {
+		a_offset = m_buttonOffset;
+	} else if (i_section == ItemDisplaySection::EQUIPMENT) {
+		a_offset = m_equipmentOffset;
+	} else if (i_section == ItemDisplaySection::INVENTORY) {
+		a_offset = m_inventoryOffset;
+	} else {
+
+	}
+	resetTipPos(a_offset);
+}
+
+void ItemWindow::tick() {
+    ItemDisplayButton itemBtn = getHoverButton();
+	if (itemBtn.m_section == ItemDisplaySection::EQUIPMENT) {
+        if (m_ui->getSelection()->getCount() == 1) {
+			computeEquipmentInfo(itemBtn.m_index);
+		}
+	}
 }
 
 bool ItemWindow::mouseDown(MouseButton btn, Vec2i pos) {
@@ -602,25 +563,11 @@ bool ItemWindow::mouseDown(MouseButton btn, Vec2i pos) {
 			if (m_hoverBtn.m_section == ItemDisplaySection::BUTTONS) {
 				m_pressedBtn = m_hoverBtn;
 				return true;
-			} else if (m_hoverBtn.m_section == ItemDisplaySection::SELECTION) {
-				RUNTIME_CHECK(m_ui->getSelection()->getCount() > m_hoverBtn.m_index);
-				const Unit *unit = m_ui->getSelection()->getUnit(m_hoverBtn.m_index);
-				RUNTIME_CHECK(unit != 0);
-				if (m_ui->getInput().isCtrlDown()) {
-					if (m_ui->getInput().isShiftDown()) {
-						m_ui->getSelection()->unSelectAllOfType(unit->getType());
-					} else {
-						m_ui->getSelection()->unSelect(unit);
-					}
-				} else if (m_ui->getInput().isShiftDown()) {
-					m_ui->getSelection()->unSelectAllNotOfType(unit->getType());
-				} else {
-					m_ui->getSelection()->clear();
-					m_ui->getSelection()->select(const_cast<Unit*>(unit));
-				}
-				m_ui->computeDisplay();
-				m_ui->computePortraitInfo(m_hoverBtn.m_index);
-				m_pressedBtn = m_hoverBtn = ItemDisplayButton(ItemDisplaySection::INVALID, invalidIndex);
+			} else if (m_hoverBtn.m_section == ItemDisplaySection::EQUIPMENT) {
+				m_pressedBtn = m_hoverBtn;
+				return true;
+			} else if (m_hoverBtn.m_section == ItemDisplaySection::INVENTORY) {
+				m_pressedBtn = m_hoverBtn;
 				return true;
 			} else {
 				m_pressedBtn = ItemDisplayButton(ItemDisplaySection::INVALID, invalidIndex);
@@ -641,7 +588,11 @@ bool ItemWindow::mouseUp(MouseButton btn, Vec2i pos) {
 				m_hoverBtn = computeIndex(pos, true);
 				if (m_hoverBtn == m_pressedBtn) {
 					if (m_hoverBtn.m_section == ItemDisplaySection::BUTTONS) {
-						m_ui->commandButtonPressed(m_hoverBtn.m_index);
+						equipButtonPressed(m_hoverBtn.m_index);
+					} else if (m_hoverBtn.m_section == ItemDisplaySection::EQUIPMENT) {
+                        equipmentButtonPressed(m_hoverBtn.m_index);
+					} else if (m_hoverBtn.m_section == ItemDisplaySection::INVENTORY) {
+                        inventoryButtonPressed(m_hoverBtn.m_index);
 					}
 					m_pressedBtn = ItemDisplayButton(ItemDisplaySection::INVALID, invalidIndex);
 					return true;
@@ -695,17 +646,20 @@ bool ItemWindow::mouseMove(Vec2i pos) {
 	if (Widget::isInsideBorders(pos)) {
 		ItemDisplayButton currBtn = computeIndex(pos, true);
 		if (currBtn != m_hoverBtn) {
-			if (currBtn.m_section == ItemDisplaySection::SELECTION) {
-				m_ui->computePortraitInfo(currBtn.m_index);
+			if (currBtn.m_section == ItemDisplaySection::BUTTONS) {
+                computeButtonInfo(currBtn.m_index);
+			} else if (currBtn.m_section == ItemDisplaySection::EQUIPMENT) {
+                computeEquipmentInfo(currBtn.m_index);
+			} else if (currBtn.m_section == ItemDisplaySection::INVENTORY) {
+                computeInventoryInfo(currBtn.m_index);
 			} else {
-
-			}
+                setToolTipText2("", "", ItemDisplaySection::INVALID);
+            }
 			m_hoverBtn = currBtn;
 			return true;
-		} else {
 		}
 	} else {
-
+		setToolTipText2("", "", ItemDisplaySection::INVALID);
 	}
 	return false;
 }
@@ -713,7 +667,7 @@ bool ItemWindow::mouseMove(Vec2i pos) {
 void ItemWindow::mouseOut() {
 	WIDGET_LOG( __FUNCTION__ << "()" );
 	m_hoverBtn = ItemDisplayButton(ItemDisplaySection::INVALID, invalidIndex);
-
+    setToolTipText2("", "", ItemDisplaySection::INVALID);
 	m_ui->invalidateActivePos();
 }
 

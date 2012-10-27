@@ -1,12 +1,9 @@
 // ==============================================================
-//	This file is part of Glest (www.glest.org)
+//	This file is part of The Mandate Engine
 //
-//	Copyright (C) 2001-2008 Martiño Figueroa
+//	Copyright (C) 2012	Matt Shafer-skelton <taomastercu@yahoo.com>
 //
-//	You can redistribute this code and/or modify it under
-//	the terms of the GNU General Public License as published
-//	by the Free Software Foundation; either version 2 of the
-//	License, or (at your option) any later version
+//  GPL V3, see source/licence.txt
 // ==============================================================
 
 #ifndef _GLEST_GAME_ITEMTYPE_H_
@@ -37,7 +34,7 @@ using Glest::Gui::Clicks;
 
 namespace Glest { namespace ProtoTypes {
 
-class ItemType : public ProducibleType, public UnitStats {
+class ItemType : public ProducibleType, public EnhancementType {
 
 private:
 	typedef vector<CreatedResource>     CreatedResources;
@@ -61,6 +58,10 @@ private:
 
 public:
 	string typeTag;
+    string getTypeTag() const {return typeTag;}
+
+	int qualityTier;
+    int getQualityTier() const {return qualityTier;}
 
     Resistances resistances;
 

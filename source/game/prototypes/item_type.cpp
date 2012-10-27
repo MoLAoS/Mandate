@@ -1,12 +1,9 @@
 // ==============================================================
-//	This file is part of Glest (www.glest.org)
+//	This file is part of The Mandate Engine
 //
-//	Copyright (C) 2001-2008 Marti?o Figueroa
+//	Copyright (C) 2012	Matt Shafer-skelton <taomastercu@yahoo.com>
 //
-//	You can redistribute this code and/or modify it under
-//	the terms of the GNU General Public License as published
-//	by the Free Software Foundation; either version 2 of the
-//	License, or (at your option) any later version
+//  GPL V3, see source/licence.txt
 // ==============================================================
 
 #include "pch.h"
@@ -80,14 +77,32 @@ bool ItemType::load(const string &dir, const TechTree *techTree, const FactionTy
 	try {
         const XmlNode *typeTagNode = parametersNode->getChild("type-tag");
         if (typeTagNode) {
-            string typeTag = typeTagNode->getAttribute("type")->getRestrictedValue();
+            typeTag = typeTagNode->getAttribute("type")->getRestrictedValue();
         }
     }
     catch (runtime_error e) {
 		g_logger.logXmlError(dir, e.what());
 		loadOk = false;
 	}
-	if (!UnitStats::load(parametersNode, dir, techTree, factionType)) {
+	try {
+        const XmlNode *tierNode = parametersNode->getChild("tier");
+        if (tierNode) {
+            qualityTier = tierNode->getAttribute("value")->getIntValue();
+        }
+    }
+    catch (runtime_error e) {
+		g_logger.logXmlError(dir, e.what());
+		loadOk = false;
+	}
+
+	try {
+        const XmlNode *enhancementNode = parametersNode->getChild("enhancement");
+        if (!EnhancementType::load(enhancementNode, dir, techTree, factionType)) {
+            loadOk = false;
+        }
+    }
+    catch (runtime_error e) {
+		g_logger.logXmlError(dir, e.what());
 		loadOk = false;
 	}
 	// images, requirements, costs...

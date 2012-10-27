@@ -15,13 +15,15 @@
 #include "unit_type.h"
 #include "upgrade_type.h"
 #include "item_type.h"
+#include "mandate_ai_personalities.h"
 #include "sound.h"
 
 using Shared::Sound::StrSound;
 using Shared::Sound::StaticSound;
 
-namespace Glest{ namespace ProtoTypes {
+using namespace Glest::Plan;
 
+namespace Glest{ namespace ProtoTypes {
 class TechTree;
 
 // =====================================================
@@ -57,6 +59,8 @@ private:
 	typedef vector<Texture2D*> ItemImages;
 	typedef vector<string> GuiFileNames;
 
+    typedef vector<Personality> Personalities;
+
 private:
     string guiDirectory;
     GuiFileNames guiFileNames;
@@ -74,8 +78,15 @@ private:
 	int enemyNoticeDelay;
 	UnitTypeSet loadableUnitTypes;
 	Pixmap2D *m_logoTeamColour, *m_logoRgba;
+	bool onHitExp;
+
+	string personalityDirectory;
+    Personalities personalities;
 
 public:
+    Personalities getPersonalities() const {return personalities;}
+
+    bool getOnHitExp() const {return onHitExp;}
 	//init
 	FactionType();
 

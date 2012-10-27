@@ -1,12 +1,9 @@
 // ==============================================================
-//	This file is part of Glest (www.glest.org)
+//	This file is part of The Mandate Engine
 //
-//	Copyright (C) 2001-2008 Marti?o Figueroa
+//	Copyright (C) 2012	Matt Shafer-skelton <taomastercu@yahoo.com>
 //
-//	You can redistribute this code and/or modify it under
-//	the terms of the GNU General Public License as published
-//	by the Free Software Foundation; either version 2 of the
-//	License, or (at your option) any later version
+//  GPL V3, see source/licence.txt
 // ==============================================================
 
 #include "pch.h"
@@ -46,9 +43,10 @@ using namespace ProtoTypes;
 // 	class Item
 // =====================================================
 
-void Item::init(const ItemType *newType, Faction *f) {
+void Item::init(int ident, const ItemType *newType, Faction *f) {
     type = newType;
     faction = f;
+    id = ident;
 
     currentSteps.resize(type->getCreatedResourceCount());
 	for (int i = 0; i < currentSteps.size(); ++i) {
@@ -84,17 +82,76 @@ string Item::getLongDesc() const {
 	stringstream ss;
 
 	const string factionName = type->getFactionType()->getName();
-	int armorBonus = getArmor() - type->getArmor();
-	// armor
-	ss << endl << lang.get("Armor") << ": " << type->getArmor();
-	if (armorBonus) {
-		ss << (armorBonus > 0 ? " +" : " ") << armorBonus;
+
+	ss << "Weapon Class: " << getType()->getTypeTag();
+	ss << endl << "Quality Tier: " << getType()->getQualityTier();
+	ss << endl << "Bonuses: ";
+	if (getType()->getMaxHp() > 0 || ((getType()->getMaxHpMult()-1)*100).intp() > 0) {
+        ss << endl << "Max Hp: +" << getType()->getMaxHp() << "/+" << ((getType()->getMaxHpMult()-1)*100).intp() << "%";
 	}
-	string armourName = lang.getTechString(type->getArmourType()->getName());
-	if (armourName == type->getArmourType()->getName()) {
-		armourName = formatString(armourName);
+    if (getType()->getHpBoost() > 0) {
+        ss << endl << "Heal Hp: +" << getType()->getHpBoost();
+    }
+	if (getType()->getHpRegeneration() > 0 || ((getType()->getHpRegenerationMult()-1)*100).intp() > 0) {
+        ss << endl << "Health Regen: " << getType()->getHpRegeneration() << "/+" << ((getType()->getHpRegenerationMult()-1)*100).intp() << "%";
 	}
-	ss << " (" << armourName << ")";
+ 	if (getType()->getMaxEp() > 0 || ((getType()->getMaxEpMult()-1)*100).intp() > 0) {
+        ss << endl << "Max Ep: +" << getType()->getMaxEp() << "/+" << ((getType()->getMaxEpMult()-1)*100).intp() << "%";
+ 	}
+ 	if (getType()->getEpBoost() > 0) {
+        ss << endl << "Heal Ep: +" << getType()->getEpBoost();
+ 	}
+ 	if (getType()->getEpRegeneration() > 0 || ((getType()->getEpRegenerationMult()-1)*100).intp() > 0) {
+        ss << endl << "Energy Regen: " << getType()->getEpRegeneration() << "/+" << ((getType()->getEpRegenerationMult()-1)*100).intp() << "%";
+ 	}
+ 	if (getType()->getMaxSp() > 0 || ((getType()->getMaxSpMult()-1)*100).intp() > 0) {
+        ss << endl << "Max Sp: +" << getType()->getMaxSp() << "/+" << ((getType()->getMaxSpMult()-1)*100).intp() << "%";
+ 	}
+ 	if (getType()->getSpBoost() > 0) {
+        ss << endl << "Heal Sp: +" << getType()->getSpBoost();
+ 	}
+  	if (getType()->getSpRegeneration() > 0 || ((getType()->getSpRegenerationMult()-1)*100).intp() > 0) {
+        ss << endl << "Shield Regen: " << getType()->getSpRegeneration() << "/+" << ((getType()->getSpRegenerationMult()-1)*100).intp() << "%";
+  	}
+ 	if (getType()->getMaxCp() > 0 || ((getType()->getMaxCpMult()-1)*100).intp() > 0) {
+        ss << endl << "Max Cp: +" << getType()->getMaxCp() << "/+" << ((getType()->getMaxCpMult()-1)*100).intp() << "%";
+ 	}
+ 	if (getType()->getSight() > 0 || ((getType()->getSightMult()-1)*100).intp() > 0) {
+        ss << endl << "Sight: +" << getType()->getSight() << "/+" << ((getType()->getSightMult()-1)*100).intp() << "%";
+ 	}
+ 	if (getType()->getMorale() > 0 || ((getType()->getMoraleMult()-1)*100).intp() > 0) {
+        ss << endl << "Morale: +" << getType()->getMorale() << "/+" << ((getType()->getMoraleMult()-1)*100).intp() << "%";
+ 	}
+ 	if (getType()->getAttackStrength() > 0 || ((getType()->getAttackStrengthMult()-1)*100).intp() > 0) {
+        ss << endl << "Attack Strength: +" << getType()->getAttackStrength() << "/+" << ((getType()->getAttackStrengthMult()-1)*100).intp() << "%";
+ 	}
+ 	if (getType()->getAttackLifeLeech() > 0 || ((getType()->getAttackLifeLeechMult()-1)*100).intp() > 0) {
+        ss << endl << "LifeLeech: +" << getType()->getAttackLifeLeech() << "/+" << ((getType()->getAttackLifeLeechMult()-1)*100).intp() << "%";
+ 	}
+ 	if (getType()->getAttackManaBurn() > 0 || ((getType()->getAttackManaBurnMult()-1)*100).intp() > 0) {
+        ss << endl << "Mana Burn: +" << getType()->getAttackManaBurn() << "/+" << ((getType()->getAttackManaBurnMult()-1)*100).intp() << "%";
+ 	}
+ 	if (getType()->getAttackCapture() > 0 || ((getType()->getAttackCaptureMult()-1)*100).intp() > 0) {
+        ss << endl << "Capture Power: +" << getType()->getAttackCapture() << "/+" << ((getType()->getAttackCaptureMult()-1)*100).intp() << "%";
+ 	}
+ 	if (getType()->getAttackRange() > 0 || ((getType()->getAttackRangeMult()-1)*100).intp() > 0) {
+        ss << endl << "Attack Range: +" << getType()->getAttackRange() << "/+" << ((getType()->getAttackRangeMult()-1)*100).intp() << "%";
+ 	}
+ 	if (getType()->getAttackSpeed() > 0 || ((getType()->getAttackSpeedMult()-1)*100).intp() > 0) {
+        ss << endl << "Attack Speed: +" << getType()->getAttackSpeed() << "/+" << ((getType()->getAttackSpeedMult()-1)*100).intp() << "%";
+ 	}
+ 	if (getType()->getMoveSpeed() > 0 || ((getType()->getMoveSpeedMult()-1)*100).intp() > 0) {
+        ss << endl << "Move Speed: +" << getType()->getMoveSpeed() << "/+" << ((getType()->getMoveSpeedMult()-1)*100).intp() << "%";
+ 	}
+ 	if (getType()->getProdSpeed() > 0 || ((getType()->getProdSpeedMult()-1)*100).intp() > 0) {
+        ss << endl << "Production Speed: +" << getType()->getProdSpeed() << "/+" << ((getType()->getProdSpeedMult()-1)*100).intp() << "%";
+ 	}
+ 	if (getType()->getRepairSpeed() > 0 || ((getType()->getRepairSpeedMult()-1)*100).intp() > 0) {
+        ss << endl << "Repair Speed: +" << getType()->getRepairSpeed() << "/+" << ((getType()->getRepairSpeedMult()-1)*100).intp() << "%";
+ 	}
+ 	if (getType()->getHarvestSpeed() > 0 || ((getType()->getHarvestSpeedMult()-1)*100).intp() > 0) {
+        ss << endl << "Harvest Speed: +" << getType()->getHarvestSpeed() << "/+" << ((getType()->getHarvestSpeedMult()-1)*100).intp() << "%";
+ 	}
 	if (type->resistances.size() > 0) {
 	ss << endl << lang.get("Resistances") << ":";
 	for (int i = 0; i < type->resistances.size(); ++i) {
@@ -168,7 +225,7 @@ string Item::getLongDesc() const {
 	// effects
 	//effects.streamDesc(ss);
 
-	return (shortDesc + ss.str());
+	return (ss.str());
 }
 
 }}//end namespace

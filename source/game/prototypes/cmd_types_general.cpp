@@ -2006,6 +2006,7 @@ void GarrisonCommandType::update(Unit *unit) const {
 		closest->setPos(Vec2i(-1));
 		g_userInterface.getSelection()->unSelect(closest);
 		unit->getGarrisonedUnits().push_back(closest->getId());
+		unit->computeTotalUpgrade();
 		unitsToGarrison.erase(std::find(unitsToGarrison.begin(), unitsToGarrison.end(), closest->getId()));
 		unit->setCurrSkill(loadSkillType);
 		unit->clearPath();
@@ -2133,8 +2134,9 @@ void DegarrisonCommandType::update(Unit *unit) const {
 				g_map.putUnitCells(targetUnit, targetUnit->getPos());
 				targetUnit->setGarrisoned(0);
 				unit->getUnitsToDegarrison().pop_front();
-            unit->getGarrisonedUnits().erase(std::find(unit->getGarrisonedUnits().begin(), unit->getGarrisonedUnits().end(), targetUnit->getId()));
+                unit->getGarrisonedUnits().erase(std::find(unit->getGarrisonedUnits().begin(), unit->getGarrisonedUnits().end(), targetUnit->getId()));
 				unit->StateChanged(unit);
+				unit->computeTotalUpgrade();
 				// keep unloading, curr skill is ok
 			} else {
 				// must be crowded, stop unloading

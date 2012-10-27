@@ -32,10 +32,10 @@
 #include "debug_widgets.h"
 #include "game_menu.h"
 
-#include "core.h"
-#include "debugger.h"
-#include "system_interface.h"
-#include "render_interface.h"
+//#include "core.h"
+//#include "debugger.h"
+//#include "system_interface.h"
+//#include "render_interface.h"
 
 // weather system not yet ready
 //#include "../physics/weather.h"
@@ -58,7 +58,7 @@ struct ScriptMessage {
 	ScriptMessage(const string &header, const string &text) : header(header), text(text) {}
 };
 
-using namespace Rocket;
+//using namespace Rocket;
 
 // =====================================================
 // 	class GameState
@@ -82,9 +82,9 @@ protected:
 	GameCamera gameCamera;
 
     //rocket
-    ShellRenderInterfaceOpenGL opengl_renderer;
+    /*ShellRenderInterfaceOpenGL opengl_renderer;
     MandateSystemInterface system_interface;
-    Rocket::Core::Context* context;
+    Rocket::Core::Context* context;*/
 
 	//misc
 	Checksum checksum;
@@ -133,7 +133,7 @@ public:
 	DebugStats* getDebugStats()             {return &m_debugStats;}
 	Vec2i getMousePos() const				{return Vec2i(mouseX, mouseY);}
 
-    Rocket::Core::Context* getContext() const {return context;}
+    //Rocket::Core::Context* getContext() const {return context;}
 
 	// ProgramState implementation
 

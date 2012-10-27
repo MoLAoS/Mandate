@@ -52,7 +52,7 @@ using namespace Shared::Graphics;
 using namespace Shared::Util;
 using namespace Shared::Platform;
 
-using namespace Rocket;
+//using namespace Rocket;
 
 namespace Glest { namespace Gui {
 
@@ -210,7 +210,7 @@ void GameState::init() {
 	simInterface->initWorld();
 	gui.init();
 
-	Rocket::Core::SetRenderInterface(&opengl_renderer);
+	/*Rocket::Core::SetRenderInterface(&opengl_renderer);
 	Rocket::Core::SetSystemInterface(&system_interface);
 	Rocket::Core::Initialise();
 
@@ -218,7 +218,7 @@ void GameState::init() {
     if (context == NULL) {
 		Rocket::Core::Shutdown();
 	}
-	Rocket::Debugger::Initialise(context);
+	Rocket::Debugger::Initialise(context);*/
 
 	gameCamera.init(g_map.getW(), g_map.getH());
 	Vec2i v(g_map.getW() / 2, g_map.getH() / 2);
@@ -1021,7 +1021,7 @@ void GameState::render2d() {
 		//	gui.getDisplay()->getColor(), m_scriptDisplayPos.x, m_scriptDisplayPos.y, false);
 	}
 
-	context->Render();
+	//context->Render();
 
 
 }

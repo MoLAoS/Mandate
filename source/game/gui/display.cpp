@@ -277,7 +277,7 @@ void Display::layout() {
 	m_sizes.hierarchySize = Vec2i(x, y);
 
 	x = 0;
-	y += 24;
+	y += -192;
 	TextWidget::setTextPos(Vec2i(x, y), 4); // (4) 'Transported' label
 	y += int(m_fontMetrics->getHeight() + 1.f);
 	m_carryImageOffset = Vec2i(x, y);

@@ -1,12 +1,9 @@
 // ==============================================================
-//	This file is part of Glest (www.glest.org)
+//	This file is part of The Mandate Engine
 //
-//	Copyright (C) 2001-2008 Martiño Figueroa
+//	Copyright (C) 2012	Matt Shafer-skelton <taomastercu@yahoo.com>
 //
-//	You can redistribute this code and/or modify it under
-//	the terms of the GNU General Public License as published
-//	by the Free Software Foundation; either version 2 of the
-//	License, or (at your option) any later version
+//  GPL V3, see source/licence.txt
 // ==============================================================
 
 #include "pch.h"
@@ -192,6 +189,16 @@ void CreatedItem::init(const ItemType *it, int amount, int amount_plus, float am
     m_amount_plus = amount_plus;
     m_amount_multiply = amount_multiply;
     m_cap = cap;
+}
+
+// =====================================================
+// 	class Equipment
+// =====================================================
+void Equipment::init(int newMax, int newCurrent, string newName, string newTypeTag) {
+    max = newMax;
+    current = newCurrent;
+    typeTag = newTypeTag;
+    name = newName;
 }
 
 }}//end namespace
