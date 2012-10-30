@@ -201,4 +201,12 @@ void Equipment::init(int newMax, int newCurrent, string newName, string newTypeT
     name = newName;
 }
 
+// =====================================================
+// 	class Attackers
+// =====================================================
+void Attacker::init(Unit *unit, int value) {
+    attacker = unit;
+    timer = value;
+}
+
 }}//end namespace

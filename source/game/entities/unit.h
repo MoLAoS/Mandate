@@ -146,6 +146,10 @@ public:
 
 	typedef vector<UnitsOwned> OwnedUnits;
 
+	typedef vector<string> BuffsApplied;
+
+	typedef vector<Attacker> Attackers;
+
 /**< system for localized resources */
 private:
     typedef vector<StoredResource> SResources;
@@ -183,6 +187,7 @@ public:
 	StoredItems getStoredItems() const {return storedItems;}
 	Item *getStoredItem(int i) const {return &getFaction()->items[storedItems[i]];}
     void accessStorageAdd(int ident);
+    void accessStorageRemove(int ident);
     void accessStorageExchange(Unit *unit);
     StoredItems getEquippedItems() const {return equippedItems;}
     Item *getEquippedItem(int i) const {return &getFaction()->items[equippedItems[i]];}
@@ -211,6 +216,7 @@ private:
 	Field field;
 
 	string currentFocus;
+	Unit *goalStructure;
 public:
     Field getField() const		  {return field;}
 	void setField(Field newField) { field = newField; }
@@ -220,6 +226,13 @@ public:
 
 	string getCurrentFocus() const {return currentFocus;}
 	void setCurrentFocus(string newFocus) {currentFocus = newFocus;}
+	Unit *getGoalStructure() const {return goalStructure;}
+	void setGoalStructure(Unit *unit) {goalStructure = unit;}
+	void shop();
+
+	Attackers attackers;
+
+	UnitDirection previousDirection;
 
     CurrentStep currentSteps; /**< current timer step for resource creation */
     CurrentStep currentUnitSteps; /**< current timer step for unit creation */
@@ -233,6 +246,8 @@ public:
     Unit *owner;
     void setOwner(Unit *unit) {owner = unit;}
     OwnedUnits ownedUnits;
+
+    BuffsApplied buffNames;
 
     Resistances resistances;
 

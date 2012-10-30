@@ -14,6 +14,18 @@ using Shared::Util::EnumNames;
 
 namespace Glest { namespace Entities {
 
+/** Direction States */
+STRINGY_ENUM(UnitDirection,
+    NORTH,
+    NORTHWEST,
+    WEST,
+    NORTHEAST,
+    SOUTHWEST,
+    EAST,
+    SOUTHEAST,
+    SOUTH
+);
+
 /** Upgrade states */
 STRINGY_ENUM( UpgradeState,
 	UPGRADING,

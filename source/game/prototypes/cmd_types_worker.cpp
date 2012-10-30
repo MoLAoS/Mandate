@@ -1162,11 +1162,19 @@ void TransportCommandType::goToStore(Unit *unit, Unit *store, Unit *producer) co
                 }
                 if (unit->getSResource(storeType)->getAmount() >= resourceAmount) {
                 unit->incResourceAmount(storeType, -resourceAmount);
-                store->incResourceAmount(storeType, resourceAmount);
+                    if (unit->getType()->personality == "collector") {
+                        store->getFaction()->incResourceAmount(storeType, resourceAmount);
+                    } else {
+                        store->incResourceAmount(storeType, resourceAmount);
+                    }
                 } else {
-                resourceAmount = unit->getSResource(storeType)->getAmount();
-                unit->incResourceAmount(storeType, -resourceAmount);
-                store->incResourceAmount(storeType, resourceAmount);
+                    resourceAmount = unit->getSResource(storeType)->getAmount();
+                    unit->incResourceAmount(storeType, -resourceAmount);
+                    if (unit->getType()->personality == "collector") {
+                        store->getFaction()->incResourceAmount(storeType, resourceAmount);
+                    } else {
+                        store->incResourceAmount(storeType, resourceAmount);
+                    }
                 }
             }
         }
@@ -1242,12 +1250,15 @@ void TransportCommandType::update(Unit *unit) const {
 	assert(command->getType() == this);
 	Vec2i targetPos;
 	Map *map = g_world.getMap();
-	if (unit->productionRoute.getStoreId() != 0 && unit->productionRoute.getProducerId()) {
+	if (unit->productionRoute.getStoreId() != -1 && unit->productionRoute.getProducerId() != -1) {
 	    Unit *store = g_world.getUnit(unit->productionRoute.getStoreId());
 	    Unit *producer = g_world.getUnit(unit->productionRoute.getProducerId());
         if (unit->productionRoute.getDestination() == store->getPos()) {
             if (unit->travel(unit->productionRoute.getDestination(), m_moveLoadedSkillType) == TravelState::ARRIVED) {
             goToStore(unit, store, producer);
+            if (unit->getCurrentFocus() == "collect") {
+                unit->productionRoute.setProducerId(-1);
+            }
             unit->productionRoute.setDestination(producer->getPos());
             }
         }

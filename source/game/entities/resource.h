@@ -182,13 +182,6 @@ private:
 	float m_amount_multiply;
 
 public:
-
-	ItemMade() : m_type(0), m_amount(0), m_amount_plus(0), m_amount_multiply(0), m_item(0), m_name(0) {}
-
-	ItemMade(const ItemMade &that) : m_type(that.m_type), m_amount(that.m_amount),
-	m_amount_plus(that.m_amount_plus), m_amount_multiply(that.m_amount_multiply),
-	m_item(that.m_item), m_name(that.m_name) {}
-
 	void init(const XmlNode *n, const TechTree *tt);
 	void init(const ItemType *it, string name, int amount, int amount_plus, float amount_multiply);
 

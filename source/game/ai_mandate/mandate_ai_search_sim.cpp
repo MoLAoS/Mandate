@@ -15,207 +15,66 @@ using namespace Glest::Search;
 
 namespace Glest { namespace Plan {
 // ===============================
-// 	class ExplorationMap
+// 	class ExploredMap
 // ===============================
-DirectionalPosition ExploredMap::findNearestUnexploredTile(Vec2i unitPos, Faction *faction, Direction direction) {
-    DirectionalPosition returnType;
-    returnType.setPositionResult(Vec2i(NULL));
-    returnType.setLastDirection(direction);
-    bool initialDirection = false;
-    if (direction == Direction::EAST || direction == Direction::SOUTH
-        || direction == Direction::WEST || direction == Direction::NORTH ) {
-        initialDirection = true;
-    }
+Vec2i ExploredMap::findNearestUnexploredTile(Vec2i unitPos, Faction *faction, UnitDirection direction) {
+    UnitDirection newDirection = direction;
+    Vec2i returnType = Vec2i(NULL);
     int posX = unitPos.x;
     int posY = unitPos.y;
     int realMaxX = g_world.getMap()->getW() - 5;
     int realMaxY = g_world.getMap()->getH() - 5;
     Tile *tile;
     Cell *cell;
-
-    if (direction == Direction::EAST && initialDirection == true) {
-        for (int j = 0; j < 100; ++j) {
-            int xPos = posX + j;
-            int yPos = posY;
-            if (xPos < realMaxX && yPos < realMaxY && xPos > 4 && yPos > 4) {
-                tile = g_world.getMap()->getTile(Map::toTileCoords(Vec2i(xPos, yPos)));
-                if (tile->isExplored(faction->getTeam())) {
-                    cell = g_world.getMap()->getCell(xPos, yPos);
-                    if (tile->isFree() && cell->isFree(Zone::LAND)) {
-                        returnType.setPositionResult(Vec2i(xPos, yPos));
-                        returnType.setLastDirection(Direction::EAST);
-                    } else {
-                        if (returnType.getPositionResult() != Vec2i(NULL)) {
-                            return returnType;
-                        }
+    int x = 0;
+    int y = 0;
+    if (newDirection == UnitDirection::NORTH || newDirection == UnitDirection::NORTHEAST || newDirection == UnitDirection::NORTHWEST) {
+        if (posY == 5) {
+            newDirection = UnitDirection::SOUTH;
+        }
+    }
+    if (newDirection == UnitDirection::SOUTH || newDirection == UnitDirection::SOUTHEAST || newDirection == UnitDirection::SOUTHWEST) {
+        if (posY == 122) {
+            newDirection = UnitDirection::NORTH;
+        }
+    }
+    if (newDirection == UnitDirection::EAST || newDirection == UnitDirection::NORTHEAST || newDirection == UnitDirection::SOUTHEAST) {
+        if (posX == 122) {
+            newDirection = UnitDirection::WEST;
+        }
+    }
+    if (newDirection == UnitDirection::WEST || newDirection == UnitDirection::NORTHWEST || newDirection == UnitDirection::SOUTHWEST) {
+        if (posX == 5) {
+            newDirection = UnitDirection::EAST;
+        }
+    }
+    switch (newDirection) {
+        case UnitDirection::NORTH: x = 0, y = -1; break;
+        case UnitDirection::SOUTH: x = 0, y = 1; break;
+        case UnitDirection::EAST: x = 1, y = 0; break;
+        case UnitDirection::WEST: x = -1, y = 0; break;
+        case UnitDirection::NORTHWEST: x = -1, y = -1; break;
+        case UnitDirection::NORTHEAST: x = 1, y = -1; break;
+        case UnitDirection::SOUTHWEST: x = -1, y = 1; break;
+        case UnitDirection::SOUTHEAST: x = 1, y = 1; break;
+    }
+    for (int j = 0; j < 5; ++j) {
+        int xPos = posX + j * x;
+        int yPos = posY + j * y;
+        if (xPos < realMaxX && yPos < realMaxY && xPos > 4 && yPos > 4) {
+            tile = g_world.getMap()->getTile(Map::toTileCoords(Vec2i(xPos, yPos)));
+            if(tile->isExplored(faction->getTeam())) {
+                cell = g_world.getMap()->getCell(xPos, yPos);
+                if (tile->isFree() && cell->isFree(Zone::LAND)) {
+                    returnType = Vec2i(xPos, yPos);
+                } else {
+                    if (returnType != Vec2i(NULL)) {
+                        return returnType;
                     }
                 }
             }
         }
     }
-    if (direction == Direction::SOUTH && initialDirection == true) {
-        for (int j = 0; j < 100; ++j) {
-            int xPos = posX;
-            int yPos = posY + j;
-            if (xPos < realMaxX && yPos < realMaxY && xPos > 4 && yPos > 4) {
-                tile = g_world.getMap()->getTile(Map::toTileCoords(Vec2i(xPos, yPos)));
-                if(tile->isExplored(faction->getTeam())) {
-                    cell = g_world.getMap()->getCell(xPos, yPos);
-                    if (tile->isFree() && cell->isFree(Zone::LAND)) {
-                        returnType.setPositionResult(Vec2i(xPos, yPos));
-                        returnType.setLastDirection(Direction::SOUTH);
-                    } else {
-                        if (returnType.getPositionResult() != Vec2i(NULL)) {
-                            return returnType;
-                        }
-                    }
-
-                }
-            }
-        }
-    }
-    if (direction == Direction::WEST && initialDirection == true) {
-        for (int j = 0; j < 100; ++j) {
-            int xPos = posX - j;
-            int yPos = posY;
-            if (xPos < realMaxX && yPos < realMaxY && xPos > 4 && yPos > 4) {
-                tile = g_world.getMap()->getTile(Map::toTileCoords(Vec2i(xPos, yPos)));
-                if (tile->isExplored(faction->getTeam())) {
-                    cell = g_world.getMap()->getCell(xPos, yPos);
-                    if (tile->isFree() && cell->isFree(Zone::LAND)) {
-                        returnType.setPositionResult(Vec2i(xPos, yPos));
-                        returnType.setLastDirection(Direction::WEST);
-                    } else {
-                        if (returnType.getPositionResult() != Vec2i(NULL)) {
-                            return returnType;
-                        }
-                    }
-                }
-            }
-        }
-    }
-    if (direction == Direction::NORTH && initialDirection == true) {
-        for (int j = 0; j < 100; ++j) {
-            int xPos = posX;
-            int yPos = posY - j;
-            if (xPos < realMaxX && yPos < realMaxY && xPos > 4 && yPos > 4) {
-                tile = g_world.getMap()->getTile(Map::toTileCoords(Vec2i(xPos, yPos)));
-                if(tile->isExplored(faction->getTeam())) {
-                    cell = g_world.getMap()->getCell(xPos, yPos);
-                    if (tile->isFree() && cell->isFree(Zone::LAND)) {
-                        returnType.setPositionResult(Vec2i(xPos, yPos));
-                        returnType.setLastDirection(Direction::NORTH);
-                    } else {
-                        if (returnType.getPositionResult() != Vec2i(NULL)) {
-                            return returnType;
-                        }
-                    }
-                }
-            }
-        }
-    }
-        for (int j = 0; j < 100; ++j) {
-            int xPos = posX - j;
-            int yPos = posY;
-            if (xPos < realMaxX && yPos < realMaxY && xPos > 4 && yPos > 4) {
-                tile = g_world.getMap()->getTile(Map::toTileCoords(Vec2i(xPos, yPos)));
-                if (tile->isExplored(faction->getTeam())) {
-                    cell = g_world.getMap()->getCell(xPos, yPos);
-                    if (tile->isFree() && cell->isFree(Zone::LAND)) {
-                        returnType.setPositionResult(Vec2i(xPos, yPos));
-                        returnType.setLastDirection(Direction::WEST);
-                    } else {
-                        if (returnType.getPositionResult() != Vec2i(NULL)) {
-                            return returnType;
-                        }
-                    }
-                }
-            }
-        }
-        for (int j = 0; j < 100; ++j) {
-            int xPos = posX + j;
-            int yPos = posY;
-            if (xPos < realMaxX && yPos < realMaxY && xPos > 4 && yPos > 4) {
-                tile = g_world.getMap()->getTile(Map::toTileCoords(Vec2i(xPos, yPos)));
-                if (tile->isExplored(faction->getTeam())) {
-                    cell = g_world.getMap()->getCell(xPos, yPos);
-                    if (tile->isFree() && cell->isFree(Zone::LAND)) {
-                        returnType.setPositionResult(Vec2i(xPos, yPos));
-                        returnType.setLastDirection(Direction::EAST);
-                    } else {
-                        if (returnType.getPositionResult() != Vec2i(NULL)) {
-                            return returnType;
-                        }
-                    }
-                }
-            }
-        }
-        for (int j = 0; j < 100; ++j) {
-            int xPos = posX;
-            int yPos = posY + j;
-            if (xPos < realMaxX && yPos < realMaxY && xPos > 4 && yPos > 4) {
-                tile = g_world.getMap()->getTile(Map::toTileCoords(Vec2i(xPos, yPos)));
-                if(tile->isExplored(faction->getTeam())) {
-                    cell = g_world.getMap()->getCell(xPos, yPos);
-                    if (tile->isFree() && cell->isFree(Zone::LAND)) {
-                        returnType.setPositionResult(Vec2i(xPos, yPos));
-                        returnType.setLastDirection(Direction::SOUTH);
-                    } else {
-                        if (returnType.getPositionResult() != Vec2i(NULL)) {
-                            return returnType;
-                        }
-                    }
-
-                }
-            }
-        }
-        for (int j = 0; j < 100; ++j) {
-            int xPos = posX;
-            int yPos = posY - j;
-            if (xPos < realMaxX && yPos < realMaxY && xPos > 4 && yPos > 4) {
-                tile = g_world.getMap()->getTile(Map::toTileCoords(Vec2i(xPos, yPos)));
-                if(tile->isExplored(faction->getTeam())) {
-                    cell = g_world.getMap()->getCell(xPos, yPos);
-                    if (tile->isFree() && cell->isFree(Zone::LAND)) {
-                        returnType.setPositionResult(Vec2i(xPos, yPos));
-                        returnType.setLastDirection(Direction::NORTH);
-                    } else {
-                        if (returnType.getPositionResult() != Vec2i(NULL)) {
-                            return returnType;
-                        }
-                    }
-                }
-            }
-        }
-
-        /*if (i % 2 == 0 && g_world.getMap()->isInside(Vec2i(posX + (i + 1), posY + (i + 1)))) {
-            tile = g_world.getMap()->getTile(Map::toTileCoords(Vec2i(posX + (i + 1), posY + (i + 1))));
-            if(tile->isExplored(faction->getTeam()) && tile->isFree()) {
-                returnPos = Vec2i(posX + (i + 1), posY + (i + 1));
-                break;
-            }
-        }
-        if (i % 2 == 0 && g_world.getMap()->isInside(Vec2i(posX + (i + 1), posY - (i + 1)))) {
-            tile = g_world.getMap()->getTile(Map::toTileCoords(Vec2i(posX + (i + 1), posY - (i + 1))));
-            if(tile->isExplored(faction->getTeam()) && tile->isFree()) {
-                returnPos = Vec2i(posX + (i + 1), posY - (i + 1));
-                break;
-            }
-        }
-        if (i % 2 == 0 && g_world.getMap()->isInside(Vec2i(posX - (i + 1), posY + (i + 1)))) {
-            tile = g_world.getMap()->getTile(Map::toTileCoords(Vec2i(posX - (i + 1), posY + (i + 1))));
-            if(tile->isExplored(faction->getTeam()) && tile->isFree()) {
-                returnPos = Vec2i(posX - (i + 1), posY + (i + 1));
-                break;
-            }
-        }
-        if (i % 2 == 0 && g_world.getMap()->isInside(Vec2i(posX - (i + 1), posY - (i + 1)))) {
-            tile = g_world.getMap()->getTile(Map::toTileCoords(Vec2i(posX - (i + 1), posY - (i + 1))));
-            if(tile->isExplored(faction->getTeam()) && tile->isFree()) {
-                returnPos = Vec2i(posX - (i + 1), posY - (i + 1));
-                break;
-            }
-        }*/
     return returnType;
 }
 

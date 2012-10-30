@@ -64,7 +64,16 @@ public:
     GoalList getGoalList() const {return goalList;}
     void init();
     void computeAction(Unit *unit, Focus focus);
-
+    void ownerLoad(Unit*unit);
+    void ownerUnload(Unit *unit);
+    void shop(Unit *unit);
+    Unit *findShop(Unit *unit);
+    Unit *findNearbyAlly(Unit *unit, Focus focus);
+    const CommandType *selectHealSpell(Unit *unit, Unit* target);
+    const CommandType *selectBuffSpell(Unit *unit, Unit* target);
+    Unit *findLair(Unit *unit);
+    Unit *findCreature(Unit *unit);
+    UnitDirection newDirection(UnitDirection oldDirection);
 };
 
 }}

@@ -131,10 +131,12 @@ public:
 class RequirableType: public DisplayableType {
 public:
 	typedef vector<const UnitType*> UnitReqs;
+	typedef vector<const ItemType*> ItemReqs;
 	typedef vector<const UpgradeType*> UpgradeReqs;
 
 protected:
 	UnitReqs unitReqs;			//needed units
+	ItemReqs itemReqs;			//needed items
 	UpgradeReqs upgradeReqs;	//needed upgrades
 	int subfactionsReqs;		//bitmask of subfactions producable is restricted to
 
@@ -148,8 +150,10 @@ public:
 	//get
 	int getUpgradeReqCount() const						{return upgradeReqs.size();}
 	int getUnitReqCount() const							{return unitReqs.size();}
+	int getItemReqCount() const							{return itemReqs.size();}
 	const UpgradeType *getUpgradeReq(int i) const		{return upgradeReqs[i];}
 	const UnitType *getUnitReq(int i) const				{return unitReqs[i];}
+	const ItemType *getItemReq(int i) const				{return itemReqs[i];}
 	int getSubfactionsReqs() const						{return subfactionsReqs;}
 	bool isAvailableInSubfaction(int subfaction) const	{return (bool)(1 << subfaction & subfactionsReqs);}
 

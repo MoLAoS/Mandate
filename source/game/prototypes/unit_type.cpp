@@ -203,6 +203,9 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 	// armor type string
 
     // nodes and traits relating to player owned ai units, mainly for majesty style games
+
+    inhuman = false;
+
 	try {
 	    const XmlNode *inhumanNode = parametersNode->getChild("control", 0, false);
 	    if (inhumanNode) {
@@ -512,6 +515,7 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 					    scope = false;
 					}
 					processes[i].setScope(scope);
+					// resources consumed
 					const XmlNode *costsNode = processNode->getChild("costs");
 					processes[i].costs.resize(costsNode->getChildCount());
 					for (int j = 0; j < processes[i].costs.size(); ++j) {
@@ -520,7 +524,9 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 					int amount = costNode->getAttribute("amount")->getIntValue();
 					processes[i].costs[j].init(techTree->getResourceType(name), name, amount, 0, 0);
 					}
-					const XmlNode *productsNode = processNode->getChild("products");
+					// resources produced
+					const XmlNode *productsNode = processNode->getChild("products", 0, false);
+					if (productsNode) {
 					processes[i].products.resize(productsNode->getChildCount());
 					for (int k = 0; k < processes[i].products.size(); ++k) {
                     const XmlNode *productNode = productsNode->getChild("product", k);
@@ -528,7 +534,10 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 					int amount = productNode->getAttribute("amount")->getIntValue();
                     processes[i].products[k].init(techTree->getResourceType(name), name, amount, 0, 0);
 					}
-					const XmlNode *itemsNode = processNode->getChild("items");
+					}
+					// items produced
+					const XmlNode *itemsNode = processNode->getChild("items", 0, false);
+					if (itemsNode) {
 					processes[i].items.resize(itemsNode->getChildCount());
 					for (int l = 0; l < processes[i].items.size(); ++l) {
                     const XmlNode *itemNode = productsNode->getChild("item", l);
@@ -536,6 +545,8 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 					int amount = itemNode->getAttribute("amount")->getIntValue();
                     processes[i].items[l].init(factionType->getItemType(name), name, amount, 0, 0);
 					}
+					}
+					//  timer
 					int steps = processNode->getAttribute("timer")->getIntValue();
 					processTimers[i].init(steps, 0);
 				}

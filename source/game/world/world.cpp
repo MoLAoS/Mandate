@@ -388,6 +388,25 @@ void World::hit(Unit *attacker, const AttackSkillType* ast, const Vec2i &targetP
 			attacked = map.getCell(targetPos)->getUnit(targetField);
 		}
 		if (attacked && attacked->isAlive()) {
+		    if (attacked->attackers.size() == 0) {
+		        Attacker newAttacker;
+                newAttacker.init(attacker, 0);
+                attacked->attackers.push_back(newAttacker);
+		    } else {
+		        bool current = false;
+                for (int i = 0; i < attacked->attackers.size(); ++i) {
+                    if (attacked->attackers[i].getUnit() == attacker) {
+                        attacked->attackers[i].resetTimer();
+                        current = true;
+                        break;
+                    }
+                }
+                if (current == false) {
+                    Attacker newAttacker;
+                    newAttacker.init(attacker, 0);
+                    attacked->attackers.push_back(newAttacker);
+                }
+		    }
 			damage(attacker, ast, attacked, 0);
 			lifeleech(attacker, ast, attacked, 0); /**< Added by MoLAoS, lifeleech */
 			manaburn(attacker, ast, attacked, 0); /**< Added by MoLAoS, manaburn */
@@ -645,6 +664,29 @@ void World::tick() {
 	}
 
 	cartographer->tick();
+
+	for (int i = 0; i < getFactionCount(); ++i) {
+		for (int j = 0; j < getFaction(i)->getUnitCount(); ++j) {
+		    Unit *unit = getFaction(i)->getUnit(j);
+		    for (int k = 0; k < unit->attackers.size(); ++k) {
+                unit->attackers[k].incTimer();
+                if (unit->attackers[k].getTimer() == 4) {
+                    unit->attackers.erase(unit->attackers.begin() + k);
+                }
+		    }
+		}
+	}
+
+	for (int i = 0; i < getFactionCount(); ++i) {
+		for (int j = 0; j < getFaction(i)->getUnitCount(); ++j) {
+		    Unit *unit = getFaction(i)->getUnit(j);
+		    for (int k = 0; k < unit->attackers.size(); ++k) {
+                if (!unit->attackers[k].getUnit()->isAlive()) {
+                    unit->attackers.erase(unit->attackers.begin() + k);
+                }
+		    }
+		}
+	}
 
 	//apply regen/degen
 	for (int i = 0; i < getFactionCount(); ++i) {

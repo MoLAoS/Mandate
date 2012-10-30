@@ -153,9 +153,9 @@ private:
     Vec2i destination;
 
 public:
-    int getStoreId() {return storeId;}
-    int getProducerId() {return producerId;}
-    Vec2i getDestination() {return destination;}
+    int getStoreId() const {return storeId;}
+    int getProducerId() const {return producerId;}
+    Vec2i getDestination() const {return destination;}
 
     void setStoreId(int v) {storeId = v;}
     void setProducerId(int v) {producerId = v;}
@@ -233,6 +233,21 @@ public:
     string getTypeTag() const {return typeTag;}
 
     void init(int max, int current, string name, string typeTag);
+};
+
+// =====================================================
+// 	class Attacker
+// =====================================================
+class Attacker {
+private:
+    Unit *attacker;
+    int timer;
+public:
+    Unit *getUnit() const {return attacker;}
+    int getTimer() const {return timer;}
+    void incTimer() { ++timer; }
+    void resetTimer() {timer = 0;}
+    void init(Unit* unit, int value);
 };
 
 }}//end namespace

@@ -222,6 +222,20 @@ string Item::getLongDesc() const {
 			ss << u.getAmount() << " " << unitName << "s " <<lang.get("Timer") << ": " << cUStep << "/" << tR.getTimerValue();
 		}
 	}
+	// can create units
+	if (type->getCreatedItemCount() > 0) {
+		for (int i = 0; i < type->getCreatedItemCount(); ++i) {
+			CreatedItem item = type->getCreatedItem(i, getFaction());
+			string itemName = lang.getTechString(item.getType()->getName());
+			Timer tR = type->getCreatedItemTimer(i, getFaction());
+			int cIStep = currentItemSteps[i].currentStep;
+			if (itemName == item.getType()->getName()) {
+				itemName = formatString(itemName);
+			}
+			ss << endl << lang.get("Create") << ": ";
+			ss << item.getAmount() << " " << itemName << "s " <<lang.get("Timer") << ": " << cIStep << "/" << tR.getTimerValue();
+		}
+	}
 	// effects
 	//effects.streamDesc(ss);
 

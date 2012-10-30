@@ -34,11 +34,20 @@ void MandateAISim::init(World *newWorld, Faction *newFaction) {
 
 Focus MandateAISim::getTopGoal(Unit *unit, string personality) {
     Focus topGoal;
+    topGoal.init("empty", NULL);
     for (int i = 0; i < getPersonalities().size(); ++i) {
         if (personality == getPersonality(i).getPersonalityName()) {
             for (int k = 0; k < getPersonality(i).getGoals().size(); ++k) {
-                if (getPersonality(i).getGoal(k).getName() == "live") {
-                    if (unit->getHp() <= (unit->getMaxHp() / 2)) {
+                Focus goal = getPersonality(i).getGoal(k);
+                string goalName = goal.getName();
+                int goalImportance = goal.getImportance();
+                if (goalName == "live") {
+                    int importanceLive = goal.getImportance();
+                    if (importanceLive > 100) {
+                        importanceLive = 100;
+                    }
+                    int healthModifier = importanceLive;
+                    if (unit->getHp() <= (unit->getMaxHp() * (healthModifier / 100))) {
                         topGoal = getPersonality(i).getGoal(k);
                         return topGoal;
                     } else if (unit->getHp() < unit->getMaxHp() && unit->isCarried()) {
@@ -46,13 +55,146 @@ Focus MandateAISim::getTopGoal(Unit *unit, string personality) {
                         return topGoal;
                     }
                 }
-                if (getPersonality(i).getGoal(k).getName() == "explore") {
-                    topGoal = getPersonality(i).getGoal(k);
-                    return topGoal;
+                if (goalName == "build") {
+                    if (topGoal.getImportance() != NULL) {
+                        if (goalImportance > topGoal.getImportance()) {
+                            topGoal = goal;
+                        }
+                    } else {
+                        topGoal = goal;
+                    }
+                }
+                if (goalName == "collect") {
+                    if (topGoal.getImportance() != NULL) {
+                        if (goalImportance > topGoal.getImportance()) {
+                            topGoal = goal;
+                        }
+                    } else {
+                        topGoal = goal;
+                    }
+                }
+                if (goalName == "explore") {
+                    if (topGoal.getImportance() != NULL) {
+                        if (goalImportance > topGoal.getImportance()) {
+                            topGoal = goal;
+                        }
+                    } else {
+                        topGoal = goal;
+                    }
+                }
+                if (goalName == "shop") {
+                    if (topGoal.getImportance() != NULL) {
+                        if (goalSystem.findShop(unit) != NULL) {
+                            int goldOwned = unit->getSResource(g_world.getTechTree()->getResourceType("gold"))->getAmount();
+                            int importanceShop = goldOwned / 100;
+                            if (goalImportance + importanceShop > topGoal.getImportance()) {
+                                topGoal = goal;
+                            }
+                        }
+                    } else {
+                        topGoal = goal;
+                    }
+                }
+                if (goalName == "raid") {
+                    if (topGoal.getImportance() != NULL) {
+                        int importanceRaid = 0;
+                        Vec2i tPos = Vec2i(NULL);
+                        Unit *lair = goalSystem.findLair(unit);
+                        if (lair != NULL) {
+                            tPos = lair->getPos();
+                        }
+                        if (tPos != Vec2i(NULL)) {
+                            Vec2i uPos = unit->getPos();
+                            int distance = sqrt(pow(float(abs(uPos.x - tPos.x)), 2) + pow(float(abs(uPos.y - tPos.y)), 2));
+                            if (distance < 100) {
+                                importanceRaid = 100 - distance;
+                            }
+                        }
+                        if (goalImportance + importanceRaid > topGoal.getImportance()) {
+                            topGoal = goal;
+                        }
+                    } else {
+                        topGoal = goal;
+                    }
+                }
+                if (goalName == "hunt") {
+                    if (topGoal.getImportance() != NULL) {
+                        int importanceHunt = 0;
+                        Vec2i tPos = Vec2i(NULL);
+                        Unit *creature = goalSystem.findCreature(unit);
+                        if (creature != NULL) {
+                            tPos = creature->getPos();
+                        }
+                        if (tPos != Vec2i(NULL)) {
+                            Vec2i uPos = unit->getPos();
+                            int distance = sqrt(pow(float(abs(uPos.x - tPos.x)), 2) + pow(float(abs(uPos.y - tPos.y)), 2));
+                            if (distance < 100) {
+                                importanceHunt = 100 - distance;
+                            }
+                        }
+                        if (goalImportance + importanceHunt > topGoal.getImportance()) {
+                            topGoal = goal;
+                        }
+                    } else {
+                        topGoal = goal;
+                    }
+                }
+                if (goalName == "attack") {
+                    if (topGoal.getImportance() != NULL) {
+                        int importanceAttack = unit->attackers.size() * 5;
+                        if (goalImportance + importanceAttack > topGoal.getImportance() && unit->attackers.size() > 0) {
+                            topGoal = goal;
+                        }
+                    } else {
+                        topGoal = goal;
+                    }
+                }
+                if (goalName == "defend") {
+                    if (topGoal.getImportance() != NULL) {
+                        Vec2i uPos = unit->getPos();
+                        Vec2i tPos = unit->owner->getPos();
+                        int distance = sqrt(pow(float(abs(uPos.x - tPos.x)), 2) + pow(float(abs(uPos.y - tPos.y)), 2));
+                        int importanceDefend = unit->owner->attackers.size() * 10;
+                        if (distance < 100 + importanceDefend) {
+                            if (goalImportance + importanceDefend > topGoal.getImportance()) {
+                                topGoal = goal;
+                            }
+                        }
+                    } else {
+                        topGoal = goal;
+                    }
+                }
+                if (goalName == "buff") {
+                    if (topGoal.getImportance() != NULL) {
+                        if (goalImportance > topGoal.getImportance()) {
+                            topGoal = goal;
+                        }
+                    } else {
+                        topGoal = goal;
+                    }
+                }
+                if (goalName == "heal") {
+                    if (topGoal.getImportance() != NULL) {
+                        if (goalImportance > topGoal.getImportance()) {
+                            topGoal = goal;
+                        }
+                    } else {
+                        topGoal = goal;
+                    }
+                }
+                if (goalName == "spell") {
+                    if (topGoal.getImportance() != NULL) {
+                        if (goalImportance > topGoal.getImportance()) {
+                            topGoal = goal;
+                        }
+                    } else {
+                        topGoal = goal;
+                    }
                 }
             }
         }
     }
+    return topGoal;
 }
 
 void MandateAISim::computeAction(Unit *unit, string personality, SkillClass currentAction) {
@@ -62,7 +204,7 @@ void MandateAISim::computeAction(Unit *unit, string personality, SkillClass curr
     } else if (currentAction == SkillClass::MOVE) {
         //goalSystem.computeAction(unit, newFocus);
     } else {
-        goalSystem.computeAction(unit, newFocus);
+        //goalSystem.computeAction(unit, newFocus);
     }
 }
 
@@ -76,28 +218,13 @@ void MandateAISim::update() {
                 unit->repair(heal, 1);
             }
             if (unit->isCarried() && unit->getCurrentFocus() == "live" && unit->getHp() == unit->getMaxHp()) {
-                const CommandType *oct = unit->owner->getType()->getFirstCtOfClass(CmdClass::UNLOAD);
-                const UnloadCommandType *ouct = static_cast<const UnloadCommandType*>(oct);
-                int maxRange = ouct->getUnloadSkillType()->getMaxRange();
-                if (g_world.placeUnit(unit->owner->getCenteredPos(), maxRange, unit)) {
-                    g_map.putUnitCells(unit, unit->getPos());
-                    unit->setCarried(0);
-                    unit->owner->getCarriedUnits().erase(std::find(unit->owner->getCarriedUnits().begin(), unit->owner->getCarriedUnits().end(), unit->getId()));
-                }
+                goalSystem.ownerUnload(unit);
             }
             if (unit->getCurrSkill()->getClass() == SkillClass::STOP) {
                 computeAction(unit, personality, SkillClass::STOP);
             }
-            else if (unit->getCurrSkill()->getClass() == SkillClass::MOVE) {
-                computeAction(unit, personality, SkillClass::MOVE);
-            } /*else if (unit->getCurrCommand()->getType()->getClass() == SkillClass::ATTACK) {
-                computeAction(unit, personality, SkillClass::ATTACK);
-            } else {
-
-            }*/
         }
     }
-
 }
 
 }}

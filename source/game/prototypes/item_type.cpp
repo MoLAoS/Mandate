@@ -212,6 +212,25 @@ bool ItemType::load(const string &dir, const TechTree *techTree, const FactionTy
         g_logger.logXmlError(path, e.what());
         loadOk = false;
     }
+    // items created
+    try {
+        const XmlNode *itemsCreatedNode= parametersNode->getChild("items-created", 0, false);
+        if (itemsCreatedNode) {
+            createdItems.resize(itemsCreatedNode->getChildCount());
+            createdItemTimers.resize(itemsCreatedNode->getChildCount());
+            for(int i = 0; i<createdItems.size(); ++i){
+                const XmlNode *itemNode = itemsCreatedNode->getChild("item", i);
+                string name = itemNode->getAttribute("name")->getRestrictedValue();
+                int amount = itemNode->getAttribute("amount")->getIntValue();
+                int steps = itemNode->getAttribute("timer")->getIntValue();
+                createdItems[i].init(factionType->getItemType(name), amount, 0, 0, -1);
+                createdItemTimers[i].init(steps, 0);
+            }
+        }
+    } catch (runtime_error e) {
+        g_logger.logXmlError(path, e.what());
+        loadOk = false;
+    }
     return loadOk;
 }
 

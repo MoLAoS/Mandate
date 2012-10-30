@@ -101,6 +101,20 @@ bool RequirableType::load(const XmlNode *baseNode, const string &dir, const Tech
 		loadOk = false;
 	}
 
+	try { // Item requirements
+		const XmlNode *itemRequirementsNode = baseNode->getChild("item-requirements", 0, false);
+		if(itemRequirementsNode) {
+			for(int i = 0; i < itemRequirementsNode->getChildCount(); ++i) {
+				const XmlNode *itemNode = itemRequirementsNode->getChild("item", i);
+				string name = itemNode->getRestrictedAttribute("name");
+				itemReqs.push_back(ft->getItemType(name));
+			}
+		}
+	} catch (runtime_error e) {
+		g_logger.logXmlError(dir, e.what ());
+		loadOk = false;
+	}
+
 	try { // Upgrade requirements
 		const XmlNode *upgradeRequirementsNode = baseNode->getChild("upgrade-requirements", 0, false);
 		if(upgradeRequirementsNode) {

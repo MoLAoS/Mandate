@@ -34,6 +34,8 @@ public:
     Personalities getPersonalities() const {return personalities;}
     Personality getPersonality(int i) const {return personalities[i];}
 
+    GoalSystem getGoalSystem() const {return goalSystem;}
+
     void init(World *world, Faction *faction);
     Focus getTopGoal(Unit *unit, string personality);
     void update();

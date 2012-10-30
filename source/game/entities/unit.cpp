@@ -166,7 +166,9 @@ Unit::Unit(CreateParams params)
 	Random random(id);
 	currSkill = getType()->getFirstStOfClass(SkillClass::STOP);	//starting skill
 	foreach_enum (AutoCmdFlag, f) {
-		m_autoCmdEnable[f] = true;
+	    if (type->inhuman == false) {
+            m_autoCmdEnable[f] = true;
+        }
 	}
 
 	ULC_UNIT_LOG( this, " constructed at pos" << pos );
@@ -179,6 +181,23 @@ Unit::Unit(CreateParams params)
 	setModelFacing(m_facing);
 
 	garrisonTest = false;
+
+	goalStructure = NULL;
+
+    srand ( id );
+    int direction = rand() % 8 + 1;
+    UnitDirection first = UnitDirection::NORTH;
+    switch (direction) {
+        case 1: first = UnitDirection::NORTH; break;
+        case 2: first = UnitDirection::SOUTH; break;
+        case 3: first = UnitDirection::EAST; break;
+        case 4: first = UnitDirection::WEST; break;
+        case 5: first = UnitDirection::NORTHWEST; break;
+        case 6: first = UnitDirection::NORTHEAST; break;
+        case 7: first = UnitDirection::SOUTHWEST; break;
+        case 8: first = UnitDirection::SOUTHEAST; break;
+    }
+	previousDirection = first;
 
 	currentSteps.resize(type->getCreatedResourceCount());
 	for (int i = 0; i < currentSteps.size(); ++i) {
@@ -1438,6 +1457,12 @@ void Unit::born(bool reborn) {
 		if (!isCarried() && !isGarrisoned()) {
 			startSkillParticleSystems();
 		}
+
+		if (type->inhuman == true) {
+            foreach_enum (AutoCmdFlag, f) {
+                m_autoCmdEnable[f] = false;
+            }
+		}
 	}
 	StateChanged(this);
 	faction->onUnitActivated(type);
@@ -1466,6 +1491,17 @@ void Unit::kill() {
 	ULC_UNIT_LOG( this, "killed." );
 	hp = 0;
 	World &world = g_world;
+
+	if (getType()->inhuman) {
+        for (int i = 0; i < attackers.size(); ++i) {
+            if (attackers[i].getUnit()->getType()->inhuman) {
+                const ResourceType *rt = g_world.getTechTree()->getResourceType("gold");
+                int goldPossible = getSResource(rt)->getAmount();
+                int amount = goldPossible / attackers.size();
+                attackers[i].getUnit()->incResourceAmount(rt, amount);
+            }
+        }
+	}
 
 	if (!m_unitsToCarry.empty()) {
 		foreach (UnitIdList, it, m_unitsToCarry) {
@@ -2116,6 +2152,23 @@ void Unit::accessStorageAdd(int ident) {
     }
 }
 
+void Unit::accessStorageRemove(int ident) {
+    Item *item;
+    for (int i = 0; i < storedItems.size(); ++i) {
+        if (getStoredItem(i)->id == ident) {
+            item = getStoredItem(i);
+            storedItems.erase(storedItems.begin() + i);
+        }
+    }
+    itemsStored = getItemsStored() - 1;
+    for (int i = 0; i < storage.size(); ++i) {
+        if (storage[i].getName() == item->getType()->getName()) {
+            storage[i].setCurrent(-1);
+            break;
+        }
+    }
+}
+
 void Unit::accessStorageExchange(Unit *storage) {
     Storage gear = getType()->equipment;
     StoredItems armory = getStoredItems();
@@ -2205,6 +2258,10 @@ void Unit::unequipItem(int ident) {
         }
     }
     computeTotalUpgrade();
+}
+
+void Unit::shop() {
+    getFaction()->getMandateAiSim().getGoalSystem().shop(getFaction()->findUnit(this->getId()));
 }
 
 /** wrapper for World::updateUnits */
@@ -2691,10 +2748,30 @@ string Unit::getLongDesc() const {
 	string shortDesc = getShortDesc();
 	stringstream ss;
 
+    if (type->inhuman == true) {
+    ss << endl << "Control: " << "inhuman";
+    }
+
+    if (getType()->hasTag("building")) {
+    ss << endl << "Tags:";
+    ss << endl << "building";
+    if (getType()->hasTag("fort")) {
+    ss << endl << "fort";
+    }
+    }
+
+    ss << endl << "Producer ID: " <<  productionRoute.getProducerId();
+    ss << endl << "Store ID: " <<  productionRoute.getStoreId();
+
 	ss << endl << "Unit Position: " << this->getCenteredPos();
 	if (anyCommand()) {
 	ss << endl << "Goal Position: " << this->getCurrCommand()->getPos();
 	}
+	if (goalStructure != NULL) {
+	ss << endl << "TargetID: " << goalStructure->getId();
+	}
+
+	ss << endl << "Direction: " << previousDirection;
 
     ss << endl << "Stored Items: " << itemsStored << "/" << itemLimit;
     ss << endl << "Equipped Items: " << getEquippedItems().size();
