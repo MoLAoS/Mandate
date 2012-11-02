@@ -379,6 +379,9 @@ void World::hit(Unit *attacker, const AttackSkillType* ast, const Vec2i &targetP
 		}
 		foreach (DistMap, it, hitSet) {
 			damage(attacker, ast, it->first, it->second);
+			lifeleech(attacker, ast, it->first, it->second); /**< Added by MoLAoS, lifeleech */
+			manaburn(attacker, ast, it->first, it->second); /**< Added by MoLAoS, manaburn */
+			capture(attacker, ast, it->first, it->second); /**< Added by MoLAoS, capturing */
 			if (ast->hasEffects()) {
 				applyEffects(attacker, ast->getEffectTypes(), it->first, it->second);
 			}
@@ -420,6 +423,10 @@ void World::hit(Unit *attacker, const AttackSkillType* ast, const Vec2i &targetP
 			}
 		}
 	}
+    if (attacker->getType()->inhuman) {
+        attacker->setCurrSkill(SkillClass::STOP);
+        attacker->finishCommand();
+    }
 }
 
 void World::damage(Unit *attacker, const AttackSkillType* ast, Unit *attacked, fixed distance) {
@@ -683,6 +690,19 @@ void World::tick() {
 		    for (int k = 0; k < unit->attackers.size(); ++k) {
                 if (!unit->attackers[k].getUnit()->isAlive()) {
                     unit->attackers.erase(unit->attackers.begin() + k);
+                }
+		    }
+		}
+	}
+
+	for (int i = 0; i < getFactionCount(); ++i) {
+		for (int j = 0; j < getFaction(i)->getUnitCount(); ++j) {
+		    Unit *unit = getFaction(i)->getUnit(j);
+		    if (unit->getType()->inhuman) {
+                for (int k = 0; k < unit->currentCommandCooldowns.size(); ++k) {
+                    if (unit->currentCommandCooldowns[k].currentStep != 0) {
+                        unit->currentCommandCooldowns[k].currentStep -= 1;
+                    }
                 }
 		    }
 		}
@@ -1060,8 +1080,9 @@ void World::tick() {
                                 int owned = u->ownedUnits[l].getOwned();
                                 if (owned == limit) {
                                     cua = 0;
-                                } else {
+                                } else if (cua > limit - owned) {
                                     cua = limit - owned;
+                                } else {
                                 }
                                 break;
                             }

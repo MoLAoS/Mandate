@@ -240,6 +240,8 @@ public:
     CurrentStep currentOwnedSteps; /**< current timer step for owned unit creation */
     CurrentStep currentProcessSteps; /**< current timer step for resource processes */
 
+    CurrentStep currentCommandCooldowns; /**< current timer step for skill cooldowns */
+
     ProductionRoute productionRoute;
     Settlement settlement;
 
@@ -248,6 +250,8 @@ public:
     OwnedUnits ownedUnits;
 
     BuffsApplied buffNames;
+
+    int taxedGold;
 
     Resistances resistances;
 

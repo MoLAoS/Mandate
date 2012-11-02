@@ -40,15 +40,6 @@ void Personality::load(const XmlNode *node, const TechTree* techTree, const Fact
 // 	class Goal System
 // ===============================
 void GoalSystem::init() {
-    goalList.push_back("explore");
-    goalList.push_back("fight");
-    goalList.push_back("live");
-    goalList.push_back("build");
-    goalList.push_back("guard");
-    goalList.push_back("buff");
-    goalList.push_back("heal");
-    goalList.push_back("spell");
-    goalList.push_back("collect");
 }
 
 void GoalSystem::ownerLoad(Unit *unit) {
@@ -178,8 +169,8 @@ const CommandType* GoalSystem::selectHealSpell(Unit *unit, Unit *target) {
     int healthToHeal = target->getMaxHp() - target->getHp();
     for (int i = 0; i < unit->getType()->getCommandTypeCount(); ++i) {
         const CommandType *testingCommandType = unit->getType()->getCommandType(i);
-        const CastSpellCommandType *testCommandType = static_cast<const CastSpellCommandType*>(testingCommandType);
-        if (testCommandType->getClass() == CmdClass::CAST_SPELL) {
+        if (testingCommandType->getClass() == CmdClass::CAST_SPELL) {
+            const CastSpellCommandType *testCommandType = static_cast<const CastSpellCommandType*>(testingCommandType);
             const SkillType *testSkillType = testCommandType->getCastSpellSkillType();
             if (testSkillType->hasEffects()) {
                 for (int j = 0; j < testSkillType->getEffectTypes().size(); ++j) {
@@ -206,8 +197,8 @@ const CommandType* GoalSystem::selectBuffSpell(Unit *unit, Unit *target) {
     bool useSpell = true;
     for (int i = 0; i < unit->getType()->getCommandTypeCount(); ++i) {
         const CommandType *testingCommandType = unit->getType()->getCommandType(i);
-        const CastSpellCommandType *testCommandType = static_cast<const CastSpellCommandType*>(testingCommandType);
-        if (testCommandType->getClass() == CmdClass::CAST_SPELL) {
+        if (testingCommandType->getClass() == CmdClass::CAST_SPELL) {
+            const CastSpellCommandType *testCommandType = static_cast<const CastSpellCommandType*>(testingCommandType);
             const SkillType *testSkillType = testCommandType->getCastSpellSkillType();
             if (testSkillType->hasEffects()) {
                 for (int j = 0; j < target->buffNames.size(); ++j) {
@@ -226,6 +217,61 @@ const CommandType* GoalSystem::selectBuffSpell(Unit *unit, Unit *target) {
     return buffCommandType;
 }
 
+const CommandType* GoalSystem::selectAttackSpell(Unit *unit, Unit *target) {
+    const CommandType *attackCommandType = NULL;
+    int currentDamage = 0;
+    int currentEp;
+    for (int i = 0; i < unit->getType()->getCommandTypeCount(); ++i) {
+        if (unit->currentCommandCooldowns[i].currentStep == 0) {
+            const CommandType *testingCommandType = unit->getType()->getCommandType(i);
+            if (testingCommandType->getClass() == CmdClass::ATTACK) {
+                const AttackCommandType *testCommandType = static_cast<const AttackCommandType*>(testingCommandType);
+                const AttackSkillType *testSkillType = testCommandType->AttackCommandTypeBase::getAttackSkillTypes()->getFirstAttackSkill();
+                if (testSkillType->getEpCost() <= unit->getEp()) {
+                    int armor = target->getArmor();
+                    fixed damageMultiplier = g_world.getTechTree()->getDamageMultiplier(testSkillType->getAttackType(), target->getType()->getArmourType());
+                    fixed fDamage = unit->getAttackStrength(testSkillType);
+                    fDamage = (fDamage / (0 + 1) - armor) * damageMultiplier;
+                    if (fDamage < 1) {
+                        fDamage = 1;
+                    }
+                    fixed totalDamage = 0 + fDamage;
+                    const UnitType *uType = target->getType();
+                    for (int t = 0; t < testSkillType->damageTypes.size(); ++t) {
+                        const DamageType dType = testSkillType->damageTypes[t];
+                        string damageType = dType.getTypeName();
+                        int mDamage = dType.getValue();
+                        for (int i = 0; i < uType->resistances.size(); ++i) {
+                            const DamageType rType = uType->resistances[i];
+                            string resistType = rType.getTypeName();
+                            if (damageType==resistType) {
+                                int resist = rType.getValue();
+                                mDamage -= resist;
+                                if (mDamage < 0) {
+                                    mDamage = 0;
+                                }
+                            }
+                        }
+                        totalDamage += mDamage;
+                    }
+                    if (currentDamage < totalDamage.intp()) {
+                        currentEp = testSkillType->getEpCost();
+                        currentDamage = totalDamage.intp();
+                        attackCommandType = testingCommandType;
+                    } else if (currentDamage == totalDamage.intp()){
+                        if (testSkillType->getEpCost() < currentEp) {
+                            currentEp = testSkillType->getEpCost();
+                            currentDamage = totalDamage.intp();
+                            attackCommandType = testingCommandType;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return attackCommandType;
+}
+
 Unit* GoalSystem::findLair(Unit *unit) {
     Vec2i uPos = unit->getPos();
     Faction *faction;
@@ -238,10 +284,10 @@ Unit* GoalSystem::findLair(Unit *unit) {
     int distance = 1000;
     for (int i = 0; i < faction->getUnitCount(); ++i) {
         Unit *possibleLair = faction->getUnit(i);
-        if (possibleLair->getType()->hasTag("building")) {
+        if (possibleLair->getType()->hasTag("building") && possibleLair->isAlive()) {
             Vec2i bPos = possibleLair->getPos();
             Tile *tile = g_world.getMap()->getTile(Map::toTileCoords(Vec2i(bPos.x, bPos.y)));
-            if(tile->isExplored(faction->getTeam())) {
+            if(tile->isExplored(unit->getFaction()->getTeam())) {
                 int newDistance = sqrt(pow(float(abs(uPos.x - bPos.x)), 2) + pow(float(abs(uPos.y - bPos.y)), 2));
                 if (newDistance < distance) {
                     distance = newDistance;
@@ -265,10 +311,10 @@ Unit* GoalSystem::findCreature(Unit *unit) {
     int distance = 1000;
     for (int i = 0; i < faction->getUnitCount(); ++i) {
         Unit *possibleCreature = faction->getUnit(i);
-        if (!possibleCreature->getType()->hasTag("building")) {
+        if (!possibleCreature->getType()->hasTag("building") && possibleCreature->isAlive()) {
             Vec2i bPos = possibleCreature->getPos();
             Tile *tile = g_world.getMap()->getTile(Map::toTileCoords(Vec2i(bPos.x, bPos.y)));
-            if(tile->isExplored(faction->getTeam())) {
+            if(tile->isExplored(unit->getFaction()->getTeam())) {
                 int newDistance = sqrt(pow(float(abs(uPos.x - bPos.x)), 2) + pow(float(abs(uPos.y - bPos.y)), 2));
                 if (newDistance < distance) {
                     distance = newDistance;
@@ -365,8 +411,6 @@ void GoalSystem::computeAction(Unit *unit, Focus focus) {
                         unit->setGoalStructure(finalPick);
                         unit->giveCommand(g_world.newCommand(ct, CmdFlags(), tPos));
                     }
-            } else {
-                ownerLoad(unit);
             }
         }
     } else if (goal == "attack") {
@@ -377,8 +421,7 @@ void GoalSystem::computeAction(Unit *unit, Focus focus) {
         }
         if (unit->getCurrSkill()->getClass() == SkillClass::STOP) {
             if (unit->attackers.size() > 0) {
-                const CommandType *ct = unit->getType()->getFirstCtOfClass(CmdClass::ATTACK);
-                const AttackCommandType *act = static_cast<const AttackCommandType*>(ct);
+                const CommandType *act = selectAttackSpell(unit, unit->attackers[0].getUnit());
                 unit->giveCommand(g_world.newCommand(act, CmdFlags(), unit->attackers[0].getUnit()));
             }
         }
@@ -394,9 +437,8 @@ void GoalSystem::computeAction(Unit *unit, Focus focus) {
                 Vec2i tPos = unit->owner->getPos();
                 int distance = sqrt(pow(float(abs(uPos.x - tPos.x)), 2) + pow(float(abs(uPos.y - tPos.y)), 2));
                 if (unit->owner->attackers.size() > 0) {
-                    if (distance < 100 + unit->owner->attackers.size() * 10) {
-                        const CommandType *ct = unit->getType()->getFirstCtOfClass(CmdClass::ATTACK);
-                        const AttackCommandType *act = static_cast<const AttackCommandType*>(ct);
+                    if (distance < 25 + unit->owner->attackers.size() * 5) {
+                        const CommandType *act = selectAttackSpell(unit, unit->owner->attackers[0].getUnit());
                         unit->giveCommand(g_world.newCommand(act, CmdFlags(), unit->owner->attackers[0].getUnit()));
                     }
                 }
@@ -409,27 +451,20 @@ void GoalSystem::computeAction(Unit *unit, Focus focus) {
             unit->setCurrSkill(SkillClass::STOP);
             unit->finishCommand();
         }
-        if (unit->getGoalStructure() != NULL && unit->getCurrSkill()->getClass() != SkillClass::ATTACK) {
-            Vec2i uPos = unit->getPos();
-            Vec2i tPos = unit->getGoalStructure()->getPos();
-            int distance = sqrt(pow(float(abs(uPos.x - tPos.x)), 2) + pow(float(abs(uPos.y - tPos.y)), 2));
-            if (distance < 21) {
-                unit->finishCommand();
-                const CommandType *ct = unit->getType()->getFirstCtOfClass(CmdClass::ATTACK);
-                const AttackCommandType *act = static_cast<const AttackCommandType*>(ct);
-                unit->giveCommand(g_world.newCommand(act, CmdFlags(), unit->getGoalStructure()));
+        if (unit->getCurrSkill()->getClass() == SkillClass::STOP) {
+            if (unit->getGoalStructure() == NULL) {
+                Unit *creature = findCreature(unit);
+                if (creature != NULL) {
+                    unit->setGoalStructure(creature);
+                }
             }
-        }
-        if (unit->getCurrSkill()->getClass() == SkillClass::STOP && unit->getGoalStructure() == NULL) {
-            Vec2i tPos = Vec2i(NULL);
-            Unit *creature = findCreature(unit);
-            if (creature != NULL) {
-                tPos = creature->getPos();
-            }
-            if (tPos != Vec2i(NULL)) {
-                unit->setGoalStructure(creature);
-                const CommandType *ct = unit->getType()->getFirstCtOfClass(CmdClass::MOVE);
-                unit->giveCommand(g_world.newCommand(ct, CmdFlags(), tPos));
+            if (unit->getGoalStructure() != NULL) {
+                if (unit->anyCommand()) {
+                    if (unit->getCurrCommand()->getType()->getClass() != CmdClass::ATTACK) {
+                        const CommandType *act = selectAttackSpell(unit, unit->getGoalStructure());
+                        unit->giveCommand(g_world.newCommand(act, CmdFlags(), unit->getGoalStructure()));
+                    }
+                }
             }
         }
     } else if (goal == "raid") {
@@ -439,28 +474,20 @@ void GoalSystem::computeAction(Unit *unit, Focus focus) {
             unit->setCurrSkill(SkillClass::STOP);
             unit->finishCommand();
         }
-        if (unit->getGoalStructure() != NULL && unit->getCurrSkill()->getClass() != SkillClass::ATTACK) {
-            Vec2i uPos = unit->getPos();
-            Vec2i tPos = unit->getGoalStructure()->getPos();
-            int distance = sqrt(pow(float(abs(uPos.x - tPos.x)), 2) + pow(float(abs(uPos.y - tPos.y)), 2));
-            if (distance < 21) {
-                unit->finishCommand();
-                const CommandType *ct = unit->getType()->getFirstCtOfClass(CmdClass::ATTACK);
-                const AttackCommandType *act = static_cast<const AttackCommandType*>(ct);
-                unit->giveCommand(g_world.newCommand(act, CmdFlags(), unit->getGoalStructure()));
+        if (unit->getCurrSkill()->getClass() == SkillClass::STOP) {
+            if (unit->getGoalStructure() == NULL) {
+                Unit *lair = findLair(unit);
+                if (lair != NULL) {
+                    unit->setGoalStructure(lair);
+                }
             }
-        }
-        if (unit->getCurrSkill()->getClass() == SkillClass::STOP && unit->getGoalStructure() == NULL) {
-            Vec2i tPos = Vec2i(NULL);
-            Unit *lair = findLair(unit);
-            if (lair != NULL) {
-                tPos = lair->getPos();
-            }
-            if (tPos != Vec2i(NULL)) {
-                unit->setGoalStructure(lair);
-                Vec2i uPos = unit->getPos();
-                const CommandType *ct = unit->getType()->getFirstCtOfClass(CmdClass::MOVE);
-                unit->giveCommand(g_world.newCommand(ct, CmdFlags(), tPos));
+            if (unit->getGoalStructure() != NULL) {
+                if (unit->anyCommand()) {
+                    if (unit->getCurrCommand()->getType()->getClass() != CmdClass::ATTACK) {
+                        const CommandType *act = selectAttackSpell(unit, unit->getGoalStructure());
+                        unit->giveCommand(g_world.newCommand(act, CmdFlags(), unit->getGoalStructure()));
+                    }
+                }
             }
         }
     } else if (goal == "explore") {
@@ -557,7 +584,15 @@ void GoalSystem::computeAction(Unit *unit, Focus focus) {
             unit->setCurrSkill(SkillClass::STOP);
             unit->finishCommand();
         }
+        if (unit->getCurrSkill()->getClass() == SkillClass::ATTACK) {
+            Unit *spellTarget = NULL;
+            spellTarget = unit->attackers[0].getUnit();
+            if (spellTarget != NULL) {
+                const CommandType *attackSpell = selectAttackSpell(unit, spellTarget);
+                unit->giveCommand(g_world.newCommand(attackSpell, CmdFlags(), spellTarget));
 
+            }
+        }
     } else if (goal == "collect") {
         if (goal != unit->getCurrentFocus()) {
             unit->setCurrentFocus(goal);

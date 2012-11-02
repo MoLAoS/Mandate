@@ -266,6 +266,7 @@ private:
 
 public:
     DamageTypes damageTypes;
+    int cooldown;
 
 	AttackSkillType() : TargetBasedSkillType("Attack"), attackStrength(0), attackVar(0),
 	attackType(0), attackLifeLeech(0), attackManaBurn(0), attackCapture(0), damageTypes(0) /*, earthquakeType(NULL)*/ {}
@@ -648,6 +649,7 @@ private:
 
 public:
 	void init();
+	const AttackSkillType *getFirstAttackSkill() const {return types[0];}
 	int getMaxRange() const									{return maxRange;}
 // const vector<const AttackSkillType*> &getTypes() const	{return types;}
 	void getDesc(string &str, const Unit *unit) const;

@@ -199,6 +199,8 @@ Unit::Unit(CreateParams params)
     }
 	previousDirection = first;
 
+	taxedGold = 0;
+
 	currentSteps.resize(type->getCreatedResourceCount());
 	for (int i = 0; i < currentSteps.size(); ++i) {
 	currentSteps[i].currentStep = 0;
@@ -224,6 +226,10 @@ Unit::Unit(CreateParams params)
 	currentOwnedSteps[i].currentStep = 0;
 	}
 
+	currentCommandCooldowns.resize(type->getCommandTypeCount());
+	for (int i = 0; i < currentCommandCooldowns.size(); ++i) {
+	currentCommandCooldowns[i].currentStep = 0;
+	}
 
     ownedUnits.resize(type->ownedUnits.size());
     for(int i = 0; i<ownedUnits.size(); ++i){
@@ -1441,6 +1447,7 @@ void Unit::born(bool reborn) {
 		hp = type->getMaxHp();
 		sp = type->getMaxSp();
 		cp = type->getMaxCp();
+		ep = type->getMaxEp();
 		if (cp == 0) {
 		    cp = -1;
 		}
@@ -2377,6 +2384,15 @@ bool Unit::update() { ///@todo should this be renamed to hasFinishedCycle()?
 	// start attack/spell systems ?
 	if (frame == getSystemStartFrame()) {
 		if (currSkill->getClass() == SkillClass::ATTACK) {
+		    for (int i = 0; i < getType()->getCommandTypeCount(); ++i) {
+		        if (getType()->getCommandType(i)->getClass() == CmdClass::ATTACK) {
+                    const AttackCommandType *act = static_cast<const AttackCommandType*>(getType()->getCommandType(i));
+                    const AttackSkillType *ast = act->AttackCommandTypeBase::getAttackSkillTypes()->getFirstAttackSkill();
+                    if (ast == currSkill) {
+                        currentCommandCooldowns[i].currentStep = ast->cooldown;
+                    }
+		        }
+		    }
 			startAttackSystems(static_cast<const AttackSkillType*>(currSkill));
 		} else if (currSkill->getClass() == SkillClass::CAST_SPELL) {
 			startSpellSystems(static_cast<const CastSpellSkillType*>(currSkill));
@@ -2773,6 +2789,9 @@ string Unit::getLongDesc() const {
 
 	ss << endl << "Direction: " << previousDirection;
 
+    if (getType()->inhuman) {
+    ss << endl << "Taxed Gold: " << taxedGold;
+    }
     ss << endl << "Stored Items: " << itemsStored << "/" << itemLimit;
     ss << endl << "Equipped Items: " << getEquippedItems().size();
 
@@ -2791,15 +2810,6 @@ string Unit::getLongDesc() const {
 		armourName = formatString(armourName);
 	}
 	ss << " (" << armourName << ")";
-
-	//ss << endl << "Garrisoned Units: " << getGarrisonedCount();
-	//ss << endl << garrisonTest;
-	//if (getGarrisonedCount() > 0) {
-    //UnitIdList garrisonedUnits = getGarrisonedUnits();
-    //foreach (UnitIdList, it, garrisonedUnits) {
-	//ss << endl << g_world.getUnit(*it)->getType()->getName();
-    //}
-	//}
 
 	if (resistances.size() > 0) {
 	ss << endl << lang.get("Resistances") << ":";

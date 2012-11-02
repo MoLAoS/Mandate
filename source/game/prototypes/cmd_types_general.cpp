@@ -1470,6 +1470,17 @@ void LoadCommandType::update(Unit *unit) const {
 		closest->setPos(Vec2i(-1));
 		g_userInterface.getSelection()->unSelect(closest);
 		unit->getCarriedUnits().push_back(closest->getId());
+
+		/** inhuman */
+		if (closest->getType()->inhuman && unit->getType()->hasTag("guild")) {
+            const ResourceType *rt = g_world.getTechTree()->getResourceType("gold");
+            int goldPossible = closest->getSResource(rt)->getAmount() - closest->taxedGold;
+            int amount = goldPossible / 2;
+            closest->incResourceAmount(rt, -amount);
+            unit->incResourceAmount(rt, amount);
+            closest->taxedGold = closest->getSResource(rt)->getAmount();
+		}
+
 		unitsToCarry.erase(std::find(unitsToCarry.begin(), unitsToCarry.end(), closest->getId()));
 		unit->setCurrSkill(loadSkillType);
 		unit->clearPath();

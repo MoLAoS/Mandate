@@ -71,6 +71,7 @@ public:
     Unit *findNearbyAlly(Unit *unit, Focus focus);
     const CommandType *selectHealSpell(Unit *unit, Unit* target);
     const CommandType *selectBuffSpell(Unit *unit, Unit* target);
+    const CommandType *selectAttackSpell(Unit *unit, Unit* target);
     Unit *findLair(Unit *unit);
     Unit *findCreature(Unit *unit);
     UnitDirection newDirection(UnitDirection oldDirection);

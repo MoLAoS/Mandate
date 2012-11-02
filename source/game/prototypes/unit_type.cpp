@@ -593,7 +593,8 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 					string name = unitNode->getAttribute("name")->getRestrictedValue();
 					int amount = unitNode->getAttribute("amount")->getIntValue();
 					int steps = unitNode->getAttribute("timer")->getIntValue();
-					createdUnits[i].init(factionType->getUnitType(name), amount, 0, 0, -1);
+                    int cap = unitNode->getAttribute("cap")->getIntValue();
+					createdUnits[i].init(factionType->getUnitType(name), amount, 0, 0, cap);
 					createdUnitTimers[i].init(steps, 0);
 				}
 			}

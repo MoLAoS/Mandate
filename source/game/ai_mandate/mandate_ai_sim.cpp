@@ -140,28 +140,32 @@ Focus MandateAISim::getTopGoal(Unit *unit, string personality) {
                     }
                 }
                 if (goalName == "attack") {
-                    if (topGoal.getImportance() != NULL) {
-                        int importanceAttack = unit->attackers.size() * 5;
-                        if (goalImportance + importanceAttack > topGoal.getImportance() && unit->attackers.size() > 0) {
+                    if (unit->attackers.size() > 0) {
+                        if (topGoal.getImportance() != NULL) {
+                            int importanceAttack = unit->attackers.size() * 5;
+                            if (goalImportance + importanceAttack > topGoal.getImportance() && unit->attackers.size() > 0) {
+                                topGoal = goal;
+                            }
+                        } else {
                             topGoal = goal;
                         }
-                    } else {
-                        topGoal = goal;
                     }
                 }
                 if (goalName == "defend") {
-                    if (topGoal.getImportance() != NULL) {
-                        Vec2i uPos = unit->getPos();
-                        Vec2i tPos = unit->owner->getPos();
-                        int distance = sqrt(pow(float(abs(uPos.x - tPos.x)), 2) + pow(float(abs(uPos.y - tPos.y)), 2));
-                        int importanceDefend = unit->owner->attackers.size() * 10;
-                        if (distance < 100 + importanceDefend) {
-                            if (goalImportance + importanceDefend > topGoal.getImportance()) {
-                                topGoal = goal;
+                    if (unit->owner->attackers.size() > 0) {
+                        if (topGoal.getImportance() != NULL) {
+                            Vec2i uPos = unit->getPos();
+                            Vec2i tPos = unit->owner->getPos();
+                            int distance = sqrt(pow(float(abs(uPos.x - tPos.x)), 2) + pow(float(abs(uPos.y - tPos.y)), 2));
+                            int importanceDefend = unit->owner->attackers.size() * 10;
+                            if (distance < 100 + importanceDefend) {
+                                if (goalImportance + importanceDefend > topGoal.getImportance()) {
+                                    topGoal = goal;
+                                }
                             }
+                        } else {
+                            topGoal = goal;
                         }
-                    } else {
-                        topGoal = goal;
                     }
                 }
                 if (goalName == "buff") {
@@ -201,10 +205,6 @@ void MandateAISim::computeAction(Unit *unit, string personality, SkillClass curr
     Focus newFocus = getTopGoal(unit, personality);
     if (currentAction == SkillClass::STOP) {
         goalSystem.computeAction(unit, newFocus);
-    } else if (currentAction == SkillClass::MOVE) {
-        //goalSystem.computeAction(unit, newFocus);
-    } else {
-        //goalSystem.computeAction(unit, newFocus);
     }
 }
 
@@ -213,6 +213,17 @@ void MandateAISim::update() {
         Unit *unit = faction->getUnit(i);
         string personality = unit->getType()->personality;
         if (unit->getType()->inhuman) {
+            if (unit->getGoalStructure() != NULL) {
+                if (!unit->getGoalStructure()->isAlive() || unit->getGoalStructure()->isCarried() || unit->getGoalStructure()->isGarrisoned()) {
+                    unit->setGoalStructure(NULL);
+                    if (unit->anyCommand()) {
+                        if (unit->getCurrCommand()->getType()->getClass() == CmdClass::ATTACK) {
+                            unit->setCurrSkill(SkillClass::STOP);
+                            unit->finishCommand();
+                        }
+                    }
+                }
+            }
             if (unit->isCarried() && unit->getCurrentFocus() == "live") {
                 int heal = unit->getMaxHp() / 10 / 40;
                 unit->repair(heal, 1);

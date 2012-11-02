@@ -420,6 +420,12 @@ void AttackSkillType::load(const XmlNode *sn, const string &dir, const TechTree 
 	attackType= tt->getAttackType(attackTypeName);
 	startTime= sn->getOptionalFloatValue("attack-start-time");
 
+    cooldown = 0;
+
+	if (sn->getOptionalChild("cooldown")) {
+        cooldown = sn->getOptionalChild("cooldown")->getAttribute("time")->getIntValue();
+	}
+
     const XmlNode *damageTypesNode = sn->getChild("damage-types", 0, false);
 	if (damageTypesNode) {
 	    damageTypes.resize(damageTypesNode->getChildCount());
@@ -470,6 +476,9 @@ void AttackSkillType::getDesc(string &str, const Unit *unit) const {
 	// skill-speed and ep-cost first
 	descSpeed(str, unit, "AttackSpeed");
 	descEpCost(str, unit);
+    str += "Cooldown: ";
+    str += intToStr(cooldown);
+    str += "\n";
 
 	//attack strength
 	str += lang.get("AttackStrength")+": ";
