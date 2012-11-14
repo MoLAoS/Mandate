@@ -20,6 +20,7 @@
 #include "upgrade_type.h"
 #include "flags.h"
 #include "game_constants.h"
+#include "abilities.h"
 
 using Shared::Sound::StaticSound;
 using Shared::Xml::XmlNode;
@@ -56,6 +57,8 @@ typedef vector<EffectType*> EffectTypes;
  */
 class EffectType: public EnhancementType, public DisplayableType {
 private:
+    typedef vector<DamageType> DamageTypes;
+
 	EffectBias bias;
 	EffectStacking stacking;
 
@@ -69,7 +72,8 @@ private:
 	EffectTypes recourse;
 	EffectTypeFlags flags;
 	string affectTag;
-	const AttackType *damageType;
+	const AttackType *damageClass;
+    DamageTypes damageTypes;
 	bool display;
 	UnitParticleSystemTypes particleSystems;
 	const FactionType *factionType;
@@ -84,12 +88,15 @@ public:
 	virtual void doChecksum(Checksum &checksum) const;
 
 	const FactionType* getFactionType() const {return factionType;}
-	EffectBias getBias() const				{return bias;}
-	EffectStacking getStacking() const		{return stacking;}
-	const EffectTypeFlags &getFlags() const	{return flags;}
-	bool getFlag(EffectTypeFlag flag) const	{return flags.get(flag);}
-	const AttackType *getDamageType() const	{return damageType;}
-	const string& getAffectTag() const		{return affectTag;}
+	EffectBias getBias() const				 {return bias;}
+	EffectStacking getStacking() const		 {return stacking;}
+	const EffectTypeFlags &getFlags() const	 {return flags;}
+	bool getFlag(EffectTypeFlag flag) const	 {return flags.get(flag);}
+	const AttackType *getDamageClass() const {return damageClass;}
+	int getDamageTypeCount() const           {return damageTypes.size();}
+	DamageTypes getDamageTypes() const       {return damageTypes;}
+	DamageType getDamageType(int i) const    {return damageTypes[i];}
+	const string& getAffectTag() const		 {return affectTag;}
 
 	bool isEffectsAlly() const				{return getFlag(EffectTypeFlag::ALLY);}
 	bool isEffectsFoe() const				{return getFlag(EffectTypeFlag::FOE);}

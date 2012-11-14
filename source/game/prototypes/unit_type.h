@@ -20,6 +20,7 @@
 #include "checksum.h"
 #include "particle_type.h"
 #include "abilities.h"
+#include "modifications.h"
 #include "hero.h"
 #include <set>
 using std::set;
@@ -98,6 +99,8 @@ private:
 
 	typedef vector<Equipment>           Equipments;
 
+    typedef vector<Modification*>       Modifications;
+
 	//typedef vector<PetRule*> PetRules;
 	//typedef map<int, const CommandType*> CommandTypeMap;
 
@@ -156,6 +159,8 @@ public:
     Resistances resistances;
 
     Equipments equipment;
+
+    Modifications modifications;
 
     int itemLimit;
 

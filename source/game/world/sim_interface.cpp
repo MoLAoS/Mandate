@@ -244,15 +244,12 @@ bool SimulationInterface::updateWorld() {
 		&& ScriptManager::getPlayerModifiers(i)->getAiEnabled()) {
 			aiInterfaces[i]->update();
 		}
-	}
-	//m_gaia->update();
-
-    //ai for player units
-	for (int i = 0; i < world->getFactionCount(); ++i) {
+		// sim agent ai
 	    if (!world->getFaction(i)->getCpuControl()) {
             world->getFaction(i)->getMandateAiSim().update();
 	    }
 	}
+	//m_gaia->update();
 
 	// World
 	world->processFrame();

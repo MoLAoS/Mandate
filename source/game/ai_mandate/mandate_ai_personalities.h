@@ -72,9 +72,11 @@ public:
     const CommandType *selectHealSpell(Unit *unit, Unit* target);
     const CommandType *selectBuffSpell(Unit *unit, Unit* target);
     const CommandType *selectAttackSpell(Unit *unit, Unit* target);
+    Unit *findCity(Unit *unit);
     Unit *findLair(Unit *unit);
     Unit *findCreature(Unit *unit);
     UnitDirection newDirection(UnitDirection oldDirection);
+    void clearSimAi(Unit *unit, string goal);
 };
 
 }}

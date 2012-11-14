@@ -307,7 +307,6 @@ public:
 	// effects
 	void applyEffects(Unit *source, const EffectTypes &effectTypes, const Vec2i &targetPos, Field targetField, int splashRadius);
 	void applyEffects(Unit *source, const EffectTypes &effectTypes, Unit *dest, fixed distance);
-	void appyEffect(Unit *unit, Effect *effect);
 
 	// scripting interface
 	int createUnit(const string &unitName, int factionIndex, const Vec2i &pos, bool precise);

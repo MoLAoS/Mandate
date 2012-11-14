@@ -217,6 +217,7 @@ private:
 
 	string currentFocus;
 	Unit *goalStructure;
+	string goalReason;
 public:
     Field getField() const		  {return field;}
 	void setField(Field newField) { field = newField; }
@@ -228,6 +229,8 @@ public:
 	void setCurrentFocus(string newFocus) {currentFocus = newFocus;}
 	Unit *getGoalStructure() const {return goalStructure;}
 	void setGoalStructure(Unit *unit) {goalStructure = unit;}
+	string getGoalReason() const {return goalReason;}
+	void setGoalReason(string string) {goalReason = string;}
 	void shop();
 
 	Attackers attackers;
@@ -241,6 +244,7 @@ public:
     CurrentStep currentProcessSteps; /**< current timer step for resource processes */
 
     CurrentStep currentCommandCooldowns; /**< current timer step for skill cooldowns */
+    CurrentStep currentAiUpdate; /**< current timer step for skill cooldowns */
 
     ProductionRoute productionRoute;
     Settlement settlement;

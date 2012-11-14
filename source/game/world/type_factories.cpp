@@ -44,6 +44,7 @@ PrototypeFactory::PrototypeFactory() {
 	m_commandTypeFactory.registerClass<TeleportCommandType>();
 	m_commandTypeFactory.registerClass<AttackCommandType>();
 	m_commandTypeFactory.registerClass<AttackStoppedCommandType>();
+	m_commandTypeFactory.registerClass<StructureCommandType>();
 	m_commandTypeFactory.registerClass<BuildCommandType>();
 	m_commandTypeFactory.registerClass<ConstructCommandType>();
 	m_commandTypeFactory.registerClass<HarvestCommandType>();

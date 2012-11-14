@@ -155,13 +155,13 @@ void FactionDisplay::init(const Faction *faction, std::set<const UnitType*> &typ
 
     int buildResize = 0;
 	for (int i = 0; i < getBuildingCount(); ++i) {
-	    if (getBuilding(i)->hasTag("building")) {
+	    if (getBuilding(i)->hasTag("faction")) {
 	        buildResize++;
 	    }
 	}
     m_factionBuilds.resize(buildResize);
 	for (int i = 0, j = 0; i < getBuildingCount(); ++i) {
-	    if (getBuilding(i)->hasTag("building")) {
+	    if (getBuilding(i)->hasTag("faction")) {
 	        m_factionBuilds[j].init(getBuilding(i), Clicks::TWO);
 	        ++j;
 	    }
@@ -257,13 +257,6 @@ void FactionDisplay::setFuzzySize(FuzzySize fuzzySize) {
 
 void FactionDisplay::setSize() {
 	Vec2i sz = m_sizes.commandSize;
-    if (m_logo != invalidIndex) {
-        sz = m_sizes.logoSize;
-    } else {
-        setVisible(false);
-        static_cast<FactionDisplayFrame*>(m_parent)->resetSize();
-        return;
-    }
 	setVisible(true);
 	Vec2i size = getSize();
 	if (size != sz) {
@@ -439,14 +432,11 @@ void FactionDisplay::computeBuildInfo(int posDisplay) {
 		setToolTipText2("", "");
 		return;
 	}
-    if (posDisplay == m_ui->cancelPos) {
-        setToolTipText2("", g_lang.get("Cancel"));
-    } else {
-        FactionBuild fb = getFactionBuild(posDisplay);
-        computeBuildTip(fb);
-        string header = "Build: " + fb.getUnitType()->getName();
-        setToolTipText2(header, "");
-    }
+    FactionBuild fb = getFactionBuild(posDisplay);
+    computeBuildTip(fb);
+    string header = "Build: " + fb.getUnitType()->getName();
+    setToolTipText2(header, "");
+
 }
 
 void FactionDisplay::onFirstTierSelect(int posBuild) {

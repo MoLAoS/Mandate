@@ -17,6 +17,7 @@
 
 #include "element_type.h"
 #include "resource_type.h"
+#include "modifications.h"
 #include "game_constants.h"
 #include "unit_type.h"
 #include "item_type.h"
@@ -43,6 +44,9 @@ using namespace ProtoTypes;
 class Item : public EnhancementType {
 	friend class EntityFactory<Item>;
 
+private:
+	typedef vector<Modification*> Modifications;
+
 public:
 	int id;	/**< unique identifier  */
 	Faction *faction;
@@ -53,6 +57,8 @@ public:
     CurrentStep currentProcessSteps; /**< current timer step for resource processes */
 
 	const ItemType *type;			/**< the UnitType of this item */
+
+    Modifications modifications;
 
     //EffectsCreated effectsCreated; /**< All effects created by this item. */
 

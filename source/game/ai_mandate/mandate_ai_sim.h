@@ -39,7 +39,7 @@ public:
     void init(World *world, Faction *faction);
     Focus getTopGoal(Unit *unit, string personality);
     void update();
-    void computeAction(Unit *unit, string personality, SkillClass currentAction);
+    void computeAction(Unit *unit, string personality, string reason);
 
 };
 

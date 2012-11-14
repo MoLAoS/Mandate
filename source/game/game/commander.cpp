@@ -106,6 +106,11 @@ CmdResult Commander::tryGiveCommand(const Selection *selection, CmdFlags flags,
 						flags.set(CmdProps::DONT_RESERVE_RESOURCES, true);
 					}
 				}
+				if (effectiveCt->getClass() == CmdClass::STRUCTURE) {
+					if (!flags.get(CmdProps::DONT_RESERVE_RESOURCES) && i != units.begin()) {
+						flags.set(CmdProps::DONT_RESERVE_RESOURCES, true);
+					}
+				}
 				if (effectiveCt->getClass() == CmdClass::CONSTRUCT) {
 					if (!flags.get(CmdProps::DONT_RESERVE_RESOURCES) && i != units.begin()) {
 						flags.set(CmdProps::DONT_RESERVE_RESOURCES, true);

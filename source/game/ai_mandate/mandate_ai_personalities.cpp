@@ -56,7 +56,8 @@ void GoalSystem::ownerLoad(Unit *unit) {
                 if (olct->getLoadSkillType()->getMaxRange() < distance) {
                     unit->giveCommand(g_world.newCommand(ct, CmdFlags(), pos));
                 }
-                if (olct->getLoadSkillType()->getMaxRange() >= distance) {
+                if (olct->getLoadSkillType()->getMaxRange() >= distance && unit->garrisonTest == false) {
+                    unit->garrisonTest = true;
                     unit->owner->giveCommand(g_world.newCommand(olct, CmdFlags(), unit, unit->owner));
                 }
             }
@@ -72,6 +73,7 @@ void GoalSystem::ownerUnload(Unit *unit) {
         g_map.putUnitCells(unit, unit->getPos());
         unit->setCarried(0);
         unit->owner->getCarriedUnits().erase(std::find(unit->owner->getCarriedUnits().begin(), unit->owner->getCarriedUnits().end(), unit->getId()));
+        unit->garrisonTest = false;
     }
 }
 
@@ -299,6 +301,30 @@ Unit* GoalSystem::findLair(Unit *unit) {
     return lair;
 }
 
+Unit* GoalSystem::findCity(Unit *unit) {
+    Vec2i uPos = unit->getPos();
+    Faction *faction;
+    Unit *city = NULL;
+    for (int i = 0; i < g_world.getFactionCount(); ++i) {
+        if (g_world.getFaction(i)->getTeam() != unit->getFaction()->getTeam()) {
+            faction = g_world.getFaction(i);
+        }
+    }
+    int distance = 1000;
+    for (int i = 0; i < faction->getUnitCount(); ++i) {
+        Unit *possibleCity = faction->getUnit(i);
+        if (possibleCity->getType()->hasTag("building") && possibleCity->isAlive()) {
+            Vec2i bPos = possibleCity->getPos();
+            int newDistance = sqrt(pow(float(abs(uPos.x - bPos.x)), 2) + pow(float(abs(uPos.y - bPos.y)), 2));
+            if (newDistance < distance) {
+                distance = newDistance;
+                city = possibleCity;
+            }
+        }
+    }
+    return city;
+}
+
 Unit* GoalSystem::findCreature(Unit *unit) {
     Vec2i uPos = unit->getPos();
     Faction *faction;
@@ -381,22 +407,131 @@ UnitDirection GoalSystem::newDirection(UnitDirection oldDirection) {
     return newUnitDirection;
 }
 
+void GoalSystem::clearSimAi(Unit *unit, string goal) {
+    if (goal != unit->getCurrentFocus()) {
+        unit->setCurrentFocus(goal);
+        unit->setGoalStructure(NULL);
+        unit->setGoalReason("compute");
+        unit->setCurrSkill(SkillClass::STOP);
+        unit->finishCommand();
+    }
+}
+
 void GoalSystem::computeAction(Unit *unit, Focus focus) {
     string goal = focus.getName();
     int importance = focus.getImportance();
     if (goal == "live") {
-        if (goal != unit->getCurrentFocus()) {
-            unit->setCurrentFocus(goal);
-            unit->setCurrSkill(SkillClass::STOP);
-            unit->finishCommand();
-        }
+        clearSimAi(unit, goal);
         ownerLoad(unit);
-    } else if (goal == "shop") {
-        if (goal != unit->getCurrentFocus()) {
-            unit->setCurrentFocus(goal);
-            unit->setCurrSkill(SkillClass::STOP);
-            unit->finishCommand();
+    } else if (goal == "build") {
+        clearSimAi(unit, goal);
+        if (unit->getCurrSkill()->getClass() == SkillClass::STOP) {
+            Faction *f = unit->getFaction();
+            vector<Unit*> buildingsList;
+            for (int i = 0; i < f->getUnitCount(); ++i) {
+                Unit *building = f->getUnit(i);
+                if (building->getType()->hasTag("building")) {
+                    if (!building->isBuilt() || building->getHp() < building->getMaxHp()) {
+                        buildingsList.push_back(building);
+                    }
+                }
+            }
+            if (buildingsList.size() > 0) {
+                int distance = 1000;
+                Vec2i uPos = unit->getCenteredPos();
+                Unit *finalPick;
+                Vec2i tPos = Vec2i(NULL);
+                for (int i = 0; i < buildingsList.size(); ++i) {
+                    Unit *building = buildingsList[i];
+                    Vec2i bPos = building->getCenteredPos();
+                    int newDistance = sqrt(pow(float(abs(uPos.x - bPos.x)), 2) + pow(float(abs(uPos.y - bPos.y)), 2));
+                    if (newDistance < distance) {
+                        distance = newDistance;
+                        finalPick = building;
+                        tPos = bPos;
+                    }
+                }
+                const CommandType *ct = unit->getType()->getFirstCtOfClass(CmdClass::REPAIR);
+                if (tPos != Vec2i(NULL)) {
+                    if (unit->isCarried()) {
+                        ownerUnload(unit);
+                    } else {
+                        unit->giveCommand(g_world.newCommand(ct, CmdFlags(), finalPick));
+                    }
+                }
+            } else if (!unit->isCarried()) {
+                ownerLoad(unit);
+            }
         }
+    } else if (goal == "collect") {
+        if (goal != unit->getCurrentFocus()) {
+            clearSimAi(unit, goal);
+            unit->productionRoute.setStoreId(unit->owner->getId());
+            unit->productionRoute.setDestination(unit->owner->getPos());
+        }
+        if (unit->getCurrSkill()->getClass() == SkillClass::STOP) {
+            Faction *f = unit->getFaction();
+            vector<Unit*> buildingsList;
+            for (int i = 0; i < f->getUnitCount(); ++i) {
+                Unit *building = f->getUnit(i);
+                if (building->getType()->hasTag("building") && !building->getType()->hasTag("fort") && building->getId() != unit->owner->getId()) {
+                    if (building->sresources.size() > 0) {
+                        for (int j = 0; j < building->sresources.size(); ++j) {
+                            if (building->getSResource(j)->getType()->getName() == "gold") {
+                                if (building->getSResource(j)->getAmount() >= 500) {
+                                    buildingsList.push_back(building);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            if (buildingsList.size() > 0) {
+                int distance = 1000;
+                Vec2i uPos = unit->getCenteredPos();
+                Unit *finalPick;
+                Vec2i tPos = Vec2i(NULL);
+                for (int i = 0; i < buildingsList.size(); ++i) {
+                    Unit *building = buildingsList[i];
+                    Vec2i bPos = building->getCenteredPos();
+                    int newDistance = sqrt(pow(float(abs(uPos.x - bPos.x)), 2) + pow(float(abs(uPos.y - bPos.y)), 2));
+                    if (newDistance < distance) {
+                        distance = newDistance;
+                        finalPick = building;
+                        tPos = bPos;
+                    }
+                }
+                const CommandType *tct = unit->getType()->getFirstCtOfClass(CmdClass::TRANSPORT);
+                if (tPos != Vec2i(NULL)) {
+                    if (unit->isCarried()) {
+                        ownerUnload(unit);
+                    } else {
+                        if (unit->productionRoute.getProducerId() == 0 || unit->productionRoute.getProducerId() == -1) {
+                            unit->productionRoute.setProducerId(finalPick->getId());
+                            unit->productionRoute.setDestination(finalPick->getPos());
+                        }
+                        if (unit->productionRoute.getProducerId() != -1 && unit->productionRoute.getStoreId() != -1) {
+                            unit->giveCommand(g_world.newCommand(tct, CmdFlags(), finalPick));
+                        }
+                    }
+                }
+            } else {
+                if (!unit->isCarried()) {
+                    const StoredResource *res;
+                    for (int i = 0; i < unit->getType()->getStoredResourceCount(); ++i) {
+                        res = unit->getSResource(i);
+                        if (res->getType()->getName() == "gold") {
+                            break;
+                        }
+                    }
+                    if (res->getAmount() == 0) {
+                        ownerLoad(unit);
+                    }
+                }
+            }
+        }
+    } else if (goal == "shop") {
+        clearSimAi(unit, goal);
         if (unit->getCurrSkill()->getClass() == SkillClass::STOP) {
             Unit *finalPick = findShop(unit);
             Vec2i tPos = Vec2i(NULL);
@@ -414,48 +549,62 @@ void GoalSystem::computeAction(Unit *unit, Focus focus) {
             }
         }
     } else if (goal == "attack") {
-        if (goal != unit->getCurrentFocus()) {
-            unit->setCurrentFocus(goal);
-            unit->setCurrSkill(SkillClass::STOP);
-            unit->finishCommand();
-        }
+        clearSimAi(unit, goal);
         if (unit->getCurrSkill()->getClass() == SkillClass::STOP) {
-            if (unit->attackers.size() > 0) {
-                const CommandType *act = selectAttackSpell(unit, unit->attackers[0].getUnit());
-                unit->giveCommand(g_world.newCommand(act, CmdFlags(), unit->attackers[0].getUnit()));
+            if (unit->getGoalStructure() == NULL) {
+                if (unit->attackers.size() > 0) {
+                    unit->setGoalStructure(unit->attackers[0].getUnit());
+                    unit->setGoalReason("kill");
+                }
+            }
+            if (unit->getGoalStructure() != NULL) {
+                if (unit->anyCommand()) {
+                    if (unit->getCurrCommand()->getType()->getClass() != CmdClass::ATTACK) {
+                        const CommandType *act = selectAttackSpell(unit, unit->getGoalStructure());
+                        unit->giveCommand(g_world.newCommand(act, CmdFlags(), unit->getGoalStructure()));
+                    }
+                }
             }
         }
     } else if (goal == "defend") {
-        if (goal != unit->getCurrentFocus()) {
-            unit->setCurrentFocus(goal);
-            unit->setCurrSkill(SkillClass::STOP);
-            unit->finishCommand();
-        }
+        clearSimAi(unit, goal);
         if (unit->owner->getId() != unit->getId()) {
             if (unit->getCurrSkill()->getClass() == SkillClass::STOP) {
-                Vec2i uPos = unit->getPos();
-                Vec2i tPos = unit->owner->getPos();
-                int distance = sqrt(pow(float(abs(uPos.x - tPos.x)), 2) + pow(float(abs(uPos.y - tPos.y)), 2));
-                if (unit->owner->attackers.size() > 0) {
-                    if (distance < 25 + unit->owner->attackers.size() * 5) {
-                        const CommandType *act = selectAttackSpell(unit, unit->owner->attackers[0].getUnit());
-                        unit->giveCommand(g_world.newCommand(act, CmdFlags(), unit->owner->attackers[0].getUnit()));
+                if (unit->getGoalStructure() == NULL) {
+                    Vec2i uPos = unit->getPos();
+                    Vec2i tPos = unit->owner->getPos();
+                    int distance = sqrt(pow(float(abs(uPos.x - tPos.x)), 2) + pow(float(abs(uPos.y - tPos.y)), 2));
+                    if (unit->owner->attackers.size() > 0) {
+                        if (unit->isCarried()) {
+                            ownerUnload(unit);
+                        }
+                        if (distance < 25 + unit->owner->attackers.size() * 5) {
+                            unit->setGoalStructure(unit->owner->attackers[0].getUnit());
+                            unit->setGoalReason("kill");
+                        }
+                    }
+                }
+                if (unit->getGoalStructure() != NULL) {
+                    if (unit->anyCommand()) {
+                        if (unit->getCurrCommand()->getType()->getClass() != CmdClass::ATTACK) {
+                            const CommandType *act = selectAttackSpell(unit, unit->getGoalStructure());
+                            unit->giveCommand(g_world.newCommand(act, CmdFlags(), unit->getGoalStructure()));
+                        }
                     }
                 }
             }
         }
     } else if (goal == "hunt") {
-        if (goal != unit->getCurrentFocus()) {
-            unit->setCurrentFocus(goal);
-            unit->setGoalStructure(NULL);
-            unit->setCurrSkill(SkillClass::STOP);
-            unit->finishCommand();
-        }
+        clearSimAi(unit, goal);
         if (unit->getCurrSkill()->getClass() == SkillClass::STOP) {
             if (unit->getGoalStructure() == NULL) {
                 Unit *creature = findCreature(unit);
                 if (creature != NULL) {
                     unit->setGoalStructure(creature);
+                    unit->setGoalReason("hunt");
+                    if (unit->isCarried()) {
+                        ownerUnload(unit);
+                    }
                 }
             }
             if (unit->getGoalStructure() != NULL) {
@@ -468,17 +617,38 @@ void GoalSystem::computeAction(Unit *unit, Focus focus) {
             }
         }
     } else if (goal == "raid") {
-        if (goal != unit->getCurrentFocus()) {
-            unit->setCurrentFocus(goal);
-            unit->setGoalStructure(NULL);
-            unit->setCurrSkill(SkillClass::STOP);
-            unit->finishCommand();
-        }
+        clearSimAi(unit, goal);
         if (unit->getCurrSkill()->getClass() == SkillClass::STOP) {
             if (unit->getGoalStructure() == NULL) {
                 Unit *lair = findLair(unit);
                 if (lair != NULL) {
                     unit->setGoalStructure(lair);
+                    unit->setGoalReason("raid");
+                    if (unit->isCarried()) {
+                        ownerUnload(unit);
+                    }
+                }
+            }
+            if (unit->getGoalStructure() != NULL) {
+                if (unit->anyCommand()) {
+                    if (unit->getCurrCommand()->getType()->getClass() != CmdClass::ATTACK) {
+                        const CommandType *act = selectAttackSpell(unit, unit->getGoalStructure());
+                        unit->giveCommand(g_world.newCommand(act, CmdFlags(), unit->getGoalStructure()));
+                    }
+                }
+            }
+        }
+    } else if (goal == "demolish") {
+        clearSimAi(unit, goal);
+        if (unit->getCurrSkill()->getClass() == SkillClass::STOP) {
+            if (unit->getGoalStructure() == NULL) {
+                Unit *city = findCity(unit);
+                if (city != NULL) {
+                    unit->setGoalStructure(city);
+                    unit->setGoalReason("demolish");
+                    if (unit->isCarried()) {
+                        ownerUnload(unit);
+                    }
                 }
             }
             if (unit->getGoalStructure() != NULL) {
@@ -491,11 +661,7 @@ void GoalSystem::computeAction(Unit *unit, Focus focus) {
             }
         }
     } else if (goal == "explore") {
-        if (goal != unit->getCurrentFocus()) {
-            unit->setCurrentFocus(goal);
-            unit->setCurrSkill(SkillClass::STOP);
-            unit->finishCommand();
-        }
+        clearSimAi(unit, goal);
         Vec2i unitPos = unit->getCenteredPos();
         Vec2i pos = unitPos;
         Vec2i position = exploredMap.findNearestUnexploredTile(unitPos, unit->getFaction(), unit->previousDirection);
@@ -507,55 +673,8 @@ void GoalSystem::computeAction(Unit *unit, Focus focus) {
         } else {
 
         }
-    } else if (goal == "build") {
-        if (goal != unit->getCurrentFocus()) {
-            unit->setCurrentFocus(goal);
-            unit->setCurrSkill(SkillClass::STOP);
-            unit->finishCommand();
-        }
-
-        if (unit->getCurrSkill()->getClass() == SkillClass::STOP) {
-        Faction *f = unit->getFaction();
-        vector<Unit*> buildingsList;
-        for (int i = 0; i < f->getUnitCount(); ++i) {
-            Unit *building = f->getUnit(i);
-            if (building->getType()->hasTag("building")) {
-                if (!building->isBuilt()) {
-                    buildingsList.push_back(building);
-                }
-            }
-        }
-        int distance = 1000;
-        Vec2i uPos = unit->getCenteredPos();
-        Unit *finalPick;
-        Vec2i tPos = Vec2i(NULL);
-        for (int i = 0; i < buildingsList.size(); ++i) {
-            Unit *building = buildingsList[i];
-            Vec2i bPos = building->getCenteredPos();
-            int newDistance = sqrt(pow(float(abs(uPos.x - bPos.x)), 2) + pow(float(abs(uPos.y - bPos.y)), 2));
-            if (newDistance < distance) {
-                distance = newDistance;
-                finalPick = building;
-                tPos = bPos;
-            }
-        }
-        const CommandType *ct = unit->getType()->getFirstCtOfClass(CmdClass::REPAIR);
-        if (tPos != Vec2i(NULL)) {
-            if (unit->isCarried()) {
-                ownerUnload(unit);
-            } else {
-                unit->giveCommand(g_world.newCommand(ct, CmdFlags(), finalPick));
-            }
-        } else {
-            ownerLoad(unit);
-        }
-        }
     } else if (goal == "buff") {
-        if (goal != unit->getCurrentFocus()) {
-            unit->setCurrentFocus(goal);
-            unit->setCurrSkill(SkillClass::STOP);
-            unit->finishCommand();
-        }
+        clearSimAi(unit, goal);
         if (unit->getCurrSkill()->getClass() == SkillClass::STOP) {
             Unit *buffTarget = NULL;
             buffTarget = findNearbyAlly(unit, focus);
@@ -565,11 +684,7 @@ void GoalSystem::computeAction(Unit *unit, Focus focus) {
             }
         }
     } else if (goal == "heal") {
-        if (goal != unit->getCurrentFocus()) {
-            unit->setCurrentFocus(goal);
-            unit->setCurrSkill(SkillClass::STOP);
-            unit->finishCommand();
-        }
+        clearSimAi(unit, goal);
         if (unit->getCurrSkill()->getClass() == SkillClass::STOP) {
             Unit *healTarget = NULL;
             healTarget = findNearbyAlly(unit, focus);
@@ -579,11 +694,7 @@ void GoalSystem::computeAction(Unit *unit, Focus focus) {
             }
         }
     } else if (goal == "spell") {
-        if (goal != unit->getCurrentFocus()) {
-            unit->setCurrentFocus(goal);
-            unit->setCurrSkill(SkillClass::STOP);
-            unit->finishCommand();
-        }
+        clearSimAi(unit, goal);
         if (unit->getCurrSkill()->getClass() == SkillClass::ATTACK) {
             Unit *spellTarget = NULL;
             spellTarget = unit->attackers[0].getUnit();
@@ -595,9 +706,7 @@ void GoalSystem::computeAction(Unit *unit, Focus focus) {
         }
     } else if (goal == "collect") {
         if (goal != unit->getCurrentFocus()) {
-            unit->setCurrentFocus(goal);
-            unit->setCurrSkill(SkillClass::STOP);
-            unit->finishCommand();
+            clearSimAi(unit, goal);
             unit->productionRoute.setStoreId(unit->owner->getId());
             unit->productionRoute.setDestination(unit->owner->getPos());
         }
@@ -658,8 +767,8 @@ void GoalSystem::computeAction(Unit *unit, Focus focus) {
                 }
             }
         }
-    } else {
-
+    } else if (goal == "rest") {
+        ownerLoad(unit);
     }
 }
 

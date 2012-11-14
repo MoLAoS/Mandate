@@ -109,6 +109,21 @@ bool ItemType::load(const string &dir, const TechTree *techTree, const FactionTy
 	if (!ProducibleType::load(parametersNode, dir, techTree, factionType)) {
 		loadOk = false;
 	}
+    try { // load unit capacity boosts
+        const XmlNode *unitsOwnedNode= parametersNode->getChild("units-owned", 0, false);
+        if (unitsOwnedNode) {
+            ownedUnits.resize(unitsOwnedNode->getChildCount());
+            for(int i = 0; i<ownedUnits.size(); ++i){
+                const XmlNode *ownedNode = unitsOwnedNode->getChild("unit", i);
+                string name = ownedNode->getAttribute("name")->getRestrictedValue();
+                int limit = ownedNode->getAttribute("limit")->getIntValue();
+                ownedUnits[i].init(factionType->getUnitType(name), 0, limit);
+            }
+        }
+    } catch (runtime_error e) {
+        g_logger.logXmlError(path, e.what());
+        loadOk = false;
+    }
     // load resistances
 	try {
 	    const XmlNode *resistancesNode = parametersNode->getChild("resistances", 0, false);

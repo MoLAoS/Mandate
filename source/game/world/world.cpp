@@ -378,13 +378,15 @@ void World::hit(Unit *attacker, const AttackSkillType* ast, const Vec2i &targetP
 			}
 		}
 		foreach (DistMap, it, hitSet) {
-			damage(attacker, ast, it->first, it->second);
-			lifeleech(attacker, ast, it->first, it->second); /**< Added by MoLAoS, lifeleech */
-			manaburn(attacker, ast, it->first, it->second); /**< Added by MoLAoS, manaburn */
-			capture(attacker, ast, it->first, it->second); /**< Added by MoLAoS, capturing */
-			if (ast->hasEffects()) {
-				applyEffects(attacker, ast->getEffectTypes(), it->first, it->second);
-			}
+		    if (it->first->getFaction()->getTeam() != attacker->getFaction()->getTeam()) {
+                damage(attacker, ast, it->first, it->second);
+                lifeleech(attacker, ast, it->first, it->second); /**< Added by MoLAoS, lifeleech */
+                manaburn(attacker, ast, it->first, it->second); /**< Added by MoLAoS, manaburn */
+                capture(attacker, ast, it->first, it->second); /**< Added by MoLAoS, capturing */
+                if (ast->hasEffects()) {
+                    applyEffects(attacker, ast->getEffectTypes(), it->first, it->second);
+                }
+            }
 		}
 	} else {
 		if (!attacked) {
@@ -424,7 +426,6 @@ void World::hit(Unit *attacker, const AttackSkillType* ast, const Vec2i &targetP
 		}
 	}
     if (attacker->getType()->inhuman) {
-        attacker->setCurrSkill(SkillClass::STOP);
         attacker->finishCommand();
     }
 }
@@ -648,19 +649,26 @@ void World::applyEffects(Unit *source, const EffectTypes &effectTypes, Unit *tar
 			}
 		}
 	}
-}
+	for (int i = 0; i < source->getEquippedItems().size(); ++i) {
+	    Item *item = source->getEquippedItem(i);
+	    for (int j = 0; j < item->modifications.size(); ++j) {
+            Modification *modif = item->modifications[j];
+            for (int k = 0; k < modif->getEffectTypeCount(); ++k) {
+                const EffectType *e = modif->getEffectType(k);
+                if ((source->isAlly(target) ? e->isEffectsAlly() : e->isEffectsFoe()) && (e->getChance() != 100 ? random.randPercent() < e->getChance() : true)) {
+                    fixed strength = e->isScaleSplashStrength() ? fixed(1) / (distance + 1) : 1;
+                    Effect *primaryEffect = newEffect(e, source, NULL, strength, target, &techTree);
+                    target->add(primaryEffect);
+                    foreach_const (EffectTypes, it, e->getRecourse()) {
+                        source->add(newEffect((*it), NULL, primaryEffect, strength, source, &techTree));
+                    }
+                }
+            }
+	    }
+        for (EffectTypes::const_iterator i = effectTypes.begin(); i != effectTypes.end(); ++i) {
+            const EffectType * const &e = *i;
 
-//CLEAN: this is never called, and has a silly name considering what it appears to be for...
-void World::appyEffect(Unit *u, Effect *e) {
-	if (u->add(e)) {
-		Unit *attacker = getUnit(e->getSource());
-		if (attacker) {
-			m_simInterface->getStats()->kill(attacker->getFactionIndex(), u->getFactionIndex());
-			attacker->incKills();
-		} else if (e->getRoot()) {
-			// if killed by a recourse effect, this was suicide
-			m_simInterface->getStats()->kill(u->getFactionIndex(), u->getFactionIndex());
-		}
+        }
 	}
 }
 
@@ -1055,6 +1063,7 @@ void World::tick() {
         for (int j = 0; j < faction->getUnitCount(); ++j) {
         const Unit *u =  faction->getUnit(j);
             if (u->isOperative()) {
+                Unit *unit = u->getFaction()->getUnit(j);
                 for (int i = 0; i < u->getType()->getCreatedUnitCount(); ++i) {
                 Timer cTime = u->getType()->getCreatedUnitTimer(i, faction);
                 int cTimeStep = u->currentUnitSteps[i].currentStep;
@@ -1064,7 +1073,6 @@ void World::tick() {
                 int cRNewTime = u->currentUnitSteps[i].currentStep;
                     if (cRNewTime == cTimeValue) {
                     const CreatedUnit cu = u->getType()->getCreatedUnit(i, faction);
-                    string name = cu.getType()->getName();
                     Vec2i locate = u->getPos();
                     int cua = cu.getAmount();
                     int cucap = cu.getCap();
@@ -1088,7 +1096,18 @@ void World::tick() {
                             }
                         }
                         for (int n = 0; n < cua; ++n) {
-                            createUnit(name, k, locate, false);
+                            Unit *createdUnit = newUnit(locate, cu.getType(), faction, getMap(), CardinalDir::NORTH);
+                            g_world.placeUnit(unit->getCenteredPos(), 10, createdUnit);
+                            createdUnit->setOwner(unit);
+                            for (int z = 0; z < u->ownedUnits.size(); ++z) {
+                                if (u->ownedUnits[z].getType() == createdUnit->getType()) {
+                                    unit->ownedUnits[z].incOwned();
+                                }
+                            }
+                            createdUnit->create();
+                            createdUnit->born();
+                            ScriptManager::onUnitCreated(createdUnit);
+                            g_simInterface.getStats()->produce(unit->getFactionIndex());
                         }
                     u->currentUnitSteps[i].currentStep = 0;
                     }
@@ -1103,7 +1122,6 @@ void World::tick() {
                         int cRNewTime = u->getEquippedItem(m)->currentUnitSteps[i].currentStep;
                         if (cRNewTime == cTimeValue) {
                             const CreatedUnit cu = u->getEquippedItem(m)->getType()->getCreatedUnit(i, faction);
-                            string name = cu.getType()->getName();
                             Vec2i locate = u->getPos();
                             int cua = cu.getAmount();
                             int cucap = cu.getCap();
@@ -1113,7 +1131,18 @@ void World::tick() {
                                 }
                             }
                             for (int n = 0; n < cua; ++n) {
-                                createUnit(name, k, locate, false);
+                                Unit *createdUnit = newUnit(locate, cu.getType(), faction, getMap(), CardinalDir::NORTH);
+                                g_world.placeUnit(unit->getCenteredPos(), 10, createdUnit);
+                                createdUnit->setOwner(unit);
+                                for (int z = 0; z < u->ownedUnits.size(); ++z) {
+                                    if (u->ownedUnits[z].getType() == createdUnit->getType()) {
+                                        unit->ownedUnits[z].incOwned();
+                                    }
+                                }
+                                createdUnit->create();
+                                createdUnit->born();
+                                ScriptManager::onUnitCreated(createdUnit);
+                                g_simInterface.getStats()->produce(unit->getFactionIndex());
                             }
                             u->getEquippedItem(m)->currentUnitSteps[i].currentStep = 0;
                         }

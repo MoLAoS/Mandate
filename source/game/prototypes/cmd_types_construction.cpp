@@ -43,6 +43,251 @@ using namespace Glest::Sim;
 using namespace Shared::Util;
 
 namespace Glest { namespace ProtoTypes {
+// =====================================================
+// 	class StructureCommandType
+// =====================================================
+
+StructureCommandType::~StructureCommandType(){
+	deleteValues(m_builtSounds.getSounds().begin(), m_builtSounds.getSounds().end());
+	deleteValues(m_startSounds.getSounds().begin(), m_startSounds.getSounds().end());
+}
+
+bool StructureCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft){
+    bool loadOk = CommandType::load(n, dir, tt, ft);
+
+	try {
+		string skillName = n->getChild("build-skill")->getAttribute("value")->getRestrictedValue();
+		m_buildSkillType = static_cast<const BuildSkillType*>(unitType->getSkillType(skillName, SkillClass::BUILD));
+	} catch (runtime_error e) {
+		g_logger.logXmlError(dir, e.what());
+		loadOk = false;
+	}
+	//buildings built
+	try {
+		const XmlNode *buildingsNode = n->getChild("buildings");
+		for(int i=0; i<buildingsNode->getChildCount(); ++i){
+			const XmlNode *buildingNode = buildingsNode->getChild("building", i);
+			string name = buildingNode->getAttribute("name")->getRestrictedValue();
+			m_buildings.push_back(ft->getUnitType(name));
+			try {
+				m_tipKeys[name] = buildingNode->getRestrictedAttribute("tip");
+			} catch (runtime_error &e) {
+				m_tipKeys[name] = "";
+		}
+		}
+	} catch (runtime_error e) {
+		g_logger.logXmlError(dir, e.what());
+		loadOk = false;
+	}
+
+	//start sound
+	try {
+		const XmlNode *startSoundNode = n->getChild("start-sound");
+		if(startSoundNode->getAttribute("enabled")->getBoolValue()){
+			m_startSounds.resize(startSoundNode->getChildCount());
+			for(int i = 0; i < startSoundNode->getChildCount(); ++i){
+				const XmlNode *soundFileNode = startSoundNode->getChild("sound-file", i);
+				string path = soundFileNode->getAttribute("path")->getRestrictedValue();
+				StaticSound *sound = new StaticSound();
+				sound->load(dir + "/" + path);
+				m_startSounds[i] = sound;
+			}
+		}
+	} catch (runtime_error e) {
+		g_logger.logXmlError(dir, e.what());
+		loadOk = false;
+	}
+
+	//built sound
+	try {
+		const XmlNode *builtSoundNode= n->getChild("built-sound");
+		if(builtSoundNode->getAttribute("enabled")->getBoolValue()){
+			m_builtSounds.resize(builtSoundNode->getChildCount());
+			for(int i=0; i<builtSoundNode->getChildCount(); ++i){
+				const XmlNode *soundFileNode= builtSoundNode->getChild("sound-file", i);
+				string path= soundFileNode->getAttribute("path")->getRestrictedValue();
+				StaticSound *sound= new StaticSound();
+				sound->load(dir + "/" + path);
+				m_builtSounds[i]= sound;
+			}
+		}
+	} catch (runtime_error e) {
+		g_logger.logXmlError(dir, e.what());
+		loadOk = false;
+	}
+	return loadOk;
+}
+
+void StructureCommandType::doChecksum(Checksum &checksum) const {
+	checksum.add(m_buildSkillType->getName());
+	for (int i=0; i < m_buildings.size(); ++i) {
+		checksum.add(m_buildings[i]->getName());
+	}
+}
+
+void StructureCommandType::subDesc(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const {
+	if (!pt) {
+		Lang &lang = g_lang;
+		const string factionName = unit->getFaction()->getType()->getName();
+		callback->addElement(g_lang.get("Buildings") + ":");
+		foreach_const (vector<const UnitType*>, it, m_buildings) {
+			callback->addItem(*it, lang.getTranslatedFactionName(factionName, (*it)->getName()));
+		}
+	}
+}
+
+void StructureCommandType::descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const {
+	string msg;
+	m_buildSkillType->getDesc(msg, unit);
+	callback->addElement(msg);
+}
+
+ProdTypePtr StructureCommandType::getProduced(int i) const {
+	return m_buildings[i];
+}
+
+void StructureCommandType::update(Unit *unit) const {
+	_PROFILE_COMMAND_UPDATE();
+	Command *command = unit->getCurrCommand();
+	assert(command->getType() == this);
+	const UnitType *builtUnitType = static_cast<const UnitType*>(command->getProdType());
+
+	BUILD_LOG( unit,
+		__FUNCTION__ << " : Updating unit " << unit->getId() << ", building type = " << builtUnitType->getName()
+		<< ", command target = " << command->getPos();
+	);
+	if (unit->getCurrSkill()->getClass() != SkillClass::BUILD) {
+		Map *map = g_world.getMap();
+		if (map->canOccupy(command->getPos(), builtUnitType->getField(), builtUnitType, command->getFacing())) {
+			acceptBuild(unit, command, builtUnitType);
+		} else {
+			vector<Unit *> occupants;
+			map->getOccupants(occupants, command->getPos(), builtUnitType->getSize(), Zone::LAND);
+			Unit *builtUnit = occupants.size() == 1 ? occupants[0] : NULL;
+			if (builtUnit && builtUnit->getType() == builtUnitType && !builtUnit->isBuilt()) {
+				existingBuild(unit, command, builtUnit);
+			} else if (occupants.size() && attemptMoveUnits(occupants)) {
+				return;
+			} else {
+				blockedBuild(unit);
+			}
+		}
+	} else {
+		continueBuild(unit, command, builtUnitType);
+	}
+}
+
+bool StructureCommandType::isBlocked(const UnitType *builtUnitType, const Vec2i &pos, CardinalDir face) const {
+	bool blocked = false;
+	Map *map = g_world.getMap();
+	if (!map->canOccupy(pos, builtUnitType->getField(), builtUnitType, face)) {
+		vector<Unit *> occupants;
+		map->getOccupants(occupants, pos, builtUnitType->getSize(), Zone::LAND);
+		Unit *builtUnit = occupants.size() == 1 ? occupants[0] : NULL;
+		if (builtUnit && builtUnit->getType() == builtUnitType && !builtUnit->isBuilt()) {
+		} else if (occupants.size() && attemptMoveUnits(occupants)) {
+		} else {
+			blocked = true;
+		}
+	}
+	return blocked;
+}
+
+CmdResult StructureCommandType::check(const Unit *unit, const Command &command) const {
+	const UnitType *builtUnit = static_cast<const UnitType*>(command.getProdType());
+	if (isBlocked(builtUnit, command.getPos(), command.getFacing())) {
+		return CmdResult::FAIL_BLOCKED;
+	}
+	return CmdResult::SUCCESS;
+}
+
+void StructureCommandType::undo(Unit *unit, const Command &command) const {
+	if (command.isReserveResources()
+			&& unit->getCurrSkill()->getClass() != SkillClass::BUILD
+			&& unit->getCurrSkill()->getClass() != SkillClass::DIE) {
+		unit->getFaction()->deApplyCosts(command.getProdType());
+	}
+}
+
+void StructureCommandType::existingBuild(Unit *unit, Command *command, Unit *builtUnit) const {
+	if (command->isReserveResources()) {
+		unit->getFaction()->deApplyCosts(static_cast<const UnitType*>(command->getProdType()));
+		command->setReserveResources(false);
+	}
+	unit->setTarget(builtUnit, true, true);
+	unit->setCurrSkill(this->getBuildSkillType());
+	command->setUnit(builtUnit);
+	BUILD_LOG( unit, "in position, building already under construction." );
+}
+
+bool StructureCommandType::attemptMoveUnits(const vector<Unit *> &occupants) const {
+	vector<Unit *>::const_iterator i;
+	for (i = occupants.begin();	i != occupants.end(); ++i) {
+		if ((*i)->getCurrSkill()->getClass() != SkillClass::MOVE) {
+			return false;
+		}
+	}
+	return true;
+}
+
+void StructureCommandType::blockedBuild(Unit *unit) const {
+	unit->cancelCurrCommand();
+	unit->setCurrSkill(SkillClass::STOP);
+	if (unit->getFactionIndex() == g_world.getThisFactionIndex()) {
+		g_console.addStdMessage("BuildingNoPlace");
+	}
+	BUILD_LOG( unit, "site blocked." << cmdCancelMsg );
+}
+
+void StructureCommandType::acceptBuild(Unit *unit, Command *command, const UnitType *builtUnitType) const {
+	Map *map = g_world.getMap();
+	Unit *builtUnit = NULL;
+	if (!command->isReserveResources()) {
+		command->setReserveResources(true);
+		if (unit->checkCommand(*command) != CmdResult::SUCCESS) {
+			if (unit->getFactionIndex() == g_world.getThisFactionIndex()) {
+				g_console.addStdMessage("BuildingNoRes");
+			}
+			BUILD_LOG( unit, "in positioin, late resource allocation failed." << cmdCancelMsg );
+			unit->finishCommand();
+			return;
+		}
+		unit->getFaction()->applyCosts(static_cast<const UnitType*>(command->getProdType()));
+	}
+	BUILD_LOG( unit, "in position, starting construction." );
+	builtUnit = g_world.newUnit(command->getPos(), builtUnitType, unit->getFaction(), map, command->getFacing());
+	builtUnit->create();
+	unit->setCurrSkill(m_buildSkillType);
+	unit->setTarget(builtUnit, true, true);
+	unit->getFaction()->checkAdvanceSubfaction(builtUnit->getType(), false);
+	Vec2i tilePos = Map::toTileCoords(builtUnit->getCenteredPos());
+	if (builtUnitType->getField() == Field::LAND
+	|| (builtUnitType->getField() == Field::AMPHIBIOUS && !map->isTileSubmerged(tilePos))) {
+		map->prepareTerrain(builtUnit);
+	}
+	command->setUnit(builtUnit);
+	if (!builtUnit->isMobile()) {
+		g_world.getCartographer()->updateMapMetrics(builtUnit->getPos(), builtUnit->getSize());
+	}
+	if (unit->getFaction()->isThisFaction()) {
+		RUNTIME_CHECK(!unit->isCarried() && !unit->isGarrisoned());
+		g_soundRenderer.playFx(getStartSound(), unit->getCurrVector(), g_gameState.getGameCamera()->getPos());
+	}
+}
+
+void StructureCommandType::continueBuild(Unit *unit, const Command *command, const UnitType *builtUnitType) const {
+	BUILD_LOG( unit, "building." );
+	Unit *builtUnit = command->getUnit();
+	if (builtUnit && builtUnit->getType() != builtUnitType) {
+		unit->setCurrSkill(SkillClass::STOP);
+	} else if (!builtUnit || builtUnit->isBuilt()) {
+		unit->finishCommand();
+		unit->setCurrSkill(SkillClass::STOP);
+	} else {
+        unit->finishCommand();
+		unit->setCurrSkill(SkillClass::STOP);
+	}
+}
 
 // =====================================================
 // 	class ConstructCommandType

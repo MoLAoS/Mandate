@@ -575,9 +575,22 @@ bool Faction::reqsOk(const RequirableType *rt) const {
 	}
 	// required upgrades
 	for (int i = 0; i < rt->getUpgradeReqCount(); ++i) {
-	    //if ()
-		if (!upgradeManager.isUpgraded(rt->getUpgradeReq(i)) || !upgradeManager.isPartial(rt->getUpgradeReq(i))) {
-			return false;
+		if (upgradeManager.isUpgraded(rt->getUpgradeReq(i).reqType)) {
+		} else if (upgradeManager.isPartial(rt->getUpgradeReq(i).reqType)) {
+		    Faction *f;
+		    for (int j = 0; j < g_world.getFactionCount(); ++j) {
+		        if (this == g_world.getFaction(j)) {
+                    f = g_world.getFaction(j);
+		        }
+		    }
+		    int stage = f->getCurrentStage(rt->getUpgradeReq(i).reqType);
+            if (rt->getUpgradeReq(i).stage == stage) {
+
+            } else {
+                return false;
+            }
+		} else {
+            return false;
 		}
 	}
 	// available in subfaction ?
@@ -676,7 +689,7 @@ void Faction::reportReqs(const RequirableType *rt, CommandCheckResult &out_resul
 	}
 	// required upgrades
 	for (int i = 0; i < rt->getUpgradeReqCount(); ++i) {
-		const UpgradeType *ut = rt->getUpgradeReq(i);
+		const UpgradeType *ut = rt->getUpgradeReq(i).reqType;
 		if (checkDups) {
 			bool duplicate = false;
 			foreach (UpgradeReqResults, it, out_result.m_upgradeReqResults) {

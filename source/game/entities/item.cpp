@@ -236,6 +236,21 @@ string Item::getLongDesc() const {
 			ss << item.getAmount() << " " << itemName << "s " <<lang.get("Timer") << ": " << cIStep << "/" << tR.getTimerValue();
 		}
 	}
+
+	if (type->ownedUnits.size() > 0) {
+		for (int i = 0; i < type->ownedUnits.size(); ++i) {
+			UnitsOwned uo = type->ownedUnits[i];
+			const UnitType *uot = uo.getType();
+			string unitName = lang.getTechString(uot->getName());
+			int owned = uo.getOwned();
+			int limit = uo.getLimit();
+			if (unitName == uo.getType()->getName()) {
+				unitName = formatString(unitName);
+			}
+			ss << endl << lang.get("Owned") << ": ";
+			ss << endl << unitName << ": " << uo.getLimit();
+		}
+	}
 	// effects
 	//effects.streamDesc(ss);
 

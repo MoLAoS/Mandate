@@ -15,6 +15,7 @@
 #include "unit_type.h"
 #include "upgrade_type.h"
 #include "item_type.h"
+#include "modifications.h"
 #include "mandate_ai_personalities.h"
 #include "sound.h"
 
@@ -55,6 +56,7 @@ private:
 	typedef vector<StoredResource> SResources;
     typedef vector<CreatedResource> CResources;
 	typedef vector<string> Subfactions;
+	typedef vector<Modification> Modifications;
 	typedef vector<ItemType*> ItemTypes;
 	typedef vector<Texture2D*> ItemImages;
 	typedef vector<string> GuiFileNames;
@@ -67,6 +69,7 @@ private:
 	UnitTypes unitTypes;
 	UpgradeTypes upgradeTypes;
 	ItemImages itemImages;
+	Modifications modifications;
 	ItemTypes itemTypes;
 	StartingUnits startingUnits;
 	SResources startingResources;
@@ -85,6 +88,7 @@ private:
 
 public:
     Personalities getPersonalities() const {return personalities;}
+    Modifications getModifications() const {return modifications;}
 
     bool getOnHitExp() const {return onHitExp;}
 	//init

@@ -299,6 +299,7 @@ void UserInterface::initMinimap(bool fow, bool sod, bool resuming) {
 const UnitType *UserInterface::getBuilding() const {
 	RUNTIME_CHECK(activeCommandType);
 	RUNTIME_CHECK(activeCommandType->getClass() == CmdClass::BUILD
+        || activeCommandType->getClass() == CmdClass::STRUCTURE
 		|| activeCommandType->getClass() == CmdClass::TRANSFORM
         || activeCommandType->getClass() == CmdClass::CONSTRUCT);
 	return choosenBuildingType;
@@ -309,6 +310,7 @@ const UnitType *UserInterface::getBuilding() const {
 bool UserInterface::isPlacingBuilding() const {
 	return isSelectingPos() && activeCommandType
 		&& (activeCommandType->getClass() == CmdClass::BUILD
+        || activeCommandType->getClass() == CmdClass::STRUCTURE
 		|| activeCommandType->getClass() == CmdClass::TRANSFORM
         || activeCommandType->getClass() == CmdClass::CONSTRUCT);
 }
@@ -828,13 +830,16 @@ void UserInterface::giveTwoClickOrders(const Vec2i &targetPos, Unit *targetUnit)
 			result = commander->tryGiveCommand(selection, flags, 0, activeCommandClass, targetPos, targetUnit);
 		}
 	} else {
-		if (activeCommandClass == CmdClass::BUILD || activeCommandClass == CmdClass::TRANSFORM
+		if (activeCommandClass == CmdClass::BUILD || activeCommandClass == CmdClass::STRUCTURE
+        || activeCommandClass == CmdClass::TRANSFORM
         || activeCommandType->getClass() == CmdClass::CONSTRUCT) {
 			// selecting pos for building
 			assert(isPlacingBuilding());
 
 			// if this is a multi-build (ie. walls) then start dragging and wait for mouse up
-			if ((activeCommandClass == CmdClass::BUILD || activeCommandClass == CmdClass::CONSTRUCT) && choosenBuildingType->isMultiBuild() && !dragging) {
+			if ((activeCommandClass == CmdClass::BUILD || activeCommandClass == CmdClass::CONSTRUCT
+                || activeCommandClass == CmdClass::STRUCTURE
+                ) && choosenBuildingType->isMultiBuild() && !dragging) {
 				dragging = true;
 				dragStartPos = posObjWorld;
 				return;
@@ -1010,6 +1015,10 @@ void UserInterface::onFirstTierSelect(int posDisplay) {
 			assert(selection->isUniform());
 			m_selectedFacing = CardinalDir::NORTH;
 			m_selectingSecond = true;
+		} else if (activeCommandType && activeCommandType->getClass() == CmdClass::STRUCTURE) {
+			assert(selection->isUniform());
+			m_selectedFacing = CardinalDir::NORTH;
+			m_selectingSecond = true;
 		} else if (activeCommandType && activeCommandType->getClass() == CmdClass::CONSTRUCT) {
 			assert(selection->isUniform());
 			m_selectedFacing = CardinalDir::NORTH;
@@ -1058,7 +1067,9 @@ void UserInterface::onSecondTierSelect(int posDisplay) {
 		RUNTIME_CHECK(ndx >= 0 && ndx < activeCommandType->getProducedCount());
 		const ProducibleType *pt = activeCommandType->getProduced(ndx);
 
-		if (activeCommandType->getClass() == CmdClass::BUILD || activeCommandType->getClass() == CmdClass::CONSTRUCT
+		if (activeCommandType->getClass() == CmdClass::BUILD
+        || activeCommandType->getClass() == CmdClass::STRUCTURE
+        || activeCommandType->getClass() == CmdClass::CONSTRUCT
 		|| activeCommandType->getClass() == CmdClass::TRANSFORM) {
 			if (world->getFaction(factionIndex)->reqsOk(pt)) {
 				choosenBuildingType = static_cast<const UnitType*>(pt);
@@ -1516,6 +1527,9 @@ void UserInterface::addOrdersResultToConsole(CmdClass cc, CmdResult result) {
 			case CmdClass::BUILD:
 				m_console->addStdMessage("BuildingNoReqs");
 				break;
+			case CmdClass::STRUCTURE:
+				m_console->addStdMessage("BuildingNoReqs");
+				break;
 			case CmdClass::PRODUCE:
 				m_console->addStdMessage("UnitNoReqs");
 				break;
@@ -1545,6 +1559,9 @@ void UserInterface::addOrdersResultToConsole(CmdClass cc, CmdResult result) {
 						case CmdClass::BUILD:
 							m_console->addStdMessage("BuildingNoRes1", a);
 							break;
+						case CmdClass::STRUCTURE:
+							m_console->addStdMessage("BuildingNoRes1", a);
+							break;
 						case CmdClass::PRODUCE:
 							m_console->addStdMessage("UnitNoRes1", a);
 							break;
@@ -1561,6 +1578,9 @@ void UserInterface::addOrdersResultToConsole(CmdClass cc, CmdResult result) {
 				} else {
 					switch (cc) {
 						case CmdClass::BUILD:
+							m_console->addStdMessage("BuildingNoRes2", a, b);
+							break;
+						case CmdClass::STRUCTURE:
 							m_console->addStdMessage("BuildingNoRes2", a, b);
 							break;
 						case CmdClass::PRODUCE:

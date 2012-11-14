@@ -231,6 +231,9 @@ Unit::Unit(CreateParams params)
 	currentCommandCooldowns[i].currentStep = 0;
 	}
 
+	currentAiUpdate.resize(1);
+	currentCommandCooldowns[0].currentStep = 0;
+
     ownedUnits.resize(type->ownedUnits.size());
     for(int i = 0; i<ownedUnits.size(); ++i){
         const UnitType *type = getType()->ownedUnits[i].getType();
@@ -1435,13 +1438,13 @@ void Unit::born(bool reborn) {
 		addStore(type);
 		faction->addCreate(type);
 
-        if (!owner->getId() == this->getId()) {
+        /*if (!owner->getId() == this->getId()) {
             for (int i = 0; i < owner->ownedUnits.size(); ++i) {
                 if (owner->ownedUnits[i].getType() == getType()) {
                     owner->ownedUnits[i].incOwned();
                 }
             }
-        }
+        }*/
 
 		setCurrSkill(SkillClass::STOP);
 		hp = type->getMaxHp();
@@ -1510,6 +1513,15 @@ void Unit::kill() {
         }
 	}
 
+	if (owner->getId() != this->getId()) {
+	    for (int i = 0; i < owner->ownedUnits.size(); ++i) {
+            if (owner->ownedUnits[i].getType() == getType()) {
+                owner->ownedUnits[i].decOwned();
+                break;
+            }
+	    }
+	}
+
 	if (!m_unitsToCarry.empty()) {
 		foreach (UnitIdList, it, m_unitsToCarry) {
 			Unit *unit = world.getUnit(*it);
@@ -1571,15 +1583,6 @@ void Unit::kill() {
 	}
 
 	Died(this);
-
-	if (!owner->getId() == this->getId()) {
-	    for (int i = 0; i < owner->ownedUnits.size(); ++i) {
-            if (owner->ownedUnits[i].getType() == getType()) {
-                owner->ownedUnits[i].decOwned();
-                break;
-            }
-	    }
-	}
 
 	clearCommands();
 	setCurrSkill(SkillClass::DIE);
@@ -1878,6 +1881,13 @@ TravelState Unit::travel(const Vec2i &pos, const MoveSkillType *moveSkill) {
 const CommandType *Unit::computeCommandType(const Vec2i &pos, const Unit *targetUnit) const{
 	const CommandType *commandType = NULL;
 	Tile *sc = map->getTile(Map::toTileCoords(pos));
+
+    if (targetUnit == this) {
+        return commandType;
+    }
+    if (targetUnit && getType()->hasTag("building")) {
+        return commandType;
+    }
 
 	if (targetUnit) {
 		//attack enemies
@@ -2775,16 +2785,17 @@ string Unit::getLongDesc() const {
     ss << endl << "fort";
     }
     }
-
     ss << endl << "Producer ID: " <<  productionRoute.getProducerId();
     ss << endl << "Store ID: " <<  productionRoute.getStoreId();
-
 	ss << endl << "Unit Position: " << this->getCenteredPos();
 	if (anyCommand()) {
 	ss << endl << "Goal Position: " << this->getCurrCommand()->getPos();
 	}
 	if (goalStructure != NULL) {
 	ss << endl << "TargetID: " << goalStructure->getId();
+	}
+	if (goalStructure != NULL) {
+	ss << endl << "TargetID: " << getGoalReason();
 	}
 
 	ss << endl << "Direction: " << previousDirection;
@@ -3105,6 +3116,20 @@ void Unit::computeTotalUpgrade() {
         totalUpgrade.sum(et);
 	}
 
+    for (int i = 0; i < getEquippedItems().size(); ++i) {
+        const ItemType *iType = getEquippedItem(i)->getType();
+        for (int j = 0; j < iType->ownedUnits.size(); ++j) {
+            UnitsOwned unitExpand = iType->ownedUnits[j];
+            for (int k = 0; k < ownedUnits.size(); ++k) {
+                if (unitExpand.getType() == ownedUnits[k].getType()) {
+                    int newLimit = unitExpand.getLimit();
+                    int oldLimit = ownedUnits[k].getLimit();
+                    ownedUnits[k].setLimit(oldLimit + newLimit);
+                }
+            }
+        }
+    }
+
     resistances.clear();
     resistances.resize(getType()->resistances.size());
     for (int i = 0; i < getType()->resistances.size(); ++i) {
@@ -3132,7 +3157,6 @@ void Unit::computeTotalUpgrade() {
 	}
 
     UnitIdList garrisonedUnits = getGarrisonedUnits();
-    garrisonTest = false;
     if (getGarrisonedCount() > 0) {
         foreach (UnitIdList, it, garrisonedUnits) {
             Unit *garUnit = g_world.getUnit(*it);
@@ -3142,7 +3166,6 @@ void Unit::computeTotalUpgrade() {
                 if (unitName == bonusName) {
                     const EnhancementType *et = getType()->loadBonuses[l].getEnhancement()->getEnhancement();
                     totalUpgrade.sum(et);
-                    garrisonTest = true;
                 }
             }
         }

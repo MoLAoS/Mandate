@@ -412,6 +412,26 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 			g_logger.logXmlError(path, e.what());
 			loadOk = false;
 		}
+		try {
+			const XmlNode *modificationsNode = parametersNode->getChild("modifications", 0, false);
+			if(modificationsNode) {
+				modifications.resize(modificationsNode->getChildCount());
+				for(int i = 0; i < modifications.size(); ++i){
+					const XmlNode *modificationNode = modificationsNode->getChild("modification", i);
+					string name = modificationNode->getAttribute("name")->getRestrictedValue();
+					for (int j = 0; j < getFactionType()->getModifications().size(); ++j) {
+                        if (getFactionType()->getModifications()[j].getName() == name) {
+                            Modification *modification = &getFactionType()->getModifications()[j];
+                            modifications.push_back(modification);
+                            break;
+                        }
+					}
+				}
+			}
+		} catch (runtime_error e) {
+			g_logger.logXmlError(path, e.what());
+			loadOk = false;
+		}
 
 	} // !glestimal
 	const XmlNode *fieldNode = parametersNode->getChild("field", 0, false);
@@ -1061,7 +1081,8 @@ bool UnitType::isOfClass(UnitClass uc) const{
 			return hasSkillClass(SkillClass::ATTACK)
 				&& !hasSkillClass(SkillClass::HARVEST);
 		case UnitClass::WORKER:
-			return hasSkillClass(SkillClass::BUILD) || hasSkillClass(SkillClass::CONSTRUCT)
+			return hasSkillClass(SkillClass::BUILD)
+                || hasSkillClass(SkillClass::CONSTRUCT)
 				|| hasSkillClass(SkillClass::REPAIR)
 				|| hasSkillClass(SkillClass::HARVEST);
 		case UnitClass::BUILDING:

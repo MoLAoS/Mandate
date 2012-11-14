@@ -35,7 +35,7 @@ EffectType::EffectType() : lightColour(0.0f) {
 	sound = NULL;
 	soundStartTime = 0.0f;
 	loopSound = false;
-	damageType = NULL;
+	damageClass = NULL;
 	factionType = 0;
 	display = true;
 }
@@ -128,9 +128,9 @@ bool EffectType::load(const XmlNode *en, const string &dir, const TechTree *tt, 
 	}
 
 	try { // damageType (default NULL)
-		attr = en->getAttribute("damage-type", false);
+		attr = en->getAttribute("damage-class", false);
 		if(attr) {
-			damageType = tt->getAttackType(attr->getRestrictedValue());
+			damageClass = tt->getAttackType(attr->getRestrictedValue());
 		}
 	}
 	catch (runtime_error e) {
@@ -157,6 +157,23 @@ bool EffectType::load(const XmlNode *en, const string &dir, const TechTree *tt, 
 		}
 	} catch (runtime_error e) {
 		g_logger.logXmlError(dir, e.what ());
+		loadOk = false;
+	}
+
+	try {
+	    const XmlNode *damageTypesNode = en->getChild("damage-types", 0, false);
+	    if (damageTypesNode) {
+	        damageTypes.resize(damageTypesNode->getChildCount());
+            for (int i = 0; i < damageTypesNode->getChildCount(); ++i) {
+                const XmlNode *damageTypeNode = damageTypesNode->getChild("damage-type", i);
+                string damageTypeName = damageTypeNode->getAttribute("type")->getRestrictedValue();
+                int amount = damageTypeNode->getAttribute("value")->getIntValue();
+                damageTypes[i].init(damageTypeName, amount);
+            }
+	    }
+	}
+    catch (runtime_error e) {
+		g_logger.logXmlError(dir, e.what());
 		loadOk = false;
 	}
 
@@ -238,8 +255,8 @@ bool EffectType::load(const XmlNode *en, const string &dir, const TechTree *tt, 
 		g_logger.logXmlError(dir, e.what ());
 		loadOk = false;
 	}
-	if(hpRegeneration >= 0 && damageType) {
-		damageType = NULL;
+	if(hpRegeneration >= 0 && damageClass) {
+		damageClass = NULL;
 	}
 	return loadOk;
 }
@@ -265,8 +282,8 @@ void EffectType::doChecksum(Checksum &checksum) const {
 	foreach_enum (EffectTypeFlag, f) {
 		checksum.add(flags.get(f));
 	}
-	if (damageType) {
-		checksum.add(damageType->getName());
+	if (damageClass) {
+		checksum.add(damageClass->getName());
 	}
 	checksum.add(display);
 }
@@ -302,8 +319,8 @@ void EffectType::getDesc(string &str) const {
 		str += intToStr(duration);
 	}
 
-	if (damageType) {
-		str += "\n   " + g_lang.get("DamageType") + ": " + g_lang.getTechString(damageType->getName());
+	if (damageClass) {
+		str += "\n   " + g_lang.get("DamageClass") + ": " + g_lang.getTechString(damageClass->getName());
 	}
 
 	EnhancementType::getDesc(str, "\n   ");

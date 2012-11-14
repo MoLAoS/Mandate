@@ -35,7 +35,7 @@ MEMORY_CHECK_IMPLEMENTATION(Effect)
 
 // ============================ Constructor & destructor =============================
 
-Effect::Effect(CreateParams params) 
+Effect::Effect(CreateParams params)
 		: m_id(-1) {
 	this->type = params.type;
 	this->source = params.source ? params.source->getId() : -1;
@@ -43,13 +43,28 @@ Effect::Effect(CreateParams params)
 	this->strength = params.strength;
 	this->duration = type->getDuration();
 	this->recourse = params.root != NULL;
-	if (type->getHpRegeneration() < 0 && type->getDamageType()) {
-		fixed fregen = type->getHpRegeneration() 
-			* params.tt->getDamageMultiplier(type->getDamageType(), params.recipient->getType()->getArmourType());
-		this->actualHpRegen = fregen.intp();
-	} else {
-		this->actualHpRegen = type->getHpRegeneration();
-	}
+	if (type->getHpRegeneration() < 0) {
+        if (type->getDamageClass()) {
+            fixed fregen = type->getHpRegeneration()
+                * params.tt->getDamageMultiplier(type->getDamageClass(), params.recipient->getType()->getArmourType());
+            this->actualHpRegen = fregen.intp();
+        } else {
+            this->actualHpRegen = type->getHpRegeneration();
+        }
+    } else if (type->getDamageTypeCount() > 0) {
+        for (int i = 0; i < type->getDamageTypeCount(); ++i) {
+            DamageType damage = type->getDamageType(i);
+            for (int j = 0; j < params.recipient->resistances.size(); ++j) {
+                DamageType resistance = params.recipient->resistances[j];
+                if (damage.getTypeName() == resistance.getTypeName()) {
+                    int damageChange = damage.getValue() - resistance.getValue();
+                    if (damageChange > 0) {
+                        this->actualHpRegen -= damageChange;
+                    }
+                }
+            }
+        }
+    }
 }
 
 Effect::Effect(const XmlNode *node) {

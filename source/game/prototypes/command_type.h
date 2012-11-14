@@ -360,6 +360,54 @@ public:
 	Command* doAutoAttack(Unit *unit) const;
 };
 
+// ===============================
+//  class StructureCommandType
+// ===============================
+
+class StructureCommandType: public CommandType {
+private:
+	const BuildSkillType*	m_buildSkillType;
+	vector<const UnitType*> m_buildings;
+	map<string, string>		m_tipKeys;
+	SoundContainer			m_startSounds;
+	SoundContainer			m_builtSounds;
+public:
+	StructureCommandType() : CommandType("Structure", Clicks::TWO), m_buildSkillType(0) {}
+	~StructureCommandType();
+	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
+	virtual void doChecksum(Checksum &checksum) const;
+	virtual void subDesc(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const override;
+	virtual void descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt = 0) const override;
+	virtual void getDesc(string &str, const Unit *unit) const {
+		m_buildSkillType->getDesc(str, unit);
+	}
+	virtual void update(Unit *unit) const;
+	bool isBlocked(const UnitType *builtUnitType, const Vec2i &pos, CardinalDir facing) const;
+	virtual CmdResult check(const Unit *unit, const Command &command) const;
+	virtual void undo(Unit *unit, const Command &command) const;
+	const BuildSkillType *getBuildSkillType() const	{return m_buildSkillType;}
+	virtual int getProducedCount() const					{return m_buildings.size();}
+	virtual ProdTypePtr getProduced(int i) const;
+	bool canBuild(const UnitType *ut) const		{
+		return std::find(m_buildings.begin(), m_buildings.end(), ut) != m_buildings.end();
+	}
+	int getBuildingCount() const					{return m_buildings.size();}
+	const UnitType * getBuilding(int i) const		{return m_buildings[i];}
+	string getTipKey(const string &name) const  {
+		map<string,string>::const_iterator it = m_tipKeys.find(name);
+		return it->second;
+	}
+	StaticSound *getStartSound() const				{return m_startSounds.getRandSound();}
+	StaticSound *getBuiltSound() const				{return m_builtSounds.getRandSound();}
+	virtual CmdClass getClass() const { return typeClass(); }
+	static CmdClass typeClass() { return CmdClass::STRUCTURE; }
+private:
+	void existingBuild(Unit *unit, Command *command, Unit *builtUnit) const;
+	bool attemptMoveUnits(const vector<Unit *> &occupants) const;
+	void blockedBuild(Unit *unit) const;
+	void acceptBuild(Unit *unit, Command *command, const UnitType *builtUnitType) const;
+	void continueBuild(Unit *unit, const Command *command, const UnitType *builtUnitType) const;
+};
 
 // ===============================
 //  class BuildCommandType

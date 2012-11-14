@@ -74,13 +74,27 @@ bool FactionType::preLoad(const string &dir, const TechTree *techTree) {
 		findAll(itemsPath, itemFilenames);
 	} catch (runtime_error e) {
 		g_logger.logError(e.what());
-		loadOk = false;
 	}
 	for (int i = 0; i < itemFilenames.size(); ++i) {
 		string path = dir + "/items/" + itemFilenames[i];
 		ItemType *it = g_prototypeFactory.newItemType();
 		itemTypes.push_back(it);
 		itemTypes.back()->preLoad(path);
+	}
+
+    // a1.75) preload modifications
+	string modificationsPath = dir + "/modifications/*.";
+	vector<string> modificationsFilenames;
+	try {
+		findAll(modificationsPath, modificationsFilenames);
+	} catch (runtime_error e) {
+		g_logger.logError(e.what());
+	}
+	for (int i = 0; i < modificationsFilenames.size(); ++i) {
+		string path = dir + "/items/" + modificationsFilenames[i];
+		Modification newMod;
+		modifications.push_back(newMod);
+		modifications.back().preLoad(path);
 	}
 
 	// a2) preload upgrades
@@ -90,7 +104,6 @@ bool FactionType::preLoad(const string &dir, const TechTree *techTree) {
 		findAll(upgradesPath, upgradeFilenames);
 	} catch (runtime_error e) {
 		g_logger.logError(e.what());
-		// allow no upgrades
 	}
 	for (int i = 0; i < upgradeFilenames.size(); ++i) {
 		string path = dir + "/upgrades/" + upgradeFilenames[i];
@@ -110,7 +123,6 @@ bool FactionType::guiPreLoad(const string &dir, const TechTree *techTree) {
 		findAll(guiPath, guiFilenames);
 	} catch (runtime_error e) {
 		g_logger.logError(e.what());
-		loadOk = false;
 	}
 	for (int i = 0; i < guiFilenames.size(); ++i) {
 		string path = dir + "/gui/" + guiFilenames[i];
@@ -225,6 +237,14 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 			loadOk = false;
 		}
 		logger.getProgramLog().itemLoaded();
+	}
+	// 3.75. Load modifications
+	for (int i = 0; i < modifications.size(); ++i) {
+		string str = dir + "/modifications/" + modifications[i].getModificationName();
+		if (modifications[i].load(str, techTree, this)) {
+		} else {
+			loadOk = false;
+		}
 	}
 	// 4. Add BeLoadedCommandType to units that need them
 

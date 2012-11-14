@@ -144,7 +144,8 @@ Command *NetworkCommand::toCommand() const {
 			|| (g_prototypeFactory.isUpgradeType(prodType) && ct->getClass() == CmdClass::UPGRADE)
 			|| (g_prototypeFactory.isUnitType(prodType)
 				&& (ct->getClass() == CmdClass::PRODUCE || ct->getClass() == CmdClass::MORPH
-					|| ct->getClass() == CmdClass::BUILD || ct->getClass() == CmdClass::CONSTRUCT
+					|| ct->getClass() == CmdClass::BUILD || ct->getClass() == CmdClass::STRUCTURE
+                    || ct->getClass() == CmdClass::CONSTRUCT
                     || ct->getClass() == CmdClass::TRANSFORM)));
 	}
 

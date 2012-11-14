@@ -51,6 +51,8 @@ private:
 
 	typedef vector<DamageType>          Resistances;
 
+	typedef vector<UnitsOwned> OwnedUnits;
+
     string name;
     const FactionType *m_factionType;
 
@@ -64,6 +66,8 @@ public:
     int getQualityTier() const {return qualityTier;}
 
     Resistances resistances;
+
+    OwnedUnits ownedUnits;
 
 	const ArmourType *getArmourType() const	{return armourType;}
 

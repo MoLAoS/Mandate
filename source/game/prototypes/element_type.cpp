@@ -79,7 +79,7 @@ string RequirableType::getReqDesc(const Faction *f) const{
 		ss << "  " << (*it)->getName() << endl;
 	}
 	foreach_const (UpgradeReqs, it, upgradeReqs) {
-		ss << "  " << (*it)->getName() << endl;
+		ss << "  " << (*it).reqType->getName() << endl;
 	}
 	return ss.str();
 }
@@ -121,7 +121,11 @@ bool RequirableType::load(const XmlNode *baseNode, const string &dir, const Tech
 			for(int i = 0; i < upgradeRequirementsNode->getChildCount(); ++i) {
 				const XmlNode *upgradeReqNode = upgradeRequirementsNode->getChild("upgrade", i);
 				string name = upgradeReqNode->getRestrictedAttribute("name");
-				upgradeReqs.push_back(ft->getUpgradeType(name));
+				int stage = upgradeReqNode->getIntAttribute("value");
+				UpgradeReq newReq;
+				newReq.reqType = ft->getUpgradeType(name);
+				newReq.stage = stage;
+				upgradeReqs.push_back(newReq);
 			}
 		}
 	} catch (runtime_error e) {
@@ -153,8 +157,8 @@ void RequirableType::doChecksum(Checksum &checksum) const {
 		checksum.add((*it)->getId());
 	}
 	foreach_const (UpgradeReqs, it, upgradeReqs) {
-		checksum.add((*it)->getName());
-		checksum.add((*it)->getId());
+		checksum.add((*it).reqType->getName());
+		checksum.add((*it).reqType->getId());
 	}
 	checksum.add(subfactionsReqs);
 }
@@ -214,7 +218,7 @@ string ProducibleType::getReqDesc(const Faction *f) const {
 		ss << "  " << (*it)->getName() << endl;
 	}
 	foreach_const (UpgradeReqs, it, upgradeReqs) {
-		ss << "  " << (*it)->getName() << endl;
+		ss << "  " << (*it).reqType->getName() << endl;
 	}
 	return ss.str();
 }

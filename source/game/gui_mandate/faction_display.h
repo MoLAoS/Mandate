@@ -67,7 +67,7 @@ struct FactionDisplayButton {
 class FactionDisplay : public Widget, public MouseWidget, public ImageWidget, public TextWidget {
 public:
 	static const int cellWidthCount = 6;
-	static const int cellHeightCount = 4;
+	static const int cellHeightCount = 6;
 
 	static const int commandCellCount = cellWidthCount * cellHeightCount;
 

@@ -194,7 +194,7 @@ void CreateItemCommandType::update(Unit *unit) const {
                     unit->accessStorageAdd(unit->getFaction()->items.size()-1);
                     for (int c = 0; c < item.getType()->ProducibleType::getCostCount(); ++c) {
                         ResourceAmount ra = item.getType()->ProducibleType::getCost(c, unit->getFaction());
-                        unit->incResourceAmount(ra.getType(), -ra.getAmount());
+                        unit->getFaction()->incResourceAmount(ra.getType(), -ra.getAmount());
                     }
                 }
             }

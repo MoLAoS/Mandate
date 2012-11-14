@@ -48,30 +48,20 @@ Focus MandateAISim::getTopGoal(Unit *unit, string personality) {
                     }
                     int healthModifier = importanceLive;
                     if (unit->getHp() <= (unit->getMaxHp() * (healthModifier / 100))) {
-                        topGoal = getPersonality(i).getGoal(k);
+                        topGoal = goal;
                         return topGoal;
                     } else if (unit->getHp() < unit->getMaxHp() && unit->isCarried()) {
-                        topGoal = getPersonality(i).getGoal(k);
+                        topGoal = goal;
                         return topGoal;
                     }
                 }
                 if (goalName == "build") {
-                    if (topGoal.getImportance() != NULL) {
-                        if (goalImportance > topGoal.getImportance()) {
-                            topGoal = goal;
-                        }
-                    } else {
-                        topGoal = goal;
-                    }
+                    topGoal = goal;
+                    return topGoal;
                 }
                 if (goalName == "collect") {
-                    if (topGoal.getImportance() != NULL) {
-                        if (goalImportance > topGoal.getImportance()) {
-                            topGoal = goal;
-                        }
-                    } else {
-                        topGoal = goal;
-                    }
+                    topGoal = goal;
+                    return topGoal;
                 }
                 if (goalName == "explore") {
                     if (topGoal.getImportance() != NULL) {
@@ -95,6 +85,28 @@ Focus MandateAISim::getTopGoal(Unit *unit, string personality) {
                         topGoal = goal;
                     }
                 }
+                if (goalName == "demolish") {
+                    if (topGoal.getImportance() != NULL) {
+                        int importanceRaid = 0;
+                        Vec2i tPos = Vec2i(NULL);
+                        Unit *lair = goalSystem.findLair(unit);
+                        if (lair != NULL) {
+                            tPos = lair->getPos();
+                        }
+                        if (tPos != Vec2i(NULL)) {
+                            Vec2i uPos = unit->getPos();
+                            int distance = sqrt(pow(float(abs(uPos.x - tPos.x)), 2) + pow(float(abs(uPos.y - tPos.y)), 2));
+                            if (distance < 100) {
+                                importanceRaid = 100 - distance;
+                            }
+                            if (goalImportance + importanceRaid > topGoal.getImportance()) {
+                                topGoal = goal;
+                            }
+                        }
+                    } else {
+                        topGoal = goal;
+                    }
+                }
                 if (goalName == "raid") {
                     if (topGoal.getImportance() != NULL) {
                         int importanceRaid = 0;
@@ -109,9 +121,9 @@ Focus MandateAISim::getTopGoal(Unit *unit, string personality) {
                             if (distance < 100) {
                                 importanceRaid = 100 - distance;
                             }
-                        }
-                        if (goalImportance + importanceRaid > topGoal.getImportance()) {
-                            topGoal = goal;
+                            if (goalImportance + importanceRaid > topGoal.getImportance()) {
+                                topGoal = goal;
+                            }
                         }
                     } else {
                         topGoal = goal;
@@ -131,9 +143,9 @@ Focus MandateAISim::getTopGoal(Unit *unit, string personality) {
                             if (distance < 100) {
                                 importanceHunt = 100 - distance;
                             }
-                        }
-                        if (goalImportance + importanceHunt > topGoal.getImportance()) {
-                            topGoal = goal;
+                            if (goalImportance + importanceHunt > topGoal.getImportance()) {
+                                topGoal = goal;
+                            }
                         }
                     } else {
                         topGoal = goal;
@@ -155,6 +167,9 @@ Focus MandateAISim::getTopGoal(Unit *unit, string personality) {
                     if (unit->owner->attackers.size() > 0) {
                         if (topGoal.getImportance() != NULL) {
                             Vec2i uPos = unit->getPos();
+                            if (unit->isCarried()) {
+                                uPos = unit->owner->getPos();
+                            }
                             Vec2i tPos = unit->owner->getPos();
                             int distance = sqrt(pow(float(abs(uPos.x - tPos.x)), 2) + pow(float(abs(uPos.y - tPos.y)), 2));
                             int importanceDefend = unit->owner->attackers.size() * 10;
@@ -195,16 +210,34 @@ Focus MandateAISim::getTopGoal(Unit *unit, string personality) {
                         topGoal = goal;
                     }
                 }
+                if (goalName == "rest") {
+                    if (topGoal.getImportance() != NULL) {
+                        if (goalImportance > topGoal.getImportance()) {
+                            topGoal = goal;
+                        }
+                    } else {
+                        topGoal = goal;
+                    }
+                }
             }
         }
     }
     return topGoal;
 }
 
-void MandateAISim::computeAction(Unit *unit, string personality, SkillClass currentAction) {
-    Focus newFocus = getTopGoal(unit, personality);
-    if (currentAction == SkillClass::STOP) {
+void MandateAISim::computeAction(Unit *unit, string personality, string reason) {
+    if (reason != "kill") {
+        Focus newFocus = getTopGoal(unit, personality);
         goalSystem.computeAction(unit, newFocus);
+    } else if (reason == "kill") {
+        if (unit->getGoalStructure() != NULL) {
+            if (unit->anyCommand()) {
+                if (unit->getCurrCommand()->getType()->getClass() != CmdClass::ATTACK) {
+                    const CommandType *act = goalSystem.selectAttackSpell(unit, unit->getGoalStructure());
+                    unit->giveCommand(g_world.newCommand(act, CmdFlags(), unit->getGoalStructure()));
+                }
+            }
+        }
     }
 }
 
@@ -212,13 +245,15 @@ void MandateAISim::update() {
     for (int i = 0; i < faction->getUnitCount(); ++i) {
         Unit *unit = faction->getUnit(i);
         string personality = unit->getType()->personality;
+        string reason = "compute";
         if (unit->getType()->inhuman) {
             if (unit->getGoalStructure() != NULL) {
                 if (!unit->getGoalStructure()->isAlive() || unit->getGoalStructure()->isCarried() || unit->getGoalStructure()->isGarrisoned()) {
                     unit->setGoalStructure(NULL);
+                    unit->setCurrentFocus("");
+                    unit->setGoalReason("compute");
                     if (unit->anyCommand()) {
                         if (unit->getCurrCommand()->getType()->getClass() == CmdClass::ATTACK) {
-                            unit->setCurrSkill(SkillClass::STOP);
                             unit->finishCommand();
                         }
                     }
@@ -232,7 +267,17 @@ void MandateAISim::update() {
                 goalSystem.ownerUnload(unit);
             }
             if (unit->getCurrSkill()->getClass() == SkillClass::STOP) {
-                computeAction(unit, personality, SkillClass::STOP);
+                if (unit->getGoalReason() == "kill") {
+                    reason = "kill";
+                    computeAction(unit, personality, reason);
+                } else {
+                    if (unit->currentAiUpdate[0].currentStep == 8) {
+                        computeAction(unit, personality, reason);
+                        unit->currentAiUpdate[0].currentStep = 0;
+                    } else {
+                        ++unit->currentAiUpdate[0].currentStep;
+                    }
+                }
             }
         }
     }
