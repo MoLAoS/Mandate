@@ -51,7 +51,20 @@ FactionType::FactionType()
 bool FactionType::preLoad(const string &dir, const TechTree *techTree) {
 	m_name = basename(dir);
     bool loadOk = true;
-
+    // a1.75) preload modifications
+	string modificationsPath = dir + "/modifications/*.";
+	vector<string> modificationsFilenames;
+	try {
+		findAll(modificationsPath, modificationsFilenames);
+	} catch (runtime_error e) {
+		g_logger.logError(e.what());
+	}
+	for (int i = 0; i < modificationsFilenames.size(); ++i) {
+		string path = dir + "/modifications/" + modificationsFilenames[i];
+		Modification newMod;
+		modifications.push_back(newMod);
+		modifications.back().preLoad(path);
+	}
 	// a1) preload units
 	string unitsPath = dir + "/units/*.";
 	vector<string> unitFilenames;
@@ -81,22 +94,6 @@ bool FactionType::preLoad(const string &dir, const TechTree *techTree) {
 		itemTypes.push_back(it);
 		itemTypes.back()->preLoad(path);
 	}
-
-    // a1.75) preload modifications
-	string modificationsPath = dir + "/modifications/*.";
-	vector<string> modificationsFilenames;
-	try {
-		findAll(modificationsPath, modificationsFilenames);
-	} catch (runtime_error e) {
-		g_logger.logError(e.what());
-	}
-	for (int i = 0; i < modificationsFilenames.size(); ++i) {
-		string path = dir + "/items/" + modificationsFilenames[i];
-		Modification newMod;
-		modifications.push_back(newMod);
-		modifications.back().preLoad(path);
-	}
-
 	// a2) preload upgrades
 	string upgradesPath= dir + "/upgrades/*.";
 	vector<string> upgradeFilenames;
@@ -216,8 +213,14 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 
 		}
 	}
-
-    // progress : 0 - unitFileNames.size()
+	// 3.75. Load modifications
+	for (int i = 0; i < modifications.size(); ++i) {
+		string str = dir + "/modifications/" + modifications[i].getName();
+		if (modifications[i].load(str, techTree, this)) {
+		} else {
+			loadOk = false;
+		}
+	}
 	// 3. Load units
 	for (int i = 0; i < unitTypes.size(); ++i) {
 		string str = dir + "/units/" + unitTypes[i]->getName();
@@ -237,14 +240,6 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 			loadOk = false;
 		}
 		logger.getProgramLog().itemLoaded();
-	}
-	// 3.75. Load modifications
-	for (int i = 0; i < modifications.size(); ++i) {
-		string str = dir + "/modifications/" + modifications[i].getModificationName();
-		if (modifications[i].load(str, techTree, this)) {
-		} else {
-			loadOk = false;
-		}
 	}
 	// 4. Add BeLoadedCommandType to units that need them
 

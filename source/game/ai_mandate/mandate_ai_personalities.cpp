@@ -94,6 +94,17 @@ void GoalSystem::shop(Unit *unit) {
                 }
             }
         }
+        for (int i = 0; i < unit->getEquipment().size(); ++i) {
+            string typeTag = unit->getEquipment()[i].getTypeTag();
+            for (int j = 0; j < shop->getType()->modifications.size(); ++j) {
+                for (int k = 0; k < shop->getType()->modifications[j].getEquipment().size(); ++k) {
+                    string tagType = shop->getType()->modifications[j].getEquipment()[k];
+                    if (tagType == typeTag) {
+                        unit->modifications.push_back(shop->getType()->modifications[j]);
+                    }
+                }
+            }
+        }
         unit->setGoalStructure(NULL);
     }
 }
@@ -104,6 +115,8 @@ Unit* GoalSystem::findShop(Unit *unit) {
     for (int i = 0; i < f->getUnitCount(); ++i) {
         Unit *building = f->getUnit(i);
         if (building->getType()->hasTag("building") && building->getType()->hasTag("shop")) {
+            buildingsList.push_back(building);
+        } else if (building->getType()->hasTag("guild") && building->getType()->hasTag("producer") && building == unit->owner) {
             buildingsList.push_back(building);
         }
     }
@@ -131,6 +144,27 @@ Unit* GoalSystem::findShop(Unit *unit) {
                         for (int k = 0; k < unit->getEquipment().size(); ++k) {
                             if (typeTag == unit->getEquipment()[k].getTypeTag()) {
                                 if (unit->getEquipment()[k].getCurrent() == 0) {
+                                    distance = newDistance;
+                                    finalPick = building;
+                                    tPos = bPos;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            if (building->getType()->modifications.size() > 0) {
+                for (int j = 0; j < building->getType()->modifications.size(); ++j) {
+                    for (int k = 0; k < building->getType()->modifications[j].getEquipment().size(); ++k) {
+                        for (int l = 0; l < unit->getEquipment().size(); ++l) {
+                            if (unit->getEquipment()[l].getTypeTag() == building->getType()->modifications[j].getEquipment()[k]) {
+                                bool owned = false;
+                                for (int m = 0; m < unit->modifications.size(); ++m) {
+                                    if (unit->modifications[m].getModificationName() == building->getType()->modifications[j].getModificationName()) {
+                                        owned = true;
+                                    }
+                                }
+                                if (owned == false) {
                                     distance = newDistance;
                                     finalPick = building;
                                     tPos = bPos;
@@ -532,6 +566,15 @@ void GoalSystem::computeAction(Unit *unit, Focus focus) {
         }
     } else if (goal == "shop") {
         clearSimAi(unit, goal);
+        if (unit->getGoalReason() == "shop") {
+            Vec2i posUnit = unit->getPos();
+            Vec2i posShop = unit->getGoalStructure()->getPos();
+            int distance = sqrt(pow(float(abs(posUnit.x - posShop.x)), 2) + pow(float(abs(posUnit.y - posShop.y)), 2));
+            if (distance < 2) {
+                unit->shop();
+                unit->setGoalReason("");
+            }
+        }
         if (unit->getCurrSkill()->getClass() == SkillClass::STOP) {
             Unit *finalPick = findShop(unit);
             Vec2i tPos = Vec2i(NULL);
@@ -545,6 +588,7 @@ void GoalSystem::computeAction(Unit *unit, Focus focus) {
                     } else {
                         unit->setGoalStructure(finalPick);
                         unit->giveCommand(g_world.newCommand(ct, CmdFlags(), tPos));
+                        unit->setGoalReason("shop");
                     }
             }
         }

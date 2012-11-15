@@ -145,10 +145,9 @@ public:
 	//typedef list<UnitId> Pets;
 
 	typedef vector<UnitsOwned> OwnedUnits;
-
 	typedef vector<string> BuffsApplied;
-
 	typedef vector<Attacker> Attackers;
+    typedef vector<Modification> Modifications;
 
 /**< system for localized resources */
 private:
@@ -197,6 +196,8 @@ public:
     Storage getEquipment() const {return equipment;}
 
 /**< system for items */
+
+    Modifications modifications;
 
 private:
 	// basic stats

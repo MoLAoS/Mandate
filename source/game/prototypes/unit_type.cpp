@@ -415,17 +415,18 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 		try {
 			const XmlNode *modificationsNode = parametersNode->getChild("modifications", 0, false);
 			if(modificationsNode) {
-				modifications.resize(modificationsNode->getChildCount());
-				for(int i = 0; i < modifications.size(); ++i){
+			    modifications.resize(modificationsNode->getChildCount());
+			    modifyNames.resize(modificationsNode->getChildCount());
+				for(int i = 0; i < modificationsNode->getChildCount(); ++i){
 					const XmlNode *modificationNode = modificationsNode->getChild("modification", i);
-					string name = modificationNode->getAttribute("name")->getRestrictedValue();
-					for (int j = 0; j < getFactionType()->getModifications().size(); ++j) {
-                        if (getFactionType()->getModifications()[j].getName() == name) {
-                            Modification *modification = &getFactionType()->getModifications()[j];
-                            modifications.push_back(modification);
-                            break;
+					string mname = modificationNode->getAttribute("name")->getRestrictedValue();
+					modifyNames[i] = mname;
+                    for (int j = 0; j < getFactionType()->getModifications().size(); ++j) {
+                        string modName = getFactionType()->getModifications()[j].getModificationName();
+                        if (modName == mname) {
+                            modifications[i] = getFactionType()->getModifications()[j];
                         }
-					}
+                    }
 				}
 			}
 		} catch (runtime_error e) {

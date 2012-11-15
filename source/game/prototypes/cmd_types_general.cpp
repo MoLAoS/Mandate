@@ -373,9 +373,6 @@ void MoveCommandType::update(Unit *unit) const {
 	}
 
 	if (unit->travel(pos, m_moveSkillType) == TravelState::ARRIVED) {
-	    if (unit->getCurrentFocus() == "shop") {
-            unit->shop();
-	    }
 	    /*if (command->getUnit()) {
 	        Unit *check = command->getUnit();
 	        /*if (check->getType()->getProperty(Property::STAIR)) {

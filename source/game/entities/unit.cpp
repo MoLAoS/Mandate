@@ -2806,6 +2806,21 @@ string Unit::getLongDesc() const {
     ss << endl << "Stored Items: " << itemsStored << "/" << itemLimit;
     ss << endl << "Equipped Items: " << getEquippedItems().size();
 
+    if (type->modifications.size() > 0) {
+        for (int i = 0; i < type->modifications.size(); ++i) {
+            ss << endl << "Unit: " << type->modifications[i].getModificationName();
+            ss << endl << "Produced: " << type->modifications[i].getEquipment().size();
+            for (int j = 0; j < type->modifications[i].getEquipment().size(); ++j) {
+                ss << endl << "Equipment: " << type->modifications[i].getEquipment()[j];
+            }
+        }
+    }
+    ss << endl << "Modification Count: " << modifications.size();
+    if (modifications.size() > 0) {
+        for (int i = 0; i < modifications.size(); ++i) {
+            ss << endl << "Bought: " << modifications[i].getModificationName();
+        }
+    }
 	const string factionName = type->getFactionType()->getName();
 	int armorBonus = getArmor() - type->getArmor();
 	int sightBonus = getSight() - type->getSight();

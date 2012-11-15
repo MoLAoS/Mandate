@@ -99,7 +99,9 @@ private:
 
 	typedef vector<Equipment>           Equipments;
 
-    typedef vector<Modification*>       Modifications;
+    typedef vector<Modification>       Modifications;
+
+    typedef vector<string>              ModifyNames;
 
 	//typedef vector<PetRule*> PetRules;
 	//typedef map<int, const CommandType*> CommandTypeMap;
@@ -161,6 +163,7 @@ public:
     Equipments equipment;
 
     Modifications modifications;
+    ModifyNames modifyNames;
 
     int itemLimit;
 

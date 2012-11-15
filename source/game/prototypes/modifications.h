@@ -22,6 +22,7 @@ private:
     typedef vector<DamageType> DamageBonuses;
     typedef vector<DamageType> ResistanceBonuses;
     typedef vector<ResourceAmount> Costs;
+    typedef vector<string> Equipment;
 
     DamageBonuses damageBonuses;
     ResistanceBonuses resistanceBonuses;
@@ -30,12 +31,15 @@ private:
 
 	EffectTypes effectTypes;
 
+    Equipment equipment;
+
     const FactionType* m_factionType;
     string name;
 
 public:
 	const FactionType* getFactionType() const { return m_factionType; }
     string getModificationName() const {return name;}
+    Equipment getEquipment() const {return equipment;}
 
     int getEffectTypeCount() const {return effectTypes.size();}
     const EffectTypes &getEffectTypes() const {return effectTypes;}

@@ -16,7 +16,7 @@ namespace Glest { namespace ProtoTypes {
 // 	class Modification
 // =====================================================
 void Modification::preLoad(const string &dir){
-	name = basename(dir);
+	m_name = basename(dir);
 }
 
 bool Modification::load(const string &dir, const TechTree *techTree, const FactionType *factionType) {
@@ -24,7 +24,9 @@ bool Modification::load(const string &dir, const TechTree *techTree, const Facti
 	bool loadOk = true;
 
 	m_factionType = factionType;
-	string path = dir + "/" + name + ".xml";
+	string path = dir + "/" + m_name + ".xml";
+
+	name = m_name;
 
 	XmlTree xmlTree;
 	try { xmlTree.load(path); }
@@ -45,6 +47,28 @@ bool Modification::load(const string &dir, const TechTree *techTree, const Facti
 		g_logger.logXmlError(path, e.what());
 		return false;
 	}
+	if (!RequirableType::load(parametersNode, dir, techTree, factionType)) {
+		loadOk = false;
+	}
+	try {
+	    const XmlNode *equipmentNode = parametersNode->getChild("equipment-types", 0, false);
+		if(equipmentNode) {
+			for(int i = 0; i < equipmentNode->getChildCount(); ++i) {
+                try {
+                    const XmlNode *typeNode = equipmentNode->getChild("equipment-type", i);
+                    string ename = typeNode->getAttribute("name")->getRestrictedValue();
+                    equipment.push_back(ename);
+                } catch (runtime_error e) {
+                    g_logger.logXmlError(dir, e.what());
+                    loadOk = false;
+                }
+			}
+		}
+
+	} catch (runtime_error e) {
+		g_logger.logXmlError(dir, e.what());
+		loadOk = false;
+	}
 	try {
 		const XmlNode *resourceRequirementsNode = parametersNode->getChild("resource-requirements", 0, false);
 		if(resourceRequirementsNode) {
@@ -52,11 +76,11 @@ bool Modification::load(const string &dir, const TechTree *techTree, const Facti
 			for(int i = 0; i < costs.size(); ++i) {
 				try {
 					const XmlNode *resourceNode = resourceRequirementsNode->getChild("resource", i);
-					string name = resourceNode->getAttribute("name")->getRestrictedValue();
+					string rname = resourceNode->getAttribute("name")->getRestrictedValue();
 					int amount = resourceNode->getAttribute("amount")->getIntValue();
                     int amount_plus = resourceNode->getAttribute("plus")->getIntValue();
                     float amount_multiply = resourceNode->getAttribute("multiply")->getFloatValue();
-                    costs[i].init(techTree->getResourceType(name), amount, amount_plus, amount_multiply);
+                    costs[i].init(techTree->getResourceType(rname), amount, amount_plus, amount_multiply);
 				} catch (runtime_error e) {
 					g_logger.logXmlError(dir, e.what());
 					loadOk = false;
@@ -65,9 +89,6 @@ bool Modification::load(const string &dir, const TechTree *techTree, const Facti
 		}
 	} catch (runtime_error e) {
 		g_logger.logXmlError(dir, e.what());
-		loadOk = false;
-	}
-	if (!RequirableType::load(parametersNode, dir, techTree, factionType)) {
 		loadOk = false;
 	}
 	try {
