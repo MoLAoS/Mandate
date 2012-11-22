@@ -189,8 +189,6 @@ void CreateItemCommandType::update(Unit *unit) const {
 			for (int i=0; i < getCreatedNumber(prodType); ++i) {
                 Item item;
                 if (unit->getItemLimit() > unit->getItemsStored() && unit->getFaction()->applyCosts(prodType) && unit->applyCosts(prodType)) {
-                    //unit->applyStaticCosts(prodType);
-                    //unit->getFaction()->applyStaticCosts(prodType);
                     item.init(unit->getFaction()->items.size(), prodType, unit->getFaction());
                     unit->getFaction()->items.push_back(item);
                     unit->accessStorageAdd(unit->getFaction()->items.size()-1);

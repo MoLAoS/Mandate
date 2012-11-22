@@ -222,6 +222,21 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 		loadOk = false;
 	}
 
+	try {
+	    const XmlNode *starterItemsNode = parametersNode->getChild("starter-items", 0, false);
+	    if (starterItemsNode) {
+            for (int i = 0; i < starterItemsNode->getChildCount(); ++i) {
+                const XmlNode *starterItemNode = starterItemsNode->getChild("type", i);
+                string type = starterItemNode->getAttribute("type")->getRestrictedValue();
+                starterItems.push_back(type);
+            }
+	    }
+	}
+	catch (runtime_error e) {
+		g_logger.logXmlError(dir, e.what());
+		loadOk = false;
+	}
+
 	// mage
 	try {
 	    const XmlNode *mageNode = parametersNode->getChild("mage", 0, false);

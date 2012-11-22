@@ -1506,6 +1506,7 @@ void Unit::born(bool reborn) {
                 taxedGold = ra.getAmount();
             }
         }
+
 		faction->addCreate(type);
 		setCurrSkill(SkillClass::STOP);
 		hp = type->getMaxHp();
@@ -1515,6 +1516,16 @@ void Unit::born(bool reborn) {
 		if (cp == 0) {
 		    cp = -1;
 		}
+
+        for (int i = 0; i < type->starterItems.size(); ++i) {
+            Item item;
+            const ItemType *prodType = faction->getType()->getItemType(type->starterItems[i]);
+            item.init(faction->items.size(), prodType, faction);
+            faction->items.push_back(item);
+            accessStorageAdd(faction->items.size()-1);
+            equipItem(storedItems.size()-1);
+        }
+
 		faction->checkAdvanceSubfaction(type, true);
 		g_world.getCartographer()->applyUnitVisibility(this);
 		g_simInterface.doUnitBorn(this);

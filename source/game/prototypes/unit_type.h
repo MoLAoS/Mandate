@@ -47,6 +47,8 @@ private:
 	typedef vector<ResourceAmount>      StoredResources;
 	typedef vector<ResourceAmount>      StarterResources;
 
+	typedef vector<string>              StarterItems;
+
 	typedef vector<CreatedResource>     CreatedResources;
 	typedef vector<Timer>               CreatedResourceTimers;
 
@@ -134,6 +136,8 @@ public:
     Resistances resistances;
 
     Equipments equipment;
+
+    StarterItems starterItems;
 
     Modifications modifications;
     ModifyNames modifyNames;
