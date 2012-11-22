@@ -29,6 +29,8 @@ private:
 
     Costs costs;
 
+    string service;
+
 	EffectTypes effectTypes;
 
     Equipment equipment;
@@ -40,6 +42,10 @@ public:
 	const FactionType* getFactionType() const { return m_factionType; }
     string getModificationName() const {return name;}
     Equipment getEquipment() const {return equipment;}
+    string getService() const {return service;}
+
+    int getCostCount() const {return costs.size();}
+    ResourceAmount getCost(int i) const {return costs[i];}
 
     int getEffectTypeCount() const {return effectTypes.size();}
     const EffectTypes &getEffectTypes() const {return effectTypes;}

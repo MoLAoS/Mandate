@@ -1162,19 +1162,11 @@ void TransportCommandType::goToStore(Unit *unit, Unit *store, Unit *producer) co
                 }
                 if (unit->getSResource(storeType)->getAmount() >= resourceAmount) {
                 unit->incResourceAmount(storeType, -resourceAmount);
-                    if (unit->getType()->personality == "collector") {
-                        store->getFaction()->incResourceAmount(storeType, resourceAmount);
-                    } else {
-                        store->incResourceAmount(storeType, resourceAmount);
-                    }
+                store->incResourceAmount(storeType, resourceAmount);
                 } else {
                     resourceAmount = unit->getSResource(storeType)->getAmount();
                     unit->incResourceAmount(storeType, -resourceAmount);
-                    if (unit->getType()->personality == "collector") {
-                        store->getFaction()->incResourceAmount(storeType, resourceAmount);
-                    } else {
-                        store->incResourceAmount(storeType, resourceAmount);
-                    }
+                    store->incResourceAmount(storeType, resourceAmount);
                 }
             }
         }
@@ -1188,7 +1180,7 @@ void TransportCommandType::goToProducer(Unit *unit, Unit *store, Unit *producer)
         for (int k = 0; k < store->getType()->getStoredResourceCount(); ++k) {
         const ResourceType *storeType = store->getType()->getStoredResource(k, store->getFaction()).getType();
             if (transportType == storeType) {
-            int resourceAmount = producer->getType()->processes[i].costs[j].getAmount()*4;
+            int resourceAmount = producer->getType()->processes[i].costs[j].getAmount()*5;
                 if (unit->getFaction()->getCpuControl()) {
                 const float &mult = g_simInterface.getGameSettings().getResourceMultilpier(unit->getFactionIndex());
                 resourceAmount = int(resourceAmount * mult);
@@ -1256,7 +1248,7 @@ void TransportCommandType::update(Unit *unit) const {
         if (unit->productionRoute.getDestination() == store->getPos()) {
             if (unit->travel(unit->productionRoute.getDestination(), m_moveLoadedSkillType) == TravelState::ARRIVED) {
             goToStore(unit, store, producer);
-            if (unit->getCurrentFocus() == "collect") {
+            if (unit->getCurrentFocus() == "transport") {
                 unit->productionRoute.setProducerId(-1);
             }
             unit->productionRoute.setDestination(producer->getPos());

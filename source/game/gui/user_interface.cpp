@@ -152,6 +152,14 @@ void UserInterface::init() {
 	this->gameCamera = game.getGameCamera();
 	this->world = &g_world;
 
+    int init = 0;
+    int inita[] = {1, 5, -1, -5};
+    taxes.resize(4);
+    for (int i = 0; i < 4; ++i) {
+        int value = inita[i];
+        taxes[i] = value;
+    }
+
 	buildPositions.reserve(max(world->getMap()->getH(), world->getMap()->getW()));
 	selection = new Selection();
 	selection->init(this, world->getThisFactionIndex());
@@ -1124,12 +1132,14 @@ void UserInterface::onHierarchySelect(int posDisplay) {
 ///@todo move to Display?
 void UserInterface::computePortraitInfo(int posDisplay) {
 	if (selection->getCount() < posDisplay) {
-		m_display->setToolTipText2("", "");
+		m_display->setToolTipText2("", "", DisplaySection::COMMANDS);
 	} else {
 		if (selection->getCount() == 1 && !selection->isEnemy()) {
 			const Unit *unit = selection->getFrontUnit();
 			string name = g_lang.getTranslatedFactionName(unit->getFaction()->getType()->getName(), unit->getType()->getName());
 			m_display->setToolTipText2(name, unit->getLongDesc(), DisplaySection::SELECTION);
+			if (unit->getType()->hasTag("guild") || unit->getType()->hasTag("member")) {
+			}
 		} else if (selection->isComandable()) {
 			m_display->setToolTipText2("", g_lang.get("PotraitInfo"), DisplaySection::SELECTION);
 		}
@@ -1148,6 +1158,38 @@ inline string describeAutoCommandState(AutoCmdState state) {
 	return "";
 }
 
+void UserInterface::taxButtonPressed(int posDisplay) {
+	WIDGET_LOG( __FUNCTION__ << "( " << posDisplay << " )");
+	if (!selectingPos && !selectingMeetingPoint) {
+		if (selection->isComandable()) {
+            int id = selection->getFrontUnit()->getId();
+            Unit *unit = g_world.findUnitById(id);
+            unit->taxRate += taxes[posDisplay];
+			computeDisplay();
+		} else {
+			resetState();
+		}
+		activePos = posDisplay;
+		computeTaxInfo(activePos);
+	} else {
+		resetState();
+	}
+}
+
+void UserInterface::computeTaxInfo(int posDisplay) {
+	WIDGET_LOG( __FUNCTION__ << "( " << posDisplay << " )");
+	if (!selection->isComandable() || posDisplay == invalidPos) {
+		m_display->setToolTipText2("", "", DisplaySection::TAX);
+		return;
+	}
+    if (selection->isUniform()) {
+        stringstream ss;
+        ss << "Tax Rate Change: " << taxes[posDisplay] << "%";
+        string info = ss.str();
+        m_display->setToolTipText2("Tax Rate", info, DisplaySection::TAX);
+    }
+}
+
 void UserInterface::computeCommandTip(const CommandType *ct, const ProducibleType *pt) {
 	m_display->getCommandTip()->clearItems();
 	ct->describe(selection->getFrontUnit(), m_display->getCommandTip(), pt);
@@ -1159,28 +1201,28 @@ void UserInterface::computeCommandInfo(int posDisplay) {
 	WIDGET_LOG( __FUNCTION__ << "( " << posDisplay << " )");
 	if (!selection->isComandable() || posDisplay == invalidPos
 	|| (m_selectingSecond && posDisplay >= activeCommandType->getProducedCount())) {
-		m_display->setToolTipText2("", "");
+		m_display->setToolTipText2("", "", DisplaySection::COMMANDS);
 		return;
 	}
 	if (!m_selectingSecond) {
 		if (posDisplay == cancelPos) {
-			m_display->setToolTipText2("", g_lang.get("Cancel"));
+			m_display->setToolTipText2("", g_lang.get("Cancel"), DisplaySection::COMMANDS);
 		} else if (posDisplay == meetingPointPos) {
-			m_display->setToolTipText2("", g_lang.get("SetMeetingPoint"));
+			m_display->setToolTipText2("", g_lang.get("SetMeetingPoint"), DisplaySection::COMMANDS);
 		} else if (posDisplay == autoRepairPos) {
 			string str = g_lang.get("AutoRepair") + " ";
 			str += describeAutoCommandState(selection->getAutoRepairState());
-			m_display->setToolTipText2("", str);
+			m_display->setToolTipText2("", str, DisplaySection::COMMANDS);
 		} else if (posDisplay == autoAttackPos) {
 			string str = g_lang.get("AutoAttack") + " ";
 			str += describeAutoCommandState(selection->getAutoCmdState(AutoCmdFlag::ATTACK));
-			m_display->setToolTipText2("", str);
+			m_display->setToolTipText2("", str, DisplaySection::COMMANDS);
 		} else if (posDisplay == autoFleePos) {
 			string str = g_lang.get("AutoFlee") + " ";
 			str += describeAutoCommandState(selection->getAutoCmdState(AutoCmdFlag::FLEE));
-			m_display->setToolTipText2("", str);
+			m_display->setToolTipText2("", str, DisplaySection::COMMANDS);
 		} else if (posDisplay == cloakTogglePos) {
-			m_display->setToolTipText2("", g_lang.get("ToggleCloak"));
+			m_display->setToolTipText2("", g_lang.get("ToggleCloak"), DisplaySection::COMMANDS);
 		} else {
 			if (selection->isUniform()) { // uniform selection
 				const CommandType *ct = m_display->getCommandType(posDisplay);
@@ -1191,13 +1233,13 @@ void UserInterface::computeCommandInfo(int posDisplay) {
 				CmdClass cc = m_display->getCommandClass(posDisplay);
 				if (cc != CmdClass::NULL_COMMAND) {
 					m_display->setToolTipText2("", g_lang.get("CommonCommand") + ": "
-						+ g_lang.get(CmdClassNames[cc]));
+						+ g_lang.get(CmdClassNames[cc]), DisplaySection::COMMANDS);
 				}
 			}
 		}
 	} else { // m_selectingSecond
 		if (posDisplay == cancelPos) {
-			m_display->setToolTipText2("", g_lang.get("Return"));
+			m_display->setToolTipText2("", g_lang.get("Return"), DisplaySection::COMMANDS);
 			return;
 		}
 		RUNTIME_CHECK(activeCommandType != 0);
@@ -1218,18 +1260,18 @@ void UserInterface::computeFormationTip(FormationCommand fc) {
 	ss << fc.formation.lines[i].line.size() << endl;
 	}
 	string lines = ss.str();
-	m_display->setToolTipText2(formation, lines);
+	m_display->setToolTipText2(formation, lines, DisplaySection::FORMATION);
 	m_display->resetTipPos();
 }
 
 void UserInterface::computeFormationInfo(int posDisplay) {
 	WIDGET_LOG( __FUNCTION__ << "( " << posDisplay << " )");
 	if (!selection->isComandable() || posDisplay == invalidPos) {
-		m_display->setToolTipText2("", "");
+		m_display->setToolTipText2("", "", DisplaySection::COMMANDS);
 		return;
 	}
     if (posDisplay == cancelPos) {
-        m_display->setToolTipText2("", g_lang.get("Cancel"));
+        m_display->setToolTipText2("", g_lang.get("Cancel"), DisplaySection::FORMATION);
     } else {
         FormationCommand fc = m_display->getFormationCommand(posDisplay);
         computeFormationTip(fc);
@@ -1245,11 +1287,11 @@ void UserInterface::computeHierarchyTip(const CommandType *hc) {
 void UserInterface::computeHierarchyInfo(int posDisplay) {
 	WIDGET_LOG( __FUNCTION__ << "( " << posDisplay << " )");
 	if (!selection->isComandable() || posDisplay == invalidPos) {
-		m_display->setToolTipText2("", "");
+		m_display->setToolTipText2("", "", DisplaySection::COMMANDS);
 		return;
 	}
     if (posDisplay == cancelPos) {
-        m_display->setToolTipText2("", g_lang.get("Cancel"));
+        m_display->setToolTipText2("", g_lang.get("Cancel"), DisplaySection::COMMANDS);
     } else {
         const CommandType *hc = m_display->getHierarchyCommand(posDisplay);
         computeHierarchyTip(hc);
@@ -1358,11 +1400,6 @@ void UserInterface::computeGarrisonedUnitsPanel() {
 }
 
 void UserInterface::computeFormationPanel() {
-    /*if (selectingPos) {
-		assert(!selection->isEmpty());
-		m_display->setSelectedFormationPos(activePos);
-	}*/
-
     if (selection->isComandable()) {
         const Unit *u = selection->getFrontUnit();
         const UnitType *ut = u->getType();
@@ -1382,6 +1419,18 @@ void UserInterface::computeHierarchyPanel() {
             const CommandType *newSquad = ut->getSquadCommand(i);
             m_display->setHierarchyImage(i, newSquad->getImage());
             m_display->setHierarchyCommand(i, newSquad);
+        }
+    }
+}
+
+void UserInterface::computeTaxPanel() {
+    if (selection->isComandable()) {
+        const Unit *u = selection->getFrontUnit();
+        const UnitType *ut = u->getType();
+        if (ut->hasTag("orderhouse") || ut->hasTag("member")) {
+            for (int i = 0; i < 4; ++i) {
+                m_display->setTaxImage(i, ut->getFactionType()->getItemImage(0));
+            }
         }
     }
 }
@@ -1501,6 +1550,7 @@ void UserInterface::computeDisplay() {
 	computeGarrisonedUnitsPanel();
 
 	// === Command Panels ===
+	computeTaxPanel();
 	computeCommandPanel();
     computeFormationPanel();
 	computeHierarchyPanel();

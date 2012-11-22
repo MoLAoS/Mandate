@@ -55,8 +55,10 @@ void FactionBuild::build(const Faction *faction, const Vec2i &pos) const {
     Map *map = g_world.getMap();
     if (map->canOccupy(pos, unitType->getField(), unitType, CardinalDir::NORTH)) {
         Unit *builtUnit = NULL;
-        builtUnit = g_world.newUnit(pos, unitType, fac, map, CardinalDir::NORTH);
-        builtUnit->create();
+        if (fac->applyCosts(unitType)) {
+            builtUnit = g_world.newUnit(pos, unitType, fac, map, CardinalDir::NORTH);
+            builtUnit->create();
+        }
     } else {
         if (fac->getIndex() == g_world.getThisFactionIndex()) {
             g_console.addStdMessage("BuildingNoPlace");

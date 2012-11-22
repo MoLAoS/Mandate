@@ -137,6 +137,9 @@ Display::Display(Container *parent, UserInterface *ui, Vec2i pos)
 	TextWidget::addText(""); // (1) unit text
 	TextWidget::addText(""); // (2) queued orders text (to display below progress bar if present)
 	TextWidget::addText(""); // (3) progress bar
+	for (int i = 0; i < taxCellCount; ++i) { // command buttons
+		ImageWidget::addImageX(0, Vec2i(0), Vec2i(m_imageSize));
+	}
 	for (int i = 0; i < commandCellCount; ++i) { // command buttons
 		ImageWidget::addImageX(0, Vec2i(0), Vec2i(m_imageSize));
 	}
@@ -225,18 +228,25 @@ void Display::layout() {
 	m_sizes.portraitSize = Vec2i(x, y);
 
 	int titleYpos = std::max((m_imageSize - int(m_fontMetrics->getHeight() + 1.f)) / 2, 0);
-	TextWidget::setTextPos(Vec2i(m_imageSize * 5 / 4, titleYpos), 0); // (0) unit title
+	TextWidget::setTextPos(Vec2i(m_imageSize * 5 / 4 + m_imageSize, titleYpos), 0); // (0) unit title
 
-	Vec2i arPos, aaPos, afPos;
+	y = m_imageSize + m_imageSize / 4 + int(m_fontMetrics->getHeight()) * 10;
 	x = 0;
-	y = m_imageSize + m_imageSize / 4 + int(m_fontMetrics->getHeight()) * 6;
+    m_taxOffset = Vec2i(x, y);
+	for (int i = 0; i < taxCellCount; ++i) { //tax buttons
+		ImageWidget::setImageX(0, selectionCellCount + i, Vec2i(x,y), Vec2i(m_imageSize));
+		x += m_imageSize;
+	}
+    y += m_imageSize;
+	x = 0;
 	m_commandOffset = Vec2i(x, y);
+    Vec2i arPos, aaPos, afPos;
 	for (int i = 0; i < commandCellCount; ++i) { // command buttons
 		if (i && i % cellWidthCount == 0) {
 			y += m_imageSize;
 			x = 0;
 		}
-		ImageWidget::setImageX(0, selectionCellCount + i, Vec2i(x,y), Vec2i(m_imageSize));
+		ImageWidget::setImageX(0, selectionCellCount + taxCellCount + i, Vec2i(x,y), Vec2i(m_imageSize));
 		if (i == UserInterface::autoRepairPos) {
 			arPos = Vec2i(x, y);
 		} else if (i == UserInterface::autoAttackPos) {
@@ -257,7 +267,7 @@ void Display::layout() {
 			y += m_imageSize;
 			x = 0;
 		}
-		ImageWidget::setImageX(0, selectionCellCount + commandCellCount + i, Vec2i(x,y), Vec2i(m_imageSize));
+		ImageWidget::setImageX(0, selectionCellCount + taxCellCount + commandCellCount + i, Vec2i(x,y), Vec2i(m_imageSize));
 		x += m_imageSize;
 	}
 	y += m_imageSize;
@@ -270,7 +280,7 @@ void Display::layout() {
 			y += m_imageSize;
 			x = 0;
 		}
-		ImageWidget::setImageX(0, selectionCellCount + commandCellCount + formationCellCount + i, Vec2i(x,y), Vec2i(m_imageSize));
+		ImageWidget::setImageX(0, selectionCellCount + taxCellCount + commandCellCount + formationCellCount + i, Vec2i(x,y), Vec2i(m_imageSize));
 		x += m_imageSize;
 	}
 	y += m_imageSize;
@@ -286,7 +296,7 @@ void Display::layout() {
 			y += m_imageSize;
 			x = 0;
 		}
-		ImageWidget::setImageX(0, selectionCellCount + commandCellCount + formationCellCount
+		ImageWidget::setImageX(0, selectionCellCount + taxCellCount + commandCellCount + formationCellCount
         + hierarchyCellCount + i, Vec2i(x,y), Vec2i(m_imageSize));
 		x += m_imageSize;
 	}
@@ -302,7 +312,7 @@ void Display::layout() {
 			y += m_imageSize;
 			x = 0;
 		}
-		ImageWidget::setImageX(0, selectionCellCount + commandCellCount + formationCellCount
+		ImageWidget::setImageX(0, selectionCellCount + taxCellCount + commandCellCount + formationCellCount
         + hierarchyCellCount + transportCellCount + i, Vec2i(x,y), Vec2i(m_imageSize));
 		x += m_imageSize;
 	}
@@ -417,7 +427,7 @@ void Display::setSelectedCommandPos(int i) {
 	}
 	if (m_selectedCommandIndex != invalidIndex) {
 		// shrink
-		int ndx = m_selectedCommandIndex + selectionCellCount;
+		int ndx = m_selectedCommandIndex + selectionCellCount + taxCellCount;
 		Vec2i pos = getImagePos(ndx);
 		Vec2i size = getImageSize(ndx);
 		pos += Vec2i(3);
@@ -428,7 +438,7 @@ void Display::setSelectedCommandPos(int i) {
 	if (m_selectedCommandIndex != invalidIndex) {
 		assert(!m_ui->getSelection()->isEmpty());
 		// enlarge
-		int ndx = m_selectedCommandIndex + selectionCellCount;
+		int ndx = m_selectedCommandIndex + selectionCellCount + taxCellCount;
 		Vec2i pos = getImagePos(ndx);
 		Vec2i size = getImageSize(ndx);
 		pos -= Vec2i(3);
@@ -443,7 +453,7 @@ void Display::setSelectedFormationPos(int i) {
 	}
 	if (m_selectedFormationIndex != invalidIndex) {
 		// shrink
-		int ndx = m_selectedFormationIndex + selectionCellCount + commandCellCount;
+		int ndx = m_selectedFormationIndex + selectionCellCount + taxCellCount + commandCellCount;
 		Vec2i pos = getImagePos(ndx);
 		Vec2i size = getImageSize(ndx);
 		pos += Vec2i(3);
@@ -454,7 +464,7 @@ void Display::setSelectedFormationPos(int i) {
 	if (m_selectedFormationIndex != invalidIndex) {
 		assert(!m_ui->getSelection()->isEmpty());
 		// enlarge
-		int ndx = m_selectedFormationIndex + selectionCellCount + commandCellCount;
+		int ndx = m_selectedFormationIndex + selectionCellCount + taxCellCount + commandCellCount;
 		Vec2i pos = getImagePos(ndx);
 		Vec2i size = getImageSize(ndx);
 		pos -= Vec2i(3);
@@ -515,6 +525,8 @@ void Display::setToolTipText2(const string &hdr, const string &tip, DisplaySecti
 	Vec2i a_offset;
 	if (i_section == DisplaySection::SELECTION) {
 		a_offset = m_portraitOffset;
+	} else if (i_section == DisplaySection::TAX) {
+		a_offset = m_taxOffset;
 	} else if (i_section == DisplaySection::TRANSPORTED) {
 		a_offset = m_carryImageOffset;
 	} else if (i_section == DisplaySection::GARRISONED) {
@@ -545,30 +557,34 @@ void Display::clear() {
 		ImageWidget::setImage(0, i);
 	}
 
+	for (int i=0; i < taxCellCount; ++i) {
+		ImageWidget::setImage(0, selectionCellCount + i);
+	}
+
 	for (int i=0; i < commandCellCount; ++i) {
 		downLighted[i]= true;
 		commandTypes[i]= NULL;
 		commandClasses[i]= CmdClass::NULL_COMMAND;
-		ImageWidget::setImage(0, selectionCellCount + i);
+		ImageWidget::setImage(0, selectionCellCount + taxCellCount + i);
 	}
 
 	for (int i=0; i < formationCellCount; ++i) {
-		ImageWidget::setImage(0, selectionCellCount + commandCellCount + i);
+		ImageWidget::setImage(0, selectionCellCount + taxCellCount + commandCellCount + i);
 	}
 
 	for (int i=0; i < hierarchyCellCount; ++i) {
 	    if (i == 4 || i == 8 || i == 12 || i == 16) {
             i += 2;
 	    }
-		ImageWidget::setImage(0, selectionCellCount + commandCellCount + formationCellCount + i);
+		ImageWidget::setImage(0, selectionCellCount + taxCellCount + commandCellCount + formationCellCount + i);
 	}
 
 	for (int i=0; i < transportCellCount; ++i) {
-		ImageWidget::setImage(0, selectionCellCount + commandCellCount + formationCellCount + hierarchyCellCount + i);
+		ImageWidget::setImage(0, selectionCellCount + taxCellCount + commandCellCount + formationCellCount + hierarchyCellCount + i);
 	}
 
 	for (int i=0; i < garrisonCellCount; ++i) {
-		ImageWidget::setImage(0, selectionCellCount + commandCellCount + formationCellCount + hierarchyCellCount + transportCellCount + i);
+		ImageWidget::setImage(0, selectionCellCount + taxCellCount + commandCellCount + formationCellCount + hierarchyCellCount + transportCellCount + i);
 	}
 
 	setSelectedCommandPos(invalidIndex);
@@ -692,9 +708,14 @@ void Display::render() {
 			ImageWidget::renderImage(i, light);
 		}
 	}
+	for (int i=0; i < taxCellCount; ++i) {
+		if (ImageWidget::getImage(i + selectionCellCount)) {
+			ImageWidget::renderImage(i + selectionCellCount, light);
+		}
+	}
 	for (int i=0; i < commandCellCount; ++i) {
-		if (ImageWidget::getImage(i + selectionCellCount) && i != m_selectedCommandIndex) {
-			ImageWidget::renderImage(i + selectionCellCount, downLighted[i] ? light : dark);
+		if (ImageWidget::getImage(i + selectionCellCount + taxCellCount) && i != m_selectedCommandIndex) {
+			ImageWidget::renderImage(i + selectionCellCount + taxCellCount, downLighted[i] ? light : dark);
 			int ndx = -1;
 			if (i == UserInterface::autoRepairPos) {
 				AutoCmdState state = m_ui->getSelection()->getAutoCmdState(AutoCmdFlag::REPAIR);
@@ -712,30 +733,30 @@ void Display::render() {
 		}
 	}
 	if (m_selectedCommandIndex != invalidIndex) {
-		assert(ImageWidget::getImage(m_selectedCommandIndex + selectionCellCount));
-		ImageWidget::renderImage(m_selectedCommandIndex + selectionCellCount, light);
+		assert(ImageWidget::getImage(m_selectedCommandIndex + selectionCellCount + taxCellCount));
+		ImageWidget::renderImage(m_selectedCommandIndex + selectionCellCount + taxCellCount, light);
 	}
 	for (int i=0; i < formationCellCount; ++i) {
-		if (ImageWidget::getImage(i + selectionCellCount + commandCellCount)) {
-			ImageWidget::renderImage(i + selectionCellCount + commandCellCount, light);
+		if (ImageWidget::getImage(i + selectionCellCount + taxCellCount + commandCellCount)) {
+			ImageWidget::renderImage(i + selectionCellCount + taxCellCount + commandCellCount, light);
 		}
 	}
 	for (int i=0; i < hierarchyCellCount; ++i) {
 	    if (i == 4 || i == 8 || i == 12 || i == 16) {
             i += 2;
 	    }
-		if (ImageWidget::getImage(i + selectionCellCount + commandCellCount + formationCellCount)) {
-			ImageWidget::renderImage(i + selectionCellCount + commandCellCount + formationCellCount, light);
+		if (ImageWidget::getImage(i + selectionCellCount + taxCellCount + commandCellCount + formationCellCount)) {
+			ImageWidget::renderImage(i + selectionCellCount + taxCellCount + commandCellCount + formationCellCount, light);
 		}
 	}
 	for (int i=0; i < transportCellCount; ++i) {
-		if (ImageWidget::getImage(i + selectionCellCount + commandCellCount + formationCellCount + hierarchyCellCount)) {
-			ImageWidget::renderImage(i + selectionCellCount + commandCellCount + formationCellCount + hierarchyCellCount, light);
+		if (ImageWidget::getImage(i + selectionCellCount + taxCellCount + commandCellCount + formationCellCount + hierarchyCellCount)) {
+			ImageWidget::renderImage(i + selectionCellCount + taxCellCount + commandCellCount + formationCellCount + hierarchyCellCount, light);
 		}
 	}
 	for (int i=0; i < garrisonCellCount; ++i) {
-		if (ImageWidget::getImage(i + selectionCellCount + commandCellCount + formationCellCount + hierarchyCellCount + transportCellCount)) {
-			ImageWidget::renderImage(i + selectionCellCount + commandCellCount + formationCellCount + hierarchyCellCount + transportCellCount, light);
+		if (ImageWidget::getImage(i + selectionCellCount + taxCellCount + commandCellCount + formationCellCount + hierarchyCellCount + transportCellCount)) {
+			ImageWidget::renderImage(i + selectionCellCount + taxCellCount + commandCellCount + formationCellCount + hierarchyCellCount + transportCellCount, light);
 		}
 	}
 	ImageWidget::endBatch();
@@ -766,18 +787,21 @@ DisplayButton Display::computeIndex(Vec2i i_pos, bool screenPos) {
 		i_pos = i_pos - getScreenPos();
 	}
 	Vec2i pos = i_pos;
-	Vec2i offsets[6] = { m_portraitOffset, m_commandOffset, m_formationOffset, m_hierarchyOffset, m_carryImageOffset, m_garrisonImageOffset };
-	int counts[6] = { selectionCellCount, commandCellCount, formationCellCount, hierarchyCellCount, transportCellCount, garrisonCellCount };
+	Vec2i offsets[7] = { m_portraitOffset, m_taxOffset, m_commandOffset, m_formationOffset, m_hierarchyOffset, m_carryImageOffset, m_garrisonImageOffset };
+	int counts[7] = { selectionCellCount, taxCellCount, commandCellCount, formationCellCount, hierarchyCellCount, transportCellCount, garrisonCellCount };
 
-	for (int i=0; i < 5; ++i) {
+	for (int i=0; i < 7; ++i) {
 		pos = i_pos - offsets[i];
-
-		if (pos.y >= 0 && pos.y < m_imageSize * cellHeightCount) {
+		if (pos.y >= 0 && pos.y < m_imageSize * (counts[i]/6)) {
 			int cellX = pos.x / m_imageSize;
-			int cellY = (pos.y / m_imageSize) % cellHeightCount;
+			int cellY = (pos.y / m_imageSize) % (counts[i]/6);
 			int index = cellY * cellWidthCount + cellX;
 			if (index >= 0 && index < counts[i]) {
-				if (ImageWidget::getImage(i * cellHeightCount * cellWidthCount + index)) {
+                int totalCells = 0;
+			    for (int l = i - 1; l >= 0; --l) {
+                    totalCells += counts[l];
+			    }
+				if (ImageWidget::getImage(totalCells + index)) {
 					return DisplayButton(DisplaySection(i), index);
 				}
 				return DisplayButton(DisplaySection::INVALID, invalidIndex);
@@ -795,7 +819,10 @@ bool Display::mouseDown(MouseButton btn, Vec2i pos) {
 	if (btn == MouseButton::LEFT) {
 		if (Widget::isInsideBorders(pos)) {
 			m_hoverBtn = computeIndex(pos, true);
-			if (m_hoverBtn.m_section == DisplaySection::COMMANDS) {
+			if (m_hoverBtn.m_section == DisplaySection::TAX) {
+				m_pressedBtn = m_hoverBtn;
+				return true;
+			} else if (m_hoverBtn.m_section == DisplaySection::COMMANDS) {
 				m_pressedBtn = m_hoverBtn;
 				return true;
 			} else if (m_hoverBtn.m_section == DisplaySection::FORMATION) {
@@ -850,6 +877,9 @@ bool Display::mouseUp(MouseButton btn, Vec2i pos) {
 			if (Widget::isInsideBorders(pos)) {
 				m_hoverBtn = computeIndex(pos, true);
 				if (m_hoverBtn == m_pressedBtn) {
+					if (m_hoverBtn.m_section == DisplaySection::TAX) {
+						m_ui->taxButtonPressed(m_hoverBtn.m_index);
+					}
 					if (m_hoverBtn.m_section == DisplaySection::COMMANDS) {
 						m_ui->commandButtonPressed(m_hoverBtn.m_index);
 					}
@@ -930,6 +960,8 @@ bool Display::mouseMove(Vec2i pos) {
 			// change stuff
 			if (currBtn.m_section == DisplaySection::SELECTION) {
 				m_ui->computePortraitInfo(currBtn.m_index);
+			} else if (currBtn.m_section == DisplaySection::TAX) {
+				m_ui->computeTaxInfo(currBtn.m_index);
 			} else if (currBtn.m_section == DisplaySection::COMMANDS) {
 				m_ui->computeCommandInfo(currBtn.m_index);
 			} else if (currBtn.m_section == DisplaySection::FORMATION) {
@@ -941,7 +973,7 @@ bool Display::mouseMove(Vec2i pos) {
 			} else if (currBtn.m_section == DisplaySection::GARRISONED) {
 				setToolTipText2("", g_lang.get("GarrisonInfo"), DisplaySection::GARRISONED);
 			} else {
-				setToolTipText2("", "");
+				setToolTipText2("", "", DisplaySection::COMMANDS);
 			}
 			m_hoverBtn = currBtn;
 			return true;
@@ -949,7 +981,7 @@ bool Display::mouseMove(Vec2i pos) {
 			// don't do anything
 		}
 	} else {
-		setToolTipText2("", "");
+		setToolTipText2("", "", DisplaySection::COMMANDS);
 	}
 	return false;
 }
@@ -957,7 +989,7 @@ bool Display::mouseMove(Vec2i pos) {
 void Display::mouseOut() {
 	WIDGET_LOG( __FUNCTION__ << "()" );
 	m_hoverBtn = DisplayButton(DisplaySection::INVALID, invalidIndex);
-	setToolTipText2("", "");
+	setToolTipText2("", "", DisplaySection::COMMANDS);
 	m_ui->invalidateActivePos();
 	//m_toolTip->setVisible(false);
 }

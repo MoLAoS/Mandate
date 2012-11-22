@@ -37,7 +37,7 @@ protected:
 	const ResourceType  *m_type;
 	int	                 m_amount;
 	int	                 m_amount_plus;
-	float	             m_amount_multiply;
+	fixed	             m_amount_multiply;
 
 public:
 	ResourceAmount() : m_type(0), m_amount(0), m_amount_plus(0), m_amount_multiply(0) {}
@@ -45,12 +45,12 @@ public:
 	m_amount_plus(that.m_amount_plus), m_amount_multiply(that.m_amount_multiply) {}
 
 	void init(const XmlNode *n, const TechTree *tt);
-	void init(const ResourceType *rt, const int amount, const int amount_plus, const float amount_multiply);
+	void init(const ResourceType *rt, const int amount, const int amount_plus, const fixed amount_multiply);
 
 	virtual void setAmount(int v) { m_amount = v; }
 	int  getAmount() const { return m_amount; }
 	int  getAmountPlus() const { return m_amount_plus; }
-	float  getAmountMultiply() const { return m_amount_multiply; }
+	fixed  getAmountMultiply() const { return m_amount_multiply; }
 	const ResourceType *getType() const { return m_type; }
 
 	void save(XmlNode *node) const;
@@ -179,16 +179,16 @@ private:
 	const ItemType *m_type;
 	int	m_amount;
 	int	m_amount_plus;
-	float m_amount_multiply;
+	fixed m_amount_multiply;
 
 public:
 	void init(const XmlNode *n, const TechTree *tt);
-	void init(const ItemType *it, string name, int amount, int amount_plus, float amount_multiply);
+	void init(const ItemType *it, string name, int amount, int amount_plus, fixed amount_multiply);
 
 	virtual void setAmount(int v) { m_amount = v; }
 	int  getAmount() const { return m_amount; }
 	int  getAmountPlus() const { return m_amount_plus; }
-	float  getAmountMultiply() const { return m_amount_multiply; }
+	fixed  getAmountMultiply() const { return m_amount_multiply; }
 	const ItemType *getType() const { return m_type; }
 
     int getItem() const { return m_item; }

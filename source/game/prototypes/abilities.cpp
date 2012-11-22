@@ -94,6 +94,42 @@ bool LoadBonus::load(const XmlNode *loadBonusNode, const string &dir, const Tech
 	return loadOk;
 }
 
+// ===============================
+// 	class Level
+// ===============================
+bool Level::load(const XmlNode *levelNode, const string &dir, const TechTree *tt, const FactionType *ft) {
+	bool loadOk = true;
+	try {
+		m_name = levelNode->getAttribute("name")->getRestrictedValue();
+	} catch (runtime_error e) {
+		g_logger.logXmlError(dir, e.what());
+		loadOk = false;
+	}
+	try {
+		exp = levelNode->getAttribute("exp")->getIntValue();
+	}
+	catch (runtime_error e) {
+		g_logger.logXmlError(dir, e.what());
+		loadOk = false;
+	}
+	try {
+		count = levelNode->getAttribute("count")->getIntValue();
+	}
+	catch (runtime_error e) {
+		g_logger.logXmlError(dir, e.what());
+		loadOk = false;
+	}
+	try {
+        if (!enLevel.load(levelNode, dir, tt, ft)) {
+            loadOk = false;
+        }
+	}
+	catch (runtime_error e) {
+		g_logger.logXmlError(dir, e.what());
+		loadOk = false;
+	}
+	return loadOk;
+}
 
 // =====================================================
 // 	class Timer
@@ -134,7 +170,7 @@ void CreatedUnit::save(XmlNode *node) const {
 	node->addChild("cap", m_cap);
 }
 
-void CreatedUnit::init(const UnitType *ut, int amount, int amount_plus, float amount_multiply, int cap) {
+void CreatedUnit::init(const UnitType *ut, int amount, int amount_plus, fixed amount_multiply, int cap) {
     m_type = ut;
     m_amount = amount;
     m_amount_plus = amount_plus;
@@ -183,7 +219,7 @@ void CreatedItem::save(XmlNode *node) const {
 	node->addChild("cap", m_cap);
 }
 
-void CreatedItem::init(const ItemType *it, int amount, int amount_plus, float amount_multiply, int cap) {
+void CreatedItem::init(const ItemType *it, int amount, int amount_plus, fixed amount_multiply, int cap) {
     m_type = it;
     m_amount = amount;
     m_amount_plus = amount_plus;

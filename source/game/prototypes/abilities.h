@@ -34,10 +34,29 @@ public:
     Enhancement m_enhancement;
 	LoadBonus();
 	virtual bool load(const XmlNode *loadBonusNode, const string &dir, const TechTree *tt, const FactionType *ft);
-    bool loadNewStyle(const XmlNode *node, const string &dir, const TechTree *techTree, const FactionType *factionType);
+	bool loadNewStyle(const XmlNode *node, const string &dir, const TechTree *techTree, const FactionType *factionType);
 	void loadResourceModifier(const XmlNode *node, ResModifierMap &map, const TechTree *techTree);
 	const Enhancement* getEnhancement() const {return &m_enhancement;}
 	string getSource() const {return source;}
+};
+
+// ===============================
+// 	class Level
+// ===============================
+
+class Level: public NameIdPair {
+private:
+    EnhancementType enLevel;
+    int count;
+	int exp;
+public:
+	virtual bool load(const XmlNode *prn, const string &dir, const TechTree *tt, const FactionType *ft);
+	virtual void doChecksum(Checksum &checksum) const {
+		NameIdPair::doChecksum(checksum);
+	}
+	const EnhancementType *getEnLevel() const {return &enLevel;}
+	int getCount() const {return count;}
+	int getExp() const {return exp;}
 };
 
 // ===============================
@@ -90,7 +109,7 @@ protected:
 	const UnitType       *m_type;
 	int	                 m_amount;
 	int	                 m_amount_plus;
-	float	             m_amount_multiply;
+	fixed	             m_amount_multiply;
 	int                  m_cap;
 
 public:
@@ -99,12 +118,12 @@ public:
 	m_amount_plus(that.m_amount_plus), m_amount_multiply(that.m_amount_multiply), m_cap(that.m_cap) {}
 
 	void init(const XmlNode *n, const Faction *f);
-	void init(const UnitType *ut, const int amount, const int amount_plus, const float amount_multiply, const int cap);
+	void init(const UnitType *ut, const int amount, const int amount_plus, const fixed amount_multiply, const int cap);
 
 	virtual void setAmount(int v) { m_amount = v; }
 	int  getAmount() const { return m_amount; }
 	int  getAmountPlus() const { return m_amount_plus; }
-	float  getAmountMultiply() const { return m_amount_multiply; }
+	fixed  getAmountMultiply() const { return m_amount_multiply; }
 	int  getCap() const { return m_cap; }
 	const UnitType *getType() const { return m_type; }
 
@@ -192,7 +211,7 @@ protected:
 	const ItemType       *m_type;
 	int	                 m_amount;
 	int	                 m_amount_plus;
-	float	             m_amount_multiply;
+	fixed	             m_amount_multiply;
 	int                  m_cap;
 
 public:
@@ -201,12 +220,12 @@ public:
 	m_amount_plus(that.m_amount_plus), m_amount_multiply(that.m_amount_multiply), m_cap(that.m_cap) {}
 
 	void init(const XmlNode *n, const Faction *f);
-	void init(const ItemType *it, const int amount, const int amount_plus, const float amount_multiply, const int cap);
+	void init(const ItemType *it, const int amount, const int amount_plus, const fixed amount_multiply, const int cap);
 
 	virtual void setAmount(int v) { m_amount = v; }
 	int  getAmount() const { return m_amount; }
 	int  getAmountPlus() const { return m_amount_plus; }
-	float  getAmountMultiply() const { return m_amount_multiply; }
+	fixed  getAmountMultiply() const { return m_amount_multiply; }
 	int  getCap() const { return m_cap; }
 	const ItemType *getType() const { return m_type; }
 

@@ -43,11 +43,11 @@ void ResourceAmount::save(XmlNode *node) const {
 	node->addChild("multiply", m_amount_multiply);
 }
 
-void ResourceAmount::init(const ResourceType *rt, int amount, int amount_plus, float amount_multiply) {
+void ResourceAmount::init(const ResourceType *rt, int amount, int amount_plus, fixed amount_multiply) {
     m_type = rt;
     m_amount = amount;
     m_amount_plus = amount_plus;
-    m_amount_multiply = amount_multiply;
+    m_amount_multiply = amount_multiply + 1;
 }
 
 // =====================================================
@@ -167,7 +167,7 @@ void ItemMade::init(const XmlNode *n, const TechTree *tt) {
 	m_item = n->getChildIntValue("item");
 }
 
-void ItemMade::init(const ItemType *it, string n, int v, int a, float b) {
+void ItemMade::init(const ItemType *it, string n, int v, int a, fixed b) {
 	m_type = it;
 	m_amount = v;
     m_item = 0;
@@ -181,9 +181,4 @@ void ItemMade::save(XmlNode *n) const {
 	n->addChild("multiply", m_amount_multiply);
 	n->addChild("item", m_item);
 }
-
-// =====================================================
-// 	class Process
-// =====================================================
-
 }} // end namespace

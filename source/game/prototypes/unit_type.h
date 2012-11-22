@@ -32,36 +32,6 @@ using Shared::Util::MultiFactory;
 namespace Glest { namespace ProtoTypes {
 using namespace Search;
 
-// ===============================
-// 	class Level
-// ===============================
-
-class Level: public EnhancementType, public NameIdPair {
-private:
-	int kills;
-	int exp;
-
-public:
-	Level() : EnhancementType() {
-		const fixed onePointFive = fixed(3) / 2;
-		maxHpMult = onePointFive;
-		maxSpMult = onePointFive;
-		maxEpMult = onePointFive;
-        maxCpMult = onePointFive;
-		sightMult = fixed(6) / 5;
-		armorMult = onePointFive;
-		effectStrength = fixed(1) / 10;
-	}
-
-	virtual bool load(const XmlNode *prn, const string &dir, const TechTree *tt, const FactionType *ft);
-	virtual void doChecksum(Checksum &checksum) const {
-		NameIdPair::doChecksum(checksum);
-		EnhancementType::doChecksum(checksum);
-	}
-	int getKills() const			{return kills;}
-	int getExp() const			    {return exp;}
-};
-
 Vec2i rotateCellOffset(const Vec2i &offsetconst, const int unitSize, const CardinalDir facing);
 
 // ===============================
@@ -75,6 +45,7 @@ private:
 	typedef vector<SkillType*>          SkillTypes;
 	typedef vector<CommandType*>        CommandTypes;
 	typedef vector<ResourceAmount>      StoredResources;
+	typedef vector<ResourceAmount>      StarterResources;
 
 	typedef vector<CreatedResource>     CreatedResources;
 	typedef vector<Timer>               CreatedResourceTimers;
@@ -99,7 +70,7 @@ private:
 
 	typedef vector<Equipment>           Equipments;
 
-    typedef vector<Modification>       Modifications;
+    typedef vector<Modification>        Modifications;
 
     typedef vector<string>              ModifyNames;
 
@@ -142,6 +113,8 @@ private:
 	//info
 	StoredResources storedResources;
 public:
+    StarterResources starterResources;
+
 	CreatedResources createdResources;
 	mutable CreatedResourceTimers createdResourceTimers;
 

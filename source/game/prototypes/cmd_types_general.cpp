@@ -188,7 +188,7 @@ bool CommandType::getArrowDetails(const Command *cmd, Vec3f &out_arrowTarget, Ve
 	return false;
 }
 
-void CommandType::apply(Faction *faction, const Command &command) const {
+void CommandType::apply(Unit *unit, Faction *faction, const Command &command) const {
 	ProdTypePtr produced = command.getProdType();
 	if (produced && !command.getFlags().get(CmdProps::DONT_RESERVE_RESOURCES)) {
 		if (command.getType()->getClass() == CmdClass::MORPH) {
@@ -197,6 +197,7 @@ void CommandType::apply(Faction *faction, const Command &command) const {
 		} else {
 			faction->applyCosts(produced);
 		}
+		unit->applyCosts(produced);
 	}
 }
 
@@ -671,7 +672,6 @@ void ProduceCommandType::update(Unit *unit) const {
 	Command *command = unit->getCurrCommand();
 	assert(command->getType() == this);
 	if (unit->getCurrSkill()->getClass() != SkillClass::PRODUCE) {
-		//if not producing
 		unit->setCurrSkill(m_produceSkillType);
 		unit->getFaction()->checkAdvanceSubfaction(command->getProdType(), false);
 	} else {
@@ -714,8 +714,6 @@ void ProduceCommandType::update(Unit *unit) const {
                     }
                 }
             }
-
-			// all the units have been produced, safe to finish command now
 			unit->finishCommand();
 			if (unit->getFactionIndex() == g_world.getThisFactionIndex()) {
 				RUNTIME_CHECK(!unit->isCarried() && !unit->isGarrisoned());
@@ -1008,8 +1006,8 @@ void UpgradeCommandType::start(Unit *unit, Command &command) const {
 
 }
 
-void UpgradeCommandType::apply(Faction *faction, const Command &command) const {
-	CommandType::apply(faction, command);
+void UpgradeCommandType::apply(Unit *unit, Faction *faction, const Command &command) const {
+	CommandType::apply(unit, faction, command);
 
 	faction->startUpgrade(static_cast<const UpgradeType*>(command.getProdType()));
 }
@@ -1448,15 +1446,26 @@ void LoadCommandType::update(Unit *unit) const {
 		return;
 	}
 
-	Unit *closest = 0; // else find closest
+	Unit *closest = NULL; // else find closest
 	fixed dist = fixed::max_int();
 	foreach (UnitIdList, it, unitsToCarry) {
 		Unit *target = g_world.getUnit(*it);
-		fixed d = fixedDist(target->getCenteredPos(), unit->getCenteredPos());
-		if (d < dist) {
-			closest = target;
-			dist = d;
+		if (target != NULL) {
+		    if (target->isAlive()) {
+                fixed d = fixedDist(target->getCenteredPos(), unit->getCenteredPos());
+                if (d < dist) {
+                    closest = target;
+                    dist = d;
+                }
+		    }
 		}
+	}
+	if (closest != NULL) {
+        if (!closest->isAlive()) {
+            unit->finishCommand();
+        }
+	} else {
+        unit->finishCommand();
 	}
 	assert(closest);
 	if (dist < loadSkillType->getMaxRange() + unit->getSize()) { // if in load range, load 'em
@@ -1469,10 +1478,10 @@ void LoadCommandType::update(Unit *unit) const {
 		unit->getCarriedUnits().push_back(closest->getId());
 
 		/** inhuman */
-		if (closest->getType()->inhuman && unit->getType()->hasTag("guild")) {
+		if (closest->getType()->inhuman && unit->getType()->hasTag("orderhouse")) {
             const ResourceType *rt = g_world.getTechTree()->getResourceType("gold");
             int goldPossible = closest->getSResource(rt)->getAmount() - closest->taxedGold;
-            int amount = goldPossible / 2;
+            int amount = goldPossible / (100/ closest->taxRate);
             closest->incResourceAmount(rt, -amount);
             unit->incResourceAmount(rt, amount);
             closest->taxedGold = closest->getSResource(rt)->getAmount();

@@ -142,7 +142,7 @@ public:
 	/** Check if a command can be executed */
 	virtual CmdResult check(const Unit *unit, const Command &command) const { return CmdResult::SUCCESS; }
 	/** Apply costs for a command. */
-	virtual void apply(Faction *faction, const Command &command) const;
+	virtual void apply(Unit *unit, Faction *faction, const Command &command) const;
 	/** De-Apply costs for a command */
 	virtual void undo(Unit *unit, const Command &command) const;
 	/** Update the command by one frame. */
@@ -962,7 +962,7 @@ public:
 	virtual CmdClass getClass() const { return typeClass(); }
 	static CmdClass typeClass() { return CmdClass::UPGRADE; }
 
-	virtual void apply(Faction *faction, const Command &command) const;
+	virtual void apply(Unit *unit, Faction *faction, const Command &command) const;
 	virtual void undo(Unit *unit, const Command &command) const;
 	virtual CmdResult check(const Unit *unit, const Command &command) const;
 };

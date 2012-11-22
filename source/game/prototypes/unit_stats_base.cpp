@@ -582,8 +582,8 @@ void EnhancementType::getDesc(string &str, const char *pre) const {
 //Initialize value from <static-modifiers>
 void EnhancementType::initStaticModifier(const XmlNode *node, const string &dir) {
 	const string &name = node->getName();
-    int value = node->getOptionalIntValue("value");
-    int additive = node->getOptionalIntValue("additive");
+    int value = node->getAttribute("value")->getIntValue();
+    int additive = node->getAttribute("additive")->getIntValue();
 	if (name == "max-hp") {
 		maxHp = value;
         layerMaxHp = additive;

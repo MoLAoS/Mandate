@@ -86,10 +86,28 @@ void GoalSystem::shop(Unit *unit) {
                 string tagType = shop->getStoredItem(j)->getType()->getTypeTag();
                 if (tagType == typeTag) {
                     if (unit->getEquipment()[i].getCurrent() == 0) {
-                        int ident = shop->getStoredItem(j)->id;
-                        shop->accessStorageRemove(ident);
-                        unit->accessStorageAdd(ident);
-                        unit->equipItem(unit->getStoredItems().size()-1);
+                        bool costs = true;
+                        for (int m = 0; m < shop->getStoredItem(j)->getType()->getCostCount(); ++m) {
+                            const ResourceType *rt = shop->getStoredItem(j)->getType()->getCost(m, unit->getFaction()).getType();
+                            int cost = shop->getStoredItem(j)->getType()->getCost(m, unit->getFaction()).getAmount();
+                            int gold = unit->getSResource(rt)->getAmount();
+                            if (gold < cost) {
+                                costs = false;
+                                break;
+                            }
+                        }
+                        if (costs == true) {
+                            for (int m = 0; m < shop->getStoredItem(j)->getType()->getCostCount(); ++m) {
+                                const ResourceType *rt = shop->getStoredItem(j)->getType()->getCost(m, unit->getFaction()).getType();
+                                int cost = shop->getStoredItem(j)->getType()->getCost(m, unit->getFaction()).getAmount();
+                                unit->incResourceAmount(rt, -cost);
+                                shop->incResourceAmount(rt, cost);
+                                int ident = shop->getStoredItem(j)->id;
+                                shop->accessStorageRemove(ident);
+                                unit->accessStorageAdd(ident);
+                                unit->equipItem(unit->getStoredItems().size()-1);
+                            }
+                        }
                     }
                 }
             }
@@ -100,7 +118,25 @@ void GoalSystem::shop(Unit *unit) {
                 for (int k = 0; k < shop->getType()->modifications[j].getEquipment().size(); ++k) {
                     string tagType = shop->getType()->modifications[j].getEquipment()[k];
                     if (tagType == typeTag) {
-                        unit->modifications.push_back(shop->getType()->modifications[j]);
+                        bool costs = true;
+                        for (int m = 0; m < shop->getType()->modifications[j].getCostCount(); ++m) {
+                            const ResourceType *rt = shop->getType()->modifications[j].getCost(m).getType();
+                            int cost = shop->getType()->modifications[j].getCost(m).getAmount();
+                            int gold = unit->getSResource(rt)->getAmount();
+                            if (gold < cost) {
+                                costs = false;
+                                break;
+                            }
+                        }
+                        if (costs == true) {
+                            for (int m = 0; m < shop->getType()->modifications[j].getCostCount(); ++m) {
+                                const ResourceType *rt = shop->getType()->modifications[j].getCost(m).getType();
+                                int cost = shop->getType()->modifications[j].getCost(m).getAmount();
+                                unit->incResourceAmount(rt, -cost);
+                                shop->incResourceAmount(rt, cost);
+                            }
+                            unit->modifications.push_back(shop->getType()->modifications[j]);
+                        }
                     }
                 }
             }
@@ -114,14 +150,15 @@ Unit* GoalSystem::findShop(Unit *unit) {
     vector<Unit*> buildingsList;
     for (int i = 0; i < f->getUnitCount(); ++i) {
         Unit *building = f->getUnit(i);
-        if (building->getType()->hasTag("building") && building->getType()->hasTag("shop")) {
-            buildingsList.push_back(building);
-        } else if (building->getType()->hasTag("guild") && building->getType()->hasTag("producer") && building == unit->owner) {
+        if (building->getType()->hasTag("shop") || building->getType()->hasTag("enhancer")) {
             buildingsList.push_back(building);
         }
     }
-    int distance = 1000;
+    int distance = 100;
     Vec2i uPos = unit->getCenteredPos();
+    if (unit->isCarried()) {
+        uPos = unit->owner->getCenteredPos();
+    }
     Unit *finalPick = NULL;
     Vec2i tPos = Vec2i(NULL);
     for (int i = 0; i < buildingsList.size(); ++i) {
@@ -136,8 +173,20 @@ Unit* GoalSystem::findShop(Unit *unit) {
                     bool stored = false;
                     for (int l = 0; l < building->getStorage().size(); ++l) {
                         if (building->getStorage()[l].getTypeTag() == typeTag && building->getStorage()[l].getCurrent() > 0) {
-                            stored = true;
-                            break;
+                            bool costs = true;
+                            for (int m = 0; m < itemType->getCostCount(); ++m) {
+                                const ResourceType *rt = itemType->getCost(m, unit->getFaction()).getType();
+                                int cost = itemType->getCost(m, unit->getFaction()).getAmount();
+                                int gold = unit->getSResource(rt)->getAmount();
+                                if (gold < cost) {
+                                    costs = false;
+                                    break;
+                                }
+                            }
+                            if (costs == true) {
+                                stored = true;
+                                break;
+                            }
                         }
                     }
                     if (stored == true) {
@@ -155,19 +204,34 @@ Unit* GoalSystem::findShop(Unit *unit) {
             }
             if (building->getType()->modifications.size() > 0) {
                 for (int j = 0; j < building->getType()->modifications.size(); ++j) {
-                    for (int k = 0; k < building->getType()->modifications[j].getEquipment().size(); ++k) {
-                        for (int l = 0; l < unit->getEquipment().size(); ++l) {
-                            if (unit->getEquipment()[l].getTypeTag() == building->getType()->modifications[j].getEquipment()[k]) {
-                                bool owned = false;
-                                for (int m = 0; m < unit->modifications.size(); ++m) {
-                                    if (unit->modifications[m].getModificationName() == building->getType()->modifications[j].getModificationName()) {
-                                        owned = true;
+                    string service = building->getType()->modifications[j].getService();
+                    if (service == "faction" || service == "guild" && building == unit->owner) {
+                        for (int k = 0; k < building->getType()->modifications[j].getEquipment().size(); ++k) {
+                            for (int l = 0; l < unit->getEquipment().size(); ++l) {
+                                if (unit->getEquipment()[l].getTypeTag() == building->getType()->modifications[j].getEquipment()[k]) {
+                                    bool owned = false;
+                                    for (int m = 0; m < unit->modifications.size(); ++m) {
+                                        if (unit->modifications[m].getModificationName() == building->getType()->modifications[j].getModificationName()) {
+                                            owned = true;
+                                        }
                                     }
-                                }
-                                if (owned == false) {
-                                    distance = newDistance;
-                                    finalPick = building;
-                                    tPos = bPos;
+                                    if (owned == false) {
+                                        bool costs = true;
+                                        for (int m = 0; m < building->getType()->modifications[j].getCostCount(); ++m) {
+                                            const ResourceType *rt = building->getType()->modifications[j].getCost(m).getType();
+                                            int cost = building->getType()->modifications[j].getCost(m).getAmount();
+                                            int gold = unit->getSResource(rt)->getAmount();
+                                            if (gold < cost) {
+                                                costs = false;
+                                                break;
+                                            }
+                                        }
+                                        if (costs == true) {
+                                            distance = newDistance;
+                                            finalPick = building;
+                                            tPos = bPos;
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -179,10 +243,95 @@ Unit* GoalSystem::findShop(Unit *unit) {
     return finalPick;
 }
 
+Unit* GoalSystem::findBuilding(Unit* unit) {
+    Unit *targetBuilding = NULL;
+    Faction *f = unit->getFaction();
+    vector<Unit*> buildingsList;
+    for (int i = 0; i < f->getUnitCount(); ++i) {
+        Unit *building = f->getUnit(i);
+        if (building->getType()->hasTag("building")) {
+            if (!building->isBuilt() && !unit->getType()->hasTag("householder")) {
+                buildingsList.push_back(building);
+            } else if (building->getHp() < building->getMaxHp()) {
+                if (building->getType()->hasTag("house") && unit->getType()->hasTag("householder") && building == unit->owner) {
+                    buildingsList.push_back(building);
+                } else if (!building->getType()->hasTag("house") && !unit->getType()->hasTag("householder")) {
+                    buildingsList.push_back(building);
+                }
+            }
+        }
+    }
+    if (buildingsList.size() > 0) {
+        int distance = 100;
+        Vec2i uPos = unit->getCenteredPos();
+        if (unit->isCarried()) {
+            uPos = unit->owner->getCenteredPos();
+        }
+        Vec2i tPos = Vec2i(NULL);
+        for (int i = 0; i < buildingsList.size(); ++i) {
+            Unit *building = buildingsList[i];
+            Vec2i bPos = building->getCenteredPos();
+            int newDistance = sqrt(pow(float(abs(uPos.x - bPos.x)), 2) + pow(float(abs(uPos.y - bPos.y)), 2));
+            if (newDistance < distance) {
+                distance = newDistance;
+                targetBuilding = building;
+                tPos = bPos;
+            }
+        }
+    }
+    return targetBuilding;
+}
+
+Unit* GoalSystem::findProducer(Unit* unit) {
+    Unit *producer = NULL;
+    Faction *f = unit->getFaction();
+    vector<Unit*> buildingsList;
+    for (int i = 0; i < f->getUnitCount(); ++i) {
+        Unit *building = f->getUnit(i);
+        if (building->getType()->hasTag("building") && building->getType()->hasTag("producer")) {
+            for (int i = 0; i < unit->owner->getType()->processes.size(); ++i) {
+                for (int j = 0; j < unit->owner->getType()->processes[i].costs.size(); ++j) {
+                    const ResourceType *transportType = unit->owner->getType()->processes[i].costs[j].getType();
+                    for (int k = 0; k < building->getType()->getStoredResourceCount(); ++k) {
+                        const ResourceType *storeType = building->getType()->getStoredResource(k, building->getFaction()).getType();
+                        if (transportType == storeType) {
+                            if (building->getSResource(storeType)->getAmount() >= unit->owner->getType()->processes[i].costs[j].getAmount()) {
+                                buildingsList.push_back(building);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    if (buildingsList.size() > 0) {
+        int distance = 100;
+        Vec2i uPos = unit->getCenteredPos();
+        if (unit->isCarried()) {
+            uPos = unit->owner->getCenteredPos();
+        }
+        Vec2i tPos = Vec2i(NULL);
+        for (int i = 0; i < buildingsList.size(); ++i) {
+            Unit *building = buildingsList[i];
+            Vec2i bPos = building->getCenteredPos();
+            int newDistance = sqrt(pow(float(abs(uPos.x - bPos.x)), 2) + pow(float(abs(uPos.y - bPos.y)), 2));
+            if (newDistance < distance) {
+                distance = newDistance;
+                producer = building;
+                tPos = bPos;
+            }
+        }
+    }
+    return producer;
+}
+
 Unit* GoalSystem::findNearbyAlly(Unit* unit, Focus focus) {
     Unit *targetAlly = NULL;
     if (focus.getName() == "heal") {
         Vec2i uPos = unit->getPos();
+        if (unit->isCarried()) {
+            uPos = unit->owner->getCenteredPos();
+        }
         int maxDistance = unit->getSight();
         int closest = maxDistance;
         for (int i = 0; i < unit->getFaction()->getUnitCount(); ++i) {
@@ -310,6 +459,9 @@ const CommandType* GoalSystem::selectAttackSpell(Unit *unit, Unit *target) {
 
 Unit* GoalSystem::findLair(Unit *unit) {
     Vec2i uPos = unit->getPos();
+    if (unit->isCarried()) {
+        uPos = unit->owner->getCenteredPos();
+    }
     Faction *faction;
     Unit *lair = NULL;
     for (int i = 0; i < g_world.getFactionCount(); ++i) {
@@ -317,7 +469,7 @@ Unit* GoalSystem::findLair(Unit *unit) {
             faction = g_world.getFaction(i);
         }
     }
-    int distance = 1000;
+    int distance = 100;
     for (int i = 0; i < faction->getUnitCount(); ++i) {
         Unit *possibleLair = faction->getUnit(i);
         if (possibleLair->getType()->hasTag("building") && possibleLair->isAlive()) {
@@ -337,6 +489,9 @@ Unit* GoalSystem::findLair(Unit *unit) {
 
 Unit* GoalSystem::findCity(Unit *unit) {
     Vec2i uPos = unit->getPos();
+    if (unit->isCarried()) {
+        uPos = unit->owner->getCenteredPos();
+    }
     Faction *faction;
     Unit *city = NULL;
     for (int i = 0; i < g_world.getFactionCount(); ++i) {
@@ -344,7 +499,7 @@ Unit* GoalSystem::findCity(Unit *unit) {
             faction = g_world.getFaction(i);
         }
     }
-    int distance = 1000;
+    int distance = 100;
     for (int i = 0; i < faction->getUnitCount(); ++i) {
         Unit *possibleCity = faction->getUnit(i);
         if (possibleCity->getType()->hasTag("building") && possibleCity->isAlive()) {
@@ -361,6 +516,9 @@ Unit* GoalSystem::findCity(Unit *unit) {
 
 Unit* GoalSystem::findCreature(Unit *unit) {
     Vec2i uPos = unit->getPos();
+    if (unit->isCarried()) {
+        uPos = unit->owner->getCenteredPos();
+    }
     Faction *faction;
     Unit *creature = NULL;
     for (int i = 0; i < g_world.getFactionCount(); ++i) {
@@ -368,7 +526,7 @@ Unit* GoalSystem::findCreature(Unit *unit) {
             faction = g_world.getFaction(i);
         }
     }
-    int distance = 1000;
+    int distance = 100;
     for (int i = 0; i < faction->getUnitCount(); ++i) {
         Unit *possibleCreature = faction->getUnit(i);
         if (!possibleCreature->getType()->hasTag("building") && possibleCreature->isAlive()) {
@@ -460,31 +618,9 @@ void GoalSystem::computeAction(Unit *unit, Focus focus) {
     } else if (goal == "build") {
         clearSimAi(unit, goal);
         if (unit->getCurrSkill()->getClass() == SkillClass::STOP) {
-            Faction *f = unit->getFaction();
-            vector<Unit*> buildingsList;
-            for (int i = 0; i < f->getUnitCount(); ++i) {
-                Unit *building = f->getUnit(i);
-                if (building->getType()->hasTag("building")) {
-                    if (!building->isBuilt() || building->getHp() < building->getMaxHp()) {
-                        buildingsList.push_back(building);
-                    }
-                }
-            }
-            if (buildingsList.size() > 0) {
-                int distance = 1000;
-                Vec2i uPos = unit->getCenteredPos();
-                Unit *finalPick;
-                Vec2i tPos = Vec2i(NULL);
-                for (int i = 0; i < buildingsList.size(); ++i) {
-                    Unit *building = buildingsList[i];
-                    Vec2i bPos = building->getCenteredPos();
-                    int newDistance = sqrt(pow(float(abs(uPos.x - bPos.x)), 2) + pow(float(abs(uPos.y - bPos.y)), 2));
-                    if (newDistance < distance) {
-                        distance = newDistance;
-                        finalPick = building;
-                        tPos = bPos;
-                    }
-                }
+            Unit *finalPick = findBuilding(unit);
+            if (finalPick != NULL) {
+                Vec2i tPos = finalPick->getCenteredPos();
                 const CommandType *ct = unit->getType()->getFirstCtOfClass(CmdClass::REPAIR);
                 if (tPos != Vec2i(NULL)) {
                     if (unit->isCarried()) {
@@ -497,77 +633,13 @@ void GoalSystem::computeAction(Unit *unit, Focus focus) {
                 ownerLoad(unit);
             }
         }
-    } else if (goal == "collect") {
-        if (goal != unit->getCurrentFocus()) {
-            clearSimAi(unit, goal);
-            unit->productionRoute.setStoreId(unit->owner->getId());
-            unit->productionRoute.setDestination(unit->owner->getPos());
-        }
-        if (unit->getCurrSkill()->getClass() == SkillClass::STOP) {
-            Faction *f = unit->getFaction();
-            vector<Unit*> buildingsList;
-            for (int i = 0; i < f->getUnitCount(); ++i) {
-                Unit *building = f->getUnit(i);
-                if (building->getType()->hasTag("building") && !building->getType()->hasTag("fort") && building->getId() != unit->owner->getId()) {
-                    if (building->sresources.size() > 0) {
-                        for (int j = 0; j < building->sresources.size(); ++j) {
-                            if (building->getSResource(j)->getType()->getName() == "gold") {
-                                if (building->getSResource(j)->getAmount() >= 500) {
-                                    buildingsList.push_back(building);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            if (buildingsList.size() > 0) {
-                int distance = 1000;
-                Vec2i uPos = unit->getCenteredPos();
-                Unit *finalPick;
-                Vec2i tPos = Vec2i(NULL);
-                for (int i = 0; i < buildingsList.size(); ++i) {
-                    Unit *building = buildingsList[i];
-                    Vec2i bPos = building->getCenteredPos();
-                    int newDistance = sqrt(pow(float(abs(uPos.x - bPos.x)), 2) + pow(float(abs(uPos.y - bPos.y)), 2));
-                    if (newDistance < distance) {
-                        distance = newDistance;
-                        finalPick = building;
-                        tPos = bPos;
-                    }
-                }
-                const CommandType *tct = unit->getType()->getFirstCtOfClass(CmdClass::TRANSPORT);
-                if (tPos != Vec2i(NULL)) {
-                    if (unit->isCarried()) {
-                        ownerUnload(unit);
-                    } else {
-                        if (unit->productionRoute.getProducerId() == 0 || unit->productionRoute.getProducerId() == -1) {
-                            unit->productionRoute.setProducerId(finalPick->getId());
-                            unit->productionRoute.setDestination(finalPick->getPos());
-                        }
-                        if (unit->productionRoute.getProducerId() != -1 && unit->productionRoute.getStoreId() != -1) {
-                            unit->giveCommand(g_world.newCommand(tct, CmdFlags(), finalPick));
-                        }
-                    }
-                }
-            } else {
-                if (!unit->isCarried()) {
-                    const StoredResource *res;
-                    for (int i = 0; i < unit->getType()->getStoredResourceCount(); ++i) {
-                        res = unit->getSResource(i);
-                        if (res->getType()->getName() == "gold") {
-                            break;
-                        }
-                    }
-                    if (res->getAmount() == 0) {
-                        ownerLoad(unit);
-                    }
-                }
-            }
-        }
     } else if (goal == "shop") {
         clearSimAi(unit, goal);
         if (unit->getGoalReason() == "shop") {
             Vec2i posUnit = unit->getPos();
+            if (unit->isCarried()) {
+                posUnit = unit->owner->getCenteredPos();
+            }
             Vec2i posShop = unit->getGoalStructure()->getPos();
             int distance = sqrt(pow(float(abs(posUnit.x - posShop.x)), 2) + pow(float(abs(posUnit.y - posShop.y)), 2));
             if (distance < 2) {
@@ -616,6 +688,9 @@ void GoalSystem::computeAction(Unit *unit, Focus focus) {
             if (unit->getCurrSkill()->getClass() == SkillClass::STOP) {
                 if (unit->getGoalStructure() == NULL) {
                     Vec2i uPos = unit->getPos();
+                    if (unit->isCarried()) {
+                        uPos = unit->owner->getCenteredPos();
+                    }
                     Vec2i tPos = unit->owner->getPos();
                     int distance = sqrt(pow(float(abs(uPos.x - tPos.x)), 2) + pow(float(abs(uPos.y - tPos.y)), 2));
                     if (unit->owner->attackers.size() > 0) {
@@ -707,6 +782,9 @@ void GoalSystem::computeAction(Unit *unit, Focus focus) {
     } else if (goal == "explore") {
         clearSimAi(unit, goal);
         Vec2i unitPos = unit->getCenteredPos();
+        if (unit->isCarried()) {
+            unitPos = unit->owner->getCenteredPos();
+        }
         Vec2i pos = unitPos;
         Vec2i position = exploredMap.findNearestUnexploredTile(unitPos, unit->getFaction(), unit->previousDirection);
         pos = position;
@@ -748,6 +826,26 @@ void GoalSystem::computeAction(Unit *unit, Focus focus) {
 
             }
         }
+    } else if (goal == "transport") {
+        if (goal != unit->getCurrentFocus()) {
+            clearSimAi(unit, goal);
+            unit->productionRoute.setStoreId(unit->owner->getId());
+            unit->productionRoute.setDestination(unit->owner->getPos());
+        }
+        if (unit->getCurrSkill()->getClass() == SkillClass::STOP) {
+            Unit *transport = NULL;
+            transport = findProducer(unit);
+            if (transport != NULL) {
+                unit->productionRoute.setProducerId(transport->getId());
+                if (unit->productionRoute.getProducerId() != NULL && unit->productionRoute.getStoreId() != NULL) {
+                    if (unit->isCarried()) {
+                        ownerUnload(unit);
+                    }
+                    const CommandType *tct = unit->getType()->getFirstCtOfClass(CmdClass::TRANSPORT);
+                    unit->giveCommand(g_world.newCommand(tct, CmdFlags(), transport));
+                }
+            }
+        }
     } else if (goal == "collect") {
         if (goal != unit->getCurrentFocus()) {
             clearSimAi(unit, goal);
@@ -755,6 +853,10 @@ void GoalSystem::computeAction(Unit *unit, Focus focus) {
             unit->productionRoute.setDestination(unit->owner->getPos());
         }
         if (unit->getCurrSkill()->getClass() == SkillClass::STOP) {
+            if (unit->getGoalReason() == "deliver") {
+                const CommandType *tct = unit->getType()->getFirstCtOfClass(CmdClass::MOVE);
+                unit->giveCommand(g_world.newCommand(tct, CmdFlags(), unit->getGoalStructure()));
+            }
             Faction *f = unit->getFaction();
             vector<Unit*> buildingsList;
             for (int i = 0; i < f->getUnitCount(); ++i) {
@@ -763,16 +865,29 @@ void GoalSystem::computeAction(Unit *unit, Focus focus) {
                     if (building->sresources.size() > 0) {
                         for (int j = 0; j < building->sresources.size(); ++j) {
                             if (building->getSResource(j)->getType()->getName() == "gold") {
-                                if (building->getSResource(j)->getAmount() >= 500) {
-                                    buildingsList.push_back(building);
+                                if (building->getSResource(j)->getAmount() - building->taxedGold >= 500) {
+                                    bool previousTarget = false;
+                                    for (int z = 0; z < unit->getFaction()->getUnitCount(); ++z) {
+                                        if (unit->getFaction()->getUnit(z)->owner->getId() == unit->owner->getId()) {
+                                            if (unit->getFaction()->getUnit(z)->getGoalStructure() == building) {
+                                                previousTarget = true;
+                                            }
+                                        }
+                                    }
+                                    if (previousTarget == false) {
+                                        buildingsList.push_back(building);
+                                    }
                                 }
                             }
                         }
                     }
                 }
             }
-            int distance = 1000;
+            int distance = 100;
             Vec2i uPos = unit->getCenteredPos();
+            if (unit->isCarried()) {
+                uPos = unit->owner->getCenteredPos();
+            }
             Unit *finalPick;
             Vec2i tPos = Vec2i(NULL);
             for (int i = 0; i < buildingsList.size(); ++i) {
@@ -785,28 +900,22 @@ void GoalSystem::computeAction(Unit *unit, Focus focus) {
                     tPos = bPos;
                 }
             }
-            const CommandType *tct = unit->getType()->getFirstCtOfClass(CmdClass::TRANSPORT);
+            const CommandType *tct = unit->getType()->getFirstCtOfClass(CmdClass::MOVE);
             if (tPos != Vec2i(NULL)) {
                 if (unit->isCarried()) {
                     ownerUnload(unit);
-                } else {
-                    if (unit->productionRoute.getProducerId() == 0 || unit->productionRoute.getProducerId() == -1) {
-                        unit->productionRoute.setProducerId(finalPick->getId());
-                        unit->productionRoute.setDestination(finalPick->getPos());
-                    }
-                    if (unit->productionRoute.getProducerId() != -1 && unit->productionRoute.getStoreId() != -1) {
-                        unit->giveCommand(g_world.newCommand(tct, CmdFlags(), finalPick));
-                    }
+                }
+                if (unit->productionRoute.getProducerId() == -1) {
+                    unit->productionRoute.setProducerId(finalPick->getId());
+                    unit->productionRoute.setDestination(finalPick->getPos());
+                }
+                if (unit->productionRoute.getProducerId() != -1 && unit->productionRoute.getStoreId() != -1) {
+                    unit->setGoalReason("collect");
+                    unit->setGoalStructure(finalPick);
+                    unit->giveCommand(g_world.newCommand(tct, CmdFlags(), finalPick->getPos()));
                 }
             } else {
-                const StoredResource *res;
-                for (int i = 0; i < unit->getType()->getStoredResourceCount(); ++i) {
-                    res = unit->getSResource(i);
-                    if (res->getType()->getName() == "gold") {
-                        break;
-                    }
-                }
-                if (res->getAmount() == 0) {
+                if (unit->productionRoute.getProducerId() == -1) {
                     ownerLoad(unit);
                 }
             }

@@ -56,12 +56,26 @@ Focus MandateAISim::getTopGoal(Unit *unit, string personality) {
                     }
                 }
                 if (goalName == "build") {
-                    topGoal = goal;
-                    return topGoal;
+                    if (goalSystem.findBuilding(unit) != NULL) {
+                        topGoal = goal;
+                        return topGoal;
+                    }
                 }
                 if (goalName == "collect") {
-                    topGoal = goal;
-                    return topGoal;
+                    if (topGoal.getImportance() != NULL) {
+                        if (goalImportance > topGoal.getImportance()) {
+                            topGoal = goal;
+                        }
+                    } else {
+                        topGoal = goal;
+                    }
+                }
+                if (goalName == "transport") {
+                    Unit *producer = NULL;
+                    producer = goalSystem.findProducer(unit);
+                    if (producer != NULL) {
+                        topGoal = goal;
+                    }
                 }
                 if (goalName == "explore") {
                     if (topGoal.getImportance() != NULL) {
@@ -226,7 +240,7 @@ Focus MandateAISim::getTopGoal(Unit *unit, string personality) {
 }
 
 void MandateAISim::computeAction(Unit *unit, string personality, string reason) {
-    if (reason != "kill") {
+    if (reason == "compute") {
         Focus newFocus = getTopGoal(unit, personality);
         goalSystem.computeAction(unit, newFocus);
     } else if (reason == "kill") {
@@ -236,6 +250,50 @@ void MandateAISim::computeAction(Unit *unit, string personality, string reason) 
                     const CommandType *act = goalSystem.selectAttackSpell(unit, unit->getGoalStructure());
                     unit->giveCommand(g_world.newCommand(act, CmdFlags(), unit->getGoalStructure()));
                 }
+            }
+        }
+    } else if (reason == "collect") {
+        if (unit->getGoalStructure() != NULL) {
+            Vec2i posUnit = unit->getPos();
+            Vec2i posGoal = unit->getGoalStructure()->getPos();
+            int distance = sqrt(pow(float(abs(posUnit.x - posGoal.x)), 2) + pow(float(abs(posUnit.y - posGoal.y)), 2));
+            if (distance < 3) {
+                for (int i = 0; i < unit->getType()->getStoredResourceCount(); ++i) {
+                    const ResourceType *rt = unit->getType()->getStoredResource(i, unit->getFaction()).getType();
+                    int taxes = 0;
+                    if (unit->getGoalStructure()->getType()->hasTag("orderhouse") || unit->getGoalStructure()->getType()->hasTag("guildhall")) {
+                        taxes = (unit->getGoalStructure()->getSResource(rt)->getAmount() -
+                                 unit->getGoalStructure()->taxedGold) / (100 / unit->getGoalStructure()->taxRate);
+                    } else {
+                        taxes = unit->getGoalStructure()->getSResource(rt)->getAmount();
+                    }
+                    unit->incResourceAmount(rt, taxes);
+                    unit->getGoalStructure()->incResourceAmount(rt, -taxes);
+                    if (unit->getGoalStructure()->getType()->hasTag("orderhouse") || unit->getGoalStructure()->getType()->hasTag("guildhall")) {
+                        unit->getGoalStructure()->taxedGold = unit->getGoalStructure()->getSResource(rt)->getAmount();
+                    }
+                }
+                unit->setGoalReason("deliver");
+                unit->setGoalStructure(unit->owner);
+                const CommandType *ct = unit->getType()->getFirstCtOfClass(CmdClass::MOVE);
+                unit->giveCommand(g_world.newCommand(ct, CmdFlags(), unit->getGoalStructure()->getPos()));
+            }
+        }
+    } else if (reason == "deliver") {
+        if (unit->getGoalStructure() != NULL) {
+            Vec2i posUnit = unit->getPos();
+            Vec2i posGoal = unit->owner->getPos();
+            int distance = sqrt(pow(float(abs(posUnit.x - posGoal.x)), 2) + pow(float(abs(posUnit.y - posGoal.y)), 2));
+            if (distance < 3) {
+                for (int i = 0; i < unit->getType()->getStoredResourceCount(); ++i) {
+                    const ResourceType *rt = unit->getType()->getStoredResource(i, unit->getFaction()).getType();
+                    int taxes = unit->getSResource(rt)->getAmount();
+                    unit->incResourceAmount(rt, -taxes);
+                    unit->getGoalStructure()->getFaction()->incResourceAmount(rt, taxes);
+                }
+                unit->productionRoute.setProducerId(-1);
+                unit->setGoalReason("compute");
+                unit->setGoalStructure(NULL);
             }
         }
     }
@@ -269,6 +327,12 @@ void MandateAISim::update() {
             if (unit->getCurrSkill()->getClass() == SkillClass::STOP) {
                 if (unit->getGoalReason() == "kill") {
                     reason = "kill";
+                    computeAction(unit, personality, reason);
+                } else if (unit->getGoalReason() == "collect") {
+                    reason = "collect";
+                    computeAction(unit, personality, reason);
+                } else if (unit->getGoalReason() == "deliver") {
+                    reason = "deliver";
                     computeAction(unit, personality, reason);
                 } else {
                     if (unit->currentAiUpdate[0].currentStep == 8) {

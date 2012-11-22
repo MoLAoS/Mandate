@@ -179,6 +179,7 @@ public:
 
 protected:
 	Costs costs;
+    Costs localCosts;
     Texture2D *cancelImage;
 	int productionTime;
 	int advancesToSubfaction;
@@ -201,6 +202,10 @@ public:
 	//}
 	ResourceAmount getCost(int i, const Faction *f) const;
 	ResourceAmount getCost(const ResourceType *rt, const Faction *f) const;
+
+	int getLocalCostCount() const						{return localCosts.size();}
+	ResourceAmount getLocalCost(int i, const Faction *f) const;
+	ResourceAmount getLocalCost(const ResourceType *rt, const Faction *f) const;
 
 	int getProductionTime() const					{return productionTime;}
 	const Texture2D *getCancelImage() const			{return cancelImage;}

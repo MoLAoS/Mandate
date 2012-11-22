@@ -200,6 +200,9 @@ Unit::Unit(CreateParams params)
 	previousDirection = first;
 
 	taxedGold = 0;
+	taxRate = 50;
+
+	levelNumber = 1;
 
 	currentSteps.resize(type->getCreatedResourceCount());
 	for (int i = 0; i < currentSteps.size(); ++i) {
@@ -232,7 +235,7 @@ Unit::Unit(CreateParams params)
 	}
 
 	currentAiUpdate.resize(1);
-	currentCommandCooldowns[0].currentStep = 0;
+	currentAiUpdate[0].currentStep = 0;
 
     ownedUnits.resize(type->ownedUnits.size());
     for(int i = 0; i<ownedUnits.size(); ++i){
@@ -251,12 +254,10 @@ Unit::Unit(CreateParams params)
     itemLimit = getType()->itemLimit;
     itemsStored = 0;
 
+    equipment.resize(getType()->equipment.size());
     for (int i = 0; i < getType()->equipment.size(); ++i) {
-        for (int j = 0; j < getType()->equipment[i].getMax(); ++j) {
-            Equipment newEquipment;
-            newEquipment.init(1, 0, "", getType()->equipment[i].getTypeTag());
-            equipment.push_back(newEquipment);
-        }
+        string nameTag = getType()->equipment[i].getTypeTag();
+        equipment[i].init(1, 0, nameTag, nameTag);
     }
 
     sresources.resize(getType()->getStoredResourceCount());
@@ -265,8 +266,8 @@ Unit::Unit(CreateParams params)
         sresources[i].init(rt, 0);
     }
 
-	productionRoute.setStoreId(0);
-	productionRoute.setProducerId(0);
+	productionRoute.setStoreId(-1);
+	productionRoute.setProducerId(-1);
 
 	field = getType()->getField();
 	zone = getType()->getZone();
@@ -567,6 +568,68 @@ void Unit::incResourceAmount(const ResourceType *rt, int amount) {
 		}
 	}
 	assert(false);
+}
+
+bool Unit::applyCosts(const ProducibleType *p) {
+	if (!checkCosts(p)) {
+		return false;
+	}
+	for (int i = 0; i < p->getLocalCostCount(); ++i) {
+		ResourceAmount ra = p->getLocalCost(i, faction);
+		const ResourceType *rt = ra.getType();
+        int cost = ra.getAmount();
+		if ((cost > 0 || rt->getClass() != ResourceClass::STATIC) && rt->getClass() != ResourceClass::CONSUMABLE) {
+		    int addition = ra.getAmountPlus();
+		    fixed multiplier = ra.getAmountMultiply();
+		    int plus = faction->getCostModifier(p, rt).m_addition;
+		    fixed multiply = faction->getCostModifier(p, rt).m_multiplier;
+			cost = addition + cost;
+			if (multiplier != 1) {
+                cost = (cost * multiplier).intp();
+			}
+			cost = cost + plus;
+			if (multiply.intp() != 1) {
+                cost = (cost * multiply).intp();
+			}
+			if (rt->getName() == "gold") {
+                int untaxedGold = getSResource(rt)->getAmount() - taxedGold;
+                if (cost > untaxedGold) {
+                    taxedGold = taxedGold - (cost - untaxedGold);
+                }
+			}
+			incResourceAmount(rt, -(cost));
+		}
+	}
+	return true;
+}
+
+void Unit::applyStaticCosts(const ProducibleType *p) {
+	for (int i = 0; i < p->getLocalCostCount(); ++i) {
+		ResourceAmount ra = p->getLocalCost(i, faction);
+		const ResourceType *rt = ra.getType();
+		if (rt->getClass() == ResourceClass::STATIC) {
+			int cost = ra.getAmount();
+			if (cost > 0) {
+				incResourceAmount(rt, -cost);
+			}
+		}
+	}
+}
+
+bool Unit::checkCosts(const ProducibleType *pt) {
+	bool ok = true;
+	for (int i = 0; i < pt->getLocalCostCount(); ++i) {
+		ResourceAmount ra = pt->getLocalCost(i, faction);
+		const ResourceType *rt = ra.getType();
+		int cost = ra.getAmount();
+		if (cost > 0) {
+			int available = getSResource(rt)->getAmount();
+			if (cost > available) {
+				ok = false;
+			}
+		}
+	}
+	return ok;
 }
 
 void Unit::setResourceBalance(const ResourceType *rt, int balance) {
@@ -1436,16 +1499,14 @@ void Unit::born(bool reborn) {
 	if (!reborn) {
 		faction->addStore(type);
 		addStore(type);
-		faction->addCreate(type);
-
-        /*if (!owner->getId() == this->getId()) {
-            for (int i = 0; i < owner->ownedUnits.size(); ++i) {
-                if (owner->ownedUnits[i].getType() == getType()) {
-                    owner->ownedUnits[i].incOwned();
-                }
+        for (int i = 0; i < type->starterResources.size(); ++i) {
+            ResourceAmount ra = type->starterResources[i];
+            incResourceAmount(ra.getType(), ra.getAmount());
+            if (ra.getType()->getName() == "gold") {
+                taxedGold = ra.getAmount();
             }
-        }*/
-
+        }
+		faction->addCreate(type);
 		setCurrSkill(SkillClass::STOP);
 		hp = type->getMaxHp();
 		sp = type->getMaxSp();
@@ -1503,11 +1564,17 @@ void Unit::kill() {
 	World &world = g_world;
 
 	if (getType()->inhuman) {
+	    int attackCount = 0;
+	    for (int i = 0; i < attackers.size(); ++i) {
+            if (attackers[i].getUnit()->getType()->hasTag("ordermember")) {
+                attackCount = attackCount + 1;
+            }
+	    }
+        const ResourceType *rt = g_world.getTechTree()->getResourceType("gold");
+        int goldPossible = getSResource(rt)->getAmount();
         for (int i = 0; i < attackers.size(); ++i) {
-            if (attackers[i].getUnit()->getType()->inhuman) {
-                const ResourceType *rt = g_world.getTechTree()->getResourceType("gold");
-                int goldPossible = getSResource(rt)->getAmount();
-                int amount = goldPossible / attackers.size();
+            if (attackers[i].getUnit()->getType()->hasTag("ordermember")) {
+                int amount = goldPossible / attackCount;
                 attackers[i].getUnit()->incResourceAmount(rt, amount);
             }
         }
@@ -1578,6 +1645,9 @@ void Unit::kill() {
 		faction->deApplyStaticConsumption(type);
 	} else {
 		faction->deApplyStaticCosts(type);
+		for (int i = 0; i < getEquippedItems().size(); ++i) {
+            faction->deApplyStaticCosts(getEquippedItem(i)->getType());
+		}
 		faction->removeStore(type);
 		faction->onUnitDeActivated(type);
 	}
@@ -2201,47 +2271,26 @@ void Unit::accessStorageExchange(Unit *storage) {
 }
 
 void Unit::equipItem(int ident) {
-    bool doEquip = false;
     Item *item = getStoredItem(ident);
-    for (int n = 0; n < getType()->equipment.size(); ++n) {
-        if (item->getType()->getTypeTag() == getType()->equipment[n].getTypeTag()) {
-            int equippedAmount = 0;
-            for (int m = 0; m < equippedItems.size(); ++m) {
-                if (item->getType()->getTypeTag() == getEquippedItem(m)->getType()->getTypeTag()) {
-                    ++equippedAmount;
-                }
-            }
-            if (equippedAmount < getType()->equipment[n].getMax()) {
-                doEquip = true;
-                break;
-            }
-        }
-    }
-    if (doEquip == false) {
-        return;
-    }
-    for (int i = 0; i < storedItems.size(); ++i) {
-        if (getStoredItem(i)->getType()->getTypeTag() == item->getType()->getTypeTag()) {
-            equippedItems.push_back(storedItems[i]);
-            for (int k = 0; k < getEquippedItems().size(); ++k) {
-                for (int j = 0; j < equipment.size(); ++j) {
-                    if (getEquippedItem(k)->getType()->getTypeTag() == equipment[j].getTypeTag()) {
-                        if (equipment[j].getCurrent() == 0) {
-                            equipment[j].setCurrent(1);
-                            equipment[j].setName(getEquippedItem(k)->getType()->getName());
-                            break;
+    for (int i = 0; i < getType()->equipment.size(); ++i) {
+        if (item->getType()->getTypeTag() == equipment[i].getTypeTag()) {
+            if (equipment[i].getCurrent() == 0) {
+                equipment[i].setCurrent(1);
+                equipment[i].setName(item->getType()->getName());
+                for (int j = 0; j < storedItems.size(); ++j) {
+                    if (storedItems[j] == item->id) {
+                        equippedItems.push_back(storedItems[j]);
+                        storedItems.erase(storedItems.begin()+j);
+                        for (int l = 0; l < storage.size(); ++l) {
+                            if (storage[l].getName() == item->getType()->getName()) {
+                                storage[l].setCurrent(-1);
+                                setItemsStored(-1);
+                            }
                         }
                     }
                 }
+                break;
             }
-            storedItems.erase(storedItems.begin()+i);
-            for (int l = 0; l < storage.size(); ++l) {
-                if (storage[l].getTypeTag() == item->getType()->getTypeTag()) {
-                    storage[l].setCurrent(-1);
-                }
-            }
-            setItemsStored(-1);
-            break;
         }
     }
     computeTotalUpgrade();
@@ -2249,29 +2298,25 @@ void Unit::equipItem(int ident) {
 
 void Unit::unequipItem(int ident) {
     Item *item = getEquippedItem(ident);
-    for (int i = 0; i < equippedItems.size(); ++i) {
-        if (equippedItems[i] == equippedItems[ident]) {
-            storedItems.push_back(equippedItems[i]);
-            for (int j = 0; j < equipment.size(); ++j) {
-                if (getEquippedItem(i)->getType()->getTypeTag() == equipment[j].getTypeTag()) {
-                    if (equipment[j+1].getTypeTag() == equipment[j].getTypeTag() && equipment[j+1].getCurrent() == 1) {
-
-                    } else {
-                        if (equipment[j].getCurrent() == 1) {
-                            equipment[j].setCurrent(-1);
-                            equipment[j].setName(getEquippedItem(i)->getType()->getTypeTag());
-                            break;
+    for (int j = 0; j < getType()->equipment.size(); ++j) {
+        if (item->getType()->getName() == equipment[j].getName()) {
+            if (equipment[j].getCurrent() == 1) {
+                equipment[j].setCurrent(-1);
+                equipment[j].setName(item->getType()->getTypeTag());
+                for (int i = 0; i < equippedItems.size(); ++i) {
+                    if (equippedItems[i] == item->id) {
+                        equippedItems.erase(equippedItems.begin()+i);
+                        storedItems.push_back(item->id);
+                        for (int l = 0; l < storage.size(); ++l) {
+                            if (storage[l].getName() == item->getType()->getName()) {
+                                storage[l].setCurrent(1);
+                                setItemsStored(1);
+                            }
                         }
                     }
                 }
+                break;
             }
-            equippedItems.erase(equippedItems.begin()+i);
-            for (int l = 0; l < storage.size(); ++l) {
-                if (storage[l].getTypeTag() == item->getType()->getTypeTag()) {
-                    storage[l].setCurrent(1);
-                }
-            }
-            setItemsStored(1);
         }
     }
     computeTotalUpgrade();
@@ -2765,6 +2810,22 @@ string Unit::getShortDesc() const {
 		}
 		ss << endl << nameString;
 	}
+	if (type->hasTag("ordermember")) {
+	    string levelName;
+	    if (levelNumber == 0) {
+            levelName = "Inductee";
+	    } else {
+            levelName = level->getName();
+	    }
+	    ss << endl << "Designation: " << levelName;
+        ss << endl << "Level: " << levelNumber;
+	}
+	if (type->hasTag("orderhouse")) {
+        ss << endl << "Total Gold: " << getSResource(g_world.getTechTree()->getResourceType("gold"))->getAmount();
+        ss << endl << "Taxed Gold: " << taxedGold;
+        ss << endl << "Tax Rate: " << taxRate;
+        ss << endl << "Open Space: " << getSResource(g_world.getTechTree()->getResourceType("space"))->getAmount();
+	}
 	return ss.str();
 }
 
@@ -2795,13 +2856,19 @@ string Unit::getLongDesc() const {
 	ss << endl << "TargetID: " << goalStructure->getId();
 	}
 	if (goalStructure != NULL) {
-	ss << endl << "TargetID: " << getGoalReason();
+	ss << endl << "Reason: " << getGoalReason();
 	}
 
 	ss << endl << "Direction: " << previousDirection;
 
-    if (getType()->inhuman) {
+    if (type->hasTag("member") || type->hasTag("orderhouse")) {
     ss << endl << "Taxed Gold: " << taxedGold;
+    }
+    if (type->hasTag("member") || type->hasTag("orderhouse")) {
+    ss << endl << "Tax Rate: " << taxRate;
+    }
+    for (int i = 0; i < type->starterResources.size(); ++i) {
+    ss << endl << type->starterResources[i].getType()->getName() << ": " << type->starterResources[i].getAmount();
     }
     ss << endl << "Stored Items: " << itemsStored << "/" << itemLimit;
     ss << endl << "Equipped Items: " << getEquippedItems().size();
@@ -2903,29 +2970,14 @@ string Unit::getLongDesc() const {
 		ss << endl << res;
 	}
 
-	// kills
-	const Level *nextLevel = getNextLevel();
-	if (kills > 0 || nextLevel) {
-		ss << endl << lang.get("Kills") << ": " << kills;
-		if (nextLevel) {
-			string levelName = lang.getFactionString(getFaction()->getType()->getName(), nextLevel->getName());
-			if (levelName == nextLevel->getName()) {
-				levelName = formatString(levelName);
-			}
-			ss << " (" << levelName << ": " << nextLevel->getKills() << ")";
-		}
-	}
+    ss << endl << lang.get("Exp") << ": " << exp;
 
-	if (exp >= 0 || nextLevel) {
-		ss << endl << lang.get("Exp") << ": " << exp;
-		if (nextLevel) {
-			string levelName = lang.getFactionString(getFaction()->getType()->getName(), nextLevel->getName());
-			if (levelName == nextLevel->getName()) {
-				levelName = formatString(levelName);
-			}
-			ss << " (" << levelName << ": " << nextLevel->getExp() << ")";
-		}
-	}
+    if (type->getLevelCount() > 0) {
+        for (int i = 0; i < type->getLevelCount(); ++i) {
+            ss << endl << type->getLevel(i)->getName();
+            ss << endl << type->getLevel(i)->getEnLevel()->getMaxHp();
+        }
+    }
 
 	// resource load
     if (loadCount) {
@@ -3130,6 +3182,14 @@ void Unit::computeTotalUpgrade() {
 	    const EnhancementType *et = static_cast<const EnhancementType*>(getEquippedItem(i)->getType());
         totalUpgrade.sum(et);
 	}
+    for (int i = 0; i < type->ownedUnits.size(); ++i) {
+        int limit = type->ownedUnits[i].getLimit();
+        for (int j = 0; j < ownedUnits.size(); ++j) {
+            if (type->ownedUnits[i].getType() == ownedUnits[j].getType()) {
+                ownedUnits[j].setLimit(limit);
+            }
+        }
+    }
 
     for (int i = 0; i < getEquippedItems().size(); ++i) {
         const ItemType *iType = getEquippedItem(i)->getType();
@@ -3186,18 +3246,22 @@ void Unit::computeTotalUpgrade() {
         }
     }
 	level = NULL;
+	int totalExp = exp;
+	int levelInt = 0;
 	for (int i = 0; i < type->getLevelCount(); ++i) {
-		const Level *level = type->getLevel(i);
-		if (kills >= level->getKills() && level->getKills() >= 0) {
-			totalUpgrade.sum(level);
-			this->level = level;
-		} else if (exp >= level->getExp() && level->getExp() >= 0) {
-			totalUpgrade.sum(level);
-			this->level = level;
-		} else {
-			break;
-		}
+		const Level *typeLevel = type->getLevel(i);
+        for (int j = 0; j < typeLevel->getCount(); ++j) {
+            if (totalExp >= typeLevel->getExp()) {
+                totalExp -= typeLevel->getExp();
+                this->level = typeLevel;
+                totalUpgrade.sum(level->getEnLevel());
+                ++levelInt;
+            } else {
+                break;
+            }
+        }
 	}
+	levelNumber = levelInt;
 	recalculateStats();
 }
 
@@ -3391,25 +3455,13 @@ void Unit::effectExpired(Effect *e) {
 /** Another one bites the dust. Increment 'kills' & check level */
 void Unit::incKills() {
 	++kills;
-
-	const Level *nextLevel = getNextLevel();
-	if (nextLevel != NULL && kills >= nextLevel->getKills() && nextLevel->getKills() >= 0) {
-		level = nextLevel;
-		totalUpgrade.sum(level);
-		recalculateStats();
-	}
 }
 
 /** Another one bites the dust. Increment 'exp' & check level */
 void Unit::incExp(int addExp) {
     exp += addExp;
-
-	const Level *nextLevel = getNextLevel();
-	if (nextLevel != NULL && exp >= nextLevel->getExp() && nextLevel->getExp() >= 0) {
-		level = nextLevel;
-		totalUpgrade.sum(level);
-		recalculateStats();
-	}
+    computeTotalUpgrade();
+    recalculateStats();
 }
 
 /** Perform a morph @param mct the CommandType describing the morph @return true if successful */
@@ -3633,7 +3685,7 @@ CmdResult Unit::checkCommand(const Command &command) const {
   * @param command the command to apply costs for
   */
 void Unit::applyCommand(const Command &command) {
-	command.getType()->apply(faction, command);
+	command.getType()->apply(this, faction, command);
 	if (command.getType()->getEnergyCost()) {
 		ep -= command.getType()->getEnergyCost();
 	}

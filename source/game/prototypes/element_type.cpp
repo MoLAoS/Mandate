@@ -182,13 +182,29 @@ ProducibleType::~ProducibleType() {
 ResourceAmount ProducibleType::getCost(int i, const Faction *f) const {
 	Modifier mod = f->getCostModifier(this, costs[i].getType());
 	ResourceAmount res(costs[i]);
-	res.setAmount((res.getAmount() * mod.getMultiplier()).intp() + mod.getAddition());
+	res.setAmount((((res.getAmount() + res.getAmountPlus()) * mod.getMultiplier()).intp() + mod.getAddition()) * res.getAmountMultiply().intp());
 	return res;
 }
 
 ResourceAmount ProducibleType::getCost(const ResourceType *rt, const Faction *f) const {
 	for (int i = 0; i < costs.size(); ++i) {
 		if (costs[i].getType() == rt) {
+			return getCost(i, f);
+		}
+	}
+	return ResourceAmount();
+}
+
+ResourceAmount ProducibleType::getLocalCost(int i, const Faction *f) const {
+	Modifier mod = f->getCostModifier(this, localCosts[i].getType());
+	ResourceAmount res(localCosts[i]);
+	res.setAmount((res.getAmount() * mod.getMultiplier()).intp() + mod.getAddition());
+	return res;
+}
+
+ResourceAmount ProducibleType::getLocalCost(const ResourceType *rt, const Faction *f) const {
+	for (int i = 0; i < localCosts.size(); ++i) {
+		if (localCosts[i].getType() == rt) {
 			return getCost(i, f);
 		}
 	}
@@ -262,8 +278,31 @@ bool ProducibleType::load(const XmlNode *baseNode, const string &dir, const Tech
 					string name = resourceNode->getAttribute("name")->getRestrictedValue();
 					int amount = resourceNode->getAttribute("amount")->getIntValue();
                     int amount_plus = resourceNode->getAttribute("plus")->getIntValue();
-                    float amount_multiply = resourceNode->getAttribute("multiply")->getFloatValue();
+                    fixed amount_multiply = resourceNode->getAttribute("multiply")->getFixedValue();
                     costs[i].init(techTree->getResourceType(name), amount, amount_plus, amount_multiply);
+				} catch (runtime_error e) {
+					g_logger.logXmlError(dir, e.what());
+					loadOk = false;
+				}
+			}
+		}
+	} catch (runtime_error e) {
+		g_logger.logXmlError(dir, e.what());
+		loadOk = false;
+	}
+
+	try {
+		const XmlNode *localRequirementsNode = baseNode->getChild("local-requirements", 0, false);
+		if(localRequirementsNode) {
+			localCosts.resize(localRequirementsNode->getChildCount());
+			for(int i = 0; i < localCosts.size(); ++i) {
+				try {
+					const XmlNode *resourceNode = localRequirementsNode->getChild("resource", i);
+					string name = resourceNode->getAttribute("name")->getRestrictedValue();
+					int amount = resourceNode->getAttribute("amount")->getIntValue();
+                    int amount_plus = resourceNode->getAttribute("plus")->getIntValue();
+                    fixed amount_multiply = resourceNode->getAttribute("multiply")->getFixedValue();
+                    localCosts[i].init(techTree->getResourceType(name), amount, amount_plus, amount_multiply);
 				} catch (runtime_error e) {
 					g_logger.logXmlError(dir, e.what());
 					loadOk = false;

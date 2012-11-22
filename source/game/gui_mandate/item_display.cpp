@@ -374,28 +374,16 @@ void ItemWindow::computeEquipmentPanel() {
     if (m_ui->getSelection()->isComandable()) {
         const Unit *u = m_ui->getSelection()->getFrontUnit();
         const FactionType *ft = u->getFaction()->getType();
+        const Texture2D *image = ft->getItemImage(0);
         if (u->isBuilt()) {
-            for (int i = 0, j = 0; i < u->getType()->equipment.size(); ++i) {
-                for (int n = 0; n < u->getType()->equipment[i].getMax(); ++n) {
-                    const Texture2D *image = ft->getItemImage(0);
-                    int counter = 0;
-                    for (int l = 0; l < u->getEquippedItems().size(); ++l) {
-                        if (u->getEquippedItem(l)->getType()->getTypeTag() == u->getType()->equipment[i].getTypeTag()) {
-                            if (n > 0) {
-                                if (counter == n) {
-                                    image = u->getEquippedItem(l)->getType()->getImage();
-                                } else {
-                                    ++counter;
-                                }
-                            } else {
-                                image = u->getEquippedItem(l)->getType()->getImage();
-                            }
-                        }
+            for (int i = 0; i < u->getType()->equipment.size(); ++i) {
+                for (int l = 0; l < u->getEquippedItems().size(); ++l) {
+                    if (u->getEquippedItem(l)->getType()->getName() == u->getType()->equipment[i].getName()) {
+                        image = u->getEquippedItem(l)->getType()->getImage();
                     }
-                    setDownImage(j + buttonCellCount, image);
-                    setDownLighted(j + buttonCellCount, true);
-                    ++j;
                 }
+                setDownImage(i + buttonCellCount, image);
+                setDownLighted(i + buttonCellCount, true);
             }
         }
     }
@@ -403,18 +391,7 @@ void ItemWindow::computeEquipmentPanel() {
 
 void ItemWindow::computeEquipmentInfo(int posDisplay) {
     const Unit *u = m_ui->getSelection()->getFrontUnit();
-    int displayPos = posDisplay;
-    for (int i = 0; i < u->getType()->equipment.size(); ++i) {
-        for (int j = 0; j < u->getType()->equipment[i].getMax()-1; ++j) {
-            if (displayPos == 0) {
-                displayPos = i;
-                break;
-            } else {
-                --displayPos;
-            }
-        }
-    }
-    string name = u->getType()->equipment[displayPos].getTypeTag();
+    string name = u->getType()->equipment[posDisplay].getTypeTag();
     string body = "";
     if (u->getEquipment()[posDisplay].getCurrent() == 1) {
         name = u->getEquipment()[posDisplay].getName();
@@ -432,21 +409,9 @@ void ItemWindow::equipmentButtonPressed(int posDisplay) {
     if (unequiping == true) {
         if (m_ui->getSelection()->isComandable()) {
             const Unit *u = m_ui->getSelection()->getFrontUnit();
-            int displayPos = posDisplay;
-            for (int i = 0; i < u->getType()->equipment.size(); ++i) {
-                for (int j = 0; j < u->getType()->equipment[i].getMax()-1; ++j) {
-                    if (displayPos == 0) {
-                        displayPos = i;
-                        break;
-                    } else {
-                        --displayPos;
-                    }
-                }
-            }
-            string tagType = u->getType()->equipment[displayPos].getTypeTag();
             Unit *unit = g_world.findUnitById(u->getId());
             for (int i = 0; i < u->getEquippedItems().size(); ++i) {
-                if (u->getEquippedItem(i)->getType()->getTypeTag() == tagType) {
+                if (u->getEquipment()[posDisplay].getName() == u->getEquippedItem(i)->getType()->getName()) {
                     unit->unequipItem(i);
                     break;
                 }
@@ -460,10 +425,9 @@ void ItemWindow::inventoryButtonPressed(int posDisplay) {
     if (equipping == true) {
         if (m_ui->getSelection()->isComandable()) {
             const Unit *u = m_ui->getSelection()->getFrontUnit();
-            string tagType = u->getStorage()[posDisplay].getTypeTag();
             Unit *unit = g_world.findUnitById(u->getId());
             for (int i = 0; i < u->getStoredItems().size(); ++i) {
-                if (u->getStoredItem(i)->getType()->getTypeTag() == tagType) {
+                if (u->getStorage()[posDisplay].getName() == u->getStoredItem(i)->getType()->getName()) {
                     unit->equipItem(i);
                     break;
                 }

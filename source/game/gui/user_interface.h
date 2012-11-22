@@ -133,6 +133,7 @@ private:
 	LuaConsole *m_luaConsole;
 
 	Random random;
+	vector<int> taxes;
 
 	// Positions
 	Vec2i posObjWorld;		// world coords
@@ -230,6 +231,7 @@ public:
 
 	void onSelectionUpdated();
 
+	void taxButtonPressed(int posDisplay);
 	void commandButtonPressed(int posDisplay);
 	void unloadRequest(int carryIndex);
 	void degarrisonRequest(int carryIndex);
@@ -301,6 +303,7 @@ public:
 	void resetState(bool redoDisplay = true);
 	void computeDisplay();
 	void computePortraitInfo(int posDisplay);
+	void computeTaxInfo(int posDisplay);
 	void computeCommandInfo(int posDisplay);
 	void computeFormationInfo(int posDisplay);
 	void computeHierarchyInfo(int posDisplay);
@@ -312,6 +315,7 @@ private:
 	void computeSelectionPanel();
 	void computeHousedUnitsPanel();
 	void computeGarrisonedUnitsPanel();
+	void computeTaxPanel();
 	void computeCommandPanel();
 	void computeFormationPanel();
 	void computeHierarchyPanel();

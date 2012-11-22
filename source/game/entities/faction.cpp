@@ -213,9 +213,10 @@ void Faction::init(const FactionType *factionType, ControlType control, string p
 		sresources.resize(techTree->getResourceTypeCount());
 		for (int i = 0; i < techTree->getResourceTypeCount(); ++i) {
 			const ResourceType *rt = techTree->getResourceType(i);
-			int resourceAmount= giveResources? factionType->getStartingResourceAmount(rt): 0;
+			int resourceAmount= giveResources ? factionType->getStartingResourceAmount(rt) : 0;
 			sresources[i].init(rt, resourceAmount);
 		}
+
 		for (int i=0; i < factionType->getUnitTypeCount(); ++i) {
 			const UnitType *ut = factionType->getUnitType(i);
 			for (int j=0; j < techTree->getResourceTypeCount(); ++j) {
@@ -760,9 +761,18 @@ bool Faction::applyCosts(const ProducibleType *p) {
         int cost = ra.getAmount();
 		if ((cost > 0 || rt->getClass() != ResourceClass::STATIC) && rt->getClass() != ResourceClass::CONSUMABLE) {
 		    int addition = ra.getAmountPlus();
-		    float multiplier = ra.getAmountMultiply();
-			m_costModifiers[p][rt].m_addition = (m_costModifiers[p][rt].m_addition + addition + cost) * multiplier;
-			incResourceAmount(rt, -(cost));
+		    fixed multiplier = ra.getAmountMultiply();
+		    int plus = m_costModifiers[p][rt].m_addition;
+		    fixed multiply = m_costModifiers[p][rt].m_multiplier;
+			cost = addition + cost;
+			if (multiplier.intp() != 1) {
+                cost = (cost * multiplier).intp();
+			}
+			cost = cost + plus;
+			if (multiply.intp() != 1) {
+                cost = (cost * multiply).intp();
+			}
+			incResourceAmount(rt, -cost);
 		}
 
 	}
@@ -786,8 +796,8 @@ bool Faction::applyCosts(const ProducibleType *pt, int discount) {
 		int modCost = (cost * ratio).intp();
 		if ((cost > 0 || rt->getClass() != ResourceClass::STATIC) && rt->getClass() != ResourceClass::CONSUMABLE) {
             int addition = ra.getAmountPlus();
-		    float multiplier = ra.getAmountMultiply();
-			m_costModifiers[pt][rt].m_addition = (m_costModifiers[pt][rt].m_addition + addition + cost) * multiplier;
+		    fixed multiplier = ra.getAmountMultiply();
+			modCost = (m_costModifiers[pt][rt].m_addition + addition + cost) * multiplier.intp();
 			incResourceAmount(rt, -(modCost));
 		}
 	}
@@ -932,23 +942,18 @@ void Faction::applyCostsOnInterval(const ResourceType *rt) {
 bool Faction::checkCosts(const ProducibleType *pt) {
 	bool ok = true;
 	neededResources.clear();
-
-	//for each unit cost check if enough resources
 	for (int i = 0; i < pt->getCostCount(); ++i) {
 		ResourceAmount ra = pt->getCost(i, this);
 		const ResourceType *rt = ra.getType();
 		int cost = ra.getAmount();
-
 		if (cost > 0) {
 			int available = getSResource(rt)->getAmount();
-
 			if (cost > available) {
 				ok = false;
 				neededResources.push_back(rt);
 			}
 		}
 	}
-
 	return ok;
 }
 

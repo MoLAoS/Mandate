@@ -51,6 +51,13 @@ bool Modification::load(const string &dir, const TechTree *techTree, const Facti
 		loadOk = false;
 	}
 	try {
+	    const XmlNode *serviceNode = parametersNode->getChild("service");
+	    service = serviceNode->getAttribute("scope")->getRestrictedValue();
+	} catch (runtime_error e) {
+		g_logger.logXmlError(dir, e.what());
+		loadOk = false;
+	}
+	try {
 	    const XmlNode *equipmentNode = parametersNode->getChild("equipment-types", 0, false);
 		if(equipmentNode) {
 			for(int i = 0; i < equipmentNode->getChildCount(); ++i) {
@@ -79,7 +86,7 @@ bool Modification::load(const string &dir, const TechTree *techTree, const Facti
 					string rname = resourceNode->getAttribute("name")->getRestrictedValue();
 					int amount = resourceNode->getAttribute("amount")->getIntValue();
                     int amount_plus = resourceNode->getAttribute("plus")->getIntValue();
-                    float amount_multiply = resourceNode->getAttribute("multiply")->getFloatValue();
+                    fixed amount_multiply = resourceNode->getAttribute("multiply")->getFixedValue();
                     costs[i].init(techTree->getResourceType(rname), amount, amount_plus, amount_multiply);
 				} catch (runtime_error e) {
 					g_logger.logXmlError(dir, e.what());

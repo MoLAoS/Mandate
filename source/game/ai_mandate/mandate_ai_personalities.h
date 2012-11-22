@@ -69,6 +69,8 @@ public:
     void shop(Unit *unit);
     Unit *findShop(Unit *unit);
     Unit *findNearbyAlly(Unit *unit, Focus focus);
+    Unit *findBuilding(Unit *unit);
+    Unit *findProducer(Unit *unit);
     const CommandType *selectHealSpell(Unit *unit, Unit* target);
     const CommandType *selectBuffSpell(Unit *unit, Unit* target);
     const CommandType *selectAttackSpell(Unit *unit, Unit* target);

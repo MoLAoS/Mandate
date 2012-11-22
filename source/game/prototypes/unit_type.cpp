@@ -35,70 +35,6 @@ using namespace Shared::Util;
 namespace Glest { namespace ProtoTypes {
 
 // ===============================
-// 	class Level
-// ===============================
-
-bool Level::load(const XmlNode *levelNode, const string &dir, const TechTree *tt, const FactionType *ft) {
-	bool loadOk = true;
-	try {
-		m_name = levelNode->getAttribute("name")->getRestrictedValue();
-	} catch (runtime_error e) {
-		g_logger.logXmlError(dir, e.what());
-		loadOk = false;
-	}
-
-	try {
-		kills = levelNode->getOptionalIntValue("kills");
-		if (kills) {
-		const XmlAttribute *defaultsAtt = levelNode->getAttribute("defaults", 0);
-		    if (defaultsAtt && !defaultsAtt->getBoolValue()) {
-			    maxHpMult = 1;
-			    maxSpMult = 1;
-			    maxEpMult = 1;
-                maxCpMult = 1;
-			    sightMult = 1;
-			    armorMult = 1;
-			    effectStrength = 0;
-		    }
-		}
-		if (kills == 0) {
-		    kills = -1;
-		}
-	}
-	catch (runtime_error e) {
-		g_logger.logXmlError(dir, e.what());
-		loadOk = false;
-	}
-	try {
-		exp = levelNode->getOptionalIntValue("exp");
-		if (exp) {
-		const XmlAttribute *defaultsAtt = levelNode->getAttribute("defaults", 0);
-		    if (defaultsAtt && !defaultsAtt->getBoolValue()) {
-			    maxHpMult = 1;
-			    maxSpMult = 1;
-			    maxEpMult = 1;
-                maxCpMult = 1;
-			    sightMult = 1;
-			    armorMult = 1;
-			    effectStrength = 0;
-		    }
-		}
-		if (exp == 0) {
-		    exp = -1;
-		}
-	}
-	catch (runtime_error e) {
-		g_logger.logXmlError(dir, e.what());
-		loadOk = false;
-	}
-
-	if (!EnhancementType::load(levelNode, dir, tt, ft)) {
-		loadOk = false;
-	}
-	return loadOk;
-}
-
-// ===============================
 // 	class PetRule
 // ===============================
 /*
@@ -268,12 +204,16 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 	try {
         const XmlNode *equipmentNode = parametersNode->getChild("equipment", 0, false);
 	    if (equipmentNode) {
-	        equipment.resize(equipmentNode->getChildCount());
-            for (int i = 0; i < equipmentNode->getChildCount(); ++i) {
+            for (int i = 0, k = 0; i < equipmentNode->getChildCount(); ++i) {
                 const XmlNode *typeNode = equipmentNode->getChild("type", i);
                 string type = typeNode->getAttribute("type")->getRestrictedValue();
                 int amount = typeNode->getAttribute("value")->getIntValue();
-                equipment[i].init(amount, 0, "", type);
+                for (int j = 0; j < amount; ++j) {
+                    Equipment newEquipment;
+                    equipment.push_back(newEquipment);
+                    equipment[k].init(1, 0, type, type);
+                    ++k;
+                }
             }
 	    }
 	}
@@ -520,7 +460,21 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 			g_logger.logXmlError(path, e.what());
 			loadOk = false;
 		}
-
+		try { // Starter resources
+			const XmlNode *starterResourcesNode= parametersNode->getChild("starter-resources", 0, false);
+			if (starterResourcesNode) {
+				starterResources.resize(starterResourcesNode->getChildCount());
+				for(int i=0; i<starterResources.size(); ++i){
+					const XmlNode *resourceNode= starterResourcesNode->getChild("resource", i);
+					string name= resourceNode->getAttribute("name")->getRestrictedValue();
+					int amount= resourceNode->getAttribute("amount")->getIntValue();
+					starterResources[i].init(techTree->getResourceType(name), amount, 0, 0);
+				}
+			}
+		} catch (runtime_error e) {
+			g_logger.logXmlError(path, e.what());
+			loadOk = false;
+		}
         try { // resources and items processed
 			const XmlNode *processesNode= parametersNode->getChild("processes", 0, false);
 			if (processesNode) {

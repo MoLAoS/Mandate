@@ -464,7 +464,7 @@ void World::damage(Unit *attacker, const AttackSkillType* ast, Unit *attacked, f
     /**< Added by MoLAoS, magic damage and resistances */
     int damage = totalDamage.intp();
     if (attacker->getFaction()->getType()->getOnHitExp() == true) {
-        attacker->incExp(damage / 10);
+        attacker->incExp(500 / (attacker->getLevelNumber() + 1));
     }
 	if (attacked->decHp(damage)) {
 		doKill(attacker, attacked);
@@ -759,7 +759,7 @@ void World::tick() {
         const Unit *u = faction->getUnit(j);
             if (u->isOperative()) {
                 Unit *unit = u->getFaction()->getUnit(j);
-                for (int s = 0; s < u->getType()->getCreatedResourceCount(); ++s) {
+                for (int s = 0; s < u->getType()->getStoredResourceCount(); ++s) {
                 ResourceAmount sr = u->getType()->getStoredResource(s, faction);
                 const ResourceType* srt = sr.getType();
                     for (int i = 0; i < u->getType()->getCreatedResourceCount(); ++i) {
@@ -787,7 +787,7 @@ void World::tick() {
 				    }
                 }
                 for (int m = 0; m < u->getEquippedItems().size(); ++m) {
-                    for (int s = 0; s < u->getEquippedItem(m)->getType()->getCreatedResourceCount(); ++s) {
+                    for (int s = 0; s < u->getType()->getStoredResourceCount(); ++s) {
                         ResourceAmount sr = u->getType()->getStoredResource(s, faction);
                         const ResourceType* srt = sr.getType();
                         for (int i = 0; i < u->getEquippedItem(m)->getType()->getCreatedResourceCount(); ++i) {

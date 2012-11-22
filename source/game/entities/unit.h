@@ -258,6 +258,8 @@ public:
 
     int taxedGold;
 
+    int taxRate;
+
     Resistances resistances;
 
     bool garrisonTest;
@@ -304,6 +306,7 @@ private:
 	CardinalDir m_facing;			/**< facing for buildings */
 
 	const Level *level;				/**< current Level */
+	int levelNumber;
 
 	const UnitType *type;			/**< the UnitType of this unit */
 	const ResourceType *loadType;	/**< the type if resource being carried */
@@ -357,6 +360,10 @@ private:
 	bool attacked_trigger;
 
 public:
+	bool applyCosts(const ProducibleType *p);
+	void applyStaticCosts(const ProducibleType *p);
+	bool checkCosts(const ProducibleType *pt);
+
 	MEMORY_CHECK_DECLARATIONS(Unit)
 
 	// signals
@@ -464,6 +471,7 @@ public:
 	int getExp() const						    {return exp;}
 	virtual void setExp(int v)                  { exp = v; }
 	const Level *getLevel() const				{return level;}
+	int getLevelNumber() const                  {return levelNumber;}
 	const Level *getNextLevel() const;
 	string getFullName() const;
 	const UnitPath *getPath() const				{return &unitPath;}

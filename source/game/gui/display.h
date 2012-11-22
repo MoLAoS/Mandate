@@ -39,7 +39,7 @@ using Entities::Faction;
 
 class UserInterface;
 
-WRAPPED_ENUM( DisplaySection, SELECTION, COMMANDS, FORMATION, HIERARCHY, TRANSPORTED, GARRISONED )
+WRAPPED_ENUM( DisplaySection, SELECTION, TAX, COMMANDS, FORMATION, HIERARCHY, TRANSPORTED, GARRISONED )
 
 struct DisplayButton {
 	DisplaySection	        m_section;
@@ -76,6 +76,7 @@ public:
 	// transported sub-panel is cellWidthCount * (cellHeightCount / 2)
 
 	static const int selectionCellCount = cellWidthCount * cellHeightCount;
+	static const int taxCellCount = cellWidthCount;
 	static const int commandCellCount = cellWidthCount * cellHeightCount;
 	static const int formationCellCount = cellWidthCount * cellHeightCount;
 	static const int hierarchyCellCount = cellWidthCount * (cellHeightCount + 1);
@@ -119,6 +120,7 @@ private:
 	FuzzySize m_fuzzySize;
 
 	Vec2i	m_portraitOffset,       // x,y offset for selected unit portrait(s)
+			m_taxOffset,            // x,y offset for tax buttons
 			m_commandOffset,        // x,y offset for command buttons
 			m_formationOffset,      // x,y offset for formation commands
 			m_hierarchyOffset,      // x,y offset for hierarchy commands
@@ -167,19 +169,19 @@ public:
 	void setPortraitTitle(const string title);
 	void setPortraitText(const string &text);
 	void setOrderQueueText(const string &text);
-	void setToolTipText2(const string &hdr, const string &tip, DisplaySection i_section = DisplaySection::COMMANDS);
+	void setToolTipText2(const string &hdr, const string &tip, DisplaySection i_section);
 	void addToolTipReq(const DisplayableType *dt, bool ok, const string &txt);
-	//void setToolTipText(const string &i_txt, DisplaySection i_section = DisplaySection::COMMANDS);
 	void setTransportedLabel(bool v);
 	void setGarrisonedLabel(bool v);
 
 	void setUpImage(int i, const Texture2D *image) 		        {setImage(image, i);}
-	void setDownImage(int i, const Texture2D *image)	        {setImage(image, selectionCellCount + i);}
-	void setFormationImage(int i, const Texture2D *image)       {setImage(image, selectionCellCount + commandCellCount + i);}
-	void setHierarchyImage(int i, const Texture2D *image)       {setImage(image, selectionCellCount + commandCellCount + formationCellCount + i);}
-	void setCarryImage(int i, const Texture2D *image)	        {setImage(image, selectionCellCount + commandCellCount +
+	void setTaxImage(int i, const Texture2D *image)	            {setImage(image, selectionCellCount + i);}
+	void setDownImage(int i, const Texture2D *image)	        {setImage(image, selectionCellCount + taxCellCount + i);}
+	void setFormationImage(int i, const Texture2D *image)       {setImage(image, selectionCellCount + taxCellCount + commandCellCount + i);}
+	void setHierarchyImage(int i, const Texture2D *image)       {setImage(image, selectionCellCount + taxCellCount + commandCellCount + formationCellCount + i);}
+	void setCarryImage(int i, const Texture2D *image)	        {setImage(image, selectionCellCount + taxCellCount + commandCellCount +
                                                                  formationCellCount + hierarchyCellCount + i);}
-	void setGarrisonImage(int i, const Texture2D *image)        {setImage(image, selectionCellCount + commandCellCount +
+	void setGarrisonImage(int i, const Texture2D *image)        {setImage(image, selectionCellCount + taxCellCount + commandCellCount +
                                                                  formationCellCount + hierarchyCellCount + transportCellCount + i);}
 	void setCommandType(int i, const CommandType *ct)	        {commandTypes[i] = ct;}
     void setFormationCommand(int i, FormationCommand fc)	    {formationCommands[i] = fc;}
