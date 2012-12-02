@@ -98,15 +98,14 @@ protected:
 
 	EffectTypes effectTypes;
 	UnitParticleSystemTypes eyeCandySystems;
-	const UnitType *m_unitType;
+	const CreatableType *m_creatableType;
 
 public:
-	//varios
+    const CreatableType *getCreatableType() const {return m_creatableType;}
 	SkillType(const char* typeName);
 	virtual ~SkillType();
-	virtual void load(const XmlNode *sn, const string &dir, const TechTree *tt, const UnitType *ft);
+	virtual bool load(const XmlNode *sn, const string &dir, const TechTree *tt, const CreatableType *ct);
 	virtual void doChecksum(Checksum &checksum) const;
-	const UnitType* getUnitType() const { return m_unitType; }
 	virtual void getDesc(string &str, const Unit *unit) const = 0;
 	void descEffects(string &str, const Unit *unit) const;
 	//void descEffectsRemoved(string &str, const Unit *unit) const;
@@ -199,7 +198,7 @@ private:
 
 public:
 	MoveSkillType() : SkillType("Move"), visibleOnly(false) {}
-	virtual void load(const XmlNode *sn, const string &dir, const TechTree *tt, const UnitType *ft) override;
+	virtual bool load(const XmlNode *sn, const string &dir, const TechTree *tt, const CreatableType *ct) override;
 	virtual void getDesc(string &str, const Unit *unit) const override {
 		descSpeed(str, unit, "WalkSpeed");
 		descEpCost(str, unit);
@@ -220,7 +219,7 @@ public:
 	RangedType();
 	int getMaxRange() const					{return maxRange;}
 	int getMinRange() const					{return minRange;}
-	virtual void load(const XmlNode *sn, const string &dir, const TechTree *tt, const FactionType *ft);
+	virtual bool load(const XmlNode *sn, const string &dir, const TechTree *tt, const FactionType *ft);
 	virtual void getDesc(string &str, const Unit *unit, const char* rangeDesc) const;
 };
 */
@@ -237,7 +236,7 @@ protected:
 public:
 	TargetBasedSkillType(const char* typeName);
 	virtual ~TargetBasedSkillType();
-	virtual void load(const XmlNode *sn, const string &dir, const TechTree *tt, const UnitType *ut) override;
+	virtual bool load(const XmlNode *sn, const string &dir, const TechTree *tt, const CreatableType *ct) override;
 	virtual void doChecksum(Checksum &checksum) const override;
 	virtual void getDesc(string &str, const Unit *unit) const override {getDesc(str, unit, "Range");}
 	virtual void getDesc(string &str, const Unit *unit, const char* rangeDesc) const;
@@ -272,7 +271,7 @@ public:
 	attackType(0), attackLifeLeech(0), attackManaBurn(0), attackCapture(0), damageTypes(0) /*, earthquakeType(NULL)*/ {}
 	virtual ~AttackSkillType();
 
-	virtual void load(const XmlNode *sn, const string &dir, const TechTree *tt, const UnitType *ut) override;
+	virtual bool load(const XmlNode *sn, const string &dir, const TechTree *tt, const CreatableType *ct) override;
 	virtual void getDesc(string &str, const Unit *unit) const override;
 	virtual void doChecksum(Checksum &checksum) const override;
 
@@ -384,7 +383,7 @@ public:
 	RepairSkillType();
 	virtual ~RepairSkillType(){}// { delete splashParticleSystemType; }
 
-	virtual void load(const XmlNode *sn, const string &dir, const TechTree *tt, const UnitType *ut) override;
+	virtual bool load(const XmlNode *sn, const string &dir, const TechTree *tt, const CreatableType *ct) override;
 	virtual void doChecksum(Checksum &checksum) const override;
 	virtual void getDesc(string &str, const Unit *unit) const override;
 
@@ -416,7 +415,7 @@ public:
 	MaintainSkillType();
 	virtual ~MaintainSkillType(){}
 
-	virtual void load(const XmlNode *sn, const string &dir, const TechTree *tt, const UnitType *ut) override;
+	virtual bool load(const XmlNode *sn, const string &dir, const TechTree *tt, const CreatableType *ct) override;
 	virtual void doChecksum(Checksum &checksum) const override;
 	virtual void getDesc(string &str, const Unit *unit) const override;
 
@@ -443,7 +442,7 @@ private:
 
 public:
 	ProduceSkillType();
-	virtual void load(const XmlNode *sn, const string &dir, const TechTree *tt, const UnitType *ut) override;
+	virtual bool load(const XmlNode *sn, const string &dir, const TechTree *tt, const CreatableType *ct) override;
 	virtual void doChecksum(Checksum &checksum) const override;
 	virtual void getDesc(string &str, const Unit *unit) const override {
 		descSpeed(str, unit, "ProductionSpeed");
@@ -487,7 +486,7 @@ private:
 
 public:
 	BeBuiltSkillType() : SkillType("Be built"){}
-	virtual void load(const XmlNode *sn, const string &dir, const TechTree *tt, const UnitType *ut) override;
+	virtual bool load(const XmlNode *sn, const string &dir, const TechTree *tt, const CreatableType *ct) override;
 	virtual void getDesc(string &str, const Unit *unit) const override {}
 	virtual bool isStretchyAnim() const override {return m_stretchy;}
 	virtual SkillClass getClass() const override { return typeClass(); }
@@ -523,7 +522,7 @@ public:
 	DieSkillType() : SkillType("Die"), fade(0.0f) {}
 	bool getFade() const	{return fade;}
 
-	virtual void load(const XmlNode *sn, const string &dir, const TechTree *tt, const UnitType *ut) override;
+	virtual bool load(const XmlNode *sn, const string &dir, const TechTree *tt, const CreatableType *ct) override;
 	virtual void doChecksum(Checksum &checksum) const override;
 	virtual void getDesc(string &str, const Unit *unit) const override {}
 
@@ -538,7 +537,7 @@ public:
 class LoadSkillType: public SkillType{
 public:
 	LoadSkillType();
-	virtual void load(const XmlNode *sn, const string &dir, const TechTree *tt, const UnitType *ut) override;
+	virtual bool load(const XmlNode *sn, const string &dir, const TechTree *tt, const CreatableType *ct) override;
 	virtual void doChecksum(Checksum &checksum) const override;
 	virtual void getDesc(string &str, const Unit *unit) const override {
 		descSpeed(str, unit, "Speed");
@@ -595,7 +594,7 @@ private:
 public:
 	BuildSelfSkillType() : SkillType("BuildSelf") {}
 
-	virtual void load(const XmlNode *sn, const string &dir, const TechTree *tt, const UnitType *ut) override;
+	virtual bool load(const XmlNode *sn, const string &dir, const TechTree *tt, const CreatableType *ct) override;
 	virtual void getDesc(string &str, const Unit *unit) const override {
 		descSpeed(str, unit, "Speed");
 		descEpCost(str, unit);

@@ -374,12 +374,17 @@ void ItemWindow::computeEquipmentPanel() {
     if (m_ui->getSelection()->isComandable()) {
         const Unit *u = m_ui->getSelection()->getFrontUnit();
         const FactionType *ft = u->getFaction()->getType();
-        const Texture2D *image = ft->getItemImage(0);
         if (u->isBuilt()) {
-            for (int i = 0; i < u->getType()->equipment.size(); ++i) {
-                for (int l = 0; l < u->getEquippedItems().size(); ++l) {
-                    if (u->getEquippedItem(l)->getType()->getName() == u->getType()->equipment[i].getName()) {
-                        image = u->getEquippedItem(l)->getType()->getImage();
+            for (int i = 0; i < u->getType()->getEquipment().size(); ++i) {
+                const Texture2D *image = ft->getItemImage(0);
+                string name = u->getType()->getEquipment()[i].getTypeTag();
+                if (u->getEquipment()[i].getCurrent() == 1) {
+                    name = u->getEquipment()[i].getName();
+                    for (int j = 0; j < u->getEquippedItems().size(); ++j) {
+                        if (u->getEquipment()[i].getName() == u->getEquippedItem(j)->getType()->getName()) {
+                            image = u->getEquippedItem(j)->getType()->getImage();
+                            break;
+                        }
                     }
                 }
                 setDownImage(i + buttonCellCount, image);
@@ -391,7 +396,7 @@ void ItemWindow::computeEquipmentPanel() {
 
 void ItemWindow::computeEquipmentInfo(int posDisplay) {
     const Unit *u = m_ui->getSelection()->getFrontUnit();
-    string name = u->getType()->equipment[posDisplay].getTypeTag();
+    string name = u->getType()->getEquipment()[posDisplay].getTypeTag();
     string body = "";
     if (u->getEquipment()[posDisplay].getCurrent() == 1) {
         name = u->getEquipment()[posDisplay].getName();
@@ -422,19 +427,26 @@ void ItemWindow::equipmentButtonPressed(int posDisplay) {
 }
 
 void ItemWindow::inventoryButtonPressed(int posDisplay) {
-    if (equipping == true) {
-        if (m_ui->getSelection()->isComandable()) {
-            const Unit *u = m_ui->getSelection()->getFrontUnit();
-            Unit *unit = g_world.findUnitById(u->getId());
+    if (m_ui->getSelection()->isComandable()) {
+        const Unit *u = m_ui->getSelection()->getFrontUnit();
+        Unit *unit = g_world.findUnitById(u->getId());
+        if (equipping == true) {
             for (int i = 0; i < u->getStoredItems().size(); ++i) {
                 if (u->getStorage()[posDisplay].getName() == u->getStoredItem(i)->getType()->getName()) {
                     unit->equipItem(i);
                     break;
                 }
             }
+            equipping = false;
+        } else if (u->getStorage()[posDisplay].getTypeTag() == "consumable") {
+            for (int i = 0; i < u->getStoredItems().size(); ++i) {
+                if (u->getStorage()[posDisplay].getName() == u->getStoredItem(i)->getType()->getName()) {
+                    unit->consumeItem(i);
+                    break;
+                }
+            }
         }
     }
-    equipping = false;
 }
 
 void ItemWindow::computeInventoryPanel() {

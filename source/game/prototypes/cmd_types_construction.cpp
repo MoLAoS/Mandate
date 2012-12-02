@@ -52,12 +52,12 @@ StructureCommandType::~StructureCommandType(){
 	deleteValues(m_startSounds.getSounds().begin(), m_startSounds.getSounds().end());
 }
 
-bool StructureCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft){
-    bool loadOk = CommandType::load(n, dir, tt, ft);
-
+bool StructureCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct) {
+    bool loadOk = CommandType::load(n, dir, tt, ct);
+    const FactionType *ft = ct->getFactionType();
 	try {
 		string skillName = n->getChild("build-skill")->getAttribute("value")->getRestrictedValue();
-		m_buildSkillType = static_cast<const BuildSkillType*>(unitType->getSkillType(skillName, SkillClass::BUILD));
+		m_buildSkillType = static_cast<const BuildSkillType*>(creatableType->getSkillType(skillName, SkillClass::BUILD));
 	} catch (runtime_error e) {
 		g_logger.logXmlError(dir, e.what());
 		loadOk = false;
@@ -301,11 +301,12 @@ ConstructCommandType::~ConstructCommandType(){
 	deleteValues(m_startSounds.getSounds().begin(), m_startSounds.getSounds().end());
 }
 
-bool ConstructCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft){
-	bool loadOk = MoveBaseCommandType::load(n, dir, tt, ft);
+bool ConstructCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct) {
+	bool loadOk = MoveBaseCommandType::load(n, dir, tt, ct);
+	const FactionType *ft = ct->getFactionType();
 	try {
 		string skillName = n->getChild("construct-skill")->getAttribute("value")->getRestrictedValue();
-		m_constructSkillType = static_cast<const ConstructSkillType*>(unitType->getSkillType(skillName, SkillClass::CONSTRUCT));
+		m_constructSkillType = static_cast<const ConstructSkillType*>(creatableType->getSkillType(skillName, SkillClass::CONSTRUCT));
 	} catch (runtime_error e) {
 		g_logger.logXmlError(dir, e.what());
 		loadOk = false;
@@ -541,13 +542,13 @@ void ConstructCommandType::acceptBuild(Unit *unit, Command *command, const UnitT
 // 	class MaintainCommandType
 // =====================================================
 
-bool MaintainCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft){
-	bool loadOk = MoveBaseCommandType::load(n, dir, tt, ft);
-
+bool MaintainCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct) {
+	bool loadOk = MoveBaseCommandType::load(n, dir, tt, ct);
+    const FactionType *ft = ct->getFactionType();
 	//repair
 	try {
 		string skillName = n->getChild("maintain-skill")->getAttribute("value")->getRestrictedValue();
-		maintainSkillType = static_cast<const MaintainSkillType*>(unitType->getSkillType(skillName, SkillClass::MAINTAIN));
+		maintainSkillType = static_cast<const MaintainSkillType*>(creatableType->getSkillType(skillName, SkillClass::MAINTAIN));
 	} catch (runtime_error e) {
 		g_logger.logXmlError(dir, e.what ());
 		loadOk = false;
@@ -665,7 +666,7 @@ CmdResult MaintainCommandType::check(const Unit *unit, const Command &command) c
                     g_soundRenderer.playFx(getBuiltSound(), unit->getCurrVector(), g_gameState.getGameCamera()->getPos());
                 }
                 Vec2i samePos = builtUnit->getPos();
-                string name = builtUnitType->getUnitName();
+                string name = builtUnitType->getName();
                 int faction = builtUnit->getFaction()->getIndex();
                 ScriptManager::onUnitDied(builtUnit);
                 builtUnit->decHp(builtUnit->getHp());

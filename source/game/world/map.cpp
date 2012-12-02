@@ -781,10 +781,10 @@ void Map::clearUnitCells(Unit *unit, const Vec2i &pos){
 			assert(isInside(currPos));
 
 			if (!ut->hasCellMap() || ut->getCellMapCell(x, y, unit->getModelFacing())) {
-			    //if (getCell(currPos)->getUnit(zone) == unit) {
+			    if (getCell(currPos)->getUnit(zone) == unit) {
                     assert(getCell(currPos)->getUnit(zone) == unit);
                     getCell(currPos)->setUnit(zone, NULL);
-			    //}
+			    }
 			}
 		}
 	}

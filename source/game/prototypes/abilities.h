@@ -16,27 +16,10 @@ namespace Glest{ namespace ProtoTypes {
 // ===============================
 // 	class Load Bonus
 // ===============================
-/** resource amount modifier */
-typedef map<const ResourceType*, Modifier> ResModifierMap;
-/** A unit type enhancement, an EnhancementType + resource cost modifiers + resource storage modifiers + resource creation modifiers */
-struct GarrisonEffect {
-	EnhancementType  m_enhancement;
-	ResModifierMap   m_costModifiers;
-	ResModifierMap   m_storeModifiers;
-	ResModifierMap   m_createModifiers;
-	const EnhancementType* getEnhancement() const { return &m_enhancement; }
-};
-
-class LoadBonus {
+class LoadBonus : public EnhancementType {
 public:
     string source;
-    typedef GarrisonEffect Enhancement;
-    Enhancement m_enhancement;
-	LoadBonus();
 	virtual bool load(const XmlNode *loadBonusNode, const string &dir, const TechTree *tt, const FactionType *ft);
-	bool loadNewStyle(const XmlNode *node, const string &dir, const TechTree *techTree, const FactionType *factionType);
-	void loadResourceModifier(const XmlNode *node, ResModifierMap &map, const TechTree *techTree);
-	const Enhancement* getEnhancement() const {return &m_enhancement;}
 	string getSource() const {return source;}
 };
 

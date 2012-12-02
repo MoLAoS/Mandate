@@ -87,14 +87,14 @@ void FormationCommand::issue(Formation formation, const Squad *squad) {
 // 	class CreateSquadCommandType
 // =====================================================
 
-bool CreateSquadCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft){
-	bool loadOk = StopBaseCommandType::load(n, dir, tt, ft);
+bool CreateSquadCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct) {
+	bool loadOk = StopBaseCommandType::load(n, dir, tt, ct);
 
 	string skillName;
 
 	try {
 		skillName = n->getChild("set-structure-skill")->getAttribute("value")->getRestrictedValue();
-		m_setStructureSkillType = static_cast<const SetStructureSkillType*>(unitType->getSkillType(skillName, SkillClass::SET_STRUCTURE));
+		m_setStructureSkillType = static_cast<const SetStructureSkillType*>(creatableType->getSkillType(skillName, SkillClass::SET_STRUCTURE));
 	} catch (runtime_error e) {
 		g_logger.logXmlError(dir, e.what());
 		loadOk = false;
@@ -135,14 +135,14 @@ void CreateSquadCommandType::update(Unit *unit) const {
 // 	class ExpandSquadCommandType
 // =====================================================
 
-bool ExpandSquadCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft){
-	bool loadOk = StopBaseCommandType::load(n, dir, tt, ft);
+bool ExpandSquadCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct) {
+	bool loadOk = StopBaseCommandType::load(n, dir, tt, ct);
 
 	string skillName;
 
 	try {
 		skillName = n->getChild("set-structure-skill")->getAttribute("value")->getRestrictedValue();
-		m_setStructureSkillType = static_cast<const SetStructureSkillType*>(unitType->getSkillType(skillName, SkillClass::SET_STRUCTURE));
+		m_setStructureSkillType = static_cast<const SetStructureSkillType*>(creatableType->getSkillType(skillName, SkillClass::SET_STRUCTURE));
 	} catch (runtime_error e) {
 		g_logger.logXmlError(dir, e.what());
 		loadOk = false;
@@ -190,14 +190,14 @@ void ExpandSquadCommandType::update(Unit *unit) const {
 // 	class SquadMoveCommandType
 // =====================================================
 
-bool SquadMoveCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft){
-	bool loadOk = MoveBaseCommandType::load(n, dir, tt, ft);
+bool SquadMoveCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct) {
+	bool loadOk = MoveBaseCommandType::load(n, dir, tt, ct);
 
 	string skillName;
 
 	try {
 		skillName = n->getChild("move-skill")->getAttribute("value")->getRestrictedValue();
-		m_moveSkillType = static_cast<const MoveSkillType*>(unitType->getSkillType(skillName, SkillClass::MOVE));
+		m_moveSkillType = static_cast<const MoveSkillType*>(creatableType->getSkillType(skillName, SkillClass::MOVE));
 	} catch (runtime_error e) {
 		g_logger.logXmlError(dir, e.what());
 		loadOk = false;

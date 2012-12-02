@@ -48,22 +48,22 @@ void Item::init(int ident, const ItemType *newType, Faction *f) {
     faction = f;
     id = ident;
 
-    currentSteps.resize(type->getCreatedResourceCount());
+    currentSteps.resize(type->getResourceProductionSystem().getCreatedResourceCount());
 	for (int i = 0; i < currentSteps.size(); ++i) {
 	currentSteps[i].currentStep = 0;
 	}
 
-	currentUnitSteps.resize(type->getCreatedUnitCount());
+	currentUnitSteps.resize(type->getUnitProductionSystem().getCreatedUnitCount());
 	for (int i = 0; i < currentUnitSteps.size(); ++i) {
 	currentUnitSteps[i].currentStep = 0;
 	}
 
-	currentItemSteps.resize(type->getCreatedItemCount());
+	currentItemSteps.resize(type->getItemProductionSystem().getCreatedItemCount());
 	for (int i = 0; i < currentItemSteps.size(); ++i) {
 	currentItemSteps[i].currentStep = 0;
 	}
 
-	currentProcessSteps.resize(type->getProcessCount());
+	currentProcessSteps.resize(type->getProcessProductionSystem().getProcessCount());
 	for (int i = 0; i < currentProcessSteps.size(); ++i) {
 	currentProcessSteps[i].currentStep = 0;
 	}
@@ -152,20 +152,20 @@ string Item::getLongDesc() const {
  	if (getType()->getHarvestSpeed() > 0 || ((getType()->getHarvestSpeedMult()-1)*100).intp() > 0) {
         ss << endl << "Harvest Speed: +" << getType()->getHarvestSpeed() << "/+" << ((getType()->getHarvestSpeedMult()-1)*100).intp() << "%";
  	}
-	if (type->resistances.size() > 0) {
+	if (type->getResistances().size() > 0) {
 	ss << endl << lang.get("Resistances") << ":";
-	for (int i = 0; i < type->resistances.size(); ++i) {
-	ss << endl << lang.get(type->resistances[i].getTypeName()) << ": ";
-	ss << type->resistances[i].getValue();
+	for (int i = 0; i < type->getResistances().size(); ++i) {
+	ss << endl << lang.get(type->getResistances()[i].getTypeName()) << ": ";
+	ss << type->getResistances()[i].getValue();
 	}
 	ss << endl;
 	}
 	// can create resources
-	if (type->getCreatedResourceCount() > 0) {
-		for (int i = 0; i < type->getCreatedResourceCount(); ++i) {
-			ResourceAmount r = type->getCreatedResource(i, getFaction());
+	if (type->getResourceProductionSystem().getCreatedResourceCount() > 0) {
+		for (int i = 0; i < type->getResourceProductionSystem().getCreatedResourceCount(); ++i) {
+			ResourceAmount r = type->getResourceProductionSystem().getCreatedResource(i, getFaction());
 			string resName = lang.getTechString(r.getType()->getName());
-			Timer tR = type->getCreatedResourceTimer(i, getFaction());
+			Timer tR = type->getResourceProductionSystem().getCreatedResourceTimer(i, getFaction());
 			int cStep = currentSteps[i].currentStep;
 			if (resName == r.getType()->getName()) {
 				resName = formatString(resName);
@@ -175,45 +175,45 @@ string Item::getLongDesc() const {
 		}
 	}
 	// can process
-    if (type->getProcessCount() > 0) {
-		for (int i = 0; i < type->getProcessCount(); ++i) {
+    if (type->getProcessProductionSystem().getProcessCount() > 0) {
+		for (int i = 0; i < type->getProcessProductionSystem().getProcessCount(); ++i) {
         ss << endl << lang.get("Process") << ": ";
-        Timer tR = type->getProcessTimer(i, getFaction());
+        Timer tR = type->getProcessProductionSystem().getProcessTimer(i, getFaction());
         int cStep = currentProcessSteps[i].currentStep;
         ss << endl << lang.get("Timer") << ": " << cStep << "/" << tR.getTimerValue();
         string scope;
-        if (type->processes[i].local == true) {
+        if (type->getProcessProductionSystem().getProcesses()[i].local == true) {
         scope = lang.get("local");
         } else {
         scope = lang.get("faction");
         }
         ss << endl << lang.get("Scope") << ": " << scope;
         ss << endl << lang.get("Costs") << ": ";
-            for (int c = 0; c < type->processes[i].costs.size(); ++c) {
-            const ResourceType *costsRT = type->processes[i].costs[c].getType();
+            for (int c = 0; c < type->getProcessProductionSystem().getProcesses()[i].costs.size(); ++c) {
+            const ResourceType *costsRT = type->getProcessProductionSystem().getProcesses()[i].costs[c].getType();
             string resName = lang.getTechString(costsRT->getName());
             if (resName == costsRT->getName()) {
             resName = formatString(resName);
 			}
-        ss << endl << type->processes[i].costs[c].getAmount() << " " << resName;
+        ss << endl << type->getProcessProductionSystem().getProcesses()[i].costs[c].getAmount() << " " << resName;
             }
         ss << endl << lang.get("Products") << ": ";
-            for (int p = 0; p < type->processes[i].products.size(); ++p) {
-            const ResourceType *productsRT = type->processes[i].products[p].getType();
+            for (int p = 0; p < type->getProcessProductionSystem().getProcesses()[i].products.size(); ++p) {
+            const ResourceType *productsRT = type->getProcessProductionSystem().getProcesses()[i].products[p].getType();
             string resName = lang.getTechString(productsRT->getName());
             if (resName == productsRT->getName()) {
             resName = formatString(resName);
 			}
-        ss << endl << type->processes[i].products[p].getAmount() << " " << resName;
+        ss << endl << type->getProcessProductionSystem().getProcesses()[i].products[p].getAmount() << " " << resName;
             }
 		}
 	}
 	// can create units
-	if (type->getCreatedUnitCount() > 0) {
-		for (int i = 0; i < type->getCreatedUnitCount(); ++i) {
-			CreatedUnit u = type->getCreatedUnit(i, getFaction());
+	if (type->getUnitProductionSystem().getCreatedUnitCount() > 0) {
+		for (int i = 0; i < type->getUnitProductionSystem().getCreatedUnitCount(); ++i) {
+			CreatedUnit u = type->getUnitProductionSystem().getCreatedUnit(i, getFaction());
 			string unitName = lang.getTechString(u.getType()->getName());
-			Timer tR = type->getCreatedUnitTimer(i, getFaction());
+			Timer tR = type->getUnitProductionSystem().getCreatedUnitTimer(i, getFaction());
 			int cUStep = currentUnitSteps[i].currentStep;
 			if (unitName == u.getType()->getName()) {
 				unitName = formatString(unitName);
@@ -223,11 +223,11 @@ string Item::getLongDesc() const {
 		}
 	}
 	// can create units
-	if (type->getCreatedItemCount() > 0) {
-		for (int i = 0; i < type->getCreatedItemCount(); ++i) {
-			CreatedItem item = type->getCreatedItem(i, getFaction());
+	if (type->getItemProductionSystem().getCreatedItemCount() > 0) {
+		for (int i = 0; i < type->getItemProductionSystem().getCreatedItemCount(); ++i) {
+			CreatedItem item = type->getItemProductionSystem().getCreatedItem(i, getFaction());
 			string itemName = lang.getTechString(item.getType()->getName());
-			Timer tR = type->getCreatedItemTimer(i, getFaction());
+			Timer tR = type->getItemProductionSystem().getCreatedItemTimer(i, getFaction());
 			int cIStep = currentItemSteps[i].currentStep;
 			if (itemName == item.getType()->getName()) {
 				itemName = formatString(itemName);
@@ -237,9 +237,9 @@ string Item::getLongDesc() const {
 		}
 	}
 
-	if (type->ownedUnits.size() > 0) {
-		for (int i = 0; i < type->ownedUnits.size(); ++i) {
-			UnitsOwned uo = type->ownedUnits[i];
+	if (type->getOwnedUnits().size() > 0) {
+		for (int i = 0; i < type->getOwnedUnits().size(); ++i) {
+			UnitsOwned uo = type->getOwnedUnits()[i];
 			const UnitType *uot = uo.getType();
 			string unitName = lang.getTechString(uot->getName());
 			int owned = uo.getOwned();

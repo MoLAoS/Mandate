@@ -43,6 +43,7 @@ Effect::Effect(CreateParams params)
 	this->strength = params.strength;
 	this->duration = type->getDuration();
 	this->recourse = params.root != NULL;
+	this->actualHpRegen = type->getHpRegeneration();
 	if (type->getHpRegeneration() < 0) {
         if (type->getDamageClass()) {
             fixed fregen = type->getHpRegeneration()

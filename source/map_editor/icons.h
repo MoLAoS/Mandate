@@ -80,6 +80,13 @@
 #include "icons/brush_resource_3.xpm"
 #include "icons/brush_resource_4.xpm"
 #include "icons/brush_resource_5.xpm"
+#include "icons/brush_resource_6.xpm"
+#include "icons/brush_resource_7.xpm"
+#include "icons/brush_resource_8.xpm"
+#include "icons/brush_resource_9.xpm"
+#include "icons/brush_resource_10.xpm"
+#include "icons/brush_resource_11.xpm"
+#include "icons/brush_resource_12.xpm"
 
 #include "icons/edit_randomize-heights.xpm"
 #include "icons/edit_randomize.xpm"

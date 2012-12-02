@@ -44,7 +44,7 @@ bool ResourceType::load(const string &dir, int id) {
 	XmlTree xmlTree;
 	const XmlNode *resourceNode;
 	try { // tree
-		xmlTree.load(path); 
+		xmlTree.load(path);
 		resourceNode = xmlTree.getRootNode();
 		if (!resourceNode) {
 			g_logger.logXmlError(path, "XML file appears to lack contents.");
@@ -74,31 +74,34 @@ bool ResourceType::load(const string &dir, int id) {
 	}
 
 	switch (resourceClass) {
-		case ResourceClass::TECHTREE: 
-			try { // model
-				const XmlNode *modelNode = typeNode->getChild("model");
-				string mPath = dir + "/" + modelNode->getAttribute("path")->getRestrictedValue();
-				model = renderer.newModel(ResourceScope::GAME);
-				model->load(mPath, GameConstants::cellScale, 2);
-			} catch (runtime_error e) {
-				g_logger.logXmlError(path, e.what());
-			}
-			try { // default resources
-				const XmlNode *defaultAmountNode = typeNode->getChild("default-amount");
-				defResPerPatch = defaultAmountNode->getAttribute("value")->getIntValue();
-			} catch (runtime_error e) {
-				g_logger.logXmlError(path, e.what());
-				loadOk = false; // can continue, to catch other errors
-			}
-			try { // resource number
-				const XmlNode *resourceNumberNode = typeNode->getChild("resource-number");
-				resourceNumber = resourceNumberNode->getAttribute("value")->getIntValue();
-			} catch (runtime_error e) {
-				g_logger.logXmlError(path, e.what());
-				loadOk = false;
-			}
+		case ResourceClass::TECHTREE:
+            hasModel = typeNode->getAttribute("has-model")->getBoolValue();
+            if (hasModel) {
+                try { // model
+                        const XmlNode *modelNode = typeNode->getChild("model");
+                        string mPath = dir + "/" + modelNode->getAttribute("path")->getRestrictedValue();
+                        model = renderer.newModel(ResourceScope::GAME);
+                        model->load(mPath, GameConstants::cellScale, 2);
+                } catch (runtime_error e) {
+                    g_logger.logXmlError(path, e.what());
+                }
+                try { // default resources
+                    const XmlNode *defaultAmountNode = typeNode->getChild("default-amount");
+                    defResPerPatch = defaultAmountNode->getAttribute("value")->getIntValue();
+                } catch (runtime_error e) {
+                    g_logger.logXmlError(path, e.what());
+                    loadOk = false; // can continue, to catch other errors
+                }
+                try { // resource number
+                    const XmlNode *resourceNumberNode = typeNode->getChild("resource-number");
+                    resourceNumber = resourceNumberNode->getAttribute("value")->getIntValue();
+                } catch (runtime_error e) {
+                    g_logger.logXmlError(path, e.what());
+                    loadOk = false;
+                }
+            }
 			break;
-		case ResourceClass::TILESET: 
+		case ResourceClass::TILESET:
 			try { // default resources
 				const XmlNode *defaultAmountNode = typeNode->getChild("default-amount");
 				defResPerPatch = defaultAmountNode->getAttribute("value")->getIntValue();
@@ -114,7 +117,7 @@ bool ResourceType::load(const string &dir, int id) {
 				loadOk = false;
 			}
 			break;
-		case ResourceClass::CONSUMABLE: 
+		case ResourceClass::CONSUMABLE:
 			try { // interval
 				const XmlNode *intervalNode = typeNode->getChild("interval");
 				interval = intervalNode->getAttribute("value")->getIntValue();

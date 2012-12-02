@@ -13,6 +13,7 @@
 #include "prototypes_enums.h"
 #include "entities_enums.h"
 #include "simulation_enums.h"
+#include "mandate_ai_enums.h"
 
 namespace Glest {
 
@@ -75,10 +76,22 @@ namespace Glest {
 		class Level;
 		class ItemType;
 		class CommandType;
+		class AttackCommandType;
+		class RepairCommandType;
+		class HarvestCommandType;
 		class LeaderStats;
 		class Leader;
 		class Mage;
 		class Hero;
+		class ResourceProductionSystem;
+		class ItemProductionSystem;
+		class ProcessProductionSystem;
+		class UnitProductionSystem;
+		class CreatableType;
+		class Timer;
+		class CreatedItem;
+		class CreatedUnit;
+		class UnitsOwned;
 	}
 
 	namespace Sim {
@@ -122,6 +135,7 @@ namespace Glest {
 		class DirectedParticleSystem;
 		class Projectile;
 		class Splash;
+		class Process;
 	}
 
 	namespace Global {

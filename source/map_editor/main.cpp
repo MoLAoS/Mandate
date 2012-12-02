@@ -176,6 +176,13 @@ void MainWindow::buildMenuBar() {
 	menuBrushResource->AppendCheckItem(miBrushResource+4, wxT("&3 - custom"));
 	menuBrushResource->AppendCheckItem(miBrushResource+5, wxT("&4 - custom"));
 	menuBrushResource->AppendCheckItem(miBrushResource+6, wxT("&5 - custom"));
+	menuBrushResource->AppendCheckItem(miBrushResource+7, wxT("&6 - custom"));
+	menuBrushResource->AppendCheckItem(miBrushResource+8, wxT("&7 - custom"));
+	menuBrushResource->AppendCheckItem(miBrushResource+9, wxT("&8 - custom"));
+	menuBrushResource->AppendCheckItem(miBrushResource+10, wxT("&9 - custom"));
+	menuBrushResource->AppendCheckItem(miBrushResource+11, wxT("&10 - custom"));
+	menuBrushResource->AppendCheckItem(miBrushResource+12, wxT("&11 - custom"));
+	menuBrushResource->AppendCheckItem(miBrushResource+13, wxT("&12 - custom"));
 	menuBrush->Append(miBrushResource, wxT("&Resource"), menuBrushResource);
 
 	bmStartPos[0] = wxBitmap(brush_players_red);
@@ -245,6 +252,13 @@ void MainWindow::buildToolBars() {
 	toolbar->AddTool(miBrushResource + 4, _("resource3"), wxBitmap(brush_resource_3), _("custom3"));
 	toolbar->AddTool(miBrushResource + 5, _("resource4"), wxBitmap(brush_resource_4), _("custom4"));
 	toolbar->AddTool(miBrushResource + 6, _("resource5"), wxBitmap(brush_resource_5), _("custom5"));
+	toolbar->AddTool(miBrushResource + 7, _("resource6"), wxBitmap(brush_resource_6), _("custom6"));
+	toolbar->AddTool(miBrushResource + 8, _("resource7"), wxBitmap(brush_resource_7), _("custom7"));
+	toolbar->AddTool(miBrushResource + 9, _("resource8"), wxBitmap(brush_resource_8), _("custom8"));
+	toolbar->AddTool(miBrushResource + 10, _("resource9"), wxBitmap(brush_resource_9), _("custom9"));
+	toolbar->AddTool(miBrushResource + 11, _("resource10"), wxBitmap(brush_resource_10), _("custom10"));
+	toolbar->AddTool(miBrushResource + 12, _("resource11"), wxBitmap(brush_resource_11), _("custom11"));
+	toolbar->AddTool(miBrushResource + 13, _("resource12"), wxBitmap(brush_resource_12), _("custom12"));
 	toolbar->AddSeparator();
 	toolbar->AddTool(miBrushObject + 1, _("brush_none"), wxBitmap(brush_none), _("None (erase)"));
 	toolbar->AddTool(miBrushObject + 2, _("brush_tree"), wxBitmap(brush_object_tree), _("Tree (unwalkable/harvestable)"));
@@ -319,7 +333,7 @@ void MainWindow::buildStatusBar() {
 	CreateStatusBar(StatusItems::COUNT);
 	GetStatusBar()->SetStatusWidths(StatusItems::COUNT, status_widths);
 	GetStatusBar()->SetStatusStyles(StatusItems::COUNT, status_styles);
-	
+
 	SetStatusText(wxT("X: 0"), StatusItems::POS_X);
 	SetStatusText(wxT("Y: 0"), StatusItems::POS_Y);
 	SetStatusText(wxT("Object: None (Erase)"), StatusItems::CURR_OBJECT);
@@ -343,7 +357,7 @@ void MainWindow::init(string fname, wxString glest) {
 		//fileName = cutLastExt(basename(fname));
 	}
 	this->glest = glest;
-	
+
 	SetTitle(windowCaption());
 	setDirty(false);
 	setExtension();
@@ -360,7 +374,7 @@ void MainWindow::centreMap() {
 
 	int pxWidth = cellSize * mw;
 	int pxHeight = cellSize * mh;
-	
+
 	int offsetX, offsetY;
 	if (pxWidth < canvasSize.x) {
 		offsetX = (canvasSize.x - pxWidth) / 2;
@@ -411,7 +425,7 @@ void MainWindow::onClose(wxCloseEvent &event) {
 MainWindow::~MainWindow() {
 	delete program;
 	program = NULL;
-	
+
 	delete glCanvas;
 	glCanvas = NULL;
 
@@ -510,7 +524,7 @@ void MainWindow::onMouseMove(wxMouseEvent &event, int x, int y) {
 			int currObject = program->getObject(x, y);
 			SetStatusText(wxT("Object: ") + ToUnicode(object_descs[currObject]), StatusItems::CURR_OBJECT);
 			resourceUnderMouse = 0;
-			objectUnderMouse = currObject;				
+			objectUnderMouse = currObject;
 		}
 	}
 	lastX = x;
@@ -605,7 +619,7 @@ void MainWindow::onMenuEditReset(wxCommandEvent &event) {
 	simpleDialog.addValue("Width", "64");
 	simpleDialog.addValue("Height", "64");
 	simpleDialog.show();
-	
+
 	try {
 		program->reset(
 			Conversion::strToInt(simpleDialog.getValue("Width")),
@@ -736,7 +750,7 @@ void MainWindow::onMenuMiscResetZoomAndPos(wxCommandEvent &event) {
 }
 
 void MainWindow::onMenuMiscAbout(wxCommandEvent &event) {
-	
+
 	string tmp = "Glest Map Editor " + versionString + " - Built: "	+ __DATE__
 		+ "\n\nCopyright 2004 The Glest Team"
 		+ "\n(with improvements by others, 2010)."
@@ -744,7 +758,7 @@ void MainWindow::onMenuMiscAbout(wxCommandEvent &event) {
 		+ "\nmodify it under the terms of the GNU General Public License"
 		+ "\nas published by the Free Software Foundation; either version 2"
 		+ "\nof the License, or (at your option) any later version.";
-	
+
 	wxMessageDialog(
 		NULL,
 		wxString(tmp.c_str(), wxConvUTF8),
@@ -797,7 +811,7 @@ void MainWindow::onMenuMiscShowMap(wxCommandEvent& event){
 	wxSingleChoiceDialog dlg(this, _("select tileset"), _("tileset"), arrstr);
 	if(dlg.ShowModal()==wxID_OK){
 		wxString tileset = arrstr[dlg.GetSelection()];
-		
+
 		// leading / stands for absolute path, disables physfs for reading
 		command = glest + ToUnicode(" -loadmap \"/"+currentFile+"\" ") + tileset;
 		cout << command.char_str() << endl;
@@ -996,7 +1010,7 @@ void MainWindow::onKeyDown(wxKeyEvent &e) {
 	if (e.GetKeyCode() == 'H') {
 		wxCommandEvent evt(wxEVT_NULL, miBrushHeight + height + heightCount / 2 + 1);
 		onMenuBrushHeight(evt);
-	} else if (e.GetKeyCode() == ' ') {	
+	} else if (e.GetKeyCode() == ' ') {
 		if (resourceUnderMouse != 0) {
 			wxCommandEvent evt(wxEVT_NULL, miBrushResource + resourceUnderMouse + 1);
 			onMenuBrushResource(evt);
@@ -1064,7 +1078,7 @@ BEGIN_EVENT_TABLE(MainWindow, wxFrame)
 	EVT_MENU_RANGE(miBrushResource + 1, miBrushResource + resourceCount, MainWindow::onMenuBrushResource)
 	EVT_MENU_RANGE(miBrushStartLocation + 1, miBrushStartLocation + startLocationCount, MainWindow::onMenuBrushStartLocation)
 	EVT_MENU_RANGE(miRadius, miRadius + radiusCount, MainWindow::onMenuRadius)
-	
+
 	EVT_TOOL(toolPlayer, MainWindow::onToolPlayer)
 END_EVENT_TABLE()
 
@@ -1114,7 +1128,7 @@ BEGIN_EVENT_TABLE(GlCanvas, wxGLCanvas)
 	EVT_LEFT_DOWN(GlCanvas::onMouseDown)
 	EVT_MOTION(GlCanvas::onMouseMove)
 	EVT_MOUSEWHEEL(GlCanvas::onMousewheelRotation)
-	
+
 	EVT_PAINT(GlCanvas::onPaint)
 END_EVENT_TABLE()
 
@@ -1164,7 +1178,7 @@ void SimpleDialog::show() {
 
 bool App::OnInit() {
 	FSFactory::getInstance()->usePhysFS = false;
-	
+
 	string fileparam, arg;
 	wxString glest;
 	for(int i=1; i<argc; ++i){

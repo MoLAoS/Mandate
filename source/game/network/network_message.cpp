@@ -314,10 +314,10 @@ DataSyncMessage::DataSyncMessage(World &world) : m_data(0), rawMsg() {
 
 	NETWORK_LOG( "DataSync" );
 	NETWORK_LOG( "========" );
-	NETWORK_LOG( 
+	NETWORK_LOG(
 		"CommandType count = " << m_cmdTypeCount
-		<< ", SkillType count = " << m_skillTypeCount 
-		<< ", ProdType count = " << m_prodTypeCount 
+		<< ", SkillType count = " << m_skillTypeCount
+		<< ", ProdType count = " << m_prodTypeCount
 		<< ", CloakType count = " << m_cloakTypeCount
 	);
 
@@ -333,16 +333,16 @@ DataSyncMessage::DataSyncMessage(World &world) : m_data(0), rawMsg() {
 			m_data[++n] = g_prototypeFactory.getChecksum(ct);
 			NETWORK_LOG(
 				"CommandType id:" << ct->getId() << " " << ct->getName() << " of UnitType: "
-				<< ct->getUnitType()->getName() << ", checksum[" << (n - 1) << "]: " 
+				<< ct->getCreatableType()->getName() << ", checksum[" << (n - 1) << "]: "
 				<< intToHex(m_data[n - 1])
 			);
 		}
 		for (int i=0; i < m_skillTypeCount; ++i) {
 			const SkillType *st = g_prototypeFactory.getSkillType(i);
 			m_data[++n] = g_prototypeFactory.getChecksum(st);
-			NETWORK_LOG( 
+			NETWORK_LOG(
 				"SkillType id: " << st->getId() << " " << st->getName() << " of UnitType: "
-				<< st->getUnitType()->getName() << ", checksum[" << (n - 1) << "]: "
+				<< st->getCreatableType()->getName() << ", checksum[" << (n - 1) << "]: "
 				<< intToHex(m_data[n - 1])
 			);
 		}
@@ -352,13 +352,13 @@ DataSyncMessage::DataSyncMessage(World &world) : m_data(0), rawMsg() {
 			if (g_prototypeFactory.isUnitType(pt)) {
 				const UnitType *ut = static_cast<const UnitType*>(pt);
 				NETWORK_LOG(
-					"UnitType id: " << ut->getId() << " " << ut->getName() << " of FactionType: " 
+					"UnitType id: " << ut->getId() << " " << ut->getName() << " of FactionType: "
 					<< ut->getFactionType()->getName() << ", checksum[" << (n - 1) << "]: "
 					<< intToHex(m_data[n - 1])
 				);
 			} else if (g_prototypeFactory.isUpgradeType(pt)) {
 				const UpgradeType *ut = static_cast<const UpgradeType*>(pt);
-				NETWORK_LOG( 
+				NETWORK_LOG(
 					"UpgradeType id: " << ut->getId() << " " << ut->getName() << " of FactionType: "
 					<< ut->getFactionType()->getName() << ", checksum[" << (n - 1) << "]: "
 					<< intToHex(m_data[n - 1])
@@ -367,8 +367,8 @@ DataSyncMessage::DataSyncMessage(World &world) : m_data(0), rawMsg() {
 				const GeneratedType *gt = static_cast<const GeneratedType*>(pt);
 				NETWORK_LOG(
 					"GeneratedType id: " << gt->getId() << " " << gt->getName() << " of CommandType: "
-					<< gt->getCommandType()->getName() << " of UnitType: " 
-					<< gt->getCommandType()->getUnitType()->getName() << ", checksum[" << (n - 1) << "]: "
+					<< gt->getCommandType()->getName() << " of UnitType: "
+					<< gt->getCommandType()->getCreatableType()->getName() << ", checksum[" << (n - 1) << "]: "
 					<< intToHex(m_data[n - 1])
 				);
 			} else {
@@ -630,7 +630,7 @@ void KeyFrame::send(NetworkConnection* connection) const {
 	)
 	size_t totalSize = msgHeader.messageSize + sizeof(MsgHeader);
 
-	NETWORK_LOG( "KeyFrame message size: " << msgHeader.messageSize << ", Move updates: " 
+	NETWORK_LOG( "KeyFrame message size: " << msgHeader.messageSize << ", Move updates: "
 		<< moveUpdateCount << ", Projectile updates: " << projUpdateCount
 		<< ", Commands: " << cmdCount );
 

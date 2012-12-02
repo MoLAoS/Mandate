@@ -448,8 +448,8 @@ void World::damage(Unit *attacker, const AttackSkillType* ast, Unit *attacked, f
     const DamageType dType = ast->damageTypes[t];
     string damageType = dType.getTypeName();
     int mDamage = dType.getValue();
-        for (int i = 0; i < uType->resistances.size(); ++i) {
-        const DamageType rType = uType->resistances[i];
+        for (int i = 0; i < attacked->resistances.size(); ++i) {
+        const DamageType rType = attacked->resistances[i];
         string resistType = rType.getTypeName();
             if (damageType==resistType) {
                 int resist = rType.getValue();
@@ -464,7 +464,7 @@ void World::damage(Unit *attacker, const AttackSkillType* ast, Unit *attacked, f
     /**< Added by MoLAoS, magic damage and resistances */
     int damage = totalDamage.intp();
     if (attacker->getFaction()->getType()->getOnHitExp() == true) {
-        attacker->incExp(500 / (attacker->getLevelNumber() + 1));
+        attacker->incExp(500 / (attacker->getLevelNumber() / 10 + 1));
     }
 	if (attacked->decHp(damage)) {
 		doKill(attacker, attacked);
@@ -567,7 +567,7 @@ void World::capture(Unit *attacker, const AttackSkillType* ast, Unit *attacked, 
     int testdie = attacked->getHp();
     attacked->decHp(testdie);
     doCapture(attacker, attacked);
-    string stype = attacked->getType()->getUnitName();
+    string stype = attacked->getType()->getName();
     Vec2i spawn = attacked->getPos();
     createUnit(stype, newFaction, spawn, true);
     }
@@ -649,6 +649,19 @@ void World::applyEffects(Unit *source, const EffectTypes &effectTypes, Unit *tar
 			}
 		}
 	}
+	for (int i = 0; i < source->getType()->effectTypes.size(); ++i) {
+        const EffectType *e = source->getType()->effectTypes[i];
+        //if (e->getBias() == EffectBias::DETRIMENTAL) {
+            if ((source->isAlly(target) ? e->isEffectsAlly() : e->isEffectsFoe()) && (e->getChance() != 100 ? random.randPercent() < e->getChance() : true)) {
+                fixed strength = e->isScaleSplashStrength() ? fixed(1) / (distance + 1) : 1;
+                Effect *primaryEffect = newEffect(e, source, NULL, strength, target, &techTree);
+                target->add(primaryEffect);
+                foreach_const (EffectTypes, it, e->getRecourse()) {
+                    source->add(newEffect((*it), NULL, primaryEffect, strength, source, &techTree));
+                }
+            }
+        //}
+	}
 	for (int i = 0; i < source->getEquippedItems().size(); ++i) {
 	    Item *item = source->getEquippedItem(i);
 	    for (int j = 0; j < item->modifications.size(); ++j) {
@@ -667,7 +680,6 @@ void World::applyEffects(Unit *source, const EffectTypes &effectTypes, Unit *tar
 	    }
         for (EffectTypes::const_iterator i = effectTypes.begin(); i != effectTypes.end(); ++i) {
             const EffectType * const &e = *i;
-
         }
 	}
 }
@@ -759,14 +771,14 @@ void World::tick() {
         const Unit *u = faction->getUnit(j);
             if (u->isOperative()) {
                 Unit *unit = u->getFaction()->getUnit(j);
-                for (int s = 0; s < u->getType()->getStoredResourceCount(); ++s) {
-                ResourceAmount sr = u->getType()->getStoredResource(s, faction);
+                for (int s = 0; s < u->getType()->getResourceProductionSystem().getStoredResourceCount(); ++s) {
+                ResourceAmount sr = u->getType()->getResourceProductionSystem().getStoredResource(s, faction);
                 const ResourceType* srt = sr.getType();
-                    for (int i = 0; i < u->getType()->getCreatedResourceCount(); ++i) {
-                    CreatedResource cr = u->getType()->createdResources[i];
+                    for (int i = 0; i < u->getType()->getResourceProductionSystem().getCreatedResourceCount(); ++i) {
+                    CreatedResource cr = u->getType()->getResourceProductionSystem().getCreatedResources()[i];
                     const ResourceType* crt = cr.getType();
                         if (srt == crt) {
-                        Timer cTime = u->getType()->getCreatedResourceTimer(i, faction);
+                        Timer cTime = u->getType()->getResourceProductionSystem().getCreatedResourceTimer(i, faction);
                         int cTimeStep = u->currentSteps[i].currentStep;
                         int cTimeValue = cTime.getTimerValue();
                         int newStep = cTimeStep + 1;
@@ -787,14 +799,14 @@ void World::tick() {
 				    }
                 }
                 for (int m = 0; m < u->getEquippedItems().size(); ++m) {
-                    for (int s = 0; s < u->getType()->getStoredResourceCount(); ++s) {
-                        ResourceAmount sr = u->getType()->getStoredResource(s, faction);
+                    for (int s = 0; s < u->getType()->getResourceProductionSystem().getStoredResourceCount(); ++s) {
+                        ResourceAmount sr = u->getType()->getResourceProductionSystem().getStoredResource(s, faction);
                         const ResourceType* srt = sr.getType();
-                        for (int i = 0; i < u->getEquippedItem(m)->getType()->getCreatedResourceCount(); ++i) {
-                            CreatedResource cr = u->getEquippedItem(m)->getType()->createdResources[i];
+                        for (int i = 0; i < u->getEquippedItem(m)->getType()->getResourceProductionSystem().getCreatedResourceCount(); ++i) {
+                            CreatedResource cr = u->getEquippedItem(m)->getType()->getResourceProductionSystem().getCreatedResources()[i];
                             const ResourceType* crt = cr.getType();
                             if (srt == crt) {
-                                Timer cTime = u->getEquippedItem(m)->getType()->getCreatedResourceTimer(i, faction);
+                                Timer cTime = u->getEquippedItem(m)->getType()->getResourceProductionSystem().getCreatedResourceTimer(i, faction);
                                 int cTimeStep = u->getEquippedItem(m)->currentSteps[i].getCurrentStep();
                                 int cTimeValue = cTime.getTimerValue();
                                 int newStep = cTimeStep + 1;
@@ -825,9 +837,9 @@ void World::tick() {
         for (int j = 0; j < faction->getUnitCount(); ++j) {
         const Unit *u =  faction->getUnit(j);
             if (u->isOperative()) {
-                for (int s = 0; s < u->getType()->getProcessCount(); ++s) {
-                    Process process = u->getType()->getProcess(s, faction);
-                    Timer cTime = u->getType()->getProcessTimer(s, faction);
+                for (int s = 0; s < u->getType()->getProcessProductionSystem().getProcessCount(); ++s) {
+                    Process process = u->getType()->getProcessProductionSystem().getProcess(s, faction);
+                    Timer cTime = u->getType()->getProcessProductionSystem().getProcessTimer(s, faction);
                     int cTimeStep = u->currentProcessSteps[s].currentStep;
                     int cTimeValue = cTime.getTimerValue();
                     int newStep = cTimeStep + 1;
@@ -907,9 +919,9 @@ void World::tick() {
                 }
 
                 for (int m = 0; m < u->getEquippedItems().size(); ++m) {
-                for (int s = 0; s < u->getEquippedItem(m)->getType()->getProcessCount(); ++s) {
-                    Process process = u->getEquippedItem(m)->getType()->getProcess(s, faction);
-                    Timer cTime = u->getEquippedItem(m)->getType()->getProcessTimer(s, faction);
+                for (int s = 0; s < u->getEquippedItem(m)->getType()->getProcessProductionSystem().getProcessCount(); ++s) {
+                    Process process = u->getEquippedItem(m)->getType()->getProcessProductionSystem().getProcess(s, faction);
+                    Timer cTime = u->getEquippedItem(m)->getType()->getProcessProductionSystem().getProcessTimer(s, faction);
                     int cTimeStep = u->getEquippedItem(m)->currentProcessSteps[s].currentStep;
                     int cTimeValue = cTime.getTimerValue();
                     int newStep = cTimeStep + 1;
@@ -998,15 +1010,15 @@ void World::tick() {
         const Unit *u =  faction->getUnit(j);
             if (u->isOperative()) {
                 Unit *unit = u->getFaction()->getUnit(j);
-                for (int i = 0; i < u->getType()->getCreatedItemCount(); ++i) {
-                Timer cTime = u->getType()->getCreatedItemTimer(i, faction);
+                for (int i = 0; i < u->getType()->getItemProductionSystem().getCreatedItemCount(); ++i) {
+                Timer cTime = u->getType()->getItemProductionSystem().getCreatedItemTimer(i, faction);
                 int cTimeStep = u->currentItemSteps[i].currentStep;
                 int newStep = cTimeStep + 1;
                 u->currentItemSteps[i].currentStep = newStep;
                 int cTimeValue = cTime.getTimerValue();
                 int cRNewTime = u->currentItemSteps[i].currentStep;
                     if (cRNewTime == cTimeValue) {
-                    const CreatedItem iu = u->getType()->getCreatedItem(i, faction);
+                    const CreatedItem iu = u->getType()->getItemProductionSystem().getCreatedItem(i, faction);
                     int iua = iu.getAmount();
                     int iucap = iu.getCap();
                         if (iucap != -1) {
@@ -1026,15 +1038,15 @@ void World::tick() {
                     }
                 }
                 for (int m = 0; m < u->getEquippedItems().size(); ++m) {
-                    for (int i = 0; i < u->getEquippedItem(m)->getType()->getCreatedItemCount(); ++i) {
-                        Timer cTime = u->getEquippedItem(m)->getType()->getCreatedItemTimer(i, faction);
+                    for (int i = 0; i < u->getEquippedItem(m)->getType()->getItemProductionSystem().getCreatedItemCount(); ++i) {
+                        Timer cTime = u->getEquippedItem(m)->getType()->getItemProductionSystem().getCreatedItemTimer(i, faction);
                         int cTimeStep = u->getEquippedItem(m)->currentItemSteps[i].currentStep;
                         int newStep = cTimeStep + 1;
                         u->getEquippedItem(m)->currentItemSteps[i].currentStep = newStep;
                         int cTimeValue = cTime.getTimerValue();
                         int cRNewTime = u->getEquippedItem(m)->currentItemSteps[i].currentStep;
                         if (cRNewTime == cTimeValue) {
-                            const CreatedItem iu = u->getEquippedItem(m)->getType()->getCreatedItem(i, faction);
+                            const CreatedItem iu = u->getEquippedItem(m)->getType()->getItemProductionSystem().getCreatedItem(i, faction);
                             int iua = iu.getAmount();
                             int iucap = iu.getCap();
                             if (iucap != -1) {
@@ -1064,15 +1076,15 @@ void World::tick() {
         const Unit *u =  faction->getUnit(j);
             if (u->isOperative()) {
                 Unit *unit = u->getFaction()->getUnit(j);
-                for (int i = 0; i < u->getType()->getCreatedUnitCount(); ++i) {
-                Timer cTime = u->getType()->getCreatedUnitTimer(i, faction);
+                for (int i = 0; i < u->getType()->getUnitProductionSystem().getCreatedUnitCount(); ++i) {
+                Timer cTime = u->getType()->getUnitProductionSystem().getCreatedUnitTimer(i, faction);
                 int cTimeStep = u->currentUnitSteps[i].currentStep;
                 int newStep = cTimeStep + 1;
                 u->currentUnitSteps[i].currentStep = newStep;
                 int cTimeValue = cTime.getTimerValue();
                 int cRNewTime = u->currentUnitSteps[i].currentStep;
                     if (cRNewTime == cTimeValue) {
-                    const CreatedUnit cu = u->getType()->getCreatedUnit(i, faction);
+                    const CreatedUnit cu = u->getType()->getUnitProductionSystem().getCreatedUnit(i, faction);
                     Vec2i locate = u->getPos();
                     int cua = cu.getAmount();
                     int cucap = cu.getCap();
@@ -1113,15 +1125,15 @@ void World::tick() {
                     }
                 }
                 for (int m = 0; m < u->getEquippedItems().size(); ++m) {
-                    for (int i = 0; i < u->getEquippedItem(m)->getType()->getCreatedUnitCount(); ++i) {
-                        Timer cTime = u->getEquippedItem(m)->getType()->getCreatedUnitTimer(i, faction);
+                    for (int i = 0; i < u->getEquippedItem(m)->getType()->getUnitProductionSystem().getCreatedUnitCount(); ++i) {
+                        Timer cTime = u->getEquippedItem(m)->getType()->getUnitProductionSystem().getCreatedUnitTimer(i, faction);
                         int cTimeStep = u->getEquippedItem(m)->currentUnitSteps[i].currentStep;
                         int newStep = cTimeStep + 1;
                         u->getEquippedItem(m)->currentUnitSteps[i].currentStep = newStep;
                         int cTimeValue = cTime.getTimerValue();
                         int cRNewTime = u->getEquippedItem(m)->currentUnitSteps[i].currentStep;
                         if (cRNewTime == cTimeValue) {
-                            const CreatedUnit cu = u->getEquippedItem(m)->getType()->getCreatedUnit(i, faction);
+                            const CreatedUnit cu = u->getEquippedItem(m)->getType()->getUnitProductionSystem().getCreatedUnit(i, faction);
                             Vec2i locate = u->getPos();
                             int cua = cu.getAmount();
                             int cucap = cu.getCap();
@@ -1234,7 +1246,7 @@ Unit *World::nearestStore(const Vec2i &pos, int factionIndex, const ResourceType
 	for (int i = 0; i < f->getUnitCount(); ++i) {
 		Unit *u = f->getUnit(i);
 		float tmpDist = u->getPos().dist(pos);
-		if (tmpDist < currDist && u->getType()->getStore(rt, f) > 0 && u->isOperative()) {
+		if (tmpDist < currDist && u->getType()->getResourceProductionSystem().getStore(rt, f) > 0 && u->isOperative()) {
 			currDist = tmpDist;
 			currUnit = u;
 		}
@@ -1626,7 +1638,7 @@ void World::initUnits() {
 		for (int j = 0; j < ft->getStartingUnitCount(); ++j) {
 			const UnitType *ut = ft->getStartingUnit(j);
 			int initNumber = ft->getStartingUnitAmount(j);
-			for (int l = 0; l < initNumber; l++) {
+			for (int l = 0; l < initNumber; ++l) {
 				Unit *unit = newUnit(Vec2i(0), ut, f, &map, CardinalDir::NORTH);
 				int startLocationIndex = f->getStartLocationIndex();
 

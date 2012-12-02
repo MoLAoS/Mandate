@@ -57,17 +57,12 @@ void PetRule::load(const XmlNode *prn, const string &dir, const TechTree *tt, co
 UnitType::UnitType()
 		: multiBuild(false), multiSelect(false)
 		, armourType(0)
-		, size(0), height(0)
 		, light(false), lightColour(0.f)
 		, m_cloakType(0)
 		, m_detectorType(0)
 		, meetingPoint(false), meetingPointImage(0)
-		, startSkill(0)
-		, halfSize(0), halfHeight(0)
 		, inhuman(0)
 		, m_cellMap(0), m_colourMap(0)
-		, m_hasProjectileAttack(false)
-		, m_factionType(0)
 		, display(true) {
 	reset();
 }
@@ -83,15 +78,10 @@ void UnitType::preLoad(const string &dir){
 	m_name = basename(dir);
 }
 
-bool UnitType::load(const string &dir, const TechTree *techTree, const FactionType *factionType, bool glestimal) {
+bool UnitType::load(const string &dir, const TechTree *techTree, const FactionType *factionType) {
 	g_logger.logProgramEvent("Unit type: " + dir, true);
 	bool loadOk = true;
-
-	m_factionType = factionType;
 	string path = dir + "/" + m_name + ".xml";
-
-	name = m_name;
-
 	XmlTree xmlTree;
 	try { xmlTree.load(path); }
 	catch (runtime_error e) {
@@ -109,287 +99,18 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 	try { parametersNode = unitNode->getChild("parameters"); }
 	catch (runtime_error e) {
 		g_logger.logXmlError(path, e.what());
-		return false; // bail out
+		return false;
 	}
-	if (!UnitStats::load(parametersNode, dir, techTree, factionType)) {
-		loadOk = false;
-	}
-	/*try {
-	const XmlNode *heroNode = parametersNode->getChild("mage", 0, false);
-	if (heroNode) {
-    isHero = true;
-
-	}
-	}
-	catch (runtime_error e) {
-		g_logger.logXmlError(path, e.what());
-		return false; // bail out
-	}
-	try {
-	const XmlNode *mageNode = parametersNode->getChild("hero", 0, false);
-	if (mageNode) {
-    isMage = true;
-
-	}
-	}
-	catch (runtime_error e) {
-		g_logger.logXmlError(path, e.what());
-		return false; // bail out
-	}*/
-	// armor type string
-
-    // nodes and traits relating to player owned ai units, mainly for majesty style games
-
-    inhuman = false;
-
-	try {
-	    const XmlNode *inhumanNode = parametersNode->getChild("control", 0, false);
-	    if (inhumanNode) {
-            string control = inhumanNode->getAttribute("type")->getRestrictedValue();
-            if (control == "inhuman") {
-                inhuman = true;
-            } else {
-                inhuman = false;
-            }
-            const XmlNode *personalityNode = inhumanNode->getChild("personality", 0, false);
-            if (personalityNode) {
-                personality = personalityNode->getAttribute("type")->getRestrictedValue();
-            }
-	    }
-	}
-	catch (runtime_error e) {
-		g_logger.logXmlError(dir, e.what());
-		loadOk = false;
-	}
-	try {
-		string armorTypeName = parametersNode->getChildRestrictedValue("armor-type");
-		armourType = techTree->getArmourType(armorTypeName);
-	}
-	catch (runtime_error e) {
-		g_logger.logXmlError(dir, e.what());
-		loadOk = false;
-	}
-	// load resistances
-	try {
-	    const XmlNode *resistancesNode = parametersNode->getChild("resistances", 0, false);
-	    if (resistancesNode) {
-	        resistances.resize(resistancesNode->getChildCount());
-            for (int i = 0; i < resistancesNode->getChildCount(); ++i) {
-                const XmlNode *resistanceNode = resistancesNode->getChild("resistance", i);
-                string resistanceTypeName = resistanceNode->getAttribute("type")->getRestrictedValue();
-                int amount = resistanceNode->getAttribute("value")->getIntValue();
-                resistances[i].init(resistanceTypeName, amount);
-            }
-	    }
-	}
-	catch (runtime_error e) {
-		g_logger.logXmlError(dir, e.what());
-		loadOk = false;
-	}
-
-	try {
-	    const XmlNode *itemLimitNode = parametersNode->getChild("item-limit", 0, false);
-	    if (itemLimitNode) {
-            itemLimit = itemLimitNode->getAttribute("limit")->getIntValue();
-	    } else {
-            itemLimit = 0;
-	    }
-	}
-	catch (runtime_error e) {
-		g_logger.logXmlError(dir, e.what());
-		loadOk = false;
-	}
-
-	//equipment slots
-	try {
-        const XmlNode *equipmentNode = parametersNode->getChild("equipment", 0, false);
-	    if (equipmentNode) {
-            for (int i = 0, k = 0; i < equipmentNode->getChildCount(); ++i) {
-                const XmlNode *typeNode = equipmentNode->getChild("type", i);
-                string type = typeNode->getAttribute("type")->getRestrictedValue();
-                int amount = typeNode->getAttribute("value")->getIntValue();
-                for (int j = 0; j < amount; ++j) {
-                    Equipment newEquipment;
-                    equipment.push_back(newEquipment);
-                    equipment[k].init(1, 0, type, type);
-                    ++k;
-                }
-            }
-	    }
-	}
-	catch (runtime_error e) {
-		g_logger.logXmlError(dir, e.what());
-		loadOk = false;
-	}
-
-	try {
-	    const XmlNode *starterItemsNode = parametersNode->getChild("starter-items", 0, false);
-	    if (starterItemsNode) {
-            for (int i = 0; i < starterItemsNode->getChildCount(); ++i) {
-                const XmlNode *starterItemNode = starterItemsNode->getChild("type", i);
-                string type = starterItemNode->getAttribute("type")->getRestrictedValue();
-                starterItems.push_back(type);
-            }
-	    }
-	}
-	catch (runtime_error e) {
-		g_logger.logXmlError(dir, e.what());
-		loadOk = false;
-	}
-
-	// mage
-	try {
-	    const XmlNode *mageNode = parametersNode->getChild("mage", 0, false);
-	    if (mageNode) {
-	        isMage = true;
-	    }
-	}
-	catch (runtime_error e) {
-		g_logger.logXmlError(dir, e.what());
-		loadOk = false;
-	}
-	// leader
-	try {
-	    const XmlNode *leaderNode = parametersNode->getChild("leader", 0, false);
-	    if (leaderNode) {
-	        isLeader = true;
-	    }
-	}
-	catch (runtime_error e) {
-		g_logger.logXmlError(dir, e.what());
-		loadOk = false;
-	}
-	// hero
-	try {
-	    const XmlNode *heroNode = parametersNode->getChild("hero", 0, false);
-	    if (heroNode) {
-	        isHero = true;
-	    }
-	}
-	catch (runtime_error e) {
-		g_logger.logXmlError(dir, e.what());
-		loadOk = false;
-	}
-
-	// size
-	try { size = parametersNode->getChildIntValue("size"); }
-	catch (runtime_error e) {
-		g_logger.logXmlError(dir, e.what());
-		loadOk = false;
-	}
-	// height
-	try { height = parametersNode->getChildIntValue("height"); }
-	catch (runtime_error e) {
-		g_logger.logXmlError(dir, e.what());
-		loadOk = false;
-	}
-	halfSize = size / fixed(2);
-	halfHeight = height / fixed(2);
-
-	// images, requirements, costs...
-	if (!ProducibleType::load(parametersNode, dir, techTree, factionType)) {
-		loadOk = false;
-	}
-	if (!glestimal) {
-		// multi-build
-		try { multiBuild = parametersNode->getOptionalBoolValue("multi-build"); }
-		catch (runtime_error e) {
-			g_logger.logXmlError(path, e.what());
-			loadOk = false;
-		}
-		// multi selection
-		try { multiSelect= parametersNode->getChildBoolValue("multi-selection"); }
-		catch (runtime_error e) {
-			g_logger.logXmlError(path, e.what());
-			loadOk = false;
-		}
-		// light & lightColour
-		try {
-			const XmlNode *lightNode = parametersNode->getChild("light");
-			light = lightNode->getAttribute("enabled")->getBoolValue();
-			if (light)
-				lightColour = lightNode->getColor3Value();
-		} catch (runtime_error e) {
-			g_logger.logXmlError(dir, e.what());
-			loadOk = false;
-		}
-		// cellmap
-		try {
-			const XmlNode *cellMapNode= parametersNode->getChild("cellmap", 0, false);
-			if (cellMapNode && cellMapNode->getAttribute("value")->getBoolValue()) {
-				m_cellMap = new PatchMap<1>(Rectangle(0,0, size, size), 0);
-				for (int i=0; i < size; ++i) {
-					try {
-						const XmlNode *rowNode= cellMapNode->getChild("row", i);
-						string row= rowNode->getAttribute("value")->getRestrictedValue();
-						if (row.size() != size) {
-							throw runtime_error("Cellmap row is not the same as unit size");
-						}
-						for (int j=0; j < row.size(); ++j) {
-							m_cellMap->setInfluence(Vec2i(j, i), row[j] == '0' ? 0 : 1);
-						}
-					} catch (runtime_error e) {
-						g_logger.logXmlError(path, e.what());
-						loadOk = false;
-					}
-				}
-			}
-		} catch (runtime_error e) {
-			g_logger.logXmlError(path, e.what());
-			loadOk = false;
-		}
-		// Levels
-		try {
-			const XmlNode *levelsNode= parametersNode->getChild("levels", 0, false);
-			if(levelsNode) {
-				levels.resize(levelsNode->getChildCount());
-				for(int i=0; i<levels.size(); ++i){
-					const XmlNode *levelNode= levelsNode->getChild("level", i);
-					levels[i].load(levelNode, dir, techTree, factionType);
-				}
-			}
-		} catch (runtime_error e) {
-			g_logger.logXmlError(path, e.what());
-			loadOk = false;
-		}
-
-		// garrison bonuses
-		try {
-			const XmlNode *loadBonusesNode = parametersNode->getChild("load-bonuses", 0, false);
-			if(loadBonusesNode) {
-				loadBonuses.resize(loadBonusesNode->getChildCount());
-				for(int i = 0; i < loadBonuses.size(); ++i){
-					const XmlNode *loadBonusNode = loadBonusesNode->getChild("load-bonus", i);
-					loadBonuses[i].load(loadBonusNode, dir, techTree, factionType);
-				}
-			}
-		} catch (runtime_error e) {
-			g_logger.logXmlError(path, e.what());
-			loadOk = false;
-		}
-		try {
-			const XmlNode *modificationsNode = parametersNode->getChild("modifications", 0, false);
-			if(modificationsNode) {
-			    modifications.resize(modificationsNode->getChildCount());
-			    modifyNames.resize(modificationsNode->getChildCount());
-				for(int i = 0; i < modificationsNode->getChildCount(); ++i){
-					const XmlNode *modificationNode = modificationsNode->getChild("modification", i);
-					string mname = modificationNode->getAttribute("name")->getRestrictedValue();
-					modifyNames[i] = mname;
-                    for (int j = 0; j < getFactionType()->getModifications().size(); ++j) {
-                        string modName = getFactionType()->getModifications()[j].getModificationName();
-                        if (modName == mname) {
-                            modifications[i] = getFactionType()->getModifications()[j];
-                        }
-                    }
-				}
-			}
-		} catch (runtime_error e) {
-			g_logger.logXmlError(path, e.what());
-			loadOk = false;
-		}
-
-	} // !glestimal
+    try { multiBuild = parametersNode->getOptionalBoolValue("multi-build"); }
+    catch (runtime_error e) {
+        g_logger.logXmlError(path, e.what());
+        loadOk = false;
+    }
+    try { multiSelect= parametersNode->getChildBoolValue("multi-selection"); }
+    catch (runtime_error e) {
+        g_logger.logXmlError(path, e.what());
+        loadOk = false;
+    }
 	const XmlNode *fieldNode = parametersNode->getChild("field", 0, false);
 	if (fieldNode) {
 		try {
@@ -406,13 +127,9 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 			loadOk = false;
 		}
 	} else {
-		///@todo deprecate 'fields' node.
-		// fields: begin clumsy... multiple fields are 'allowed' here, but we only want one...
 		Fields fields;
 		try {
 			fields.load(parametersNode->getChild("fields"), dir, techTree, factionType);
-
-			// extract ONE, making sure to chose Land over Air (for magitech compatability)
 			field = Field::INVALID;
 			if (fields.get(Field::AMPHIBIOUS))		field = Field::AMPHIBIOUS;
 			else if (fields.get(Field::ANY_WATER))	field = Field::ANY_WATER;
@@ -426,331 +143,13 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 			loadOk = false;
 		}
 	}
-
 	vector<string> deCloakOnSkills;
 	vector<SkillClass> deCloakOnSkillClasses;
-
-	if (!glestimal) {
-		// properties
-		try { properties.load(parametersNode->getChild("properties"), dir, techTree, factionType); }
-		catch (runtime_error e) {
-			g_logger.logXmlError(path, e.what());
-			loadOk = false;
-		}
-
-		try { // cloak
-			const XmlNode *cloakNode = parametersNode->getOptionalChild("cloak");
-			if (cloakNode) {
-				m_cloakType = g_prototypeFactory.newCloakType(this);
-				m_cloakType->load(dir, cloakNode, techTree, deCloakOnSkills, deCloakOnSkillClasses);
-			}
-		} catch (runtime_error e) {
-			g_logger.logXmlError(path, e.what());
-			loadOk = false;
-		}
-
-		try { // detector
-			const XmlNode *detectNode = parametersNode->getOptionalChild("detector");
-			if (detectNode) {
-				m_detectorType = g_prototypeFactory.newDetectorType(this);
-				m_detectorType->load(dir, detectNode, techTree);
-			}
-		} catch (runtime_error e) {
-			g_logger.logXmlError(path, e.what());
-			loadOk = false;
-		}
-
-		try { // Resources stored
-			const XmlNode *resourcesStoredNode= parametersNode->getChild("resources-stored", 0, false);
-			if (resourcesStoredNode) {
-				storedResources.resize(resourcesStoredNode->getChildCount());
-				for(int i=0; i<storedResources.size(); ++i){
-					const XmlNode *resourceNode= resourcesStoredNode->getChild("resource", i);
-					string name= resourceNode->getAttribute("name")->getRestrictedValue();
-					int amount= resourceNode->getAttribute("amount")->getIntValue();
-					storedResources[i].init(techTree->getResourceType(name), amount, 0, 0);
-				}
-			}
-		} catch (runtime_error e) {
-			g_logger.logXmlError(path, e.what());
-			loadOk = false;
-		}
-		try { // Starter resources
-			const XmlNode *starterResourcesNode= parametersNode->getChild("starter-resources", 0, false);
-			if (starterResourcesNode) {
-				starterResources.resize(starterResourcesNode->getChildCount());
-				for(int i=0; i<starterResources.size(); ++i){
-					const XmlNode *resourceNode= starterResourcesNode->getChild("resource", i);
-					string name= resourceNode->getAttribute("name")->getRestrictedValue();
-					int amount= resourceNode->getAttribute("amount")->getIntValue();
-					starterResources[i].init(techTree->getResourceType(name), amount, 0, 0);
-				}
-			}
-		} catch (runtime_error e) {
-			g_logger.logXmlError(path, e.what());
-			loadOk = false;
-		}
-        try { // resources and items processed
-			const XmlNode *processesNode= parametersNode->getChild("processes", 0, false);
-			if (processesNode) {
-				processes.resize(processesNode->getChildCount());
-                processTimers.resize(processesNode->getChildCount());
-				for(int i = 0; i < processes.size(); ++i){
-					const XmlNode *processNode = processesNode->getChild("process", i);
-					string range = processNode->getAttribute("scope")->getRestrictedValue();
-					bool scope;
-					if (range == "local") {
-					    scope = true;
-					} else {
-					    scope = false;
-					}
-					processes[i].setScope(scope);
-					// resources consumed
-					const XmlNode *costsNode = processNode->getChild("costs");
-					processes[i].costs.resize(costsNode->getChildCount());
-					for (int j = 0; j < processes[i].costs.size(); ++j) {
-                    const XmlNode *costNode = costsNode->getChild("cost", j);
-                    string name = costNode->getAttribute("name")->getRestrictedValue();
-					int amount = costNode->getAttribute("amount")->getIntValue();
-					processes[i].costs[j].init(techTree->getResourceType(name), name, amount, 0, 0);
-					}
-					// resources produced
-					const XmlNode *productsNode = processNode->getChild("products", 0, false);
-					if (productsNode) {
-					processes[i].products.resize(productsNode->getChildCount());
-					for (int k = 0; k < processes[i].products.size(); ++k) {
-                    const XmlNode *productNode = productsNode->getChild("product", k);
-                    string name = productNode->getAttribute("name")->getRestrictedValue();
-					int amount = productNode->getAttribute("amount")->getIntValue();
-                    processes[i].products[k].init(techTree->getResourceType(name), name, amount, 0, 0);
-					}
-					}
-					// items produced
-					const XmlNode *itemsNode = processNode->getChild("items", 0, false);
-					if (itemsNode) {
-					processes[i].items.resize(itemsNode->getChildCount());
-					for (int l = 0; l < processes[i].items.size(); ++l) {
-                    const XmlNode *itemNode = productsNode->getChild("item", l);
-                    string name = itemNode->getAttribute("name")->getRestrictedValue();
-					int amount = itemNode->getAttribute("amount")->getIntValue();
-                    processes[i].items[l].init(factionType->getItemType(name), name, amount, 0, 0);
-					}
-					}
-					//  timer
-					int steps = processNode->getAttribute("timer")->getIntValue();
-					processTimers[i].init(steps, 0);
-				}
-			}
-		} catch (runtime_error e) {
-			g_logger.logXmlError(path, e.what());
-			loadOk = false;
-		}
-
-        try { // Resources created
-			const XmlNode *resourcesCreatedNode= parametersNode->getChild("resources-created", 0, false);
-			if (resourcesCreatedNode) {
-				createdResources.resize(resourcesCreatedNode->getChildCount());
-                createdResourceTimers.resize(resourcesCreatedNode->getChildCount());
-				for(int i = 0; i < createdResources.size(); ++i){
-					const XmlNode *resourceNode = resourcesCreatedNode->getChild("resource", i);
-					string range = resourceNode->getAttribute("scope")->getRestrictedValue();
-					bool scope;
-					if (range == "local") {
-					    scope = true;
-					} else if (range == "faction") {
-					    scope = false;
-					}
-					createdResources[i].setScope(scope);
-					string name = resourceNode->getAttribute("name")->getRestrictedValue();
-					int amount = resourceNode->getAttribute("amount")->getIntValue();
-					int steps = resourceNode->getAttribute("timer")->getIntValue();
-					createdResources[i].init(techTree->getResourceType(name), amount);
-					createdResourceTimers[i].init(steps, 0);
-				}
-			}
-		} catch (runtime_error e) {
-			g_logger.logXmlError(path, e.what());
-			loadOk = false;
-		}
-
-        try { // units created
-			const XmlNode *unitsCreatedNode= parametersNode->getChild("units-created", 0, false);
-			if (unitsCreatedNode) {
-				createdUnits.resize(unitsCreatedNode->getChildCount());
-                createdUnitTimers.resize(unitsCreatedNode->getChildCount());
-				for(int i = 0; i<createdUnits.size(); ++i){
-					const XmlNode *unitNode = unitsCreatedNode->getChild("unit", i);
-					string name = unitNode->getAttribute("name")->getRestrictedValue();
-					int amount = unitNode->getAttribute("amount")->getIntValue();
-					int steps = unitNode->getAttribute("timer")->getIntValue();
-                    int cap = unitNode->getAttribute("cap")->getIntValue();
-					createdUnits[i].init(factionType->getUnitType(name), amount, 0, 0, cap);
-					createdUnitTimers[i].init(steps, 0);
-				}
-			}
-		} catch (runtime_error e) {
-			g_logger.logXmlError(path, e.what());
-			loadOk = false;
-		}
-
-        try { // items created
-			const XmlNode *itemsCreatedNode= parametersNode->getChild("items-created", 0, false);
-			if (itemsCreatedNode) {
-				createdItems.resize(itemsCreatedNode->getChildCount());
-                createdItemTimers.resize(itemsCreatedNode->getChildCount());
-				for(int i = 0; i<createdItems.size(); ++i){
-					const XmlNode *itemNode = itemsCreatedNode->getChild("item", i);
-					string name = itemNode->getAttribute("name")->getRestrictedValue();
-					int amount = itemNode->getAttribute("amount")->getIntValue();
-					int steps = itemNode->getAttribute("timer")->getIntValue();
-					createdItems[i].init(factionType->getItemType(name), amount, 0, 0, -1);
-					createdItemTimers[i].init(steps, 0);
-				}
-			}
-		} catch (runtime_error e) {
-			g_logger.logXmlError(path, e.what());
-			loadOk = false;
-		}
-
-        try { // units owned
-			const XmlNode *unitsOwnedNode= parametersNode->getChild("units-owned", 0, false);
-			if (unitsOwnedNode) {
-				ownedUnits.resize(unitsOwnedNode->getChildCount());
-				for(int i = 0; i<ownedUnits.size(); ++i){
-					const XmlNode *ownedNode = unitsOwnedNode->getChild("unit", i);
-					string name = ownedNode->getAttribute("name")->getRestrictedValue();
-					int limit = ownedNode->getAttribute("limit")->getIntValue();
-					ownedUnits[i].init(factionType->getUnitType(name), 0, limit);
-				}
-			}
-		} catch (runtime_error e) {
-			g_logger.logXmlError(path, e.what());
-			loadOk = false;
-		}
-
-		try { // meeting point
-			const XmlNode *meetingPointNode= parametersNode->getChild("meeting-point");
-			meetingPoint= meetingPointNode->getAttribute("value")->getBoolValue();
-			if (meetingPoint) {
-				string imgPath = dir + "/" + meetingPointNode->getAttribute("image-path")->getRestrictedValue();
-				meetingPointImage = g_renderer.getTexture2D(ResourceScope::GAME, imgPath);
-			}
-		} catch (runtime_error e) {
-			g_logger.logXmlError(path, e.what());
-			loadOk = false;
-		}
-		try { // selection sounds
-			const XmlNode *selectionSoundNode= parametersNode->getChild("selection-sounds");
-			if(selectionSoundNode->getAttribute("enabled")->getBoolValue()){
-				selectionSounds.resize(selectionSoundNode->getChildCount());
-				for(int i=0; i<selectionSounds.getSounds().size(); ++i){
-					const XmlNode *soundNode= selectionSoundNode->getChild("sound", i);
-					string path= soundNode->getAttribute("path")->getRestrictedValue();
-					StaticSound *sound= new StaticSound();
-					sound->load(dir + "/" + path);
-					selectionSounds[i]= sound;
-				}
-			}
-		} catch (runtime_error e) {
-			g_logger.logXmlError(path, e.what());
-			loadOk = false;
-		}
-		try { // command sounds
-			const XmlNode *commandSoundNode= parametersNode->getChild("command-sounds");
-			if(commandSoundNode->getAttribute("enabled")->getBoolValue()){
-				commandSounds.resize(commandSoundNode->getChildCount());
-				for(int i=0; i<commandSoundNode->getChildCount(); ++i){
-					const XmlNode *soundNode= commandSoundNode->getChild("sound", i);
-					string path= soundNode->getAttribute("path")->getRestrictedValue();
-					StaticSound *sound= new StaticSound();
-					sound->load(dir + "/" + path);
-					commandSounds[i]= sound;
-				}
-			}
-		} catch (runtime_error e) {
-			g_logger.logXmlError(path, e.what());
-			loadOk = false;
-		}
-	} // !glestimal
-
-	try { // skills
-		const XmlNode *skillsNode= unitNode->getChild("skills");
-		//skillTypes.resize(skillsNode->getChildCount());
-		for (int i=0; i < skillsNode->getChildCount(); ++i) {
-			const XmlNode *sn = skillsNode->getChild(i);
-			if (sn->getName() != "skill") continue;
-			const XmlNode *typeNode = sn->getChild("type");
-			string classId = typeNode->getAttribute("value")->getRestrictedValue();
-			SkillType *skillType = g_prototypeFactory.newSkillType(SkillClassNames.match(classId.c_str()));
-			skillType->load(sn, dir, techTree, this);
-			skillTypes.push_back(skillType);
-			g_prototypeFactory.setChecksum(skillType);
-		}
-	} catch (runtime_error e) {
-		g_logger.logXmlError(path, e.what());
-		return false; // if skills are screwy, stop
-	}
-
-	sortSkillTypes();
-	setDeCloakSkills(deCloakOnSkills, deCloakOnSkillClasses);
-
-	try { // commands
-		const XmlNode *commandsNode = unitNode->getChild("commands");
-		for (int i = 0; i < commandsNode->getChildCount(); ++i) {
-			const XmlNode *commandNode = commandsNode->getChild(i);
-			if (commandNode->getName() != "command") continue;
-			string classId = commandNode->getChildRestrictedValue("type");
-			CommandType *commandType = g_prototypeFactory.newCommandType(CmdClassNames.match(classId.c_str()), this);
-			loadOk = commandType->load(commandNode, dir, techTree, factionType) && loadOk;
-			commandTypes.push_back(commandType);
-			g_prototypeFactory.setChecksum(commandType);
-		}
-	} catch (runtime_error e) {
-		g_logger.logXmlError(path, e.what());
-		loadOk = false;
-	}
-	if (!loadOk) return false; // unsafe to keep going...
-
-	// if type has a meeting point, add a SetMeetingPoint command
-	if (meetingPoint) {
-		CommandType *smpct = g_prototypeFactory.newCommandType(CmdClass::SET_MEETING_POINT, this);
-		commandTypes.push_back(smpct);
-		g_prototypeFactory.setChecksum(smpct);
-	}
-
-    try {
-	const XmlNode *leaderNode = unitNode->getChild("leader", 0, false);
-	if (leaderNode) {
-	    isLeader = true;
-        if (!leader.load(leaderNode, dir, techTree, factionType, this, path)) {
-            loadOk = false;
-        }
-	}
-	}
-	catch (runtime_error e) {
-		g_logger.logXmlError(path, e.what());
-		return false;
-	}
-
-	for (int i = 0; i < leader.squadCommands.size(); ++i) {
-        squadCommands.push_back(leader.squadCommands[i]);
-        commandTypes.push_back(leader.squadCommands[i]);
-	}
-
-	sortCommandTypes();
-
-	try { // Logger::logXmlError() expects a char*, so it's easier just to throw & catch ;)
-		if(!getFirstStOfClass(SkillClass::STOP)) {
-			throw runtime_error("Every unit must have at least one stop skill: "+ path);
-		}
-		if(!getFirstStOfClass(SkillClass::DIE)) {
-			throw runtime_error("Every unit must have at least one die skill: "+ path);
-		}
-	} catch (runtime_error e) {
-		g_logger.logXmlError(path, e.what());
-		loadOk = false;
-	}
-
+    try { properties.load(parametersNode->getChild("properties"), dir, techTree, factionType); }
+    catch (runtime_error e) {
+        g_logger.logXmlError(path, e.what());
+        loadOk = false;
+    }
 	try {
 		const XmlNode *tagsNode = parametersNode->getChild("tags", 0, false);
 		if (tagsNode) {
@@ -764,33 +163,256 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 		g_logger.logXmlError(path, e.what());
 		loadOk = false;
 	}
-
-	if (!glestimal) {
-		//emanations
-		try {
-			const XmlNode *emanationsNode = parametersNode->getChild("emanations", 0, false);
-			if (emanationsNode) {
-				emanations.resize(emanationsNode->getChildCount());
-				for (int i = 0; i < emanationsNode->getChildCount(); ++i) {
-					try {
-						const XmlNode *emanationNode = emanationsNode->getChild("emanation", i);
-						EmanationType *emanation = g_prototypeFactory.newEmanationType();
-						emanation->load(emanationNode, dir, techTree, factionType);
-						emanations[i] = emanation;
-						///@todo set checksum ???
-					} catch (runtime_error e) {
-						g_logger.logXmlError(path, e.what());
-						loadOk = false;
-					}
-				}
-			}
-		} catch (runtime_error e) {
-			g_logger.logXmlError(path, e.what());
-			loadOk = false;
-		}
+    try {
+        const XmlNode *cloakNode = parametersNode->getOptionalChild("cloak");
+        if (cloakNode) {
+            m_cloakType = g_prototypeFactory.newCloakType(this);
+            m_cloakType->load(dir, cloakNode, techTree, deCloakOnSkills, deCloakOnSkillClasses);
+        }
+    } catch (runtime_error e) {
+        g_logger.logXmlError(path, e.what());
+        loadOk = false;
+    }
+    try {
+        const XmlNode *detectNode = parametersNode->getOptionalChild("detector");
+        if (detectNode) {
+            m_detectorType = g_prototypeFactory.newDetectorType(this);
+            m_detectorType->load(dir, detectNode, techTree);
+        }
+    } catch (runtime_error e) {
+        g_logger.logXmlError(path, e.what());
+        loadOk = false;
+    }
+    try {
+        const XmlNode *meetingPointNode= parametersNode->getChild("meeting-point");
+        meetingPoint= meetingPointNode->getAttribute("value")->getBoolValue();
+        if (meetingPoint) {
+            string imgPath = dir + "/" + meetingPointNode->getAttribute("image-path")->getRestrictedValue();
+            meetingPointImage = g_renderer.getTexture2D(ResourceScope::GAME, imgPath);
+        }
+    } catch (runtime_error e) {
+        g_logger.logXmlError(path, e.what());
+        loadOk = false;
+    }
+	try {
+		string armorTypeName = parametersNode->getChildRestrictedValue("armor-type");
+		armourType = techTree->getArmourType(armorTypeName);
 	}
-	m_colourMap = new PatchMap<1>(Rectangle(0,0, size, size), 0);
-	RectIterator iter(Rect2i(0, 0, size - 1, size - 1));
+	catch (runtime_error e) {
+		g_logger.logXmlError(dir, e.what());
+		loadOk = false;
+	}
+	try {
+        const XmlNode *creatableTypeNode = unitNode->getChild("creatable-type");
+        if (!CreatableType::load(creatableTypeNode, dir, techTree, factionType)) {
+            loadOk = false;
+        }
+    }
+    catch (runtime_error e) {
+		g_logger.logXmlError(dir, e.what());
+		loadOk = false;
+	}
+    try {
+        const XmlNode *cellMapNode= parametersNode->getChild("cellmap", 0, false);
+        if (cellMapNode && cellMapNode->getAttribute("value")->getBoolValue()) {
+            m_cellMap = new PatchMap<1>(Rectangle(0,0, getSize(), getSize()), 0);
+            for (int i=0; i < getSize(); ++i) {
+                try {
+                    const XmlNode *rowNode= cellMapNode->getChild("row", i);
+                    string row= rowNode->getAttribute("value")->getRestrictedValue();
+                    if (row.size() != getSize()) {
+                        throw runtime_error("Cellmap row is not the same as unit size");
+                    }
+                    for (int j=0; j < row.size(); ++j) {
+                        m_cellMap->setInfluence(Vec2i(j, i), row[j] == '0' ? 0 : 1);
+                    }
+                } catch (runtime_error e) {
+                    g_logger.logXmlError(path, e.what());
+                    loadOk = false;
+                }
+            }
+        }
+    } catch (runtime_error e) {
+        g_logger.logXmlError(path, e.what());
+        loadOk = false;
+    }
+	try {
+        inhuman = false;
+	    const XmlNode *inhumanNode = unitNode->getChild("control", 0, false);
+	    if (inhumanNode) {
+            string control = inhumanNode->getAttribute("type")->getRestrictedValue();
+            if (control == "inhuman") {
+                inhuman = true;
+            } else {
+                inhuman = false;
+            }
+            live = 1;
+            const XmlNode *personalityNode = inhumanNode->getChild("personality", 0, false);
+            if (personalityNode) {
+                personality = personalityNode->getAttribute("type")->getRestrictedValue();
+                for (int i = 0; i < factionType->getPersonalities().size(); ++i) {
+                    if (personality == factionType->getPersonalities()[i].getPersonalityName()) {
+                        for (int k = 0; k < factionType->getPersonalities()[i].getGoals().size(); ++k) {
+                            Focus goal = factionType->getPersonalities()[i].getGoal(k);
+                            Goal goalName = goal.getName();
+                            int goalImportance = goal.getImportance();
+                            if (goalName == Goal::LIVE) {
+                                live = goalImportance;
+                            }
+                        }
+                    }
+                }
+            }
+	    }
+	}
+	catch (runtime_error e) {
+		g_logger.logXmlError(dir, e.what());
+		loadOk = false;
+	}
+	try {
+	    const XmlNode *mageNode = unitNode->getChild("mage", 0, false);
+	    if (mageNode) {
+	        isMage = true;
+	    }
+	}
+	catch (runtime_error e) {
+		g_logger.logXmlError(dir, e.what());
+		loadOk = false;
+	}
+    try {
+        const XmlNode *leaderNode = unitNode->getChild("leader", 0, false);
+        if (leaderNode) {
+            isLeader = true;
+            if (!leader.load(leaderNode, dir, techTree, factionType, this, path)) {
+                loadOk = false;
+            }
+        }
+	}
+	catch (runtime_error e) {
+		g_logger.logXmlError(path, e.what());
+		return false;
+	}
+	for (int i = 0; i < leader.squadCommands.size(); ++i) {
+        addSquadCommand(leader.squadCommands[i]);
+	}
+	if (meetingPoint) {
+		CommandType *smpct = g_prototypeFactory.newCommandType(CmdClass::SET_MEETING_POINT, this);
+		addCommand(smpct);
+		g_prototypeFactory.setChecksum(smpct);
+	}
+	try {
+	    const XmlNode *heroNode = unitNode->getChild("hero", 0, false);
+	    if (heroNode) {
+	        isHero = true;
+	    }
+	}
+	catch (runtime_error e) {
+		g_logger.logXmlError(dir, e.what());
+		loadOk = false;
+	}
+	try {
+        const XmlNode *itemLimitNode = unitNode->getChild("item-limit", 0, false);
+        if (itemLimitNode) {
+            itemLimit = itemLimitNode->getAttribute("limit")->getIntValue();
+        } else {
+            itemLimit = 0;
+        }
+    } catch (runtime_error e) {
+        g_logger.logXmlError(dir, e.what());
+        loadOk = false;
+    }
+    try {
+        const XmlNode *equipmentNode = unitNode->getChild("equipment", 0, false);
+        if (equipmentNode) {
+            for (int i = 0, k = 0; i < equipmentNode->getChildCount(); ++i) {
+                const XmlNode *typeNode = equipmentNode->getChild("type", i);
+                string type = typeNode->getAttribute("type")->getRestrictedValue();
+                int amount = typeNode->getAttribute("value")->getIntValue();
+                for (int j = 0; j < amount; ++j) {
+                    Equipment newEquipment;
+                    equipment.push_back(newEquipment);
+                    equipment[k].init(1, 0, type, type);
+                    ++k;
+                }
+            }
+        }
+    } catch (runtime_error e) {
+        g_logger.logXmlError(dir, e.what());
+        loadOk = false;
+    }
+    try {
+        const XmlNode *starterItemsNode = unitNode->getChild("starter-items", 0, false);
+        if (starterItemsNode) {
+            for (int i = 0; i < starterItemsNode->getChildCount(); ++i) {
+                const XmlNode *starterItemNode = starterItemsNode->getChild("type", i);
+                string type = starterItemNode->getAttribute("type")->getRestrictedValue();
+                starterItems.push_back(type);
+            }
+        }
+    } catch (runtime_error e) {
+        g_logger.logXmlError(dir, e.what());
+        loadOk = false;
+    }
+    try {
+        const XmlNode *levelsNode = unitNode->getChild("levels", 0, false);
+        if(levelsNode) {
+            levels.resize(levelsNode->getChildCount());
+            for(int i=0; i<levels.size(); ++i){
+                const XmlNode *levelNode= levelsNode->getChild("level", i);
+                levels[i].load(levelNode, dir, techTree, factionType);
+            }
+        }
+    } catch (runtime_error e) {
+        g_logger.logXmlError(path, e.what());
+        loadOk = false;
+    }
+    try {
+        const XmlNode *loadBonusesNode = unitNode->getChild("load-bonuses", 0, false);
+        if(loadBonusesNode) {
+            loadBonuses.resize(loadBonusesNode->getChildCount());
+            for(int i = 0; i < loadBonuses.size(); ++i){
+                const XmlNode *loadBonusNode = loadBonusesNode->getChild("load-bonus", i);
+                loadBonuses[i].load(loadBonusNode, dir, techTree, factionType);
+            }
+        }
+    } catch (runtime_error e) {
+        g_logger.logXmlError(path, e.what());
+        loadOk = false;
+    }
+    try {
+        const XmlNode *selectionSoundNode = unitNode->getChild("selection-sounds");
+        if(selectionSoundNode->getAttribute("enabled")->getBoolValue()){
+            selectionSounds.resize(selectionSoundNode->getChildCount());
+            for(int i=0; i<selectionSounds.getSounds().size(); ++i){
+                const XmlNode *soundNode= selectionSoundNode->getChild("sound", i);
+                string path= soundNode->getAttribute("path")->getRestrictedValue();
+                StaticSound *sound= new StaticSound();
+                sound->load(dir + "/" + path);
+                selectionSounds[i]= sound;
+            }
+        }
+    } catch (runtime_error e) {
+        g_logger.logXmlError(path, e.what());
+        loadOk = false;
+    }
+    try { // command sounds
+        const XmlNode *commandSoundNode = unitNode->getChild("command-sounds");
+        if(commandSoundNode->getAttribute("enabled")->getBoolValue()){
+            commandSounds.resize(commandSoundNode->getChildCount());
+            for(int i=0; i<commandSoundNode->getChildCount(); ++i){
+                const XmlNode *soundNode= commandSoundNode->getChild("sound", i);
+                string path= soundNode->getAttribute("path")->getRestrictedValue();
+                StaticSound *sound= new StaticSound();
+                sound->load(dir + "/" + path);
+                commandSounds[i]= sound;
+            }
+        }
+    } catch (runtime_error e) {
+        g_logger.logXmlError(path, e.what());
+        loadOk = false;
+    }
+	m_colourMap = new PatchMap<1>(Rectangle(0,0, getSize(), getSize()), 0);
+	RectIterator iter(Rect2i(0, 0, getSize() - 1, getSize() - 1));
 	while (iter.more()) {
 		Vec2i pos = iter.next();
 		if (!hasCellMap() || m_cellMap->getInfluence(pos)) {
@@ -815,236 +437,24 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 
 void UnitType::addBeLoadedCommand() {
 	CommandType *blct = g_prototypeFactory.newCommandType(CmdClass::BE_LOADED, this);
-	static_cast<BeLoadedCommandType*>(blct)->setMoveSkill(getFirstMoveSkill());
-	commandTypes.push_back(blct);
-	commandTypesByClass[CmdClass::BE_LOADED].push_back(blct);
+	const MoveSkillType *mst = static_cast<const MoveSkillType*>(CreatableType::getFirstStOfClass(SkillClass::MOVE));
+	static_cast<BeLoadedCommandType*>(blct)->setMoveSkill(mst);
+	CreatableType::addBeLoadedCommand(blct);
 	g_prototypeFactory.setChecksum(blct);
 }
 
 void UnitType::doChecksum(Checksum &checksum) const {
-	ProducibleType::doChecksum(checksum);
-	UnitStats::doChecksum(checksum);
-
 	if (armourType) checksum.add(armourType->getName());
 	checksum.add(light);
 	checksum.add(lightColour);
-	checksum.add(size);
-	checksum.add(height);
-
 	checksum.add(multiBuild);
 	checksum.add(multiSelect);
-
-	foreach_const (StoredResources, it, storedResources) {
-		checksum.add(it->getType()->getName());
-		checksum.add(it->getAmount());
-	}
-	foreach_const (CreatedResources, it, createdResources) {
-		checksum.add(it->getType()->getName());
-		checksum.add(it->getAmount());
-	}
 	foreach_const (Levels, it, levels) {
 		it->doChecksum(checksum);
 	}
-
-	/*foreach_const (LoadBonuses, it, loadBonuses) {
-		it->doChecksum(checksum);
-	}*/
-
-	//meeting point
 	checksum.add(meetingPoint);
-	checksum.add(halfSize);
-	checksum.add(halfHeight);
-
-	//NETWORK_LOG( "Checksum for UnitType: " << getName() << " = " << intToHex(checksum.getSum()) )
 }
-
-// ==================== get ====================
-
-const CommandType *UnitType::getCommandType(const string &m_name) const {
-	for (CommandTypes::const_iterator i = commandTypes.begin(); i != commandTypes.end(); ++i) {
-		if ((*i)->getName() == m_name) {
-			return (*i);
-		}
-	}
-	return NULL;
-}
-
-const HarvestCommandType *UnitType::getHarvestCommand(const ResourceType *rt) const {
-	foreach_const (CommandTypes, it, commandTypesByClass[CmdClass::HARVEST]) {
-		const HarvestCommandType *hct = static_cast<const HarvestCommandType*>(*it);
-		if (hct->canHarvest(rt)) {
-			return hct;
-		}
-	}
-	return 0;
-}
-
-const AttackCommandType *UnitType::getAttackCommand(Zone zone) const {
-	foreach_const (CommandTypes, it, commandTypesByClass[CmdClass::ATTACK]) {
-		const AttackCommandType *act = static_cast<const AttackCommandType*>(*it);
-		if (act->getAttackSkillTypes()->getZone(zone)) {
-			return act;
-		}
-	}
-	return 0;
-}
-
-const RepairCommandType *UnitType::getRepairCommand(const UnitType *repaired) const {
-	foreach_const (CommandTypes, it, commandTypesByClass[CmdClass::REPAIR]) {
-		const RepairCommandType *rct = static_cast<const RepairCommandType*>(*it);
-		if (rct->canRepair(repaired)) {
-			return rct;
-		}
-	}
-	return 0;
-}
-
-int UnitType::getStore(const ResourceType *rt, const Faction *f) const {
-	foreach_const (StoredResources, it, storedResources) {
-		if (it->getType() == rt) {
-			Modifier mod = f->getStoreModifier(this, rt);
-			return (it->getAmount() * mod.getMultiplier()).intp() + mod.getAddition();
-		}
-	}
-	return 0;
-}
-
-ResourceAmount UnitType::getStoredResource(int i, const Faction *f) const {
-	ResourceAmount res(storedResources[i]);
-	Modifier mod = f->getStoreModifier(this, res.getType());
-	res.setAmount((res.getAmount() * mod.getMultiplier()).intp() + mod.getAddition());
-	return res;
-}
-
-int UnitType::getCreate(const ResourceType *rt, const Faction *f) const {
-	foreach_const (CreatedResources, it, createdResources) {
-		if (it->getType() == rt) {
-			Modifier mod = f->getCreateModifier(this, rt);
-			return (it->getAmount() * mod.getMultiplier()).intp() + mod.getAddition();
-		}
-	}
-	return 0;
-}
-
-ResourceAmount UnitType::getCreatedResource(int i, const Faction *f) const {
-	ResourceAmount res(createdResources[i]);
-	Modifier mod = f->getCreateModifier(this, res.getType());
-	res.setAmount((res.getAmount() * mod.getMultiplier()).intp() + mod.getAddition());
-	return res;
-}
-
-Timer UnitType::getCreatedResourceTimer(int i, const Faction *f) const {
-	Timer timer(createdResourceTimers[i]);
-	return timer;
-}
-
-int UnitType::getProcessing(const ResourceType *rt, const Faction *f) const {
-	foreach_const (Processes, it, processes) {
-		//if (it->getType() == rt) {
-			//Modifier mod = f->getCreateModifier(this, rt);
-			//return (it->getAmount() * mod.getMultiplier()).intp() + mod.getAddition();
-		//}
-	}
-	return 0;
-}
-
-Process UnitType::getProcess(int i, const Faction *f) const {
-	Process proc(processes[i]);
-	//Modifier mod = f->getCreateModifier(this, res.getType());
-	//proc.setAmount((proc.getAmount() * mod.getMultiplier()).intp() + mod.getAddition());
-	return proc;
-}
-
-Timer UnitType::getProcessTimer(int i, const Faction *f) const {
-	Timer timer(processTimers[i]);
-	return timer;
-}
-
-int UnitType::getCreateUnit(const UnitType *ut, const Faction *f) const {
-	foreach_const (CreatedUnits, it, createdUnits) {
-		if (it->getType() == ut) {
-			Modifier mod = f->getCreatedUnitModifier(this, ut);
-			return (it->getAmount() * mod.getMultiplier()).intp() + mod.getAddition();
-		}
-	}
-	return 0;
-}
-
-CreatedUnit UnitType::getCreatedUnit(int i, const Faction *f) const {
-	CreatedUnit unit(createdUnits[i]);
-	Modifier mod = f->getCreatedUnitModifier(this, unit.getType());
-	unit.setAmount((unit.getAmount() * mod.getMultiplier()).intp() + mod.getAddition());
-	return unit;
-}
-
-Timer UnitType::getCreatedUnitTimer(int i, const Faction *f) const {
-	Timer timer(createdUnitTimers[i]);
-	return timer;
-}
-
-int UnitType::getCreateItem(const ItemType *it, const Faction *f) const {
-	foreach_const (CreatedItems, it, createdItems) {
-		//if (it->getType() == it) {
-			//Modifier mod = f->getCreatedItemModifier(this, ut);
-			//return (it->getAmount() * mod.getMultiplier()).intp() + mod.getAddition();
-		//}
-	}
-	return 0;
-}
-
-CreatedItem UnitType::getCreatedItem(int i, const Faction *f) const {
-	CreatedItem item(createdItems[i]);
-	//Modifier mod = f->getCreatedItemModifier(this, item.getType());
-	//item.setAmount((item.getAmount() * mod.getMultiplier()).intp() + mod.getAddition());
-	return item;
-}
-
-Timer UnitType::getCreatedItemTimer(int i, const Faction *f) const {
-	Timer timer(createdItemTimers[i]);
-	return timer;
-}
-
-// only used for matching while loading commands
-const SkillType *UnitType::getSkillType(const string &skillName, SkillClass skillClass) const{
-	for (int i=0; i < skillTypes.size(); ++i) {
-		if (skillTypes[i]->getName() == skillName) {
-			if (skillTypes[i]->getClass() == skillClass || skillClass == SkillClass::COUNT) {
-				return skillTypes[i];
-			} else {
-				throw runtime_error("Skill '" + skillName + "' is not of class " + SkillClassNames[skillClass]);
-			}
-		}
-	}
-	throw runtime_error("No skill named '" + skillName + "'");
-}
-
-
 // ==================== has ====================
-
-bool UnitType::hasSkillClass(SkillClass skillClass) const {
-	return !skillTypesByClass[skillClass].empty();
-}
-
-bool UnitType::hasCommandType(const CommandType *ct) const {
-	assert(ct);
-	foreach_const (CommandTypes, it, commandTypesByClass[ct->getClass()]) {
-		if (*it == ct) {
-			return true;
-		}
-	}
-	return false;
-}
-
-bool UnitType::hasSkillType(const SkillType *st) const {
-	assert(st);
-	foreach_const (SkillTypes, it, skillTypesByClass[st->getClass()]) {
-		if (*it == st) {
-			return true;
-		}
-	}
-	return false;
-}
-
 bool UnitType::isOfClass(UnitClass uc) const{
 	switch (uc) {
 		case UnitClass::WARRIOR:
@@ -1091,64 +501,7 @@ Vec2i rotateCellOffset(const Vec2i &offset, const int unitSize, const CardinalDi
 
 bool UnitType::getCellMapCell(Vec2i pos, CardinalDir facing) const {
 	RUNTIME_CHECK(m_cellMap != 0);
-	return m_cellMap->getInfluence(rotateCellOffset(pos, size, facing));
-}
-
-// ==================== PRIVATE ====================
-
-void UnitType::sortSkillTypes() {
-	foreach_enum (SkillClass, sc) {
-		foreach (SkillTypes, it, skillTypes) {
-			if ((*it)->getClass() == sc) {
-				skillTypesByClass[sc].push_back(*it);
-			}
-		}
-	}
-	if (!skillTypesByClass[SkillClass::BE_BUILT].empty()) {
-		startSkill = skillTypesByClass[SkillClass::BE_BUILT].front();
-	} else {
-		startSkill = skillTypesByClass[SkillClass::STOP].front();
-	}
-	foreach (SkillTypes, it, skillTypesByClass[SkillClass::ATTACK]) {
-		if ((*it)->getProjectile()) {
-			m_hasProjectileAttack = true;
-			break;
-		}
-	}
-}
-
-void UnitType::setDeCloakSkills(const vector<string> &names, const vector<SkillClass> &classes) {
-	foreach_const (vector<string>, it, names) {
-		bool found = false;
-		foreach (SkillTypes, sit, skillTypes) {
-			if (*it == (*sit)->getName()) {
-				found = true;
-				(*sit)->setDeCloak(true);
-				break;
-			}
-		}
-		if (!found) {
-			throw runtime_error("de-cloak is set for skill '" + m_name + "', which was not found.");
-		}
-	}
-	foreach_const (vector<SkillClass>, it, classes) {
-		foreach (SkillTypes, sit, skillTypesByClass[*it]) {
-			(*sit)->setDeCloak(true);
-		}
-	}
-}
-
-void UnitType::sortCommandTypes() {
-	foreach_enum (CmdClass, cc) {
-		foreach (CommandTypes, it, commandTypes) {
-			if ((*it)->getClass() == cc) {
-				commandTypesByClass[cc].push_back(*it);
-			}
-		}
-	}
-//	foreach (CommandTypes, it, commandTypes) {
-//		commandTypeMap[(*it)->getId()] = *it;
-//	}
+	return m_cellMap->getInfluence(rotateCellOffset(pos, getSize(), facing));
 }
 
 }}//end namespace

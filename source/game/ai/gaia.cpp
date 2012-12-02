@@ -92,7 +92,7 @@ void Gaia::update() {
 			if (!ct) {
 				continue;
 			}
-			Vec2i target = glestimal->getPos() + 
+			Vec2i target = glestimal->getPos() +
 				Vec2i(m_rand.randRange(-12,12), m_rand.randRange(-12,12));
 			g_map.clampPos(target);
 			glestimal->giveCommand(g_world.newCommand(ct, CmdFlags(), target));

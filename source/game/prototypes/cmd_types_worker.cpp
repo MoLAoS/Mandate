@@ -146,13 +146,13 @@ bool RepairCommandType::repairableInSight(const Unit *unit, Unit **rangedPtr,
 	return repairableInRange(unit, rangedPtr, rct, unit->getSight(), allowSelf);
 }
 
-bool RepairCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft){
-	bool loadOk = MoveBaseCommandType::load(n, dir, tt, ft);
-
+bool RepairCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct) {
+	bool loadOk = MoveBaseCommandType::load(n, dir, tt, ct);
+    const FactionType *ft = ct->getFactionType();
 	//repair
 	try {
 		string skillName= n->getChild("repair-skill")->getAttribute("value")->getRestrictedValue();
-		repairSkillType= static_cast<const RepairSkillType*>(unitType->getSkillType(skillName, SkillClass::REPAIR));
+		repairSkillType= static_cast<const RepairSkillType*>(creatableType->getSkillType(skillName, SkillClass::REPAIR));
 	} catch (runtime_error e) {
 		g_logger.logXmlError(dir, e.what ());
 		loadOk = false;
@@ -422,13 +422,13 @@ BuildCommandType::~BuildCommandType(){
 	deleteValues(m_startSounds.getSounds().begin(), m_startSounds.getSounds().end());
 }
 
-bool BuildCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft){
-	bool loadOk = MoveBaseCommandType::load(n, dir, tt, ft);
-
+bool BuildCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct) {
+	bool loadOk = MoveBaseCommandType::load(n, dir, tt, ct);
+    const FactionType *ft = ct->getFactionType();
 	//build
 	try {
 		string skillName = n->getChild("build-skill")->getAttribute("value")->getRestrictedValue();
-		m_buildSkillType = static_cast<const BuildSkillType*>(unitType->getSkillType(skillName, SkillClass::BUILD));
+		m_buildSkillType = static_cast<const BuildSkillType*>(creatableType->getSkillType(skillName, SkillClass::BUILD));
 	} catch (runtime_error e) {
 		g_logger.logXmlError(dir, e.what());
 		loadOk = false;
@@ -758,14 +758,14 @@ void BuildCommandType::continueBuild(Unit *unit, const Command *command, const U
 // 	class HarvestCommandType
 // =====================================================
 
-bool HarvestCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft){
-	bool loadOk = MoveBaseCommandType::load(n, dir, tt, ft);
-
+bool HarvestCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct) {
+	bool loadOk = MoveBaseCommandType::load(n, dir, tt, ct);
+    const FactionType *ft = ct->getFactionType();
 	string skillName;
 	//harvest
 	try {
 		skillName = n->getChild("harvest-skill")->getAttribute("value")->getRestrictedValue();
-		m_harvestSkillType = static_cast<const HarvestSkillType*>(unitType->getSkillType(skillName, SkillClass::HARVEST));
+		m_harvestSkillType = static_cast<const HarvestSkillType*>(creatableType->getSkillType(skillName, SkillClass::HARVEST));
 	} catch (runtime_error e) {
 		g_logger.logXmlError(dir, e.what());
 		loadOk = false;
@@ -773,7 +773,7 @@ bool HarvestCommandType::load(const XmlNode *n, const string &dir, const TechTre
 	//stop loaded
 	try {
 		skillName = n->getChild("stop-loaded-skill")->getAttribute("value")->getRestrictedValue();
-		m_stopLoadedSkillType = static_cast<const StopSkillType*>(unitType->getSkillType(skillName, SkillClass::STOP));
+		m_stopLoadedSkillType = static_cast<const StopSkillType*>(creatableType->getSkillType(skillName, SkillClass::STOP));
 	} catch (runtime_error e) {
 		g_logger.logXmlError(dir, e.what());
 		loadOk = false;
@@ -782,7 +782,7 @@ bool HarvestCommandType::load(const XmlNode *n, const string &dir, const TechTre
 	//move loaded
 	try {
 		skillName = n->getChild("move-loaded-skill")->getAttribute("value")->getRestrictedValue();
-		m_moveLoadedSkillType = static_cast<const MoveSkillType*>(unitType->getSkillType(skillName, SkillClass::MOVE));
+		m_moveLoadedSkillType = static_cast<const MoveSkillType*>(creatableType->getSkillType(skillName, SkillClass::MOVE));
 	} catch (runtime_error e) {
 		g_logger.logXmlError(dir, e.what());
 		loadOk = false;
@@ -1053,14 +1053,14 @@ void HarvestCommandType::update(Unit *unit) const {
 // 	class TransportCommandType
 // =====================================================
 
-bool TransportCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft){
-	bool loadOk = MoveBaseCommandType::load(n, dir, tt, ft);
-
+bool TransportCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct) {
+	bool loadOk = MoveBaseCommandType::load(n, dir, tt, ct);
+    const FactionType *ft = ct->getFactionType();
 	string skillName;
 	//harvest
 	try {
 		skillName = n->getChild("transport-skill")->getAttribute("value")->getRestrictedValue();
-		m_transportSkillType = static_cast<const TransportSkillType*>(unitType->getSkillType(skillName, SkillClass::TRANSPORT));
+		m_transportSkillType = static_cast<const TransportSkillType*>(creatableType->getSkillType(skillName, SkillClass::TRANSPORT));
 	} catch (runtime_error e) {
 		g_logger.logXmlError(dir, e.what());
 		loadOk = false;
@@ -1068,7 +1068,7 @@ bool TransportCommandType::load(const XmlNode *n, const string &dir, const TechT
 	//stop loaded
 	try {
 		skillName = n->getChild("stop-loaded-skill")->getAttribute("value")->getRestrictedValue();
-		m_stopLoadedSkillType = static_cast<const StopSkillType*>(unitType->getSkillType(skillName, SkillClass::STOP));
+		m_stopLoadedSkillType = static_cast<const StopSkillType*>(creatableType->getSkillType(skillName, SkillClass::STOP));
 	} catch (runtime_error e) {
 		g_logger.logXmlError(dir, e.what());
 		loadOk = false;
@@ -1077,7 +1077,7 @@ bool TransportCommandType::load(const XmlNode *n, const string &dir, const TechT
 	//move loaded
 	try {
 		skillName = n->getChild("move-loaded-skill")->getAttribute("value")->getRestrictedValue();
-		m_moveLoadedSkillType = static_cast<const MoveSkillType*>(unitType->getSkillType(skillName, SkillClass::MOVE));
+		m_moveLoadedSkillType = static_cast<const MoveSkillType*>(creatableType->getSkillType(skillName, SkillClass::MOVE));
 	} catch (runtime_error e) {
 		g_logger.logXmlError(dir, e.what());
 		loadOk = false;
@@ -1127,13 +1127,13 @@ void TransportCommandType::subDesc(const Unit *unit, CmdDescriptor *callback, Pr
 }
 
 void TransportCommandType::goToStore(Unit *unit, Unit *store, Unit *producer) const {
-    for (int i = 0; i < producer->getType()->processes.size(); ++i) {
-    for (int j = 0; j < producer->getType()->processes[i].costs.size(); ++j) {
-        const ResourceType *transportType = producer->getType()->processes[i].costs[j].getType();
-        for (int k = 0; k < store->getType()->getStoredResourceCount(); ++k) {
-        const ResourceType *storeType = store->getType()->getStoredResource(k, store->getFaction()).getType();
+    for (int i = 0; i < producer->getType()->getProcessProductionSystem().getProcesses().size(); ++i) {
+    for (int j = 0; j < producer->getType()->getProcessProductionSystem().getProcesses()[i].costs.size(); ++j) {
+        const ResourceType *transportType = producer->getType()->getProcessProductionSystem().getProcesses()[i].costs[j].getType();
+        for (int k = 0; k < store->getType()->getResourceProductionSystem().getStoredResourceCount(); ++k) {
+        const ResourceType *storeType = store->getType()->getResourceProductionSystem().getStoredResource(k, store->getFaction()).getType();
             if (transportType == storeType) {
-            int resourceAmount = producer->getType()->processes[i].costs[j].getAmount()*4;
+            int resourceAmount = producer->getType()->getProcessProductionSystem().getProcesses()[i].costs[j].getAmount()*4;
                 if (unit->getFaction()->getCpuControl()) {
                 const float &mult = g_simInterface.getGameSettings().getResourceMultilpier(unit->getFactionIndex());
                 resourceAmount = int(resourceAmount * mult);
@@ -1150,10 +1150,10 @@ void TransportCommandType::goToStore(Unit *unit, Unit *store, Unit *producer) co
         }
     }
     }
-    for (int i = 0; i < unit->getType()->getStoredResourceCount(); ++i) {
-        const ResourceType *transportType = unit->getType()->getStoredResource(i, store->getFaction()).getType();
-        for (int k = 0; k < store->getType()->getStoredResourceCount(); ++k) {
-        const ResourceType *storeType = store->getType()->getStoredResource(k, store->getFaction()).getType();
+    for (int i = 0; i < unit->getType()->getResourceProductionSystem().getStoredResourceCount(); ++i) {
+        const ResourceType *transportType = unit->getType()->getResourceProductionSystem().getStoredResource(i, store->getFaction()).getType();
+        for (int k = 0; k < store->getType()->getResourceProductionSystem().getStoredResourceCount(); ++k) {
+        const ResourceType *storeType = store->getType()->getResourceProductionSystem().getStoredResource(k, store->getFaction()).getType();
             if (transportType == storeType) {
             int resourceAmount = unit->getSResource(storeType)->getAmount();
                 if (unit->getFaction()->getCpuControl()) {
@@ -1174,13 +1174,13 @@ void TransportCommandType::goToStore(Unit *unit, Unit *store, Unit *producer) co
 }
 
 void TransportCommandType::goToProducer(Unit *unit, Unit *store, Unit *producer) const {
-    for (int i = 0; i < producer->getType()->processes.size(); ++i) {
-    for (int j = 0; j < producer->getType()->processes[i].costs.size(); ++j) {
-        const ResourceType *transportType = producer->getType()->processes[i].costs[j].getType();
-        for (int k = 0; k < store->getType()->getStoredResourceCount(); ++k) {
-        const ResourceType *storeType = store->getType()->getStoredResource(k, store->getFaction()).getType();
-            if (transportType == storeType) {
-            int resourceAmount = producer->getType()->processes[i].costs[j].getAmount()*5;
+    for (int i = 0; i < producer->getType()->getProcessProductionSystem().getProcesses().size(); ++i) {
+    for (int j = 0; j < producer->getType()->getProcessProductionSystem().getProcesses()[i].costs.size(); ++j) {
+        const ResourceType *transportType = producer->getType()->getProcessProductionSystem().getProcesses()[i].costs[j].getType();
+        for (int k = 0; k < store->getType()->getResourceProductionSystem().getStoredResourceCount(); ++k) {
+        const ResourceType *storeType = store->getType()->getResourceProductionSystem().getStoredResource(k, store->getFaction()).getType();
+            if (transportType == storeType && storeType->getName() != "wealth") {
+            int resourceAmount = producer->getType()->getProcessProductionSystem().getProcesses()[i].costs[j].getAmount()*5;
                 if (unit->getFaction()->getCpuControl()) {
                 const float &mult = g_simInterface.getGameSettings().getResourceMultilpier(unit->getFactionIndex());
                 resourceAmount = int(resourceAmount * mult);
@@ -1197,15 +1197,15 @@ void TransportCommandType::goToProducer(Unit *unit, Unit *store, Unit *producer)
         }
     }
     }
-    for (int i = 0; i < producer->getType()->processes.size(); ++i) {
-    for (int j = 0; j < producer->getType()->processes[i].products.size(); ++j) {
-        const ResourceType *transportType = producer->getType()->processes[i].products[j].getType();
-        for (int k = 0; k < store->getType()->getStoredResourceCount(); ++k) {
-        const ResourceType *storeType = store->getType()->getStoredResource(k, store->getFaction()).getType();
+    for (int i = 0; i < producer->getType()->getProcessProductionSystem().getProcesses().size(); ++i) {
+    for (int j = 0; j < producer->getType()->getProcessProductionSystem().getProcesses()[i].products.size(); ++j) {
+        const ResourceType *transportType = producer->getType()->getProcessProductionSystem().getProcesses()[i].products[j].getType();
+        for (int k = 0; k < store->getType()->getResourceProductionSystem().getStoredResourceCount(); ++k) {
+        const ResourceType *storeType = store->getType()->getResourceProductionSystem().getStoredResource(k, store->getFaction()).getType();
         if (transportType == storeType) {
-        for (int l = 0; l < producer->getType()->getStoredResourceCount(); ++l) {
-        const ResourceType *produceType = producer->getType()->getStoredResource(l, producer->getFaction()).getType();
-            if (storeType == produceType) {
+        for (int l = 0; l < producer->getType()->getResourceProductionSystem().getStoredResourceCount(); ++l) {
+        const ResourceType *produceType = producer->getType()->getResourceProductionSystem().getStoredResource(l, producer->getFaction()).getType();
+            if (storeType == produceType && storeType->getName() != "wealth") {
             int resourceAmount = producer->getSResource(produceType)->getAmount();
                 if (unit->getFaction()->getCpuControl()) {
                 const float &mult = g_simInterface.getGameSettings().getResourceMultilpier(unit->getFactionIndex());
@@ -1219,10 +1219,10 @@ void TransportCommandType::goToProducer(Unit *unit, Unit *store, Unit *producer)
         }
     }
     }
-    for (int i = 0; i < producer->getType()->createdResources.size(); ++i) {
-    const ResourceType *transportType = producer->getType()->createdResources[i].getType();
-    for (int k = 0; k < store->getType()->getStoredResourceCount(); ++k) {
-    const ResourceType *storeType = store->getType()->getStoredResource(k, store->getFaction()).getType();
+    for (int i = 0; i < producer->getType()->getResourceProductionSystem().getCreatedResources().size(); ++i) {
+    const ResourceType *transportType = producer->getType()->getResourceProductionSystem().getCreatedResources()[i].getType();
+    for (int k = 0; k < store->getType()->getResourceProductionSystem().getStoredResourceCount(); ++k) {
+    const ResourceType *storeType = store->getType()->getResourceProductionSystem().getStoredResource(k, store->getFaction()).getType();
         if (transportType == storeType) {
         int resourceAmount = producer->getSResource(storeType)->getAmount();
             if (unit->getFaction()->getCpuControl()) {
@@ -1269,14 +1269,14 @@ void TransportCommandType::update(Unit *unit) const {
 // 	class SetStoreCommandType
 // =====================================================
 
-bool SetStoreCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft){
-	bool loadOk = StopBaseCommandType::load(n, dir, tt, ft);
+bool SetStoreCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct) {
+	bool loadOk = StopBaseCommandType::load(n, dir, tt, ct);
 
 	string skillName;
 	// set structure
 	try {
 		skillName = n->getChild("set-structure-skill")->getAttribute("value")->getRestrictedValue();
-		m_setStructureSkillType = static_cast<const SetStructureSkillType*>(unitType->getSkillType(skillName, SkillClass::SET_STRUCTURE));
+		m_setStructureSkillType = static_cast<const SetStructureSkillType*>(creatableType->getSkillType(skillName, SkillClass::SET_STRUCTURE));
 	} catch (runtime_error e) {
 		g_logger.logXmlError(dir, e.what());
 		loadOk = false;
@@ -1325,14 +1325,14 @@ void SetStoreCommandType::update(Unit *unit) const {
 // 	class SetProducerCommandType
 // =====================================================
 
-bool SetProducerCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft){
-	bool loadOk = StopBaseCommandType::load(n, dir, tt, ft);
+bool SetProducerCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct) {
+	bool loadOk = StopBaseCommandType::load(n, dir, tt, ct);
 
 	string skillName;
 	// set structure
 	try {
 		skillName = n->getChild("set-structure-skill")->getAttribute("value")->getRestrictedValue();
-		m_setStructureSkillType = static_cast<const SetStructureSkillType*>(unitType->getSkillType(skillName, SkillClass::SET_STRUCTURE));
+		m_setStructureSkillType = static_cast<const SetStructureSkillType*>(creatableType->getSkillType(skillName, SkillClass::SET_STRUCTURE));
 	} catch (runtime_error e) {
 		g_logger.logXmlError(dir, e.what());
 		loadOk = false;

@@ -63,7 +63,7 @@ const char *object_descs[] = {
 };
 
 const char *resource_descs[] = {
-	"None (Erase)", "Gold", "Stone", "Custom 4", "Custom 5", "Custom 6"
+	"None (Erase)", "Gold", "Stone", "Custom 3", "Custom 4", "Custom 5", "Custom 6", "Custom 7", "Custom 8", "Custom 9", "Custom 10", "Custom 11", "Custom 12"
 };
 
 
@@ -85,7 +85,7 @@ private:
 	static const int heightCount = 11;
 	static const int surfaceCount = 5;
 	static const int objectCount = 11;
-	static const int resourceCount = 6;
+	static const int resourceCount = 13;
 	static const int startLocationCount = 8;
 	static const int radiusCount = 9;
 
@@ -129,14 +129,14 @@ private:
 
 public:
 	Program *program;
-	
+
 private:
 	GlCanvas *glCanvas;
 /*	Program *program;*/
 	int lastX, lastY;
 
 	wxPanel *panel;
-	
+
 	wxTimer *timer;
 	wxToolBar *toolbar, *toolbar2;
 
@@ -167,7 +167,7 @@ private:
 	int startLocation;
 	int resourceUnderMouse;
 	int objectUnderMouse;
-	
+
 	ChangeType enabledGroup;
 
 	//string fileName;
@@ -221,7 +221,7 @@ public:
 	void onMenuBrushResource(wxCommandEvent &event);
 	void onMenuBrushStartLocation(wxCommandEvent &event);
 	void onMenuRadius(wxCommandEvent &event);
-	
+
 	void onToolPlayer(wxCommandEvent &event);
 
 	void change(int x, int y);
@@ -242,7 +242,7 @@ private:
 	void setFactionCount();
 
 	void centreMap();
-	
+
 	wxString windowCaption() const;
 };
 

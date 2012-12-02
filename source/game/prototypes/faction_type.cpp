@@ -507,7 +507,7 @@ bool FactionType::loadGlestimals(const string &dir, const TechTree *techTree) {
 	// load glestimals
 	for (int i = 0; i < unitTypes.size(); ++i) {
 		string str = dir + "/glestimals/" + unitTypes[i]->getName();
-		if (unitTypes[i]->load(str, techTree, this, true)) {
+		if (unitTypes[i]->load(str, techTree, this)) {
 			Checksum checksum;
 			unitTypes[i]->doChecksum(checksum);
 			g_prototypeFactory.setChecksum(unitTypes[i]);

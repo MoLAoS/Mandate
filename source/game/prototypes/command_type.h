@@ -92,14 +92,14 @@ class CommandType : public RequirableType {
 protected:
 	Clicks          clicks;
 	bool            queuable;
-	const UnitType *unitType;
+	const CreatableType *creatableType;
 	string          m_tipKey;
 	string          m_tipHeaderKey;
 	int             energyCost;
 	bool            m_display;
 
 	void setId(int v) { m_id = v; }
-	void setUnitType(const UnitType *ut) { unitType = ut; }
+	void setCreatableType(const CreatableType *ct) { creatableType = ct; }
 
 	string emptyString;
 
@@ -116,7 +116,7 @@ public:
 	virtual string toString() const;
 
 	// load & checksum
-	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
+	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct);
 	virtual void doChecksum(Checksum &checksum) const;
 
 	/** tip key for this command, from the tip attribute of the command name node */
@@ -160,7 +160,7 @@ public:
 	bool isInvisible() const                            {return !m_display;}
 
 	// get
-	const UnitType*       getUnitType() const   { return unitType; }
+	const CreatableType*       getCreatableType() const   { return creatableType; }
 	int                   getEnergyCost() const	{ return energyCost; }
 	bool                  getArrowDetails(const Command *cmd, Vec3f &out_target, Vec3f &out_color) const;
 	virtual Vec3f         getArrowColor() const {return Vec3f(1.f, 1.f, 0.f);}
@@ -211,7 +211,7 @@ public:
 		CommandType::doChecksum(checksum);
 		checksum.add(m_moveSkillType->getName());
 	}
-	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
+	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct);
 	virtual void getDesc(string &str, const Unit *unit) const	{m_moveSkillType->getDesc(str, unit);}
 	const MoveSkillType *getMoveSkillType() const				{return m_moveSkillType;}
 
@@ -233,7 +233,7 @@ public:
 		CommandType::doChecksum(checksum);
 		checksum.add(m_stopSkillType->getName());
 	}
-	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
+	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct);
 	virtual void getDesc(string &str, const Unit *unit) const	{m_stopSkillType->getDesc(str, unit);}
 	const StopSkillType *getStopSkillType() const				{return m_stopSkillType;}
 };
@@ -292,7 +292,7 @@ protected:
 	AttackSkillTypes attackSkillTypes;
 
 public:
-	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft, const UnitType *ut);
+	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct);
 	virtual void getDesc(string &str, const Unit *unit) const {attackSkillTypes.getDesc(str, unit);}
 	virtual void doChecksum(Checksum &checksum) const {
 		attackSkillTypes.doChecksum(checksum);
@@ -311,7 +311,7 @@ class AttackCommandType: public MoveBaseCommandType, public AttackCommandTypeBas
 public:
 	AttackCommandType(const char* name = "Attack", Clicks clicks = Clicks::TWO) :
 			MoveBaseCommandType(name, clicks) {}
-	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
+	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct);
 	virtual void doChecksum(Checksum &checksum) const {
 		MoveBaseCommandType::doChecksum(checksum);
 		AttackCommandTypeBase::doChecksum(checksum);
@@ -341,7 +341,7 @@ public:
 class AttackStoppedCommandType: public StopBaseCommandType, public AttackCommandTypeBase {
 public:
 	AttackStoppedCommandType() : StopBaseCommandType("AttackStopped", Clicks::ONE) {}
-	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
+	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct);
 	virtual void doChecksum(Checksum &checksum) const {
 		StopBaseCommandType::doChecksum(checksum);
 		AttackCommandTypeBase::doChecksum(checksum);
@@ -374,7 +374,7 @@ private:
 public:
 	StructureCommandType() : CommandType("Structure", Clicks::TWO), m_buildSkillType(0) {}
 	~StructureCommandType();
-	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
+	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct);
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void subDesc(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const override;
 	virtual void descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt = 0) const override;
@@ -424,7 +424,7 @@ private:
 public:
 	BuildCommandType() : MoveBaseCommandType("Build", Clicks::TWO), m_buildSkillType(0) {}
 	~BuildCommandType();
-	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
+	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct);
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void subDesc(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const override;
 	virtual void descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt = 0) const override;
@@ -489,7 +489,7 @@ private:
 public:
 	ConstructCommandType() : MoveBaseCommandType("Construct", Clicks::TWO), m_constructSkillType(0) {}
 	~ConstructCommandType();
-	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
+	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct);
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void subDesc(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const override;
 	virtual void descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt = 0) const override;
@@ -550,7 +550,7 @@ private:
 public:
 	MaintainCommandType() : MoveBaseCommandType("Maintain", Clicks::TWO), maintainSkillType(0) {}
 	~MaintainCommandType() {}
-	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
+	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct);
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void subDesc(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const override;
 	virtual void descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt = 0) const override;
@@ -590,7 +590,7 @@ public:
 	HarvestCommandType() : MoveBaseCommandType("Harvest", Clicks::TWO)
 		, m_moveLoadedSkillType(0), m_harvestSkillType(0), m_stopLoadedSkillType(0)
 		, m_maxLoad(0), m_hitsPerUnit(0) {}
-	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
+	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct);
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void getDesc(string &str, const Unit *unit) const;
 	virtual void subDesc(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const override;
@@ -625,7 +625,7 @@ private:
 public:
 	TransportCommandType() : MoveBaseCommandType("Transport", Clicks::ONE)
 		, m_moveLoadedSkillType(0), m_transportSkillType(0), m_stopLoadedSkillType(0) {}
-	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
+	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct);
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void getDesc(string &str, const Unit *unit) const;
 	virtual void subDesc(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const override;
@@ -656,7 +656,7 @@ private:
 public:
 	SetStoreCommandType() : StopBaseCommandType("SetStore", Clicks::TWO),
 		m_setStructureSkillType(0) {}
-	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
+	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct);
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void getDesc(string &str, const Unit *unit) const;
 	virtual void subDesc(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const override;
@@ -681,7 +681,7 @@ private:
 public:
 	SetProducerCommandType() : StopBaseCommandType("SetProducer", Clicks::TWO),
 		m_setStructureSkillType(0) {}
-	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
+	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct);
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void getDesc(string &str, const Unit *unit) const;
 	virtual void subDesc(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const override;
@@ -706,7 +706,7 @@ private:
 public:
 	CreateSettlementCommandType() : StopBaseCommandType("CreateSettlement", Clicks::TWO),
 		m_setStructureSkillType(0) {}
-	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
+	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct);
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void getDesc(string &str, const Unit *unit) const;
 	virtual void subDesc(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const override;
@@ -731,7 +731,7 @@ private:
 public:
 	ExpandSettlementCommandType() : StopBaseCommandType("ExpandSettlement", Clicks::TWO),
 		m_setStructureSkillType(0) {}
-	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
+	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct);
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void getDesc(string &str, const Unit *unit) const;
 	virtual void subDesc(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const override;
@@ -757,7 +757,7 @@ private:
 public:
 	RepairCommandType() : MoveBaseCommandType("Repair", Clicks::TWO), repairSkillType(0) {}
 	~RepairCommandType() {}
-	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
+	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct);
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void getDesc(string &str, const Unit *unit) const;
 	virtual void descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt = 0) const override;
@@ -804,7 +804,7 @@ private:
 
 public:
 	ProduceCommandType() : CommandType("Produce", Clicks::ONE, true), m_produceSkillType(0) {}
-	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
+	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct);
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void getDesc(string &str, const Unit *unit) const;
 	virtual void subDesc(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const override;
@@ -849,7 +849,7 @@ private:
 
 public:
 	CreateItemCommandType() : CommandType("CreateItem", Clicks::ONE, true), m_produceSkillType(0) {}
-	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
+	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct);
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void getDesc(string &str, const Unit *unit) const;
 	virtual void subDesc(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const override;
@@ -893,7 +893,7 @@ private:
 
 public:
 	GenerateCommandType() : CommandType("Generate", Clicks::ONE, true), m_produceSkillType(0) {}
-	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
+	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct);
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void getDesc(string &str, const Unit *unit) const;
 	virtual void subDesc(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const override;
@@ -932,7 +932,7 @@ private:
 
 public:
 	UpgradeCommandType() : CommandType("Upgrade", Clicks::ONE, true), m_upgradeSkillType(0) { }
-	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
+	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct);
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual string getReqDesc(const Faction *f) const;
 	//virtual ProdTypePtr getProduced() const;
@@ -989,7 +989,7 @@ private:
 
 public:
 	MorphCommandType();
-	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
+	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct);
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void getDesc(string &str, const Unit *unit) const;
 	virtual void update(Unit *unit) const;
@@ -1036,7 +1036,7 @@ public:
 
 	HpPolicy getHpPolicy() const { return m_hpPolicy; }
 
-	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
+	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct);
 	virtual void doChecksum(Checksum &checksum) const;
 
 	virtual void update(Unit *unit) const;
@@ -1072,7 +1072,7 @@ public:
 			, loadSkillType(0), moveSkillType(0), m_loadCapacity(0), m_allowProjectiles(false) {
 		queuable = true;
 	}
-	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
+	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct);
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void getDesc(string &str, const Unit *unit) const;
 	virtual void update(Unit *unit) const;
@@ -1109,7 +1109,7 @@ private:
 
 public:
 	UnloadCommandType() : CommandType("Unload", Clicks::TWO), unloadSkillType(0), moveSkillType(0) {}
-	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
+	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct);
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void getDesc(string &str, const Unit *unit) const;
 	virtual void descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt = 0) const override;
@@ -1150,7 +1150,7 @@ public:
 			, loadSkillType(0), moveSkillType(0), m_loadCapacity(0), m_allowProjectiles(false) {
 		queuable = true;
 	}
-	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
+	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct);
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void getDesc(string &str, const Unit *unit) const;
 	virtual void update(Unit *unit) const;
@@ -1187,7 +1187,7 @@ private:
 
 public:
 	FactionUnloadCommandType() : CommandType("Unload", Clicks::TWO), unloadSkillType(0), moveSkillType(0) {}
-	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
+	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct);
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void getDesc(string &str, const Unit *unit) const;
 	virtual void descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt = 0) const override;
@@ -1228,7 +1228,7 @@ public:
 			, loadSkillType(0), moveSkillType(0), m_loadCapacity(0), m_allowProjectiles(false) {
 		queuable = true;
 	}
-	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
+	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct);
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void getDesc(string &str, const Unit *unit) const;
 	virtual void update(Unit *unit) const;
@@ -1265,7 +1265,7 @@ private:
 
 public:
 	DegarrisonCommandType() : CommandType("Unload", Clicks::TWO), unloadSkillType(0), moveSkillType(0) {}
-	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
+	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct);
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void getDesc(string &str, const Unit *unit) const;
 	virtual void descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt = 0) const override;
@@ -1322,7 +1322,7 @@ private:
 public:
 	GuardCommandType(const char* name = "Guard", Clicks clicks = Clicks::TWO)
 			: AttackCommandType(name, clicks), m_maxDistance(0) {}
-	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
+	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct);
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void update(Unit *unit) const;
 	virtual void tick(const Unit *unit, Command &command) const;
@@ -1366,7 +1366,7 @@ public:
 		checksum.add(m_castSpellSkillType->getName());
 	}
 	virtual Clicks getClicks() const { return (m_affects == SpellAffect::SELF ? Clicks::ONE : Clicks::TWO); }
-	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
+	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct);
 	virtual void getDesc(string &str, const Unit *unit) const {
 		m_castSpellSkillType->getDesc(str, unit);
 	}
@@ -1397,7 +1397,7 @@ public:
 
 	virtual void getDesc(string &str, const Unit *unit) const {}
 	virtual void descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt = 0) const override;
-	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
+	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct);
 	virtual void update(Unit *unit) const;
 	virtual CmdClass getClass() const { return typeClass(); }
 	static CmdClass typeClass() { return CmdClass::BUILD_SELF; }

@@ -24,12 +24,12 @@ namespace Glest { namespace Plan {
 class Focus {
 private:
     int importance;
-    string name;
+    Goal name;
 public:
     int getImportance() const {return importance;}
-    string getName() const {return name;}
+    Goal getName() const {return name;}
 
-    void init(string newName, int newImportance);
+    void init(Goal newName, int newImportance);
 };
 
 // ===============================
@@ -52,7 +52,6 @@ public:
 // ===============================
 // 	class Goal System
 // ===============================
-
 typedef vector<string> GoalList;
 
 class GoalSystem {
@@ -61,7 +60,6 @@ private:
     ExploredMap exploredMap;
 
 public:
-    GoalList getGoalList() const {return goalList;}
     void init();
     void computeAction(Unit *unit, Focus focus);
     void ownerLoad(Unit*unit);
@@ -78,7 +76,7 @@ public:
     Unit *findLair(Unit *unit);
     Unit *findCreature(Unit *unit);
     UnitDirection newDirection(UnitDirection oldDirection);
-    void clearSimAi(Unit *unit, string goal);
+    void clearSimAi(Unit *unit, Goal goal);
 };
 
 }}

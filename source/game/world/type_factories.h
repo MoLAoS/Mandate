@@ -276,19 +276,21 @@ public:	// create objects
 		return static_cast<UpgradeType*>(m_prodTypeFactory.newInstance(ProducibleClass::UPGRADE));
  	}
 	UnitType*	newUnitType() {
-		return static_cast<UnitType*>(m_prodTypeFactory.newInstance(ProducibleClass::UNIT));
+	    CreatableType *cType =  static_cast<CreatableType*>(m_prodTypeFactory.newInstance(ProducibleClass::UNIT));
+		return static_cast<UnitType*>(cType);
  	}
 	ItemType*	newItemType() {
-		return static_cast<ItemType*>(m_prodTypeFactory.newInstance(ProducibleClass::ITEM));
+		CreatableType *cType =  static_cast<CreatableType*>(m_prodTypeFactory.newInstance(ProducibleClass::ITEM));
+		return static_cast<ItemType*>(cType);
  	}
 
 	// skills
 	SkillType*		newSkillType(SkillClass sc)		{ return m_skillTypeFactory.newInstance(sc); }
 
 	// commands
-	CommandType*	newCommandType(CmdClass cc, const UnitType *ut)	{
+	CommandType*	newCommandType(CmdClass cc, const CreatableType *crt)	{
 		CommandType *ct = m_commandTypeFactory.newInstance(cc);
-		ct->setUnitType(ut);
+		ct->setCreatableType(crt);
 		return ct;
 	}
 

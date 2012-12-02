@@ -53,7 +53,7 @@ ProduceTask::ProduceTask(const ResourceType *resourceType)
 		, unitType(0) {
 }
 
-ProduceTask::ProduceTask(const UnitType *unitType) 
+ProduceTask::ProduceTask(const UnitType *unitType)
 		: Task(TaskClass::PRODUCE)
 		, unitClass(UnitClass::INVALID)
 		, resourceType(0)
@@ -72,7 +72,7 @@ string ProduceTask::toString() const {
 // 	class BuildTask
 // =====================================================
 
-BuildTask::BuildTask(const UnitType *unitType) 
+BuildTask::BuildTask(const UnitType *unitType)
 		: Task(TaskClass::BUILD) {
 	this->unitType = unitType;
 	resourceType = NULL;
@@ -622,10 +622,10 @@ void Ai::massiveAttack(const Vec2i &pos, Field field, bool ultraAttack){
 		if (act && unit->getType()->hasCommandClass(CmdClass::PRODUCE)) {
 			++producerWarriorCount;
 		}
-		
+
 		if (aiInterface->getControlType() == ControlType::CPU_MEGA) {
 			//if (producerWarriorCount > maxProducerWarriors) {
-				if (unit->getCommandCount() > 0 
+				if (unit->getCommandCount() > 0
 				&& unit->getCurrCommand()->getType() != 0
 				&& ( unit->getCurrCommand()->getType()->getClass() == CmdClass::BUILD
 				||   unit->getCurrCommand()->getType()->getClass() == CmdClass::MORPH
@@ -636,10 +636,11 @@ void Ai::massiveAttack(const Vec2i &pos, Field field, bool ultraAttack){
 					isWarrior = !unit->getType()->hasCommandClass(CmdClass::HARVEST);
 				}
 			//} else {
-			//	isWarrior = !unit->getType()->hasCommandClass(CmdClass::HARVEST) && !unit->getType()->hasCommandClass(CmdClass::PRODUCE);  
+			//	isWarrior = !unit->getType()->hasCommandClass(CmdClass::HARVEST) && !unit->getType()->hasCommandClass(CmdClass::PRODUCE);
 			//}
 		} else {
-			isWarrior = !unit->getType()->hasCommandClass(CmdClass::HARVEST) && !unit->getType()->hasCommandClass(CmdClass::PRODUCE);
+			isWarrior = !unit->getType()->hasCommandClass(CmdClass::HARVEST) &&
+			!unit->getType()->hasCommandClass(CmdClass::PRODUCE);
 		}
 		if (act) {
 			bool alreadyAttacking = unit->getCurrSkill()->getClass() == SkillClass::ATTACK;
@@ -676,7 +677,7 @@ inline Vec2i randOffset(Random &rand, int radius) {
 void Ai::returnBase(int unitIndex) {
     Vec2i pos = getRandomHomePosition() + randOffset(random, villageRadius);
     CmdResult r = aiInterface->giveCommand(unitIndex, CmdClass::MOVE, pos);
-	AI_LOG( MILITARY, 2, "Ai::returnBase: Order return to base pos:" << pos 
+	AI_LOG( MILITARY, 2, "Ai::returnBase: Order return to base pos:" << pos
 		<< " result: " << CmdResultNames[r] );
 }
 
@@ -688,7 +689,7 @@ void Ai::harvest(int unitIndex) {
 	}
 	const HarvestCommandType *hct = aiInterface->getMyUnit(unitIndex)->getType()->getHarvestCommand(rt);
 	if (!hct) {
-		AI_LOG( ECONOMY, 1, "Ai::harvest: worker " << unitIndex 
+		AI_LOG( ECONOMY, 1, "Ai::harvest: worker " << unitIndex
 			<< " [type=" << aiInterface->getMyUnit(unitIndex)->getType()->getName() << "] "
 			<< "can not harvest " << rt->getName() );
 		return;
@@ -697,7 +698,7 @@ void Ai::harvest(int unitIndex) {
 	if (aiInterface->getNearestSightedResource(rt, aiInterface->getHomeLocation(), resPos)) {
 		resPos = resPos + Vec2i(random.randRange(-2, 2), random.randRange(-2, 2));
 		aiInterface->giveCommand(unitIndex, hct, resPos);
-		AI_LOG( ECONOMY, 2, "Ai::harvest: Harvest command for resource " << rt->getName() 
+		AI_LOG( ECONOMY, 2, "Ai::harvest: Harvest command for resource " << rt->getName()
 			<< " at pos " << resPos << " issued." );
 	}
 }

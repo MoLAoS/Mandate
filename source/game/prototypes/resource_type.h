@@ -37,6 +37,8 @@ private:
 	int defResPerPatch;	// used only if class == ResourceClass::TILESET || class == ResourceClass::TECHTREE
 	bool recoupCost;	// used only if class == ResourceClass::STATIC
 
+	bool hasModel;
+
 	Model *model;
 	/**
 	 * Rather or not to display this resource at the top of the screen (defaults to true).

@@ -116,7 +116,7 @@ UserInterface::UserInterface(GameState &game)
 		, m_factionDisplay(0)
 		, m_resourceBar(0)
 		, m_tradeBar(0)
-		, m_unitBar(0)
+		//, m_unitBar(0)
 		, m_luaConsole(0)
 		, selection(0)
 		, m_selectingSecond(false)
@@ -196,7 +196,7 @@ void UserInterface::init() {
 		m_resourceBar = barFrame->getResourceBar();
 		m_resourceBar->init(fac, displayResources);
 
-		set<const UnitType*> displayUnits;
+		/*set<const UnitType*> displayUnits;
 		for (int i = 0; i < ft->getUnitTypeCount(); ++i) {
 			const UnitType *ut = ft->getUnitType(i);
             displayUnits.insert(ut);
@@ -205,7 +205,7 @@ void UserInterface::init() {
 		// create UnitBar, connect thisFactions Units to it...
 		UnitBarFrame *unitFrame = new UnitBarFrame();
 		m_unitBar = unitFrame->getUnitBar();
-		m_unitBar->init(fac, displayUnits);
+		m_unitBar->init(fac, displayUnits);*/
 
 		m_luaConsole = new LuaConsole(this, &g_program);
 		m_luaConsole->setPos(Vec2i(200,200));
@@ -227,13 +227,13 @@ void UserInterface::init() {
 			y = 20;
 			x = g_metrics.getScreenW() - 20 - 195;
 		}
-		if (m_unitBar) {
+		/*if (m_unitBar) {
 			y = m_unitBar->getParent()->getPos().y + m_unitBar->getParent()->getHeight() + 10;
 			x = g_metrics.getScreenW() - 20 - 195;
 		} else {
 			y = 20;
 			x = g_metrics.getScreenW() - 20 - 195;
-		}
+		}*/
 	}
 
 	// Display Panel
@@ -270,14 +270,14 @@ void UserInterface::init() {
             buildings.insert(ut);
         }
 	}
-    FactionDisplayFrame *displayFactionFrame = new FactionDisplayFrame(this, Vec2i(x,y));
+    FactionDisplayFrame *displayFactionFrame = new FactionDisplayFrame(this, Vec2i(10,50));
     m_factionDisplay = displayFactionFrame->getFactionDisplay();
     m_factionDisplay->setSize();
     m_factionDisplay->init(fac, buildings);
 
 
     y += 250;
-	ItemDisplayFrame *itemWindow = new ItemDisplayFrame(this, Vec2i(x,y));
+	ItemDisplayFrame *itemWindow = new ItemDisplayFrame(this, Vec2i(10,330));
 	m_itemWindow = itemWindow->getItemDisplay();
 	m_itemWindow->setSize();
 
@@ -1138,7 +1138,7 @@ void UserInterface::computePortraitInfo(int posDisplay) {
 			const Unit *unit = selection->getFrontUnit();
 			string name = g_lang.getTranslatedFactionName(unit->getFaction()->getType()->getName(), unit->getType()->getName());
 			m_display->setToolTipText2(name, unit->getLongDesc(), DisplaySection::SELECTION);
-			if (unit->getType()->hasTag("guild") || unit->getType()->hasTag("member")) {
+			if (unit->getType()->hasTag("guild") || unit->getType()->hasTag("ordermember")) {
 			}
 		} else if (selection->isComandable()) {
 			m_display->setToolTipText2("", g_lang.get("PotraitInfo"), DisplaySection::SELECTION);
@@ -1416,7 +1416,7 @@ void UserInterface::computeHierarchyPanel() {
         const Unit *u = selection->getFrontUnit();
         const UnitType *ut = u->getType();
         for (int i = 0; i < ut->leader.squadCommands.size(); ++i) {
-            const CommandType *newSquad = ut->getSquadCommand(i);
+            const CommandType *newSquad = ut->leader.squadCommands[i];
             m_display->setHierarchyImage(i, newSquad->getImage());
             m_display->setHierarchyCommand(i, newSquad);
         }
@@ -1427,7 +1427,7 @@ void UserInterface::computeTaxPanel() {
     if (selection->isComandable()) {
         const Unit *u = selection->getFrontUnit();
         const UnitType *ut = u->getType();
-        if (ut->hasTag("orderhouse") || ut->hasTag("member")) {
+        if (ut->hasTag("orderhouse") || ut->hasTag("ordermember")) {
             for (int i = 0; i < 4; ++i) {
                 m_display->setTaxImage(i, ut->getFactionType()->getItemImage(0));
             }

@@ -80,7 +80,7 @@ bool Leader::load(const XmlNode *leaderNode, const string &dir, const TechTree *
 			if (squadCommandNode->getName() != "command") continue;
 			string classId = squadCommandNode->getChildRestrictedValue("type");
 			CommandType *commandType = g_prototypeFactory.newCommandType(CmdClassNames.match(classId.c_str()), unitType);
-			loadOk = commandType->load(squadCommandNode, dir, techTree, factionType) && loadOk;
+			loadOk = commandType->load(squadCommandNode, dir, techTree, unitType) && loadOk;
 			squadCommands.push_back(commandType);
 			g_prototypeFactory.setChecksum(commandType);
 		}

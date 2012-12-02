@@ -44,13 +44,13 @@ namespace Glest { namespace ProtoTypes {
 // =====================================================
 
 
-bool CreateItemCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft){
-	bool loadOk = CommandType::load(n, dir, tt, ft);
-
+bool CreateItemCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct) {
+	bool loadOk = CommandType::load(n, dir, tt, ct);
+    const FactionType *ft = ct->getFactionType();
 	//produce
 	try {
 		string skillName = n->getChild("produce-skill")->getAttribute("value")->getRestrictedValue();
-		m_produceSkillType = static_cast<const ProduceSkillType*>(unitType->getSkillType(skillName, SkillClass::PRODUCE));
+		m_produceSkillType = static_cast<const ProduceSkillType*>(creatableType->getSkillType(skillName, SkillClass::PRODUCE));
 	} catch (runtime_error e) {
 		g_logger.logXmlError(dir, e.what ());
 		loadOk = false;

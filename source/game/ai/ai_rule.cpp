@@ -156,8 +156,8 @@ void AiRuleRepair::execute() {
 					nearestRct = rct;
 					nearest = i;
 					minDist = dist;
-					AI_LOG( GENERAL, 3, "AiRuleRepair::execute: Candidate repairer id " 
-						<< u->getId() << " @ " << u->getPos() << " distance " << dist.toFloat() 
+					AI_LOG( GENERAL, 3, "AiRuleRepair::execute: Candidate repairer id "
+						<< u->getId() << " @ " << u->getPos() << " distance " << dist.toFloat()
 						<< " (closest seen so far)" );
 				}
 			}
@@ -282,11 +282,11 @@ void AiRuleAddTasks::execute() {
 	warriors += warriorCount < 10   ? 1 : 0;
 	warriors += warriorRatio < 0.2f ? 2 : warriorRatio < 0.3f ? 1 : 0;
 	warriors += workerCount >= 15   ? 2 : workerCount >= 10   ? 1 : 0;
-	
+
 	// buildings
 	if (buildingCount < 6 || buildingRatio < 0.2f) ++buildings;
 	if (buildingCount < 10 && workerCount > 12) ++buildings;
-		
+
 	// upgrades
 	if (workerCount > 5 * (upgradeCount + 1)) ++upgrades;
 
@@ -303,12 +303,12 @@ void AiRuleAddTasks::execute() {
 		workers = 0; // reset
 		if (workerCount < buildingCount + 2) ++workers;
 		if (workerCount > 5 && workerRatio < 0.20) ++workers;
-		
+
 		// buildings
 		buildings = 0; // reset
 		if (buildingCount < 6 || buildingRatio < 0.2f) ++buildings;
 		if (buildingCount < 10 && ai->isStableBase()) ++buildings;
-	
+
 	} else {// normal CPU / UltraCPU ...
 		// additional upgrades
 		if (ai->isStableBase()) ++upgrades;
@@ -381,7 +381,7 @@ bool AiRuleBuildOneFarm::test() {
 				for (int n = 0; n < pt->getCostCount(); ++n) {
 					ResourceAmount r = pt->getCost(n, ai->getAiInterface()->getFaction());
 					// can produce consumables and would be the first of its type?
-					if (r.getAmount() < 0 && r.getType()->getClass() == ResourceClass::CONSUMABLE 
+					if (r.getAmount() < 0 && r.getType()->getClass() == ResourceClass::CONSUMABLE
 					&& ai->getCountOfType(ut) == 0) {
 						farm = ut;
 						AI_LOG( PRODUCTION, 1, "AiRuleBuildOneFarm::test: found unbuilt farm-type " << farm->getName() );
@@ -499,7 +499,7 @@ void AiRuleProduce::execute() {
 void AiRuleProduce::produceResources(const ProduceTask *task) {
 	assert(task->getResourceType());
 	assert(task->getUnitClass() == UnitClass::INVALID && !task->getUnitType());
-	
+
 	GlestAiInterface *aiInterface = ai->getAiInterface();
 	const FactionType *ft = aiInterface->getMyFactionType();
 	const Faction *faction = aiInterface->getMyFaction();
@@ -508,7 +508,7 @@ void AiRuleProduce::produceResources(const ProduceTask *task) {
 	typedef vector<ProdPair> CommandList;
 	map<const UnitType*, CommandList> prodMap;
 
-	// 1. Find all UnitTypes that can make ProducibleTypes that satisfy request (cost is 
+	// 1. Find all UnitTypes that can make ProducibleTypes that satisfy request (cost is
 	// negative for pt->resourceType and has reqsOk() for Producible)
 	for (int i=0; i < ft->getUnitTypeCount(); ++i) {
 		const UnitType *ut = ft->getUnitType(i);
@@ -532,7 +532,7 @@ void AiRuleProduce::produceResources(const ProduceTask *task) {
 		return;
 	}
 
-	// 2. Look at all units that are of types found in 1 and find the one with the 
+	// 2. Look at all units that are of types found in 1 and find the one with the
 	// least commands
 	int lowCmd = numeric_limits<int>::max();
 	Unit *unitToCmd = 0;
@@ -582,7 +582,7 @@ void AiRuleProduce::produceResources(const ProduceTask *task) {
 void AiRuleProduce::produceGeneric(const ProduceTask *task) {
 	assert(task->getUnitClass() != UnitClass::INVALID);
 	assert(!task->getResourceType() && !task->getUnitType());
-	
+
 	GlestAiInterface *aiInterface = ai->getAiInterface();
 	const FactionType *ft = aiInterface->getMyFactionType();
 	const Faction *faction = aiInterface->getMyFaction();
@@ -666,7 +666,7 @@ void AiRuleProduce::produceSpecific(const ProduceTask *task) {
 		AI_LOG( PRODUCTION, 3, "AiRuleProduce::produceSpecific: resource reqs not met, reposting.");
 		ai->retryTask(task);
 		return;
-	}		
+	}
 
 	// 2. find all UnitTypes that can produce/morph-to required type
 	for (int i=0; i < ft->getUnitTypeCount(); ++i) {
@@ -676,7 +676,7 @@ void AiRuleProduce::produceSpecific(const ProduceTask *task) {
 		//}
 		for (int j=0; j < ut->getCommandTypeCount(); ++j) {
 			const CommandType *ct = ut->getCommandType(j);
-			if (!faction->reqsOk(ct) 
+			if (!faction->reqsOk(ct)
 			|| (ct->getClass() != CmdClass::PRODUCE && ct->getClass() != CmdClass::MORPH)) {
 				continue;
 			}
@@ -721,7 +721,7 @@ void AiRuleProduce::produceSpecific(const ProduceTask *task) {
 
 	// 4. if producer with lowest command count has many commands, add task to make more producers
 	if (lowCmd > 2) {
-		if (aiInterface->reqsOk(unitToCmd->getType())) { 
+		if (aiInterface->reqsOk(unitToCmd->getType())) {
 			if (ai->getCountOfClass(UnitClass::BUILDING) > 5) {
 				AI_LOG( PRODUCTION, 3, "AiRuleProduce::produceSpecific: lowest producer command queue is "
 					<< lowCmd << ", adding task to build/produce another " << unitToCmd->getType()->getName() );
@@ -1037,11 +1037,11 @@ void AiRuleUpgrade::upgradeGeneric(const UpgradeTask *upgt) {
 
 void AiRuleUpgrade::upgradeSpecific(const UpgradeTask *upgt) {
 	GlestAiInterface *aiInterface = ai->getAiInterface();
-	
+
 	if (aiInterface->reqsOk(upgt->getUpgradeType())) { // if reqs ok
 		// if resources dont meet retry
 		if (!aiInterface->checkCosts(upgt->getUpgradeType())) {
-			AI_LOG( RESEARCH, 3, "AiRuleUpgrade::upgradeSpecific: can't afford upgrade " 
+			AI_LOG( RESEARCH, 3, "AiRuleUpgrade::upgradeSpecific: can't afford upgrade "
 				<< upgt->getUpgradeType()->getName() << ", re-posting" );
 			ai->retryTask(upgt);
 			return;
@@ -1091,7 +1091,7 @@ bool AiRuleExpand::test() {
 				for (int j=0; j < aiInterface->getMyUnitCount(); ++j) { // foreach unit
 					const Unit *u = aiInterface->getMyUnit(j);
 					const UnitType *ut = aiInterface->getMyUnit(j)->getType();
-					if (ut->getStore(rt, ai->getAiInterface()->getFaction()) > 0) { // store ?
+					if (ut->getResourceProductionSystem().getStore(rt, ai->getAiInterface()->getFaction()) > 0) { // store ?
 						storeType = ut;
 						int distance = static_cast<int>(u->getPos().dist(expandPos));
 						if (distance < minDistance) {

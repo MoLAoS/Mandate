@@ -202,7 +202,7 @@ void DebugRenderer::init() {
 	gtCallback.loadTextures();
 
 	if (resourceMapOverlay) {
-		string str("gold");
+		string str("wealth");
 		rmOverlay.rt = findResourceMapRes(str);
 	}
 }

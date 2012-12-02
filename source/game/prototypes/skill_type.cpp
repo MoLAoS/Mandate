@@ -55,7 +55,7 @@ SkillType::SkillType(const char* typeName)
 		, animationsStyle(AnimationsStyle::SINGLE)
 		, soundStartTime(0.f)
 		, typeName(typeName)
-		, m_unitType(0) {
+		, m_creatableType(0) {
 }
 
 SkillType::~SkillType(){
@@ -69,9 +69,10 @@ SkillType::~SkillType(){
 	delete splashParticleSystemType;
 }
 
-void SkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const UnitType *ut){
-	m_unitType = ut;
-	const FactionType *ft = ut->getFactionType();
+bool SkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const CreatableType *ct){
+    bool loadOk = true;
+	m_creatableType = ct;
+    const FactionType *ft = ct->getFactionType();
 	m_name = sn->getChildStringValue("name");
 	epCost = sn->getOptionalIntValue("ep-cost");
 	speed = sn->getChildIntValue("speed");
@@ -85,14 +86,14 @@ void SkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, c
 	const XmlAttribute *animPathAttrib = animNode->getAttribute("path", false);
 	if (animPathAttrib) { // single animation, lagacy style
 		string path = dir + "/" + animPathAttrib->getRestrictedValue();
-		animations.push_back(modelFactory.getModel(cleanPath(path), ut->getSize(), ut->getHeight()));
+		animations.push_back(modelFactory.getModel(cleanPath(path), ct->getSize(), ct->getHeight()));
 		animationsStyle = AnimationsStyle::SINGLE;
 	} else { // multi-anim or anim-by-surface-type, new style
 		for (int i=0; i < animNode->getChildCount(); ++i) {
 			XmlNodePtr node = animNode->getChild(i);
 			string path = node->getAttribute("path")->getRestrictedValue();
 			path = dir + "/" + path;
-			Model *model = modelFactory.getModel(cleanPath(path), ut->getSize(), ut->getHeight());
+			Model *model = modelFactory.getModel(cleanPath(path), ct->getSize(), ct->getHeight());
 			if (node->getName() == "anim-file") {
 				animations.push_back(model);
 			} else if (node->getName() == "surface") {
@@ -232,6 +233,7 @@ void SkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, c
 			splashParticleSystemType->load(dir,  dir + "/" + path);
 		}
 	}
+	return loadOk;
 }
 
 void SkillType::doChecksum(Checksum &checksum) const {
@@ -316,7 +318,11 @@ CycleInfo SkillType::calculateCycleTime() const {
 	}
 	if (skillFrames < 1) {
 		stringstream ss;
-		ss << "Error: UnitType '" << m_unitType->getName() << "', SkillType '" << getName()
+		string name;
+		if (m_creatableType != 0) {
+            name = m_creatableType->getName();
+		}
+		ss << "Error: CreatableType '" << name << "', SkillType '" << getName()
 			<< ", skill speed is too fast, cycle calculation clamped to one frame.";
 		g_logger.logError(ss.str());
 		skillFrames = 1;
@@ -329,13 +335,15 @@ CycleInfo SkillType::calculateCycleTime() const {
 // 	class MoveSkillType
 // =====================================================
 
-void MoveSkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const UnitType *ft) {
-	SkillType::load(sn, dir, tt, ft);
+bool MoveSkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const CreatableType *ct){
+    bool loadOk = true;
+	loadOk = SkillType::load(sn, dir, tt, ct);
 
 	XmlNode *visibleOnlyNode = sn->getOptionalChild("visible-only");
 	if (visibleOnlyNode) {
 		visibleOnly = visibleOnlyNode->getAttribute("value")->getBoolValue();
 	}
+	return loadOk;
 }
 
 fixed MoveSkillType::getSpeed(const Unit *unit) const {
@@ -354,9 +362,10 @@ TargetBasedSkillType::TargetBasedSkillType(const char* typeName)
 TargetBasedSkillType::~TargetBasedSkillType(){
 }
 
-void TargetBasedSkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const UnitType *ut){
-	SkillType::load(sn, dir, tt, ut);
-	const FactionType *ft = ut->getFactionType();
+bool TargetBasedSkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const CreatableType *ct){
+    bool loadOk = true;
+	SkillType::load(sn, dir, tt, ct);
+	const FactionType *ft = ct->getFactionType();
 
 	//fields
 	const XmlNode *attackFieldsNode = sn->getChild("attack-fields", 0, false);
@@ -368,6 +377,7 @@ void TargetBasedSkillType::load(const XmlNode *sn, const string &dir, const Tech
 		throw runtime_error("Must specify either <attack-fields> or <fields>.");
 	}
 	zones.load(fieldsNode ? fieldsNode : attackFieldsNode, dir, tt, ft);
+	return loadOk;
 }
 
 void TargetBasedSkillType::doChecksum(Checksum &checksum) const {
@@ -402,8 +412,9 @@ AttackSkillType::~AttackSkillType() {
 //	delete earthquakeType;
 }
 
-void AttackSkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const UnitType *ut){
-	TargetBasedSkillType::load(sn, dir, tt, ut);
+bool AttackSkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const CreatableType *ct){
+    bool loadOk = true;
+	loadOk = TargetBasedSkillType::load(sn, dir, tt, ct);
 
 	//misc
 	if (sn->getOptionalChild("attack-strenght")) { // support vanilla-glest typo
@@ -453,6 +464,7 @@ void AttackSkillType::load(const XmlNode *sn, const string &dir, const TechTree 
 		earthquakeType->load(earthquakeNode, dir, tt, ft);
 	}
 #endif
+    return loadOk;
 }
 
 void AttackSkillType::doChecksum(Checksum &checksum) const {
@@ -579,10 +591,12 @@ void DieSkillType::doChecksum(Checksum &checksum) const {
 	checksum.add<bool>(fade);
 }
 
-void DieSkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const UnitType *ut) {
-	SkillType::load(sn, dir, tt, ut);
+bool DieSkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const CreatableType *ct){
+    bool loadOk = true;
+	loadOk = SkillType::load(sn, dir, tt, ct);
 
 	fade= sn->getChild("fade")->getAttribute("value")->getBoolValue();
+	return loadOk;
 }
 
 // ===============================
@@ -597,10 +611,11 @@ RepairSkillType::RepairSkillType() : SkillType("Repair") {
 	selfOnly = false;
 }
 
-void RepairSkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const UnitType *ut) {
+bool RepairSkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const CreatableType *ct){
+    bool loadOk = true;
 	minRange = 1;
 	maxRange = 1;
-	SkillType::load(sn, dir, tt, ut);
+	loadOk = SkillType::load(sn, dir, tt, ct);
 
 	XmlNode *n;
 
@@ -640,6 +655,7 @@ void RepairSkillType::load(const XmlNode *sn, const string &dir, const TechTree 
 		splashParticleSystemType= new SplashType();
 		splashParticleSystemType->load(dir,  dir + "/" + path);
 	}
+	return loadOk;
 }
 
 void RepairSkillType::doChecksum(Checksum &checksum) const {
@@ -680,10 +696,11 @@ MaintainSkillType::MaintainSkillType() : SkillType("Maintain") {
 	selfOnly = false;
 }
 
-void MaintainSkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const UnitType *ut) {
+bool MaintainSkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const CreatableType *ct){
+    bool loadOk = true;
 	minRange = 1;
 	maxRange = 1;
-	SkillType::load(sn, dir, tt, ut);
+	loadOk = SkillType::load(sn, dir, tt, ct);
 
 	XmlNode *n;
 
@@ -723,6 +740,7 @@ void MaintainSkillType::load(const XmlNode *sn, const string &dir, const TechTre
 		splashParticleSystemType= new SplashType();
 		splashParticleSystemType->load(dir,  dir + "/" + path);
 	}
+	return loadOk;
 }
 
 void MaintainSkillType::doChecksum(Checksum &checksum) const {
@@ -760,14 +778,16 @@ ProduceSkillType::ProduceSkillType() : SkillType("Produce") {
 	maxPets = 0;
 }
 
-void ProduceSkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const UnitType *ut) {
-	SkillType::load(sn, dir, tt, ut);
+bool ProduceSkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const CreatableType *ct){
+    bool loadOk = true;
+	loadOk = SkillType::load(sn, dir, tt, ct);
 
 	XmlNode *petNode = sn->getChild("pet", 0, false);
 	if(petNode) {
 		pet = petNode->getAttribute("value")->getBoolValue();
 		maxPets = petNode->getAttribute("max")->getIntValue();
 	}
+	return loadOk;
 }
 
 void ProduceSkillType::doChecksum(Checksum &checksum) const {
@@ -803,8 +823,10 @@ fixed MorphSkillType::getSpeed(const Unit *unit) const {
 LoadSkillType::LoadSkillType() : SkillType("Load") {
 }
 
-void LoadSkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const UnitType *ut) {
-	SkillType::load(sn, dir, tt, ut);
+bool LoadSkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const CreatableType *ct){
+    bool loadOk = true;
+	loadOk = SkillType::load(sn, dir, tt, ct);
+	return loadOk;
 }
 
 void LoadSkillType::doChecksum(Checksum &checksum) const {
@@ -815,18 +837,22 @@ void LoadSkillType::doChecksum(Checksum &checksum) const {
 // 	class BeBuiltSkillType
 // =====================================================
 
-void BeBuiltSkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const UnitType *ft) {
-	SkillType::load(sn, dir, tt, ft);
+bool BeBuiltSkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const CreatableType *ct){
+    bool loadOk = true;
+	loadOk = SkillType::load(sn, dir, tt, ct);
 	m_stretchy = sn->getOptionalBoolValue("anim-stretch", false);
+	return loadOk;
 }
 
 // =====================================================
 // 	class BuildSelfSkillType
 // =====================================================
 
-void BuildSelfSkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const UnitType *ft) {
-	SkillType::load(sn, dir, tt, ft);
+bool BuildSelfSkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const CreatableType *ct){
+    bool loadOk = true;
+	loadOk = SkillType::load(sn, dir, tt, ct);
 	m_stretchy = sn->getOptionalBoolValue("anim-stretch", false);
+	return loadOk;
 }
 
 // =====================================================

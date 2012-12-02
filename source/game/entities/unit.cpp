@@ -150,6 +150,7 @@ Unit::Unit(CreateParams params)
 		, toBeUndertaken(false)
 		, carried(false)
 		, garrisoned(false)
+		, existing(false)
 		, m_cloaked(false)
 		, m_cloaking(false)
 		, m_deCloaking(false)
@@ -204,27 +205,27 @@ Unit::Unit(CreateParams params)
 
 	levelNumber = 1;
 
-	currentSteps.resize(type->getCreatedResourceCount());
+	currentSteps.resize(type->getResourceProductionSystem().getCreatedResourceCount());
 	for (int i = 0; i < currentSteps.size(); ++i) {
 	currentSteps[i].currentStep = 0;
 	}
 
-	currentProcessSteps.resize(type->getProcessCount());
+	currentProcessSteps.resize(type->getProcessProductionSystem().getProcessCount());
 	for (int i = 0; i < currentProcessSteps.size(); ++i) {
 	currentProcessSteps[i].currentStep = 0;
 	}
 
-	currentUnitSteps.resize(type->getCreatedUnitCount());
+	currentUnitSteps.resize(type->getUnitProductionSystem().getCreatedUnitCount());
 	for (int i = 0; i < currentUnitSteps.size(); ++i) {
 	currentUnitSteps[i].currentStep = 0;
 	}
 
-	currentItemSteps.resize(type->getCreatedItemCount());
+	currentItemSteps.resize(type->getItemProductionSystem().getCreatedItemCount());
 	for (int i = 0; i < currentItemSteps.size(); ++i) {
 	currentItemSteps[i].currentStep = 0;
 	}
 
-	currentOwnedSteps.resize(type->ownedUnits.size());
+	currentOwnedSteps.resize(type->getOwnedUnits().size());
 	for (int i = 0; i < currentOwnedSteps.size(); ++i) {
 	currentOwnedSteps[i].currentStep = 0;
 	}
@@ -237,32 +238,32 @@ Unit::Unit(CreateParams params)
 	currentAiUpdate.resize(1);
 	currentAiUpdate[0].currentStep = 0;
 
-    ownedUnits.resize(type->ownedUnits.size());
+    ownedUnits.resize(type->getOwnedUnits().size());
     for(int i = 0; i<ownedUnits.size(); ++i){
-        const UnitType *type = getType()->ownedUnits[i].getType();
-        int limit = getType()->ownedUnits[i].getLimit();
+        const UnitType *type = getType()->getOwnedUnits()[i].getType();
+        int limit = getType()->getOwnedUnits()[i].getLimit();
         ownedUnits[i].init(type, 0, limit);
     }
 
     owner = this;
 
-    resistances.resize(getType()->resistances.size());
-    for (int i = 0; i < getType()->resistances.size(); ++i) {
-        resistances[i] = getType()->resistances[i];
+    resistances.resize(getType()->getResistances().size());
+    for (int i = 0; i < getType()->getResistances().size(); ++i) {
+        resistances[i] = getType()->getResistances()[i];
     }
 
-    itemLimit = getType()->itemLimit;
+    itemLimit = getType()->getItemLimit();
     itemsStored = 0;
 
-    equipment.resize(getType()->equipment.size());
-    for (int i = 0; i < getType()->equipment.size(); ++i) {
-        string nameTag = getType()->equipment[i].getTypeTag();
+    equipment.resize(getType()->getEquipment().size());
+    for (int i = 0; i < getType()->getEquipment().size(); ++i) {
+        string nameTag = getType()->getEquipment()[i].getTypeTag();
         equipment[i].init(1, 0, nameTag, nameTag);
     }
 
-    sresources.resize(getType()->getStoredResourceCount());
-    for (int i = 0; i < getType()->getStoredResourceCount(); ++i) {
-        const ResourceType *rt = getType()->getStoredResource(i, getFaction()).getType();
+    sresources.resize(getType()->getResourceProductionSystem().getStoredResourceCount());
+    for (int i = 0; i < getType()->getResourceProductionSystem().getStoredResourceCount(); ++i) {
+        const ResourceType *rt = getType()->getResourceProductionSystem().getStoredResource(i, getFaction()).getType();
         sresources[i].init(rt, 0);
     }
 
@@ -272,13 +273,13 @@ Unit::Unit(CreateParams params)
 	field = getType()->getField();
 	zone = getType()->getZone();
 
-	if (getType()->isMage == true) {
+	if (getType()->getIsMage() == true) {
 	}
 
-	if (getType()->isLeader == true) {
+	if (getType()->getIsLeader() == true) {
 	}
 
-	if (getType()->isHero == true) {
+	if (getType()->getIsHero() == true) {
 	}
 
 }
@@ -591,7 +592,7 @@ bool Unit::applyCosts(const ProducibleType *p) {
 			if (multiply.intp() != 1) {
                 cost = (cost * multiply).intp();
 			}
-			if (rt->getName() == "gold") {
+			if (rt->getName() == "wealth") {
                 int untaxedGold = getSResource(rt)->getAmount() - taxedGold;
                 if (cost > untaxedGold) {
                     taxedGold = taxedGold - (cost - untaxedGold);
@@ -655,8 +656,8 @@ void Unit::addStore(const ResourceType *rt, int amount) {
 }
 
 void Unit::addStore(const UnitType *unitType) {
-	for (int i = 0; i < unitType->getStoredResourceCount(); ++i) {
-		ResourceAmount r = unitType->getStoredResource(i, getFaction());
+	for (int i = 0; i < unitType->getResourceProductionSystem().getStoredResourceCount(); ++i) {
+		ResourceAmount r = unitType->getResourceProductionSystem().getStoredResource(i, getFaction());
 		for (int j = 0; j < sresources.size(); ++j) {
 			if (sresources[j].getType() == r.getType()) {
 				sresources[j].setStorage(sresources[j].getStorage() + r.getAmount());
@@ -802,7 +803,7 @@ bool Unit::isInteresting(InterestingUnitType iut) const{
 		case InterestingUnitType::DAMAGED:
 			return isDamaged();
 		case InterestingUnitType::STORE:
-			return type->getStoredResourceCount() > 0;
+			return type->getResourceProductionSystem().getStoredResourceCount() > 0;
 		default:
 			return false;
 	}
@@ -1485,6 +1486,10 @@ void Unit::born(bool reborn) {
 	if (reborn && (!isAlive() || !isBuilt())) {
 		return;
 	}
+	if (isExisting()) {
+        return;
+	}
+	existing = true;
 	if (type->getCloakClass() == CloakClass::PERMANENT && faction->reqsOk(type->getCloakType())) {
 		cloak();
 	}
@@ -1499,10 +1504,10 @@ void Unit::born(bool reborn) {
 	if (!reborn) {
 		faction->addStore(type);
 		addStore(type);
-        for (int i = 0; i < type->starterResources.size(); ++i) {
-            ResourceAmount ra = type->starterResources[i];
+        for (int i = 0; i < type->getResourceProductionSystem().getStarterResources().size(); ++i) {
+            ResourceAmount ra = type->getResourceProductionSystem().getStarterResources()[i];
             incResourceAmount(ra.getType(), ra.getAmount());
-            if (ra.getType()->getName() == "gold") {
+            if (ra.getType()->getName() == "wealth") {
                 taxedGold = ra.getAmount();
             }
         }
@@ -1517,9 +1522,9 @@ void Unit::born(bool reborn) {
 		    cp = -1;
 		}
 
-        for (int i = 0; i < type->starterItems.size(); ++i) {
+        for (int i = 0; i < type->getStarterItems().size(); ++i) {
             Item item;
-            const ItemType *prodType = faction->getType()->getItemType(type->starterItems[i]);
+            const ItemType *prodType = faction->getType()->getItemType(type->getStarterItems()[i]);
             item.init(faction->items.size(), prodType, faction);
             faction->items.push_back(item);
             accessStorageAdd(faction->items.size()-1);
@@ -1581,7 +1586,7 @@ void Unit::kill() {
                 attackCount = attackCount + 1;
             }
 	    }
-        const ResourceType *rt = g_world.getTechTree()->getResourceType("gold");
+        const ResourceType *rt = g_world.getTechTree()->getResourceType("wealth");
         int goldPossible = getSResource(rt)->getAmount();
         for (int i = 0; i < attackers.size(); ++i) {
             if (attackers[i].getUnit()->getType()->hasTag("ordermember")) {
@@ -2268,7 +2273,7 @@ void Unit::accessStorageRemove(int ident) {
 }
 
 void Unit::accessStorageExchange(Unit *storage) {
-    Storage gear = getType()->equipment;
+    Storage gear = getType()->getEquipment();
     StoredItems armory = getStoredItems();
     for (int i = 0; i < armory.size(); ++i) {
         for (int l = 0; l < gear.size(); ++l) {
@@ -2283,7 +2288,7 @@ void Unit::accessStorageExchange(Unit *storage) {
 
 void Unit::equipItem(int ident) {
     Item *item = getStoredItem(ident);
-    for (int i = 0; i < getType()->equipment.size(); ++i) {
+    for (int i = 0; i < getType()->getEquipment().size(); ++i) {
         if (item->getType()->getTypeTag() == equipment[i].getTypeTag()) {
             if (equipment[i].getCurrent() == 0) {
                 equipment[i].setCurrent(1);
@@ -2309,7 +2314,7 @@ void Unit::equipItem(int ident) {
 
 void Unit::unequipItem(int ident) {
     Item *item = getEquippedItem(ident);
-    for (int j = 0; j < getType()->equipment.size(); ++j) {
+    for (int j = 0; j < getType()->getEquipment().size(); ++j) {
         if (item->getType()->getName() == equipment[j].getName()) {
             if (equipment[j].getCurrent() == 1) {
                 equipment[j].setCurrent(-1);
@@ -2328,6 +2333,29 @@ void Unit::unequipItem(int ident) {
                 }
                 break;
             }
+        }
+    }
+    computeTotalUpgrade();
+}
+
+void Unit::consumeItem(int ident) {
+    Item *item = getStoredItem(ident);
+    for (int j = 0; j < storedItems.size(); ++j) {
+        if (storedItems[j] == item->id) {
+            storedItems.erase(storedItems.begin()+j);
+            for (int l = 0; l < storage.size(); ++l) {
+                if (storage[l].getName() == item->getType()->getName()) {
+                    storage[l].setCurrent(-1);
+                    setItemsStored(-1);
+                    break;
+                }
+            }
+        }
+    }
+    if (item->getType()->getTypeTag() == "consumable-buff") {
+        for (int i = 0; i < item->getType()->effectTypes.size(); ++i) {
+            EffectType *ef = item->getType()->effectTypes[i];
+            effectTypes.push_back(ef);
         }
     }
     computeTotalUpgrade();
@@ -2790,22 +2818,22 @@ bool Unit::decHp(int i) {
 string Unit::getShortDesc() const {
 	stringstream ss;
 	ss << g_lang.get("Hp") << ": " << hp << "/" << getMaxHp();
-	if (getHpRegeneration()) {
+	if (getHpRegeneration() > 0) {
 		ss << " (" << g_lang.get("Regeneration") << ": " << getHpRegeneration() << ")";
 	}
-    if (getMaxSp()) {
+    if (getMaxSp() > 0) {
     ss << endl << g_lang.get("Sp") << ": " << sp << "/" << getMaxSp();
-	    if (getSpRegeneration()) {
+	    if (getSpRegeneration() > 0) {
         ss << " (" << g_lang.get("Regeneration") << ": " << getSpRegeneration() << ")";
         }
 	}
-	if (getMaxEp()) {
+	if (getMaxEp() > 0) {
     ss << endl << g_lang.get("Ep") << ": " << ep << "/" << getMaxEp();
-		if (getEpRegeneration()) {
+		if (getEpRegeneration() > 0) {
         ss << " (" << g_lang.get("Regeneration") << ": " << getEpRegeneration() << ")";
 		}
 	}
-    if (getMaxCp()) {
+    if (getMaxCp() > 0) {
 		ss << endl << g_lang.get("Cp") << ": " << cp << "/" << getMaxCp();
 	}
 	if (!commands.empty()) { // Show current command being executed
@@ -2831,11 +2859,17 @@ string Unit::getShortDesc() const {
 	    ss << endl << "Designation: " << levelName;
         ss << endl << "Level: " << levelNumber;
 	}
-	if (type->hasTag("orderhouse")) {
-        ss << endl << "Total Gold: " << getSResource(g_world.getTechTree()->getResourceType("gold"))->getAmount();
+	if (type->hasTag("orderhouse") || type->hasTag("ordermember")) {
+        ss << endl << "Total Gold: " << getSResource(g_world.getTechTree()->getResourceType("wealth"))->getAmount();
         ss << endl << "Taxed Gold: " << taxedGold;
         ss << endl << "Tax Rate: " << taxRate;
-        ss << endl << "Open Space: " << getSResource(g_world.getTechTree()->getResourceType("space"))->getAmount();
+        if (type->hasTag("orderhouse")) {
+            ss << endl << "Open Space: " << getSResource(g_world.getTechTree()->getResourceType("space"))->getAmount();
+        }
+        if (type->hasTag("ordermember")) {
+            ss << endl << "Focus: " << currentFocus;
+            ss << endl << "Task: " << goalReason;
+        }
 	}
 	return ss.str();
 }
@@ -2846,10 +2880,214 @@ string Unit::getLongDesc() const {
 	string shortDesc = getShortDesc();
 	stringstream ss;
 
+    if (type->hasTag("ordermember") || type->hasTag("orderhouse")) {
+    ss << endl << "Taxed Gold: " << taxedGold;
+    }
+    if (type->hasTag("ordermember") || type->hasTag("orderhouse")) {
+    ss << endl << "Tax Rate: " << taxRate;
+    }
+	if (goalStructure != NULL) {
+	ss << endl << "Reason: " << getGoalReason();
+	}
+        ss << endl << "Stored Items: " << itemsStored << "/" << itemLimit;
+    if (type->getModifications().size() > 0) {
+        for (int i = 0; i < type->getModifications().size(); ++i) {
+            ss << endl << "Unit: " << type->getModifications()[i].getModificationName();
+            ss << endl << "Produced: " << type->getModifications()[i].getEquipment().size();
+            for (int j = 0; j < type->getModifications()[i].getEquipment().size(); ++j) {
+                ss << endl << "Equipment: " << type->getModifications()[i].getEquipment()[j];
+            }
+        }
+    }
+	const string factionName = type->getFactionType()->getName();
+	int sightBonus = getSight() - type->getSight();
+	if (resistances.size() > 0) {
+	ss << endl << lang.get("Resistances") << ":";
+	for (int i = 0; i < resistances.size(); ++i) {
+	ss << endl << lang.get(resistances[i].getTypeName()) << ": ";
+	ss << resistances[i].getValue();
+	}
+	ss << endl;
+	}
+	int expGivenBonus = getExpGiven() - type->getExpGiven();
+	ss << endl << lang.get("ExpGiven") << ": " << type->getExpGiven();
+	if (expGivenBonus) {
+		ss << (expGivenBonus > 0 ? " +" : " ") << expGivenBonus;
+	}
+	if (getType()->personality != "") {
+	ss << endl << getType()->personality;
+	for (int i = 0; i < getFaction()->getMandateAiSim().getPersonalities().size(); ++i) {
+        if (getFaction()->getMandateAiSim().getPersonality(i).getPersonalityName() == getType()->personality) {
+            ss << endl << "Found: " << getFaction()->getMandateAiSim().getPersonality(i).getPersonalityName();
+        }
+	}
+	ss << endl << "Current Focus: " << getCurrentFocus();
+	}
+	ss << endl << lang.get("Sight") << ": " << type->getSight();
+	if (sightBonus) {
+		ss << (sightBonus > 0 ? " +" : " ") << sightBonus;
+	}
+    ss << endl << lang.get("Exp") << ": " << exp;
+
+    if (type->getLevelCount() > 0) {
+        for (int i = 0; i < type->getLevelCount(); ++i) {
+            ss << endl << type->getLevel(i)->getName();
+            ss << endl << type->getLevel(i)->getEnLevel()->getMaxHp();
+        }
+    }
+    if (loadCount) {
+		string resName = lang.getTechString(loadType->getName());
+		if (resName == loadType->getName()) {
+			resName = formatString(resName);
+		}
+		ss << endl << lang.get("Load") << ": " << loadCount << "  " << resName;
+	}
+	for (int i = 0; i < type->getCostCount(); ++i) {
+		const ResourceAmount r = getType()->getCost(i, getFaction());
+		if (r.getType()->getClass() == ResourceClass::CONSUMABLE) {
+			string resName = lang.getTechString(r.getType()->getName());
+			if (resName == r.getType()->getName()) {
+				resName = formatString(resName);
+			}
+			ss << endl << (r.getAmount() < 0 ? lang.get("Produce") : lang.get("Consume"))
+				<< ": " << abs(r.getAmount()) << " " << resName;
+		}
+	}
+	if (type->getResourceProductionSystem().getStoredResourceCount() > 0) {
+		for (int i = 0; i < type->getResourceProductionSystem().getStoredResourceCount(); ++i) {
+			ResourceAmount r = type->getResourceProductionSystem().getStoredResource(i, getFaction());
+			string resName = lang.getTechString(r.getType()->getName());
+			if (resName == r.getType()->getName()) {
+				resName = formatString(resName);
+			}
+			ss << endl << lang.get("Store") << ": ";
+			ss << r.getAmount() << " " << resName;
+		}
+	}
+	if (type->getResourceProductionSystem().getCreatedResourceCount() > 0) {
+		for (int i = 0; i < type->getResourceProductionSystem().getCreatedResourceCount(); ++i) {
+			ResourceAmount r = type->getResourceProductionSystem().getCreatedResource(i, getFaction());
+			string resName = lang.getTechString(r.getType()->getName());
+			Timer tR = type->getResourceProductionSystem().getCreatedResourceTimer(i, getFaction());
+			int cStep = currentSteps[i].currentStep;
+			if (resName == r.getType()->getName()) {
+				resName = formatString(resName);
+			}
+			ss << endl << lang.get("Create") << ": ";
+			ss << r.getAmount() << " " << resName << " " << lang.get("Timer") << ": " << cStep << "/" << tR.getTimerValue();
+		}
+	}
+    if (type->getProcessProductionSystem().getProcessCount() > 0) {
+		for (int i = 0; i < type->getProcessProductionSystem().getProcessCount(); ++i) {
+        ss << endl << lang.get("Process") << ": ";
+        Timer tR = type->getProcessProductionSystem().getProcessTimer(i, getFaction());
+        int cStep = currentProcessSteps[i].currentStep;
+        ss << endl << lang.get("Timer") << ": " << cStep << "/" << tR.getTimerValue();
+        string scope;
+        if (type->getProcessProductionSystem().getProcesses()[i].local == true) {
+        scope = lang.get("local");
+        } else {
+        scope = lang.get("faction");
+        }
+        ss << endl << lang.get("Scope") << ": " << scope;
+        ss << endl << lang.get("Costs") << ": ";
+            for (int c = 0; c < type->getProcessProductionSystem().getProcesses()[i].costs.size(); ++c) {
+            const ResourceType *costsRT = type->getProcessProductionSystem().getProcesses()[i].costs[c].getType();
+            string resName = lang.getTechString(costsRT->getName());
+            if (resName == costsRT->getName()) {
+            resName = formatString(resName);
+			}
+        ss << endl << type->getProcessProductionSystem().getProcesses()[i].costs[c].getAmount() << " " << resName;
+            }
+        ss << endl << lang.get("Products") << ": ";
+            for (int p = 0; p < type->getProcessProductionSystem().getProcesses()[i].products.size(); ++p) {
+            const ResourceType *productsRT = type->getProcessProductionSystem().getProcesses()[i].products[p].getType();
+            string resName = lang.getTechString(productsRT->getName());
+            if (resName == productsRT->getName()) {
+            resName = formatString(resName);
+			}
+        ss << endl << type->getProcessProductionSystem().getProcesses()[i].products[p].getAmount() << " " << resName;
+            }
+        ss << endl << lang.get("Items") << ": ";
+            for (int t = 0; t < type->getProcessProductionSystem().getProcesses()[i].items.size(); ++t) {
+            const ItemType *itemsIT = type->getProcessProductionSystem().getProcesses()[i].items[t].getType();
+            string itemName = lang.getTechString(itemsIT->getName());
+            if (itemName == itemsIT->getName()) {
+            itemName = formatString(itemName);
+			}
+        ss << endl << type->getProcessProductionSystem().getProcesses()[i].items[t].getAmount() << " " << itemName;
+            }
+		}
+	}
+	if (type->getResourceProductionSystem().getStoredResourceCount() > 0) {
+    ss << endl << lang.get("Storage") << ": ";
+		for (int i = 0; i < type->getResourceProductionSystem().getStoredResourceCount(); ++i) {
+        ResourceAmount r = type->getResourceProductionSystem().getStoredResource(i, getFaction());
+        const StoredResource *res = getSResource(i);
+        string resName = lang.getTechString(r.getType()->getName());
+			if (resName == r.getType()->getName()) {
+            resName = formatString(resName);
+			}
+        ss << endl << lang.get("Stored") << ": ";
+        ss << res->getAmount() << "/" << r.getAmount() << " " << resName;
+		}
+	}
+	if (type->getUnitProductionSystem().getCreatedUnitCount() > 0) {
+		for (int i = 0; i < type->getUnitProductionSystem().getCreatedUnitCount(); ++i) {
+			CreatedUnit u = type->getUnitProductionSystem().getCreatedUnit(i, getFaction());
+			string unitName = lang.getTechString(u.getType()->getName());
+			Timer tR = type->getUnitProductionSystem().getCreatedUnitTimer(i, getFaction());
+			int cUStep = currentUnitSteps[i].currentStep;
+			if (unitName == u.getType()->getName()) {
+				unitName = formatString(unitName);
+			}
+			ss << endl << lang.get("Create") << ": ";
+			ss << u.getAmount() << " " << unitName << "s " <<lang.get("Timer") << ": " << cUStep << "/" << tR.getTimerValue();
+		}
+	}
+	if (type->getItemProductionSystem().getCreatedItemCount() > 0) {
+		for (int i = 0; i < type->getItemProductionSystem().getCreatedItemCount(); ++i) {
+			CreatedItem item = type->getItemProductionSystem().getCreatedItem(i, getFaction());
+			string itemName = lang.getTechString(item.getType()->getName());
+			Timer tR = type->getItemProductionSystem().getCreatedItemTimer(i, getFaction());
+			int cIStep = currentItemSteps[i].currentStep;
+			if (itemName == item.getType()->getName()) {
+				itemName = formatString(itemName);
+			}
+			ss << endl << lang.get("Create") << ": ";
+			ss << item.getAmount() << " " << itemName << "s " <<lang.get("Timer") << ": " << cIStep << "/" << tR.getTimerValue();
+		}
+	}
+	if (ownedUnits.size() > 0) {
+		for (int i = 0; i < ownedUnits.size(); ++i) {
+			UnitsOwned uo = ownedUnits[i];
+			const UnitType *uot = uo.getType();
+			string unitName = lang.getTechString(uot->getName());
+			int owned = uo.getOwned();
+			int limit = uo.getLimit();
+			if (unitName == uo.getType()->getName()) {
+				unitName = formatString(unitName);
+			}
+			ss << endl << lang.get("Owned") << ": ";
+			ss << endl << unitName << ": " << uo.getOwned() << "/" << uo.getLimit();
+		}
+	}
+	if (type->getLoadBonuses().size() > 0) {
+		for (int i = 0; i < type->getLoadBonuses().size(); ++i) {
+			const LoadBonus lb = type->getLoadBonuses()[i];
+			ss << endl << "Load Bonus: " << "Max-Hp: " << lb.getMaxHp();
+			ss << endl << "Source: " << lb.getSource();
+		}
+	}
+	effects.streamDesc(ss);
+    /*ss << endl << "Live %: " << type->live;
+    if (getType()->hasTag("ordermember")) {
+    ss << endl << "ordermember";
+    ss << endl<< fixed(getMaxHp() * type->live / 100).intp();
+    }
     if (type->inhuman == true) {
     ss << endl << "Control: " << "inhuman";
     }
-
     if (getType()->hasTag("building")) {
     ss << endl << "Tags:";
     ss << endl << "building";
@@ -2865,47 +3103,21 @@ string Unit::getLongDesc() const {
 	}
 	if (goalStructure != NULL) {
 	ss << endl << "TargetID: " << goalStructure->getId();
-	}
-	if (goalStructure != NULL) {
-	ss << endl << "Reason: " << getGoalReason();
-	}
-
-	ss << endl << "Direction: " << previousDirection;
-
-    if (type->hasTag("member") || type->hasTag("orderhouse")) {
-    ss << endl << "Taxed Gold: " << taxedGold;
-    }
-    if (type->hasTag("member") || type->hasTag("orderhouse")) {
-    ss << endl << "Tax Rate: " << taxRate;
-    }
-    for (int i = 0; i < type->starterResources.size(); ++i) {
-    ss << endl << type->starterResources[i].getType()->getName() << ": " << type->starterResources[i].getAmount();
-    }
-    ss << endl << "Stored Items: " << itemsStored << "/" << itemLimit;
-    ss << endl << "Equipped Items: " << getEquippedItems().size();
-
-    if (type->modifications.size() > 0) {
-        for (int i = 0; i < type->modifications.size(); ++i) {
-            ss << endl << "Unit: " << type->modifications[i].getModificationName();
-            ss << endl << "Produced: " << type->modifications[i].getEquipment().size();
-            for (int j = 0; j < type->modifications[i].getEquipment().size(); ++j) {
-                ss << endl << "Equipment: " << type->modifications[i].getEquipment()[j];
-            }
-        }
-    }
-    ss << endl << "Modification Count: " << modifications.size();
+	}*/
+	//ss << endl << "Direction: " << previousDirection;
+    //for (int i = 0; i < type->starterResources.size(); ++i) {
+    //ss << endl << type->starterResources[i].getType()->getName() << ": " << type->starterResources[i].getAmount();
+    //}
+    //ss << endl << "Equipped Items: " << getEquippedItems().size();
+    /*ss << endl << "Modification Count: " << modifications.size();
     if (modifications.size() > 0) {
         for (int i = 0; i < modifications.size(); ++i) {
             ss << endl << "Bought: " << modifications[i].getModificationName();
         }
-    }
-	const string factionName = type->getFactionType()->getName();
-	int armorBonus = getArmor() - type->getArmor();
-	int sightBonus = getSight() - type->getSight();
-	int expGivenBonus = getExpGiven() - type->getExpGiven();
-
+    }*/
+	//int armorBonus = getArmor() - type->getArmor();
 	// armor
-	ss << endl << lang.get("Armor") << ": " << type->getArmor();
+	/*ss << endl << lang.get("Armor") << ": " << type->getArmor();
 	if (armorBonus) {
 		ss << (armorBonus > 0 ? " +" : " ") << armorBonus;
 	}
@@ -2913,41 +3125,10 @@ string Unit::getLongDesc() const {
 	if (armourName == type->getArmourType()->getName()) {
 		armourName = formatString(armourName);
 	}
-	ss << " (" << armourName << ")";
-
-	if (resistances.size() > 0) {
-	ss << endl << lang.get("Resistances") << ":";
-	for (int i = 0; i < resistances.size(); ++i) {
-	ss << endl << lang.get(resistances[i].getTypeName()) << ": ";
-	ss << resistances[i].getValue();
-	}
-	ss << endl;
-	}
-
+	ss << " (" << armourName << ")";*/
 	// exp given
-	ss << endl << lang.get("ExpGiven") << ": " << type->getExpGiven();
-	if (expGivenBonus) {
-		ss << (expGivenBonus > 0 ? " +" : " ") << expGivenBonus;
-	}
-
-	//personality check
-	if (getType()->personality != "") {
-	ss << endl << getType()->personality;
-	for (int i = 0; i < getFaction()->getMandateAiSim().getPersonalities().size(); ++i) {
-        if (getFaction()->getMandateAiSim().getPersonality(i).getPersonalityName() == getType()->personality) {
-            ss << endl << "Found: " << getFaction()->getMandateAiSim().getPersonality(i).getPersonalityName();
-        }
-	}
-	ss << endl << "Current Focus: " << getCurrentFocus();
-	}
-
-	// sight
-	ss << endl << lang.get("Sight") << ": " << type->getSight();
-	if (sightBonus) {
-		ss << (sightBonus > 0 ? " +" : " ") << sightBonus;
-	}
 	// cloaked ?
-	if (isCloaked()) {
+	/*if (isCloaked()) {
 		string gRes, res;
 		string group = world.getCloakGroupName(type->getCloakType()->getCloakGroup());
 		if (!lang.lookUp(group, factionName, gRes)) {
@@ -2955,9 +3136,9 @@ string Unit::getLongDesc() const {
 		}
 		lang.lookUp("Cloak", factionName, gRes, res);
 		ss << endl << res;
-	}
+	}*/
 	// detector ?
-	if (type->isDetector()) {
+	/*if (type->isDetector()) {
 		string gRes, res;
 		const DetectorType *dt = type->getDetectorType();
 		if (dt->getGroupCount() == 1) {
@@ -2979,179 +3160,7 @@ string Unit::getLongDesc() const {
 			lang.lookUp("MultiDetector", factionName, list, res);
 		}
 		ss << endl << res;
-	}
-
-    ss << endl << lang.get("Exp") << ": " << exp;
-
-    if (type->getLevelCount() > 0) {
-        for (int i = 0; i < type->getLevelCount(); ++i) {
-            ss << endl << type->getLevel(i)->getName();
-            ss << endl << type->getLevel(i)->getEnLevel()->getMaxHp();
-        }
-    }
-
-	// resource load
-    if (loadCount) {
-		string resName = lang.getTechString(loadType->getName());
-		if (resName == loadType->getName()) {
-			resName = formatString(resName);
-		}
-		ss << endl << lang.get("Load") << ": " << loadCount << "  " << resName;
-	}
-
-	// consumable production
-	for (int i = 0; i < type->getCostCount(); ++i) {
-		const ResourceAmount r = getType()->getCost(i, getFaction());
-		if (r.getType()->getClass() == ResourceClass::CONSUMABLE) {
-			string resName = lang.getTechString(r.getType()->getName());
-			if (resName == r.getType()->getName()) {
-				resName = formatString(resName);
-			}
-			ss << endl << (r.getAmount() < 0 ? lang.get("Produce") : lang.get("Consume"))
-				<< ": " << abs(r.getAmount()) << " " << resName;
-		}
-	}
-	// can store
-	if (type->getStoredResourceCount() > 0) {
-		for (int i = 0; i < type->getStoredResourceCount(); ++i) {
-			ResourceAmount r = type->getStoredResource(i, getFaction());
-			string resName = lang.getTechString(r.getType()->getName());
-			if (resName == r.getType()->getName()) {
-				resName = formatString(resName);
-			}
-			ss << endl << lang.get("Store") << ": ";
-			ss << r.getAmount() << " " << resName;
-		}
-	}
-	// can create resources
-	if (type->getCreatedResourceCount() > 0) {
-		for (int i = 0; i < type->getCreatedResourceCount(); ++i) {
-			ResourceAmount r = type->getCreatedResource(i, getFaction());
-			string resName = lang.getTechString(r.getType()->getName());
-			Timer tR = type->getCreatedResourceTimer(i, getFaction());
-			int cStep = currentSteps[i].currentStep;
-			if (resName == r.getType()->getName()) {
-				resName = formatString(resName);
-			}
-			ss << endl << lang.get("Create") << ": ";
-			ss << r.getAmount() << " " << resName << " " << lang.get("Timer") << ": " << cStep << "/" << tR.getTimerValue();
-		}
-	}
-
-	// can process
-    if (type->getProcessCount() > 0) {
-		for (int i = 0; i < type->getProcessCount(); ++i) {
-        ss << endl << lang.get("Process") << ": ";
-        Timer tR = type->getProcessTimer(i, getFaction());
-        int cStep = currentProcessSteps[i].currentStep;
-        ss << endl << lang.get("Timer") << ": " << cStep << "/" << tR.getTimerValue();
-        string scope;
-        if (type->processes[i].local == true) {
-        scope = lang.get("local");
-        } else {
-        scope = lang.get("faction");
-        }
-        ss << endl << lang.get("Scope") << ": " << scope;
-        ss << endl << lang.get("Costs") << ": ";
-            for (int c = 0; c < type->processes[i].costs.size(); ++c) {
-            const ResourceType *costsRT = type->processes[i].costs[c].getType();
-            string resName = lang.getTechString(costsRT->getName());
-            if (resName == costsRT->getName()) {
-            resName = formatString(resName);
-			}
-        ss << endl << type->processes[i].costs[c].getAmount() << " " << resName;
-            }
-        ss << endl << lang.get("Products") << ": ";
-            for (int p = 0; p < type->processes[i].products.size(); ++p) {
-            const ResourceType *productsRT = type->processes[i].products[p].getType();
-            string resName = lang.getTechString(productsRT->getName());
-            if (resName == productsRT->getName()) {
-            resName = formatString(resName);
-			}
-        ss << endl << type->processes[i].products[p].getAmount() << " " << resName;
-            }
-        ss << endl << lang.get("Items") << ": ";
-            for (int t = 0; t < type->processes[i].items.size(); ++t) {
-            const ItemType *itemsIT = type->processes[i].items[t].getType();
-            string itemName = lang.getTechString(itemsIT->getName());
-            if (itemName == itemsIT->getName()) {
-            itemName = formatString(itemName);
-			}
-        ss << endl << type->processes[i].items[t].getAmount() << " " << itemName;
-            }
-		}
-	}
-
-	if (type->getStoredResourceCount() > 0) {
-    ss << endl << lang.get("Storage") << ": ";
-		for (int i = 0; i < type->getStoredResourceCount(); ++i) {
-        ResourceAmount r = type->getStoredResource(i, getFaction());
-        const StoredResource *res = getSResource(i);
-        string resName = lang.getTechString(r.getType()->getName());
-			if (resName == r.getType()->getName()) {
-            resName = formatString(resName);
-			}
-        ss << endl << lang.get("Stored") << ": ";
-        ss << res->getAmount() << "/" << r.getAmount() << " " << resName;
-		}
-	}
-
-	// can create units
-	if (type->getCreatedUnitCount() > 0) {
-		for (int i = 0; i < type->getCreatedUnitCount(); ++i) {
-			CreatedUnit u = type->getCreatedUnit(i, getFaction());
-			string unitName = lang.getTechString(u.getType()->getName());
-			Timer tR = type->getCreatedUnitTimer(i, getFaction());
-			int cUStep = currentUnitSteps[i].currentStep;
-			if (unitName == u.getType()->getName()) {
-				unitName = formatString(unitName);
-			}
-			ss << endl << lang.get("Create") << ": ";
-			ss << u.getAmount() << " " << unitName << "s " <<lang.get("Timer") << ": " << cUStep << "/" << tR.getTimerValue();
-		}
-	}
-
-	// can create items
-	if (type->getCreatedItemCount() > 0) {
-		for (int i = 0; i < type->getCreatedItemCount(); ++i) {
-			CreatedItem item = type->getCreatedItem(i, getFaction());
-			string itemName = lang.getTechString(item.getType()->getName());
-			Timer tR = type->getCreatedItemTimer(i, getFaction());
-			int cIStep = currentItemSteps[i].currentStep;
-			if (itemName == item.getType()->getName()) {
-				itemName = formatString(itemName);
-			}
-			ss << endl << lang.get("Create") << ": ";
-			ss << item.getAmount() << " " << itemName << "s " <<lang.get("Timer") << ": " << cIStep << "/" << tR.getTimerValue();
-		}
-	}
-
-	if (ownedUnits.size() > 0) {
-		for (int i = 0; i < ownedUnits.size(); ++i) {
-			UnitsOwned uo = ownedUnits[i];
-			const UnitType *uot = uo.getType();
-			string unitName = lang.getTechString(uot->getName());
-			int owned = uo.getOwned();
-			int limit = uo.getLimit();
-			if (unitName == uo.getType()->getName()) {
-				unitName = formatString(unitName);
-			}
-			ss << endl << lang.get("Owned") << ": ";
-			ss << endl << unitName << ": " << uo.getOwned() << "/" << uo.getLimit();
-		}
-	}
-
-	if (type->loadBonuses.size() > 0) {
-		for (int i = 0; i < type->loadBonuses.size(); ++i) {
-			const LoadBonus lb = type->loadBonuses[i];
-			ss << endl << "Load Bonus: " << "Max-Hp: " << lb.m_enhancement.m_enhancement.getMaxHp();
-			ss << endl << "Source: " << lb.getSource();
-		}
-	}
-
-	// effects
-	effects.streamDesc(ss);
-
+	}*/
 	return (shortDesc + ss.str());
 }
 
@@ -3193,10 +3202,10 @@ void Unit::computeTotalUpgrade() {
 	    const EnhancementType *et = static_cast<const EnhancementType*>(getEquippedItem(i)->getType());
         totalUpgrade.sum(et);
 	}
-    for (int i = 0; i < type->ownedUnits.size(); ++i) {
-        int limit = type->ownedUnits[i].getLimit();
+    for (int i = 0; i < type->getOwnedUnits().size(); ++i) {
+        int limit = type->getOwnedUnits()[i].getLimit();
         for (int j = 0; j < ownedUnits.size(); ++j) {
-            if (type->ownedUnits[i].getType() == ownedUnits[j].getType()) {
+            if (type->getOwnedUnits()[i].getType() == ownedUnits[j].getType()) {
                 ownedUnits[j].setLimit(limit);
             }
         }
@@ -3204,8 +3213,8 @@ void Unit::computeTotalUpgrade() {
 
     for (int i = 0; i < getEquippedItems().size(); ++i) {
         const ItemType *iType = getEquippedItem(i)->getType();
-        for (int j = 0; j < iType->ownedUnits.size(); ++j) {
-            UnitsOwned unitExpand = iType->ownedUnits[j];
+        for (int j = 0; j < iType->getOwnedUnits().size(); ++j) {
+            UnitsOwned unitExpand = iType->getOwnedUnits()[j];
             for (int k = 0; k < ownedUnits.size(); ++k) {
                 if (unitExpand.getType() == ownedUnits[k].getType()) {
                     int newLimit = unitExpand.getLimit();
@@ -3217,13 +3226,13 @@ void Unit::computeTotalUpgrade() {
     }
 
     resistances.clear();
-    resistances.resize(getType()->resistances.size());
-    for (int i = 0; i < getType()->resistances.size(); ++i) {
-        resistances[i] = getType()->resistances[i];
+    resistances.resize(getType()->getResistances().size());
+    for (int i = 0; i < getType()->getResistances().size(); ++i) {
+        resistances[i] = getType()->getResistances()[i];
     }
 
 	for (int i = 0; i < getEquippedItems().size(); ++i) {
-	    Resistances resists = getEquippedItem(i)->getType()->resistances;
+	    Resistances resists = getEquippedItem(i)->getType()->getResistances();
 	    for (int j = 0; j < resists.size(); ++j) {
 	        if (resistances.size() == 0) {
                 resistances.push_back(resists[j]);
@@ -3247,10 +3256,11 @@ void Unit::computeTotalUpgrade() {
         foreach (UnitIdList, it, garrisonedUnits) {
             Unit *garUnit = g_world.getUnit(*it);
             string unitName = garUnit->getType()->getName();
-            for (int l = 0; l < type->loadBonuses.size(); ++l) {
-                string bonusName = type->loadBonuses[l].getSource();
+            for (int l = 0; l < type->getLoadBonuses().size(); ++l) {
+                const LoadBonus lb = type->getLoadBonuses()[l];
+                string bonusName = lb.getSource();
                 if (unitName == bonusName) {
-                    const EnhancementType *et = getType()->loadBonuses[l].getEnhancement()->getEnhancement();
+                    const EnhancementType *et = static_cast<const EnhancementType*>(&lb);
                     totalUpgrade.sum(et);
                 }
             }
@@ -3305,7 +3315,7 @@ void Unit::recalculateStats() {
 
 		// take care of effect damage type
 		hpRegeneration += (*i)->getActualHpRegen() - (*i)->getType()->getHpRegeneration();
-		spRegeneration += (*i)->getActualSpRegen() - (*i)->getType()->getSpRegeneration();
+		//spRegeneration += (*i)->getActualSpRegen() - (*i)->getType()->getSpRegeneration();
 	}
 
 	effects.clearDirty();

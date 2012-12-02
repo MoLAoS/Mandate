@@ -192,12 +192,14 @@ public:
     Item *getEquippedItem(int i) const {return &getFaction()->items[equippedItems[i]];}
     void equipItem(int ident);
     void unequipItem(int ident);
+    void consumeItem(int ident);
     Storage getStorage() const {return storage;}
     Storage getEquipment() const {return equipment;}
 
 /**< system for items */
 
     Modifications modifications;
+    EffectTypes effectTypes;
 
 private:
 	// basic stats
@@ -211,6 +213,8 @@ private:
 	int progress2;			/**< 'secondary' skill progress counter (progress for Production) */
 	int kills;				/**< number of kills */
 	int exp;                /**< amount of experience */
+
+	bool existing;
 
 	/**< new system to enable walls */
 	Zone zone;
@@ -613,6 +617,7 @@ public:
 	bool renderCloaked() const			{return m_cloaked || m_cloaking || m_deCloaking;}
 	bool isOfClass(UnitClass uc) const { return type->isOfClass(uc); }
 	bool isTargetUnitVisible(int teamIndex) const;
+	bool isExisting() const {return existing;}
 	bool isActive() const;
 	bool isBuilding() const;
 	bool isDead() const					{return !hp;}

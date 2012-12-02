@@ -41,16 +41,17 @@ namespace Glest { namespace ProtoTypes {
 // 	class AttackCommandTypeBase
 // ===============================
 
-bool AttackCommandTypeBase::load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft, const UnitType *unitType) {
+bool AttackCommandTypeBase::load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct) {
 	const AttackSkillType *ast;
 	string skillName;
 	const XmlNode *attackSkillNode = n->getChild("attack-skill", 0, false);
 	bool loadOk = true;
+	const FactionType *ft = ct->getFactionType();
 	//single attack skill
 	if(attackSkillNode) {
 		try {
 			skillName = attackSkillNode->getAttribute("value")->getRestrictedValue();
-			ast = static_cast<const AttackSkillType*>(unitType->getSkillType(skillName, SkillClass::ATTACK));
+			ast = static_cast<const AttackSkillType*>(ct->getSkillType(skillName, SkillClass::ATTACK));
 			attackSkillTypes.push_back(ast, AttackSkillPreferences());
 		} catch (runtime_error e) {
 			g_logger.logXmlError(dir, e.what ());
@@ -71,7 +72,7 @@ bool AttackCommandTypeBase::load(const XmlNode *n, const string &dir, const Tech
 					AttackSkillPreferences prefs;
 					attackSkillNode = attackSkillsNode->getChild("attack-skill", i);
 					skillName = attackSkillNode->getAttribute("value")->getRestrictedValue();
-					ast = static_cast<const AttackSkillType*>(unitType->getSkillType(skillName, SkillClass::ATTACK));
+					ast = static_cast<const AttackSkillType*>(ct->getSkillType(skillName, SkillClass::ATTACK));
 					flagsNode = attackSkillNode->getChild("flags", 0, false);
 					if(flagsNode) {
 						prefs.load(flagsNode, dir, tt, ft);
@@ -183,9 +184,9 @@ void AttackCommandType::update(Unit *unit) const {
 	}
 }
 
-bool AttackCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft) {
-	bool ok = MoveBaseCommandType::load(n, dir, tt, ft);
-	return AttackCommandTypeBase::load(n, dir, tt, ft, unitType) && ok;
+bool AttackCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct) {
+	bool ok = MoveBaseCommandType::load(n, dir, tt, ct);
+	return AttackCommandTypeBase::load(n, dir, tt, ct) && ok;
 }
 
 void AttackCommandType::descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const {
@@ -229,9 +230,9 @@ void AttackStoppedCommandType::update(Unit *unit) const {
 	}
 }
 
-bool AttackStoppedCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft){
-	bool ok = StopBaseCommandType::load(n, dir, tt, ft);
-	return AttackCommandTypeBase::load(n, dir, tt, ft, unitType) && ok;
+bool AttackStoppedCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct) {
+	bool ok = StopBaseCommandType::load(n, dir, tt, ct);
+	return AttackCommandTypeBase::load(n, dir, tt, ct) && ok;
 }
 
 Command *AttackStoppedCommandType::doAutoAttack(Unit *unit) const {
@@ -335,8 +336,8 @@ void GuardCommandType::tick(const Unit *unit, Command &command) const {
 	replaceDeadReferences(command);
 }
 
-bool GuardCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft){
-	bool loadOk = AttackCommandType::load(n, dir, tt, ft);
+bool GuardCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct) {
+	bool loadOk = AttackCommandType::load(n, dir, tt, ct);
 
 	//distance
 	try { m_maxDistance = n->getChild("max-distance")->getAttribute("value")->getIntValue(); }
@@ -397,14 +398,14 @@ Unit* Targets::getNearestHpRatio(fixed hpRatio) {
 // 	class CreateSettlementCommandType
 // =====================================================
 
-bool CreateSettlementCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft){
-	bool loadOk = StopBaseCommandType::load(n, dir, tt, ft);
+bool CreateSettlementCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct) {
+	bool loadOk = StopBaseCommandType::load(n, dir, tt, ct);
 
 	string skillName;
 	// set structure
 	try {
 		skillName = n->getChild("set-structure-skill")->getAttribute("value")->getRestrictedValue();
-		m_setStructureSkillType = static_cast<const SetStructureSkillType*>(unitType->getSkillType(skillName, SkillClass::SET_STRUCTURE));
+		m_setStructureSkillType = static_cast<const SetStructureSkillType*>(creatableType->getSkillType(skillName, SkillClass::SET_STRUCTURE));
 	} catch (runtime_error e) {
 		g_logger.logXmlError(dir, e.what());
 		loadOk = false;
@@ -453,14 +454,14 @@ void CreateSettlementCommandType::update(Unit *unit) const {
 // 	class ExpandSettlementCommandType
 // =====================================================
 
-bool ExpandSettlementCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft){
-	bool loadOk = StopBaseCommandType::load(n, dir, tt, ft);
+bool ExpandSettlementCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct) {
+	bool loadOk = StopBaseCommandType::load(n, dir, tt, ct);
 
 	string skillName;
 	// set structure
 	try {
 		skillName = n->getChild("set-structure-skill")->getAttribute("value")->getRestrictedValue();
-		m_setStructureSkillType = static_cast<const SetStructureSkillType*>(unitType->getSkillType(skillName, SkillClass::SET_STRUCTURE));
+		m_setStructureSkillType = static_cast<const SetStructureSkillType*>(creatableType->getSkillType(skillName, SkillClass::SET_STRUCTURE));
 	} catch (runtime_error e) {
 		g_logger.logXmlError(dir, e.what());
 		loadOk = false;

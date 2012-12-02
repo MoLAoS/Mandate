@@ -25,71 +25,14 @@ void DamageType::init(string name, int amount) {
 // ===============================
 // 	class Load Bonus
 // ===============================
-
-LoadBonus::LoadBonus()
-{}
-
-void LoadBonus::loadResourceModifier(const XmlNode *node, ResModifierMap &map, const TechTree *techTree) {
-	for (int i=0; i < node->getChildCount(); ++i) {
-		const XmlNode *resNode = node->getChild(i);
-		if (resNode->getName() == "resource") {
-			string resName = resNode->getAttribute("name")->getRestrictedValue();
-			int addition = 0;
-			if (const XmlAttribute *addAttrib = resNode->getAttribute("addition", false)) {
-				addition = addAttrib->getIntValue();
-			}
-			fixed mult = 1;
-			if (const XmlAttribute *multAttrib = resNode->getAttribute("multiplier", false)) {
-				mult = multAttrib->getFixedValue();
-			}
-			const ResourceType *rt = techTree->getResourceType(resName);
-			if (map.find(rt) != map.end()) {
-				throw runtime_error("duplicate resource node '" + resName + "'");
-			}
-			map[rt] = Modifier(addition, mult);
-		}
-	}
-}
-
-bool LoadBonus::loadNewStyle(const XmlNode *node, const string &dir, const TechTree *techTree,
-							   const FactionType *factionType) {
-	bool loadOk = true;
-		const XmlNode *enhanceNode, *enhancementNode;
-		try {
-			enhanceNode = node->getChild("enhancement", 0, false);
-			enhancementNode = enhanceNode->getChild("effects");
-		} catch (runtime_error &e) {
-			g_logger.logXmlError(dir, e.what());
-			loadOk = false;
-		}
-		if (!m_enhancement.m_enhancement.load(enhancementNode, dir, techTree, factionType)) {
-			loadOk = false;
-		}
-		try { // creation and storage modifiers
-			if (const XmlNode *costModsNode = enhancementNode->getOptionalChild("cost-modifiers")) {
-				loadResourceModifier(costModsNode, m_enhancement.m_costModifiers, techTree);
-			}
-			if (const XmlNode *storeModsNode = enhancementNode->getOptionalChild("store-modifiers")) {
-				loadResourceModifier(storeModsNode, m_enhancement.m_storeModifiers, techTree);
-			}
-			if (const XmlNode *createModsNode = enhancementNode->getOptionalChild("create-modifiers")) {
-				loadResourceModifier(createModsNode, m_enhancement.m_createModifiers, techTree);
-			}
-		} catch (runtime_error e) {
-			g_logger.logXmlError(dir, e.what());
-			loadOk = false;
-		}
-	return loadOk;
-}
-
 bool LoadBonus::load(const XmlNode *loadBonusNode, const string &dir, const TechTree *techTree, const FactionType *factionType) {
 	bool loadOk = true;
     const XmlNode *sourceNode = loadBonusNode->getChild("source");
     const XmlNode *loadableUnitNode = sourceNode->getChild("loadable-unit");
     source = loadableUnitNode->getAttribute("name")->getRestrictedValue();
-    const XmlNode *enhancementsNode = loadBonusNode->getChild("enhancements", 0, false);
-    if (enhancementsNode) {
-    loadOk = loadNewStyle(enhancementsNode, dir, techTree, factionType) && loadOk;
+    const XmlNode *enhancementNode = loadBonusNode->getChild("enhancement", 0, false);
+    if (enhancementNode) {
+        EnhancementType::load(enhancementNode, dir, techTree, factionType);
     }
 	return loadOk;
 }

@@ -1080,8 +1080,8 @@ void Faction::reEvaluateStore() {
 		// don't want the resources of dead units to be included
 		if (!(*it)->isDead()) {
 			const UnitType *ut = (*it)->getType();
-			for (int j=0; j < ut->getStoredResourceCount(); ++j) {
-				ResourceAmount res = ut->getStoredResource(j, this);
+			for (int j=0; j < ut->getResourceProductionSystem().getStoredResourceCount(); ++j) {
+				ResourceAmount res = ut->getResourceProductionSystem().getStoredResource(j, this);
 				storeMap[res.getType()] += res.getAmount();
 			}
 		}
@@ -1107,8 +1107,8 @@ void Faction::reEvaluateCreate() {
 		// don't want the resources of dead units to be included
 		if (!(*it)->isDead()) {
 			const UnitType *ut = (*it)->getType();
-			for (int j=0; j < ut->getCreatedResourceCount(); ++j) {
-				ResourceAmount res = ut->getCreatedResource(j, this);
+			for (int j=0; j < ut->getResourceProductionSystem().getCreatedResourceCount(); ++j) {
+				ResourceAmount res = ut->getResourceProductionSystem().getCreatedResource(j, this);
 				storeMap[res.getType()] += res.getAmount();
 			}
 		}
@@ -1129,8 +1129,8 @@ void Faction::addStore(const ResourceType *rt, int amount) {
 }
 
 void Faction::addStore(const UnitType *unitType) {
-	for (int i = 0; i < unitType->getStoredResourceCount(); ++i) {
-		ResourceAmount r = unitType->getStoredResource(i, this);
+	for (int i = 0; i < unitType->getResourceProductionSystem().getStoredResourceCount(); ++i) {
+		ResourceAmount r = unitType->getResourceProductionSystem().getStoredResource(i, this);
 		for (int j = 0; j < sresources.size(); ++j) {
 			if (sresources[j].getType() == r.getType()) {
 				sresources[j].setStorage(sresources[j].getStorage() + r.getAmount());
@@ -1153,8 +1153,8 @@ void Faction::addCreate(const ResourceType *rt, int amount) {
 }
 
 void Faction::addCreate(const UnitType *unitType) {
-	for (int i = 0; i < unitType->getCreatedResourceCount(); ++i) {
-		ResourceAmount r = unitType->getCreatedResource(i, this);
+	for (int i = 0; i < unitType->getResourceProductionSystem().getCreatedResourceCount(); ++i) {
+		ResourceAmount r = unitType->getResourceProductionSystem().getCreatedResource(i, this);
 		for (int j = 0; j < cresources.size(); ++j) {
 			if (cresources[j].getType() == r.getType()) {
 				cresources[j].setCreation(cresources[j].getCreation() + r.getAmount());

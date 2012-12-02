@@ -391,7 +391,7 @@ void Display::setSize() {
 		if (!m_ui->getSelection()->isComandable()) {
 			sz = m_sizes.portraitSize;
 		} else {
-		    if (m_ui->getSelection()->getFrontUnit()->getType()->isLeader) {
+		    if (m_ui->getSelection()->getFrontUnit()->getType()->getIsLeader()) {
             sz = m_sizes.hierarchySize;
 		    }
 		    if (m_ui->getSelection()->hasTransported()) {

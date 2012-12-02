@@ -57,7 +57,7 @@ Cartographer::Cartographer(World *world)
 	nmSearchEngine->getNeighbourFunc().setSearchSpace(SearchSpace::CELLMAP);
 
 	masterMap = new AnnotatedMap(world);
-	
+
 	clusterMap = new ClusterMap(masterMap, this);
 
 	// team search and visibility maps
@@ -81,7 +81,7 @@ Cartographer::Cartographer(World *world)
 	const TechTree *tt = world->getTechTree();
 
 	vector<rt_ptr> harvestResourceTypes;
-		
+
 	for (int i = 0; i < tt->getResourceTypeCount(); ++i) {
 		rt_ptr rt = tt->getResourceType(i);
 		if (rt->getClass() == ResourceClass::TECHTREE
@@ -144,7 +144,7 @@ Cartographer::~Cartographer() {
 	foreach (TeamDetectorMaps, it, m_detectorMaps) {
 		deleteMapValues(it->second);
 	}
-	
+
 	// Goal Maps
 	deleteMapValues(resourceMaps);
 	deleteMapValues(storeMaps);
@@ -348,7 +348,7 @@ void Cartographer::detectorActivated(Unit *unit) {
 	int radius = unit->getSight() / 2 + 1;
 	for (int i=0; i < dt->getGroupCount(); ++i) {
 		TypeMap<int> *iMap = m_detectorMaps[unit->getTeam()][dt->getGroup(i)];
-		incrementMap(iMap, tilepos, radius);		
+		incrementMap(iMap, tilepos, radius);
 	}
 }
 
@@ -417,7 +417,7 @@ private:
 public:
 	DistanceBuilderGoal(TypeMap<float> *iMap, float maxRange = numeric_limits<float>::infinity())
 			: iMap(iMap), maxRange(maxRange) {}
-	
+
 	/** The goal function, writes costSoFar into the influence map.
 	  * @param pos position to test @param costSoFar the cost of the shortest path to pos
 	  * @return true if maxRange is exceeded. */
@@ -440,7 +440,7 @@ void Cartographer::adjustGlestimalMap(Field f, TypeMap<float> &iMap, const Vec2i
 }
 
 /** constructs an influence map using djkstra search from all tech resources, fills 'positions' with
-  * a collection of Vec2i that are each at least 25 cells distant from a tech resource, and at 
+  * a collection of Vec2i that are each at least 25 cells distant from a tech resource, and at
   * least 15 cells distant from each other. */
 void Cartographer::buildGlestimalMap(Field f, V2iList &positions) {
 	Rectangle rect(0, 0, cellMap->getW() - 2, cellMap->getH() - 2);
@@ -486,7 +486,7 @@ void Cartographer::buildGlestimalMap(Field f, V2iList &positions) {
 			positions.push_back(bigPos);
 			adjustGlestimalMap(f, iMap, bigPos, 15.f);
 		}
-	// while the best pos we found is at least 25 cells from a tech resource 
+	// while the best pos we found is at least 25 cells from a tech resource
 	// and at least 15 cells from another spawn point (travelling in Field f)
 	} while (big > 25.f);
 }
@@ -497,7 +497,7 @@ void Cartographer::initTeamMaps() {
 	for ( ; it != m_explorationMaps.end(); ++it ) {
 		AnnotatedMap *aMap = getAnnotatedMap(it->first);
 		ExplorationMap *eMap = it->second;
-		
+
 		///@todo seems like there should be something here
 	}
 }
@@ -517,12 +517,12 @@ public:
 	VisibilityMaintainerGoal(float range, ExplorationMap *eMap, bool inc)
 		: range(range), eMap(eMap), inc(inc) {}
 
-	/** The goal function 
+	/** The goal function
 	  * @param pos position to test
 	  * @param costSoFar the cost of the shortest path to pos
 	  * @return true when range is exceeded.
 	  */
-	bool operator()(const Vec2i &pos, const float costSoFar) const { 
+	bool operator()(const Vec2i &pos, const float costSoFar) const {
 		if ( costSoFar > range ) {
 			return true;
 		}
@@ -531,7 +531,7 @@ public:
 		} else {
 			eMap->decVisCounter(pos);
 		}
-		return false; 
+		return false;
 	}
 };
 
@@ -541,7 +541,7 @@ public:
   * @param add true to add this units visibility to its team map, false to remove
   */
 void Cartographer::maintainUnitVisibility(Unit *unit, bool add) {
-	
+
 	/* This might be too expensive using Dijkstra...
 
 	// set up goal function
@@ -564,7 +564,7 @@ class ResourceFinderGoal {
 private:
 	const ResourceType	*m_resourceType;
 	Map					*m_cellMap;
-	
+
 public:
 	/** Construct goal function object */
 	ResourceFinderGoal(const ResourceType	*resourceType, Map *cellMap)
@@ -576,11 +576,11 @@ public:
 		if (tile->getResource() && tile->getResource()->getType() == m_resourceType) {
 			return true;
 		}
-		return false; 
+		return false;
 	}
 };
 
-Surveyor::Surveyor(Faction *faction, Cartographer *cartographer) 
+Surveyor::Surveyor(Faction *faction, Cartographer *cartographer)
 		: m_faction(faction), m_cartographer(cartographer) {
 	m_w = m_cartographer->getMasterMap()->getWidth();
 	m_h = m_cartographer->getMasterMap()->getHeight();
@@ -588,7 +588,7 @@ Surveyor::Surveyor(Faction *faction, Cartographer *cartographer)
 	///@todo shrink map, start with a rect 100 * 100 around base pos
 	m_baseMap = new PatchMap<2>(rect, 3);
 	m_basePos = faction->getUnit(0)->getPos();
-	
+
 	buildBaseMap();
 	findResourceLocations();
 
@@ -603,7 +603,7 @@ void Surveyor::findResourceLocations() {
 	Map *cellMap = m_cartographer->getCellMap();
 
 	vector<const ResourceType*> resTypes;
-	
+
 	for (int i=0; i < g_world.getTechTree()->getResourceTypeCount(); ++i) {
 		const ResourceType *rt = g_world.getTechTree()->getResourceType(i);
 		if (rt->getClass() == ResourceClass::TECHTREE || rt->getClass() == ResourceClass::TILESET) {
@@ -621,7 +621,7 @@ void Surveyor::findResourceLocations() {
 			m_resourceMap[*it] = engine->getGoalPos();
 		} else {
 			m_resourceMap[*it] = Vec2i(-1);
-		}		
+		}
 	}
 }
 
@@ -692,12 +692,12 @@ public:
 	ProximtyCalculatorGoal(float range, DistancePairMap *iMap, PatchMap<2> *ngMap, const vector<Vec2i> &enemyLocs)
 		: m_range(range), m_iMap(iMap), m_nogoMap(ngMap), m_enemyLocs(enemyLocs) {}
 
-	/** The goal function 
+	/** The goal function
 	  * @param pos position to test
 	  * @param costSoFar the cost of the shortest path to pos
 	  * @return true when range is exceeded.
 	  */
-	bool operator()(const Vec2i &pos, const float costSoFar) const { 
+	bool operator()(const Vec2i &pos, const float costSoFar) const {
 		const float inf = numeric_limits<float>::infinity();
 		if (costSoFar > m_range) {
 			return true;
@@ -716,7 +716,7 @@ public:
 			}
 		}
 		m_iMap->setInfluence(pos, std::make_pair(baseProximity, enemyProximity));
-		return false; 
+		return false;
 	}
 };
 
@@ -739,7 +739,7 @@ Vec2i Surveyor::findLocationForBuilding(const UnitType *buildingType, LocationTy
 	ZeroHeuristic h;
 	engine->setStart(m_basePos, 0.f);
 	engine->aStar(goal, cost, h);
-	
+
 	typedef pair<Vec2i, FloatPair> CandidatePosition;
 	vector<CandidatePosition> candidatePositions;
 
@@ -772,8 +772,8 @@ Vec2i Surveyor::findLocationForBuilding(const UnitType *buildingType, LocationTy
 	}
 
 	// find one to suit LocationType
-	if (locType == LocationType::DEAD_WEIGHT || locType == LocationType::RESEARCH_BUILDING) {	
-		// find cosy spot near base centre, but not in the way of resources. 
+	if (locType == LocationType::DEAD_WEIGHT || locType == LocationType::RESEARCH_BUILDING) {
+		// find cosy spot near base centre, but not in the way of resources.
 		// prefer locations away from known enemy locations
 		if (!candidatePositions.empty()) {
 			CandidatePosition *best = 0;
@@ -804,7 +804,7 @@ Vec2i Surveyor::findLocationForBuilding(const UnitType *buildingType, LocationTy
 		if (!candidatePositions.empty()) {
 			CandidatePosition *best = 0;
 			foreach (vector<CandidatePosition>, it, candidatePositions) {
-				if (!best 
+				if (!best
 				|| (best->second.second - best->second.first) > (it->second.second - it->second.first)) {
 					best = &*it;
 				}

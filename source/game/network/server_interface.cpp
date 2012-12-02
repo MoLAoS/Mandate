@@ -38,7 +38,7 @@ namespace Glest { namespace Net {
 //	class ServerInterface
 // =====================================================
 
-ServerInterface::ServerInterface(Program &prog) 
+ServerInterface::ServerInterface(Program &prog)
 		: NetworkInterface(prog)
 		, m_portBound(false)
 		, m_waitingForPlayers(false)
@@ -94,7 +94,7 @@ ConnectionSlot* ServerInterface::getSlot(int playerIndex) {
 int ServerInterface::getConnectedSlotCount() {
 	assert(m_portBound);
 	int connectedSlotCount = 0;
-	
+
 	for (int i = 0; i < GameConstants::maxPlayers; ++i) {
 		if (slots[i] && slots[i]->isConnected()) {
 			++connectedSlotCount;
@@ -171,27 +171,27 @@ void ServerInterface::dataSync(int playerNdx, DataSyncMessage &msg) {
 	}
 	bool ok = true;
 	if (m_dataSync->getChecksumCount() != msg.getChecksumCount()) {
-		NETWORK_LOG( "DataSync Fail: Client has sent " << msg.getChecksumCount() 
+		NETWORK_LOG( "DataSync Fail: Client has sent " << msg.getChecksumCount()
 			<< " total checksums, I have " << m_dataSync->getChecksumCount() )
 		ok = false;
 	}
 	if (m_dataSync->getCmdTypeCount() != msg.getCmdTypeCount()) {
-		NETWORK_LOG( "DataSync Fail: Client has sent " << msg.getCmdTypeCount() 
+		NETWORK_LOG( "DataSync Fail: Client has sent " << msg.getCmdTypeCount()
 			<< " CommandType checksums, I have " << m_dataSync->getCmdTypeCount() )
 		ok = false;
 	}
 	if (m_dataSync->getSkillTypeCount() != msg.getSkillTypeCount()) {
-		NETWORK_LOG( "DataSync Fail: Client has sent " << msg.getSkillTypeCount() 
+		NETWORK_LOG( "DataSync Fail: Client has sent " << msg.getSkillTypeCount()
 			<< " SkillType checksums, I have " << m_dataSync->getSkillTypeCount() )
 		ok = false;
 	}
 	if (m_dataSync->getProdTypeCount() != msg.getProdTypeCount()) {
-		NETWORK_LOG( "DataSync Fail: Client has sent " << msg.getProdTypeCount() 
+		NETWORK_LOG( "DataSync Fail: Client has sent " << msg.getProdTypeCount()
 			<< " ProducibleType checksums, I have " << m_dataSync->getProdTypeCount() )
 		ok = false;
 	}
 	if (m_dataSync->getCloakTypeCount() != msg.getCloakTypeCount()) {
-		NETWORK_LOG( "DataSync Fail: Client has sent " << msg.getProdTypeCount() 
+		NETWORK_LOG( "DataSync Fail: Client has sent " << msg.getProdTypeCount()
 			<< " CloakType checksums, I have " << m_dataSync->getProdTypeCount() )
 		ok = false;
 	}
@@ -226,32 +226,32 @@ void ServerInterface::dataSync(int playerNdx, DataSyncMessage &msg) {
 				const CommandType *ct = m_prototypeFactory->getCommandType(i - cmdOffset);
 				NETWORK_LOG(
 					"DataSync Fail: CommandType '" << ct->getName() << "' of UnitType '"
-					<< ct->getUnitType()->getName() << "' of FactionType '"
-					<< ct->getUnitType()->getFactionType()->getName() << "'";
+					<< ct->getCreatableType()->getName() << "' of FactionType '"
+					<< ct->getCreatableType()->getFactionType()->getName() << "'";
 				)
 			} else if (i < prodOffset) {
 				const SkillType *skillType = m_prototypeFactory->getSkillType(i - skllOffset);
 				NETWORK_LOG(
 					"DataSync Fail: SkillType '" << skillType->getName() << "' of UnitType '"
-					<< skillType->getUnitType()->getName() << "' of FactionType '"
-					<< skillType->getUnitType()->getFactionType()->getName() << "'";
+					<< skillType->getCreatableType()->getName() << "' of FactionType '"
+					<< skillType->getCreatableType()->getFactionType()->getName() << "'";
 				)
 			} else if (i < cloakOffset) {
 				const ProducibleType *pt = m_prototypeFactory->getProdType(i - prodOffset);
 				//int id = i - prodOffset;
 				if (m_prototypeFactory->isUnitType(pt)) {
 					const UnitType *ut = static_cast<const UnitType*>(pt);
-					NETWORK_LOG( "DataSync Fail: UnitType " << ut->getId() << ": " << ut->getName() 
+					NETWORK_LOG( "DataSync Fail: UnitType " << ut->getId() << ": " << ut->getName()
 						<< " of FactionType: " << ut->getFactionType()->getName() );
 				} else if (m_prototypeFactory->isUpgradeType(pt)) {
 					const UpgradeType *ut = static_cast<const UpgradeType*>(pt);
-					NETWORK_LOG( "DataSync Fail: UpgradeType " << ut->getId() << ": " << ut->getName() 
+					NETWORK_LOG( "DataSync Fail: UpgradeType " << ut->getId() << ": " << ut->getName()
 						<< " of FactionType: " << ut->getFactionType()->getName() );
 				} else if (m_prototypeFactory->isGeneratedType(pt)) {
 					const GeneratedType *gt = static_cast<const GeneratedType*>(pt);
-					NETWORK_LOG( "DataSync Fail: GeneratedType " << gt->getId() << ": " << gt->getName() << " of CommandType: " 
-						<< gt->getCommandType()->getName() << " of UnitType: " 
-						<< gt->getCommandType()->getUnitType()->getName() );
+					NETWORK_LOG( "DataSync Fail: GeneratedType " << gt->getId() << ": " << gt->getName() << " of CommandType: "
+						<< gt->getCommandType()->getName() << " of UnitType: "
+						<< gt->getCommandType()->getCreatableType()->getName() );
 				} else {
 					throw runtime_error(string("Unknown producible class for type: ") + pt->getName());
 				}
@@ -322,7 +322,7 @@ void ServerInterface::process(TextMessage &msg, int requestor) {
 }
 
 void ServerInterface::updateKeyframe(int frameCount) {
-	NETWORK_LOG( __FUNCTION__ << " building & sending keyframe " 
+	NETWORK_LOG( __FUNCTION__ << " building & sending keyframe "
 		<< (frameCount / GameConstants::networkFramePeriod) << " @ frame " << frameCount);
 	// build command list, remove commands from requested and add to pending
 	while (!requestedCommands.empty()) {
@@ -332,7 +332,7 @@ void ServerInterface::updateKeyframe(int frameCount) {
 	}
 	keyFrame.setFrameCount(frameCount);
 	broadcastMessage(&keyFrame);
-	
+
 	keyFrame.reset();
 }
 
@@ -432,7 +432,7 @@ void ServerInterface::syncAiSeeds(int aiCount, int *seeds) {
 void ServerInterface::doLaunchBroadcast() {
 	NETWORK_LOG( __FUNCTION__ << " Launching game." );
 	LaunchMessage networkMessageLaunch(&gameSettings);
-	broadcastMessage(&networkMessageLaunch);	
+	broadcastMessage(&networkMessageLaunch);
 }
 
 void ServerInterface::broadcastMessage(const Message* networkMessage, int excludeSlot) {
