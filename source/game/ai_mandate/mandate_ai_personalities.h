@@ -68,6 +68,7 @@ public:
     Unit *findShop(Unit *unit);
     Unit *findNearbyAlly(Unit *unit, Focus focus);
     Unit *findBuilding(Unit *unit);
+    Unit *findGuild(Unit *unit);
     Unit *findProducer(Unit *unit);
     const CommandType *selectHealSpell(Unit *unit, Unit* target);
     const CommandType *selectBuffSpell(Unit *unit, Unit* target);
@@ -75,6 +76,7 @@ public:
     Unit *findCity(Unit *unit);
     Unit *findLair(Unit *unit);
     Unit *findCreature(Unit *unit);
+    Unit *buildingList(Unit *unit, vector<Unit*> buildingsList);
     UnitDirection newDirection(UnitDirection oldDirection);
     void clearSimAi(Unit *unit, Goal goal);
 };

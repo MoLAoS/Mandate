@@ -77,6 +77,13 @@ Focus MandateAISim::getTopGoal(Unit *unit, string personality) {
                         topGoal = goal;
                     }
                 }
+                if (goalName == Goal::TRADE) {
+                    Unit *producer = NULL;
+                    producer = goalSystem.findProducer(unit);
+                    if (producer != NULL) {
+                        topGoal = goal;
+                    }
+                }
                 if (goalName == Goal::EXPLORE) {
                     if (topGoal.getImportance() != NULL) {
                         if (goalImportance > topGoal.getImportance()) {

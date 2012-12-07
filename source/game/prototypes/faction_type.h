@@ -62,8 +62,12 @@ private:
 	typedef vector<string> GuiFileNames;
 
     typedef vector<Personality> Personalities;
+	typedef vector<ResourceAmount> ResourceTrades;
+
+
 
 private:
+    ResourceTrades resourceTrades;
     string guiDirectory;
     GuiFileNames guiFileNames;
 	UnitTypes unitTypes;
@@ -87,6 +91,7 @@ private:
     Personalities personalities;
 
 public:
+    ResourceTrades getResourceTrades() const {return resourceTrades;}
     Personalities getPersonalities() const {return personalities;}
     Modifications getModifications() const {return modifications;}
 

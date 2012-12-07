@@ -52,6 +52,7 @@ private:
 	typedef vector<Level>               Levels;
 	typedef vector<LoadBonus>           LoadBonuses;
 	typedef vector<ParticleSystemType*> ParticleSystemTypes;
+	typedef vector<ResourceAmount>      ResourceStores;
 private:
 	bool multiBuild;
 	bool multiSelect;
@@ -89,6 +90,8 @@ public:
     bool getIsHero() const {return isHero;}
     LoadBonuses getLoadBonuses() const {return loadBonuses;}
 private:
+    ResourceStores resourceStores;
+
 	Levels levels;
 	bool meetingPoint;
 	Texture2D *meetingPointImage;
@@ -98,6 +101,8 @@ private:
 	Field field;
 	Zone zone;
 public:
+    ResourceStores getResourceStores() const {return resourceStores;}
+
 	static ProducibleClass typeClass() { return ProducibleClass::UNIT; }
 	UnitType();
 	virtual ~UnitType();

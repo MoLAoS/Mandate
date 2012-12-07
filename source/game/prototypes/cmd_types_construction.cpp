@@ -56,6 +56,15 @@ bool StructureCommandType::load(const XmlNode *n, const string &dir, const TechT
     bool loadOk = CommandType::load(n, dir, tt, ct);
     const FactionType *ft = ct->getFactionType();
 	try {
+	    const XmlNode *childNode = n->getChild("child-structure", 0, false);
+	    if (childNode) {
+            m_child = childNode->getAttribute("child-building")->getBoolValue();
+	    }
+	} catch (runtime_error e) {
+		g_logger.logXmlError(dir, e.what());
+		loadOk = false;
+	}
+	try {
 		string skillName = n->getChild("build-skill")->getAttribute("value")->getRestrictedValue();
 		m_buildSkillType = static_cast<const BuildSkillType*>(creatableType->getSkillType(skillName, SkillClass::BUILD));
 	} catch (runtime_error e) {
@@ -242,7 +251,7 @@ void StructureCommandType::blockedBuild(Unit *unit) const {
 void StructureCommandType::acceptBuild(Unit *unit, Command *command, const UnitType *builtUnitType) const {
 	Map *map = g_world.getMap();
 	Unit *builtUnit = NULL;
-    if (unit->applyCosts(builtUnitType)) {
+    if ((!m_child && unit->applyCosts(builtUnitType)) || (m_child && unit->owner->applyCosts(builtUnitType))) {
         if (!command->isReserveResources()) {
             command->setReserveResources(true);
             if (unit->checkCommand(*command) != CmdResult::SUCCESS) {

@@ -31,6 +31,7 @@ void Personality::load(const XmlNode *node, const TechTree* techTree, const Fact
     goalList.push_back("live");
     goalList.push_back("build");
     goalList.push_back("collect");
+    goalList.push_back("trade");
     goalList.push_back("transport");
     goalList.push_back("explore");
     goalList.push_back("shop");
@@ -70,6 +71,7 @@ void GoalSystem::init() {
     goalList.push_back("build");
     goalList.push_back("collect");
     goalList.push_back("transport");
+    goalList.push_back("trade");
     goalList.push_back("explore");
     goalList.push_back("shop");
     goalList.push_back("demolish");
@@ -190,6 +192,29 @@ void GoalSystem::shop(Unit *unit) {
     }
 }
 
+Unit *GoalSystem::buildingList(Unit *unit, vector<Unit*> buildingsList) {
+    Unit *targetBuilding = NULL;
+    if (buildingsList.size() > 0) {
+        int distance = 50;
+        Vec2i uPos = unit->getCenteredPos();
+        if (unit->isCarried()) {
+            uPos = unit->owner->getCenteredPos();
+        }
+        Vec2i tPos = Vec2i(NULL);
+        for (int i = 0; i < buildingsList.size(); ++i) {
+            Unit *building = buildingsList[i];
+            Vec2i bPos = building->getCenteredPos();
+            int newDistance = sqrt(pow(float(abs(uPos.x - bPos.x)), 2) + pow(float(abs(uPos.y - bPos.y)), 2));
+            if (newDistance < distance) {
+                distance = newDistance;
+                targetBuilding = building;
+                tPos = bPos;
+            }
+        }
+    }
+    return targetBuilding;
+}
+
 Unit* GoalSystem::findShop(Unit *unit) {
     Faction *f = unit->getFaction();
     vector<Unit*> buildingsList;
@@ -306,24 +331,7 @@ Unit* GoalSystem::findBuilding(Unit* unit) {
             }
         }
     }
-    if (buildingsList.size() > 0) {
-        int distance = 50;
-        Vec2i uPos = unit->getCenteredPos();
-        if (unit->isCarried()) {
-            uPos = unit->owner->getCenteredPos();
-        }
-        Vec2i tPos = Vec2i(NULL);
-        for (int i = 0; i < buildingsList.size(); ++i) {
-            Unit *building = buildingsList[i];
-            Vec2i bPos = building->getCenteredPos();
-            int newDistance = sqrt(pow(float(abs(uPos.x - bPos.x)), 2) + pow(float(abs(uPos.y - bPos.y)), 2));
-            if (newDistance < distance) {
-                distance = newDistance;
-                targetBuilding = building;
-                tPos = bPos;
-            }
-        }
-    }
+    targetBuilding = buildingList(unit, buildingsList);
     return targetBuilding;
 }
 
@@ -334,15 +342,27 @@ Unit* GoalSystem::findProducer(Unit* unit) {
     for (int i = 0; i < f->getUnitCount(); ++i) {
         Unit *building = f->getUnit(i);
         if (building->getType()->hasTag("building") && building->getType()->hasTag("producer")) {
-            for (int i = 0; i < unit->owner->getType()->getProcessProductionSystem().getProcesses().size(); ++i) {
-                for (int j = 0; j < unit->owner->getType()->getProcessProductionSystem().getProcesses()[i].costs.size(); ++j) {
-                    const ResourceType *transportType = unit->owner->getType()->getProcessProductionSystem().getProcesses()[i].costs[j].getType();
-                    for (int k = 0; k < building->getType()->getResourceProductionSystem().getStoredResourceCount(); ++k) {
-                        const ResourceType *storeType = building->getType()->getResourceProductionSystem().getStoredResource(k, building->getFaction()).getType();
-                        if (transportType == storeType && storeType->getName() != "wealth") {
-                            if (building->getSResource(storeType)->getAmount() >=
-                                unit->owner->getType()->getProcessProductionSystem().getProcesses()[i].costs[j].getAmount()) {
-                                buildingsList.push_back(building);
+            for (int k = 0; k < building->getType()->getResourceProductionSystem().getStoredResourceCount(); ++k) {
+                const ResourceType *producedType = building->getType()->getResourceProductionSystem().getStoredResource(k, building->getFaction()).getType();
+                int amount = building->getSResource(producedType)->getAmount();
+                if (amount > 20 && producedType->getName() != "wealth") {
+                    for (int j = 0; j < unit->getType()->getResourceProductionSystem().getStoredResourceCount(); ++j) {
+                        const ResourceType *transportedType = unit->getType()->getResourceProductionSystem().getStoredResource(j, unit->getFaction()).getType();
+                        for (int l = 0; l < unit->owner->getType()->getResourceProductionSystem().getStoredResourceCount(); ++l) {
+                            const ResourceType *storedType = unit->owner->getType()->getResourceProductionSystem().getStoredResource(l, unit->getFaction()).getType();
+                            if (transportedType == storedType && storedType == producedType &&
+                                transportedType == producedType) {
+                                bool previousTarget = false;
+                                for (int z = 0; z < unit->getFaction()->getUnitCount(); ++z) {
+                                    if (unit->getFaction()->getUnit(z)->getType()->personality == unit->getType()->personality) {
+                                        if (unit->getFaction()->getUnit(z)->getGoalStructure() == building) {
+                                            previousTarget = true;
+                                        }
+                                    }
+                                }
+                                if (previousTarget == false) {
+                                    buildingsList.push_back(building);
+                                }
                             }
                         }
                     }
@@ -350,24 +370,46 @@ Unit* GoalSystem::findProducer(Unit* unit) {
             }
         }
     }
-    if (buildingsList.size() > 0) {
-        int distance = 50;
-        Vec2i uPos = unit->getCenteredPos();
-        if (unit->isCarried()) {
-            uPos = unit->owner->getCenteredPos();
-        }
-        Vec2i tPos = Vec2i(NULL);
-        for (int i = 0; i < buildingsList.size(); ++i) {
-            Unit *building = buildingsList[i];
-            Vec2i bPos = building->getCenteredPos();
-            int newDistance = sqrt(pow(float(abs(uPos.x - bPos.x)), 2) + pow(float(abs(uPos.y - bPos.y)), 2));
-            if (newDistance < distance) {
-                distance = newDistance;
-                producer = building;
-                tPos = bPos;
+    producer = buildingList(unit, buildingsList);
+    return producer;
+}
+
+Unit* GoalSystem::findGuild(Unit* unit) {
+    Unit *producer = NULL;
+    Faction *f = unit->getFaction();
+    vector<Unit*> buildingsList;
+    for (int i = 0; i < f->getUnitCount(); ++i) {
+        Unit *building = f->getUnit(i);
+        if (building->getType()->hasTag("building") && building->getType()->hasTag("producer")) {
+            for (int k = 0; k < building->getType()->getResourceProductionSystem().getStoredResourceCount(); ++k) {
+                const ResourceType *producedType = building->getType()->getResourceProductionSystem().getStoredResource(k, building->getFaction()).getType();
+                int amount = building->getSResource(producedType)->getAmount();
+                if (amount > 20 && producedType->getName() != "wealth") {
+                    for (int j = 0; j < unit->getType()->getResourceProductionSystem().getStoredResourceCount(); ++j) {
+                        const ResourceType *transportedType = unit->getType()->getResourceProductionSystem().getStoredResource(j, unit->getFaction()).getType();
+                        for (int l = 0; l < unit->owner->getType()->getResourceProductionSystem().getStoredResourceCount(); ++l) {
+                            const ResourceType *storedType = unit->owner->getType()->getResourceProductionSystem().getStoredResource(l, unit->getFaction()).getType();
+                            if (transportedType == storedType && storedType == producedType &&
+                                transportedType == producedType) {
+                                bool previousTarget = false;
+                                for (int z = 0; z < unit->getFaction()->getUnitCount(); ++z) {
+                                    if (unit->getFaction()->getUnit(z)->getType()->personality == unit->getType()->personality) {
+                                        if (unit->getFaction()->getUnit(z)->getGoalStructure() == building) {
+                                            previousTarget = true;
+                                        }
+                                    }
+                                }
+                                if (previousTarget == false) {
+                                    buildingsList.push_back(building);
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }
+    producer = buildingList(unit, buildingsList);
     return producer;
 }
 
@@ -884,12 +926,34 @@ void GoalSystem::computeAction(Unit *unit, Focus focus) {
             transport = findProducer(unit);
             if (transport != NULL) {
                 unit->productionRoute.setProducerId(transport->getId());
-                if (unit->productionRoute.getProducerId() != NULL && unit->productionRoute.getStoreId() != NULL) {
+                unit->setGoalStructure(transport);
+                if (unit->productionRoute.getProducerId() != -1 && unit->productionRoute.getStoreId() != -1) {
                     if (unit->isCarried()) {
                         ownerUnload(unit);
                     }
                     const CommandType *tct = unit->getType()->getFirstCtOfClass(CmdClass::TRANSPORT);
-                    unit->giveCommand(g_world.newCommand(tct, CmdFlags(), transport));
+                    unit->giveCommand(g_world.newCommand(tct, CmdFlags(), unit->getGoalStructure()));
+                }
+            }
+        }
+    } else if (goal == Goal::TRADE) {
+        if (goalList[goal] != unit->getCurrentFocus()) {
+            clearSimAi(unit, goal);
+            unit->productionRoute.setStoreId(unit->owner->getId());
+            unit->productionRoute.setDestination(unit->owner->getPos());
+        }
+        if (unit->getCurrSkill()->getClass() == SkillClass::STOP) {
+            Unit *transport = NULL;
+            transport = findProducer(unit);
+            if (transport != NULL) {
+                unit->productionRoute.setProducerId(transport->getId());
+                unit->setGoalStructure(transport);
+                if (unit->productionRoute.getProducerId() != -1 && unit->productionRoute.getStoreId() != -1) {
+                    if (unit->isCarried()) {
+                        ownerUnload(unit);
+                    }
+                    const CommandType *tct = unit->getType()->getFirstCtOfClass(CmdClass::TRADE);
+                    unit->giveCommand(g_world.newCommand(tct, CmdFlags(), unit->getGoalStructure()));
                 }
             }
         }

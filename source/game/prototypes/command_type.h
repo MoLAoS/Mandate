@@ -371,6 +371,7 @@ private:
 	map<string, string>		m_tipKeys;
 	SoundContainer			m_startSounds;
 	SoundContainer			m_builtSounds;
+	bool                    m_child;
 public:
 	StructureCommandType() : CommandType("Structure", Clicks::TWO), m_buildSkillType(0) {}
 	~StructureCommandType();
@@ -387,6 +388,7 @@ public:
 	virtual void undo(Unit *unit, const Command &command) const;
 	const BuildSkillType *getBuildSkillType() const	{return m_buildSkillType;}
 	virtual int getProducedCount() const					{return m_buildings.size();}
+	bool isChild() const {return m_child;}
 	virtual ProdTypePtr getProduced(int i) const;
 	bool canBuild(const UnitType *ut) const		{
 		return std::find(m_buildings.begin(), m_buildings.end(), ut) != m_buildings.end();
@@ -585,6 +587,7 @@ private:
 	vector<const ResourceType*> m_harvestedResources;
 	int							m_maxLoad;
 	int							m_hitsPerUnit;
+	bool                        m_location;
 
 public:
 	HarvestCommandType() : MoveBaseCommandType("Harvest", Clicks::TWO)
@@ -596,6 +599,8 @@ public:
 	virtual void subDesc(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const override;
 	virtual void descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt = 0) const override;
 	virtual void update(Unit *unit) const;
+
+    bool getLocation() const {return m_location;}
 
 	//get
 	const MoveSkillType *getMoveLoadedSkillType() const		{return m_moveLoadedSkillType;}
@@ -621,6 +626,7 @@ private:
 	const TransportSkillType*	m_transportSkillType;
 	const StopSkillType*		m_stopLoadedSkillType;
 	vector<const ResourceType*> m_transportedResources;
+	bool                        m_location;
 
 public:
 	TransportCommandType() : MoveBaseCommandType("Transport", Clicks::ONE)
@@ -693,6 +699,37 @@ public:
 
 	virtual CmdClass getClass() const { return typeClass(); }
 	static CmdClass typeClass() { return CmdClass::SET_PRODUCER; }
+};
+
+// ===============================
+//  class TradeCommandType
+// ===============================
+
+class TradeCommandType: public MoveBaseCommandType {
+private:
+	const MoveSkillType*		m_moveLoadedSkillType;
+	const TransportSkillType*	m_transportSkillType;
+	const StopSkillType*		m_stopLoadedSkillType;
+	bool                        m_location;
+public:
+	TradeCommandType() : MoveBaseCommandType("Trade", Clicks::ONE)
+		, m_moveLoadedSkillType(0), m_transportSkillType(0), m_stopLoadedSkillType(0) {}
+	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct);
+	virtual void doChecksum(Checksum &checksum) const;
+	virtual void getDesc(string &str, const Unit *unit) const;
+	virtual void subDesc(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const override;
+	virtual void descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt = 0) const override;
+	virtual void update(Unit *unit) const;
+	void goToGuild(Unit* unit, Unit* home, Unit *guild) const;
+	void goToOwner(Unit* unit, Unit* home, Unit *guild) const;
+
+	//get
+	const MoveSkillType *getMoveLoadedSkillType() const		        {return m_moveLoadedSkillType;}
+	const TransportSkillType *getTransportSkillType() const	        {return m_transportSkillType;}
+	const StopSkillType *getStopLoadedSkillType() const		        {return m_stopLoadedSkillType;}
+
+	virtual CmdClass getClass() const { return typeClass(); }
+	static CmdClass typeClass() { return CmdClass::TRADE; }
 };
 
 // ==================================
@@ -801,6 +838,7 @@ private:
 	vector<int>             m_producedNumbers;
 	map<string, string>		m_tipKeys;
 	SoundContainer			m_finishedSounds;
+	bool                    m_child;
 
 public:
 	ProduceCommandType() : CommandType("Produce", Clicks::ONE, true), m_produceSkillType(0) {}
@@ -813,6 +851,7 @@ public:
 	virtual string getReqDesc(const Faction *f) const;
 
 	int getProducedNumber(const UnitType* ut) const;
+	bool isChild() const {return m_child;}
 
 	// get
 	virtual int getProducedCount() const	{return m_producedUnits.size();}

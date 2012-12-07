@@ -212,6 +212,22 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 		g_logger.logXmlError(dir, e.what());
 		loadOk = false;
 	}
+	try {
+        const XmlNode *resourceStoresNode = unitNode->getChild("resource-stores", 0, false);
+        if (resourceStoresNode) {
+            resourceStores.resize(resourceStoresNode->getChildCount());
+            for (int i = 0; i < resourceStoresNode->getChildCount(); ++i) {
+                const XmlNode *resourceStoreNode = resourceStoresNode->getChild("resource", i);
+                string resType = resourceStoreNode->getAttribute("type")->getRestrictedValue();
+                int required = resourceStoreNode->getAttribute("stored")->getIntValue();
+                resourceStores[i].init(techTree->getResourceType(resType), required, 0, 0);
+            }
+        }
+    }
+    catch (runtime_error e) {
+		g_logger.logXmlError(dir, e.what());
+		loadOk = false;
+	}
     try {
         const XmlNode *cellMapNode= parametersNode->getChild("cellmap", 0, false);
         if (cellMapNode && cellMapNode->getAttribute("value")->getBoolValue()) {

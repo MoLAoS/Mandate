@@ -198,7 +198,29 @@ void CommandType::apply(Unit *unit, Faction *faction, const Command &command) co
 		} else {
 			faction->applyCosts(produced);
 		}
-		unit->applyCosts(produced);
+		if (command.getType()->getClass() == CmdClass::PRODUCE || command.getType()->getClass() == CmdClass::STRUCTURE) {
+		    const ProduceCommandType *pct = NULL;
+		    const StructureCommandType *sct = NULL;
+		    if (command.getType()->getClass() == CmdClass::PRODUCE) {
+                pct = static_cast<const ProduceCommandType*>(command.getType());
+		    } else if (command.getType()->getClass() == CmdClass::STRUCTURE) {
+                sct = static_cast<const StructureCommandType*>(command.getType());
+		    }
+		    bool prodct = false;
+		    bool structct = false;
+		    if (pct != NULL) {
+                prodct = pct->isChild();
+		    } else if (sct != NULL) {
+                structct = sct->isChild();
+		    }
+            if (prodct || structct) {
+                unit->owner->applyCosts(produced);
+            } else if (!prodct && !structct) {
+                unit->applyCosts(produced);
+            }
+		} else {
+            unit->applyCosts(produced);
+		}
 	}
 }
 
@@ -539,6 +561,15 @@ void StopCommandType::update(Unit *unit) const {
 bool ProduceCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct) {
 	bool loadOk = CommandType::load(n, dir, tt, ct);
     const FactionType *ft = ct->getFactionType();
+	try {
+	    const XmlNode *childNode = n->getChild("child-structure", 0, false);
+	    if (childNode) {
+            m_child = childNode->getAttribute("child-building")->getBoolValue();
+	    }
+	} catch (runtime_error e) {
+		g_logger.logXmlError(dir, e.what());
+		loadOk = false;
+	}
 	//produce
 	try {
 		string skillName = n->getChild("produce-skill")->getAttribute("value")->getRestrictedValue();

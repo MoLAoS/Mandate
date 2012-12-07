@@ -300,7 +300,22 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 			loadOk = false;
 		}
 	}
-
+	try {
+        const XmlNode *resourceTradesNode = factionNode->getChild("resource-trades", 0, false);
+        if (resourceTradesNode) {
+            resourceTrades.resize(resourceTradesNode->getChildCount());
+            for (int i = 0; i < resourceTradesNode->getChildCount(); ++i) {
+                const XmlNode *resourceTradeNode = resourceTradesNode->getChild("resource", i);
+                string resType = resourceTradeNode->getAttribute("type")->getRestrictedValue();
+                int required = resourceTradeNode->getAttribute("value")->getIntValue();
+                resourceTrades[i].init(techTree->getResourceType(resType),required,0,0);
+            }
+        }
+    }
+    catch (runtime_error e) {
+		g_logger.logXmlError(dir, e.what());
+		loadOk = false;
+	}
 	// 6. Read starting resources
 	try {
 		const XmlNode *startingResourcesNode = factionNode->getChild("starting-resources");
