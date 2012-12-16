@@ -137,7 +137,7 @@ Display::Display(Container *parent, UserInterface *ui, Vec2i pos)
 	TextWidget::addText(""); // (1) unit text
 	TextWidget::addText(""); // (2) queued orders text (to display below progress bar if present)
 	TextWidget::addText(""); // (3) progress bar
-	for (int i = 0; i < taxCellCount; ++i) { // command buttons
+	for (int i = 0; i < taxCellCount; ++i) { // tax buttons
 		ImageWidget::addImageX(0, Vec2i(0), Vec2i(m_imageSize));
 	}
 	for (int i = 0; i < commandCellCount; ++i) { // command buttons

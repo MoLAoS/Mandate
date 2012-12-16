@@ -98,7 +98,7 @@ public:
 	void setCentre(bool vert, bool horiz);
 	void setCentre(bool v) { setCentre(v, v); }
 
-	
+
 	static Anchors getCentreAnchors() {
 		Anchors a;
 		a.setCentre(true);
@@ -180,7 +180,7 @@ public: // get border sizes
 		return m_borderStyle.m_sizes[Border::TOP] + m_borderStyle.m_sizes[Border::BOTTOM];
 	}
 	Vec2i getBordersAll() const	{ return Vec2i(getBordersHoriz(), getBordersVert()); }
-	
+
 	bool isPermanent() const { return m_permanent; }
 	void setPermanent() { m_permanent = true; }
 	void setTransient() { m_permanent = false; }
@@ -233,14 +233,20 @@ public:
 	FontPtr getFont(int ndx) const;
 	FontPtr getFont() const { return getFont(m_textStyle.m_fontIndex); }
 	FontPtr getSmallFont() const {
-		if (m_textStyle.m_smallFontIndex != -1) { 
+		if (m_textStyle.m_smallFontIndex != -1) {
 			return getFont(m_textStyle.m_smallFontIndex);
 		}
 		return getFont();
 	}
 	FontPtr getBigFont() const {
-		if (m_textStyle.m_largeFontIndex != -1) { 
+		if (m_textStyle.m_largeFontIndex != -1) {
 			return getFont(m_textStyle.m_largeFontIndex);
+		}
+		return getFont();
+	}
+	FontPtr getTinyFont() const {
+		if (m_textStyle.m_tinyFontIndex != -1) {
+			return getFont(m_textStyle.m_tinyFontIndex);
 		}
 		return getFont();
 	}
@@ -280,7 +286,7 @@ public:
 	void setStyle(const WidgetStyle &style) {
 		*static_cast<WidgetStyle*>(this) = style;
 	}
-	
+
 	//virtual void setParent(Container* p) { m_parent = p; }
 
 	void setBorderStyle(const BorderStyle &style);
@@ -517,7 +523,7 @@ public:
 //  enum MouseAppearance
 // =====================================================
 
-WRAPPED_ENUM( MouseAppearance, 
+WRAPPED_ENUM( MouseAppearance,
 	DEFAULT,
 	CMD_ICON,
 	MOVE_FREE/*,
@@ -566,7 +572,7 @@ private:
 	int m_absolute;
 
 public:
-	SizeHint(int percentage = -1, int absolute = -1) 
+	SizeHint(int percentage = -1, int absolute = -1)
 			: m_percentage(percentage), m_absolute(absolute) {}
 
 	SizeHint(const SizeHint &rhs)

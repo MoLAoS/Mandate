@@ -218,8 +218,6 @@ void CommandType::apply(Unit *unit, Faction *faction, const Command &command) co
             } else if (!prodct && !structct) {
                 unit->applyCosts(produced);
             }
-		} else {
-            unit->applyCosts(produced);
 		}
 	}
 }
@@ -565,6 +563,8 @@ bool ProduceCommandType::load(const XmlNode *n, const string &dir, const TechTre
 	    const XmlNode *childNode = n->getChild("child-structure", 0, false);
 	    if (childNode) {
             m_child = childNode->getAttribute("child-building")->getBoolValue();
+	    } else {
+            m_child = false;
 	    }
 	} catch (runtime_error e) {
 		g_logger.logXmlError(dir, e.what());

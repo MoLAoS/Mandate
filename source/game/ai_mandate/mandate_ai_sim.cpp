@@ -78,10 +78,24 @@ Focus MandateAISim::getTopGoal(Unit *unit, string personality) {
                     }
                 }
                 if (goalName == Goal::TRADE) {
-                    Unit *producer = NULL;
-                    producer = goalSystem.findProducer(unit);
-                    if (producer != NULL) {
-                        topGoal = goal;
+                    const ResourceType *rt = NULL;
+                    int minWealth = 0;
+                    for (int j = 0; j < unit->owner->getType()->getResourceStores().size(); ++j) {
+                        if (unit->owner->getType()->getResourceStores()[j].getType()->getName() == "wealth") {
+                            minWealth = unit->owner->getType()->getResourceStores()[j].getAmount();
+                            rt = unit->owner->getType()->getResourceStores()[j].getType();
+                        }
+                    }
+                    int freeWealth = unit->owner->getSResource(rt)->getAmount() - minWealth;
+                    if (unit->owner->getType()->hasTag("fort")) {
+                        freeWealth = unit->owner->getFaction()->getSResource(rt)->getAmount() - minWealth;
+                    }
+                    if (freeWealth > 50) {
+                        Unit *producer = NULL;
+                        producer = goalSystem.findGuild(unit);
+                        if (producer != NULL) {
+                            topGoal = goal;
+                        }
                     }
                 }
                 if (goalName == Goal::EXPLORE) {
@@ -268,7 +282,9 @@ void MandateAISim::computeAction(Unit *unit, string personality, string reason) 
                 for (int i = 0; i < unit->getType()->getResourceProductionSystem().getStoredResourceCount(); ++i) {
                     const ResourceType *rt = unit->getType()->getResourceProductionSystem().getStoredResource(i, unit->getFaction()).getType();
                     int taxes = 0;
-                    if (unit->getGoalStructure()->getType()->hasTag("orderhouse") || unit->getGoalStructure()->getType()->hasTag("guildhall")) {
+                    if (unit->getGoalStructure()->getType()->hasTag("orderhouse") || unit->getGoalStructure()->getType()->hasTag("guildhall")
+                         || unit->getGoalStructure()->getType()->hasTag("shop") || unit->getGoalStructure()->getType()->hasTag("producer")
+                         || unit->getGoalStructure()->getType()->hasTag("house")) {
                         taxes = (unit->getGoalStructure()->getSResource(rt)->getAmount() -
                                  unit->getGoalStructure()->taxedGold) / (100 / unit->getGoalStructure()->taxRate);
                     } else {
@@ -276,7 +292,9 @@ void MandateAISim::computeAction(Unit *unit, string personality, string reason) 
                     }
                     unit->incResourceAmount(rt, taxes);
                     unit->getGoalStructure()->incResourceAmount(rt, -taxes);
-                    if (unit->getGoalStructure()->getType()->hasTag("orderhouse") || unit->getGoalStructure()->getType()->hasTag("guildhall")) {
+                    if (unit->getGoalStructure()->getType()->hasTag("orderhouse") || unit->getGoalStructure()->getType()->hasTag("guildhall")
+                         || unit->getGoalStructure()->getType()->hasTag("house") || unit->getGoalStructure()->getType()->hasTag("shop")
+                         || unit->getGoalStructure()->getType()->hasTag("producer")) {
                         unit->getGoalStructure()->taxedGold = unit->getGoalStructure()->getSResource(rt)->getAmount();
                     }
                 }

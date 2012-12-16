@@ -899,11 +899,11 @@ public:
 	int getCreatedNumber(const ItemType* it) const;
 
 	// get
-	virtual int getCreatedCount() const	{return m_createdItems.size();}
-	virtual const ProducibleType* getCreated(int i) const;
+	virtual int getProducedCount() const	{return m_createdItems.size();}
+	virtual const ProducibleType* getProduced(int i) const;
 
 	const ItemType *getCreatedItem(int i) const		{return m_createdItems[i];}
-	int getCreatedUnitCount() const		{return m_createdItems.size();}
+	int getCreatedItemCount() const		{return m_createdItems.size();}
 
 	string getTipKey(const string &name) const  {
 		map<string,string>::const_iterator it = m_tipKeys.find(name);

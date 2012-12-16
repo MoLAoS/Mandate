@@ -152,9 +152,10 @@ void ResCost::init(const XmlNode *n, const TechTree *tt) {
 	m_cost = n->getChildIntValue("cost");
 }
 
-void ResCost::init(const ResourceType *rt, string n, int v, int a, int b) {
+void ResCost::init(const ResourceType *rt, bool consume, string n, int v, int a, int b) {
 	ResourceAmount::init(rt, v, 0, 0);
 	m_cost = 0;
+	m_consume = consume;
 	m_name = n;
 }
 

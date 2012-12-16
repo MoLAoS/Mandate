@@ -2859,7 +2859,7 @@ string Unit::getShortDesc() const {
 	    ss << endl << "Designation: " << levelName;
         ss << endl << "Level: " << levelNumber;
 	}
-	if (type->hasTag("orderhouse") || type->hasTag("ordermember")) {
+	if (type->hasTag("orderhouse") || type->hasTag("ordermember") || type->hasTag("shop") || type->hasTag("guildhall")) {
         ss << endl << "Total Gold: " << getSResource(g_world.getTechTree()->getResourceType("wealth"))->getAmount();
         ss << endl << "Taxed Gold: " << taxedGold;
         ss << endl << "Tax Rate: " << taxRate;
@@ -2880,16 +2880,16 @@ string Unit::getLongDesc() const {
 	string shortDesc = getShortDesc();
 	stringstream ss;
 
-    if (type->hasTag("ordermember") || type->hasTag("orderhouse")) {
+    if (type->hasTag("ordermember") || type->hasTag("orderhouse") || type->hasTag("guildhall") || type->hasTag("shop")) {
     ss << endl << "Taxed Gold: " << taxedGold;
     }
-    if (type->hasTag("ordermember") || type->hasTag("orderhouse")) {
+    if (type->hasTag("ordermember") || type->hasTag("orderhouse") || type->hasTag("guildhall") || type->hasTag("shop")) {
     ss << endl << "Tax Rate: " << taxRate;
     }
 	if (goalStructure != NULL) {
 	ss << endl << "Reason: " << getGoalReason();
 	}
-        ss << endl << "Stored Items: " << itemsStored << "/" << itemLimit;
+    ss << endl << "Stored Items: " << itemsStored << "/" << itemLimit;
     if (type->getModifications().size() > 0) {
         for (int i = 0; i < type->getModifications().size(); ++i) {
             ss << endl << "Unit: " << type->getModifications()[i].getModificationName();

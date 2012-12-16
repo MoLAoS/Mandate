@@ -157,14 +157,18 @@ public:
 class ResCost : public ResourceAmount {
 private:
 	int m_cost;
+	bool m_consume;
 	string m_name;
 
 public:
 	void init(const XmlNode *node, const TechTree *tt);
-    void init(const ResourceType *rt, string name, int cost, int add, int mult);
+    void init(const ResourceType *rt, bool consume, string name, int cost, int add, int mult);
 
     int getCost() const { return m_cost; }
 	void setCost(int cost) { m_cost = cost; }
+
+    bool getConsume() const { return m_consume; }
+	void setConsume(bool consume) { m_consume = consume; }
 
     string getName() const { return m_name; }
 	void setName(string name) { m_name = name; }
@@ -214,8 +218,10 @@ public:
     Products products;
     Items items;
     bool local;
+    int count;
 
     void setScope(bool scope) { local = scope; }
+    void setCount(int value) { count = value; }
 };
 
 }}// end namespace

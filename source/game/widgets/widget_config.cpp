@@ -593,17 +593,17 @@ void WidgetConfig::loadTextStyle(WidgetType widgetType, TextStyle &style, TextSt
 
 		// font(s)
 		if (luaScript.getStringSet("Font", fontSet)) {
-			style.m_smallFontIndex = getFontIndex(fontSet[0]);
-			if (style.m_smallFontIndex == -1) {
+			style.m_fontIndex = getFontIndex(fontSet[0]);
+			if (style.m_fontIndex == -1) {
 				WIDGET_LOG( "\t\tError: font named '" << fontSet[0] << "' not found" );
 			} else {
-				WIDGET_LOG( "\t\tSmall Font: '" << fontSet[0] << "' @ ndx " << style.m_smallFontIndex );
+				WIDGET_LOG( "\t\tMedium Font: '" << fontSet[0] << "' @ ndx " << style.m_fontIndex );
 			}
-			style.m_fontIndex = getFontIndex(fontSet[1]);
-			if (style.m_fontIndex == -1) {
+			style.m_smallFontIndex = getFontIndex(fontSet[1]);
+			if (style.m_smallFontIndex == -1) {
 				WIDGET_LOG( "\t\tError: font named '" << fontSet[1] << "' not found" );
 			} else {
-				WIDGET_LOG( "\t\tMedium Font: '" << fontSet[1] << "' @ ndx " << style.m_fontIndex );
+				WIDGET_LOG( "\t\tSmall Font: '" << fontSet[1] << "' @ ndx " << style.m_smallFontIndex );
 			}
 			style.m_largeFontIndex = getFontIndex(fontSet[2]);
 			if (style.m_largeFontIndex == -1) {
@@ -611,8 +611,14 @@ void WidgetConfig::loadTextStyle(WidgetType widgetType, TextStyle &style, TextSt
 			} else {
 				WIDGET_LOG( "\t\tLarge Font: '" << fontSet[2] << "' @ ndx " << style.m_largeFontIndex );
 			}
+			style.m_tinyFontIndex = getFontIndex(fontSet[3]);
+			if (style.m_tinyFontIndex == -1) {
+				WIDGET_LOG( "\t\tError: font named '" << fontSet[3] << "' not found" );
+			} else {
+				WIDGET_LOG( "\t\tTiny Font: '" << fontSet[3] << "' @ ndx " << style.m_tinyFontIndex );
+			}
 		} else if (luaScript.getStringField("Font", name)) {
-			style.m_fontIndex = style.m_smallFontIndex = style.m_largeFontIndex = getFontIndex(name);
+			style.m_fontIndex = style.m_smallFontIndex = style.m_tinyFontIndex = style.m_largeFontIndex = getFontIndex(name);
 			if (style.m_fontIndex == -1) {
 				WIDGET_LOG( "\t\tError: font named '" << name << "' not found" );
 			} else {
@@ -624,9 +630,10 @@ void WidgetConfig::loadTextStyle(WidgetType widgetType, TextStyle &style, TextSt
 				style.m_fontIndex = src->m_fontIndex;
 				style.m_smallFontIndex = src->m_smallFontIndex;
 				style.m_largeFontIndex = src->m_largeFontIndex;
+				style.m_tinyFontIndex = src->m_tinyFontIndex;
 			} else {
 				WIDGET_LOG( "\t\tError: font named '" << name << "' not found" );
-				style.m_fontIndex = style.m_smallFontIndex = style.m_largeFontIndex = -1;
+				style.m_fontIndex = style.m_smallFontIndex = style.m_largeFontIndex = style.m_tinyFontIndex = -1;
 			}
 		}
 		if (luaScript.getStringField("Colour", colour)) {

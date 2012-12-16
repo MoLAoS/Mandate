@@ -114,7 +114,7 @@ bool CreateItemCommandType::load(const XmlNode *n, const string &dir, const Tech
 	return loadOk;
 }
 
-const ProducibleType* CreateItemCommandType::getCreated(int i) const {
+const ProducibleType* CreateItemCommandType::getProduced(int i) const {
 	return m_createdItems[i];
 }
 
@@ -184,7 +184,7 @@ void CreateItemCommandType::update(Unit *unit) const {
 	} else {
 		unit->update2();
 		const FactionType *ft = unit->getFaction()->getType();
-		const ItemType *prodType = m_createdItems[0];
+		const ItemType *prodType = static_cast<const ItemType*>(command->getProdType());
 		if (unit->getProgress2() > prodType->getProductionTime()) {
 			for (int i=0; i < getCreatedNumber(prodType); ++i) {
                 Item item;

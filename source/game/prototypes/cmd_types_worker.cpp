@@ -1483,40 +1483,64 @@ void TradeCommandType::subDesc(const Unit *unit, CmdDescriptor *callback, ProdTy
 void TradeCommandType::goToGuild(Unit *unit, Unit *home, Unit *guild) const {
     for (int i = 0; i < home->getType()->getResourceStores().size(); ++i) {
         const ResourceType *requiredType = home->getType()->getResourceStores()[i].getType();
-        int required = home->getType()->getResourceStores()[i].getAmount();
-        int possessed = home->getSResource(requiredType)->getAmount();
         for (int k = 0; k < guild->getType()->getResourceProductionSystem().getStoredResourceCount(); ++k) {
             const ResourceType *guildType = guild->getType()->getResourceProductionSystem().getStoredResource(k, guild->getFaction()).getType();
-            if (requiredType == guildType) {
+            if (requiredType == guildType && requiredType->getName() != "wealth") {
                 int minWealth = 0;
+                int tradeValue = 0;
+                int freeWealth = 0;
+                int available = 0;
+                int required = home->getType()->getResourceStores()[i].getAmount();
+                int possessed = home->getSResource(requiredType)->getAmount();
+                int requiredAmount = required - possessed;
+                int resourceAmount = guild->getSResource(requiredType)->getAmount();
                 const ResourceType *rt = NULL;
-                for (int j = 0; j < unit->getType()->getResourceStores().size(); ++j) {
-                    if (unit->getType()->getResourceStores()[j].getType()->getName() == "wealth") {
-                        minWealth = unit->getType()->getResourceStores()[j].getAmount();
-                        rt = unit->getType()->getResourceStores()[j].getType();
+                for (int j = 0; j < home->getType()->getResourceStores().size(); ++j) {
+                    if (home->getType()->getResourceStores()[j].getType()->getName() == "wealth") {
+                        minWealth = home->getType()->getResourceStores()[j].getAmount();
+                        rt = home->getType()->getResourceStores()[j].getType();
                     }
                 }
-                int freeWealth = home->getSResource(rt)->getAmount() - minWealth;
-                int tradeValue = 0;
                 for (int j = 0; j < unit->getFaction()->getType()->getResourceTrades().size(); ++j) {
                     if (unit->getFaction()->getType()->getResourceTrades()[j].getType() == requiredType) {
                         tradeValue = unit->getFaction()->getType()->getResourceTrades()[j].getAmount();
                     }
                 }
-                int resourceAmount = guild->getSResource(guildType)->getAmount();
-                if (home->getSResource(guildType)->getAmount() <= required) {
-                    int requiredAmount = required - possessed;
-                    if (requiredAmount > 50 && resourceAmount > 50) {
-                        if (freeWealth > 100 * tradeValue) {
-                            int buyAmount = resourceAmount;
-                            if (buyAmount > 100) {
-                                buyAmount = 100;
+                if (home->getType()->hasTag("fort")) {
+                    freeWealth = home->getFaction()->getSResource(rt)->getAmount() - minWealth;
+                } else {
+                    freeWealth = home->getSResource(rt)->getAmount() - minWealth;
+                }
+                if (!guild->getType()->hasTag("shop")) {
+                    available = resourceAmount;
+                    for (int q = 0; q < guild->getType()->getResourceStores().size(); ++q) {
+                        if (guild->getType()->getResourceStores()[q].getType() == requiredType) {
+                            int free = resourceAmount - guild->getType()->getResourceStores()[q].getAmount();
+                            if (free >= 10) {
+                                available = free;
                             }
-                            int cost = buyAmount * tradeValue;
-                            home->incResourceAmount(rt, -cost);
-                            guild->incResourceAmount(requiredType, -buyAmount);
-                            unit->incResourceAmount(requiredType, buyAmount);
                         }
+                    }
+                } else {
+                    available = resourceAmount;
+                }
+                if (requiredAmount > 10 && available > 10) {
+                    if (requiredAmount < available) {
+                        available = requiredAmount;
+                    }
+                    if (available > 100) {
+                        available = 100;
+                    }
+                    int cost = available * tradeValue;
+                    if(freeWealth > cost) {
+                        if (home->getType()->hasTag("fort")) {
+                            home->getFaction()->incResourceAmount(rt, -cost);
+                        } else {
+                            home->incResourceAmount(rt, -cost);
+                        }
+                        guild->incResourceAmount(rt, -cost);
+                        guild->incResourceAmount(requiredType, -available);
+                        unit->incResourceAmount(requiredType, available);
                     }
                 }
             }
@@ -1527,12 +1551,13 @@ void TradeCommandType::goToGuild(Unit *unit, Unit *home, Unit *guild) const {
 void TradeCommandType::goToOwner(Unit *unit, Unit *home, Unit *guild) const {
     for (int i = 0; i < unit->getType()->getResourceProductionSystem().getStoredResourceCount(); ++i) {
         const ResourceType *rt = unit->getType()->getResourceProductionSystem().getStoredResource(i, unit->getFaction()).getType();
-        if (unit->getSResource(rt)->getAmount() > 0) {
-            unit->incResourceAmount(rt, -unit->getSResource(rt)->getAmount());
-            if (m_location == true) {
-                home->incResourceAmount(rt, unit->getSResource(rt)->getAmount());
-            } else if (m_location == false) {
-                home->getFaction()->incResourceAmount(rt, unit->getSResource(rt)->getAmount());
+        int carried = unit->getSResource(rt)->getAmount();
+        if (carried > 0) {
+            unit->incResourceAmount(rt, -carried);
+            if (!home->getType()->hasTag("fort")) {
+                home->incResourceAmount(rt, carried);
+            } else if (home->getType()->hasTag("fort")) {
+                home->getFaction()->incResourceAmount(rt, carried);
             }
         }
     }
@@ -1542,28 +1567,28 @@ void TradeCommandType::update(Unit *unit) const {
 	_PROFILE_COMMAND_UPDATE();
 	Command *command = unit->getCurrCommand();
 	assert(command->getType() == this);
-	Vec2i targetPos;
 	Map *map = g_world.getMap();
 	if (unit->productionRoute.getStoreId() != -1 && unit->productionRoute.getProducerId() != -1) {
 	    Unit *store = g_world.getUnit(unit->productionRoute.getStoreId());
 	    Unit *producer = g_world.getUnit(unit->productionRoute.getProducerId());
         if (unit->productionRoute.getDestination() == store->getPos()) {
             if (unit->travel(unit->productionRoute.getDestination(), m_moveLoadedSkillType) == TravelState::ARRIVED) {
-                goToGuild(unit, store, producer);
+                goToOwner(unit, store, producer);
                 unit->productionRoute.setDestination(producer->getPos());
-                if (unit->getCurrentFocus() == "transport" && unit->getGoalStructure() == NULL) {
+                if (unit->getCurrentFocus() == "trade") {
                     unit->productionRoute.setProducerId(-1);
                     unit->finishCommand();
                 }
             }
         }
+        Vec2i uPos = unit->getPos();
+        Vec2i bPos = producer->getCenteredPos();
+        int newDistance = sqrt(pow(float(abs(uPos.x - bPos.x)), 2) + pow(float(abs(uPos.y - bPos.y)), 2));
         if (unit->productionRoute.getDestination() == producer->getPos()) {
-            if (unit->travel(unit->productionRoute.getDestination(), m_moveLoadedSkillType) == TravelState::ARRIVED) {
-                goToOwner(unit, store, producer);
+            if (unit->travel(unit->productionRoute.getDestination(), m_moveLoadedSkillType) == TravelState::ARRIVED
+                || newDistance < 3) {
+                goToGuild(unit, store, producer);
                 unit->productionRoute.setDestination(store->getPos());
-                if (unit->getCurrentFocus() == "transport") {
-                    unit->setGoalStructure(NULL);
-                }
             }
         }
 	} else {

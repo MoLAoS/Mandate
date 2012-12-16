@@ -31,8 +31,8 @@ void Personality::load(const XmlNode *node, const TechTree* techTree, const Fact
     goalList.push_back("live");
     goalList.push_back("build");
     goalList.push_back("collect");
-    goalList.push_back("trade");
     goalList.push_back("transport");
+    goalList.push_back("trade");
     goalList.push_back("explore");
     goalList.push_back("shop");
     goalList.push_back("demolish");
@@ -98,6 +98,19 @@ void GoalSystem::ownerLoad(Unit *unit) {
             if (!unit->isCarried()) {
                 if (olct->getLoadSkillType()->getMaxRange() < distance) {
                     unit->giveCommand(g_world.newCommand(ct, CmdFlags(), pos));
+                }
+                Unit *home = unit->owner;
+                for (int i = 0; i < unit->getType()->getResourceProductionSystem().getStoredResourceCount(); ++i) {
+                    const ResourceType *rt = unit->getType()->getResourceProductionSystem().getStoredResource(i, unit->getFaction()).getType();
+                    int carried = unit->getSResource(rt)->getAmount();
+                    if (carried > 0) {
+                        unit->incResourceAmount(rt, -carried);
+                        if (!home->getType()->hasTag("fort")) {
+                            home->incResourceAmount(rt, carried);
+                        } else if (home->getType()->hasTag("fort")) {
+                            home->getFaction()->incResourceAmount(rt, carried);
+                        }
+                    }
                 }
                 if (olct->getLoadSkillType()->getMaxRange() >= distance && unit->garrisonTest == false) {
                     unit->garrisonTest = true;
@@ -345,7 +358,13 @@ Unit* GoalSystem::findProducer(Unit* unit) {
             for (int k = 0; k < building->getType()->getResourceProductionSystem().getStoredResourceCount(); ++k) {
                 const ResourceType *producedType = building->getType()->getResourceProductionSystem().getStoredResource(k, building->getFaction()).getType();
                 int amount = building->getSResource(producedType)->getAmount();
-                if (amount > 20 && producedType->getName() != "wealth") {
+                for (int n = 0; n < building->getType()->getResourceStores().size(); ++n) {
+                    const ResourceType *resType = building->getType()->getResourceStores()[n].getType();
+                    if (resType == producedType) {
+                        amount = amount - building->getType()->getResourceStores()[n].getAmount();
+                    }
+                }
+                if (amount > 50 && producedType->getName() != "wealth") {
                     for (int j = 0; j < unit->getType()->getResourceProductionSystem().getStoredResourceCount(); ++j) {
                         const ResourceType *transportedType = unit->getType()->getResourceProductionSystem().getStoredResource(j, unit->getFaction()).getType();
                         for (int l = 0; l < unit->owner->getType()->getResourceProductionSystem().getStoredResourceCount(); ++l) {
@@ -380,27 +399,66 @@ Unit* GoalSystem::findGuild(Unit* unit) {
     vector<Unit*> buildingsList;
     for (int i = 0; i < f->getUnitCount(); ++i) {
         Unit *building = f->getUnit(i);
-        if (building->getType()->hasTag("building") && building->getType()->hasTag("producer")) {
-            for (int k = 0; k < building->getType()->getResourceProductionSystem().getStoredResourceCount(); ++k) {
-                const ResourceType *producedType = building->getType()->getResourceProductionSystem().getStoredResource(k, building->getFaction()).getType();
-                int amount = building->getSResource(producedType)->getAmount();
-                if (amount > 20 && producedType->getName() != "wealth") {
-                    for (int j = 0; j < unit->getType()->getResourceProductionSystem().getStoredResourceCount(); ++j) {
-                        const ResourceType *transportedType = unit->getType()->getResourceProductionSystem().getStoredResource(j, unit->getFaction()).getType();
-                        for (int l = 0; l < unit->owner->getType()->getResourceProductionSystem().getStoredResourceCount(); ++l) {
-                            const ResourceType *storedType = unit->owner->getType()->getResourceProductionSystem().getStoredResource(l, unit->getFaction()).getType();
-                            if (transportedType == storedType && storedType == producedType &&
-                                transportedType == producedType) {
-                                bool previousTarget = false;
-                                for (int z = 0; z < unit->getFaction()->getUnitCount(); ++z) {
-                                    if (unit->getFaction()->getUnit(z)->getType()->personality == unit->getType()->personality) {
-                                        if (unit->getFaction()->getUnit(z)->getGoalStructure() == building) {
-                                            previousTarget = true;
+        bool buy = false;
+        if (unit->owner->getType()->hasTag("house") && building->getType()->hasTag("shop")){
+            buy = true;
+        }
+        if (unit->owner->getType()->hasTag("shop") && building->getType()->hasTag("guildhall")) {
+            buy = true;
+        }
+        if (unit->owner->getType()->hasTag("guildhall") && building->getType()->hasTag("producer")) {
+            buy = true;
+        }
+        if (buy == true) {
+            for (int j = 0; j < building->getType()->getResourceProductionSystem().getStoredResourceCount(); ++j) {
+                const ResourceType *producedType = building->getType()->getResourceProductionSystem().
+                                                   getStoredResource(j, building->getFaction()).getType();
+                if (producedType->getName() != "wealth") {
+                    for (int k = 0; k < unit->getType()->getResourceProductionSystem().getStoredResourceCount(); ++k) {
+                        const ResourceType *transportedType = unit->getType()->getResourceProductionSystem().
+                                                              getStoredResource(k, unit->getFaction()).getType();
+                        if (producedType == transportedType) {
+                            for (int l = 0; l < unit->owner->getType()->getResourceProductionSystem().getStoredResourceCount(); ++l) {
+                                const ResourceType *storedType = unit->owner->getType()->getResourceProductionSystem().
+                                                                 getStoredResource(l, unit->getFaction()).getType();
+                                if (producedType == storedType) {
+                                    for (int m = 0; m < unit->owner->getType()->getResourceStores().size(); ++m) {
+                                        const ResourceType *resType = unit->owner->getType()->getResourceStores()[m].getType();
+                                        if (producedType == resType) {
+                                            int homeStored = unit->owner->getSResource(producedType)->getAmount();
+                                            int homeStores = unit->owner->getType()->getResourceStores()[m].getAmount();
+                                            if (homeStored < homeStores) {
+                                                int available = 0;
+                                                int amount = building->getSResource(producedType)->getAmount();
+                                                if (!building->getType()->hasTag("shop")) {
+                                                    available = amount;
+                                                    for (int n = 0; n < building->getType()->getResourceStores().size(); ++n) {
+                                                        if (building->getType()->getResourceStores()[n].getType() == producedType) {
+                                                            int free = amount - building->getType()->getResourceStores()[n].getAmount();
+                                                            if (free >= 10) {
+                                                                available = free;
+                                                            }
+                                                        }
+                                                    }
+                                                } else {
+                                                    available = amount;
+                                                }
+                                                if (available >= 10) {
+                                                    bool previousTarget = false;
+                                                    for (int o = 0; o < unit->getFaction()->getUnitCount(); ++o) {
+                                                        if (unit->getFaction()->getUnit(o)->getType()->personality == unit->getType()->personality) {
+                                                            if (unit->getFaction()->getUnit(o)->getGoalStructure() == building) {
+                                                                previousTarget = true;
+                                                            }
+                                                        }
+                                                    }
+                                                    if (previousTarget == false) {
+                                                        buildingsList.push_back(building);
+                                                    }
+                                                }
+                                            }
                                         }
                                     }
-                                }
-                                if (previousTarget == false) {
-                                    buildingsList.push_back(building);
                                 }
                             }
                         }
@@ -944,9 +1002,10 @@ void GoalSystem::computeAction(Unit *unit, Focus focus) {
         }
         if (unit->getCurrSkill()->getClass() == SkillClass::STOP) {
             Unit *transport = NULL;
-            transport = findProducer(unit);
+            transport = findGuild(unit);
             if (transport != NULL) {
                 unit->productionRoute.setProducerId(transport->getId());
+                unit->productionRoute.setDestination(transport->getPos());
                 unit->setGoalStructure(transport);
                 if (unit->productionRoute.getProducerId() != -1 && unit->productionRoute.getStoreId() != -1) {
                     if (unit->isCarried()) {
@@ -1033,8 +1092,10 @@ void GoalSystem::computeAction(Unit *unit, Focus focus) {
         }
     } else if (goal == Goal::REST) {
         clearSimAi(unit, goal);
-        ownerLoad(unit);
-        unit->setGoalReason("rest");
+        if (unit->getCurrSkill()->getClass() == SkillClass::STOP) {
+            ownerLoad(unit);
+            unit->setGoalReason("rest");
+        }
     }
 }
 

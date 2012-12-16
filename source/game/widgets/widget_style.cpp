@@ -103,7 +103,7 @@ void BackgroundStyle::setTexture(int imageIndex) {
 
 TextStyle::TextStyle() {
 	memset(this, 0, sizeof(*this));
-	m_smallFontIndex = m_largeFontIndex = -1;
+	m_tinyFontIndex = m_smallFontIndex = m_largeFontIndex = -1;
 }
 
 void TextStyle::setNormal(int fontIndex, int colourIndex) {

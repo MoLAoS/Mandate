@@ -1138,7 +1138,7 @@ void UserInterface::computePortraitInfo(int posDisplay) {
 			const Unit *unit = selection->getFrontUnit();
 			string name = g_lang.getTranslatedFactionName(unit->getFaction()->getType()->getName(), unit->getType()->getName());
 			m_display->setToolTipText2(name, unit->getLongDesc(), DisplaySection::SELECTION);
-			if (unit->getType()->hasTag("guild") || unit->getType()->hasTag("ordermember")) {
+			if (unit->getType()->hasTag("guildhall") || unit->getType()->hasTag("ordermember")) {
 			}
 		} else if (selection->isComandable()) {
 			m_display->setToolTipText2("", g_lang.get("PotraitInfo"), DisplaySection::SELECTION);
@@ -1427,7 +1427,8 @@ void UserInterface::computeTaxPanel() {
     if (selection->isComandable()) {
         const Unit *u = selection->getFrontUnit();
         const UnitType *ut = u->getType();
-        if (ut->hasTag("orderhouse") || ut->hasTag("ordermember")) {
+        if (ut->hasTag("orderhouse") || ut->hasTag("ordermember") || ut->hasTag("shop")
+             || ut->hasTag("producer") || ut->hasTag("house")) {
             for (int i = 0; i < 4; ++i) {
                 m_display->setTaxImage(i, ut->getFactionType()->getItemImage(0));
             }
@@ -1559,6 +1560,9 @@ void UserInterface::computeDisplay() {
 	m_itemWindow->computeEquipmentPanel();
 	m_itemWindow->computeButtonsPanel();
 	m_itemWindow->computeInventoryPanel();
+
+    // === Resource Panels ===
+	m_itemWindow->computeResourcesPanel();
 
 	// === Faction Panel ===
 	m_factionDisplay->computeBuildPanel();

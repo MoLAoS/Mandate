@@ -189,6 +189,7 @@ bool ProcessProductionSystem::load(const XmlNode *processProductionNode, const s
             processTimers.resize(processesNode->getChildCount());
             for(int i = 0; i < processes.size(); ++i){
                 const XmlNode *processNode = processesNode->getChild("process", i);
+                int count = processNode->getAttribute("count")->getIntValue();
                 string range = processNode->getAttribute("scope")->getRestrictedValue();
                 bool scope;
                 if (range == "local") {
@@ -196,6 +197,7 @@ bool ProcessProductionSystem::load(const XmlNode *processProductionNode, const s
                 } else {
                     scope = false;
                 }
+                processes[i].setCount(count);
                 processes[i].setScope(scope);
                 const XmlNode *costsNode = processNode->getChild("costs");
                 processes[i].costs.resize(costsNode->getChildCount());
@@ -203,7 +205,8 @@ bool ProcessProductionSystem::load(const XmlNode *processProductionNode, const s
                 const XmlNode *costNode = costsNode->getChild("cost", j);
                 string name = costNode->getAttribute("name")->getRestrictedValue();
                 int amount = costNode->getAttribute("amount")->getIntValue();
-                processes[i].costs[j].init(techTree->getResourceType(name), name, amount, 0, 0);
+                bool consume = costNode->getAttribute("consume")->getBoolValue();
+                processes[i].costs[j].init(techTree->getResourceType(name), consume, name, amount, 0, 0);
                 }
                 const XmlNode *productsNode = processNode->getChild("products");
                 processes[i].products.resize(productsNode->getChildCount());

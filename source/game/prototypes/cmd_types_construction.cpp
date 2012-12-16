@@ -59,6 +59,8 @@ bool StructureCommandType::load(const XmlNode *n, const string &dir, const TechT
 	    const XmlNode *childNode = n->getChild("child-structure", 0, false);
 	    if (childNode) {
             m_child = childNode->getAttribute("child-building")->getBoolValue();
+	    } else {
+            m_child = false;
 	    }
 	} catch (runtime_error e) {
 		g_logger.logXmlError(dir, e.what());
@@ -251,39 +253,36 @@ void StructureCommandType::blockedBuild(Unit *unit) const {
 void StructureCommandType::acceptBuild(Unit *unit, Command *command, const UnitType *builtUnitType) const {
 	Map *map = g_world.getMap();
 	Unit *builtUnit = NULL;
-    if ((!m_child && unit->applyCosts(builtUnitType)) || (m_child && unit->owner->applyCosts(builtUnitType))) {
-        if (!command->isReserveResources()) {
-            command->setReserveResources(true);
-            if (unit->checkCommand(*command) != CmdResult::SUCCESS) {
-                if (unit->getFactionIndex() == g_world.getThisFactionIndex()) {
-                    g_console.addStdMessage("BuildingNoRes");
-                }
-                BUILD_LOG( unit, "in positioin, late resource allocation failed." << cmdCancelMsg );
-                unit->finishCommand();
-                return;
+    if (!command->isReserveResources()) {
+        command->setReserveResources(true);
+        if (unit->checkCommand(*command) != CmdResult::SUCCESS) {
+            if (unit->getFactionIndex() == g_world.getThisFactionIndex()) {
+                g_console.addStdMessage("BuildingNoRes");
             }
+            BUILD_LOG( unit, "in positioin, late resource allocation failed." << cmdCancelMsg );
+            unit->finishCommand();
+            return;
         }
-        BUILD_LOG( unit, "in position, starting construction." );
-        builtUnit = g_world.newUnit(command->getPos(), builtUnitType, unit->getFaction(), map, command->getFacing());
-        builtUnit->create();
-        unit->setCurrSkill(m_buildSkillType);
-        unit->setTarget(builtUnit, true, true);
-        unit->getFaction()->checkAdvanceSubfaction(builtUnit->getType(), false);
-        Vec2i tilePos = Map::toTileCoords(builtUnit->getCenteredPos());
-        if (builtUnitType->getField() == Field::LAND
-        || (builtUnitType->getField() == Field::AMPHIBIOUS && !map->isTileSubmerged(tilePos))) {
-            map->prepareTerrain(builtUnit);
-        }
-        command->setUnit(builtUnit);
-        if (!builtUnit->isMobile()) {
-            g_world.getCartographer()->updateMapMetrics(builtUnit->getPos(), builtUnit->getSize());
-        }
-        if (unit->getFaction()->isThisFaction()) {
-            RUNTIME_CHECK(!unit->isCarried() && !unit->isGarrisoned());
-            g_soundRenderer.playFx(getStartSound(), unit->getCurrVector(), g_gameState.getGameCamera()->getPos());
-        }
-    } else {
-        unit->finishCommand();
+    }
+    BUILD_LOG( unit, "in position, starting construction." );
+    builtUnit = g_world.newUnit(command->getPos(), builtUnitType, unit->getFaction(), map, command->getFacing());
+    builtUnit->setOwner(unit);
+    builtUnit->create();
+    unit->setCurrSkill(m_buildSkillType);
+    unit->setTarget(builtUnit, true, true);
+    unit->getFaction()->checkAdvanceSubfaction(builtUnit->getType(), false);
+    Vec2i tilePos = Map::toTileCoords(builtUnit->getCenteredPos());
+    if (builtUnitType->getField() == Field::LAND
+    || (builtUnitType->getField() == Field::AMPHIBIOUS && !map->isTileSubmerged(tilePos))) {
+        map->prepareTerrain(builtUnit);
+    }
+    command->setUnit(builtUnit);
+    if (!builtUnit->isMobile()) {
+        g_world.getCartographer()->updateMapMetrics(builtUnit->getPos(), builtUnit->getSize());
+    }
+    if (unit->getFaction()->isThisFaction()) {
+        RUNTIME_CHECK(!unit->isCarried() && !unit->isGarrisoned());
+        g_soundRenderer.playFx(getStartSound(), unit->getCurrVector(), g_gameState.getGameCamera()->getPos());
     }
 }
 
