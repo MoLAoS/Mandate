@@ -2236,9 +2236,7 @@ void Unit::accessStorageAdd(int ident) {
         bool found = false;
         for (int i = 0; i < storage.size(); ++i) {
             if (storage[i].getName() == item->getType()->getName()) {
-                //if (storage[i].getCurrent() == storage[i].getMax()) {
-                    storage[i].setCurrent(1);
-                //}
+                storage[i].setCurrent(1);
                 found = true;
                 break;
             }

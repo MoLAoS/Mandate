@@ -1427,8 +1427,7 @@ void UserInterface::computeTaxPanel() {
     if (selection->isComandable()) {
         const Unit *u = selection->getFrontUnit();
         const UnitType *ut = u->getType();
-        if (ut->hasTag("orderhouse") || ut->hasTag("ordermember") || ut->hasTag("shop")
-             || ut->hasTag("producer") || ut->hasTag("house")) {
+        if (ut->hasTag("orderhouse") || ut->hasTag("ordermember") || ut->hasTag("shop") || ut->hasTag("producer")) {
             for (int i = 0; i < 4; ++i) {
                 m_display->setTaxImage(i, ut->getFactionType()->getItemImage(0));
             }

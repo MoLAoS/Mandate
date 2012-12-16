@@ -188,10 +188,12 @@ void CreateItemCommandType::update(Unit *unit) const {
 		if (unit->getProgress2() > prodType->getProductionTime()) {
 			for (int i=0; i < getCreatedNumber(prodType); ++i) {
                 Item item;
-                if (unit->getItemLimit() > unit->getItemsStored() && unit->getFaction()->applyCosts(prodType) && unit->applyCosts(prodType)) {
+                if (unit->getItemLimit() > unit->getItemsStored() && unit->getFaction()->applyCosts(prodType)
+                && unit->applyCosts(prodType) && prodType->getTypeTag() != "stock") {
                     item.init(unit->getFaction()->items.size(), prodType, unit->getFaction());
                     unit->getFaction()->items.push_back(item);
                     unit->accessStorageAdd(unit->getFaction()->items.size()-1);
+                } else if (prodType->getTypeTag() == "stock") {
                 }
             }
         unit->finishCommand();
