@@ -15,6 +15,7 @@
 #include "conversion.h"
 #include "resource_type.h"
 #include "tech_tree.h"
+#include "unit.h"
 #include "logger.h"
 
 #include "leak_dumper.h"
@@ -114,72 +115,14 @@ void StoredResource::save(XmlNode *n) const {
 
 void CreatedResource::init(const XmlNode *n, const TechTree *tt) {
 	ResourceAmount::init(n, tt);
-	m_creation = n->getChildIntValue("creation");
 }
 
 void CreatedResource::init(const ResourceType *rt, int v) {
 	ResourceAmount::init(rt, v, 0, 0);
-	m_creation = 0;
 }
 
 void CreatedResource::save(XmlNode *n) const {
 	ResourceAmount::save(n);
-	n->addChild("creation", m_creation);
 }
 
-// =====================================================
-// 	Helper Classes For Process
-// =====================================================
-
-void ResMade::init(const XmlNode *n, const TechTree *tt) {
-	ResourceAmount::init(n, tt);
-	m_product = n->getChildIntValue("product");
-}
-
-void ResMade::init(const ResourceType *rt, string n, int v, int a, int b) {
-	ResourceAmount::init(rt, v, 0, 0);
-    m_product = 0;
-    m_name = n;
-}
-
-void ResMade::save(XmlNode *n) const {
-	ResourceAmount::save(n);
-	n->addChild("product", m_product);
-}
-
-void ResCost::init(const XmlNode *n, const TechTree *tt) {
-	ResourceAmount::init(n, tt);
-	m_cost = n->getChildIntValue("cost");
-}
-
-void ResCost::init(const ResourceType *rt, bool consume, string n, int v, int a, int b) {
-	ResourceAmount::init(rt, v, 0, 0);
-	m_cost = 0;
-	m_consume = consume;
-	m_name = n;
-}
-
-void ResCost::save(XmlNode *n) const {
-	ResourceAmount::save(n);
-	n->addChild("cost", m_cost);
-}
-
-void ItemMade::init(const XmlNode *n, const TechTree *tt) {
-	m_item = n->getChildIntValue("item");
-}
-
-void ItemMade::init(const ItemType *it, string n, int v, int a, fixed b) {
-	m_type = it;
-	m_amount = v;
-    m_item = 0;
-    m_name = n;
-}
-
-void ItemMade::save(XmlNode *n) const {
-	n->addChild("type", m_type);
-	n->addChild("amount", m_amount);
-	n->addChild("plus", m_amount_plus);
-	n->addChild("multiply", m_amount_multiply);
-	n->addChild("item", m_item);
-}
 }} // end namespace

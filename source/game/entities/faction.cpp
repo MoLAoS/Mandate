@@ -448,7 +448,6 @@ const CreatedResource *Faction::getCResource(const ResourceType *rt) const {
 int Faction::getCreateAmount(const ResourceType *rt) const {
 	for (int i = 0; i < cresources.size(); ++i) {
 		if (rt == cresources[i].getType()) {
-			return cresources[i].getCreation();
 		}
 	}
 	assert(false);
@@ -1066,6 +1065,10 @@ void Faction::remove(Unit *unit) {
 	assert(units.size() == unitMap.size());
 }
 
+void Faction::addItem(Item *item) {
+    items.push_back(item);
+}
+
 void Faction::reEvaluateStore() {
 	typedef map<const ResourceType*, int> StorageMap;
 	StorageMap storeMap;
@@ -1093,33 +1096,6 @@ void Faction::reEvaluateStore() {
 	}
 }
 
-void Faction::reEvaluateCreate() {
-	typedef map<const ResourceType*, int> StorageMap;
-	StorageMap storeMap;
-	const TechTree *tt = g_world.getTechTree();
-	for (int i=0; i < tt->getResourceTypeCount(); ++i) {
-		const ResourceType *rt = tt->getResourceType(i);
-		if (rt->getClass() != ResourceClass::STATIC) {
-			storeMap[rt] = 0;
-		}
-	}
-	foreach_const (Units, it, units) {
-		// don't want the resources of dead units to be included
-		if (!(*it)->isDead()) {
-			const UnitType *ut = (*it)->getType();
-			for (int j=0; j < ut->getResourceProductionSystem().getCreatedResourceCount(); ++j) {
-				ResourceAmount res = ut->getResourceProductionSystem().getCreatedResource(j, this);
-				storeMap[res.getType()] += res.getAmount();
-			}
-		}
-	}
-	for (int j = 0; j < cresources.size(); ++j) {
-		if (cresources[j].getType()->getClass() != ResourceClass::STATIC) {
-			cresources[j].setCreation(storeMap[cresources[j].getType()]);
-		}
-	}
-}
-
 void Faction::addStore(const ResourceType *rt, int amount) {
 	for (int j = 0; j < sresources.size(); ++j) {
 		if (sresources[j].getType() == rt) {
@@ -1142,29 +1118,6 @@ void Faction::addStore(const UnitType *unitType) {
 void Faction::removeStore(const UnitType *unitType) {
 	reEvaluateStore();
 	limitResourcesToStore();
-}
-
-void Faction::addCreate(const ResourceType *rt, int amount) {
-	for (int j = 0; j < cresources.size(); ++j) {
-		if (cresources[j].getType() == rt) {
-			cresources[j].setCreation(cresources[j].getCreation() + amount);
-		}
-	}
-}
-
-void Faction::addCreate(const UnitType *unitType) {
-	for (int i = 0; i < unitType->getResourceProductionSystem().getCreatedResourceCount(); ++i) {
-		ResourceAmount r = unitType->getResourceProductionSystem().getCreatedResource(i, this);
-		for (int j = 0; j < cresources.size(); ++j) {
-			if (cresources[j].getType() == r.getType()) {
-				cresources[j].setCreation(cresources[j].getCreation() + r.getAmount());
-			}
-		}
-	}
-}
-
-void Faction::removeCreate(const UnitType *unitType) {
-	reEvaluateCreate();
 }
 
 void Faction::capResource(const ResourceType *rt) {

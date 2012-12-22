@@ -46,7 +46,6 @@ class Item : public EnhancementType {
 
 private:
 	typedef vector<Modification*> Modifications;
-
 public:
 	int id;	/**< unique identifier  */
 	Faction *faction;
@@ -56,18 +55,57 @@ public:
     CurrentStep currentItemSteps; /**< current timer step for unit creation */
     CurrentStep currentProcessSteps; /**< current timer step for resource processes */
 
-	const ItemType *type;			/**< the UnitType of this item */
+	const ItemType *type;			/**< the InitType of this item */
 
     Modifications modifications;
 
     //EffectsCreated effectsCreated; /**< All effects created by this item. */
 
+public:
+	struct CreateParams {
+		int ident;
+		const ItemType *type;
+		Faction *faction;
+
+		CreateParams(int ident, const ItemType *type, Faction *faction)
+			: ident(ident), type(type), faction(faction) { }
+	};
+
+	struct LoadParams {
+		const XmlNode *node;
+		Faction *faction;
+
+		LoadParams(const XmlNode *node, Faction *faction)
+			: node(node), faction(faction) {}
+	};
+public:
+    Item(CreateParams params);
+	Item(LoadParams params);
+	virtual ~Item();
+
+public:
     const ItemType *getType() const {return type;}
 	Faction *getFaction() const {return faction;}
     string getShortDesc() const;
     string getLongDesc() const;
 
     void init(int ident, const ItemType* type, Faction *faction);
+};
+
+// =====================================================
+//  class ItemFactory
+// =====================================================
+typedef vector<Item> ItemStore;
+
+class ItemFactory : public EntityFactory<Item> {
+	friend class Glest::Sim::World;
+private:
+    //ItemStore items;
+public:
+	ItemFactory() {}
+	~ItemFactory() {}
+	Item* newItem(int ident, const ItemType* type, Faction *faction);
+	Item* getItem(int id) { return EntityFactory<Item>::getInstance(id); }
 };
 
 }}// end namespace

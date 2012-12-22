@@ -403,7 +403,7 @@ Unit* GoalSystem::findGuild(Unit* unit) {
         if (unit->owner->getType()->hasTag("house") && building->getType()->hasTag("shop")){
             buy = true;
         }
-        if (unit->owner->getType()->hasTag("shop") && building->getType()->hasTag("guildhall")) {
+        if (unit->owner->getType()->hasTag("shop") || unit->owner->getType()->hasTag("guildhall") && building->getType()->hasTag("guildhall")) {
             buy = true;
         }
         if (unit->owner->getType()->hasTag("guildhall") && building->getType()->hasTag("producer")) {

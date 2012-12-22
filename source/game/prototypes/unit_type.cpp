@@ -218,9 +218,26 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
             resourceStores.resize(resourceStoresNode->getChildCount());
             for (int i = 0; i < resourceStoresNode->getChildCount(); ++i) {
                 const XmlNode *resourceStoreNode = resourceStoresNode->getChild("resource", i);
+                string status = resourceStoreNode->getAttribute("status")->getRestrictedValue();
                 string resType = resourceStoreNode->getAttribute("type")->getRestrictedValue();
                 int required = resourceStoreNode->getAttribute("stored")->getIntValue();
-                resourceStores[i].init(techTree->getResourceType(resType), required, 0, 0);
+                resourceStores[i].init(status, techTree->getResourceType(resType), required);
+            }
+        }
+    }
+    catch (runtime_error e) {
+		g_logger.logXmlError(dir, e.what());
+		loadOk = false;
+	}
+	try {
+        const XmlNode *itemStoresNode = unitNode->getChild("item-stores", 0, false);
+        if (itemStoresNode) {
+            itemStores.resize(itemStoresNode->getChildCount());
+            for (int i = 0; i < itemStoresNode->getChildCount(); ++i) {
+                const XmlNode *itemStoreNode = itemStoresNode->getChild("item", i);
+                string resType = itemStoreNode->getAttribute("type")->getRestrictedValue();
+                int required = itemStoreNode->getAttribute("stored")->getIntValue();
+                itemStores[i].init(factionType->getItemType(resType), required);
             }
         }
     }

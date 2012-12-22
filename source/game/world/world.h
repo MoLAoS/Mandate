@@ -63,6 +63,7 @@ typedef EntityFactory<MapObject>   MapObjectFactory;
 class MasterEntityFactory {
 protected:
 	UnitFactory        m_unitFactory;
+	ItemFactory        m_itemFactory;
 	UpgradeFactory     m_upgradeFactory;
 	CommandFactory     m_commandFactory;
 	EffectFactory      m_effectFactory;
@@ -90,6 +91,14 @@ public:
 
 	Unit*	newUnit(const XmlNode *node, Faction *faction, Map *map, const TechTree *tt, bool putInWorld = true) {
 		return m_unitFactory.newUnit(node, faction, map, tt, putInWorld);
+	}
+
+	Item*	newItem(int ident, const ItemType* type, Faction *faction) {
+		return m_itemFactory.newItem(ident, type, faction);
+	}
+
+	Item*	newItem(const XmlNode *node, Faction *faction, Map *map, const TechTree *tt) {
+
 	}
 
 	Upgrade* newUpgrade(const UpgradeType *type, int factionNdx) {
@@ -134,6 +143,7 @@ public:
 	}
 
 	Unit*	getUnit(int id) { return m_unitFactory.getInstance(id); }
+	Item*	getItem(int id) { return m_itemFactory.getInstance(id); }
 	MapObject* getMapObj(int id) { return m_mapObjectFactory.getInstance(id); }
 
 	void	deleteUnit(Unit *unit) { m_unitFactory.deleteUnit(unit); }
@@ -142,6 +152,7 @@ public:
 	void	deleteEffect(const Effect *e) { m_effectFactory.deleteInstance(e); }
 
 	UnitFactory&        getUnitFactory() { return m_unitFactory; }
+	ItemFactory&        getItemFactory() { return m_itemFactory; }
 	UpgradeFactory&     getUpgradeFactory() { return m_upgradeFactory; }
 	CommandFactory&     getCommandFactory() { return m_commandFactory; }
 	EffectFactory&      getEffectFactory() { return m_effectFactory; }

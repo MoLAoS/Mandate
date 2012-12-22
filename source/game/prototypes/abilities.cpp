@@ -10,13 +10,23 @@
 #include "abilities.h"
 #include "tech_tree.h"
 #include "faction.h"
+#include "unit.h"
+#include "world.h"
+#include "sim_interface.h"
 
 namespace Glest { namespace ProtoTypes {
+
+// ===============================
+// 	class ItemStore
+// ===============================
+void ItemStore::init(const ItemType *it, int cap) {
+    m_type = it;
+    m_cap = cap;
+}
 
 // =====================================================
 // 	class DamageType
 // =====================================================
-
 void DamageType::init(string name, int amount) {
     type_name = name;
     value = amount;
@@ -94,34 +104,6 @@ void Timer::init(int timer, int step) {
 }
 
 // =====================================================
-// 	class CreatedUnit
-// =====================================================
-
-void CreatedUnit::init(const XmlNode *node, const Faction *f) {
-	m_type = f->getType()->getUnitType(node->getChildStringValue("type"));
-	m_amount = node->getChildIntValue("amount");
-	m_amount_plus = node->getChildIntValue("plus");
-	m_amount_multiply = node->getChildFloatValue("multiply");
-	m_cap = node->getChildIntValue("cap");
-}
-
-void CreatedUnit::save(XmlNode *node) const {
-	node->addChild("type", m_type->getName());
-	node->addChild("amount", m_amount);
-	node->addChild("plus", m_amount_plus);
-	node->addChild("multiply", m_amount_multiply);
-	node->addChild("cap", m_cap);
-}
-
-void CreatedUnit::init(const UnitType *ut, int amount, int amount_plus, fixed amount_multiply, int cap) {
-    m_type = ut;
-    m_amount = amount;
-    m_amount_plus = amount_plus;
-    m_amount_multiply = amount_multiply;
-    m_cap = cap;
-}
-
-// =====================================================
 // 	class UnitsOwned
 // =====================================================
 
@@ -140,34 +122,6 @@ void UnitsOwned::init(const UnitType *ut, int owned, int limit) {
     m_type = ut;
     m_owned = owned;
     m_limit = limit;
-}
-
-// =====================================================
-// 	class CreatedItem
-// =====================================================
-
-void CreatedItem::init(const XmlNode *node, const Faction *f) {
-	m_type = f->getType()->getItemType(node->getChildStringValue("type"));
-	m_amount = node->getChildIntValue("amount");
-	m_amount_plus = node->getChildIntValue("plus");
-	m_amount_multiply = node->getChildFloatValue("multiply");
-	m_cap = node->getChildIntValue("cap");
-}
-
-void CreatedItem::save(XmlNode *node) const {
-	node->addChild("type", m_type->getName());
-	node->addChild("amount", m_amount);
-	node->addChild("plus", m_amount_plus);
-	node->addChild("multiply", m_amount_multiply);
-	node->addChild("cap", m_cap);
-}
-
-void CreatedItem::init(const ItemType *it, int amount, int amount_plus, fixed amount_multiply, int cap) {
-    m_type = it;
-    m_amount = amount;
-    m_amount_plus = amount_plus;
-    m_amount_multiply = amount_multiply;
-    m_cap = cap;
 }
 
 // =====================================================

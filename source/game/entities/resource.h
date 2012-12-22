@@ -115,113 +115,15 @@ public:
 
 class CreatedResource : public ResourceAmount {
 private:
-	int m_creation;
-
-public:
-
     bool local;
-
+public:
     void setScope(bool scope) { local = scope; }
+    bool getScope() const {return local;}
 
 	void init(const XmlNode *node, const TechTree *tt);
     void init(const ResourceType *rt, int amount);
 
-    int getCreation() const { return m_creation; }
-	void setCreation(int creation) { m_creation = creation; }
-
 	void save(XmlNode *node) const;
-};
-
-// =====================================================
-// 	Helper Classes For Process
-// =====================================================
-
-class ResMade : public ResourceAmount {
-private:
-	int m_product;
-	string m_name;
-
-public:
-	void init(const XmlNode *node, const TechTree *tt);
-    void init(const ResourceType *rt, string name, int product, int add, int mult);
-
-    int getProduct() const { return m_product; }
-	void setProduct(int product) { m_product = product; }
-
-    string getName() const { return m_name; }
-	void setName(string name) { m_name = name; }
-
-	void save(XmlNode *node) const;
-};
-
-class ResCost : public ResourceAmount {
-private:
-	int m_cost;
-	bool m_consume;
-	string m_name;
-
-public:
-	void init(const XmlNode *node, const TechTree *tt);
-    void init(const ResourceType *rt, bool consume, string name, int cost, int add, int mult);
-
-    int getCost() const { return m_cost; }
-	void setCost(int cost) { m_cost = cost; }
-
-    bool getConsume() const { return m_consume; }
-	void setConsume(bool consume) { m_consume = consume; }
-
-    string getName() const { return m_name; }
-	void setName(string name) { m_name = name; }
-
-	void save(XmlNode *node) const;
-};
-
-class ItemMade {
-private:
-	int m_item;
-	string m_name;
-	const ItemType *m_type;
-	int	m_amount;
-	int	m_amount_plus;
-	fixed m_amount_multiply;
-
-public:
-	void init(const XmlNode *n, const TechTree *tt);
-	void init(const ItemType *it, string name, int amount, int amount_plus, fixed amount_multiply);
-
-	virtual void setAmount(int v) { m_amount = v; }
-	int  getAmount() const { return m_amount; }
-	int  getAmountPlus() const { return m_amount_plus; }
-	fixed  getAmountMultiply() const { return m_amount_multiply; }
-	const ItemType *getType() const { return m_type; }
-
-    int getItem() const { return m_item; }
-	void setItem(int item) { m_item = item; }
-
-    string getName() const { return m_name; }
-	void setName(string name) { m_name = name; }
-
-	void save(XmlNode *node) const;
-};
-
-typedef vector<ItemMade> Items;
-typedef	vector<ResMade> Products;
-typedef vector<ResCost> Costs;
-
-// =====================================================
-// 	class Process
-// =====================================================
-
-class Process {
-public:
-    Costs costs;
-    Products products;
-    Items items;
-    bool local;
-    int count;
-
-    void setScope(bool scope) { local = scope; }
-    void setCount(int value) { count = value; }
 };
 
 }}// end namespace

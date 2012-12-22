@@ -92,6 +92,7 @@ namespace Glest {
 		class CreatedItem;
 		class CreatedUnit;
 		class UnitsOwned;
+		class Process;
 	}
 
 	namespace Sim {
@@ -135,7 +136,6 @@ namespace Glest {
 		class DirectedParticleSystem;
 		class Projectile;
 		class Splash;
-		class Process;
 	}
 
 	namespace Global {

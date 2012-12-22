@@ -42,6 +42,35 @@ using namespace ProtoTypes;
 // =====================================================
 // 	class Item
 // =====================================================
+Item::Item(CreateParams params)
+		: id(params.ident)
+		, type(params.type)
+		, faction(params.faction) {
+    currentSteps.resize(type->getResourceProductionSystem().getCreatedResourceCount());
+	for (int i = 0; i < currentSteps.size(); ++i) {
+	currentSteps[i].currentStep = 0;
+	}
+
+	currentUnitSteps.resize(type->getUnitProductionSystem().getCreatedUnitCount());
+	for (int i = 0; i < currentUnitSteps.size(); ++i) {
+	currentUnitSteps[i].currentStep = 0;
+	}
+
+	currentItemSteps.resize(type->getItemProductionSystem().getCreatedItemCount());
+	for (int i = 0; i < currentItemSteps.size(); ++i) {
+	currentItemSteps[i].currentStep = 0;
+	}
+
+	currentProcessSteps.resize(type->getProcessProductionSystem().getProcessCount());
+	for (int i = 0; i < currentProcessSteps.size(); ++i) {
+	currentProcessSteps[i].currentStep = 0;
+	}
+}
+
+Item::~Item() {
+	if (!g_program.isTerminating() && World::isConstructed()) {
+	}
+}
 
 void Item::init(int ident, const ItemType *newType, Faction *f) {
     type = newType;
@@ -182,7 +211,7 @@ string Item::getLongDesc() const {
         int cStep = currentProcessSteps[i].currentStep;
         ss << endl << lang.get("Timer") << ": " << cStep << "/" << tR.getTimerValue();
         string scope;
-        if (type->getProcessProductionSystem().getProcesses()[i].local == true) {
+        if (type->getProcessProductionSystem().getProcesses()[i].getScope() == true) {
         scope = lang.get("local");
         } else {
         scope = lang.get("faction");
@@ -205,6 +234,15 @@ string Item::getLongDesc() const {
             resName = formatString(resName);
 			}
         ss << endl << type->getProcessProductionSystem().getProcesses()[i].products[p].getAmount() << " " << resName;
+            }
+        ss << endl << lang.get("Items") << ": ";
+            for (int t = 0; t < type->getProcessProductionSystem().getProcesses()[i].items.size(); ++t) {
+            const ItemType *itemsIT = type->getProcessProductionSystem().getProcesses()[i].items[t].getType();
+            string itemName = lang.getTechString(itemsIT->getName());
+            if (itemName == itemsIT->getName()) {
+            itemName = formatString(itemName);
+			}
+        ss << endl << type->getProcessProductionSystem().getProcesses()[i].items[t].getAmount() << " " << itemName;
             }
 		}
 	}
@@ -255,6 +293,19 @@ string Item::getLongDesc() const {
 	//effects.streamDesc(ss);
 
 	return (ss.str());
+}
+
+// =====================================================
+//  class ItemFactory
+// =====================================================
+Item* ItemFactory::newItem(int ident, const ItemType* type, Faction *faction) {
+	//Item item;
+	//item.init(ident, type, faction);
+	//items.push_back(item);
+	//return &items[items.size()-1];
+	Item::CreateParams params(ident, type, faction);
+	Item *item = new Item(params);
+	return item;
 }
 
 }}//end namespace

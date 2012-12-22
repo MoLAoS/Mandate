@@ -228,7 +228,7 @@ void Display::layout() {
 	m_sizes.portraitSize = Vec2i(x, y);
 
 	int titleYpos = std::max((m_imageSize - int(m_fontMetrics->getHeight() + 1.f)) / 2, 0);
-	TextWidget::setTextPos(Vec2i(m_imageSize * 5 / 4 + m_imageSize, titleYpos), 0); // (0) unit title
+	TextWidget::setTextPos(Vec2i(m_imageSize * 5 / 4, titleYpos), 0); // (0) unit title
 
 	y = m_imageSize + m_imageSize / 4 + int(m_fontMetrics->getHeight()) * 10;
 	x = 0;

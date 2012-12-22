@@ -100,6 +100,12 @@ private:
 	int uiLastDisplayPosX;
 	int uiLastDisplayPosY;
 	int uiLastDisplaySize;
+	int uiLastFactionDisplayPosX;
+	int uiLastFactionDisplayPosY;
+	int uiLastFactionDisplaySize;
+	int uiLastItemDisplayPosX;
+	int uiLastItemDisplayPosY;
+	int uiLastItemDisplaySize;
 	int uiLastTradeBarPosX;
 	int uiLastTradeBarPosY;
 	int uiLastTradeBarSize;
@@ -211,6 +217,12 @@ public:
 	int getUiLastDisplayPosX() const			{return uiLastDisplayPosX;}
 	int getUiLastDisplayPosY() const			{return uiLastDisplayPosY;}
 	int getUiLastDisplaySize() const			{return uiLastDisplaySize;}
+	int getUiLastFactionDisplayPosX() const		{return uiLastFactionDisplayPosX;}
+	int getUiLastFactionDisplayPosY() const		{return uiLastFactionDisplayPosY;}
+	int getUiLastFactionDisplaySize() const		{return uiLastFactionDisplaySize;}
+	int getUiLastItemDisplayPosX() const		{return uiLastItemDisplayPosX;}
+	int getUiLastItemDisplayPosY() const		{return uiLastItemDisplayPosY;}
+	int getUiLastItemDisplaySize() const		{return uiLastItemDisplaySize;}
 	int getUiLastTradeBarPosX() const			{return uiLastTradeBarPosX;}
 	int getUiLastTradeBarPosY() const			{return uiLastTradeBarPosY;}
 	int getUiLastTradeBarSize() const			{return uiLastTradeBarSize;}
@@ -304,6 +316,12 @@ public:
 	void setUiLastDisplayPosX(int val)			{uiLastDisplayPosX = val;}
 	void setUiLastDisplayPosY(int val)			{uiLastDisplayPosY = val;}
 	void setUiLastDisplaySize(int val)			{uiLastDisplaySize = val;}
+	void setUiLastFactionDisplayPosX(int val)	{uiLastFactionDisplayPosX = val;}
+	void setUiLastFactionDisplayPosY(int val)	{uiLastFactionDisplayPosY = val;}
+	void setUiLastFactionDisplaySize(int val)	{uiLastFactionDisplaySize = val;}
+	void setUiLastItemDisplayPosX(int val)		{uiLastItemDisplayPosX = val;}
+	void setUiLastItemDisplayPosY(int val)		{uiLastItemDisplayPosY = val;}
+	void setUiLastItemDisplaySize(int val)		{uiLastItemDisplaySize = val;}
 	void setUiLastTradeBarPosX(int val)			{uiLastTradeBarPosX = val;}
 	void setUiLastTradeBarPosY(int val)			{uiLastTradeBarPosY = val;}
 	void setUiLastTradeBarSize(int val)			{uiLastTradeBarSize = val;}

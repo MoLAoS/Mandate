@@ -78,19 +78,21 @@ void GameMenu::init() {
 
 void GameMenu::onSaveWidgets(Widget*) {
 	g_userInterface.getResourceBar()->persist();
-	g_userInterface.getUnitBar()->persist();
+	//g_userInterface.getUnitBar()->persist();
 	g_userInterface.getMinimap()->persist();
 	g_userInterface.getDisplay()->persist();
 	g_userInterface.getFactionDisplay()->persist();
+	g_userInterface.getItemWindow()->persist();
 	g_config.save();
 }
 
 void GameMenu::onResetWidgets(Widget*) {
 	g_userInterface.getResourceBar()->reset();
-	g_userInterface.getUnitBar()->reset();
+	//g_userInterface.getUnitBar()->reset();
 	g_userInterface.getMinimap()->reset();
 	g_userInterface.getDisplay()->reset();
 	g_userInterface.getFactionDisplay()->reset();
+	g_userInterface.getItemWindow()->reset();
 	g_config.save();
 }
 

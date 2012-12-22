@@ -14,6 +14,19 @@
 namespace Glest{ namespace ProtoTypes {
 
 // ===============================
+// 	class ItemStore
+// ===============================
+class ItemStore {
+private:
+    const ItemType *m_type;
+    int m_cap;
+public:
+    const ItemType *getType() const {return m_type;}
+    int getCap() const {return m_cap;}
+    void init(const ItemType *type, int cap);
+};
+
+// ===============================
 // 	class Load Bonus
 // ===============================
 class LoadBonus : public EnhancementType {
@@ -80,38 +93,6 @@ public:
 };
 
 typedef vector<TimerStep> CurrentStep;
-
-// =====================================================
-// 	class CreatedUnit
-//
-/// Amount of a given UnitType
-// =====================================================
-
-class CreatedUnit {
-protected:
-	const UnitType       *m_type;
-	int	                 m_amount;
-	int	                 m_amount_plus;
-	fixed	             m_amount_multiply;
-	int                  m_cap;
-
-public:
-	CreatedUnit() : m_type(0), m_amount(0), m_amount_plus(0), m_amount_multiply(0), m_cap(0) {}
-	CreatedUnit(const CreatedUnit &that) : m_type(that.m_type), m_amount(that.m_amount),
-	m_amount_plus(that.m_amount_plus), m_amount_multiply(that.m_amount_multiply), m_cap(that.m_cap) {}
-
-	void init(const XmlNode *n, const Faction *f);
-	void init(const UnitType *ut, const int amount, const int amount_plus, const fixed amount_multiply, const int cap);
-
-	virtual void setAmount(int v) { m_amount = v; }
-	int  getAmount() const { return m_amount; }
-	int  getAmountPlus() const { return m_amount_plus; }
-	fixed  getAmountMultiply() const { return m_amount_multiply; }
-	int  getCap() const { return m_cap; }
-	const UnitType *getType() const { return m_type; }
-
-	void save(XmlNode *node) const;
-};
 
 // =====================================================
 // 	class UnitsOwned
@@ -183,37 +164,7 @@ public:
 
 };
 
-// =====================================================
-// 	class CreatedItem
-//
-/// Amount of a given ItemType
-// =====================================================
 
-class CreatedItem {
-protected:
-	const ItemType       *m_type;
-	int	                 m_amount;
-	int	                 m_amount_plus;
-	fixed	             m_amount_multiply;
-	int                  m_cap;
-
-public:
-	CreatedItem() : m_type(0), m_amount(0), m_amount_plus(0), m_amount_multiply(0), m_cap(0) {}
-	CreatedItem(const CreatedItem &that) : m_type(that.m_type), m_amount(that.m_amount),
-	m_amount_plus(that.m_amount_plus), m_amount_multiply(that.m_amount_multiply), m_cap(that.m_cap) {}
-
-	void init(const XmlNode *n, const Faction *f);
-	void init(const ItemType *it, const int amount, const int amount_plus, const fixed amount_multiply, const int cap);
-
-	virtual void setAmount(int v) { m_amount = v; }
-	int  getAmount() const { return m_amount; }
-	int  getAmountPlus() const { return m_amount_plus; }
-	fixed  getAmountMultiply() const { return m_amount_multiply; }
-	int  getCap() const { return m_cap; }
-	const ItemType *getType() const { return m_type; }
-
-	void save(XmlNode *node) const;
-};
 
 // =====================================================
 // 	class Equipment

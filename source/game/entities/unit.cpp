@@ -1512,7 +1512,6 @@ void Unit::born(bool reborn) {
             }
         }
 
-		faction->addCreate(type);
 		setCurrSkill(SkillClass::STOP);
 		hp = type->getMaxHp();
 		sp = type->getMaxSp();
@@ -1523,11 +1522,10 @@ void Unit::born(bool reborn) {
 		}
 
         for (int i = 0; i < type->getStarterItems().size(); ++i) {
-            Item item;
             const ItemType *prodType = faction->getType()->getItemType(type->getStarterItems()[i]);
-            item.init(faction->items.size(), prodType, faction);
-            faction->items.push_back(item);
-            accessStorageAdd(faction->items.size()-1);
+            Item *newItem = g_world.newItem(faction->getItemCount(), prodType, faction);
+            faction->addItem(newItem);
+            accessStorageAdd(faction->getItemCount()-1);
             equipItem(storedItems.size()-1);
         }
 
@@ -2926,7 +2924,6 @@ string Unit::getLongDesc() const {
 		ss << (sightBonus > 0 ? " +" : " ") << sightBonus;
 	}
     ss << endl << lang.get("Exp") << ": " << exp;
-
     if (type->getLevelCount() > 0) {
         for (int i = 0; i < type->getLevelCount(); ++i) {
             ss << endl << type->getLevel(i)->getName();
@@ -2951,7 +2948,7 @@ string Unit::getLongDesc() const {
 				<< ": " << abs(r.getAmount()) << " " << resName;
 		}
 	}
-	if (type->getResourceProductionSystem().getStoredResourceCount() > 0) {
+	/*if (type->getResourceProductionSystem().getStoredResourceCount() > 0) {
 		for (int i = 0; i < type->getResourceProductionSystem().getStoredResourceCount(); ++i) {
 			ResourceAmount r = type->getResourceProductionSystem().getStoredResource(i, getFaction());
 			string resName = lang.getTechString(r.getType()->getName());
@@ -2961,7 +2958,7 @@ string Unit::getLongDesc() const {
 			ss << endl << lang.get("Store") << ": ";
 			ss << r.getAmount() << " " << resName;
 		}
-	}
+	}*/
 	if (type->getResourceProductionSystem().getCreatedResourceCount() > 0) {
 		for (int i = 0; i < type->getResourceProductionSystem().getCreatedResourceCount(); ++i) {
 			ResourceAmount r = type->getResourceProductionSystem().getCreatedResource(i, getFaction());
@@ -2982,7 +2979,7 @@ string Unit::getLongDesc() const {
         int cStep = currentProcessSteps[i].currentStep;
         ss << endl << lang.get("Timer") << ": " << cStep << "/" << tR.getTimerValue();
         string scope;
-        if (type->getProcessProductionSystem().getProcesses()[i].local == true) {
+        if (type->getProcessProductionSystem().getProcesses()[i].getScope() == true) {
         scope = lang.get("local");
         } else {
         scope = lang.get("faction");
@@ -3017,7 +3014,7 @@ string Unit::getLongDesc() const {
             }
 		}
 	}
-	if (type->getResourceProductionSystem().getStoredResourceCount() > 0) {
+	if (type->getResourceProductionSystem().getStoredResourceCount() > 0 && type->getResourceProductionSystem().getStoredResourceCount() < 5) {
     ss << endl << lang.get("Storage") << ": ";
 		for (int i = 0; i < type->getResourceProductionSystem().getStoredResourceCount(); ++i) {
         ResourceAmount r = type->getResourceProductionSystem().getStoredResource(i, getFaction());

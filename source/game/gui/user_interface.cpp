@@ -216,24 +216,24 @@ void UserInterface::init() {
 	}
 
 	int x, y;
+    /*if (m_resourceBar) {
+        y = m_resourceBar->getParent()->getPos().y + m_resourceBar->getParent()->getHeight() + 10;
+        x = g_metrics.getScreenW() - 20 - 195;
+    } else {
+        y = 20;
+        x = g_metrics.getScreenW() - 20 - 195;
+    }
+    if (m_unitBar) {
+        y = m_unitBar->getParent()->getPos().y + m_unitBar->getParent()->getHeight() + 10;
+        x = g_metrics.getScreenW() - 20 - 195;
+    } else {
+        y = 20;
+        x = g_metrics.getScreenW() - 20 - 195;
+    }*/
+
 	if (g_config.getUiLastDisplayPosX() != -1 && g_config.getUiLastDisplayPosY() != -1) {
 		x = g_config.getUiLastDisplayPosX();
 		y = g_config.getUiLastDisplayPosY();
-	} else {
-		if (m_resourceBar) {
-			y = m_resourceBar->getParent()->getPos().y + m_resourceBar->getParent()->getHeight() + 10;
-			x = g_metrics.getScreenW() - 20 - 195;
-		} else {
-			y = 20;
-			x = g_metrics.getScreenW() - 20 - 195;
-		}
-		/*if (m_unitBar) {
-			y = m_unitBar->getParent()->getPos().y + m_unitBar->getParent()->getHeight() + 10;
-			x = g_metrics.getScreenW() - 20 - 195;
-		} else {
-			y = 20;
-			x = g_metrics.getScreenW() - 20 - 195;
-		}*/
 	}
 
 	// Display Panel
@@ -247,9 +247,6 @@ void UserInterface::init() {
 	if (g_config.getUiLastDisplaySize() == 3) {
 		displayFrame->onExpand(0);
 	}
-
-    x = 100;
-    y = 200;
 
     /*TradeBarFrame *tradeFrame = new TradeBarFrame(Vec2i(x,y));
     m_tradeBar = tradeFrame->getTradeBar();
@@ -270,18 +267,35 @@ void UserInterface::init() {
             buildings.insert(ut);
         }
 	}
-    FactionDisplayFrame *displayFactionFrame = new FactionDisplayFrame(this, Vec2i(10,50));
+
+	if (g_config.getUiLastFactionDisplayPosX() != -1 && g_config.getUiLastFactionDisplayPosY() != -1) {
+		x = g_config.getUiLastFactionDisplayPosX();
+		y = g_config.getUiLastFactionDisplayPosY();
+	}
+    FactionDisplayFrame *displayFactionFrame = new FactionDisplayFrame(this, Vec2i(x,y));
     m_factionDisplay = displayFactionFrame->getFactionDisplay();
     m_factionDisplay->setSize();
     m_factionDisplay->init(fac, buildings);
+	if (g_config.getUiLastFactionDisplaySize() >= 2) {
+		displayFrame->onExpand(0);
+	}
+	if (g_config.getUiLastFactionDisplaySize() == 3) {
+		displayFrame->onExpand(0);
+	}
 
-
-    y += 250;
-	ItemDisplayFrame *itemWindow = new ItemDisplayFrame(this, Vec2i(10,330));
+	if (g_config.getUiLastItemDisplayPosX() != -1 && g_config.getUiLastItemDisplayPosY() != -1) {
+		x = g_config.getUiLastItemDisplayPosX();
+		y = g_config.getUiLastItemDisplayPosY();
+	}
+	ItemDisplayFrame *itemWindow = new ItemDisplayFrame(this, Vec2i(x,y));
 	m_itemWindow = itemWindow->getItemDisplay();
 	m_itemWindow->setSize();
-
-	//m_minimap->getParent()->setPos(Vec2i(20, y));
+	if (g_config.getUiLastItemDisplaySize() >= 2) {
+		displayFrame->onExpand(0);
+	}
+	if (g_config.getUiLastItemDisplaySize() == 3) {
+		displayFrame->onExpand(0);
+	}
 }
 
 void UserInterface::initMinimap(bool fow, bool sod, bool resuming) {

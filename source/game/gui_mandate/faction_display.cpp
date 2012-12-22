@@ -127,7 +127,6 @@ FactionDisplay::FactionDisplay(Container *parent, UserInterface *ui, Vec2i pos)
 	CHECK_HEAP();
 	setWidgetStyle(WidgetType::DISPLAY);
 	TextWidget::setAlignment(Alignment::NONE);
-	//g_widgetWindow.registerUpdate(this);
 	TextWidget::setAlignment(Alignment::NONE);
 	TextWidget::setText("");
     TextWidget::addText("");
@@ -194,7 +193,7 @@ void FactionDisplay::layout() {
 	TextWidget::setTextPos(Vec2i(m_imageSize * 5 / 4, titleYpos), 1);
 
 	x = 0;
-	y = m_imageSize + m_imageSize / 4 + int(m_fontMetrics->getHeight());
+	y = m_imageSize / 4 + int(m_fontMetrics->getHeight());
 	m_commandOffset = Vec2i(x, y);
 	for (int i = 0; i < commandCellCount; ++i) {
 		if (i && i % cellWidthCount == 0) {
@@ -231,16 +230,16 @@ void FactionDisplay::persist() {
 	Vec2i pos = m_parent->getPos();
 	int sz = getFuzzySize() + 1;
 
-	cfg.setUiLastDisplaySize(sz);
-	cfg.setUiLastDisplayPosX(pos.x);
-	cfg.setUiLastDisplayPosY(pos.y);
+	cfg.setUiLastFactionDisplaySize(sz);
+	cfg.setUiLastFactionDisplayPosX(pos.x);
+	cfg.setUiLastFactionDisplayPosY(pos.y);
 }
 
 void FactionDisplay::reset() {
 	Config &cfg = g_config;
-	cfg.setUiLastDisplaySize(2);
-	cfg.setUiLastDisplayPosX(-1);
-	cfg.setUiLastDisplayPosY(-1);
+	cfg.setUiLastFactionDisplaySize(2);
+	cfg.setUiLastFactionDisplayPosX(-1);
+	cfg.setUiLastFactionDisplayPosY(-1);
 	if (getFuzzySize() == FuzzySize::SMALL) {
 		static_cast<FactionDisplayFrame*>(m_parent)->onExpand(0);
 	} else if (getFuzzySize() == FuzzySize::LARGE) {
@@ -402,7 +401,7 @@ FactionDisplayButton FactionDisplay::computeIndex(Vec2i i_pos, bool screenPos) {
 	Vec2i offsets[1] = { m_commandOffset };
 	int counts[1] = { commandCellCount };
 
-	for (int i=0; i < 2; ++i) {
+	for (int i=0; i < 1; ++i) {
 		pos = i_pos - offsets[i];
 
 		if (pos.y >= 0 && pos.y < m_imageSize * cellHeightCount) {

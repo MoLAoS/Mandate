@@ -184,12 +184,12 @@ public:
     void setItemLimit(int expand) {itemLimit = itemLimit + expand;}
     void setItemsStored(int amount) {itemsStored = itemsStored + amount;}
 	StoredItems getStoredItems() const {return storedItems;}
-	Item *getStoredItem(int i) const {return &getFaction()->items[storedItems[i]];}
+	Item *getStoredItem(int i) const {return getFaction()->getItems()[storedItems[i]];}
     void accessStorageAdd(int ident);
     void accessStorageRemove(int ident);
     void accessStorageExchange(Unit *unit);
     StoredItems getEquippedItems() const {return equippedItems;}
-    Item *getEquippedItem(int i) const {return &getFaction()->items[equippedItems[i]];}
+    Item *getEquippedItem(int i) const {return getFaction()->getItems()[equippedItems[i]];}
     void equipItem(int ident);
     void unequipItem(int ident);
     void consumeItem(int ident);

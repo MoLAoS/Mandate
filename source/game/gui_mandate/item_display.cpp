@@ -111,7 +111,7 @@ void ItemDisplayFrame::setPinned(bool v) {
 // =====================================================
 
 ItemWindow::ItemWindow(Container *parent, UserInterface *ui, Vec2i pos)
-		: Widget(parent, pos, Vec2i(192, 850))
+		: Widget(parent, pos, Vec2i(880, 5))
 		, MouseWidget(this)
 		, ImageWidget(this)
 		, TextWidget(this)
@@ -198,7 +198,7 @@ void ItemWindow::layout() {
 		ImageWidget::setImageX(0, i, Vec2i(x,y), Vec2i(m_imageSize));
 		x += m_imageSize;
 	}
-	m_sizes.commandSize = Vec2i(x, y+32+(m_imageSize*12));
+	m_sizes.commandSize = Vec2i(x, y+32+(m_imageSize*16));
 
 	x = 0;
 	y += m_imageSize;
@@ -253,20 +253,20 @@ void ItemWindow::persist() {
 	Vec2i pos = m_parent->getPos();
 	int sz = getFuzzySize() + 1;
 
-	cfg.setUiLastDisplaySize(sz);
-	cfg.setUiLastDisplayPosX(pos.x);
-	cfg.setUiLastDisplayPosY(pos.y);
+	cfg.setUiLastItemDisplaySize(sz);
+	cfg.setUiLastItemDisplayPosX(pos.x);
+	cfg.setUiLastItemDisplayPosY(pos.y);
 }
 
 void ItemWindow::reset() {
 	Config &cfg = g_config;
-	cfg.setUiLastDisplaySize(2);
-	cfg.setUiLastDisplayPosX(-1);
-	cfg.setUiLastDisplayPosY(-1);
+	cfg.setUiLastItemDisplaySize(2);
+	cfg.setUiLastItemDisplayPosX(-1);
+	cfg.setUiLastItemDisplayPosY(-1);
 	if (getFuzzySize() == FuzzySize::SMALL) {
-		static_cast<DisplayFrame*>(m_parent)->onExpand(0);
+		static_cast<ItemDisplayFrame*>(m_parent)->onExpand(0);
 	} else if (getFuzzySize() == FuzzySize::LARGE) {
-		static_cast<DisplayFrame*>(m_parent)->onShrink(0);
+		static_cast<ItemDisplayFrame*>(m_parent)->onShrink(0);
 	}
 	m_parent->setPos(Vec2i(g_metrics.getScreenW() - 20 - m_parent->getWidth(), 20));
 }
@@ -496,12 +496,14 @@ void ItemWindow::computeInventoryPanel() {
 }
 
 void ItemWindow::computeInventoryInfo(int posDisplay) {
-    const Unit *u = m_ui->getSelection()->getFrontUnit();
-    const ItemType *type = u->getFaction()->getType()->getItemType(u->getStorage()[posDisplay].getName());
-    stringstream ss;
-    ss << u->getStorage()[posDisplay].getCurrent();
-    string name = type->getName()+ " (" + u->getStorage()[posDisplay].getTypeTag() + ") " + ": " + ss.str();
-    setToolTipText2(name, "", ItemDisplaySection::INVENTORY);
+    if (m_ui->getSelection()->isComandable()) {
+        const Unit *u = m_ui->getSelection()->getFrontUnit();
+        const ItemType *type = u->getFaction()->getType()->getItemType(u->getStorage()[posDisplay].getName());
+        stringstream ss;
+        ss << u->getStorage()[posDisplay].getCurrent();
+        string name = type->getName()+ " (" + u->getStorage()[posDisplay].getTypeTag() + ") " + ": " + ss.str();
+        setToolTipText2(name, "", ItemDisplaySection::INVENTORY);
+    }
 }
 
 void ItemWindow::computeResourcesPanel() {
@@ -528,27 +530,33 @@ void ItemWindow::computeResourcesPanel() {
 }
 
 void ItemWindow::computeResourcesInfo(int posDisplay) {
-    const Unit *u = m_ui->getSelection()->getFrontUnit();
-    stringstream ss;
-    int displayPos = 0;
-    if (posDisplay > -1 && posDisplay < 6) {
-        displayPos = posDisplay;
-    } else if (posDisplay > 5 && posDisplay < 12) {
-        displayPos = posDisplay - 6;
-    } else if (posDisplay > 11 && posDisplay < 18) {
-        displayPos = posDisplay - 6;
-    } else if (posDisplay > 17 && posDisplay < 24) {
-        displayPos = posDisplay - 12;
-    } else if (posDisplay > 23 && posDisplay < 30) {
-        displayPos = posDisplay - 12;
-    } else if (posDisplay > 29 && posDisplay < 36) {
-        displayPos = posDisplay - 18;
-    } else {
+    if (m_ui->getSelection()->isComandable()) {
+        /*const Unit *u = m_ui->getSelection()->getFrontUnit();
+        stringstream ss;
+        int displayPos = 0;
+        if (posDisplay > -1 && posDisplay < 6) {
+            displayPos = posDisplay;
+        } else if (posDisplay > 5 && posDisplay < 12) {
+            displayPos = posDisplay - 6;
+        } else if (posDisplay > 11 && posDisplay < 18) {
+            displayPos = posDisplay - 6;
+        } else if (posDisplay > 17 && posDisplay < 24) {
+            displayPos = posDisplay - 12;
+        } else if (posDisplay > 23 && posDisplay < 30) {
+            displayPos = posDisplay - 12;
+        } else if (posDisplay > 29 && posDisplay < 36) {
+            displayPos = posDisplay - 18;
+        } else if (posDisplay > 35 && posDisplay < 42) {
+            displayPos = posDisplay - 18;
+        } else if (posDisplay > 41 && posDisplay < 48) {
+            displayPos = posDisplay - 24;
+        } else {
+        }*/
+        //const ResourceType *rt = u->getType()->getResourceProductionSystem().getStoredResource(displayPos, u->getFaction()).getType();;
+        //ss << u->getSResource(rt)->getAmount();
+        //string name = rt->getName() + ": " + ss.str();
+        //setToolTipText2(name, "", ItemDisplaySection::RESOURCES);
     }
-    const ResourceType *rt = u->getType()->getResourceProductionSystem().getStoredResource(displayPos, u->getFaction()).getType();;
-    ss << u->getSResource(rt)->getAmount();
-    string name = rt->getName() + ": " + ss.str();
-    //setToolTipText2(name, "", ItemDisplaySection::RESOURCES);
 }
 
 ItemDisplayButton ItemWindow::computeIndex(Vec2i i_pos, bool screenPos) {

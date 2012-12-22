@@ -764,411 +764,126 @@ void World::tick() {
 			}
 		}
 	}
-    // apply resource generation
-    for (int k = 0; k < getFactionCount(); ++k) { /**< Added by MoLAoS, resource generation */
-    Faction *faction = getFaction(k);
-        for (int j = 0; j < faction->getUnitCount(); ++j) {
-        const Unit *u = faction->getUnit(j);
-            if (u->isOperative()) {
-                Unit *unit = u->getFaction()->getUnit(j);
-                for (int s = 0; s < u->getType()->getResourceProductionSystem().getStoredResourceCount(); ++s) {
-                ResourceAmount sr = u->getType()->getResourceProductionSystem().getStoredResource(s, faction);
-                const ResourceType* srt = sr.getType();
-                    for (int i = 0; i < u->getType()->getResourceProductionSystem().getCreatedResourceCount(); ++i) {
-                    CreatedResource cr = u->getType()->getResourceProductionSystem().getCreatedResources()[i];
-                    const ResourceType* crt = cr.getType();
-                        if (srt == crt) {
-                        Timer cTime = u->getType()->getResourceProductionSystem().getCreatedResourceTimer(i, faction);
-                        int cTimeStep = u->currentSteps[i].currentStep;
-                        int cTimeValue = cTime.getTimerValue();
-                        int newStep = cTimeStep + 1;
-                        u->currentSteps[i].currentStep = newStep;
-                        int cRNewTime = u->currentSteps[i].currentStep;
-                            if (cRNewTime == cTimeValue) {
-                                if (srt->getClass() == ResourceClass::TECHTREE || srt->getClass() == ResourceClass::TILESET) {
-                                    int balance = cr.getAmount();
-                                    if (cr.local == false) {
-                                    u->getFaction()->incResourceAmount(srt, balance);
-                                    } else {
-                                    unit->incResourceAmount(srt, balance);
-                                    }
-                                }
-                            u->currentSteps[i].currentStep = 0;
-                            }
-					    }
-				    }
-                }
-                for (int m = 0; m < u->getEquippedItems().size(); ++m) {
-                    for (int s = 0; s < u->getType()->getResourceProductionSystem().getStoredResourceCount(); ++s) {
-                        ResourceAmount sr = u->getType()->getResourceProductionSystem().getStoredResource(s, faction);
-                        const ResourceType* srt = sr.getType();
-                        for (int i = 0; i < u->getEquippedItem(m)->getType()->getResourceProductionSystem().getCreatedResourceCount(); ++i) {
-                            CreatedResource cr = u->getEquippedItem(m)->getType()->getResourceProductionSystem().getCreatedResources()[i];
-                            const ResourceType* crt = cr.getType();
-                            if (srt == crt) {
-                                Timer cTime = u->getEquippedItem(m)->getType()->getResourceProductionSystem().getCreatedResourceTimer(i, faction);
-                                int cTimeStep = u->getEquippedItem(m)->currentSteps[i].getCurrentStep();
-                                int cTimeValue = cTime.getTimerValue();
-                                int newStep = cTimeStep + 1;
-                                u->getEquippedItem(m)->currentSteps[i].setCurrentStep(newStep);
-                                int cRNewTime = u->getEquippedItem(m)->currentSteps[i].getCurrentStep();
-                                if (cRNewTime == cTimeValue) {
-                                    if (srt->getClass() == ResourceClass::TECHTREE || srt->getClass() == ResourceClass::TILESET) {
-                                        int balance = cr.getAmount();
-                                        if (cr.local == false) {
-                                        unit->getFaction()->incResourceAmount(srt, balance);
-                                        } else {
-                                        unit->incResourceAmount(srt, balance);
-                                        }
-                                    }
-                                u->getEquippedItem(m)->currentSteps[i].setCurrentStep(0);
-                                }
-                            }
-                        }
-                    }
-                }
-			}
-		}
-	} /**< Added by MoLAoS, resource generation */
-
-    // apply processing
-    for (int k = 0; k < getFactionCount(); ++k) { /**< Added by MoLAoS, resource processing */
+	// automatic production
+    for (int k = 0; k < getFactionCount(); ++k) {
         Faction *faction = getFaction(k);
         for (int j = 0; j < faction->getUnitCount(); ++j) {
-            const Unit *u =  faction->getUnit(j);
+            const Unit *u = faction->getUnit(j);
             if (u->isOperative()) {
-                for (int s = 0; s < u->getType()->getProcessProductionSystem().getProcessCount(); ++s) {
-                    Process process = u->getType()->getProcessProductionSystem().getProcess(s, faction);
-                    Timer cTime = u->getType()->getProcessProductionSystem().getProcessTimer(s, faction);
-                    int cTimeStep = u->currentProcessSteps[s].currentStep;
-                    int cTimeValue = cTime.getTimerValue();
-                    int newStep = cTimeStep + 1;
-                    u->currentProcessSteps[s].currentStep = newStep;
-                    int cRNewTime = u->currentProcessSteps[s].currentStep;
-                    if (cRNewTime == cTimeValue) {
-                        int count = 0;
-                        for (int t = 0; t < process.costs.size(); ++t) {
-                        const ResourceType *costsRT = process.costs[t].getType();
-                            for (int i = 0; i < u->getFaction()->sresources.size(); ++i) {
-                                if (costsRT == u->getFaction()->sresources[i].getType()) {
-                                    int stockpile = 0;
-                                    if (process.local == false) {
-                                        stockpile = u->getFaction()->getSResource(costsRT)->getAmount();
-                                    } else {
-                                        stockpile = u->getSResource(costsRT)->getAmount();
-                                    }
-                                    for (int g = 0; g < process.count; ++g) {
-                                        int expended = process.costs[t].getAmount();
-                                        if (expended > stockpile) {
+                /**< Added by MoLAoS, resource generation */
+                Unit *unit = faction->getUnit(j);
+                for (int i = 0; i < unit->getType()->getResourceProductionSystem().getCreatedResourceCount(); ++i) {
+                    CreatedResource cr = unit->getType()->getResourceProductionSystem().getCreatedResources()[i];
+                    unit->getType()->getResourceProductionSystem().update(cr, unit, i);
+                }
+                for (int m = 0; m < unit->getEquippedItems().size(); ++m) {
+                    Item *item = unit->getEquippedItem(m);
+                    for (int i = 0; i < item->getType()->getResourceProductionSystem().getCreatedResourceCount(); ++i) {
+                        CreatedResource cr = unit->getEquippedItem(m)->getType()->getResourceProductionSystem().getCreatedResources()[i];
+                        item->getType()->getResourceProductionSystem().update(cr, unit, item, i);
+                    }
+                }
+                /**< Added by MoLAoS, resource processing */
+                for (int s = 0; s < unit->getType()->getProcessProductionSystem().getProcessCount(); ++s) {
+                    Process process = unit->getType()->getProcessProductionSystem().getProcess(s, faction);
+                    bool toUpdate = true;
+                    for (int d = 0; d < process.items.size(); ++d) {
+                        for (int e = 0; e < unit->getType()->getItemStores().size(); ++e) {
+                            if (process.items[d].getType() == unit->getType()->getItemStores()[e].getType()) {
+                                for (int f = 0; f < unit->getStorage().size(); ++f) {
+                                    if (process.items[d].getType()->getName() == unit->getStorage()[f].getName())  {
+                                        if (unit->getStorage()[f].getCurrent() + process.items[d].getAmount() > unit->getType()->getItemStores()[e].getCap()) {
+                                            toUpdate = false;
                                             break;
-                                        } else {
-                                            ++count;
-                                            stockpile -= expended;
                                         }
                                     }
                                 }
                             }
                         }
-                        for (int g = 0; g < count; ++g) {
-                            Unit *unit = u->getFaction()->getUnit(j);
-                            for (int c = 0; c < process.costs.size(); ++c) {
-                            const ResourceType *costsRT = process.costs[c].getType();
-                                for (int i = 0; i < u->getFaction()->sresources.size(); ++i) {
-                                    if (costsRT == u->getFaction()->sresources[i].getType()) {
-                                    int expended = process.costs[c].getAmount();
-                                        if (process.local == false) {
-                                            if (process.costs[c].getConsume() == true) {
-                                                u->getFaction()->incResourceAmount(costsRT, -expended);
-                                            }
-                                        } else {
-                                            if (process.costs[c].getConsume() == true) {
-                                                unit->incResourceAmount(costsRT, -expended);
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            for (int p = 0; p < process.products.size(); ++p) {
-                            const ResourceType *productsRT = process.products[p].getType();
-                                for (int i = 0; i < u->getFaction()->sresources.size(); ++i) {
-                                    if (productsRT == u->getFaction()->sresources[i].getType()) {
-                                    int produced = process.products[p].getAmount();
-                                        if (process.local == false) {
-                                        u->getFaction()->incResourceAmount(productsRT, produced);
-                                        } else {
-                                        unit->incResourceAmount(productsRT, produced);
-                                        }
-                                    }
-                                }
-                            }
-                            for (int t = 0; t < process.items.size(); ++t) {
-                                const ItemType *itemsIT = process.items[t].getType();
-                                int items = process.items[t].getAmount();
-                                if (process.local == false) {
-                                } else {
-                                    for (int s = 0; s < items; ++s) {
-                                        Item item;
-                                        item.init(unit->getFaction()->items.size(), process.items[t].getType(), unit->getFaction());
-                                        if (unit->getItemLimit() > unit->getItemsStored()) {
-                                            unit->getFaction()->items.push_back(item);
-                                            unit->accessStorageAdd(unit->getFaction()->items.size()-1);
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    u->currentProcessSteps[s].currentStep = 0;
+                    }
+                    if (toUpdate == true) {
+                        unit->getType()->getProcessProductionSystem().update(process, unit, s);
                     }
                 }
-
-                for (int m = 0; m < u->getEquippedItems().size(); ++m) {
-                for (int s = 0; s < u->getEquippedItem(m)->getType()->getProcessProductionSystem().getProcessCount(); ++s) {
-                    Process process = u->getEquippedItem(m)->getType()->getProcessProductionSystem().getProcess(s, faction);
-                    Timer cTime = u->getEquippedItem(m)->getType()->getProcessProductionSystem().getProcessTimer(s, faction);
-                    int cTimeStep = u->getEquippedItem(m)->currentProcessSteps[s].currentStep;
-                    int cTimeValue = cTime.getTimerValue();
-                    int newStep = cTimeStep + 1;
-                    u->getEquippedItem(m)->currentProcessSteps[s].currentStep = newStep;
-                    int cRNewTime = u->getEquippedItem(m)->currentProcessSteps[s].currentStep;
-                    if (cRNewTime == cTimeValue) {
-                        int count = 0;
-                        for (int t = 0; t < process.costs.size(); ++t) {
-                        const ResourceType *costsRT = process.costs[t].getType();
-                            for (int i = 0; i < u->getFaction()->sresources.size(); ++i) {
-                                if (costsRT == u->getFaction()->sresources[i].getType()) {
-                                    int stockpile = 0;
-                                    if (process.local == false) {
-                                        stockpile = u->getFaction()->getSResource(costsRT)->getAmount();
-                                    } else {
-                                        stockpile = u->getSResource(costsRT)->getAmount();
-                                    }
-                                    for (int g = 0; g < process.count; ++g) {
-                                        int expended = process.costs[t].getAmount();
-                                        if (expended > stockpile) {
-                                            break;
-                                        } else {
-                                            ++count;
-                                            stockpile -= expended;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        for (int g = 0; g < count; ++g) {
-                            Unit *unit = u->getFaction()->getUnit(j);
-                            for (int c = 0; c < process.costs.size(); ++c) {
-                            const ResourceType *costsRT = process.costs[c].getType();
-                                for (int i = 0; i < u->getFaction()->sresources.size(); ++i) {
-                                    if (costsRT == u->getFaction()->sresources[i].getType()) {
-                                    int expended = process.costs[c].getAmount();
-                                        if (process.local == false) {
-                                            if (process.costs[c].getConsume() == true) {
-                                                u->getFaction()->incResourceAmount(costsRT, -expended);
-                                            }
-                                        } else {
-                                            if (process.costs[c].getConsume() == true) {
-                                                unit->incResourceAmount(costsRT, -expended);
+                for (int m = 0; m < unit->getEquippedItems().size(); ++m) {
+                    Item *item = unit->getEquippedItem(m);
+                    for (int s = 0; s < item->getType()->getProcessProductionSystem().getProcessCount(); ++s) {
+                        Process process = item->getType()->getProcessProductionSystem().getProcess(s, faction);
+                        bool toUpdate = true;
+                        for (int d = 0; d < process.items.size(); ++d) {
+                            for (int e = 0; e < unit->getType()->getItemStores().size(); ++e) {
+                                if (process.items[d].getType() == unit->getType()->getItemStores()[e].getType()) {
+                                    for (int f = 0; f < unit->getStorage().size(); ++f) {
+                                        if (process.items[d].getType()->getName() == unit->getStorage()[f].getName())  {
+                                            if (unit->getStorage()[f].getCurrent() + process.items[d].getAmount() > unit->getType()->getItemStores()[e].getCap()) {
+                                                toUpdate = false;
+                                                break;
                                             }
                                         }
                                     }
                                 }
                             }
-                            for (int p = 0; p < process.products.size(); ++p) {
-                            const ResourceType *productsRT = process.products[p].getType();
-                                for (int i = 0; i < u->getFaction()->sresources.size(); ++i) {
-                                    if (productsRT == u->getFaction()->sresources[i].getType()) {
-                                    int produced = process.products[p].getAmount();
-                                        if (process.local == false) {
-                                        u->getFaction()->incResourceAmount(productsRT, produced);
-                                        } else {
-                                        unit->incResourceAmount(productsRT, produced);
-                                        }
-                                    }
-                                }
-                            }
-                            for (int t = 0; t < process.items.size(); ++t) {
-                                const ItemType *itemsIT = process.items[t].getType();
-                                int items = process.items[t].getAmount();
-                                if (process.local == false) {
-                                } else {
-                                    for (int s = 0; s < items; ++s) {
-                                        Item item;
-                                        item.init(unit->getFaction()->items.size(), process.items[t].getType(), unit->getFaction());
-                                        if (unit->getItemLimit() > unit->getItemsStored()) {
-                                            unit->getFaction()->items.push_back(item);
-                                            unit->accessStorageAdd(unit->getFaction()->items.size()-1);
-                                        }
+                        }
+                        if (toUpdate == true) {
+                            item->getType()->getProcessProductionSystem().update(process, unit, item, s);
+                        }
+                    }
+                }
+                /**< Added by MoLAoS, item generation */
+                for (int i = 0; i < unit->getType()->getItemProductionSystem().getCreatedItemCount(); ++i) {
+                    CreatedItem createdItem = unit->getType()->getItemProductionSystem().getCreatedItem(i, faction);
+                    bool updating = true;
+                    for (int e = 0; e < unit->getType()->getItemStores().size(); ++e) {
+                        if (createdItem.getType() == unit->getType()->getItemStores()[e].getType()) {
+                            for (int f = 0; f < unit->getStorage().size(); ++f) {
+                                if (createdItem.getType()->getName() == unit->getStorage()[f].getName())  {
+                                    if (unit->getStorage()[f].getCurrent() + createdItem.getAmount() > unit->getType()->getItemStores()[e].getCap()) {
+                                        updating = false;
                                     }
                                 }
                             }
                         }
-                    u->getEquippedItem(m)->currentProcessSteps[s].currentStep = 0;
+                    }
+                    if (updating == true) {
+                        unit->getType()->getItemProductionSystem().update(createdItem, unit, i);
                     }
                 }
-                }
-            }
-        }
-	} /**< Added by MoLAoS, resource processing */
-
-    for (int k = 0; k < getFactionCount(); ++k) { /**< Added by MoLAoS, item generation */
-    Faction *faction = getFaction(k);
-        for (int j = 0; j < faction->getUnitCount(); ++j) {
-        const Unit *u =  faction->getUnit(j);
-            if (u->isOperative()) {
-                Unit *unit = u->getFaction()->getUnit(j);
-                for (int i = 0; i < u->getType()->getItemProductionSystem().getCreatedItemCount(); ++i) {
-                Timer cTime = u->getType()->getItemProductionSystem().getCreatedItemTimer(i, faction);
-                int cTimeStep = u->currentItemSteps[i].currentStep;
-                int newStep = cTimeStep + 1;
-                u->currentItemSteps[i].currentStep = newStep;
-                int cTimeValue = cTime.getTimerValue();
-                int cRNewTime = u->currentItemSteps[i].currentStep;
-                    if (cRNewTime == cTimeValue) {
-                    const CreatedItem iu = u->getType()->getItemProductionSystem().getCreatedItem(i, faction);
-                    int iua = iu.getAmount();
-                    int iucap = iu.getCap();
-                        if (iucap != -1) {
-                            if (iucap < iua) {
-                                iua = iucap;
+                for (int m = 0; m < unit->getEquippedItems().size(); ++m) {
+                    Item *item = unit->getEquippedItem(m);
+                    for (int i = 0; i < item->getType()->getItemProductionSystem().getCreatedItemCount(); ++i) {
+                        CreatedItem createdItem = item->getType()->getItemProductionSystem().getCreatedItem(i, faction);
+                        bool updating = true;
+                        for (int e = 0; e < unit->getType()->getItemStores().size(); ++e) {
+                            if (createdItem.getType() == unit->getType()->getItemStores()[e].getType()) {
+                                for (int f = 0; f < unit->getStorage().size(); ++f) {
+                                    if (createdItem.getType()->getName() == unit->getStorage()[f].getName())  {
+                                        if (unit->getStorage()[f].getCurrent() + createdItem.getAmount() > unit->getType()->getItemStores()[e].getCap()) {
+                                            updating = false;
+                                        }
+                                    }
+                                }
                             }
                         }
-                        for (int n = 0; n < iua; ++n) {
-                            Item item;
-                            item.init(unit->getFaction()->items.size(), iu.getType(), u->getFaction());
-                            if (unit->getItemLimit() > unit->getItemsStored()) {
-                                unit->getFaction()->items.push_back(item);
-                                unit->accessStorageAdd(unit->getFaction()->items.size()-1);
-                            }
+                        if (updating == true) {
+                            item->getType()->getItemProductionSystem().update(createdItem, unit, item, i);
                         }
-                    u->currentItemSteps[i].currentStep = 0;
                     }
                 }
-                for (int m = 0; m < u->getEquippedItems().size(); ++m) {
-                    for (int i = 0; i < u->getEquippedItem(m)->getType()->getItemProductionSystem().getCreatedItemCount(); ++i) {
-                        Timer cTime = u->getEquippedItem(m)->getType()->getItemProductionSystem().getCreatedItemTimer(i, faction);
-                        int cTimeStep = u->getEquippedItem(m)->currentItemSteps[i].currentStep;
-                        int newStep = cTimeStep + 1;
-                        u->getEquippedItem(m)->currentItemSteps[i].currentStep = newStep;
-                        int cTimeValue = cTime.getTimerValue();
-                        int cRNewTime = u->getEquippedItem(m)->currentItemSteps[i].currentStep;
-                        if (cRNewTime == cTimeValue) {
-                            const CreatedItem iu = u->getEquippedItem(m)->getType()->getItemProductionSystem().getCreatedItem(i, faction);
-                            int iua = iu.getAmount();
-                            int iucap = iu.getCap();
-                            if (iucap != -1) {
-                                if (iucap < iua) {
-                                    iua = iucap;
-                                }
-                            }
-                            for (int n = 0; n < iua; ++n) {
-                                Item item;
-                                item.init(unit->getFaction()->items.size(), iu.getType(), u->getFaction());
-                                if (unit->getItemLimit() > unit->getItemsStored()) {
-                                    unit->getFaction()->items.push_back(item);
-                                    unit->accessStorageAdd(unit->getFaction()->items.size()-1);
-                                }
-                            }
-                            u->getEquippedItem(m)->currentItemSteps[i].currentStep = 0;
-                        }
+                /**< Added by MoLAoS, unit generation */
+                for (int i = 0; i < unit->getType()->getUnitProductionSystem().getCreatedUnitCount(); ++i) {
+                    CreatedUnit createdUnit = unit->getType()->getUnitProductionSystem().getCreatedUnit(i, faction);
+                    unit->getType()->getUnitProductionSystem().update(createdUnit, unit, i);
+                }
+                for (int m = 0; m < unit->getEquippedItems().size(); ++m) {
+                    Item *item = unit->getEquippedItem(m);
+                    for (int i = 0; i < item->getType()->getUnitProductionSystem().getCreatedUnitCount(); ++i) {
+                        CreatedUnit createdUnit = item->getType()->getUnitProductionSystem().getCreatedUnit(i, faction);
+                        item->getType()->getUnitProductionSystem().update(createdUnit, unit, item, i);
                     }
                 }
             }
         }
-	} /**< Added by MoLAoS, item generation */
-
-    for (int k = 0; k < getFactionCount(); ++k) { /**< Added by MoLAoS, unit generation */
-    Faction *faction = getFaction(k);
-        for (int j = 0; j < faction->getUnitCount(); ++j) {
-        const Unit *u =  faction->getUnit(j);
-            if (u->isOperative()) {
-                Unit *unit = u->getFaction()->getUnit(j);
-                for (int i = 0; i < u->getType()->getUnitProductionSystem().getCreatedUnitCount(); ++i) {
-                Timer cTime = u->getType()->getUnitProductionSystem().getCreatedUnitTimer(i, faction);
-                int cTimeStep = u->currentUnitSteps[i].currentStep;
-                int newStep = cTimeStep + 1;
-                u->currentUnitSteps[i].currentStep = newStep;
-                int cTimeValue = cTime.getTimerValue();
-                int cRNewTime = u->currentUnitSteps[i].currentStep;
-                    if (cRNewTime == cTimeValue) {
-                    const CreatedUnit cu = u->getType()->getUnitProductionSystem().getCreatedUnit(i, faction);
-                    Vec2i locate = u->getPos();
-                    int cua = cu.getAmount();
-                    int cucap = cu.getCap();
-                        if (cucap != -1) {
-                            if (cucap < cua) {
-                                cua = cucap;
-                            }
-                        }
-                        for (int l = 0; l < u->ownedUnits.size(); ++l) {
-                            const UnitType *kind = u->ownedUnits[l].getType();
-                            if (kind == cu.getType()) {
-                                int limit = u->ownedUnits[l].getLimit();
-                                int owned = u->ownedUnits[l].getOwned();
-                                if (owned == limit) {
-                                    cua = 0;
-                                } else if (cua > limit - owned) {
-                                    cua = limit - owned;
-                                } else {
-                                }
-                                break;
-                            }
-                        }
-                        for (int n = 0; n < cua; ++n) {
-                            Unit *createdUnit = newUnit(locate, cu.getType(), faction, getMap(), CardinalDir::NORTH);
-                            g_world.placeUnit(unit->getCenteredPos(), 10, createdUnit);
-                            createdUnit->setOwner(unit);
-                            for (int z = 0; z < u->ownedUnits.size(); ++z) {
-                                if (u->ownedUnits[z].getType() == createdUnit->getType()) {
-                                    unit->ownedUnits[z].incOwned();
-                                }
-                            }
-                            createdUnit->create();
-                            createdUnit->born();
-                            ScriptManager::onUnitCreated(createdUnit);
-                            g_simInterface.getStats()->produce(unit->getFactionIndex());
-                        }
-                    u->currentUnitSteps[i].currentStep = 0;
-                    }
-                }
-                for (int m = 0; m < u->getEquippedItems().size(); ++m) {
-                    for (int i = 0; i < u->getEquippedItem(m)->getType()->getUnitProductionSystem().getCreatedUnitCount(); ++i) {
-                        Timer cTime = u->getEquippedItem(m)->getType()->getUnitProductionSystem().getCreatedUnitTimer(i, faction);
-                        int cTimeStep = u->getEquippedItem(m)->currentUnitSteps[i].currentStep;
-                        int newStep = cTimeStep + 1;
-                        u->getEquippedItem(m)->currentUnitSteps[i].currentStep = newStep;
-                        int cTimeValue = cTime.getTimerValue();
-                        int cRNewTime = u->getEquippedItem(m)->currentUnitSteps[i].currentStep;
-                        if (cRNewTime == cTimeValue) {
-                            const CreatedUnit cu = u->getEquippedItem(m)->getType()->getUnitProductionSystem().getCreatedUnit(i, faction);
-                            Vec2i locate = u->getPos();
-                            int cua = cu.getAmount();
-                            int cucap = cu.getCap();
-                            if (cucap != -1) {
-                                if (cucap < cua) {
-                                    cua = cucap;
-                                }
-                            }
-                            for (int n = 0; n < cua; ++n) {
-                                Unit *createdUnit = newUnit(locate, cu.getType(), faction, getMap(), CardinalDir::NORTH);
-                                g_world.placeUnit(unit->getCenteredPos(), 10, createdUnit);
-                                createdUnit->setOwner(unit);
-                                for (int z = 0; z < u->ownedUnits.size(); ++z) {
-                                    if (u->ownedUnits[z].getType() == createdUnit->getType()) {
-                                        unit->ownedUnits[z].incOwned();
-                                    }
-                                }
-                                createdUnit->create();
-                                createdUnit->born();
-                                ScriptManager::onUnitCreated(createdUnit);
-                                g_simInterface.getStats()->produce(unit->getFactionIndex());
-                            }
-                            u->getEquippedItem(m)->currentUnitSteps[i].currentStep = 0;
-                        }
-                    }
-                }
-            }
-        }
-	} /**< Added by MoLAoS, unit generation */
+	}
 }
 
 const UnitType* World::findUnitTypeById(const FactionType* factionType, int id) {

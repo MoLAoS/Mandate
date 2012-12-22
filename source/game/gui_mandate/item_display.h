@@ -72,7 +72,7 @@ public:
 	static const int buttonCellCount = cellWidthCount * cellHeightCount;
 	static const int equipmentCellCount = cellWidthCount * cellHeightCount * 3;
 	static const int inventoryCellCount = cellWidthCount * cellHeightCount *3;
-	static const int resourcesCellCount = cellWidthCount * cellHeightCount * 6;
+	static const int resourcesCellCount = cellWidthCount * cellHeightCount * 10;
 	static const int invalidIndex = -1;
 private:
 	UserInterface *m_ui;

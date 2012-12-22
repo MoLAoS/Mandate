@@ -105,6 +105,12 @@ Config::Config(const char* fileName) {
 	uiLastDisplayPosX = p->getInt("UiLastDisplayPosX", -1);
 	uiLastDisplayPosY = p->getInt("UiLastDisplayPosY", -1);
 	uiLastDisplaySize = p->getInt("UiLastDisplaySize", 1, 1, 3);
+	uiLastFactionDisplayPosX = p->getInt("UiLastFactionDisplayPosX", -1);
+	uiLastFactionDisplayPosY = p->getInt("UiLastFactionDisplayPosY", -1);
+	uiLastFactionDisplaySize = p->getInt("UiLastFactionDisplaySize", 1, 1, 3);
+	uiLastItemDisplayPosX = p->getInt("UiLastItemDisplayPosX", -1);
+	uiLastItemDisplayPosY = p->getInt("UiLastItemDisplayPosY", -1);
+	uiLastItemDisplaySize = p->getInt("UiLastItemDisplaySize", 1, 1, 3);
 	uiLastTradeBarPosX = p->getInt("UiLastTradeBarPosX", -1);
 	uiLastTradeBarPosY = p->getInt("UiLastTradeBarPosY", -1);
 	uiLastTradeBarSize = p->getInt("UiLastTradeBarSize", 1, 1, 3);
@@ -208,6 +214,12 @@ void Config::save(const char *path) {
 	p->setInt("UiLastDisplayPosX", uiLastDisplayPosX);
 	p->setInt("UiLastDisplayPosY", uiLastDisplayPosY);
 	p->setInt("UiLastDisplaySize", uiLastDisplaySize);
+	p->setInt("UiLastFactionDisplayPosX", uiLastFactionDisplayPosX);
+	p->setInt("UiLastFactionDisplayPosY", uiLastFactionDisplayPosY);
+	p->setInt("UiLastFactionDisplaySize", uiLastFactionDisplaySize);
+	p->setInt("UiLastItemDisplayPosX", uiLastItemDisplayPosX);
+	p->setInt("UiLastItemDisplayPosY", uiLastItemDisplayPosY);
+	p->setInt("UiLastItemDisplaySize", uiLastItemDisplaySize);
 	p->setInt("UiLastTradeBarPosX", uiLastTradeBarPosX);
 	p->setInt("UiLastTradeBarPosY", uiLastTradeBarPosY);
 	p->setInt("UiLastTradeBarSize", uiLastTradeBarSize);

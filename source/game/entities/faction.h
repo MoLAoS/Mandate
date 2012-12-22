@@ -136,7 +136,7 @@ public:
 
 class Faction : public NameIdPair {
 public:
-    typedef vector<Item>                               Items;
+    typedef vector<Item*>                               Items;
 	typedef vector<const ResourceType *>               ResourceTypes;
 	typedef map<const ResourceType*, Modifier>         CostModifiers;
 	typedef map<const ProducibleType*, CostModifiers>  UnitCostModifiers;
@@ -172,9 +172,9 @@ typedef vector<UpgradeStage>    UpgradeStages;
 	UpgradeStage *getUpgradeStage(int i) {assert(i < upgradeStages.size()); return &upgradeStages[i];}
 	int getCurrentStage(const UpgradeType *ut);
 
-	Items items;
 
 private:
+	Items items;
 	Units units;
 	UnitMap unitMap;
 	Products products;
@@ -271,6 +271,8 @@ public:
 	Unit *getUnit(int i) const							{assert(units.size() == unitMap.size()); assert(i < units.size()); return units[i];}
 	int getUnitCount() const							{return units.size();}
 	const Units &getUnits() const						{return units;}
+	int getItemCount() const							{return items.size();}
+	const Items &getItems() const						{return items;}
 	const UpgradeManager *getUpgradeManager() const		{return &upgradeManager;}
 	const Texture2D *getTexture() const					{return texture;}
 	const Texture2D *getLogoTex() const					{return m_logoTex;}
@@ -346,6 +348,8 @@ public:
 	void add(Unit *unit);
 	void remove(Unit *unit);
 
+	void addItem(Item *item);
+
 	void onUnitActivated(const UnitType *ut) { ++m_unitCountMap[ut]; }
 	void onUnitMorphed(const UnitType *new_ut, const UnitType *old_ut) {
 		assert(m_unitCountMap[old_ut] > 0);
@@ -358,11 +362,6 @@ public:
 	void addStore(const UnitType *unitType);
 	void removeStore(const UnitType *unitType);
 	void reEvaluateStore();
-
-    void addCreate(const ResourceType *rt, int amount);
-	void addCreate(const UnitType *unitType);
-	void removeCreate(const UnitType *unitType);
-	void reEvaluateCreate();
 
 	void setLastEventLoc(Vec3f lastEventLoc)	{this->lastEventLoc = lastEventLoc;}
 	void attackNotice(const Unit *u);

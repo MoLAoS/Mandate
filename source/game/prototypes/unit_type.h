@@ -52,7 +52,7 @@ private:
 	typedef vector<Level>               Levels;
 	typedef vector<LoadBonus>           LoadBonuses;
 	typedef vector<ParticleSystemType*> ParticleSystemTypes;
-	typedef vector<ResourceAmount>      ResourceStores;
+	typedef vector<ResourceStore>       ResourceStores;
 private:
 	bool multiBuild;
 	bool multiSelect;
@@ -77,13 +77,16 @@ private:
     bool isLeader;
     bool isHero;
 	typedef vector<string> StarterItems;
+	typedef vector<ItemStore> ItemStores;
 	typedef vector<Equipment> Equipments;
 	StarterItems starterItems;
+	ItemStores itemStores;
 	Equipments equipment;
 	int itemLimit;
 public:
     int getItemLimit() const {return itemLimit;}
     StarterItems getStarterItems() const {return starterItems;}
+    ItemStores getItemStores() const {return itemStores;}
     Equipments getEquipment() const {return equipment;}
     bool getIsLeader() const {return isLeader;}
     bool getIsMage() const {return isMage;}

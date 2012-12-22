@@ -1485,7 +1485,16 @@ void TradeCommandType::goToGuild(Unit *unit, Unit *home, Unit *guild) const {
         const ResourceType *requiredType = home->getType()->getResourceStores()[i].getType();
         for (int k = 0; k < guild->getType()->getResourceProductionSystem().getStoredResourceCount(); ++k) {
             const ResourceType *guildType = guild->getType()->getResourceProductionSystem().getStoredResource(k, guild->getFaction()).getType();
-            if (requiredType == guildType && requiredType->getName() != "wealth") {
+            bool status = false;
+            for (int j = 0; j < guild->getType()->getResourceStores().size(); ++j) {
+                if (guild->getType()->getResourceStores()[j].getType() == guildType) {
+                    if (guild->getType()->getResourceStores()[j].getStatus() == "stockpile") {
+                        status = true;
+                        break;
+                    }
+                }
+            }
+            if (requiredType == guildType && requiredType->getName() != "wealth" && !status) {
                 int minWealth = 0;
                 int tradeValue = 0;
                 int freeWealth = 0;
