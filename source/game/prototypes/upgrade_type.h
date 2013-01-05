@@ -17,7 +17,7 @@
 #include "element_type.h"
 #include "checksum.h"
 #include "xml_parser.h"
-#include "unit_stats_base.h"
+#include "statistics.h"
 #include "factory.h"
 #include "prototypes_enums.h"
 #include "entities_enums.h"
@@ -35,12 +35,12 @@ typedef map<const ResourceType*, Modifier> ResModifierMap;
 
 /** A unit type enhancement, an EnhancementType + resource cost modifiers + resource storage modifiers + resource creation modifiers */
 struct UpgradeEffect {
-	EnhancementType  m_enhancement;
+	Statistics  m_enhancement;
 	ResModifierMap   m_costModifiers;
 	ResModifierMap   m_storeModifiers;
 	ResModifierMap   m_createModifiers;
 
-	const EnhancementType* getEnhancement() const { return &m_enhancement; }
+	const Statistics* getEnhancement() const { return &m_enhancement; }
 
 };
 

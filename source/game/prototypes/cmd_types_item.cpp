@@ -46,7 +46,17 @@ namespace Glest { namespace ProtoTypes {
 
 bool CreateItemCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct) {
 	bool loadOk = CommandType::load(n, dir, tt, ct);
-    const FactionType *ft = ct->getFactionType();
+    const FactionType *ft = ct->getFactionType();	try {
+    const XmlNode *childNode = n->getChild("child-structure", 0, false);
+	    if (childNode) {
+            m_child = childNode->getAttribute("child-building")->getBoolValue();
+	    } else {
+            m_child = false;
+	    }
+	} catch (runtime_error e) {
+		g_logger.logXmlError(dir, e.what());
+		loadOk = false;
+	}
 	//produce
 	try {
 		string skillName = n->getChild("produce-skill")->getAttribute("value")->getRestrictedValue();
@@ -187,8 +197,7 @@ void CreateItemCommandType::update(Unit *unit) const {
 		const ItemType *prodType = static_cast<const ItemType*>(command->getProdType());
 		if (unit->getProgress2() > prodType->getProductionTime()) {
 			for (int i=0; i < getCreatedNumber(prodType); ++i) {
-                if (unit->getItemLimit() > unit->getItemsStored() && unit->getFaction()->applyCosts(prodType)
-                && unit->applyCosts(prodType) && prodType->getTypeTag() != "stock") {
+                if (unit->getItemLimit() > unit->getItemsStored() && prodType->getTypeTag() != "stock") {
                     Item *newItem = g_world.newItem(unit->getFaction()->getItemCount(), prodType, unit->getFaction());
                     unit->getFaction()->addItem(newItem);
                     unit->accessStorageAdd(unit->getFaction()->getItemCount()-1);

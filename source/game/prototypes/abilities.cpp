@@ -15,7 +15,6 @@
 #include "sim_interface.h"
 
 namespace Glest { namespace ProtoTypes {
-
 // ===============================
 // 	class ItemStore
 // ===============================
@@ -25,69 +24,8 @@ void ItemStore::init(const ItemType *it, int cap) {
 }
 
 // =====================================================
-// 	class DamageType
-// =====================================================
-void DamageType::init(string name, int amount) {
-    type_name = name;
-    value = amount;
-}
-
-// ===============================
-// 	class Load Bonus
-// ===============================
-bool LoadBonus::load(const XmlNode *loadBonusNode, const string &dir, const TechTree *techTree, const FactionType *factionType) {
-	bool loadOk = true;
-    const XmlNode *sourceNode = loadBonusNode->getChild("source");
-    const XmlNode *loadableUnitNode = sourceNode->getChild("loadable-unit");
-    source = loadableUnitNode->getAttribute("name")->getRestrictedValue();
-    const XmlNode *enhancementNode = loadBonusNode->getChild("enhancement", 0, false);
-    if (enhancementNode) {
-        EnhancementType::load(enhancementNode, dir, techTree, factionType);
-    }
-	return loadOk;
-}
-
-// ===============================
-// 	class Level
-// ===============================
-bool Level::load(const XmlNode *levelNode, const string &dir, const TechTree *tt, const FactionType *ft) {
-	bool loadOk = true;
-	try {
-		m_name = levelNode->getAttribute("name")->getRestrictedValue();
-	} catch (runtime_error e) {
-		g_logger.logXmlError(dir, e.what());
-		loadOk = false;
-	}
-	try {
-		exp = levelNode->getAttribute("exp")->getIntValue();
-	}
-	catch (runtime_error e) {
-		g_logger.logXmlError(dir, e.what());
-		loadOk = false;
-	}
-	try {
-		count = levelNode->getAttribute("count")->getIntValue();
-	}
-	catch (runtime_error e) {
-		g_logger.logXmlError(dir, e.what());
-		loadOk = false;
-	}
-	try {
-        if (!enLevel.load(levelNode, dir, tt, ft)) {
-            loadOk = false;
-        }
-	}
-	catch (runtime_error e) {
-		g_logger.logXmlError(dir, e.what());
-		loadOk = false;
-	}
-	return loadOk;
-}
-
-// =====================================================
 // 	class Timer
 // =====================================================
-
 void Timer::init(const XmlNode *node, const TechTree *tt) {
 	timerValue = node->getChildIntValue("timer");
 	currentStep = node->getChildIntValue("step");
@@ -106,7 +44,6 @@ void Timer::init(int timer, int step) {
 // =====================================================
 // 	class UnitsOwned
 // =====================================================
-
 void UnitsOwned::init(const XmlNode *node, const Faction *f) {
 	m_type = f->getType()->getUnitType(node->getChildStringValue("type"));
 	m_limit = node->getChildIntValue("limit");

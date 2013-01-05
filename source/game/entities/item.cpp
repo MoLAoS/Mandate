@@ -181,11 +181,11 @@ string Item::getLongDesc() const {
  	if (getType()->getHarvestSpeed() > 0 || ((getType()->getHarvestSpeedMult()-1)*100).intp() > 0) {
         ss << endl << "Harvest Speed: +" << getType()->getHarvestSpeed() << "/+" << ((getType()->getHarvestSpeedMult()-1)*100).intp() << "%";
  	}
-	if (type->getResistances().size() > 0) {
+	if (type->getResistances()->size() > 0) {
 	ss << endl << lang.get("Resistances") << ":";
-	for (int i = 0; i < type->getResistances().size(); ++i) {
-	ss << endl << lang.get(type->getResistances()[i].getTypeName()) << ": ";
-	ss << type->getResistances()[i].getValue();
+	for (int i = 0; i < type->getResistances()->size(); ++i) {
+	ss << endl << lang.get(type->getResistance(i)->getTypeName()) << ": ";
+	ss << type->getResistance(i)->getValue();
 	}
 	ss << endl;
 	}

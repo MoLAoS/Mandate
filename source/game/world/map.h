@@ -24,6 +24,7 @@
 #include "command_type.h"
 #include "logger.h"
 #include "object.h"
+#include "object_type.h"
 #include "game_constants.h"
 #include "selection.h"
 #include "exceptions.h"
@@ -153,7 +154,9 @@ public:
 
 	//misc
 	bool isFree() const						{ return !object || object->getWalkable();	}
-	void deleteResource();//					{ delete object; object= NULL;				}
+	bool isPlacement(string spot) const;
+	bool isBonusObject(string name) const;
+	void deleteResource();
 };
 
 /** Tile Vertex structure */
@@ -273,6 +276,9 @@ public:
 	}
 	Tile *getTileFromCellPos(const Vec2i &pos) const { return getTileFromCellPos(pos.x, pos.y);	}
 
+	bool isBonusObject(string name, const Vec2i &pos, Field field) const;
+	bool nearUnitBonusObject(const UnitType *ut, const Vec2i &pos);
+
 	int getW() const							{ return m_cellSize.w;  }
 	int getH() const							{ return m_cellSize.h;   }
 	int getTileW() const						{ return m_tileSize.w;    }
@@ -315,9 +321,15 @@ public:
 	// This should just do a look up in the map metrics (currently maintained by the Cartographer object)
 	// Is a cell of a given field 'free' to be occupied
 	bool isFreeCell(const Vec2i &pos, Field field) const;
+	bool isFoundation(string foundation, const Vec2i &pos, Field field) const;
 
 	bool areFreeCells(const Vec2i &pos, int size, Field field) const;
-	bool areFreeCells ( const Vec2i &pos, int size, char *fieldMap ) const;
+	bool areFreeCells(const Vec2i &pos, int size, char *fieldMap) const;
+
+	bool areFoundation(string foundation, const Vec2i &pos, int size, Field field) const;
+	bool areFoundation(string foundation, const Vec2i &pos, int size, char *fieldMap) const;
+
+	bool clearFoundation(string foundation, const Vec2i &pos, int size, Field field) const;
 
 	bool isFreeCellOrHasUnit(const Vec2i &pos, Field field, const Unit *unit) const;
 	bool areFreeCellsOrHasUnit(const Vec2i &pos, int size, Field field, const Unit *unit) const;

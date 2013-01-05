@@ -23,6 +23,7 @@
 #include "vec.h"
 #include "prototypes_enums.h"
 #include "simulation_enums.h"
+#include "abilities.h"
 #include "cloak_type.h"
 #include "damage_multiplier.h"
 #include "sound_container.h"
@@ -38,21 +39,39 @@ using Shared::Util::MultiFactory;
 
 namespace Glest { namespace ProtoTypes {
 using namespace Search;
-
 Vec2i rotateCellOffset(const Vec2i &offsetconst, const int unitSize, const CardinalDir facing);
+// ===============================
+// 	class BonusPowerType
+//
+///	A bonus from another
+/// map object or building
+// ===============================
+class BonusPower : public Statistics {
+private:
+    ResourceProductionSystem resourceGeneration;
+    ItemProductionSystem itemGeneration;
+    UnitProductionSystem unitGeneration;
+    ProcessProductionSystem processingSystem;
+public:
+    ResourceProductionSystem getResourceProductionSystem() const {return resourceGeneration;}
+    ItemProductionSystem getItemProductionSystem() const {return itemGeneration;}
+    UnitProductionSystem getUnitProductionSystem() const {return unitGeneration;}
+    ProcessProductionSystem getProcessProductionSystem() const {return processingSystem;}
+    bool load(const XmlNode *bonusPowerNode, const string &dir, const TechTree *techTree, const FactionType *factionType);
+};
 
 // ===============================
 // 	class UnitType
 //
 ///	A unit or building type
 // ===============================
-
 class UnitType : public CreatableType {
 private:
 	typedef vector<Level>               Levels;
 	typedef vector<LoadBonus>           LoadBonuses;
 	typedef vector<ParticleSystemType*> ParticleSystemTypes;
 	typedef vector<ResourceStore>       ResourceStores;
+	typedef vector<BonusPower>          BonusPowers;
 private:
 	bool multiBuild;
 	bool multiSelect;
@@ -63,7 +82,17 @@ public:
     Leader leader;
     bool inhuman;
     string personality;
+    string foundation;
     int live;
+    Statistics dayPower;
+    Statistics nightPower;
+    const Statistics *getDayPower() const   {return &dayPower;}
+    const Statistics *getNightPower() const {return &nightPower;}
+    string bonusObjectName;
+    string getBonusObjectName() const {return bonusObjectName;}
+    BonusPowers bonusPowers;
+    int getBonusPowerCount() const {return bonusPowers.size();}
+    const BonusPower *getBonusPower(int i) const {return &bonusPowers[i];}
 private:
 	bool light;
     Vec3f lightColour;

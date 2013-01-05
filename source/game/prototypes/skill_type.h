@@ -251,8 +251,6 @@ public:
 
 class AttackSkillType: public TargetBasedSkillType {
 private:
-    typedef vector<DamageType> DamageTypes;
-
 	int attackStrength;
 	int attackVar;
 	int attackLifeLeech; // attempt to add lifeleech
@@ -261,11 +259,10 @@ private:
 	fixed attackPctStolen;
 	fixed attackPctVar;
 	const AttackType *attackType;
+    int cooldown;
 //	EarthquakeType *earthquakeType;
-
 public:
     DamageTypes damageTypes;
-    int cooldown;
 
 	AttackSkillType() : TargetBasedSkillType("Attack"), attackStrength(0), attackVar(0),
 	attackType(0), attackLifeLeech(0), attackManaBurn(0), attackCapture(0), damageTypes(0) /*, earthquakeType(NULL)*/ {}
@@ -282,6 +279,7 @@ public:
 	int getAttackLifeLeech() const				{return attackLifeLeech;} // attempt to add lifeleech
 	int getAttackManaBurn() const				{return attackManaBurn;} // attempt to add manaburn
 	int getAttackCapture() const				{return attackCapture;} // attempt to add capturing
+	int getCooldown() const				        {return cooldown;} // attempt to add cooldowns
 	//fixed getAttackPctStolen() const			{return attackPctStolen;}
 	//fixed getAttackPctVar() const				{return attackPctVar;}
 	const AttackType *getAttackType() const		{return attackType;}

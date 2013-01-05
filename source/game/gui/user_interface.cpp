@@ -561,8 +561,7 @@ void UserInterface::mouseDownLeft(int x, int y) {
 
     if (m_factionDisplay->building == true) {
         m_factionDisplay->currentFactionBuild.build(m_factionDisplay->getFaction(), worldPos);
-    } else
-    if (selectingPos) { // give standard orders
+    } else if (selectingPos) { // give standard orders
 		giveTwoClickOrders(worldPos, (Unit *)targetUnit);
 	} else if (selectingMeetingPoint) { // set meeting point
 		if (selection->isComandable()) {
@@ -1551,7 +1550,10 @@ void UserInterface::computeDisplay() {
 	if (selectedObject && !selection->isEmpty()) {
 		selectedObject = 0;
 	}
-
+    if (m_factionDisplay->building) {
+        selectedObject = 0;
+        return;
+    }
 	// init
 	m_display->clear();
 	m_itemWindow->clear();

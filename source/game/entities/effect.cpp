@@ -54,11 +54,11 @@ Effect::Effect(CreateParams params)
         }
     } else if (type->getDamageTypeCount() > 0) {
         for (int i = 0; i < type->getDamageTypeCount(); ++i) {
-            DamageType damage = type->getDamageType(i);
-            for (int j = 0; j < params.recipient->resistances.size(); ++j) {
-                DamageType resistance = params.recipient->resistances[j];
-                if (damage.getTypeName() == resistance.getTypeName()) {
-                    int damageChange = damage.getValue() - resistance.getValue();
+            const DamageType *damage = type->getDamageType(i);
+            for (int j = 0; j < params.recipient->getResistanceCount(); ++j) {
+                const DamageType *resistance = params.recipient->getResistance(j);
+                if (damage->getTypeName() == resistance->getTypeName()) {
+                    int damageChange = damage->getValue() - resistance->getValue();
                     if (damageChange > 0) {
                         this->actualHpRegen -= damageChange;
                     }

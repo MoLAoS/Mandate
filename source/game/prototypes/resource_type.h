@@ -39,6 +39,8 @@ private:
 
 	bool hasModel;
 
+	string foundation;
+
 	Model *model;
 	/**
 	 * Rather or not to display this resource at the top of the screen (defaults to true).
@@ -58,6 +60,7 @@ public:
 	bool getRecoupCost() const		{ return recoupCost; }
 	const Model *getModel() const	{return model;}
 	bool isDisplay() const			{return display;}
+	string getFoundation() const    {return foundation;}
 
 	static ResourceClass strToRc(const string &s);
 };

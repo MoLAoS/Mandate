@@ -137,6 +137,7 @@ FactionDisplay::FactionDisplay(Container *parent, UserInterface *ui, Vec2i pos)
 	if (logoTex) {
 		m_logo = ImageWidget::addImageX(logoTex, Vec2i(0, 0), Vec2i(192,192));
 	}
+	building = false;
 	layout();
 	m_selectedCommandIndex = invalidIndex;
 	clear();
@@ -451,13 +452,17 @@ void FactionDisplay::onFirstTierSelect(int posBuild) {
             currentFactionBuild = fb;
         }
 	}
-    m_ui->computeDisplay();
+	if (building == false) {
+        m_ui->computeDisplay();
+    }
 }
 
 void FactionDisplay::buildButtonPressed(int posDisplay) {
 	WIDGET_LOG( __FUNCTION__ << "( " << posDisplay << " )");
     onFirstTierSelect(posDisplay);
-    m_ui->computeDisplay();
+    if (building == false) {
+        m_ui->computeDisplay();
+    }
     m_ui->setActivePos(posDisplay);
     building = true;
     computeBuildInfo(m_ui->getActivePos());

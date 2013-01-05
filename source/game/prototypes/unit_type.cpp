@@ -33,6 +33,72 @@ using namespace Shared::Graphics;
 using namespace Shared::Util;
 
 namespace Glest { namespace ProtoTypes {
+// ===============================
+// 	class BonusPower
+// ===============================
+bool BonusPower::load(const XmlNode *bonusPowerNode, const string &dir, const TechTree *techTree, const FactionType *factionType) {
+    bool loadOk = true;
+	try {
+        const XmlNode *statisticsNode = bonusPowerNode->getChild("statistics", 0, false);
+        if (statisticsNode) {
+            if (!Statistics::load(statisticsNode, dir, techTree, factionType)) {
+                loadOk = false;
+            }
+        }
+    } catch (runtime_error e) {
+		g_logger.logXmlError(dir, e.what());
+		loadOk = false;
+	}
+	try {
+        const XmlNode *resourceProductionNode = bonusPowerNode->getChild("resource-production", 0, false);
+        if (resourceProductionNode) {
+            if (!resourceGeneration.load(resourceProductionNode, dir, techTree, factionType)) {
+                loadOk = false;
+            }
+        }
+    }
+    catch (runtime_error e) {
+		g_logger.logXmlError(dir, e.what());
+		loadOk = false;
+	}
+	try {
+        const XmlNode *itemProductionNode = bonusPowerNode->getChild("item-production", 0, false);
+        if (itemProductionNode) {
+            if (!itemGeneration.load(itemProductionNode, dir, techTree, factionType)) {
+                loadOk = false;
+            }
+        }
+    }
+    catch (runtime_error e) {
+		g_logger.logXmlError(dir, e.what());
+		loadOk = false;
+	}
+	try {
+        const XmlNode *processingProductionNode = bonusPowerNode->getChild("processing", 0, false);
+        if (processingProductionNode) {
+            if (!processingSystem.load(processingProductionNode, dir, techTree, factionType)) {
+                loadOk = false;
+            }
+        }
+    }
+    catch (runtime_error e) {
+		g_logger.logXmlError(dir, e.what());
+		loadOk = false;
+	}
+	try {
+        const XmlNode *unitProductionNode = bonusPowerNode->getChild("unit-production", 0, false);
+        if (unitProductionNode) {
+            if (!unitGeneration.load(unitProductionNode, dir, techTree, factionType)) {
+                loadOk = false;
+            }
+        }
+    }
+    catch (runtime_error e) {
+		g_logger.logXmlError(dir, e.what());
+		loadOk = false;
+	}
+	return loadOk;
+}
 
 // ===============================
 // 	class PetRule
@@ -62,6 +128,8 @@ UnitType::UnitType()
 		, m_detectorType(0)
 		, meetingPoint(false), meetingPointImage(0)
 		, inhuman(0)
+		, foundation("none")
+		, bonusObjectName("")
 		, m_cellMap(0), m_colourMap(0)
 		, display(true) {
 	reset();
@@ -103,6 +171,16 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 	}
     try { multiBuild = parametersNode->getOptionalBoolValue("multi-build"); }
     catch (runtime_error e) {
+        g_logger.logXmlError(path, e.what());
+        loadOk = false;
+    }
+    try {
+        const XmlNode *foundationNode = parametersNode->getChild("foundation", 0, false);
+        foundation = "none";
+        if (foundationNode) {
+            foundation = foundationNode->getAttribute("type")->getRestrictedValue();
+        }
+    } catch (runtime_error e) {
         g_logger.logXmlError(path, e.what());
         loadOk = false;
     }
@@ -296,6 +374,52 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
                     }
                 }
             }
+	    }
+	}
+	catch (runtime_error e) {
+		g_logger.logXmlError(dir, e.what());
+		loadOk = false;
+	}
+	try {
+	    const XmlNode *dayNode = unitNode->getChild("day-power", 0, false);
+	    if (dayNode) {
+	        const XmlNode *enhancementNode = dayNode->getChild("enhancement", 0, false);
+	        if (enhancementNode) {
+                if(!dayPower.load(enhancementNode, dir, techTree, factionType)) {
+                    loadOk = false;
+                }
+	        }
+	    }
+	}
+	catch (runtime_error e) {
+		g_logger.logXmlError(dir, e.what());
+		loadOk = false;
+	}
+	try {
+	    const XmlNode *nightNode = unitNode->getChild("night-power", 0, false);
+	    if (nightNode) {
+	        const XmlNode *enhancementNode = nightNode->getChild("enhancement", 0, false);
+	        if (enhancementNode) {
+                if(!nightPower.load(enhancementNode, dir, techTree, factionType)) {
+                    loadOk = false;
+                }
+	        }
+	    }
+	}
+	catch (runtime_error e) {
+		g_logger.logXmlError(dir, e.what());
+		loadOk = false;
+	}
+	try {
+	    const XmlNode *bonusObjectNode = unitNode->getChild("bonus-object", 0, false);
+	    if (bonusObjectNode) {
+	        bonusObjectName = bonusObjectNode->getAttribute("object-name")->getRestrictedValue();
+	        const XmlNode *enhancementNode = bonusObjectNode->getChild("enhancement", 0, false);
+	        if (enhancementNode) {
+                //if(!.load(enhancementNode, dir, techTree, factionType)) {
+                    //loadOk = false;
+                //}
+	        }
 	    }
 	}
 	catch (runtime_error e) {

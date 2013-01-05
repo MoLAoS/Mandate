@@ -170,6 +170,7 @@ void StructureCommandType::update(Unit *unit) const {
 	if (unit->getCurrSkill()->getClass() != SkillClass::BUILD) {
 		Map *map = g_world.getMap();
 		if (map->canOccupy(command->getPos(), builtUnitType->getField(), builtUnitType, command->getFacing())) {
+		    map->clearFoundation(builtUnitType->foundation, command->getPos(), builtUnitType->getSize(), builtUnitType->getField());
 			acceptBuild(unit, command, builtUnitType);
 		} else {
 			vector<Unit *> occupants;

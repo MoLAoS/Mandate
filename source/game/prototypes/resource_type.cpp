@@ -73,8 +73,14 @@ bool ResourceType::load(const string &dir, int id) {
 		return false; // bail, can't continue without type
 	}
 
+    foundation = "none";
+    const XmlNode *foundationNode = typeNode->getChild("foundation", 0, false);
+
 	switch (resourceClass) {
 		case ResourceClass::TECHTREE:
+			if (foundationNode) {
+                foundation = foundationNode->getAttribute("type")->getRestrictedValue();
+			}
             hasModel = typeNode->getAttribute("has-model")->getBoolValue();
             if (hasModel) {
                 try { // model
@@ -102,6 +108,9 @@ bool ResourceType::load(const string &dir, int id) {
             }
 			break;
 		case ResourceClass::TILESET:
+			if (foundationNode) {
+                foundation = foundationNode->getAttribute("type")->getRestrictedValue();
+			}
 			try { // default resources
 				const XmlNode *defaultAmountNode = typeNode->getChild("default-amount");
 				defResPerPatch = defaultAmountNode->getAttribute("value")->getIntValue();

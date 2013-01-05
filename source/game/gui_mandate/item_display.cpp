@@ -431,10 +431,21 @@ void ItemWindow::computeEquipmentInfo(int posDisplay) {
     string body = "";
     if (u->getEquipment()[posDisplay].getCurrent() == 1) {
         name = u->getEquipment()[posDisplay].getName();
+        int kind = 0;
+        for (int i = 0; i < u->getEquipment().size(); ++i) {
+            if (u->getEquipment()[i].getName() == name) {
+                ++kind;
+                if (i == posDisplay) {
+                    break;
+                }
+            }
+        }
         for (int i = 0; i < u->getEquippedItems().size(); ++i) {
-            if (u->getEquipment()[posDisplay].getName() == u->getEquippedItem(i)->getType()->getName()) {
-                body = u->getEquippedItem(i)->getLongDesc();
-                break;
+            if (u->getEquippedItem(i)->getType()->getName() == name) {
+                --kind;
+                if (kind == 0) {
+                    body = u->getEquippedItem(i)->getLongDesc();
+                }
             }
         }
     }

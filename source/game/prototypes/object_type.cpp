@@ -26,10 +26,12 @@ namespace Glest { namespace ProtoTypes {
 // 	class MapObjectType
 // =====================================================
 
-void MapObjectType::init(int modelCount, int objectClass, bool walkable){
+void MapObjectType::init(int modelCount, int objectClass, bool walkable, string foundation, string name){
 	models.reserve(modelCount);
-	this->objectClass= objectClass;
-	this->walkable= walkable;
+	this->objectClass = objectClass;
+	this->walkable = walkable;
+	this->foundation = foundation;
+	this->name = name;
 }
 
 void MapObjectType::loadModel(const string &path){

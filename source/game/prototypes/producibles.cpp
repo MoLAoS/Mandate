@@ -245,7 +245,7 @@ ResourceAmount ResourceProductionSystem::getStoredResource(int i, const Faction 
     return res;
 }
 
-void ResourceProductionSystem::update(CreatedResource cr, Unit *unit, int t) {
+void ResourceProductionSystem::update(CreatedResource cr, Unit *unit, int timer, TimerStep *timerStep) {
     const ResourceType *srt;
     Faction *faction = unit->getFaction();
     for (int s = 0; s < unit->getType()->getResourceProductionSystem().getStoredResourceCount(); ++s) {
@@ -254,13 +254,11 @@ void ResourceProductionSystem::update(CreatedResource cr, Unit *unit, int t) {
             break;
         }
     }
-    Timer cTime = unit->getType()->getResourceProductionSystem().getCreatedResourceTimer(t, faction);
-    int cTimeStep = unit->currentSteps[t].currentStep;
-    int cTimeValue = cTime.getTimerValue();
+    int cTimeStep = timerStep->currentStep;
     int newStep = cTimeStep + 1;
-    unit->currentSteps[t].currentStep = newStep;
-    int cRNewTime = unit->currentSteps[t].currentStep;
-    if (cRNewTime == cTimeValue) {
+    timerStep->currentStep = newStep;
+    int cRNewTime = timerStep->currentStep;
+    if (cRNewTime == timer) {
         if (srt->getClass() == ResourceClass::TECHTREE || srt->getClass() == ResourceClass::TILESET) {
             int balance = cr.getAmount();
             if (cr.getScope() == false) {
@@ -269,35 +267,7 @@ void ResourceProductionSystem::update(CreatedResource cr, Unit *unit, int t) {
                 unit->incResourceAmount(srt, balance);
             }
         }
-        unit->currentSteps[t].currentStep = 0;
-    }
-}
-
-void ResourceProductionSystem::update(CreatedResource cr, Unit *unit, Item *item, int t) {
-    const ResourceType *srt;
-    Faction *faction = unit->getFaction();
-    for (int s = 0; s < unit->getType()->getResourceProductionSystem().getStoredResourceCount(); ++s) {
-        srt = unit->getType()->getResourceProductionSystem().getStoredResource(s, faction).getType();
-        if (srt == cr.getType()) {
-            break;
-        }
-    }
-    Timer cTime = item->getType()->getResourceProductionSystem().getCreatedResourceTimer(t, faction);
-    int cTimeStep = item->currentSteps[t].currentStep;
-    int cTimeValue = cTime.getTimerValue();
-    int newStep = cTimeStep + 1;
-    item->currentSteps[t].currentStep = newStep;
-    int cRNewTime = item->currentSteps[t].currentStep;
-    if (cRNewTime == cTimeValue) {
-        if (srt->getClass() == ResourceClass::TECHTREE || srt->getClass() == ResourceClass::TILESET) {
-            int balance = cr.getAmount();
-            if (cr.getScope() == false) {
-                unit->getFaction()->incResourceAmount(srt, balance);
-            } else {
-                unit->incResourceAmount(srt, balance);
-            }
-        }
-        item->currentSteps[t].currentStep = 0;
+        timerStep->currentStep = 0;
     }
 }
 
@@ -349,15 +319,13 @@ Timer ItemProductionSystem::getCreatedItemTimer(int i, const Faction *f) const {
 	return timer;
 }
 
-void ItemProductionSystem::update(CreatedItem ci, Unit *unit, int t) {
+void ItemProductionSystem::update(CreatedItem ci, Unit *unit, int timer, TimerStep *timerStep) {
     Faction *faction = unit->getFaction();
-    Timer cTime = unit->getType()->getItemProductionSystem().getCreatedItemTimer(t, faction);
-    int cTimeStep = unit->currentItemSteps[t].currentStep;
+    int cTimeStep = timerStep->currentStep;
     int newStep = cTimeStep + 1;
-    unit->currentItemSteps[t].currentStep = newStep;
-    int cTimeValue = cTime.getTimerValue();
-    int cRNewTime = unit->currentItemSteps[t].currentStep;
-    if (cRNewTime == cTimeValue) {
+    timerStep->currentStep = newStep;
+    int cRNewTime = timerStep->currentStep;
+    if (cRNewTime == timer) {
         int iua = ci.getAmount();
         int iucap = ci.getCap();
         if (iucap != -1) {
@@ -372,34 +340,7 @@ void ItemProductionSystem::update(CreatedItem ci, Unit *unit, int t) {
                 unit->accessStorageAdd(unit->getFaction()->getItemCount()-1);
             }
         }
-        unit->currentItemSteps[t].currentStep = 0;
-    }
-}
-
-void ItemProductionSystem::update(CreatedItem ci, Unit *unit, Item *item, int t) {
-    Faction *faction = unit->getFaction();
-    Timer cTime = item->getType()->getItemProductionSystem().getCreatedItemTimer(t, faction);
-    int cTimeStep = item->currentItemSteps[t].currentStep;
-    int newStep = cTimeStep + 1;
-    item->currentItemSteps[t].currentStep = newStep;
-    int cTimeValue = cTime.getTimerValue();
-    int cRNewTime = item->currentItemSteps[t].currentStep;
-    if (cRNewTime == cTimeValue) {
-        int iua = ci.getAmount();
-        int iucap = ci.getCap();
-        if (iucap != -1) {
-            if (iucap < iua) {
-                iua = iucap;
-            }
-        }
-        for (int n = 0; n < iua; ++n) {
-            if (unit->getItemLimit() > unit->getItemsStored()) {
-                Item *newItem = g_world.newItem(unit->getFaction()->getItemCount(), ci.getType(), faction);
-                unit->getFaction()->addItem(newItem);
-                unit->accessStorageAdd(unit->getFaction()->getItemCount()-1);
-            }
-        }
-        item->currentItemSteps[t].currentStep = 0;
+        timerStep->currentStep = 0;
     }
 }
 
@@ -512,16 +453,14 @@ Timer ProcessProductionSystem::getProcessTimer(int i, const Faction *f) const {
 	return timer;
 }
 
-void ProcessProductionSystem::update(Process process, Unit *unit, int s) {
+void ProcessProductionSystem::update(Process process, Unit *unit, int timer, TimerStep *timerStep) {
     vector<int> counts;
     Faction *faction = unit->getFaction();
-    Timer cTime = unit->getType()->getProcessProductionSystem().getProcessTimer(s, faction);
-    int cTimeStep = unit->currentProcessSteps[s].currentStep;
-    int cTimeValue = cTime.getTimerValue();
+    int cTimeStep = timerStep->currentStep;
     int newStep = cTimeStep + 1;
-    unit->currentProcessSteps[s].currentStep = newStep;
-    int cRNewTime = unit->currentProcessSteps[s].currentStep;
-    if (cRNewTime == cTimeValue) {
+    timerStep->currentStep = newStep;
+    int cRNewTime = timerStep->currentStep;
+    if (cRNewTime == timer) {
         int count = 0;
         int bonusCount = 0;
         for (int t = 0; t < process.costs.size(); ++t) {
@@ -662,161 +601,7 @@ void ProcessProductionSystem::update(Process process, Unit *unit, int s) {
                 }
             }
         }
-        unit->currentProcessSteps[s].currentStep = 0;
-    }
-}
-
-void ProcessProductionSystem::update(Process process, Unit *unit, Item *item, int s) {
-    vector<int> counts;
-    Faction *faction = unit->getFaction();
-    Timer cTime = item->getType()->getProcessProductionSystem().getProcessTimer(s, faction);
-    int cTimeStep = item->currentProcessSteps[s].currentStep;
-    int cTimeValue = cTime.getTimerValue();
-    int newStep = cTimeStep + 1;
-    item->currentProcessSteps[s].currentStep = newStep;
-    int cRNewTime = item->currentProcessSteps[s].currentStep;
-    if (cRNewTime == cTimeValue) {
-        int count = 0;
-        int bonusCount = 0;
-        for (int t = 0; t < process.costs.size(); ++t) {
-            const ResourceType *costsRT = process.costs[t].getType();
-            int stockpile = 0;
-            if (process.getScope() == false) {
-                for (int i = 0; i < unit->getFaction()->sresources.size(); ++i) {
-                    if (costsRT == unit->getFaction()->sresources[i].getType()) {
-                        stockpile = unit->getFaction()->getSResource(costsRT)->getAmount();
-                    }
-                }
-            } else if (process.getScope() == true) {
-                for (int i = 0; i < unit->sresources.size(); ++i) {
-                    if (costsRT == unit->sresources[i].getType()) {
-                        stockpile = unit->getSResource(costsRT)->getAmount();
-                    }
-                }
-            }
-            for (int g = 0; g < process.count; ++g) {
-                int expended = process.costs[t].getAmount();
-                if (expended > stockpile) {
-                    break;
-                } else {
-                    ++count;
-                    stockpile -= expended;
-                }
-            }
-        }
-        counts.resize(process.bonuses.size());
-        for (int t = 0; t < process.bonuses.size(); ++t) {
-            const ResourceType *costsRT = process.bonuses[t].cost.getType();
-            int stockpile = 0;
-            if (process.getScope() == false) {
-                for (int i = 0; i < unit->getFaction()->sresources.size(); ++i) {
-                    if (costsRT == unit->getFaction()->sresources[i].getType()) {
-                        stockpile = unit->getFaction()->getSResource(costsRT)->getAmount();
-                    }
-                }
-            } else if (process.getScope() == true) {
-                for (int i = 0; i < unit->sresources.size(); ++i) {
-                    if (costsRT == unit->sresources[i].getType()) {
-                        stockpile = unit->getSResource(costsRT)->getAmount();
-                    }
-                }
-            }
-            for (int g = 0; g < process.count; ++g) {
-                for (int h = 0; h < process.bonuses[t].count; ++h) {
-                    int expended = process.bonuses[t].cost.getAmount();
-                    if (expended > stockpile) {
-                        break;
-                    } else {
-                        ++counts[t];
-                        stockpile -= expended;
-                    }
-                }
-            }
-        }
-        for (int c = 0; c < process.bonuses.size(); ++c) {
-            for (int d = 0; d < counts[c]; ++d) {
-                const ResourceType *costsRT = process.bonuses[c].cost.getType();
-                for (int i = 0; i < unit->getFaction()->sresources.size(); ++i) {
-                    if (costsRT == unit->getFaction()->sresources[i].getType()) {
-                        int expended = process.bonuses[c].cost.getAmount();
-                        if (process.getScope() == false) {
-                            if (process.bonuses[c].cost.getConsume() == true) {
-                                unit->getFaction()->incResourceAmount(costsRT, -expended);
-                            }
-                        } else {
-                            if (process.bonuses[c].cost.getConsume() == true) {
-                                unit->incResourceAmount(costsRT, -expended);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        for (int g = 0; g < count; ++g) {
-            for (int c = 0; c < process.costs.size(); ++c) {
-                const ResourceType *costsRT = process.costs[c].getType();
-                for (int i = 0; i < unit->getFaction()->sresources.size(); ++i) {
-                    if (costsRT == unit->getFaction()->sresources[i].getType()) {
-                        int expended = process.costs[c].getAmount();
-                        if (process.getScope() == false) {
-                            if (process.costs[c].getConsume() == true) {
-                                unit->getFaction()->incResourceAmount(costsRT, -expended);
-                            }
-                        } else {
-                            if (process.costs[c].getConsume() == true) {
-                                unit->incResourceAmount(costsRT, -expended);
-                            }
-                        }
-                    }
-                }
-            }
-            for (int p = 0; p < process.products.size(); ++p) {
-                const ResourceType *productsRT = process.products[p].getType();
-                for (int i = 0; i < unit->getFaction()->sresources.size(); ++i) {
-                    if (productsRT == unit->getFaction()->sresources[i].getType()) {
-                        fixed mult = 1;
-                        int produced = process.products[p].getAmount();
-                        for (int c = 0; c < process.bonuses.size(); ++c) {
-                            if (process.bonuses[c].product.getType() == productsRT) {
-                                if (counts[c] > 0) {
-                                    mult += process.bonuses[c].product.getAmountMultiply();
-                                    --counts[c];
-                                }
-                            }
-                        }
-                        produced = (produced * mult).intp();
-                        for (int c = 0; c < process.bonuses.size(); ++c) {
-                            if (process.bonuses[c].product.getType() == productsRT) {
-                                if (counts[c] > 0) {
-                                    produced = produced + process.bonuses[c].product.getAmountPlus();
-                                    counts[c];
-                                }
-                            }
-                        }
-                        if (process.getScope() == false) {
-                            unit->getFaction()->incResourceAmount(productsRT, produced);
-                        } else {
-                            unit->incResourceAmount(productsRT, produced);
-                        }
-                    }
-                }
-            }
-            for (int t = 0; t < process.items.size(); ++t) {
-                const ItemType *itemsIT = process.items[t].getType();
-                int items = process.items[t].getAmount();
-                if (process.getScope() == false) {
-                } else {
-                    for (int q = 0; q < items; ++q) {
-                        if (unit->getItemLimit() > unit->getItemsStored()) {
-                            Item *newItem = g_world.newItem(unit->getFaction()->getItemCount(), itemsIT, faction);
-                            unit->getFaction()->addItem(newItem);
-                            unit->accessStorageAdd(unit->getFaction()->getItemCount()-1);
-                        }
-                    }
-                }
-            }
-        }
-        item->currentProcessSteps[s].currentStep = 0;
+        timerStep->currentStep = 0;
     }
 }
 
@@ -869,15 +654,13 @@ Timer UnitProductionSystem::getCreatedUnitTimer(int i, const Faction *f) const {
 	return timer;
 }
 
-void UnitProductionSystem::update(CreatedUnit cu, Unit *unit, int i) {
+void UnitProductionSystem::update(CreatedUnit cu, Unit *unit, int timer, TimerStep *timerStep) {
     Faction *faction = unit->getFaction();
-    Timer cTime = unit->getType()->getUnitProductionSystem().getCreatedUnitTimer(i, faction);
-    int cTimeStep = unit->currentUnitSteps[i].currentStep;
+    int cTimeStep = timerStep->currentStep;
     int newStep = cTimeStep + 1;
-    unit->currentUnitSteps[i].currentStep = newStep;
-    int cTimeValue = cTime.getTimerValue();
-    int cRNewTime = unit->currentUnitSteps[i].currentStep;
-    if (cRNewTime == cTimeValue) {
+    timerStep->currentStep = newStep;
+    int cRNewTime = timerStep->currentStep;
+    if (cRNewTime == timer) {
         Vec2i locate = unit->getPos();
         int cua = cu.getAmount();
         int cucap = cu.getCap();
@@ -914,56 +697,7 @@ void UnitProductionSystem::update(CreatedUnit cu, Unit *unit, int i) {
             ScriptManager::onUnitCreated(createdUnit);
             g_simInterface.getStats()->produce(unit->getFactionIndex());
         }
-        unit->currentUnitSteps[i].currentStep = 0;
-    }
-}
-
-void UnitProductionSystem::update(CreatedUnit cu, Unit *unit, Item *item, int i) {
-    Faction *faction = unit->getFaction();
-    Timer cTime = item->getType()->getUnitProductionSystem().getCreatedUnitTimer(i, faction);
-    int cTimeStep = item->currentUnitSteps[i].currentStep;
-    int newStep = cTimeStep + 1;
-    item->currentUnitSteps[i].currentStep = newStep;
-    int cTimeValue = cTime.getTimerValue();
-    int cRNewTime = item->currentUnitSteps[i].currentStep;
-    if (cRNewTime == cTimeValue) {
-        Vec2i locate = unit->getPos();
-        int cua = cu.getAmount();
-        int cucap = cu.getCap();
-        if (cucap != -1) {
-            if (cucap < cua) {
-                cua = cucap;
-            }
-        }
-        for (int l = 0; l < unit->ownedUnits.size(); ++l) {
-            const UnitType *kind = unit->ownedUnits[l].getType();
-            if (kind == cu.getType()) {
-                int limit = unit->ownedUnits[l].getLimit();
-                int owned = unit->ownedUnits[l].getOwned();
-                if (owned == limit) {
-                    cua = 0;
-                } else if (cua > limit - owned) {
-                    cua = limit - owned;
-                } else {
-                }
-                break;
-            }
-        }
-        for (int n = 0; n < cua; ++n) {
-            Unit *createdUnit = g_world.newUnit(locate, cu.getType(), faction, g_world.getMap(), CardinalDir::NORTH);
-            g_world.placeUnit(unit->getCenteredPos(), 10, createdUnit);
-            createdUnit->setOwner(unit);
-            for (int z = 0; z < unit->ownedUnits.size(); ++z) {
-                if (unit->ownedUnits[z].getType() == createdUnit->getType()) {
-                    unit->ownedUnits[z].incOwned();
-                }
-            }
-            createdUnit->create();
-            createdUnit->born();
-            ScriptManager::onUnitCreated(createdUnit);
-            g_simInterface.getStats()->produce(unit->getFactionIndex());
-        }
-        item->currentUnitSteps[i].currentStep = 0;
+        timerStep->currentStep = 0;
     }
 }
 

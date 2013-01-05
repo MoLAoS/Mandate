@@ -89,6 +89,7 @@ namespace Glest {
 		class UnitProductionSystem;
 		class CreatableType;
 		class Timer;
+		class TimerStep;
 		class CreatedItem;
 		class CreatedUnit;
 		class UnitsOwned;

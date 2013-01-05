@@ -138,7 +138,9 @@ void Tileset::load(const string &dir, TechTree *tt){
 		for(int i=0; i<objCount; ++i){
 			const XmlNode *objectNode= objectsNode->getChild("object", i);
 			int childCount= objectNode->getChildCount();
-			objectTypes[i].init(childCount, i, objectNode->getAttribute("walkable")->getBoolValue());
+			string name = objectNode->getAttribute("name")->getRestrictedValue();
+			string foundation = objectNode->getAttribute("foundation")->getRestrictedValue();
+			objectTypes[i].init(childCount, i, objectNode->getAttribute("walkable")->getBoolValue(), foundation, name);
 			for(int j=0; j<childCount; ++j){
 				const XmlNode *modelNode= objectNode->getChild("model", j);
 				const XmlAttribute *pathAttribute= modelNode->getAttribute("path");
@@ -247,7 +249,7 @@ const Pixmap2D *Tileset::getSurfPixmap(int type) const {
 	float r = rndm.randRange(0.f, 1.f);
 	int var = 0;
 	float max = 0.f;
-	
+
 	for (int i=0; i < surfProbs[type].size(); ++i) {
 		max += surfProbs[type][i];
 		if (r <= max) {

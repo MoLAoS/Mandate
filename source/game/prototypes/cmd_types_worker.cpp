@@ -541,6 +541,7 @@ void BuildCommandType::update(Unit *unit) const {
 
 		Map *map = g_world.getMap();
 		if (map->canOccupy(command->getPos(), builtUnitType->getField(), builtUnitType, command->getFacing())) {
+		    map->clearFoundation(builtUnitType->foundation, command->getPos(), builtUnitType->getSize(), builtUnitType->getField());
 			acceptBuild(unit, command, builtUnitType);
 		} else {
 			// there are no free cells
@@ -1485,71 +1486,81 @@ void TradeCommandType::goToGuild(Unit *unit, Unit *home, Unit *guild) const {
         const ResourceType *requiredType = home->getType()->getResourceStores()[i].getType();
         for (int k = 0; k < guild->getType()->getResourceProductionSystem().getStoredResourceCount(); ++k) {
             const ResourceType *guildType = guild->getType()->getResourceProductionSystem().getStoredResource(k, guild->getFaction()).getType();
-            bool status = false;
-            for (int j = 0; j < guild->getType()->getResourceStores().size(); ++j) {
-                if (guild->getType()->getResourceStores()[j].getType() == guildType) {
-                    if (guild->getType()->getResourceStores()[j].getStatus() == "stockpile") {
-                        status = true;
-                        break;
+            if (requiredType == guildType && requiredType->getName() != "wealth") {
+                bool status = false;
+                for (int j = 0; j < guild->getType()->getResourceStores().size(); ++j) {
+                    if (guild->getType()->getResourceStores()[j].getType() == guildType) {
+                        if (guild->getType()->getResourceStores()[j].getStatus() == "stockpile") {
+                            status = true;
+                            break;
+                        }
                     }
                 }
-            }
-            if (requiredType == guildType && requiredType->getName() != "wealth" && !status) {
-                int minWealth = 0;
-                int tradeValue = 0;
-                int freeWealth = 0;
-                int available = 0;
-                int required = home->getType()->getResourceStores()[i].getAmount();
-                int possessed = home->getSResource(requiredType)->getAmount();
-                int requiredAmount = required - possessed;
-                int resourceAmount = guild->getSResource(requiredType)->getAmount();
-                const ResourceType *rt = NULL;
-                for (int j = 0; j < home->getType()->getResourceStores().size(); ++j) {
-                    if (home->getType()->getResourceStores()[j].getType()->getName() == "wealth") {
-                        minWealth = home->getType()->getResourceStores()[j].getAmount();
-                        rt = home->getType()->getResourceStores()[j].getType();
+                if (!status) {
+                    int minWealth = 0;
+                    int tradeValue = 0;
+                    int freeWealth = 0;
+                    int available = 0;
+                    int required = home->getType()->getResourceStores()[i].getAmount();
+                    int possessed = home->getSResource(requiredType)->getAmount();
+                    int requiredAmount = required - possessed;
+                    int resourceAmount = guild->getSResource(requiredType)->getAmount();
+                    const ResourceType *rt = NULL;
+                    for (int j = 0; j < home->getType()->getResourceStores().size(); ++j) {
+                        if (home->getType()->getResourceStores()[j].getType()->getName() == "wealth") {
+                            minWealth = home->getType()->getResourceStores()[j].getAmount();
+                            rt = home->getType()->getResourceStores()[j].getType();
+                        }
                     }
-                }
-                for (int j = 0; j < unit->getFaction()->getType()->getResourceTrades().size(); ++j) {
-                    if (unit->getFaction()->getType()->getResourceTrades()[j].getType() == requiredType) {
-                        tradeValue = unit->getFaction()->getType()->getResourceTrades()[j].getAmount();
+                    for (int j = 0; j < unit->getFaction()->getType()->getResourceTrades().size(); ++j) {
+                        if (unit->getFaction()->getType()->getResourceTrades()[j].getType() == requiredType) {
+                            tradeValue = unit->getFaction()->getType()->getResourceTrades()[j].getAmount();
+                        }
                     }
-                }
-                if (home->getType()->hasTag("fort")) {
-                    freeWealth = home->getFaction()->getSResource(rt)->getAmount() - minWealth;
-                } else {
-                    freeWealth = home->getSResource(rt)->getAmount() - minWealth;
-                }
-                if (!guild->getType()->hasTag("shop")) {
-                    available = resourceAmount;
-                    for (int q = 0; q < guild->getType()->getResourceStores().size(); ++q) {
-                        if (guild->getType()->getResourceStores()[q].getType() == requiredType) {
-                            int free = resourceAmount - guild->getType()->getResourceStores()[q].getAmount();
-                            if (free >= 10) {
-                                available = free;
+                    if (home->getType()->hasTag("fort")) {
+                        freeWealth = home->getFaction()->getSResource(rt)->getAmount() - minWealth;
+                    } else {
+                        freeWealth = home->getSResource(rt)->getAmount() - minWealth;
+                    }
+                    if (!guild->getType()->hasTag("shop")) {
+                        available = resourceAmount;
+                        for (int q = 0; q < guild->getType()->getResourceStores().size(); ++q) {
+                            if (guild->getType()->getResourceStores()[q].getType() == requiredType) {
+                                int free = resourceAmount - guild->getType()->getResourceStores()[q].getAmount();
+                                if (free >= 10) {
+                                    available = free;
+                                }
                             }
                         }
+                    } else {
+                        available = resourceAmount;
                     }
-                } else {
-                    available = resourceAmount;
-                }
-                if (requiredAmount > 10 && available > 10) {
-                    if (requiredAmount < available) {
-                        available = requiredAmount;
-                    }
-                    if (available > 100) {
-                        available = 100;
-                    }
-                    int cost = available * tradeValue;
-                    if(freeWealth > cost) {
-                        if (home->getType()->hasTag("fort")) {
-                            home->getFaction()->incResourceAmount(rt, -cost);
-                        } else {
-                            home->incResourceAmount(rt, -cost);
+                    if (requiredAmount > 10 && available > 10) {
+                        if (requiredAmount < available) {
+                            available = requiredAmount;
                         }
-                        guild->incResourceAmount(rt, -cost);
-                        guild->incResourceAmount(requiredType, -available);
-                        unit->incResourceAmount(requiredType, available);
+                        if (available > 100) {
+                            available = 100;
+                        }
+                        int possible = freeWealth / tradeValue;
+                        if (possible < available) {
+                            available = possible;
+                        }
+                        int cost = available * tradeValue;
+                        if(freeWealth >= cost) {
+                            if (home->getType()->hasTag("fort")) {
+                                home->getFaction()->incResourceAmount(rt, -cost);
+                            } else {
+                                int untaxedGold = home->getSResource(rt)->getAmount() - home->taxedGold;
+                                if (cost > untaxedGold) {
+                                    home->taxedGold = home->taxedGold - (cost - untaxedGold);
+                                }
+                                home->incResourceAmount(rt, -cost);
+                            }
+                            guild->incResourceAmount(rt, cost);
+                            guild->incResourceAmount(requiredType, -available);
+                            unit->incResourceAmount(requiredType, available);
+                        }
                     }
                 }
             }

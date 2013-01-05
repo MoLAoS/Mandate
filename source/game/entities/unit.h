@@ -134,15 +134,18 @@ typedef list<UnitId>        UnitIdList;
 // ===============================
 
 /** Represents a single game unit or building. The Unit class inherits from
-  * EnhancementType as a mechanism to maintain a cache of it's current
+  * Statistics as a mechanism to maintain a cache of it's current
   * stat values. These values are only recalculated when an effect is added
   * or removed, an upgrade is applied or the unit levels up or garrisons a unit. */
-class Unit : public EnhancementType {
+class Unit : public Statistics {
 	friend class EntityFactory<Unit>;
 
 public:
 	typedef list<Command*> Commands;
 	//typedef list<UnitId> Pets;
+
+	typedef vector<BonusPower> BonusPowers;
+	typedef vector<ProductionSystemTimers> BonusPowerTimers;
 
 	typedef vector<UnitsOwned> OwnedUnits;
 	typedef vector<string> BuffsApplied;
@@ -152,7 +155,6 @@ public:
 /**< system for localized resources */
 private:
     typedef vector<StoredResource> SResources;
-    typedef vector<DamageType> Resistances;
 public:
     SResources sresources;
 
@@ -200,6 +202,7 @@ public:
 
     Modifications modifications;
     EffectTypes effectTypes;
+    bool dayCycle;
 
 private:
 	// basic stats
@@ -242,11 +245,8 @@ public:
 
 	UnitDirection previousDirection;
 
-    CurrentStep currentSteps; /**< current timer step for resource creation */
-    CurrentStep currentUnitSteps; /**< current timer step for unit creation */
-    CurrentStep currentItemSteps; /**< current timer step for item creation */
-    CurrentStep currentOwnedSteps; /**< current timer step for owned unit creation */
-    CurrentStep currentProcessSteps; /**< current timer step for resource processes */
+	ProductionSystemTimers productionSystemTimers;
+	BonusPowerTimers bonusPowerTimers;
 
     CurrentStep currentCommandCooldowns; /**< current timer step for skill cooldowns */
     CurrentStep currentAiUpdate; /**< current timer step for skill cooldowns */
@@ -264,9 +264,9 @@ public:
 
     int taxRate;
 
-    Resistances resistances;
-
     bool garrisonTest;
+
+    bool bonusObject;
 
 private:
 	// housed unit bits
@@ -337,7 +337,7 @@ private:
 
 	Effects effects;				/**< Effects (spells, etc.) currently effecting unit. */
 	Effects effectsCreated;			/**< All effects created by this unit. */
-	EnhancementType totalUpgrade;	/**< All stat changes from upgrades, level ups, garrisoned units and effects */
+	Statistics totalUpgrade;	/**< All stat changes from upgrades, level ups, garrisoned units and effects */
 
 	// is this really needed here? maybe keep faction (but change to an index), ditch map
 	Faction *faction;

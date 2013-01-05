@@ -885,6 +885,7 @@ private:
 	vector<int>             m_createdNumbers;
 	map<string, string>		m_tipKeys;
 	SoundContainer			m_finishedSounds;
+	bool                    m_child;
 
 public:
 	CreateItemCommandType() : CommandType("CreateItem", Clicks::ONE, true), m_produceSkillType(0) {}
@@ -897,6 +898,7 @@ public:
 	virtual string getReqDesc(const Faction *f) const;
 
 	int getCreatedNumber(const ItemType* it) const;
+	bool isChild() const {return m_child;}
 
 	// get
 	virtual int getProducedCount() const	{return m_createdItems.size();}

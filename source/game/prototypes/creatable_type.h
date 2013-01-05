@@ -16,7 +16,6 @@
 #include <time.h>
 
 #include "forward_decs.h"
-#include "unit_stats_base.h"
 #include "element_type.h"
 #include "modifications.h"
 #include "producibles.h"
@@ -34,21 +33,17 @@ namespace Glest { namespace ProtoTypes {
 // =====================================================
 // 	class CreatableType
 // =====================================================
-class CreatableType : public ProducibleType, public EnhancementType {
+class CreatableType : public ProducibleType, public Statistics {
 private:
     typedef vector<string> ModifyNames;
     typedef vector<Modification> Modifications;
     typedef vector<EmanationType*> Emanations;
-    typedef vector<DamageType> Resistances;
-    typedef vector<DamageType> DamageTypes;
 	typedef vector<UnitsOwned> OwnedUnits;
     ResourceProductionSystem resourceGeneration;
     ItemProductionSystem itemGeneration;
     UnitProductionSystem unitGeneration;
     ProcessProductionSystem processingSystem;
 private:
-    Resistances resistances;
-    DamageTypes damageTypes;
     Emanations emanations;
 	OwnedUnits ownedUnits;
     Modifications modifications;
@@ -69,8 +64,6 @@ public:
     UnitProductionSystem getUnitProductionSystem() const {return unitGeneration;}
     ProcessProductionSystem getProcessProductionSystem() const {return processingSystem;}
 	const Emanations &getEmanations() const {return emanations;}
-	Resistances getResistances() const {return resistances;}
-	DamageTypes getDamageTypes() const {return damageTypes;}
 	OwnedUnits getOwnedUnits() const {return ownedUnits;}
 	Modifications getModifications() const {return modifications;}
     const FactionType *getFactionType() const {return m_factionType;}

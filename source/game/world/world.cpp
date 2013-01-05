@@ -448,11 +448,11 @@ void World::damage(Unit *attacker, const AttackSkillType* ast, Unit *attacked, f
     const DamageType dType = ast->damageTypes[t];
     string damageType = dType.getTypeName();
     int mDamage = dType.getValue();
-        for (int i = 0; i < attacked->resistances.size(); ++i) {
-        const DamageType rType = attacked->resistances[i];
-        string resistType = rType.getTypeName();
+        for (int i = 0; i < attacked->getResistances()->size(); ++i) {
+        const DamageType *rType = attacked->getResistance(i);
+        string resistType = rType->getTypeName();
             if (damageType==resistType) {
-                int resist = rType.getValue();
+                int resist = rType->getValue();
                 mDamage -= resist;
                 if (mDamage < 0) {
                     mDamage = 0;
@@ -728,6 +728,19 @@ void World::tick() {
 		}
 	}
 
+	for (int i = 0; i < getFactionCount(); ++i) {
+		for (int j = 0; j < getFaction(i)->getUnitCount(); ++j) {
+		    Unit *unit = getFaction(i)->getUnit(j);
+		    if (timeFlow.isDay() && !unit->dayCycle) {
+		        unit->dayCycle = true;
+		        unit->computeTotalUpgrade();
+		    } else if (timeFlow.isNight() && unit->dayCycle) {
+		        unit->dayCycle = false;
+		        unit->computeTotalUpgrade();
+		    }
+		}
+	}
+
 	//apply regen/degen
 	for (int i = 0; i < getFactionCount(); ++i) {
 		for (int j = 0; j < getFaction(i)->getUnitCount(); ++j) {
@@ -774,13 +787,26 @@ void World::tick() {
                 Unit *unit = faction->getUnit(j);
                 for (int i = 0; i < unit->getType()->getResourceProductionSystem().getCreatedResourceCount(); ++i) {
                     CreatedResource cr = unit->getType()->getResourceProductionSystem().getCreatedResources()[i];
-                    unit->getType()->getResourceProductionSystem().update(cr, unit, i);
+                    int cTime = unit->getType()->getResourceProductionSystem().getCreatedResourceTimer(i, faction).getTimerValue();
+                    TimerStep *timeStep = &unit->productionSystemTimers.currentSteps[i];
+                    unit->getType()->getResourceProductionSystem().update(cr, unit, cTime, timeStep);
                 }
                 for (int m = 0; m < unit->getEquippedItems().size(); ++m) {
                     Item *item = unit->getEquippedItem(m);
                     for (int i = 0; i < item->getType()->getResourceProductionSystem().getCreatedResourceCount(); ++i) {
-                        CreatedResource cr = unit->getEquippedItem(m)->getType()->getResourceProductionSystem().getCreatedResources()[i];
-                        item->getType()->getResourceProductionSystem().update(cr, unit, item, i);
+                        CreatedResource cr = item->getType()->getResourceProductionSystem().getCreatedResources()[i];
+                        int cTime = item->getType()->getResourceProductionSystem().getCreatedResourceTimer(i, faction).getTimerValue();
+                        TimerStep *timeStep = &item->currentSteps[i];
+                        item->getType()->getResourceProductionSystem().update(cr, unit, cTime, timeStep);
+                    }
+                }
+                for (int m = 0; m < unit->getType()->getBonusPowerCount(); ++m) {
+                    const BonusPower *bonusPower = unit->getType()->getBonusPower(m);
+                    for (int i = 0; i < bonusPower->getResourceProductionSystem().getCreatedResourceCount(); ++i) {
+                        CreatedResource cr = bonusPower->getResourceProductionSystem().getCreatedResources()[i];
+                        int cTime = bonusPower->getResourceProductionSystem().getCreatedResourceTimer(i, faction).getTimerValue();
+                        TimerStep *timeStep = &unit->bonusPowerTimers[m].currentSteps[i];
+                        bonusPower->getResourceProductionSystem().update(cr, unit, cTime, timeStep);
                     }
                 }
                 /**< Added by MoLAoS, resource processing */
@@ -802,7 +828,9 @@ void World::tick() {
                         }
                     }
                     if (toUpdate == true) {
-                        unit->getType()->getProcessProductionSystem().update(process, unit, s);
+                        int cTime = unit->getType()->getProcessProductionSystem().getProcessTimer(s, faction).getTimerValue();
+                        TimerStep *timeStep = &unit->productionSystemTimers.currentProcessSteps[s];
+                        unit->getType()->getProcessProductionSystem().update(process, unit, cTime, timeStep);
                     }
                 }
                 for (int m = 0; m < unit->getEquippedItems().size(); ++m) {
@@ -825,7 +853,35 @@ void World::tick() {
                             }
                         }
                         if (toUpdate == true) {
-                            item->getType()->getProcessProductionSystem().update(process, unit, item, s);
+                            int cTime = item->getType()->getProcessProductionSystem().getProcessTimer(s, faction).getTimerValue();
+                            TimerStep *timeStep = &item->currentProcessSteps[s];
+                            item->getType()->getProcessProductionSystem().update(process, unit, cTime, timeStep);
+                        }
+                    }
+                }
+                for (int m = 0; m < unit->getType()->getBonusPowerCount(); ++m) {
+                    const BonusPower *bonusPower = unit->getType()->getBonusPower(m);
+                    for (int s = 0; s < bonusPower->getProcessProductionSystem().getProcessCount(); ++s) {
+                        Process process = bonusPower->getProcessProductionSystem().getProcess(s, faction);
+                        bool toUpdate = true;
+                        for (int d = 0; d < process.items.size(); ++d) {
+                            for (int e = 0; e < unit->getType()->getItemStores().size(); ++e) {
+                                if (process.items[d].getType() == unit->getType()->getItemStores()[e].getType()) {
+                                    for (int f = 0; f < unit->getStorage().size(); ++f) {
+                                        if (process.items[d].getType()->getName() == unit->getStorage()[f].getName())  {
+                                            if (unit->getStorage()[f].getCurrent() + process.items[d].getAmount() > unit->getType()->getItemStores()[e].getCap()) {
+                                                toUpdate = false;
+                                                break;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        if (toUpdate == true) {
+                            int cTime = bonusPower->getProcessProductionSystem().getProcessTimer(s, faction).getTimerValue();
+                            TimerStep *timeStep = &unit->bonusPowerTimers[m].currentProcessSteps[s];
+                            bonusPower->getProcessProductionSystem().update(process, unit, cTime, timeStep);
                         }
                     }
                 }
@@ -845,7 +901,9 @@ void World::tick() {
                         }
                     }
                     if (updating == true) {
-                        unit->getType()->getItemProductionSystem().update(createdItem, unit, i);
+                        int cTime = unit->getType()->getItemProductionSystem().getCreatedItemTimer(i, faction).getTimerValue();
+                        TimerStep *timeStep = &unit->productionSystemTimers.currentItemSteps[i];
+                        unit->getType()->getItemProductionSystem().update(createdItem, unit, cTime, timeStep);
                     }
                 }
                 for (int m = 0; m < unit->getEquippedItems().size(); ++m) {
@@ -865,20 +923,58 @@ void World::tick() {
                             }
                         }
                         if (updating == true) {
-                            item->getType()->getItemProductionSystem().update(createdItem, unit, item, i);
+                            int cTime = item->getType()->getItemProductionSystem().getCreatedItemTimer(i, faction).getTimerValue();
+                            TimerStep *timeStep = &item->currentItemSteps[i];
+                            item->getType()->getItemProductionSystem().update(createdItem, unit, cTime, timeStep);
+                        }
+                    }
+                }
+                for (int m = 0; m < unit->getType()->getBonusPowerCount(); ++m) {
+                    const BonusPower *bonusPower = unit->getType()->getBonusPower(m);
+                    for (int i = 0; i < bonusPower->getItemProductionSystem().getCreatedItemCount(); ++i) {
+                        CreatedItem createdItem = bonusPower->getItemProductionSystem().getCreatedItem(i, faction);
+                        bool updating = true;
+                        for (int e = 0; e < unit->getType()->getItemStores().size(); ++e) {
+                            if (createdItem.getType() == unit->getType()->getItemStores()[e].getType()) {
+                                for (int f = 0; f < unit->getStorage().size(); ++f) {
+                                    if (createdItem.getType()->getName() == unit->getStorage()[f].getName())  {
+                                        if (unit->getStorage()[f].getCurrent() + createdItem.getAmount() > unit->getType()->getItemStores()[e].getCap()) {
+                                            updating = false;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        if (updating == true) {
+                            int cTime = bonusPower->getItemProductionSystem().getCreatedItemTimer(i, faction).getTimerValue();
+                            TimerStep *timeStep = &unit->bonusPowerTimers[m].currentItemSteps[i];
+                            bonusPower->getItemProductionSystem().update(createdItem, unit, cTime, timeStep);
                         }
                     }
                 }
                 /**< Added by MoLAoS, unit generation */
                 for (int i = 0; i < unit->getType()->getUnitProductionSystem().getCreatedUnitCount(); ++i) {
                     CreatedUnit createdUnit = unit->getType()->getUnitProductionSystem().getCreatedUnit(i, faction);
-                    unit->getType()->getUnitProductionSystem().update(createdUnit, unit, i);
+                    int cTime = unit->getType()->getUnitProductionSystem().getCreatedUnitTimer(i, faction).getTimerValue();
+                    TimerStep *timeStep = &unit->productionSystemTimers.currentUnitSteps[i];
+                    unit->getType()->getUnitProductionSystem().update(createdUnit, unit, cTime, timeStep);
                 }
                 for (int m = 0; m < unit->getEquippedItems().size(); ++m) {
                     Item *item = unit->getEquippedItem(m);
                     for (int i = 0; i < item->getType()->getUnitProductionSystem().getCreatedUnitCount(); ++i) {
                         CreatedUnit createdUnit = item->getType()->getUnitProductionSystem().getCreatedUnit(i, faction);
-                        item->getType()->getUnitProductionSystem().update(createdUnit, unit, item, i);
+                        int cTime = item->getType()->getUnitProductionSystem().getCreatedUnitTimer(i, faction).getTimerValue();
+                        TimerStep *timeStep = &item->currentUnitSteps[i];
+                        item->getType()->getUnitProductionSystem().update(createdUnit, unit, cTime, timeStep);
+                    }
+                }
+                for (int m = 0; m < unit->getType()->getBonusPowerCount(); ++m) {
+                    const BonusPower *bonusPower = unit->getType()->getBonusPower(m);
+                    for (int i = 0; i < bonusPower->getUnitProductionSystem().getCreatedUnitCount(); ++i) {
+                        CreatedUnit createdUnit = bonusPower->getUnitProductionSystem().getCreatedUnit(i, faction);
+                        int cTime = bonusPower->getUnitProductionSystem().getCreatedUnitTimer(i, faction).getTimerValue();
+                        TimerStep *timeStep = &unit->bonusPowerTimers[m].currentUnitSteps[i];
+                        bonusPower->getUnitProductionSystem().update(createdUnit, unit, cTime, timeStep);
                     }
                 }
             }

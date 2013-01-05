@@ -160,23 +160,6 @@ bool EffectType::load(const XmlNode *en, const string &dir, const TechTree *tt, 
 		loadOk = false;
 	}
 
-	try {
-	    const XmlNode *damageTypesNode = en->getChild("damage-types", 0, false);
-	    if (damageTypesNode) {
-	        damageTypes.resize(damageTypesNode->getChildCount());
-            for (int i = 0; i < damageTypesNode->getChildCount(); ++i) {
-                const XmlNode *damageTypeNode = damageTypesNode->getChild("damage-type", i);
-                string damageTypeName = damageTypeNode->getAttribute("type")->getRestrictedValue();
-                int amount = damageTypeNode->getAttribute("value")->getIntValue();
-                damageTypes[i].init(damageTypeName, amount);
-            }
-	    }
-	}
-    catch (runtime_error e) {
-		g_logger.logXmlError(dir, e.what());
-		loadOk = false;
-	}
-
 	const XmlNode *affectNode = en->getChild("affect", 0, false);
 	if (affectNode) {
 		affectTag = affectNode->getRestrictedValue();
@@ -190,7 +173,7 @@ bool EffectType::load(const XmlNode *en, const string &dir, const TechTree *tt, 
 		flags.load(flagsNode, dir, tt, ft);
 	}
 
-	EnhancementType::load(en, dir, tt, ft);
+	Statistics::load(en, dir, tt, ft);
 
 	try { // light & lightColour
 		const XmlNode *lightNode = en->getChild("light", 0, false);

@@ -55,13 +55,10 @@ typedef vector<EffectType*> EffectTypes;
  * stats, regeneration/degeneration and possibly other behaviors &
  * attributes of a Unit.
  */
-class EffectType: public EnhancementType, public DisplayableType {
+class EffectType: public Statistics, public DisplayableType {
 private:
-    typedef vector<DamageType> DamageTypes;
-
 	EffectBias bias;
 	EffectStacking stacking;
-
 	int duration;
 	fixed chance;
 	bool light;
@@ -77,10 +74,8 @@ private:
 	bool display;
 	UnitParticleSystemTypes particleSystems;
 	const FactionType *factionType;
-
 public:
 	static EffectClass typeClass() { return EffectClass::EFFECT; }
-
 public:
 	EffectType();
 	virtual ~EffectType() { delete sound; }
@@ -93,9 +88,6 @@ public:
 	const EffectTypeFlags &getFlags() const	 {return flags;}
 	bool getFlag(EffectTypeFlag flag) const	 {return flags.get(flag);}
 	const AttackType *getDamageClass() const {return damageClass;}
-	int getDamageTypeCount() const           {return damageTypes.size();}
-	DamageTypes getDamageTypes() const       {return damageTypes;}
-	DamageType getDamageType(int i) const    {return damageTypes[i];}
 	const string& getAffectTag() const		 {return affectTag;}
 
 	bool isEffectsAlly() const				{return getFlag(EffectTypeFlag::ALLY);}

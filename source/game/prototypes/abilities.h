@@ -9,56 +9,12 @@
 #ifndef _GLEST_GAME_ABILITIES_H_
 #define _GLEST_GAME_ABILITIES_H_
 
-#include "unit_stats_base.h"
+#include "statistics.h"
 
 namespace Glest{ namespace ProtoTypes {
-
-// ===============================
-// 	class ItemStore
-// ===============================
-class ItemStore {
-private:
-    const ItemType *m_type;
-    int m_cap;
-public:
-    const ItemType *getType() const {return m_type;}
-    int getCap() const {return m_cap;}
-    void init(const ItemType *type, int cap);
-};
-
-// ===============================
-// 	class Load Bonus
-// ===============================
-class LoadBonus : public EnhancementType {
-public:
-    string source;
-	virtual bool load(const XmlNode *loadBonusNode, const string &dir, const TechTree *tt, const FactionType *ft);
-	string getSource() const {return source;}
-};
-
-// ===============================
-// 	class Level
-// ===============================
-
-class Level: public NameIdPair {
-private:
-    EnhancementType enLevel;
-    int count;
-	int exp;
-public:
-	virtual bool load(const XmlNode *prn, const string &dir, const TechTree *tt, const FactionType *ft);
-	virtual void doChecksum(Checksum &checksum) const {
-		NameIdPair::doChecksum(checksum);
-	}
-	const EnhancementType *getEnLevel() const {return &enLevel;}
-	int getCount() const {return count;}
-	int getExp() const {return exp;}
-};
-
 // ===============================
 // 	class Timer
 // ===============================
-
 class Timer {
 public:
     int timerValue;
@@ -83,9 +39,7 @@ public:
 // 	class TimerStep
 // ===============================
 /**< class that makes up current step vector */
-
 class TimerStep {
-
 public:
     mutable int currentStep;
     int getCurrentStep() {return currentStep;}
@@ -94,12 +48,22 @@ public:
 
 typedef vector<TimerStep> CurrentStep;
 
+// ===============================
+// 	class ProductionSystemTimers
+// ===============================
+class ProductionSystemTimers {
+public:
+    CurrentStep currentSteps; /**< current timer step for resource creation */
+    CurrentStep currentUnitSteps; /**< current timer step for unit creation */
+    CurrentStep currentItemSteps; /**< current timer step for item creation */
+    CurrentStep currentProcessSteps; /**< current timer step for resource processes */
+};
+
 // =====================================================
 // 	class UnitsOwned
 //
 /// Amount of a given UnitType
 // =====================================================
-
 class UnitsOwned {
 private:
 	const UnitType *m_type;
@@ -128,7 +92,6 @@ public:
 // 	class ProductionRoute
 // ===============================
 /**< class that deals with the route of transport carts */
-
 class ProductionRoute {
 private:
     int storeId;
@@ -146,25 +109,17 @@ public:
 };
 
 // ===============================
-// 	class DamageType
+// 	class ItemStore
 // ===============================
-/**< class that deals with damage type resistance and attack damage types */
-
-class DamageType {
+class ItemStore {
 private:
-    string type_name;
-    int value;
-
+    const ItemType *m_type;
+    int m_cap;
 public:
-    string getTypeName() const {return type_name;}
-    int getValue() const {return value;}
-    void setValue(int i) {value = value + i;}
-
-    void init(const string name, const int amount);
-
+    const ItemType *getType() const {return m_type;}
+    int getCap() const {return m_cap;}
+    void init(const ItemType *type, int cap);
 };
-
-
 
 // =====================================================
 // 	class Equipment

@@ -41,7 +41,7 @@ namespace Glest { namespace Entities {
 //typedef vector<Effect> EffectsCreated;
 
 using namespace ProtoTypes;
-class Item : public EnhancementType {
+class Item : public Statistics {
 	friend class EntityFactory<Item>;
 
 private:

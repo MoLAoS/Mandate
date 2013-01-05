@@ -35,6 +35,7 @@
 
 #include "leak_dumper.h"
 #include "fixed.h"
+#include "sim_interface.h"
 
 using namespace Shared::Graphics;
 using namespace Shared::Util;
@@ -48,6 +49,47 @@ using Gui::Selection;
 void Tile::deleteResource() {
 	g_world.getMapObjectFactory().deleteInstance(object);
 	object = 0;
+}
+
+bool Tile::isPlacement(string foundation) const {
+    if (object != NULL) {
+        if (object->getType() != NULL && object->getType()->getFoundation() == foundation) {
+            g_console.addStdMessage("ObjectFoundationMatch");
+            return true;
+        } else if (object->getResource() != NULL) {
+            if (object->getResource()->getType()->getFoundation() == foundation) {
+                g_console.addStdMessage("ResourceFoundationMatch");
+                return true;
+            } else {
+                g_console.addStdMessage("NoFoundationMatch");
+                return false;
+            }
+        } else {
+            g_console.addStdMessage("NoResourceOrType");
+            return false;
+        }
+    } else {
+        g_console.addStdMessage("NoObject");
+        return false;
+    }
+}
+
+bool Tile::isBonusObject(string name) const {
+    if (object != NULL) {
+        if (object->getType() != NULL && object->getType()->getName() == name) {
+            return true;
+        } else if (object->getResource() != NULL) {
+            if (object->getResource()->getType()->getName() == name) {
+                return true;
+            } else {
+                return false;
+            }
+        } else {
+            return false;
+        }
+    } else {
+        return false;
+    }
 }
 
 // =====================================================
@@ -372,12 +414,52 @@ bool Map::isFreeCell(const Vec2i &pos, Field field) const {
 	if (!isInside(pos) || !getCell(pos)->isFree(freeCell)) {
 		return false;
 	}
-	if (field != Field::AIR && !getTile(toTileCoords(pos))->isFree()) {
-		return false;
-	} else if (field != Field::WALL && !getTile(toTileCoords(pos))->isFree()) {
-	    return false;
+	if (field != Field::AIR && field != Field::WALL) {
+        if(!getTile(toTileCoords(pos))->isFree()) {
+            return false;
+        }
 	}
 	return g_cartographer.getMasterMap()->canOccupy(pos, 1, field);
+}
+
+bool Map::isFoundation(string foundation, const Vec2i &pos, Field field) const {
+    Zone freeCell;
+    if (field == Field::AIR) {
+    freeCell = Zone::AIR;
+    } else if (field == Field::LAND) {
+    freeCell = Zone::LAND;
+    } else if (field == Field::WALL || field == Field::STAIR) {
+    freeCell = Zone::WALL;
+    }
+	if (!isInside(pos) || !getCell(pos)->isFree(freeCell)) {
+		return false;
+	}
+	if (field != Field::AIR && field != Field::WALL) {
+        if(!getTile(toTileCoords(pos))->isPlacement(foundation)) {
+            return false;
+        }
+	}
+	return true;
+}
+
+bool Map::isBonusObject(string name, const Vec2i &pos, Field field) const {
+    Zone freeCell;
+    if (field == Field::AIR) {
+    freeCell = Zone::AIR;
+    } else if (field == Field::LAND) {
+    freeCell = Zone::LAND;
+    } else if (field == Field::WALL || field == Field::STAIR) {
+    freeCell = Zone::WALL;
+    }
+	if (!isInside(pos) || !getCell(pos)->isFree(freeCell)) {
+		return false;
+	}
+	if (field != Field::AIR && field != Field::WALL) {
+        if(!getTile(toTileCoords(pos))->isBonusObject(name)) {
+            return false;
+        }
+	}
+	return true;
 }
 
 bool Map::isFreeCellOrHasUnit(const Vec2i &pos, Field field, const Unit *unit) const {
@@ -413,7 +495,7 @@ bool Map::canOccupy(const Vec2i &pos, Field field, const UnitType *ut, CardinalD
 		for (int y=0; y < ut->getSize(); ++y) {
 			for (int x=0; x < ut->getSize(); ++x) {
 				if (ut->getCellMapCell(x, y, facing)) {
-					if (!isFreeCell(pos + Vec2i(x, y), field)) {
+					if (!isFreeCell(pos + Vec2i(x, y), field) && !isFoundation(ut->foundation, pos + Vec2i(x, y), field)) {
 						return false;
 					}
 				}
@@ -421,7 +503,12 @@ bool Map::canOccupy(const Vec2i &pos, Field field, const UnitType *ut, CardinalD
 		}
 		return true;
 	} else {
-		return areFreeCells(pos, ut->getSize(), field);
+	    if (ut->foundation == "none") {
+            return areFreeCells(pos, ut->getSize(), field);
+        } else if (ut->foundation != "none") {
+            return areFoundation(ut->foundation, pos, ut->getSize(), field);
+        }
+        return areFreeCells(pos, ut->getSize(), field);
 	}
 }
 
@@ -442,7 +529,7 @@ bool Map::isAproxFreeCell(const Vec2i &pos, Field field, int teamIndex) const {
 	return false;
 }
 
-bool Map::areFreeCells(const Vec2i & pos, int size, Field field) const {
+bool Map::areFreeCells(const Vec2i &pos, int size, Field field) const {
 	for (int i=pos.x; i<pos.x+size; ++i) {
 		for (int j=pos.y; j<pos.y+size; ++j) {
 			if (!isFreeCell(Vec2i(i,j), field)) {
@@ -470,6 +557,72 @@ bool Map::areFreeCells(const Vec2i &pos, int size, char *fieldMap) const {
 		}
 	}
 	return true;
+}
+
+bool Map::areFoundation(string foundation, const Vec2i &pos, int size, Field field) const {
+	for (int i=pos.x; i<pos.x+size; ++i) {
+		for (int j=pos.y; j<pos.y+size; ++j) {
+			if (!isFoundation(foundation, Vec2i(i,j), field)) {
+                g_console.addStdMessage("NotFounded");
+				return false;
+			}
+		}
+	}
+	return true;
+}
+
+bool Map::clearFoundation(string foundation, const Vec2i &pos, int size, Field field) const {
+    bool clear = true;
+	for (int i=pos.x; i<pos.x+size; ++i) {
+		for (int j=pos.y; j<pos.y+size; ++j) {
+			if (!isFoundation(foundation, Vec2i(i,j), field)) {
+			    clear = false;
+			}
+		}
+	}
+	if (clear == true) {
+        getTile(toTileCoords(pos))->deleteResource();
+        g_world.getCartographer()->updateMapMetrics(pos, GameConstants::cellScale);
+        return true;
+	} else {
+        return false;
+	}
+}
+
+bool Map::areFoundation(string foundation, const Vec2i &pos, int size, char *fieldMap) const {
+	for (int i = 0; i < size; ++i) {
+		for (int j = 0; j < size; ++j) {
+			Field field;
+			switch (fieldMap[j*size+i]) {
+				case 'l': field = Field::LAND; break;
+				case 'a': field = Field::AMPHIBIOUS; break;
+				case 'w': field = Field::DEEP_WATER; break;
+				case 'r': field = Field::LAND; break;
+				default: throw runtime_error("Bad value in fieldMap");
+			}
+			if (!isFoundation(foundation, Vec2i(pos.x+i, pos.y+j), field)) {
+				return false;
+			}
+		}
+	}
+	return true;
+}
+
+bool Map::nearUnitBonusObject(const UnitType *ut, const Vec2i &pos) {
+    string objectName = "";
+    if (ut->getBonusObjectName() != "") {
+        objectName = ut->getBonusObjectName();
+    }
+    if (objectName != "") {
+        for (int i=pos.x-5; i < pos.x+6; ++i) {
+            for (int j=pos.y-5; j < pos.y+6; ++j) {
+                if (isBonusObject(objectName, Vec2i(i,j), Field::LAND)) {
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
 }
 
 bool Map::areFreeCellsOrHasUnit(const Vec2i &pos, int size, Field field, const Unit *unit) const {

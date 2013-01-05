@@ -156,6 +156,8 @@ Unit::Unit(CreateParams params)
 		, m_deCloaking(false)
 		, m_cloakAlpha(1.f)
 		, fire(0)
+		, dayCycle(true)
+		, bonusObject(false)
 		, faction(params.faction)
 		, map(params.map)
 		, commandCallback(0)
@@ -205,29 +207,41 @@ Unit::Unit(CreateParams params)
 
 	levelNumber = 1;
 
-	currentSteps.resize(type->getResourceProductionSystem().getCreatedResourceCount());
-	for (int i = 0; i < currentSteps.size(); ++i) {
-	currentSteps[i].currentStep = 0;
+	productionSystemTimers.currentSteps.resize(type->getResourceProductionSystem().getCreatedResourceCount());
+	for (int i = 0; i < productionSystemTimers.currentSteps.size(); ++i) {
+        productionSystemTimers.currentSteps[i].currentStep = 0;
+	}
+	productionSystemTimers.currentProcessSteps.resize(type->getProcessProductionSystem().getProcessCount());
+	for (int i = 0; i < productionSystemTimers.currentProcessSteps.size(); ++i) {
+        productionSystemTimers.currentProcessSteps[i].currentStep = 0;
+	}
+	productionSystemTimers.currentUnitSteps.resize(type->getUnitProductionSystem().getCreatedUnitCount());
+	for (int i = 0; i < productionSystemTimers.currentUnitSteps.size(); ++i) {
+        productionSystemTimers.currentUnitSteps[i].currentStep = 0;
+	}
+	productionSystemTimers.currentItemSteps.resize(type->getItemProductionSystem().getCreatedItemCount());
+	for (int i = 0; i < productionSystemTimers.currentItemSteps.size(); ++i) {
+        productionSystemTimers.currentItemSteps[i].currentStep = 0;
 	}
 
-	currentProcessSteps.resize(type->getProcessProductionSystem().getProcessCount());
-	for (int i = 0; i < currentProcessSteps.size(); ++i) {
-	currentProcessSteps[i].currentStep = 0;
-	}
-
-	currentUnitSteps.resize(type->getUnitProductionSystem().getCreatedUnitCount());
-	for (int i = 0; i < currentUnitSteps.size(); ++i) {
-	currentUnitSteps[i].currentStep = 0;
-	}
-
-	currentItemSteps.resize(type->getItemProductionSystem().getCreatedItemCount());
-	for (int i = 0; i < currentItemSteps.size(); ++i) {
-	currentItemSteps[i].currentStep = 0;
-	}
-
-	currentOwnedSteps.resize(type->getOwnedUnits().size());
-	for (int i = 0; i < currentOwnedSteps.size(); ++i) {
-	currentOwnedSteps[i].currentStep = 0;
+	bonusPowerTimers.resize(type->getBonusPowerCount());
+	for (int j = 0; j < bonusPowerTimers.size(); ++j) {
+        bonusPowerTimers[j].currentSteps.resize(type->getBonusPower(j)->getResourceProductionSystem().getCreatedResourceCount());
+        for (int i = 0; i < bonusPowerTimers[j].currentSteps.size(); ++i) {
+            bonusPowerTimers[j].currentSteps[i].currentStep = 0;
+        }
+        bonusPowerTimers[j].currentProcessSteps.resize(type->getBonusPower(j)->getProcessProductionSystem().getProcessCount());
+        for (int i = 0; i < bonusPowerTimers[j].currentProcessSteps.size(); ++i) {
+            bonusPowerTimers[j].currentProcessSteps[i].currentStep = 0;
+        }
+        bonusPowerTimers[j].currentUnitSteps.resize(type->getBonusPower(j)->getUnitProductionSystem().getCreatedUnitCount());
+        for (int i = 0; i < bonusPowerTimers[j].currentUnitSteps.size(); ++i) {
+            bonusPowerTimers[j].currentUnitSteps[i].currentStep = 0;
+        }
+        bonusPowerTimers[j].currentItemSteps.resize(type->getBonusPower(j)->getItemProductionSystem().getCreatedItemCount());
+        for (int i = 0; i < bonusPowerTimers[j].currentItemSteps.size(); ++i) {
+            bonusPowerTimers[j].currentItemSteps[i].currentStep = 0;
+        }
 	}
 
 	currentCommandCooldowns.resize(type->getCommandTypeCount());
@@ -247,9 +261,11 @@ Unit::Unit(CreateParams params)
 
     owner = this;
 
-    resistances.resize(getType()->getResistances().size());
-    for (int i = 0; i < getType()->getResistances().size(); ++i) {
-        resistances[i] = getType()->getResistances()[i];
+    resistances.resize(getType()->getResistanceCount());
+    for (int i = 0; i < getType()->getResistanceCount(); ++i) {
+        string name = getType()->getResistance(i)->getTypeName();
+        int value = getType()->getResistance(i)->getValue();
+        resistances[i].init(name, value);
     }
 
     itemLimit = getType()->getItemLimit();
@@ -1490,6 +1506,9 @@ void Unit::born(bool reborn) {
         return;
 	}
 	existing = true;
+	if (g_world.getMap()->nearUnitBonusObject(type, pos)) {
+        bonusObject = true;
+	}
 	if (type->getCloakClass() == CloakClass::PERMANENT && faction->reqsOk(type->getCloakType())) {
 		cloak();
 	}
@@ -2479,7 +2498,7 @@ bool Unit::update() { ///@todo should this be renamed to hasFinishedCycle()?
                     const AttackCommandType *act = static_cast<const AttackCommandType*>(getType()->getCommandType(i));
                     const AttackSkillType *ast = act->AttackCommandTypeBase::getAttackSkillTypes()->getFirstAttackSkill();
                     if (ast == currSkill) {
-                        currentCommandCooldowns[i].currentStep = ast->cooldown;
+                        currentCommandCooldowns[i].currentStep = ast->getCooldown();
                     }
 		        }
 		    }
@@ -2897,11 +2916,11 @@ string Unit::getLongDesc() const {
     }
 	const string factionName = type->getFactionType()->getName();
 	int sightBonus = getSight() - type->getSight();
-	if (resistances.size() > 0) {
+	if (getResistanceCount() > 0) {
 	ss << endl << lang.get("Resistances") << ":";
-	for (int i = 0; i < resistances.size(); ++i) {
-	ss << endl << lang.get(resistances[i].getTypeName()) << ": ";
-	ss << resistances[i].getValue();
+	for (int i = 0; i < getResistanceCount(); ++i) {
+	ss << endl << lang.get(getResistance(i)->getTypeName()) << ": ";
+	ss << getResistance(i)->getValue();
 	}
 	ss << endl;
 	}
@@ -2927,7 +2946,7 @@ string Unit::getLongDesc() const {
     if (type->getLevelCount() > 0) {
         for (int i = 0; i < type->getLevelCount(); ++i) {
             ss << endl << type->getLevel(i)->getName();
-            ss << endl << type->getLevel(i)->getEnLevel()->getMaxHp();
+            ss << endl << type->getLevel(i)->getStatistics()->getMaxHp();
         }
     }
     if (loadCount) {
@@ -2964,7 +2983,7 @@ string Unit::getLongDesc() const {
 			ResourceAmount r = type->getResourceProductionSystem().getCreatedResource(i, getFaction());
 			string resName = lang.getTechString(r.getType()->getName());
 			Timer tR = type->getResourceProductionSystem().getCreatedResourceTimer(i, getFaction());
-			int cStep = currentSteps[i].currentStep;
+			int cStep = productionSystemTimers.currentSteps[i].currentStep;
 			if (resName == r.getType()->getName()) {
 				resName = formatString(resName);
 			}
@@ -2976,7 +2995,7 @@ string Unit::getLongDesc() const {
 		for (int i = 0; i < type->getProcessProductionSystem().getProcessCount(); ++i) {
         ss << endl << lang.get("Process") << ": ";
         Timer tR = type->getProcessProductionSystem().getProcessTimer(i, getFaction());
-        int cStep = currentProcessSteps[i].currentStep;
+        int cStep = productionSystemTimers.currentProcessSteps[i].currentStep;
         ss << endl << lang.get("Timer") << ": " << cStep << "/" << tR.getTimerValue();
         string scope;
         if (type->getProcessProductionSystem().getProcesses()[i].getScope() == true) {
@@ -3032,7 +3051,7 @@ string Unit::getLongDesc() const {
 			CreatedUnit u = type->getUnitProductionSystem().getCreatedUnit(i, getFaction());
 			string unitName = lang.getTechString(u.getType()->getName());
 			Timer tR = type->getUnitProductionSystem().getCreatedUnitTimer(i, getFaction());
-			int cUStep = currentUnitSteps[i].currentStep;
+			int cUStep = productionSystemTimers.currentUnitSteps[i].currentStep;
 			if (unitName == u.getType()->getName()) {
 				unitName = formatString(unitName);
 			}
@@ -3045,7 +3064,7 @@ string Unit::getLongDesc() const {
 			CreatedItem item = type->getItemProductionSystem().getCreatedItem(i, getFaction());
 			string itemName = lang.getTechString(item.getType()->getName());
 			Timer tR = type->getItemProductionSystem().getCreatedItemTimer(i, getFaction());
-			int cIStep = currentItemSteps[i].currentStep;
+			int cIStep = productionSystemTimers.currentItemSteps[i].currentStep;
 			if (itemName == item.getType()->getName()) {
 				itemName = formatString(itemName);
 			}
@@ -3180,72 +3199,42 @@ void Unit::applyUpgrade(const UpgradeType *upgradeType) {
 
 
 	for (int i = 0; i < us->m_enhancements.size(); ++i) {
-	const EnhancementType *et = &us->m_enhancements[i].m_enhancement;
-	if (et) {
-		totalUpgrade.sum(et);
+	const Statistics *stats = &us->m_enhancements[i].m_enhancement;
+	if (stats) {
+		totalUpgrade.sum(stats);
 		recalculateStats();
-		doRegen(et->getHpBoost(), et->getSpBoost(), et->getEpBoost());
+		doRegen(stats->getHpBoost(), stats->getSpBoost(), stats->getEpBoost());
 	}
     }
 }
 
 /** recompute stats, re-evaluate upgrades & level and recalculate totalUpgrade */
 void Unit::computeTotalUpgrade() {
+    totalUpgrade.resistances.clear();
 	faction->getUpgradeManager()->computeTotalUpgrade(this, &totalUpgrade);
-
-	for (int i = 0; i < getEquippedItems().size(); ++i) {
-	    const EnhancementType *et = static_cast<const EnhancementType*>(getEquippedItem(i)->getType());
-        totalUpgrade.sum(et);
-	}
-    for (int i = 0; i < type->getOwnedUnits().size(); ++i) {
-        int limit = type->getOwnedUnits()[i].getLimit();
-        for (int j = 0; j < ownedUnits.size(); ++j) {
-            if (type->getOwnedUnits()[i].getType() == ownedUnits[j].getType()) {
-                ownedUnits[j].setLimit(limit);
-            }
+    if (dayCycle) {
+        const Statistics *stats = &type->dayPower;
+        if (stats) {
+            totalUpgrade.sum(stats);
+        }
+    } if (!dayCycle) {
+        const Statistics *stats = &type->nightPower;
+        if (stats) {
+            totalUpgrade.sum(stats);
         }
     }
-
-    for (int i = 0; i < getEquippedItems().size(); ++i) {
-        const ItemType *iType = getEquippedItem(i)->getType();
-        for (int j = 0; j < iType->getOwnedUnits().size(); ++j) {
-            UnitsOwned unitExpand = iType->getOwnedUnits()[j];
-            for (int k = 0; k < ownedUnits.size(); ++k) {
-                if (unitExpand.getType() == ownedUnits[k].getType()) {
-                    int newLimit = unitExpand.getLimit();
-                    int oldLimit = ownedUnits[k].getLimit();
-                    ownedUnits[k].setLimit(oldLimit + newLimit);
-                }
-            }
-        }
-    }
-
-    resistances.clear();
-    resistances.resize(getType()->getResistances().size());
-    for (int i = 0; i < getType()->getResistances().size(); ++i) {
-        resistances[i] = getType()->getResistances()[i];
-    }
-
 	for (int i = 0; i < getEquippedItems().size(); ++i) {
-	    Resistances resists = getEquippedItem(i)->getType()->getResistances();
-	    for (int j = 0; j < resists.size(); ++j) {
-	        if (resistances.size() == 0) {
-                resistances.push_back(resists[j]);
-	        } else {
-                for (int k = 0; k < resistances.size(); ++k) {
-                    if (resistances[k].getTypeName() == resists[j].getTypeName()) {
-                        resistances[k].setValue(resists[j].getValue());
-                        break;
-                    }
-                    if (k == resistances.size()-1) {
-                        resistances.push_back(resists[j]);
-                        break;
-                    }
-                }
-	        }
-	    }
+	    const Statistics *stats = static_cast<const Statistics*>(getEquippedItem(i)->getType());
+        if (stats) {
+            totalUpgrade.sum(stats);
+        }
 	}
-
+	for (int i = 0; i < type->getBonusPowerCount(); ++i) {
+	    const Statistics *stats = static_cast<const Statistics*>(type->getBonusPower(i));
+        if (stats) {
+            totalUpgrade.sum(stats);
+        }
+	}
     UnitIdList garrisonedUnits = getGarrisonedUnits();
     if (getGarrisonedCount() > 0) {
         foreach (UnitIdList, it, garrisonedUnits) {
@@ -3255,8 +3244,8 @@ void Unit::computeTotalUpgrade() {
                 const LoadBonus lb = type->getLoadBonuses()[l];
                 string bonusName = lb.getSource();
                 if (unitName == bonusName) {
-                    const EnhancementType *et = static_cast<const EnhancementType*>(&lb);
-                    totalUpgrade.sum(et);
+                    const Statistics *stats = static_cast<const Statistics*>(&lb);
+                    totalUpgrade.sum(stats);
                 }
             }
         }
@@ -3270,7 +3259,7 @@ void Unit::computeTotalUpgrade() {
             if (totalExp >= typeLevel->getExp()) {
                 totalExp -= typeLevel->getExp();
                 this->level = typeLevel;
-                totalUpgrade.sum(level->getEnLevel());
+                totalUpgrade.sum(level->getStatistics());
                 ++levelInt;
             } else {
                 break;
@@ -3278,6 +3267,27 @@ void Unit::computeTotalUpgrade() {
         }
 	}
 	levelNumber = levelInt;
+    for (int i = 0; i < type->getOwnedUnits().size(); ++i) {
+        int limit = type->getOwnedUnits()[i].getLimit();
+        for (int j = 0; j < ownedUnits.size(); ++j) {
+            if (type->getOwnedUnits()[i].getType() == ownedUnits[j].getType()) {
+                ownedUnits[j].setLimit(limit);
+            }
+        }
+    }
+    for (int i = 0; i < getEquippedItems().size(); ++i) {
+        const ItemType *iType = getEquippedItem(i)->getType();
+        for (int j = 0; j < iType->getOwnedUnits().size(); ++j) {
+            UnitsOwned unitExpand = iType->getOwnedUnits()[j];
+            for (int k = 0; k < ownedUnits.size(); ++k) {
+                if (unitExpand.getType() == ownedUnits[k].getType()) {
+                    int newLimit = unitExpand.getLimit();
+                    int oldLimit = ownedUnits[k].getLimit();
+                    ownedUnits[k].setLimit(oldLimit + newLimit);
+                }
+            }
+        }
+    }
 	recalculateStats();
 }
 
@@ -3312,6 +3322,10 @@ void Unit::recalculateStats() {
 		hpRegeneration += (*i)->getActualHpRegen() - (*i)->getType()->getHpRegeneration();
 		//spRegeneration += (*i)->getActualSpRegen() - (*i)->getType()->getSpRegeneration();
 	}
+
+    resistances.clear();
+    const Statistics *stats = static_cast<const Statistics*>(&totalUpgrade);
+    Statistics::addResistancesAndDamage(stats);
 
 	effects.clearDirty();
 

@@ -403,7 +403,10 @@ Unit* GoalSystem::findGuild(Unit* unit) {
         if (unit->owner->getType()->hasTag("house") && building->getType()->hasTag("shop")){
             buy = true;
         }
-        if (unit->owner->getType()->hasTag("shop") || unit->owner->getType()->hasTag("guildhall") && building->getType()->hasTag("guildhall")) {
+        if (unit->owner->getType()->hasTag("shop") && building->getType()->hasTag("guildhall")) {
+            buy = true;
+        }
+        if (unit->owner->getType()->hasTag("guildhall") && building->getType()->hasTag("guildhall")) {
             buy = true;
         }
         if (unit->owner->getType()->hasTag("guildhall") && building->getType()->hasTag("producer")) {
@@ -413,7 +416,15 @@ Unit* GoalSystem::findGuild(Unit* unit) {
             for (int j = 0; j < building->getType()->getResourceProductionSystem().getStoredResourceCount(); ++j) {
                 const ResourceType *producedType = building->getType()->getResourceProductionSystem().
                                                    getStoredResource(j, building->getFaction()).getType();
-                if (producedType->getName() != "wealth") {
+                bool status = false;
+                for (int n = 0; n < building->getType()->getResourceStores().size(); ++n) {
+                    if (building->getType()->getResourceStores()[n].getType() == producedType) {
+                        if (building->getType()->getResourceStores()[n].getStatus() == "stockpile") {
+                            status = true;
+                        }
+                    }
+                }
+                if (producedType->getName() != "wealth" && !status) {
                     for (int k = 0; k < unit->getType()->getResourceProductionSystem().getStoredResourceCount(); ++k) {
                         const ResourceType *transportedType = unit->getType()->getResourceProductionSystem().
                                                               getStoredResource(k, unit->getFaction()).getType();
@@ -572,11 +583,11 @@ const CommandType* GoalSystem::selectAttackSpell(Unit *unit, Unit *target) {
                         const DamageType dType = testSkillType->damageTypes[t];
                         string damageType = dType.getTypeName();
                         int mDamage = dType.getValue();
-                        for (int i = 0; i < uType->getResistances().size(); ++i) {
-                            const DamageType rType = uType->getResistances()[i];
-                            string resistType = rType.getTypeName();
+                        for (int i = 0; i < uType->getResistances()->size(); ++i) {
+                            const DamageType *rType = uType->getResistance(i);
+                            string resistType = rType->getTypeName();
                             if (damageType==resistType) {
-                                int resist = rType.getValue();
+                                int resist = rType->getValue();
                                 mDamage -= resist;
                                 if (mDamage < 0) {
                                     mDamage = 0;

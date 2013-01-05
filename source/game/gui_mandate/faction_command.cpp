@@ -48,12 +48,11 @@ void FactionBuild::describe(const Faction *faction, TradeDescriptor *callback, c
 	subDesc(faction, callback, ut);
 }
 
-
-
 void FactionBuild::build(const Faction *faction, const Vec2i &pos) const {
     Faction *fac = faction->getUnit(0)->getFaction();
     Map *map = g_world.getMap();
     if (map->canOccupy(pos, unitType->getField(), unitType, CardinalDir::NORTH)) {
+        map->clearFoundation(unitType->foundation, pos, unitType->getSize(), unitType->getField());
         Unit *builtUnit = NULL;
         if (fac->applyCosts(unitType)) {
             builtUnit = g_world.newUnit(pos, unitType, fac, map, CardinalDir::NORTH);

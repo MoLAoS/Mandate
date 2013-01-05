@@ -198,24 +198,33 @@ void CommandType::apply(Unit *unit, Faction *faction, const Command &command) co
 		} else {
 			faction->applyCosts(produced);
 		}
-		if (command.getType()->getClass() == CmdClass::PRODUCE || command.getType()->getClass() == CmdClass::STRUCTURE) {
+		if (command.getType()->getClass() == CmdClass::CREATE_ITEM) {
+		}
+		if (command.getType()->getClass() == CmdClass::PRODUCE || command.getType()->getClass() == CmdClass::STRUCTURE
+            || command.getType()->getClass() == CmdClass::CREATE_ITEM) {
 		    const ProduceCommandType *pct = NULL;
 		    const StructureCommandType *sct = NULL;
+		    const CreateItemCommandType *cct = NULL;
 		    if (command.getType()->getClass() == CmdClass::PRODUCE) {
                 pct = static_cast<const ProduceCommandType*>(command.getType());
 		    } else if (command.getType()->getClass() == CmdClass::STRUCTURE) {
                 sct = static_cast<const StructureCommandType*>(command.getType());
+		    } else if (command.getType()->getClass() == CmdClass::CREATE_ITEM) {
+                cct = static_cast<const CreateItemCommandType*>(command.getType());
 		    }
 		    bool prodct = false;
 		    bool structct = false;
+		    bool createct = false;
 		    if (pct != NULL) {
                 prodct = pct->isChild();
 		    } else if (sct != NULL) {
                 structct = sct->isChild();
+		    } else if (sct != NULL) {
+                createct = cct->isChild();
 		    }
-            if (prodct || structct) {
+            if (prodct || structct || createct) {
                 unit->owner->applyCosts(produced);
-            } else if (!prodct && !structct) {
+            } else if (!prodct && !structct && !createct) {
                 unit->applyCosts(produced);
             }
 		}

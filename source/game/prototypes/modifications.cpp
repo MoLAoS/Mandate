@@ -99,9 +99,9 @@ bool Modification::load(const string &dir, const TechTree *techTree, const Facti
 		loadOk = false;
 	}
 	try {
-        const XmlNode *enhancementNode = parametersNode->getChild("enhancement", 0, false);
-	    if (enhancementNode) {
-            if (!EnhancementType::load(enhancementNode, dir, techTree, factionType)) {
+        const XmlNode *statisticsNode = parametersNode->getChild("statistics", 0, false);
+	    if (statisticsNode) {
+            if (!Statistics::load(statisticsNode, dir, techTree, factionType)) {
                 loadOk = false;
             }
 	    }
@@ -119,38 +119,6 @@ bool Modification::load(const string &dir, const TechTree *techTree, const Facti
 			effectType->load(effectNode, dir, techTree, factionType);
 			effectTypes[i] = effectType;
 		}
-	}
-	try {
-	    const XmlNode *damageTypesNode = parametersNode->getChild("damage-types", 0, false);
-	    if (damageTypesNode) {
-	        damageBonuses.resize(damageTypesNode->getChildCount());
-            for (int i = 0; i < damageTypesNode->getChildCount(); ++i) {
-                const XmlNode *damageTypeNode = damageTypesNode->getChild("damage-type", i);
-                string damageTypeName = damageTypeNode->getAttribute("type")->getRestrictedValue();
-                int amount = damageTypeNode->getAttribute("value")->getIntValue();
-                damageBonuses[i].init(damageTypeName, amount);
-            }
-	    }
-	}
-    catch (runtime_error e) {
-		g_logger.logXmlError(dir, e.what());
-		loadOk = false;
-	}
-	try {
-	    const XmlNode *resistancesNode = parametersNode->getChild("resistances", 0, false);
-	    if (resistancesNode) {
-	        resistanceBonuses.resize(resistancesNode->getChildCount());
-            for (int i = 0; i < resistancesNode->getChildCount(); ++i) {
-                const XmlNode *resistanceNode = resistancesNode->getChild("resistance", i);
-                string resistanceTypeName = resistanceNode->getAttribute("type")->getRestrictedValue();
-                int amount = resistanceNode->getAttribute("value")->getIntValue();
-                resistanceBonuses[i].init(resistanceTypeName, amount);
-            }
-	    }
-	}
-    catch (runtime_error e) {
-		g_logger.logXmlError(dir, e.what());
-		loadOk = false;
 	}
     return loadOk;
 }

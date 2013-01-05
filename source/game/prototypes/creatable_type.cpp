@@ -57,9 +57,9 @@ bool CreatableType::load(const XmlNode *creatableTypeNode, const string &dir, co
 		loadOk = false;
 	}
 	try {
-        const XmlNode *enhancementNode = creatableTypeNode->getChild("enhancement", 0, false);
-        if (enhancementNode) {
-            if (!EnhancementType::load(enhancementNode, dir, techTree, factionType)) {
+        const XmlNode *statisticsNode = creatableTypeNode->getChild("statistics", 0, false);
+        if (statisticsNode) {
+            if (!Statistics::load(statisticsNode, dir, techTree, factionType)) {
                 loadOk = false;
             }
         }
@@ -91,36 +91,6 @@ bool CreatableType::load(const XmlNode *creatableTypeNode, const string &dir, co
         g_logger.logXmlError(dir, e.what());
         loadOk = false;
     }
-	try {
-	    const XmlNode *resistancesNode = creatableTypeNode->getChild("resistances", 0, false);
-	    if (resistancesNode) {
-	        resistances.resize(resistancesNode->getChildCount());
-            for (int i = 0; i < resistancesNode->getChildCount(); ++i) {
-                const XmlNode *resistanceNode = resistancesNode->getChild("resistance", i);
-                string resistanceTypeName = resistanceNode->getAttribute("type")->getRestrictedValue();
-                int amount = resistanceNode->getAttribute("value")->getIntValue();
-                resistances[i].init(resistanceTypeName, amount);
-            }
-	    }
-	} catch (runtime_error e) {
-		g_logger.logXmlError(dir, e.what());
-		loadOk = false;
-	}
-	try {
-        const XmlNode *damageTypesNode = creatableTypeNode->getChild("damage-types", 0, false);
-        if (damageTypesNode) {
-            damageTypes.resize(damageTypesNode->getChildCount());
-            for (int i = 0; i < damageTypesNode->getChildCount(); ++i) {
-                const XmlNode *damageTypeNode = damageTypesNode->getChild("damage-type", i);
-                string damageTypeName = damageTypeNode->getAttribute("type")->getRestrictedValue();
-                int amount = damageTypeNode->getAttribute("value")->getIntValue();
-                damageTypes[i].init(damageTypeName, amount);
-            }
-        }
-	} catch (runtime_error e) {
-		g_logger.logXmlError(dir, e.what());
-		loadOk = false;
-	}
     try {
         const XmlNode *emanationsNode = creatableTypeNode->getChild("emanations", 0, false);
         if (emanationsNode) {
