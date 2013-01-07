@@ -113,6 +113,8 @@ UserInterface::UserInterface(GameState &game)
 		, m_minimap(0)
 		, m_display(0)
 		, m_itemWindow(0)
+		, m_carriedWindow(0)
+		, m_productionWindow(0)
 		, m_factionDisplay(0)
 		, m_resourceBar(0)
 		, m_tradeBar(0)
@@ -296,6 +298,34 @@ void UserInterface::init() {
 	if (g_config.getUiLastItemDisplaySize() == 3) {
 		displayFrame->onExpand(0);
 	}
+
+	if (g_config.getUiLastProductionDisplayPosX() != -1 && g_config.getUiLastProductionDisplayPosY() != -1) {
+		x = g_config.getUiLastProductionDisplayPosX();
+		y = g_config.getUiLastProductionDisplayPosY();
+	}
+	ProductionDisplayFrame *productionWindow = new ProductionDisplayFrame(this, Vec2i(x,y));
+	m_productionWindow = productionWindow->getProductionDisplay();
+	m_productionWindow->setSize();
+	if (g_config.getUiLastProductionDisplaySize() >= 2) {
+		displayFrame->onExpand(0);
+	}
+	if (g_config.getUiLastProductionDisplaySize() == 3) {
+		displayFrame->onExpand(0);
+	}
+
+	if (g_config.getUiLastCarriedDisplayPosX() != -1 && g_config.getUiLastCarriedDisplayPosY() != -1) {
+		x = g_config.getUiLastCarriedDisplayPosX();
+		y = g_config.getUiLastCarriedDisplayPosY();
+	}
+	CarriedDisplayFrame *carriedWindow = new CarriedDisplayFrame(this, Vec2i(x,y));
+	m_carriedWindow = carriedWindow->getCarriedDisplay();
+	m_carriedWindow->setSize();
+	if (g_config.getUiLastCarriedDisplaySize() >= 2) {
+		displayFrame->onExpand(0);
+	}
+	if (g_config.getUiLastCarriedDisplaySize() == 3) {
+		displayFrame->onExpand(0);
+	}
 }
 
 void UserInterface::initMinimap(bool fow, bool sod, bool resuming) {
@@ -379,6 +409,8 @@ void UserInterface::onSelectionUpdated() {
     currentGroup = invalidGroupIndex;
     m_display->setSize();
     m_itemWindow->setSize();
+    m_carriedWindow->setSize();
+    m_productionWindow->setSize();
 }
 
 void UserInterface::onLeftClickOrder(Vec2i cellPos) {
@@ -426,6 +458,8 @@ void UserInterface::tick() {
 		}
 	}
 	m_itemWindow->tick();
+	m_carriedWindow->tick();
+	m_productionWindow->tick();
 	m_selectionDirty = false;
 }
 ///@todo move to Display
@@ -530,6 +564,31 @@ void UserInterface::degarrisonRequest(int carryIndex) {
     if (dres != CmdResult::SUCCESS) {
         addOrdersResultToConsole(CmdClass::DEGARRISON, dres);
     }
+}
+
+void UserInterface::factionUnloadRequest(int carryIndex) {
+	WIDGET_LOG( __FUNCTION__ << "( " << carryIndex << " )");
+	int i=0;
+	Unit *transportUnit = 0, *unloadUnit = 0;
+	for (int ndx = 0; !unloadUnit && ndx < selection->getCount(); ++ndx) {
+		if (selection->getUnit(ndx)->getType()->isOfClass(UnitClass::CARRIER)) {
+			const Unit *unit = selection->getUnit(ndx);
+			UnitIdList containedUnits = unit->getFaction()->getTransitingUnits();
+			foreach (UnitIdList, it, containedUnits) {
+				if (carryIndex == i) {
+					unloadUnit = g_world.getUnit(*it);
+					transportUnit = const_cast<Unit*>(unit);
+					break;
+				}
+				++i;
+			}
+		}
+	}
+	assert(transportUnit && unloadUnit);
+	CmdResult res = commander->tryUnloadCommand(transportUnit, CmdFlags(), Command::invalidPos, unloadUnit);
+	if (res != CmdResult::SUCCESS) {
+		addOrdersResultToConsole(CmdClass::UNLOAD, res);
+	}
 }
 
 // ==================== events ====================
@@ -1557,6 +1616,8 @@ void UserInterface::computeDisplay() {
 	// init
 	m_display->clear();
 	m_itemWindow->clear();
+	m_carriedWindow->clear();
+	m_productionWindow->clear();
 
 	// === Selection Panel ===
 	computeSelectionPanel();
@@ -1578,6 +1639,17 @@ void UserInterface::computeDisplay() {
 
     // === Resource Panels ===
 	m_itemWindow->computeResourcesPanel();
+
+    // === Production Panels ===
+    m_productionWindow->computeResourcesPanel();
+    m_productionWindow->computeItemPanel();
+    m_productionWindow->computeProcessPanel();
+    m_productionWindow->computeUnitPanel();
+
+    // === Production Panels ===
+    m_carriedWindow->computeCarriedPanel();
+    m_carriedWindow->computeGarrisonedPanel();
+    m_carriedWindow->computeContainedPanel();
 
 	// === Faction Panel ===
 	m_factionDisplay->computeBuildPanel();

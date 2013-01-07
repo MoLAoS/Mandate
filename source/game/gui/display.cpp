@@ -227,10 +227,10 @@ void Display::layout() {
 	y += m_imageSize;
 	m_sizes.portraitSize = Vec2i(x, y);
 
-	int titleYpos = std::max((m_imageSize - int(m_fontMetrics->getHeight() + 1.f)) / 2, 0);
-	TextWidget::setTextPos(Vec2i(m_imageSize * 5 / 4, titleYpos), 0); // (0) unit title
+	y += m_imageSize * 3 * -1 + 5;
+	TextWidget::setTextPos(Vec2i(5, y), 0); // (0) unit title
 
-	y = m_imageSize + m_imageSize / 4 + int(m_fontMetrics->getHeight()) * 10;
+	y = m_imageSize * 2 + m_imageSize / 4 + int(m_fontMetrics->getHeight()) * 10;
 	x = 0;
     m_taxOffset = Vec2i(x, y);
 	for (int i = 0; i < taxCellCount; ++i) { //tax buttons
@@ -491,7 +491,7 @@ void Display::setPortraitText(const string &text) {
 	foreach_const (string, it, str) {
 		if (*it == '\n') ++lines;
 	}
-	int yPos = m_imageSize * 5 / 4;
+	int yPos = m_imageSize * 5 / 4 + m_imageSize;
 	TextWidget::setTextPos(Vec2i(5, yPos), 1);
 	TextWidget::setText(str, 1);
 

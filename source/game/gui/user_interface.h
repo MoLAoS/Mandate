@@ -15,6 +15,8 @@
 #include "command_type.h"
 #include "display.h"
 #include "item_display.h"
+#include "production_display.h"
+#include "carried_display.h"
 #include "faction_display.h"
 #include "commander.h"
 #include "console.h"
@@ -126,6 +128,8 @@ private:
 	Minimap *m_minimap;
 	Display *m_display;
 	ItemWindow *m_itemWindow;
+	CarriedWindow *m_carriedWindow;
+	ProductionWindow *m_productionWindow;
 	FactionDisplay *m_factionDisplay;
 	ResourceBar *m_resourceBar;
 	TradeBar *m_tradeBar;
@@ -184,32 +188,36 @@ public:
 	bool                  setSelectingPos(bool b)    {selectingPos = b;}
 
 	//get
-	int                   getActivePos()             { return activePos;        }
-	Minimap*              getMinimap()               { return m_minimap;        }
-	const Minimap*        getMinimap() const         { return m_minimap;        }
-	ResourceBar*          getResourceBar()           { return m_resourceBar;    }
-	UnitBar*              getUnitBar()               { return m_unitBar;        }
-	TradeBar*             getTradeBar()              { return m_tradeBar;       }
-	const Input&          getInput() const           { return input;            }
-	LuaConsole*           getLuaConsole()            { return m_luaConsole;     }
-	Vec2i                 getPosObjWorld() const     { return posObjWorld;      }
-	const UnitType*       getBuilding() const;
-	const Vec2i&          getDragStartPos() const    { return dragStartPos;     }
-	const BuildPositions& getBuildPositions() const  { return buildPositions;   }
-	CardinalDir           getBuildingFacing() const  { return m_selectedFacing; }
-	const Mouse3d*        getMouse3d() const         { return &mouse3d;         }
-	Console*              getRegularConsole()        { return m_console;        }
-	Console*              getDialogConsole()         { return m_dialogConsole;  }
-	Display*              getDisplay()	             { return m_display;        }
-	const Display*        getDisplay()	const        { return m_display;        }
-	ItemWindow*           getItemWindow()	         { return m_itemWindow;     }
-	const ItemWindow*     getItemWindow()	const    { return m_itemWindow;        }
-	FactionDisplay*       getFactionDisplay()	     { return m_factionDisplay; }
-	const FactionDisplay* getFactionDisplay() const  { return m_factionDisplay; }
-	const Selection*      getSelection()	const    { return selection;        }
-	Selection*            getSelection()             { return selection;        }
-	const SelectionQuad*  getSelectionQuad() const   { return &selectionQuad;   }
-	const MapObject*      getSelectedObject() const  { return selectedObject;   }
+	int                     getActivePos()               { return activePos;          }
+	Minimap*                getMinimap()                 { return m_minimap;          }
+	const Minimap*          getMinimap() const           { return m_minimap;          }
+	ResourceBar*            getResourceBar()             { return m_resourceBar;      }
+	UnitBar*                getUnitBar()                 { return m_unitBar;          }
+	TradeBar*               getTradeBar()                { return m_tradeBar;         }
+	const Input&            getInput() const             { return input;              }
+	LuaConsole*             getLuaConsole()              { return m_luaConsole;       }
+	Vec2i                   getPosObjWorld() const       { return posObjWorld;        }
+	const UnitType*         getBuilding() const;
+	const Vec2i&            getDragStartPos() const      { return dragStartPos;       }
+	const BuildPositions&   getBuildPositions() const    { return buildPositions;     }
+	CardinalDir             getBuildingFacing() const    { return m_selectedFacing;   }
+	const Mouse3d*          getMouse3d() const           { return &mouse3d;           }
+	Console*                getRegularConsole()          { return m_console;          }
+	Console*                getDialogConsole()           { return m_dialogConsole;    }
+	Display*                getDisplay()	             { return m_display;          }
+	const Display*          getDisplay()	const        { return m_display;          }
+	ItemWindow*             getItemWindow()	             { return m_itemWindow;       }
+	const ItemWindow*       getItemWindow()	const        { return m_itemWindow;       }
+	ProductionWindow*       getProductionWindow()	     { return m_productionWindow; }
+	const ProductionWindow* getProductionWindow() const  { return m_productionWindow; }
+	CarriedWindow*       getCarriedWindow()	     { return m_carriedWindow; }
+	const CarriedWindow* getCarriedWindow() const  { return m_carriedWindow; }
+	FactionDisplay*         getFactionDisplay()	         { return m_factionDisplay;   }
+	const FactionDisplay*   getFactionDisplay() const    { return m_factionDisplay;   }
+	const Selection*        getSelection()	const        { return selection;          }
+	Selection*              getSelection()               { return selection;          }
+	const SelectionQuad*    getSelectionQuad() const     { return &selectionQuad;     }
+	const MapObject*        getSelectedObject() const    { return selectedObject;     }
 
 	bool isValidPosObjWorld() const         { return validPosObjWorld;          }
 	bool isSelecting() const                { return selectionQuad.isEnabled(); }
@@ -235,6 +243,7 @@ public:
 	void commandButtonPressed(int posDisplay);
 	void unloadRequest(int carryIndex);
 	void degarrisonRequest(int carryIndex);
+	void factionUnloadRequest(int carryIndex);
 
     void formationButtonPressed(int posDisplay);
     void hierarchyButtonPressed(int posDisplay);

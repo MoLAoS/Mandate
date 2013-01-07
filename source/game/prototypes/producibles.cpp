@@ -644,8 +644,6 @@ int UnitProductionSystem::getCreateUnit(const UnitType *ut, const Faction *f) co
 
 CreatedUnit UnitProductionSystem::getCreatedUnit(int i, const Faction *f) const {
 	CreatedUnit unit(createdUnits[i]);
-	//Modifier mod = f->getCreatedUnitModifier(this, unit.getType());
-	//unit.setAmount((unit.getAmount() * mod.getMultiplier()).intp() + mod.getAddition());
 	return unit;
 }
 

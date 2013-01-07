@@ -106,6 +106,18 @@ private:
 	int uiLastItemDisplayPosX;
 	int uiLastItemDisplayPosY;
 	int uiLastItemDisplaySize;
+	int uiLastProductionDisplayPosX;
+	int uiLastProductionDisplayPosY;
+	int uiLastProductionDisplaySize;
+	int uiLastStatsDisplayPosX;
+	int uiLastStatsDisplayPosY;
+	int uiLastStatsDisplaySize;
+	int uiLastCarriedDisplayPosX;
+	int uiLastCarriedDisplayPosY;
+	int uiLastCarriedDisplaySize;
+	int uiLastResourcesDisplayPosX;
+	int uiLastResourcesDisplayPosY;
+	int uiLastResourcesDisplaySize;
 	int uiLastTradeBarPosX;
 	int uiLastTradeBarPosY;
 	int uiLastTradeBarSize;
@@ -223,6 +235,18 @@ public:
 	int getUiLastItemDisplayPosX() const		{return uiLastItemDisplayPosX;}
 	int getUiLastItemDisplayPosY() const		{return uiLastItemDisplayPosY;}
 	int getUiLastItemDisplaySize() const		{return uiLastItemDisplaySize;}
+	int getUiLastProductionDisplayPosX() const	{return uiLastProductionDisplayPosX;}
+	int getUiLastProductionDisplayPosY() const	{return uiLastProductionDisplayPosY;}
+	int getUiLastProductionDisplaySize() const	{return uiLastProductionDisplaySize;}
+	int getUiLastStatsDisplayPosX() const		{return uiLastStatsDisplayPosX;}
+	int getUiLastStatsDisplayPosY() const		{return uiLastStatsDisplayPosY;}
+	int getUiLastStatsDisplaySize() const		{return uiLastStatsDisplaySize;}
+	int getUiLastCarriedDisplayPosX() const		{return uiLastCarriedDisplayPosX;}
+	int getUiLastCarriedDisplayPosY() const		{return uiLastCarriedDisplayPosY;}
+	int getUiLastCarriedDisplaySize() const		{return uiLastCarriedDisplaySize;}
+	int getUiLastResourcesDisplayPosX() const	{return uiLastResourcesDisplayPosX;}
+	int getUiLastResourcesDisplayPosY() const	{return uiLastResourcesDisplayPosY;}
+	int getUiLastResourcesDisplaySize() const	{return uiLastResourcesDisplaySize;}
 	int getUiLastTradeBarPosX() const			{return uiLastTradeBarPosX;}
 	int getUiLastTradeBarPosY() const			{return uiLastTradeBarPosY;}
 	int getUiLastTradeBarSize() const			{return uiLastTradeBarSize;}
@@ -322,6 +346,18 @@ public:
 	void setUiLastItemDisplayPosX(int val)		{uiLastItemDisplayPosX = val;}
 	void setUiLastItemDisplayPosY(int val)		{uiLastItemDisplayPosY = val;}
 	void setUiLastItemDisplaySize(int val)		{uiLastItemDisplaySize = val;}
+	void setUiLastProductionDisplayPosX(int val){uiLastProductionDisplayPosX = val;}
+	void setUiLastProductionDisplayPosY(int val){uiLastProductionDisplayPosY = val;}
+	void setUiLastProductionDisplaySize(int val){uiLastProductionDisplaySize = val;}
+	void setUiLastStatsDisplayPosX(int val)		{uiLastStatsDisplayPosX = val;}
+	void setUiLastStatsDisplayPosY(int val)		{uiLastStatsDisplayPosY = val;}
+	void setUiLastStatsDisplaySize(int val)		{uiLastStatsDisplaySize = val;}
+	void setUiLastCarriedDisplayPosX(int val)	{uiLastCarriedDisplayPosX = val;}
+	void setUiLastCarriedDisplayPosY(int val)	{uiLastCarriedDisplayPosY = val;}
+	void setUiLastCarriedDisplaySize(int val)	{uiLastCarriedDisplaySize = val;}
+	void setUiLastResourcesDisplayPosX(int val)	{uiLastResourcesDisplayPosX = val;}
+	void setUiLastResourcesDisplayPosY(int val)	{uiLastResourcesDisplayPosY = val;}
+	void setUiLastResourcesDisplaySize(int val)	{uiLastResourcesDisplaySize = val;}
 	void setUiLastTradeBarPosX(int val)			{uiLastTradeBarPosX = val;}
 	void setUiLastTradeBarPosY(int val)			{uiLastTradeBarPosY = val;}
 	void setUiLastTradeBarSize(int val)			{uiLastTradeBarSize = val;}
