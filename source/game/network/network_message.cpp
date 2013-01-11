@@ -296,11 +296,6 @@ DataSyncMessage::DataSyncMessage(World &world) : m_data(0), rawMsg() {
 		<< intToHex(checksums[1].getSum())
 	);
 	const TechTree *tt = world.getTechTree();
-	tt->doChecksumDamageMult(checksums[2]);
-	NETWORK_LOG(
-		"TechTree: " << tt->getName() << ", Damge Multiplier checksum: "
-		<< intToHex(checksums[2].getSum())
-	);
 	tt->doChecksumResources(checksums[3]);
 	NETWORK_LOG(
 		"TechTree: " << tt->getName() << ", Resource Types checksum: "

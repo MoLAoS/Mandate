@@ -448,12 +448,13 @@ public:
 
 
 	int getProductionPercent() const;
-	float getHpRatio() const					{return clamp(float(hp) / getMaxHp(), 0.f, 1.f);}
-	fixed getHpRatioFixed() const				{ return fixed(hp) / getMaxHp(); }
-	float getSpRatio() const					{return clamp(float(sp) / getMaxSp(), 0.f, 1.f);}
-	fixed getSpRatioFixed() const				{ return fixed(sp) / getMaxSp(); }
-	float getEpRatio() const					{return !type->getMaxEp() ? 0.0f : clamp(float(ep)/getMaxEp(), 0.f, 1.f);}
-    float getCpRatio() const					{return clamp(float(cp) / getMaxCp(), 0.f, 1.f);}
+	float getHpRatio() const					{return clamp(float(hp) / getResourcePools()->getMaxHp().getValue(), 0.f, 1.f);}
+	fixed getHpRatioFixed() const				{ return fixed(hp) / getResourcePools()->getMaxHp().getValue(); }
+	float getSpRatio() const					{return clamp(float(sp) / getResourcePools()->getMaxSp().getValue(), 0.f, 1.f);}
+	fixed getSpRatioFixed() const				{ return fixed(sp) / getResourcePools()->getMaxSp().getValue(); }
+	float getEpRatio() const					{return !type->getResourcePools()->getMaxEp().getValue() ? 0.0f :
+                                                clamp(float(ep) / getResourcePools()->getMaxEp().getValue(), 0.f, 1.f);}
+    float getCpRatio() const					{return clamp(float(cp) / getResourcePools()->getMaxCp().getValue(), 0.f, 1.f);}
 	bool getToBeUndertaken() const				{return toBeUndertaken;}
 	UnitId getTarget() const					{return targetRef;}
 	Vec2i getNextPos() const					{return nextPos;}
@@ -530,50 +531,6 @@ public:
 	bool getAttackedTrigger() const				{ return attacked_trigger; }
 
 	/**
-	 * Returns the total attack strength (base damage) for this unit using the
-	 * supplied skill, taking into account all upgrades & effects.
-	 */
-	int getAttackStrength(const AttackSkillType *ast) const	{
-		return (ast->getAttackStrength() * attackStrengthMult + attackStrength).intp();
-	}
-
-	// attempt to add lifeleech
-    /**
-	 * Returns the total life leech (base lifesteal) for this unit using the
-	 * supplied skill, taking into account all upgrades & effects.
-	 */
-		int getAttackLifeLeech(const AttackSkillType *ast) const	{
-		return (ast->getAttackLifeLeech() * attackLifeLeechMult + attackLifeLeech).intp();
-	}
-
-	// attempt to add manaburn
-    /**
-	 * Returns the total mana burn (base mana reduction) for this unit using the
-	 * supplied skill, taking into account all upgrades & effects.
-	 */
-		int getAttackManaBurn(const AttackSkillType *ast) const	{
-		return (ast->getAttackManaBurn() * attackManaBurnMult + attackManaBurn).intp();
-	}
-
-	// attempt to add capturing
-    /**
-	 * Returns the total capture amount (base capture damage) for this unit using the
-	 * supplied skill, taking into account all upgrades & effects.
-	 */
-		int getAttackCapture(const AttackSkillType *ast) const	{
-		return (ast->getAttackCapture() * attackCaptureMult + attackCapture).intp();
-	}
-
-	/**
-	 * Returns the total attack percentage stolen for this unit using the
-	 * supplied skill, taking into account all upgrades & effects.
-	 * @todo fix for fixed ;)
-	 */
-	//fixed getAttackPctStolen(const AttackSkillType *ast) const	{
-	//	return (ast->getAttackPctStolen() * attackPctStolenMult + attackPctStolen);
-	//}
-
-	/**
 	 * Returns the maximum range (attack range, spell range, etc.) for this unit
 	 * using the supplied skill after all modifications due to upgrades &
 	 * effects.
@@ -581,14 +538,14 @@ public:
 	int getMaxRange(const SkillType *st) const {
 		switch(st->getClass()) {
 			case SkillClass::ATTACK:
-				return (st->getMaxRange() * attackRangeMult + attackRange).intp();
+				return (st->getMaxRange() * getAttackStats()->getAttackRange().getValueMult() + getAttackStats()->getAttackRange().getValue()).intp();
 			default:
 				return st->getMaxRange();
 		}
 	}
 
 	int getMaxRange(const AttackSkillTypes *asts) const {
-		return (asts->getMaxRange() * attackRangeMult + attackRange).intp();
+		return (asts->getMaxRange() * getAttackStats()->getAttackRange().getValueMult() + getAttackStats()->getAttackRange().getValue()).intp();
 	}
 
 	// pos
@@ -622,7 +579,7 @@ public:
 	bool isBuilding() const;
 	bool isDead() const					{return !hp;}
 	bool isAlive() const				{return hp;}
-	bool isDamaged() const				{return hp < getMaxHp();}
+	bool isDamaged() const				{return hp < getResourcePools()->getMaxHp().getValue();}
 	bool isOperative() const			{return isAlive() && isBuilt();}
 	bool isBeingBuilt() const			{
 		return currSkill->getClass() == SkillClass::BE_BUILT

@@ -27,7 +27,6 @@ public:
     void setValue(int i) {value = value + i;}
 
     void init(const string name, const int amount);
-
 };
 
 // ===============================

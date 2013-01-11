@@ -177,9 +177,9 @@ Unit::Unit(CreateParams params)
 	ULC_UNIT_LOG( this, " constructed at pos" << pos );
 
 	computeTotalUpgrade();
-	hp = type->getMaxHp() / 20;
-	sp = type->getMaxSp() / 20;
-	cp = type->getMaxCp();
+	hp = type->getResourcePools()->getMaxHp().getValue() / 20;
+	sp = type->getResourcePools()->getMaxSp().getValue() / 20;
+	cp = type->getResourcePools()->getMaxCp().getValue();
 
 	setModelFacing(m_facing);
 
@@ -865,7 +865,7 @@ float Unit::getProgress() const {
 
 float Unit::getAnimProgress() const {
 	if (isBeingBuilt() && currSkill->isStretchyAnim()) {
-		return float(getProgress2()) / float(getMaxHp());
+		return float(getProgress2()) / float(getResourcePools()->getMaxHp().getValue());
 	}
 	return float(g_world.getFrameCount() - lastAnimReset)
 			/	float(nextAnimReset - lastAnimReset);
@@ -1532,10 +1532,10 @@ void Unit::born(bool reborn) {
         }
 
 		setCurrSkill(SkillClass::STOP);
-		hp = type->getMaxHp();
-		sp = type->getMaxSp();
-		cp = type->getMaxCp();
-		ep = type->getMaxEp();
+		hp = type->getResourcePools()->getMaxHp().getValue();
+		sp = type->getResourcePools()->getMaxSp().getValue();
+		cp = type->getResourcePools()->getMaxCp().getValue();
+		ep = type->getResourcePools()->getMaxEp().getValue();
 		if (cp == 0) {
 		    cp = -1;
 		}
@@ -2421,7 +2421,7 @@ void Unit::doKill(Unit *killed) {
 	if (isAlive() && getTeam() != killed->getTeam()) {
         if (getFaction()->getType()->getOnHitExp() == false) {
             incKills();
-            int addExp = killed->getExpGiven();
+            int addExp = killed->getUnitStats()->getExpGiven().getValue();
             incExp(addExp);
 		}
 	}
@@ -2629,15 +2629,15 @@ bool Unit::doRegen(int hpRegeneration, int spRegeneration, int epRegeneration) {
 
 	//sp regen/degen
 	sp += spRegeneration;
-	if (sp > getMaxSp()) {
-		sp = getMaxSp();
+	if (sp > getResourcePools()->getMaxSp().getValue()) {
+		sp = getResourcePools()->getMaxSp().getValue();
 	} else if(sp < 0) {
 		sp = 0;
 	}
 	//ep regen/degen
 	ep += epRegeneration;
-	if (ep > getMaxEp()) {
-		ep = getMaxEp();
+	if (ep > getResourcePools()->getMaxEp().getValue()) {
+		ep = getResourcePools()->getMaxEp().getValue();
 	} else if(ep < 0) {
 		ep = 0;
 	}
@@ -2666,7 +2666,7 @@ Unit* Unit::tick() {
 		(*i)->getType()->tick(this, (**i));
 	}
 	if (isAlive()) {
-		if (doRegen(getHpRegeneration(), getSpRegeneration(), getEpRegeneration())) {
+		if (doRegen(getResourcePools()->getHpRegeneration().getValue(), getResourcePools()->getSpRegeneration().getValue(), getResourcePools()->getEpRegeneration().getValue())) {
 			if (!(killer = effects.getKiller())) {
 				// if no killer, then this had to have been natural degeneration
 				killer = this;
@@ -2705,8 +2705,8 @@ bool Unit::computeEp() {
 		return false;
 	}
 	if (decEp(cost)) {
-		if (ep > getMaxEp()) {
-			ep = getMaxEp();
+		if (ep > getResourcePools()->getMaxEp().getValue()) {
+			ep = getResourcePools()->getMaxEp().getValue();
 		}
 		return false;
 	}
@@ -2725,7 +2725,7 @@ bool Unit::repair(int amount, fixed multiplier) {
 
 	//if not specified, use default value
 	if (!amount) {
-		amount = getType()->getMaxHp() / type->getProductionTime() + 1;
+		amount = getType()->getResourcePools()->getMaxHp().getValue() / type->getProductionTime() + 1;
 	}
 	amount = (amount * multiplier).intp();
     hp += amount;
@@ -2733,8 +2733,8 @@ bool Unit::repair(int amount, fixed multiplier) {
 		hp_above_trigger = 0;
 		ScriptManager::onHPAboveTrigger(this);
 	}
-	if (hp > getMaxHp()) {
-		hp = getMaxHp();
+	if (hp > getResourcePools()->getMaxHp().getValue()) {
+		hp = getResourcePools()->getMaxHp().getValue();
 		if (!isBuilt()) {
 			faction->checkAdvanceSubfaction(type, true);
 			born();
@@ -2747,7 +2747,7 @@ bool Unit::repair(int amount, fixed multiplier) {
 		}
 	}
 	//stop fire
-	if (hp > type->getMaxHp() / 2 && fire != NULL) {
+	if (hp > type->getResourcePools()->getMaxHp().getValue() / 2 && fire != NULL) {
 		fire->fade();
 		fire = NULL;
 	}
@@ -2802,7 +2802,7 @@ bool Unit::decHp(int i) {
 	}
 
 	// fire
-	if (type->getProperty(Property::BURNABLE) && hp < type->getMaxHp() / 2
+	if (type->getProperty(Property::BURNABLE) && hp < type->getResourcePools()->getMaxHp().getValue() / 2
 	&& fire == NULL && m_carrier == -1  && m_garrison == -1) {
 		FireParticleSystem *fps;
 		Vec2i cPos = getCenteredPos();
@@ -2832,24 +2832,24 @@ bool Unit::decHp(int i) {
 
 string Unit::getShortDesc() const {
 	stringstream ss;
-	ss << g_lang.get("Hp") << ": " << hp << "/" << getMaxHp();
-	if (getHpRegeneration() > 0) {
-		ss << " (" << g_lang.get("Regeneration") << ": " << getHpRegeneration() << ")";
+	ss << g_lang.get("Hp") << ": " << hp << "/" << getResourcePools()->getMaxHp().getValue();
+	if (getResourcePools()->getHpRegeneration().getValue() > 0) {
+		ss << " (" << g_lang.get("Regeneration") << ": " << getResourcePools()->getHpRegeneration().getValue() << ")";
 	}
-    if (getMaxSp() > 0) {
-    ss << endl << g_lang.get("Sp") << ": " << sp << "/" << getMaxSp();
-	    if (getSpRegeneration() > 0) {
-        ss << " (" << g_lang.get("Regeneration") << ": " << getSpRegeneration() << ")";
+    if (getResourcePools()->getMaxSp().getValue() > 0) {
+    ss << endl << g_lang.get("Sp") << ": " << sp << "/" << getResourcePools()->getMaxSp().getValue();
+	    if (getResourcePools()->getSpRegeneration().getValue() > 0) {
+        ss << " (" << g_lang.get("Regeneration") << ": " << getResourcePools()->getSpRegeneration().getValue() << ")";
         }
 	}
-	if (getMaxEp() > 0) {
-    ss << endl << g_lang.get("Ep") << ": " << ep << "/" << getMaxEp();
-		if (getEpRegeneration() > 0) {
-        ss << " (" << g_lang.get("Regeneration") << ": " << getEpRegeneration() << ")";
+	if (getResourcePools()->getMaxEp().getValue() > 0) {
+    ss << endl << g_lang.get("Ep") << ": " << ep << "/" << getResourcePools()->getMaxEp().getValue();
+		if (getResourcePools()->getEpRegeneration().getValue() > 0) {
+        ss << " (" << g_lang.get("Regeneration") << ": " << getResourcePools()->getEpRegeneration().getValue() << ")";
 		}
 	}
-    if (getMaxCp() > 0) {
-		ss << endl << g_lang.get("Cp") << ": " << cp << "/" << getMaxCp();
+    if (getResourcePools()->getMaxCp().getValue() > 0) {
+		ss << endl << g_lang.get("Cp") << ": " << cp << "/" << getResourcePools()->getMaxCp().getValue();
 	}
 	if (!commands.empty()) { // Show current command being executed
 		string factionName = faction->getType()->getName();
@@ -2915,7 +2915,7 @@ string Unit::getLongDesc() const {
         }
     }
 	const string factionName = type->getFactionType()->getName();
-	int sightBonus = getSight() - type->getSight();
+	int sightBonus = getUnitStats()->getSight().getValue() - type->getUnitStats()->getSight().getValue();
 	if (getResistanceCount() > 0) {
 	ss << endl << lang.get("Resistances") << ":";
 	for (int i = 0; i < getResistanceCount(); ++i) {
@@ -2924,8 +2924,8 @@ string Unit::getLongDesc() const {
 	}
 	ss << endl;
 	}
-	int expGivenBonus = getExpGiven() - type->getExpGiven();
-	ss << endl << lang.get("ExpGiven") << ": " << type->getExpGiven();
+	int expGivenBonus = getUnitStats()->getExpGiven().getValue() - type->getUnitStats()->getExpGiven().getValue();
+	ss << endl << lang.get("ExpGiven") << ": " << type->getUnitStats()->getExpGiven().getValue();
 	if (expGivenBonus) {
 		ss << (expGivenBonus > 0 ? " +" : " ") << expGivenBonus;
 	}
@@ -2938,7 +2938,7 @@ string Unit::getLongDesc() const {
 	}
 	ss << endl << "Current Focus: " << getCurrentFocus();
 	}
-	ss << endl << lang.get("Sight") << ": " << type->getSight();
+	ss << endl << lang.get("Sight") << ": " << type->getUnitStats()->getSight().getValue();
 	if (sightBonus) {
 		ss << (sightBonus > 0 ? " +" : " ") << sightBonus;
 	}
@@ -2946,7 +2946,7 @@ string Unit::getLongDesc() const {
     if (type->getLevelCount() > 0) {
         for (int i = 0; i < type->getLevelCount(); ++i) {
             ss << endl << type->getLevel(i)->getName();
-            ss << endl << type->getLevel(i)->getStatistics()->getMaxHp();
+            ss << endl << type->getLevel(i)->getStatistics()->getResourcePools()->getMaxHp().getValue();
         }
     }
     if (loadCount) {
@@ -3089,7 +3089,7 @@ string Unit::getLongDesc() const {
 	if (type->getLoadBonuses().size() > 0) {
 		for (int i = 0; i < type->getLoadBonuses().size(); ++i) {
 			const LoadBonus lb = type->getLoadBonuses()[i];
-			ss << endl << "Load Bonus: " << "Max-Hp: " << lb.getMaxHp();
+			ss << endl << "Load Bonus: " << "Max-Hp: " << lb.getResourcePools()->getMaxHp().getValue();
 			ss << endl << "Source: " << lb.getSource();
 		}
 	}
@@ -3097,7 +3097,7 @@ string Unit::getLongDesc() const {
     /*ss << endl << "Live %: " << type->live;
     if (getType()->hasTag("ordermember")) {
     ss << endl << "ordermember";
-    ss << endl<< fixed(getMaxHp() * type->live / 100).intp();
+    ss << endl<< fixed(getResourcePools()->getMaxHp().getValue() * type->live / 100).intp();
     }
     if (type->inhuman == true) {
     ss << endl << "Control: " << "inhuman";
@@ -3199,12 +3199,14 @@ void Unit::applyUpgrade(const UpgradeType *upgradeType) {
 
 
 	for (int i = 0; i < us->m_enhancements.size(); ++i) {
-	const Statistics *stats = &us->m_enhancements[i].m_enhancement;
-	if (stats) {
-		totalUpgrade.sum(stats);
-		recalculateStats();
-		doRegen(stats->getHpBoost(), stats->getSpBoost(), stats->getEpBoost());
-	}
+        const Statistics *stats = &us->m_enhancements[i].m_enhancement;
+        if (stats) {
+            totalUpgrade.sum(stats);
+            recalculateStats();
+            doRegen(stats->getResourcePools()->getHpBoost().getValue(),
+                    stats->getResourcePools()->getSpBoost().getValue(),
+                    stats->getResourcePools()->getEpBoost().getValue());
+        }
     }
 }
 
@@ -3212,6 +3214,7 @@ void Unit::applyUpgrade(const UpgradeType *upgradeType) {
 void Unit::computeTotalUpgrade() {
     totalUpgrade.resistances.clear();
 	faction->getUpgradeManager()->computeTotalUpgrade(this, &totalUpgrade);
+	totalUpgrade.sum(type);
     if (dayCycle) {
         const Statistics *stats = &type->dayPower;
         if (stats) {
@@ -3297,56 +3300,50 @@ void Unit::computeTotalUpgrade() {
  * totalUpgrade objects.
  */
 void Unit::recalculateStats() {
-	int oldMaxHp = getMaxHp();
+	int oldMaxHp = getResourcePools()->getMaxHp().getValue();
 	int oldHp = hp;
-	int oldMaxSp = getMaxSp();
+	int oldMaxSp = getResourcePools()->getMaxSp().getValue();
 	int oldSp = sp;
-	int oldSight = getSight();
+	int oldSight = getUnitStats()->getSight().getValue();
 
-	EnhancementType::reset();
-	UnitStats::setValues(*type);
-
-	// add up all multipliers first and then apply (multiply) once.
-	// See EnhancementType::addMultipliers() for the 'adding' strategy
-	EnhancementType::addMultipliers(totalUpgrade);
-	for (Effects::const_iterator i = effects.begin(); i != effects.end(); ++i) {
-		EnhancementType::addMultipliers(*(*i)->getType(), (*i)->getStrength());
-	}
-	EnhancementType::clampMultipliers();
-	UnitStats::applyMultipliers(*this);
-	UnitStats::addStatic(totalUpgrade);
-	for (Effects::const_iterator i = effects.begin(); i != effects.end(); ++i) {
-		UnitStats::addStatic(*(*i)->getType(), (*i)->getStrength());
-
-		// take care of effect damage type
-		hpRegeneration += (*i)->getActualHpRegen() - (*i)->getType()->getHpRegeneration();
-		//spRegeneration += (*i)->getActualSpRegen() - (*i)->getType()->getSpRegeneration();
-	}
-
+	reset();
     resistances.clear();
+
+	for (Effects::const_iterator i = effects.begin(); i != effects.end(); ++i) {
+		totalUpgrade.addMultipliers((*i)->getType(), (*i)->getStrength());
+	}
+
+	totalUpgrade.clampMultipliers();
+
     const Statistics *stats = static_cast<const Statistics*>(&totalUpgrade);
-    Statistics::addResistancesAndDamage(stats);
+
+	applyMultipliers(stats);
+	addStatic(stats);
+
+	for (Effects::const_iterator i = effects.begin(); i != effects.end(); ++i) {
+		addStatic((*i)->getType(), (*i)->getStrength());
+		getResourcePools()->getHpRegeneration().incValue((*i)->getActualHpRegen() - (*i)->getType()->getResourcePools()->getHpRegeneration().getValue());
+	}
+
+    addResistancesAndDamage(stats);
 
 	effects.clearDirty();
 
-	// correct negatives
-	sanitiseUnitStats();
+    sanitiseEnhancement();
 
-	// adjust hp (if maxHp was modified)
-	if (getMaxHp() > oldMaxHp) {
-		hp += getMaxHp() - oldMaxHp;
-	} else if (hp > getMaxHp()) {
-		hp = getMaxHp();
+	if (getResourcePools()->getMaxHp().getValue() > oldMaxHp) {
+		hp += getResourcePools()->getMaxHp().getValue() - oldMaxHp;
+	} else if (hp > getResourcePools()->getMaxHp().getValue()) {
+		hp = getResourcePools()->getMaxHp().getValue();
 	}
 
-	// adjust sp (if maxSp was modified)
-	if (getMaxSp() > oldMaxSp) {
-		sp += getMaxSp() - oldMaxSp;
-	} else if (sp > getMaxSp()) {
-		sp = getMaxSp();
+	if (getResourcePools()->getMaxSp().getValue() > oldMaxSp) {
+		sp += getResourcePools()->getMaxSp().getValue() - oldMaxSp;
+	} else if (sp > getResourcePools()->getMaxSp().getValue()) {
+		sp = getResourcePools()->getMaxSp().getValue();
 	}
 
-	if (oldSight != getSight() && type->getDetectorType()) {
+	if (oldSight != getUnitStats()->getSight().getValue() && type->getDetectorType()) {
 		g_cartographer.detectorSightModified(this, oldSight);
 	}
 
@@ -3373,7 +3370,7 @@ bool Unit::add(Effect *e) {
 	}
 
 	if (e->getType()->isTickImmediately()) {
-		if (doRegen(e->getType()->getHpRegeneration(), e->getType()->getSpRegeneration(), e->getType()->getEpRegeneration())) {
+		if (doRegen(e->getType()->getResourcePools()->getHpRegeneration().getValue(), e->getType()->getResourcePools()->getSpRegeneration().getValue(), e->getType()->getResourcePools()->getEpRegeneration().getValue())) {
 			g_world.getEffectFactory().deleteInstance(e);
 			return true;
 		}
@@ -3571,12 +3568,12 @@ bool Unit::transform(const TransformCommandType *tct, const UnitType *ut, Vec2i 
 		if (policy == HpPolicy::SET_TO_ONE) {
 			hp = 1;
 		} else if (policy == HpPolicy::RESET) {
-			hp = type->getMaxHp() / 20;
+			hp = type->getResourcePools()->getMaxHp().getValue() / 20;
 		} else {
-			if (oldHp < getMaxHp()) {
+			if (oldHp < getResourcePools()->getMaxHp().getValue()) {
 				hp = oldHp;
 			} else {
-				hp = getMaxHp();
+				hp = getResourcePools()->getMaxHp().getValue();
 			}
 		}
 		commands.clear();

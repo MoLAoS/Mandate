@@ -15,7 +15,6 @@
 #include "sim_interface.h"
 
 namespace Glest { namespace ProtoTypes {
-
 // =====================================================
 // 	class DamageType
 // =====================================================

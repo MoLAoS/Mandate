@@ -539,9 +539,9 @@ void ConstructCommandType::acceptBuild(Unit *unit, Command *command, const UnitT
 	const UnitType *preBuiltUnitType = unit->getFaction()->getType()->getUnitType(preUnitType);
 	builtUnit = g_world.newUnit(command->getPos(), preBuiltUnitType, unit->getFaction(), map, command->getFacing());
 	builtUnit->create();
-	int newHp = builtUnit->getType()->getMaxHp();
+	int newHp = builtUnit->getType()->getResourcePools()->getMaxHp().getValue();
 	builtUnit->repair(newHp);
-	newHp = builtUnitType->getMaxHp() ;
+	newHp = builtUnitType->getResourcePools()->getMaxHp().getValue();
 	builtUnit->decHp(newHp);
     unit->finishCommand();
     unit->setCurrSkill(SkillClass::STOP);
@@ -960,7 +960,7 @@ bool MaintainCommandType::maintainableInRange(const Unit *unit, Unit **rangedPtr
 
 bool MaintainCommandType::maintainableInSight(const Unit *unit, Unit **rangedPtr,
 							const MaintainCommandType *rct, bool allowSelf) {
-	return maintainableInRange(unit, rangedPtr, rct, unit->getSight(), allowSelf);
+	return maintainableInRange(unit, rangedPtr, rct, unit->getUnitStats()->getSight().getValue(), allowSelf);
 }
 
 }}

@@ -43,15 +43,9 @@ Effect::Effect(CreateParams params)
 	this->strength = params.strength;
 	this->duration = type->getDuration();
 	this->recourse = params.root != NULL;
-	this->actualHpRegen = type->getHpRegeneration();
-	if (type->getHpRegeneration() < 0) {
-        if (type->getDamageClass()) {
-            fixed fregen = type->getHpRegeneration()
-                * params.tt->getDamageMultiplier(type->getDamageClass(), params.recipient->getType()->getArmourType());
-            this->actualHpRegen = fregen.intp();
-        } else {
-            this->actualHpRegen = type->getHpRegeneration();
-        }
+	this->actualHpRegen = type->getResourcePools()->getHpRegeneration().getValue();
+	if (type->getResourcePools()->getHpRegeneration().getValue() < 0) {
+        this->actualHpRegen = type->getResourcePools()->getHpRegeneration().getValue();
     } else if (type->getDamageTypeCount() > 0) {
         for (int i = 0; i < type->getDamageTypeCount(); ++i) {
             const DamageType *damage = type->getDamageType(i);
@@ -263,7 +257,7 @@ Unit *Effects::getKiller() const {
 		//If more than two other units hit this unit with a DOT and it died,
 		//credit goes to the one 1st in the list.
 
-		if ((*i)->getType()->getHpRegeneration() < 0 && source != NULL && source->isAlive()) {
+		if ((*i)->getType()->getResourcePools()->getHpRegeneration().getValue() < 0 && source != NULL && source->isAlive()) {
 			return source;
 		}
 	}

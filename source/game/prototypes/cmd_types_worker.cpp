@@ -143,7 +143,7 @@ bool RepairCommandType::repairableInRange(const Unit *unit, Unit **rangedPtr,
 
 bool RepairCommandType::repairableInSight(const Unit *unit, Unit **rangedPtr,
 							const RepairCommandType *rct, bool allowSelf) {
-	return repairableInRange(unit, rangedPtr, rct, unit->getSight(), allowSelf);
+	return repairableInRange(unit, rangedPtr, rct, unit->getUnitStats()->getSight().getValue(), allowSelf);
 }
 
 bool RepairCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct) {

@@ -122,7 +122,6 @@ void PetRule::load(const XmlNode *prn, const string &dir, const TechTree *tt, co
 
 UnitType::UnitType()
 		: multiBuild(false), multiSelect(false)
-		, armourType(0)
 		, light(false), lightColour(0.f)
 		, m_cloakType(0)
 		, m_detectorType(0)
@@ -272,14 +271,6 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
         g_logger.logXmlError(path, e.what());
         loadOk = false;
     }
-	try {
-		string armorTypeName = parametersNode->getChildRestrictedValue("armor-type");
-		armourType = techTree->getArmourType(armorTypeName);
-	}
-	catch (runtime_error e) {
-		g_logger.logXmlError(dir, e.what());
-		loadOk = false;
-	}
 	try {
         const XmlNode *creatableTypeNode = unitNode->getChild("creatable-type");
         if (!CreatableType::load(creatableTypeNode, dir, techTree, factionType)) {
@@ -601,7 +592,6 @@ void UnitType::addBeLoadedCommand() {
 }
 
 void UnitType::doChecksum(Checksum &checksum) const {
-	if (armourType) checksum.add(armourType->getName());
 	checksum.add(light);
 	checksum.add(lightColour);
 	checksum.add(multiBuild);

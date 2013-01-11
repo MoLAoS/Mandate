@@ -2457,18 +2457,18 @@ unitOnRange_exitLoop:
 }
 
 bool CommandType::attackerInSight(const Unit *unit, Unit **rangedPtr) {
-	return unitInRange(unit, unit->getSight(), rangedPtr, NULL, NULL);
+	return unitInRange(unit, unit->getUnitStats()->getSight().getValue(), rangedPtr, NULL, NULL);
 }
 
 bool CommandType::attackableInRange(const Unit *unit, Unit **rangedPtr,
 			const AttackSkillTypes *asts, const AttackSkillType **past) {
-	int range = min(unit->getMaxRange(asts), unit->getSight());
+	int range = unit->getMaxRange(asts);
 	return unitInRange(unit, range, rangedPtr, asts, past);
 }
 
 bool CommandType::attackableInSight(const Unit *unit, Unit **rangedPtr,
 			const AttackSkillTypes *asts, const AttackSkillType **past) {
-	return unitInRange(unit, unit->getSight(), rangedPtr, asts, past);
+	return unitInRange(unit, unit->getUnitStats()->getSight().getValue(), rangedPtr, asts, past);
 }
 
 }}//end namespace

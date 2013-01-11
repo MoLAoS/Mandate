@@ -119,30 +119,10 @@ void UpgradeManager::updateUpgrade(const Upgrade *upgrade, Faction *f) {
             if ((*fit).getUpgradeStage()<(*fit).getMaxStage()) {
             const FactionType *factionType = it->getType()->getFactionType();
                 for (int i = 0; i < (*fit).m_enhancements.size(); ++i) {
-                (*fit).m_enhancements[i].m_enhancement.maxHp += (*fit).m_enhancements[i].m_enhancement.layerMaxHp;
-                (*fit).m_enhancements[i].m_enhancement.maxSp += (*fit).m_enhancements[i].m_enhancement.layerMaxSp;
-                (*fit).m_enhancements[i].m_enhancement.maxEp += (*fit).m_enhancements[i].m_enhancement.layerMaxEp;
-                (*fit).m_enhancements[i].m_enhancement.maxCp += (*fit).m_enhancements[i].m_enhancement.layerMaxCp;
-                (*fit).m_enhancements[i].m_enhancement.hpRegeneration += (*fit).m_enhancements[i].m_enhancement.layerHpRegeneration;
-                (*fit).m_enhancements[i].m_enhancement.spRegeneration += (*fit).m_enhancements[i].m_enhancement.layerSpRegeneration;
-                (*fit).m_enhancements[i].m_enhancement.epRegeneration += (*fit).m_enhancements[i].m_enhancement.layerEpRegeneration;
-                (*fit).m_enhancements[i].m_enhancement.sight += (*fit).m_enhancements[i].m_enhancement.layerSight;
-                (*fit).m_enhancements[i].m_enhancement.armor += (*fit).m_enhancements[i].m_enhancement.layerArmor;
-                (*fit).m_enhancements[i].m_enhancement.attackStrength += (*fit).m_enhancements[i].m_enhancement.layerAttackStrength;
-                (*fit).m_enhancements[i].m_enhancement.attackLifeLeech += (*fit).m_enhancements[i].m_enhancement.layerAttackLifeLeech;
-                (*fit).m_enhancements[i].m_enhancement.attackManaBurn += (*fit).m_enhancements[i].m_enhancement.layerAttackManaBurn;
-                (*fit).m_enhancements[i].m_enhancement.attackCapture += (*fit).m_enhancements[i].m_enhancement.layerAttackCapture;
-                (*fit).m_enhancements[i].m_enhancement.effectStrength += (*fit).m_enhancements[i].m_enhancement.layerEffectStrength;
-                (*fit).m_enhancements[i].m_enhancement.attackPctStolen += (*fit).m_enhancements[i].m_enhancement.layerAttackPctStolen;
-                (*fit).m_enhancements[i].m_enhancement.attackRange += (*fit).m_enhancements[i].m_enhancement.layerAttackRange;
-                (*fit).m_enhancements[i].m_enhancement.moveSpeed += (*fit).m_enhancements[i].m_enhancement.layerMoveSpeed;
-                (*fit).m_enhancements[i].m_enhancement.attackSpeed += (*fit).m_enhancements[i].m_enhancement.layerAttackSpeed;
-                (*fit).m_enhancements[i].m_enhancement.prodSpeed += (*fit).m_enhancements[i].m_enhancement.layerProdSpeed;
-                (*fit).m_enhancements[i].m_enhancement.repairSpeed += (*fit).m_enhancements[i].m_enhancement.layerRepairSpeed;
-                (*fit).m_enhancements[i].m_enhancement.harvestSpeed += (*fit).m_enhancements[i].m_enhancement.layerHarvestSpeed;
+                    (*fit).m_enhancements[i].m_enhancement.modify();
+                }
             }
         }
-    }
     }
     }
 }
@@ -255,37 +235,39 @@ void UpgradeManager::addPointBoosts(Unit *unit) const {
     Faction *f = unit->getFaction();
 	foreach_const (Upgrades, it, upgrades) {
 		if ((*it)->getFactionIndex() == unit->getFactionIndex()
-		&& (*it)->getType()->isAffected(unit->getType())) {
+            && (*it)->getType()->isAffected(unit->getType())) {
 		    for (int i = 0; i < f->getCurrentStage((*it)->getType()); ++i) {
-            Faction::UpgradeStages::iterator fit;
-	        for(fit=f->upgradeStages.begin(); fit!=f->upgradeStages.end(); ++fit){
-		        if((*fit).getUpgradeType()==(*it)->getType()){
-			        break;
-		        }
-	        }
-			const EnhancementType &e = *(*fit).getEnhancement(unit->getType());
-			unit->doRegen(e.getHpBoost(), e.getSpBoost(), e.getEpBoost());
+                Faction::UpgradeStages::iterator fit;
+                for(fit=f->upgradeStages.begin(); fit!=f->upgradeStages.end(); ++fit){
+                    if((*fit).getUpgradeType()==(*it)->getType()){
+                        break;
+                    }
+                }
+                const Statistics &stats = *(*fit).getStatistics(unit->getType());
+                unit->doRegen(stats.getResourcePools()->getHpBoost().getValue(),
+                              stats.getResourcePools()->getSpBoost().getValue(),
+                              stats.getResourcePools()->getEpBoost().getValue());
 		    }
 		}
 	}
 }
 
-void UpgradeManager::computeTotalUpgrade(const Unit *unit, EnhancementType *totalUpgrade) const{
+void UpgradeManager::computeTotalUpgrade(const Unit *unit, Statistics *totalUpgrade) const{
 	totalUpgrade->reset();
     Faction *f = unit->getFaction();
 	foreach_const (Upgrades, it, upgrades) {
-		if ((*it)->getFactionIndex() == unit->getFactionIndex()
-		&& (*it)->getType()->isAffected(unit->getType())) {
-		    for (int i = 0; i < f->getCurrentStage((*it)->getType()); ++i) {
-            Faction::UpgradeStages::iterator fit;
-	        for(fit=f->upgradeStages.begin(); fit!=f->upgradeStages.end(); ++fit){
-		        if((*fit).getUpgradeType()==(*it)->getType()){
-			        break;
-		        }
-	        }
-		    for (int i = 0; i < f->getCurrentStage((*it)->getType()); ++i) {
-			totalUpgrade->sum((*fit).getEnhancement(unit->getType()));
-		    }
+        if ((*it)->getFactionIndex() == unit->getFactionIndex()
+            && (*it)->getType()->isAffected(unit->getType())) {
+            for (int i = 0; i < f->getCurrentStage((*it)->getType()); ++i) {
+                Faction::UpgradeStages::iterator fit;
+                for(fit=f->upgradeStages.begin(); fit!=f->upgradeStages.end(); ++fit){
+                    if((*fit).getUpgradeType()==(*it)->getType()){
+                        break;
+                    }
+                }
+                for (int i = 0; i < f->getCurrentStage((*it)->getType()); ++i) {
+                    totalUpgrade->sum((*fit).getStatistics(unit->getType()));
+                }
 		    }
 		}
 	}

@@ -59,80 +59,6 @@ bool TechTree::preload(const string &dir, const set<string> &factionNames){
 		return false;
 	}
 
-	//attack types
-	const XmlNode *attackTypesNode;
-	try {
-		attackTypesNode= techTreeNode->getChild("attack-types");
-		attackTypes.resize(attackTypesNode->getChildCount());
-		for(int i=0; i<attackTypes.size(); ++i){
-			const XmlNode *attackTypeNode= attackTypesNode->getChild("attack-type", i);
-			string name;
-			try {
-				name = attackTypeNode->getAttribute("name")->getRestrictedValue();
-				attackTypes[i].setName(name);
-				attackTypes[i].setId(i);
-				attackTypeMap[name] = &attackTypes[i];
-			}
-			catch (runtime_error &e) {
-				g_logger.logXmlError(path, e.what());
-				loadOk = false;
-			}
-		}
-	}
-	catch (runtime_error &e) {
-		g_logger.logXmlError(path, e.what());
-		loadOk = false;
-	}
-
-	//armor types
-	const XmlNode *armorTypesNode;
-	try {
-		armorTypesNode= techTreeNode->getChild("armor-types");
-		armorTypes.resize(armorTypesNode->getChildCount());
-		for(int i=0; i<armorTypes.size(); ++i){
-			string name ;
-			try {
-				name = armorTypesNode->getChild("armor-type", i)->getRestrictedAttribute("name");
-				armorTypes[i].setName(name);
-				armorTypes[i].setId(i);
-				armorTypeMap[name] = &armorTypes[i];
-			}
-			catch (runtime_error &e) {
-				g_logger.logXmlError(path, e.what());
-				loadOk = false;
-			}
-		}
-	}
-	catch (runtime_error &e) {
-		g_logger.logXmlError(path, e.what());
-		loadOk = false;
-	}
-
-	try { //damage multipliers
-		damageMultiplierTable.init(attackTypes.size(), armorTypes.size());
-		const XmlNode *damageMultipliersNode= techTreeNode->getChild("damage-multipliers");
-		for (int i = 0; i < damageMultipliersNode->getChildCount(); ++i) {
-			try {
-				const XmlNode *dmNode= damageMultipliersNode->getChild("damage-multiplier", i);
-				const AttackType *attackType= getAttackType(dmNode->getRestrictedAttribute("attack"));
-				const ArmourType *armourType= getArmourType(dmNode->getRestrictedAttribute("armor"));
-
-				fixed fixedMult = dmNode->getFixedAttribute("value");
-				//float multiplier= dmNode->getFloatAttribute("value");
-
-				//cout << "Damage Multiplier as float: " << multiplier << ", as fixed " << fixedMult << endl;
-
-				damageMultiplierTable.setDamageMultiplier(attackType, armourType, fixedMult);
-			} catch (runtime_error e) {
-				g_logger.logXmlError(path, e.what());
-				loadOk = false;
-			}
-		}
-	} catch (runtime_error &e) {
-		g_logger.logXmlError(path, e.what());
-		loadOk = false;
-	}
-
 	//load factions
 	factionTypes.resize(factionNames.size());
 	int i = 0;
@@ -209,31 +135,11 @@ void TechTree::doChecksumResources(Checksum &checksum) const {
 	}
 }
 
-void TechTree::doChecksumDamageMult(Checksum &checksum) const {
-	checksum.add(desc);
-	foreach_const (ArmorTypes, it, armorTypes) {
-		it->doChecksum(checksum);
-	}
-	foreach_const (AttackTypes, it, attackTypes) {
-		it->doChecksum(checksum);
-	}
-	foreach_const (ArmorTypes, armourIt, armorTypes) {
-		const ArmourType *armourType
-			= (*const_cast<ArmorTypeMap*>(&armorTypeMap))[armourIt->getName()];
-		foreach_const (AttackTypes, attackIt, attackTypes) {
-			const AttackType *attackType
-				= (*const_cast<AttackTypeMap*>(&attackTypeMap))[attackIt->getName()];
-			checksum.add(damageMultiplierTable.getDamageMultiplier(attackType, armourType));
-		}
-	}
-}
-
 void TechTree::doChecksumFaction(Checksum &checksum, int i) const {
 	factionTypes[i].doChecksum(checksum);
 }
 
 void TechTree::doChecksum(Checksum &checksum) const {
-	doChecksumDamageMult(checksum);
 	doChecksumResources(checksum);
 	for (int i=0; i < factionTypes.size(); ++i) {
 		factionTypes[i].doChecksum(checksum);

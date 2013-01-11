@@ -347,7 +347,7 @@ bool MoveSkillType::load(const XmlNode *sn, const string &dir, const TechTree *t
 }
 
 fixed MoveSkillType::getSpeed(const Unit *unit) const {
-	return speed * unit->getMoveSpeedMult() + unit->getMoveSpeed();
+	return speed * unit->getUnitStats()->getMoveSpeed().getValueMult() + unit->getUnitStats()->getMoveSpeed().getValue();
 }
 
 // =====================================================
@@ -417,22 +417,8 @@ bool AttackSkillType::load(const XmlNode *sn, const string &dir, const TechTree 
 	loadOk = TargetBasedSkillType::load(sn, dir, tt, ct);
 
 	//misc
-	if (sn->getOptionalChild("attack-strenght")) { // support vanilla-glest typo
-		attackStrength = sn->getChild("attack-strenght")->getAttribute("value")->getIntValue();
-	} else {
-		attackStrength = sn->getChild("attack-strength")->getAttribute("value")->getIntValue();
-	}
-	attackVar= sn->getChild("attack-var")->getAttribute("value")->getIntValue();
-    attackLifeLeech = sn->getOptionalIntValue("attack-life-leech"); //->getAttribute("value")->getIntValue(); //attempt to add lifeleech
-	attackManaBurn = sn->getOptionalIntValue("attack-mana-burn"); //->getAttribute("value")->getIntValue(); //attempt to add manaburn
-	attackCapture = sn->getOptionalIntValue("attack-capture"); //->getAttribute("value")->getIntValue(); //attempt to add capturing
-	maxRange= sn->getOptionalIntValue("attack-range");
-	string attackTypeName= sn->getChild("attack-type")->getAttribute("value")->getRestrictedValue();
-	attackType= tt->getAttackType(attackTypeName);
 	startTime= sn->getOptionalFloatValue("attack-start-time");
-
     cooldown = 0;
-
 	if (sn->getOptionalChild("cooldown")) {
         cooldown = sn->getOptionalChild("cooldown")->getAttribute("time")->getIntValue();
 	}
@@ -447,20 +433,11 @@ bool AttackSkillType::load(const XmlNode *sn, const string &dir, const TechTree 
             damageTypes[i].init(damageTypeName, amount);
 	    }
 	}
-
-	const XmlNode *attackPctStolenNode= sn->getChild("attack-percent-stolen", 0, false);
-	if(attackPctStolenNode) {
-		attackPctStolen = attackPctStolenNode->getAttribute("value")->getFixedValue() / 100;
-		attackPctVar = attackPctStolenNode->getAttribute("var")->getFixedValue() / 100;
-	} else {
-		attackPctStolen = 0;
-		attackPctVar = 0;
-	}
 #ifdef EARTHQUAKE_CODE
 	earthquakeType = NULL;
 	XmlNode *earthquakeNode = sn->getChild("earthquake", 0, false);
 	if(earthquakeNode) {
-		earthquakeType = new EarthquakeType(float(attackStrength), attackType);
+		earthquakeType = new EarthquakeType(float(0));
 		earthquakeType->load(earthquakeNode, dir, tt, ft);
 	}
 #endif
@@ -469,16 +446,6 @@ bool AttackSkillType::load(const XmlNode *sn, const string &dir, const TechTree 
 
 void AttackSkillType::doChecksum(Checksum &checksum) const {
 	TargetBasedSkillType::doChecksum(checksum);
-
-	checksum.add(attackStrength);
-	checksum.add(attackVar);
-    checksum.add(attackLifeLeech);
-	checksum.add(attackManaBurn);
-    checksum.add(attackCapture);
-	checksum.add(attackPctStolen);
-	checksum.add(attackPctVar);
-	attackType->doChecksum(checksum);
-
 	// earthquakeType ??
 }
 
@@ -492,18 +459,6 @@ void AttackSkillType::getDesc(string &str, const Unit *unit) const {
     str += intToStr(cooldown);
     str += "\n";
 
-	//attack strength
-	str += lang.get("AttackStrength")+": ";
-	str += intToStr(attackStrength);
-	//this section deals with the variable damage, which i don't like
-	/*str += intToStr(attackStrength - attackVar);
-	str += "...";
-	str += intToStr(attackStrength + attackVar);*/
-
-	EnhancementType::describeModifier(str, unit->getAttackStrength(this) - attackStrength);
-	str += " ("+ attackType->getName() +")";
-	str += "\n";
-
 	if (damageTypes.size() > 0) {
     str += lang.get("Magic Damage")+": ";
     str += "\n";
@@ -514,40 +469,12 @@ void AttackSkillType::getDesc(string &str, const Unit *unit) const {
     str += "\n";
 	}
 
-	str += lang.get("AttackLifeLeech")+": ";
-	str += intToStr(attackStrength * attackLifeLeech / 100);
-	//this section deals with the variable damage, which i don't like
-	/*str += intToStr(attackStrength * attackLifeLeech / 100 - attackVar);
-	str += "...";
-	str += intToStr(attackStrength * attackLifeLeech / 100 + attackVar);*/
-
-    EnhancementType::describeModifier(str, unit->getAttackLifeLeech(this) - attackLifeLeech);
-    str += "%";
-    str += "\n";
-
-	str += lang.get("AttackManaBurn")+": ";
-	str += intToStr(attackStrength * attackManaBurn / 100);
-	//this section deals with the variable damage, which i don't like
-	/*str += intToStr(attackStrength * attackManaBurn / 100 - attackVar);
-	str += "...";
-	str += intToStr(attackStrength * attackManaBurn / 100 + attackVar);*/
-
-    EnhancementType::describeModifier(str, unit->getAttackManaBurn(this) - attackManaBurn);
-    str += "%";
-    str += "\n";
-
-    str += lang.get("AttackCapture")+": ";
-	str += intToStr(attackCapture);
-
-    EnhancementType::describeModifier(str, unit->getAttackCapture(this) - attackCapture);
-    str += "\n";
-
 	TargetBasedSkillType::getDesc(str, unit, "AttackDistance");
 	descEffects(str, unit);
 }
 
 fixed AttackSkillType::getSpeed(const Unit *unit) const {
-	return speed * unit->getAttackSpeedMult() + unit->getAttackSpeed();
+	return speed * unit->getAttackStats()->getAttackSpeed().getValueMult() + unit->getAttackStats()->getAttackSpeed().getValue();
 }
 
 // ===============================
@@ -555,7 +482,7 @@ fixed AttackSkillType::getSpeed(const Unit *unit) const {
 // ===============================
 
 fixed BuildSkillType::getSpeed(const Unit *unit) const {
-	return speed * unit->getRepairSpeedMult() + unit->getRepairSpeed();
+	return speed * unit->getProductionSpeeds()->getRepairSpeed().getValueMult() + unit->getProductionSpeeds()->getRepairSpeed().getValue();
 }
 
 // ===============================
@@ -563,7 +490,7 @@ fixed BuildSkillType::getSpeed(const Unit *unit) const {
 // ===============================
 
 fixed ConstructSkillType::getSpeed(const Unit *unit) const {
-	return speed * unit->getRepairSpeedMult() + unit->getRepairSpeed();
+	return speed * unit->getProductionSpeeds()->getRepairSpeed().getValueMult() + unit->getProductionSpeeds()->getRepairSpeed().getValue();
 }
 
 // ===============================
@@ -571,7 +498,7 @@ fixed ConstructSkillType::getSpeed(const Unit *unit) const {
 // ===============================
 
 fixed HarvestSkillType::getSpeed(const Unit *unit) const {
-	return speed * unit->getHarvestSpeedMult() + unit->getHarvestSpeed();
+	return speed * unit->getProductionSpeeds()->getHarvestSpeed().getValueMult() + unit->getProductionSpeeds()->getHarvestSpeed().getValue();
 }
 
 // ===============================
@@ -681,7 +608,7 @@ void RepairSkillType::getDesc(string &str, const Unit *unit) const {
 }
 
 fixed RepairSkillType::getSpeed(const Unit *unit) const {
-	return speed * unit->getRepairSpeedMult() + unit->getRepairSpeed();
+	return speed * unit->getProductionSpeeds()->getRepairSpeed().getValueMult() + unit->getProductionSpeeds()->getRepairSpeed().getValue();
 }
 
 // ===============================
@@ -766,7 +693,7 @@ void MaintainSkillType::getDesc(string &str, const Unit *unit) const {
 }
 
 fixed MaintainSkillType::getSpeed(const Unit *unit) const {
-	return speed * unit->getRepairSpeedMult() + unit->getRepairSpeed();
+	return speed * unit->getProductionSpeeds()->getRepairSpeed().getValueMult() + unit->getProductionSpeeds()->getRepairSpeed().getValue();
 }
 
 // =====================================================
@@ -797,7 +724,7 @@ void ProduceSkillType::doChecksum(Checksum &checksum) const {
 }
 
 fixed ProduceSkillType::getSpeed(const Unit *unit) const {
-	return speed * unit->getProdSpeedMult() + unit->getProdSpeed();
+	return speed * unit->getProductionSpeeds()->getProdSpeed().getValueMult() + unit->getProductionSpeeds()->getProdSpeed().getValue();
 }
 
 // =====================================================
@@ -805,7 +732,7 @@ fixed ProduceSkillType::getSpeed(const Unit *unit) const {
 // =====================================================
 
 fixed UpgradeSkillType::getSpeed(const Unit *unit) const {
-	return speed * unit->getProdSpeedMult() + unit->getProdSpeed();
+	return speed * unit->getProductionSpeeds()->getProdSpeed().getValueMult() + unit->getProductionSpeeds()->getProdSpeed().getValue();
 }
 
 // =====================================================
@@ -813,7 +740,7 @@ fixed UpgradeSkillType::getSpeed(const Unit *unit) const {
 // =====================================================
 
 fixed MorphSkillType::getSpeed(const Unit *unit) const {
-	return speed * unit->getProdSpeedMult() + unit->getProdSpeed();
+	return speed * unit->getProductionSpeeds()->getProdSpeed().getValueMult() + unit->getProductionSpeeds()->getProdSpeed().getValue();
 }
 
 // =====================================================

@@ -69,7 +69,6 @@ private:
 	EffectTypes recourse;
 	EffectTypeFlags flags;
 	string affectTag;
-	const AttackType *damageClass;
     DamageTypes damageTypes;
 	bool display;
 	UnitParticleSystemTypes particleSystems;
@@ -87,7 +86,6 @@ public:
 	EffectStacking getStacking() const		 {return stacking;}
 	const EffectTypeFlags &getFlags() const	 {return flags;}
 	bool getFlag(EffectTypeFlag flag) const	 {return flags.get(flag);}
-	const AttackType *getDamageClass() const {return damageClass;}
 	const string& getAffectTag() const		 {return affectTag;}
 
 	bool isEffectsAlly() const				{return getFlag(EffectTypeFlag::ALLY);}

@@ -56,13 +56,12 @@ private:
 	float shiftsPerSecondVar;	/**< variance of shiftsPerSecond (+-) */
 	Vec3f shiftLengthMult;		/**< multiplier of magnitude to determine max length of each shift */
 	float maxDps;				/**< maxiumum damage per second caused */
-	const AttackType *attackType;/**< the damage type to use for damage reports */
 	bool affectsAllies;			/**< rather or not this earthquake affects allies */
 	StaticSound *sound;
 
 
 public:
-	EarthquakeType(float maxDps, const AttackType *attackType);
+	EarthquakeType(float maxDps);
 	~EarthquakeType() { delete sound; }
 	void load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
 	void spawn(Map &map, Unit *cause, const Vec2i &epicenter, float strength) const;
@@ -77,7 +76,6 @@ public:
 	float getshiftsPerSecondVar() const		{return shiftsPerSecondVar;}
 	const Vec3f &getshiftLengthMult() const	{return shiftLengthMult;}
 	float getMaxDps() const					{return maxDps;}
-	const AttackType *getAttackType() const	{return attackType;}
 	bool isAffectsAllies() const			{return affectsAllies;}
 	StaticSound *getSound() const			{return sound;}
 };

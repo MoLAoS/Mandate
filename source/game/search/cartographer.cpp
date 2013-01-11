@@ -345,7 +345,7 @@ void Cartographer::detectorActivated(Unit *unit) {
 	assert(unit->getType()->getDetectorType());
 	const DetectorType *dt = unit->getType()->getDetectorType();
 	Vec2i tilepos = Map::toTileCoords(unit->getCenteredPos());
-	int radius = unit->getSight() / 2 + 1;
+	int radius = unit->getUnitStats()->getSight().getValue() / 2 + 1;
 	for (int i=0; i < dt->getGroupCount(); ++i) {
 		TypeMap<int> *iMap = m_detectorMaps[unit->getTeam()][dt->getGroup(i)];
 		incrementMap(iMap, tilepos, radius);
@@ -358,7 +358,7 @@ void Cartographer::detectorMoved(Unit *unit, Vec2i oldPos) {
 	Vec2i oldTilePos = Map::toTileCoords(oldPos);
 	Vec2i newTilePos = Map::toTileCoords(unit->getCenteredPos());
 	assert(oldTilePos != newTilePos); // doesn't need to be true, but should be.
-	int radius = unit->getSight() / 2 + 1;
+	int radius = unit->getUnitStats()->getSight().getValue() / 2 + 1;
 	for (int i=0; i < dt->getGroupCount(); ++i) {
 		TypeMap<int> *iMap = m_detectorMaps[unit->getTeam()][dt->getGroup(i)];
 		deccrementMap(iMap, oldTilePos, radius);
@@ -370,7 +370,7 @@ void Cartographer::detectorDeactivated(Unit *unit) {
 	assert(unit->getType()->getDetectorType());
 	const DetectorType *dt = unit->getType()->getDetectorType();
 	Vec2i tilepos = Map::toTileCoords(unit->getCenteredPos());
-	int radius = unit->getSight() / 2 + 1;
+	int radius = unit->getUnitStats()->getSight().getValue() / 2 + 1;
 	for (int i=0; i < dt->getGroupCount(); ++i) {
 		TypeMap<int> *iMap = m_detectorMaps[unit->getTeam()][dt->getGroup(i)];
 		deccrementMap(iMap, tilepos, radius);
@@ -379,7 +379,7 @@ void Cartographer::detectorDeactivated(Unit *unit) {
 
 void Cartographer::detectorSightModified(Unit *unit, int oldSight) {
 	assert(unit->getType()->getDetectorType());
-	assert(unit->getSight() != oldSight);
+	assert(unit->getUnitStats()->getSight().getValue() != oldSight);
 	const DetectorType *dt = unit->getType()->getDetectorType();
 	Vec2i tilePos = Map::toTileCoords(unit->getCenteredPos());
 	int radius = oldSight / 2 + 1;
@@ -387,7 +387,7 @@ void Cartographer::detectorSightModified(Unit *unit, int oldSight) {
 		TypeMap<int> *iMap = m_detectorMaps[unit->getTeam()][dt->getGroup(i)];
 		deccrementMap(iMap, tilePos, radius);
 	}
-	radius = unit->getSight() / 2 + 1;
+	radius = unit->getUnitStats()->getSight().getValue() / 2 + 1;
 	for (int i=0; i < dt->getGroupCount(); ++i) {
 		TypeMap<int> *iMap = m_detectorMaps[unit->getTeam()][dt->getGroup(i)];
 		incrementMap(iMap, tilePos, radius);

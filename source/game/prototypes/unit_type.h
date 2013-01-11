@@ -25,7 +25,6 @@
 #include "simulation_enums.h"
 #include "abilities.h"
 #include "cloak_type.h"
-#include "damage_multiplier.h"
 #include "sound_container.h"
 #include "checksum.h"
 #include "particle_type.h"
@@ -75,7 +74,6 @@ private:
 private:
 	bool multiBuild;
 	bool multiSelect;
-	const ArmourType *armourType;
 public:
     Hero hero;
     Mage mage;
@@ -154,7 +152,6 @@ public:
 	bool isDetector() const                      { return m_detectorType ? true : false; }
 	const Model *getIdleAnimation() const	{return getFirstStOfClass(SkillClass::STOP)->getAnimation();}
 	bool getMultiSelect() const				{return multiSelect;}
-	const ArmourType *getArmourType() const	{return armourType;}
 	bool getLight() const					{return light;}
 	Vec3f getLightColour() const			{return lightColour;}
 	Field getField() const					{return field;}

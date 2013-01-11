@@ -40,7 +40,7 @@ struct UpgradeEffect {
 	ResModifierMap   m_storeModifiers;
 	ResModifierMap   m_createModifiers;
 
-	const Statistics* getEnhancement() const { return &m_enhancement; }
+	const Statistics* getStatistics() const { return &m_enhancement; }
 
 };
 
@@ -83,7 +83,7 @@ public:
 	// get
 	ProducibleClass getClass() const override                       { return typeClass(); }
 	const FactionType* getFactionType() const                       { return m_factionType; }
-	const EnhancementType* getEnhancement(const UnitType *ut) const;
+	const Statistics *getEnhancement(const UnitType *ut) const;
 	Modifier getCostModifier(const UnitType *ut, const ResourceType *rt) const;
 	Modifier getStoreModifier(const UnitType *ut, const ResourceType *rt) const;
     Modifier getCreateModifier(const UnitType *ut, const ResourceType *rt) const;

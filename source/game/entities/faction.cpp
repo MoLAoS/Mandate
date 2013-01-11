@@ -119,10 +119,10 @@ void UpgradeStage::init(const UpgradeType *upgradeType, int upgradeStage, int ma
     this->m_enhancementMap = m_enhancementMap;
     }
 
-const EnhancementType* UpgradeStage::getEnhancement(const UnitType *ut) const {
+const Statistics* UpgradeStage::getStatistics(const UnitType *ut) const {
 	EnhancementMap::const_iterator it = m_enhancementMap.find(ut);
 	if (it != m_enhancementMap.end()) {
-		return it->second->getEnhancement();
+		return it->second->getStatistics();
 	}
 	return 0;
 }
@@ -922,7 +922,7 @@ void Faction::applyCostsOnInterval(const ResourceType *rt) {
 				//      demand exceeds supply & stores.
 				if (getSResource(resource.getType())->getAmount() < 0) {
 					resetResourceAmount(resource.getType());
-					if (unit->decHp(unit->getType()->getMaxHp() / 3)) {
+					if (unit->decHp(unit->getType()->getResourcePools()->getMaxHp().getValue() / 3)) {
 						World::getCurrWorld()->doKill(unit, unit);
 					} else {
 						StaticSound *sound = unit->getType()->getFirstStOfClass(SkillClass::DIE)->getSound();

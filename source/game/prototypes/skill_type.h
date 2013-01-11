@@ -29,7 +29,6 @@ using Shared::Math::Vec3f;
 using Shared::Graphics::Model;
 using Shared::Util::MultiFactory;
 
-#include "damage_multiplier.h"
 #include "effect_type.h"
 #include "sound_container.h"
 #include "prototypes_enums.h"
@@ -251,21 +250,12 @@ public:
 
 class AttackSkillType: public TargetBasedSkillType {
 private:
-	int attackStrength;
-	int attackVar;
-	int attackLifeLeech; // attempt to add lifeleech
-	int attackManaBurn; // attempt to add manaburn
-    int attackCapture; // attempt to add capturing
-	fixed attackPctStolen;
-	fixed attackPctVar;
-	const AttackType *attackType;
     int cooldown;
 //	EarthquakeType *earthquakeType;
 public:
     DamageTypes damageTypes;
 
-	AttackSkillType() : TargetBasedSkillType("Attack"), attackStrength(0), attackVar(0),
-	attackType(0), attackLifeLeech(0), attackManaBurn(0), attackCapture(0), damageTypes(0) /*, earthquakeType(NULL)*/ {}
+	AttackSkillType() : TargetBasedSkillType("Attack"), damageTypes(0) /*, earthquakeType(NULL)*/ {}
 	virtual ~AttackSkillType();
 
 	virtual bool load(const XmlNode *sn, const string &dir, const TechTree *tt, const CreatableType *ct) override;
@@ -274,15 +264,7 @@ public:
 
 	//get
 	virtual fixed getSpeed(const Unit *unit) const override;
-	int getAttackStrength() const				{return attackStrength;}
-	int getAttackVar() const					{return attackVar;}
-	int getAttackLifeLeech() const				{return attackLifeLeech;} // attempt to add lifeleech
-	int getAttackManaBurn() const				{return attackManaBurn;} // attempt to add manaburn
-	int getAttackCapture() const				{return attackCapture;} // attempt to add capturing
 	int getCooldown() const				        {return cooldown;} // attempt to add cooldowns
-	//fixed getAttackPctStolen() const			{return attackPctStolen;}
-	//fixed getAttackPctVar() const				{return attackPctVar;}
-	const AttackType *getAttackType() const		{return attackType;}
 //	const EarthquakeType *getEarthquakeType() const	{return earthquakeType;}
 
 	virtual SkillClass getClass() const override { return typeClass(); }

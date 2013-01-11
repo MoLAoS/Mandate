@@ -249,9 +249,7 @@ void World::initSurveyor(Faction *f) {
 // ==================== misc ====================
 #ifdef EARTHQUAKE_CODE
 void World::updateEarthquakes(float seconds) {
-
-	map.update(seconds);
-
+	/*map.update(seconds);
 	const Map::Earthquakes &earthquakes = map.getEarthquakes();
 	Map::Earthquakes::const_iterator ei;
 	for (ei = earthquakes.begin(); ei != earthquakes.end(); ++ei) {
@@ -260,25 +258,16 @@ void World::updateEarthquakes(float seconds) {
 			Earthquake::DamageReport damageReport;
 			Earthquake::DamageReport::const_iterator dri;
 			float maxDps = (*ei)->getType()->getMaxDps();
-			const AttackType *at = (*ei)->getType()->getAttackType();
-
 			(*ei)->getDamageReport(damageReport, 0.25f);
 			Unit *attacker = (*ei)->getCause();
-
 			for (dri = damageReport.begin(); dri != damageReport.end(); ++dri) {
-				fixed multiplier = techTree.getDamageMultiplier(
-						at, dri->first->getType()->getArmourType());
-
 				///@todo make fixed point ... use multiplier
-
 				float intensity = dri->second.intensity;
 				float count = (float)dri->second.count;
 				float damage = intensity * maxDps;// * multiplier;
-
 				if (!(*ei)->getType()->isAffectsAllies() && attacker->isAlly(dri->first)) {
 					continue;
 				}
-
 				if (dri->first->decHp((int)roundf(damage)) && attacker) {
 					doKill(attacker, dri->first);
 					continue;
@@ -292,7 +281,7 @@ void World::updateEarthquakes(float seconds) {
 				}
 			}
 		}
-	}
+	}*/
 }
 #endif // Disable Earthquakes
 
@@ -431,16 +420,8 @@ void World::hit(Unit *attacker, const AttackSkillType* ast, const Vec2i &targetP
 }
 
 void World::damage(Unit *attacker, const AttackSkillType* ast, Unit *attacked, fixed distance) {
-	int var = ast->getAttackVar();
-	int armor = attacked->getArmor();
-	fixed damageMultiplier = getTechTree()->getDamageMultiplier(ast->getAttackType(),
-							 attacked->getType()->getArmourType());
 	//compute damage
-	fixed fDamage = attacker->getAttackStrength(ast);
-	fDamage = ((fDamage + random.randRange(-var, var)) / (distance + 1) - armor) * damageMultiplier;
-	if (fDamage < 1) {
-		fDamage = 0;
-	}
+	fixed fDamage = 0;
     /**< Added by MoLAoS, magic damage and resistances */
     fixed totalDamage = 0 + fDamage;
     const UnitType *uType = attacked->getType();
@@ -487,16 +468,12 @@ void World::damage(Unit *unit, int hp) {
 }
 
 void World::lifeleech(Unit *attacker, const AttackSkillType* ast, Unit *attacked, fixed distance) { /**< Added by MoLAoS, lifeleech */
-	int var = ast->getAttackVar();
-	int armor = attacked->getArmor();
 	int health = attacker->getHp();
-	int maxHealth = attacker->getMaxHp();
-	fixed damageMultiplier = getTechTree()->getDamageMultiplier(ast->getAttackType(),
-							 attacked->getType()->getArmourType());
+	int maxHealth = attacker->getResourcePools()->getMaxHp().getValue();
     // compute lifeleech
-    fixed fDamage = attacker->getAttackStrength(ast);
-    fixed fLifeLeech = attacker->getAttackLifeLeech(ast);
-    fDamage = ((fDamage + random.randRange(-var, var)) / (distance + 1) - armor) * damageMultiplier;
+    fixed fDamage = 0;
+    fixed fLifeLeech = 0;
+    fDamage = fDamage / (distance + 1);
 	fLifeLeech = fDamage * (fLifeLeech / 100);
 	if (fLifeLeech < 1) {
 		fLifeLeech = 0;
@@ -524,15 +501,11 @@ void World::lifeleech(Unit *unit, int hp) { /**< Added by MoLAoS, lifeleech */
 } /**< Added by MoLAoS, lifeleech */
 
 void World::manaburn(Unit *attacker, const AttackSkillType* ast, Unit *attacked, fixed distance) { /**< Added by MoLAoS, manaburn */
-    int var = ast->getAttackVar();
     int ep = attacked->getEp();
-    int armor = attacked->getArmor();
-	fixed damageMultiplier = getTechTree()->getDamageMultiplier(ast->getAttackType(),
-							 attacked->getType()->getArmourType());
     // compute manaburn
-    fixed fDamage = attacker->getAttackStrength(ast);
-    fixed fManaBurn = attacker->getAttackManaBurn(ast);
-    fDamage = ((fDamage + random.randRange(-var, var)) / (distance + 1) - armor) * damageMultiplier;
+    fixed fDamage = 0;
+    fixed fManaBurn = 0;
+    fDamage = fDamage / (distance + 1);
 	fManaBurn = fDamage * (fManaBurn / 100);
 	if (fManaBurn < 1) {
 		fManaBurn = 0;
@@ -555,7 +528,7 @@ void World::manaburn(Unit *unit, int ep) { /**< Added by MoLAoS, manaburn */
 void World::capture(Unit *attacker, const AttackSkillType* ast, Unit *attacked, fixed distance) { /**< Added by MoLAoS, capturing */
     int cp = attacked->getCp();
     // compute capture
-    fixed fCapture = attacker->getAttackCapture(ast);
+    fixed fCapture = 0;
 	if (fCapture < 1) {
 		fCapture = 0;
 	}
@@ -1591,7 +1564,7 @@ void World::computeFow() {
 		for (int j = 0; j < getFaction(i)->getUnitCount(); ++j) {
 			Unit *unit = getFaction(i)->getUnit(j);
 			if (unit->isOperative() && !unit->isCarried()  && !unit->isGarrisoned()) {
-				exploreCells(unit->getCenteredPos(), unit->getSight(), unit->getTeam());
+				exploreCells(unit->getCenteredPos(), unit->getUnitStats()->getSight().getValue(), unit->getTeam());
 			}
 		}
 	}
@@ -1622,7 +1595,7 @@ void World::computeFow() {
 		for (int j = 0; j < faction->getUnitCount(); ++j) {
 			const Unit *unit = faction->getUnit(j);
 			if (unit->isOperative() && !unit->isCarried()  && !unit->isGarrisoned()) {
-				int sightRange = unit->getSight();
+				int sightRange = unit->getUnitStats()->getSight().getValue();
 				Vec2i pos;
 				float distance;
 

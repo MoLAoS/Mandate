@@ -86,7 +86,7 @@ bool UpgradeType::loadNewStyle(const XmlNode *node, const string &dir, const Tec
 		if (!m_enhancements[i].m_enhancement.load(enhancementNode, dir, techTree, factionType)) {
 			loadOk = false;
 		}
-		try { // resource cost and storage modifiers
+		try {
 			if (const XmlNode *costModsNode = enhancementNode->getOptionalChild("cost-modifiers")) {
 				loadResourceModifier(costModsNode, m_enhancements[i].m_costModifiers, techTree);
 			}
@@ -100,7 +100,7 @@ bool UpgradeType::loadNewStyle(const XmlNode *node, const string &dir, const Tec
 			g_logger.logXmlError(dir, e.what());
 			loadOk = false;
 		}
-		try { // Units affected by this upgrade
+		try {
 			const XmlNode *affectsNode = enhanceNode->getChild("affects", 0);
 			for (int j=0; j < affectsNode->getChildCount(); ++j) {
 				const XmlNode *affectNode = affectsNode->getChild(j);
@@ -133,73 +133,6 @@ bool UpgradeType::loadNewStyle(const XmlNode *node, const string &dir, const Tec
 	return loadOk;
 }
 
-bool UpgradeType::loadOldStyle(const XmlNode *node, const string &dir, const TechTree *techTree,
-							   const FactionType *factionType) {
-	bool loadOk = true;
-	m_enhancements.resize(1);
-	m_unitsAffected.resize(1);
-
-	///@todo deprecate
-
-	// values
-	// maintain backward compatibility using legacy format
-	EnhancementType &e = m_enhancements[0].m_enhancement;
-	//const XmlNode *statNode = node->getChild("stats", 0, false);
-
-    //const XmlNode *maxHpNode = statNode->getChild("max-hp");
-	//int hpBase = maxHpNode->getOptionalIntValue("base");
-	//int hpAdd = maxHpNode->getOptionalIntValue("additive");
-	//float hpMult = maxHpNode->getOptionalFloatValue("multiplier");
-	//int hpTotal = hpBase*(1+hpMult)+hpAdd;
-	e.setMaxHp(node->getOptionalIntValue("max-hp"));
-
-	//const XmlNode *maxEpNode = statNode->getChild("max-ep");
-	//int epBase = maxEpNode->getOptionalIntValue("base");
-	//int epAdd = maxEpNode->getOptionalIntValue("additive");
-	//float epMult = maxEpNode->getOptionalFloatValue("multiplier");
-	//int epTotal = epBase*(1+epMult)+epAdd;
-	e.setMaxEp(node->getOptionalIntValue("max-ep"));
-
-	e.setMaxSp(node->getOptionalIntValue("max-sp"));
-	e.setSight(node->getOptionalIntValue("sight"));
-	if (node->getOptionalChild("attack-strenght")) { // support vanilla-glest typo
-		e.setAttackStrength(node->getOptionalIntValue("attack-strenght"));
-	} else {
-		e.setAttackStrength(node->getOptionalIntValue("attack-strength"));
-	}
-    e.setAttackLifeLeech(node->getOptionalIntValue("attack-life-leech"));
-    e.setAttackManaBurn(node->getOptionalIntValue("attack-mana-burn"));
-    e.setAttackCapture(node->getOptionalIntValue("attack-capture"));
-	e.setAttackRange(node->getOptionalIntValue("attack-range"));
-	e.setArmor(node->getOptionalIntValue("armor"));
-	e.setMoveSpeed(node->getOptionalIntValue("move-speed"));
-	e.setProdSpeed(node->getOptionalIntValue("production-speed"));
-
-	// initialize values using new format if nodes are present
-	if (node->getChild("static-modifiers", 0, false) || node->getChild("multipliers", 0, false)
-	|| node->getChild("point-boosts", 0, false)) {
-		if (!e.load(node, dir, techTree, factionType)) {
-			loadOk = false;
-		}
-	}
-	try { // Units affected by this upgrade
-		const XmlNode *effectsNode = node->getChild("effects", 0, false);
-		if (effectsNode) {
-			for (int i=0; i < effectsNode->getChildCount(); ++i) {
-				const XmlNode *unitNode = effectsNode->getChild("unit", i);
-				string name = unitNode->getAttribute("name")->getRestrictedValue();
-				const UnitType *ut = factionType->getUnitType(name);
-				m_enhancementMap[ut] = &m_enhancements[0];
-				m_unitsAffected[0].push_back(name);
-			}
-		}
-	} catch (runtime_error e) {
-		g_logger.logXmlError ( dir, e.what() );
-		loadOk = false;
-	}
-	return loadOk;
-}
-
 bool UpgradeType::load(const string &dir, const TechTree *techTree, const FactionType *factionType) {
 	string path;
 	m_factionType = factionType;
@@ -217,7 +150,6 @@ bool UpgradeType::load(const string &dir, const TechTree *techTree, const Factio
 		g_logger.logError("Fatal Error: could not load " + path);
 		return false;
 	}
-    // Amount producible(upgrades only)
     const XmlNode *countNode;
     try { countNode = upgradeNode->getOptionalChild("stage"); }
     catch (runtime_error &e) {
@@ -231,7 +163,6 @@ bool UpgradeType::load(const string &dir, const TechTree *techTree, const Factio
 		    return false;
 	    }
     }
-    // Names for upgrade set
 	const XmlNode *namesNode;
     try { namesNode = upgradeNode->getOptionalChild("names");
     if(namesNode) {
@@ -247,17 +178,13 @@ bool UpgradeType::load(const string &dir, const TechTree *techTree, const Factio
 		g_logger.logXmlError(dir, e.what());
 		return false;
 	}
-	// ProducibleType parameters (unit/upgrade reqs, resource reqs, prod time ...)
 	if (!ProducibleType::load(upgradeNode, dir, techTree, factionType)) {
 		loadOk = false;
 	}
-	// enhancements...
 	const XmlNode *enhancementsNode = upgradeNode->getChild("enhancements", 0, false);
-	if (enhancementsNode) { // Nu skool.
-		loadOk = loadNewStyle(enhancementsNode, dir, techTree, factionType) && loadOk;
-	} else { // Old skool.
-		loadOk = loadOldStyle(upgradeNode, dir, techTree, factionType) && loadOk;
-	}
+    if (!loadNewStyle(enhancementsNode, dir, techTree, factionType)) {
+        loadOk = false;
+    }
 	return loadOk;
 }
 

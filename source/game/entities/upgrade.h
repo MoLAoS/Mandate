@@ -107,7 +107,7 @@ public:
 	bool isUpgrading(const UpgradeType *upgradeType) const;
 	bool isPartial(const UpgradeType *upgradeType) const;
 	bool isUpgradingOrUpgraded(const UpgradeType *upgradeType, const Faction *f) const;
-	void computeTotalUpgrade(const Unit *unit, EnhancementType *totalUpgrade) const;
+	void computeTotalUpgrade(const Unit *unit, Statistics *totalUpgrade) const;
 	void addPointBoosts(Unit *unit) const;
 
 	void load(const XmlNode *node, Faction *f);

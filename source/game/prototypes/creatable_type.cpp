@@ -46,17 +46,6 @@ bool CreatableType::load(const XmlNode *creatableTypeNode, const string &dir, co
 	halfSize = size / fixed(2);
 	halfHeight = height / fixed(2);
 	try {
-        const XmlNode *statsNode = creatableTypeNode->getChild("stats", 0, false);
-        if (statsNode) {
-            if (!UnitStats::load(statsNode, dir, techTree, factionType)) {
-                loadOk = false;
-            }
-        }
-    } catch (runtime_error e) {
-		g_logger.logXmlError(dir, e.what());
-		loadOk = false;
-	}
-	try {
         const XmlNode *statisticsNode = creatableTypeNode->getChild("statistics", 0, false);
         if (statisticsNode) {
             if (!Statistics::load(statisticsNode, dir, techTree, factionType)) {

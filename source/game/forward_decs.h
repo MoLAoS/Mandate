@@ -33,14 +33,15 @@ namespace Glest {
 		class RequirableType;
 		class ProducibleType;
 		class GeneratedType;
-		class AttackType;
-		class ArmourType;
-		class DamageMultiplierTable;
+		class ResourcePools;
+		class ProductionSpeeds;
+		class AttackStats;
 		class UnitStats;
 		class Fields;
 		class Zones;
 		class UnitProperties;
 		class EnhancementType;
+		class Statistics;
 		class EffectType;
 		class EmanationType;
 		class EffectTypeFlags;

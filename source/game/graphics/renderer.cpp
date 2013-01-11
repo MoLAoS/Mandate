@@ -1312,7 +1312,7 @@ void Renderer::renderSelectionEffects() {
 		renderSelectionCircle(currVec, unit->getType()->getSize(), selectionCircleRadius);
 
 		// magic circle
-		if (world->getThisFactionIndex() == unit->getFactionIndex() && unit->getType()->getMaxEp() > 0) {
+		if (world->getThisFactionIndex() == unit->getFactionIndex() && unit->getType()->getResourcePools()->getMaxEp().getValue() > 0) {
 			glColor4f(unit->getEpRatio()/2.f, unit->getEpRatio(), unit->getEpRatio(), 0.5f);
 			renderSelectionCircle(currVec, unit->getType()->getSize(), magicCircleRadius);
 		}

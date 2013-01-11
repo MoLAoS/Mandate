@@ -35,7 +35,6 @@ EffectType::EffectType() : lightColour(0.0f) {
 	sound = NULL;
 	soundStartTime = 0.0f;
 	loopSound = false;
-	damageClass = NULL;
 	factionType = 0;
 	display = true;
 }
@@ -123,17 +122,6 @@ bool EffectType::load(const XmlNode *en, const string &dir, const TechTree *tt, 
 	try { // duration
 		duration = en->getAttribute("duration")->getIntValue();
 	} catch (runtime_error e) {
-		g_logger.logXmlError(dir, e.what ());
-		loadOk = false;
-	}
-
-	try { // damageType (default NULL)
-		attr = en->getAttribute("damage-class", false);
-		if(attr) {
-			damageClass = tt->getAttackType(attr->getRestrictedValue());
-		}
-	}
-	catch (runtime_error e) {
 		g_logger.logXmlError(dir, e.what ());
 		loadOk = false;
 	}
@@ -238,9 +226,6 @@ bool EffectType::load(const XmlNode *en, const string &dir, const TechTree *tt, 
 		g_logger.logXmlError(dir, e.what ());
 		loadOk = false;
 	}
-	if(hpRegeneration >= 0 && damageClass) {
-		damageClass = NULL;
-	}
 	return loadOk;
 }
 
@@ -264,9 +249,6 @@ void EffectType::doChecksum(Checksum &checksum) const {
 	}
 	foreach_enum (EffectTypeFlag, f) {
 		checksum.add(flags.get(f));
-	}
-	if (damageClass) {
-		checksum.add(damageClass->getName());
 	}
 	checksum.add(display);
 }
@@ -300,10 +282,6 @@ void EffectType::getDesc(string &str) const {
 		str += g_lang.get("Permenant");
 	} else {
 		str += intToStr(duration);
-	}
-
-	if (damageClass) {
-		str += "\n   " + g_lang.get("DamageClass") + ": " + g_lang.getTechString(damageClass->getName());
 	}
 
 	EnhancementType::getDesc(str, "\n   ");

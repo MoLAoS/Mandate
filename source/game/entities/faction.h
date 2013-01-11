@@ -110,7 +110,7 @@ public:
 	static ProducibleClass typeClass() { return ProducibleClass::UPGRADE; }
     ProducibleClass getClass() const override                       { return typeClass(); }
 	const FactionType* getFactionType() const                       { return m_factionType; }
-	const EnhancementType* getEnhancement(const UnitType *ut) const;
+	const Statistics* getStatistics(const UnitType *ut) const;
 	Modifier getCostModifier(const UnitType *ut, const ResourceType *rt) const;
 	Modifier getStoreModifier(const UnitType *ut, const ResourceType *rt) const;
     Modifier getCreateModifier(const UnitType *ut, const ResourceType *rt) const;

@@ -38,8 +38,8 @@ namespace Glest { namespace ProtoTypes {
 // 	class EarthquakeType
 // =====================================================
 
-EarthquakeType::EarthquakeType(float maxDps, const AttackType *attackType) :
-		maxDps(maxDps), attackType(attackType), affectsAllies(true) {
+EarthquakeType::EarthquakeType(float maxDps) :
+		maxDps(maxDps), affectsAllies(true) {
 }
 
 /** Load the EarthquakeType from xml */

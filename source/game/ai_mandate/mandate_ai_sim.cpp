@@ -47,10 +47,10 @@ Focus MandateAISim::getTopGoal(Unit *unit, string personality) {
                         importanceLive = 100;
                     }
                     int healthModifier = importanceLive;
-                    if (unit->getHp() <= (unit->getMaxHp() * (healthModifier / 100))) {
+                    if (unit->getHp() <= (unit->getResourcePools()->getHpRegeneration().getValue() * (healthModifier / 100))) {
                         topGoal = goal;
                         return topGoal;
-                    } else if (unit->getHp() < unit->getMaxHp() && unit->isCarried()) {
+                    } else if (unit->getHp() < unit->getResourcePools()->getHpRegeneration().getValue() && unit->isCarried()) {
                         topGoal = goal;
                         return topGoal;
                     }
@@ -342,7 +342,7 @@ void MandateAISim::update() {
                     }
                 }
             }
-            int minHp = fixed(unit->getMaxHp() * unit->getType()->live / 100).intp();
+            int minHp = fixed(unit->getResourcePools()->getHpRegeneration().getValue() * unit->getType()->live / 100).intp();
             if (unit->getType()->hasTag("ordermember") && unit->getHp() <= minHp && !unit->isCarried()) {
                 goalSystem.clearSimAi(unit, Goal::LIVE);
                 Focus liveFocus;
@@ -350,10 +350,10 @@ void MandateAISim::update() {
                 goalSystem.computeAction(unit, liveFocus);
             } else {
                 if (unit->isCarried() && unit->getCurrentFocus() == "live") {
-                    int heal = unit->getMaxHp() / 10 / 40;
+                    int heal = unit->getResourcePools()->getHpRegeneration().getValue() / 10 / 40;
                     unit->repair(heal, 1);
                 }
-                if (unit->isCarried() && unit->getCurrentFocus() == "live" && unit->getHp() == unit->getMaxHp()) {
+                if (unit->isCarried() && unit->getCurrentFocus() == "live" && unit->getHp() == unit->getResourcePools()->getHpRegeneration().getValue()) {
                     goalSystem.ownerUnload(unit);
                 }
                 if (unit->getCurrSkill()->getClass() == SkillClass::STOP) {
