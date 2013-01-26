@@ -32,55 +32,22 @@ using namespace Shared::Util;
 using namespace Shared::Graphics;
 
 namespace Glest { namespace ProtoTypes {
-
 // =====================================================
-// 	class SkillType
+// 	class SoundsAndAnimations
 // =====================================================
-
-SkillType::SkillType(const char* typeName)
-		: NameIdPair()
-		, effectTypes()
-		, epCost(0)
-		, animSpeed(0)
-		, minRange(0)
-		, maxRange(0)
-		, m_deCloak(false)
-		, startTime(0.f)
-		, projectile(false)
-		, projectileParticleSystemType(0)
-		, splash(false)
-		, splashDamageAll(false)
-		, splashRadius(0)
-		, splashParticleSystemType(0)
-		, animationsStyle(AnimationsStyle::SINGLE)
+SoundsAndAnimations::SoundsAndAnimations()
+		: animationsStyle(AnimationsStyle::SINGLE)
 		, soundStartTime(0.f)
-		, typeName(typeName)
-		, m_creatableType(0) {
+		, animSpeed(0) {
 }
 
-SkillType::~SkillType(){
-	deleteValues(effectTypes);
+SoundsAndAnimations::~SoundsAndAnimations(){
 	deleteValues(sounds.getSounds());
-	deleteValues(eyeCandySystems);
-	deleteValues(projSounds.getSounds());
-
-	///@todo these should have a factory...
-	delete projectileParticleSystemType;
-	delete splashParticleSystemType;
 }
 
-bool SkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const CreatableType *ct){
+bool SoundsAndAnimations::load(const XmlNode *sn, const string &dir, const TechTree *tt, const CreatableType *ct){
     bool loadOk = true;
-	m_creatableType = ct;
-    const FactionType *ft = ct->getFactionType();
-	m_name = sn->getChildStringValue("name");
-	epCost = sn->getOptionalIntValue("ep-cost");
-	speed = sn->getChildIntValue("speed");
-	minRange = sn->getOptionalIntValue("min-range", 1);
-	maxRange = sn->getOptionalIntValue("max-range", 1);
 	animSpeed = sn->getChildIntValue("anim-speed");
-
-	//model
 	ModelFactory &modelFactory = g_world.getModelFactory();
 	const XmlNode *animNode = sn->getChild("animation");
 	const XmlAttribute *animPathAttrib = animNode->getAttribute("path", false);
@@ -123,7 +90,6 @@ bool SkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, c
 					throw runtime_error(msg);
 				}
 			} else {
-				// error ?
 				g_logger.logXmlError(path,
 					("Warning: In 'animation' node, child node '" + node->getName() + "' unknown.").c_str());
 			}
@@ -133,13 +99,9 @@ bool SkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, c
 		}
 		if (!m_animBySurfaceMap.empty() || !m_animBySurfPairMap.empty()) {
 			if (m_animBySurfaceMap.size() != SurfaceType::COUNT) {
-
-				// error
 			}
 		}
 	}
-
-	//sound
 	XmlNodePtr soundNode= sn->getChild("sound", 0, false);
 	if(soundNode && soundNode->getBoolAttribute("enabled")) {
 		soundStartTime= soundNode->getAttribute("start-time")->getFloatValue();
@@ -151,7 +113,121 @@ bool SkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, c
 			sounds.add(sound);
 		}
 	}
+	return loadOk;
+}
 
+const Model* SoundsAndAnimations::getAnimation(SurfaceType from, SurfaceType to) const {
+	AnimationBySurfacePair::const_iterator it = m_animBySurfPairMap.find(make_pair(from, to));
+	if (it != m_animBySurfPairMap.end()) {
+		return it->second;
+	}
+	return getAnimation(to);
+}
+
+const Model* SoundsAndAnimations::getAnimation(SurfaceType st) const {
+	AnimationBySurface::const_iterator it = m_animBySurfaceMap.find(st);
+	if (it != m_animBySurfaceMap.end()) {
+		return it->second;
+	}
+	return getAnimation();
+}
+
+// =====================================================
+// 	class ItemCost
+// =====================================================
+void ItemCost::init(int amount, const ItemType *type) {
+    this->type = type;
+    this->amount = amount;
+}
+
+// =====================================================
+// 	class SkillCosts
+// =====================================================
+bool SkillCosts::load(const XmlNode *sn, const string &dir, const TechTree *tt, const CreatableType *ct) {
+    bool loadOk = true;
+    const FactionType *ft = ct->getFactionType();
+    const XmlNode *hpCostNode = sn->getChild("hp-cost", 0, false);
+    if (hpCostNode) {
+        hpCost = hpCostNode->getAttribute("amount")->getIntValue();
+    }
+    const XmlNode *spCostNode = sn->getChild("sp-cost", 0, false);
+    if (spCostNode) {
+        spCost = spCostNode->getAttribute("amount")->getIntValue();
+    }
+    const XmlNode *epCostNode = sn->getChild("ep-cost", 0, false);
+    if (epCostNode) {
+        epCost = epCostNode->getAttribute("amount")->getIntValue();
+    }
+    const XmlNode *itemCostsNode = sn->getChild("item-costs", 0, false);
+    if (itemCostsNode) {
+        for (int i = 0; i < itemCostsNode->getChildCount(); ++i) {
+            const XmlNode *costNode = itemCostsNode->getChild("cost", i);
+            string typeString = costNode->getAttribute("type")->getRestrictedValue();
+            int amount = costNode->getAttribute("amount")->getIntValue();
+            const ItemType *itemType = ft->getItemType(typeString);
+            itemCosts[i].init(amount, itemType);
+        }
+    }
+    const XmlNode *resourceCostsNode = sn->getChild("resource-costs", 0, false);
+    if (resourceCostsNode) {
+        for (int i = 0; i < resourceCostsNode->getChildCount(); ++i) {
+            const XmlNode *costNode = resourceCostsNode->getChild("cost", i);
+            string typeString = costNode->getAttribute("type")->getRestrictedValue();
+            int amount = costNode->getAttribute("amount")->getIntValue();
+            const ResourceType *resourceType = g_world.getTechTree()->getResourceType(typeString);
+            resourceCosts[i].init(resourceType, amount, 0, 0);
+        }
+    }
+    return loadOk;
+}
+
+// =====================================================
+// 	class SkillType
+// =====================================================
+SkillType::SkillType(const char* typeName)
+		: NameIdPair()
+		, m_deCloak(false)
+		, startTime(0.f)
+		, minRange(0)
+		, maxRange(0)
+		, typeName(typeName)
+		, m_creatableType(0) {
+}
+
+SkillType::~SkillType(){
+	deleteValues(eyeCandySystems);
+}
+
+bool SkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const CreatableType *ct){
+    bool loadOk = true;
+	m_creatableType = ct;
+    const FactionType *ft = ct->getFactionType();
+	m_name = sn->getChildStringValue("name");
+	speed = sn->getChildIntValue("speed");
+
+    const XmlNode *minRangeNode = sn->getChild("min-range", 0, false);
+	if(minRangeNode) {
+		minRange = minRangeNode->getAttribute("value")->getIntValue();
+	}
+
+    const XmlNode *maxRangeNode = sn->getChild("max-range", 0, false);
+	if(maxRangeNode) {
+		maxRange = maxRangeNode->getAttribute("value")->getIntValue();
+	}
+
+    const XmlNode *skillCostsNode = sn->getChild("skill-costs", 0, false);
+    if (skillCostsNode) {
+        if(!skillCosts.load(skillCostsNode, dir, tt, ct)) {
+           loadOk = false;
+        }
+    }
+
+    const XmlNode *soundsAndAnimationsNode = sn->getChild("sounds-animations", 0, false);
+    if (soundsAndAnimationsNode) {
+        if(!soundsAndAnimations.load(soundsAndAnimationsNode, dir, tt, ct)) {
+           loadOk = false;
+        }
+    }
 	// particle systems
 	const XmlNode *particlesNode = sn->getOptionalChild("particle-systems");
 	if (particlesNode) {
@@ -177,117 +253,21 @@ bool SkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, c
 			}
 		}
 	}
-
-	//effects
-	const XmlNode *effectsNode = sn->getChild("effects", 0, false);
-	if (effectsNode) {
-		effectTypes.resize(effectsNode->getChildCount());
-		for(int i=0; i < effectsNode->getChildCount(); ++i) {
-			const XmlNode *effectNode = effectsNode->getChild("effect", i);
-			EffectType *effectType = new EffectType();
-			effectType->load(effectNode, dir, tt, ft);
-			effectTypes[i] = effectType;
-		}
-	}
-
 	startTime = sn->getOptionalFloatValue("start-time");
-
-	//projectile
-	const XmlNode *projectileNode = sn->getChild("projectile", 0, false);
-	if (projectileNode && projectileNode->getAttribute("value")->getBoolValue()) {
-
-		//proj particle
-		const XmlNode *particleNode= projectileNode->getChild("particle", 0, false);
-		if(particleNode && particleNode->getAttribute("value")->getBoolValue()){
-			string path= particleNode->getAttribute("path")->getRestrictedValue();
-			projectileParticleSystemType = new ProjectileType();
-			projectileParticleSystemType->load(dir,  dir + "/" + path);
-			projectile = true;
-		}
-
-		//proj sounds
-		const XmlNode *soundNode= projectileNode->getChild("sound", 0, false);
-		if(soundNode && soundNode->getAttribute("enabled")->getBoolValue()) {
-			for(int i=0; i<soundNode->getChildCount(); ++i){
-				const XmlNode *soundFileNode= soundNode->getChild("sound-file", i);
-				string path= soundFileNode->getAttribute("path")->getRestrictedValue();
-				StaticSound *sound= new StaticSound();
-				sound->load(dir + "/" + path);
-				projSounds.add(sound);
-			}
-		}
-	}
-
-	//splash damage and/or special effects
-	const XmlNode *splashNode = sn->getChild("splash", 0, false);
-	splash = splashNode && splashNode->getBoolValue();
-	if (splash) {
-		splashDamageAll = splashNode->getOptionalBoolValue("damage-all", true);
-		splashRadius= splashNode->getChild("radius")->getAttribute("value")->getIntValue();
-
-		//splash particle
-		const XmlNode *particleNode= splashNode->getChild("particle", 0, false);
-		if(particleNode && particleNode->getAttribute("value")->getBoolValue()){
-			string path= particleNode->getAttribute("path")->getRestrictedValue();
-			splashParticleSystemType= new SplashType();
-			splashParticleSystemType->load(dir,  dir + "/" + path);
-		}
-	}
 	return loadOk;
 }
 
 void SkillType::doChecksum(Checksum &checksum) const {
 	checksum.add<SkillClass>(getClass());
 	checksum.add(m_name);
-	checksum.add(epCost);
 	checksum.add(speed);
-	checksum.add(animSpeed);
-	checksum.add(minRange);
-	checksum.add(maxRange);
 	checksum.add(startTime);
-	checksum.add(projectile);
-	checksum.add(splash);
-	checksum.add(splashDamageAll);
-	checksum.add(splashRadius);
-}
-
-void SkillType::descEffects(string &str, const Unit *unit) const {
-	for(EffectTypes::const_iterator i = effectTypes.begin(); i != effectTypes.end(); ++i) {
-		str += g_lang.get("Effect") + ": ";
-		(*i)->getDesc(str);
-	}
-}
-
-void SkillType::descRange(string &str, const Unit *unit, const char* rangeDesc) const {
-	str+= Lang::getInstance().get(rangeDesc)+": ";
-	if(minRange > 1) {
-		str += 	intToStr(minRange) + "...";
-	}
-	str += intToStr(maxRange);
-	EnhancementType::describeModifier(str, unit->getMaxRange(this) - maxRange);
-	str+="\n";
 }
 
 void SkillType::descSpeed(string &str, const Unit *unit, const char* speedType) const {
 	str += g_lang.get(speedType) + ": " + intToStr(speed);
 	EnhancementType::describeModifier(str, unit->getSpeed(this) - speed);
 	str += "\n";
-}
-
-const Model* SkillType::getAnimation(SurfaceType st) const {
-	AnimationBySurface::const_iterator it = m_animBySurfaceMap.find(st);
-	if (it != m_animBySurfaceMap.end()) {
-		return it->second;
-	}
-	return getAnimation();
-}
-
-const Model* SkillType::getAnimation(SurfaceType from, SurfaceType to) const {
-	AnimationBySurfacePair::const_iterator it = m_animBySurfPairMap.find(make_pair(from, to));
-	if (it != m_animBySurfPairMap.end()) {
-		return it->second;
-	}
-	return getAnimation(to);
 }
 
 CycleInfo SkillType::calculateCycleTime() const {
@@ -303,16 +283,16 @@ CycleInfo SkillType::calculateCycleTime() const {
 	int soundOffset = -1;
 	int systemOffset = -1;
 
-	if (getAnimSpeed() != 0) {
-		float animProgressSpeed = getAnimSpeed() * speedModifier;
+	if (getSoundsAndAnimations()->getAnimSpeed() != 0) {
+		float animProgressSpeed = getSoundsAndAnimations()->getAnimSpeed() * speedModifier;
 		animFrames = int(1.0000001f / animProgressSpeed);
 
 		if (skillClass == SkillClass::ATTACK || skillClass == SkillClass::CAST_SPELL) {
 			systemOffset = clamp(int(startTime / animProgressSpeed), 1, animFrames - 1);
 			assert(systemOffset > 0 && systemOffset < 256);
 		}
-		if (!sounds.getSounds().empty()) {
-			soundOffset = clamp(int(soundStartTime / animProgressSpeed), 1, animFrames - 1);
+		if (!getSoundsAndAnimations()->getSounds().empty()) {
+			soundOffset = clamp(int(getSoundsAndAnimations()->getSoundStartTime() / animProgressSpeed), 1, animFrames - 1);
 			assert(soundOffset > 0);
 		}
 	}
@@ -347,7 +327,7 @@ bool MoveSkillType::load(const XmlNode *sn, const string &dir, const TechTree *t
 }
 
 fixed MoveSkillType::getSpeed(const Unit *unit) const {
-	return speed * unit->getUnitStats()->getMoveSpeed().getValueMult() + unit->getUnitStats()->getMoveSpeed().getValue();
+	return getBaseSpeed() * unit->getUnitStats()->getMoveSpeed().getValueMult() + unit->getUnitStats()->getMoveSpeed().getValue();
 }
 
 // =====================================================
@@ -355,17 +335,76 @@ fixed MoveSkillType::getSpeed(const Unit *unit) const {
 // =====================================================
 
 TargetBasedSkillType::TargetBasedSkillType(const char* typeName)
-		: SkillType(typeName) {
-	startTime = 0.0f;
-}
+		: effectTypes()
+		, projectile(false)
+		, projectileParticleSystemType(0)
+		, splash(false)
+		, splashDamageAll(false)
+		, splashRadius(0)
+		, splashParticleSystemType(0)
+		, SkillType(typeName) {}
 
 TargetBasedSkillType::~TargetBasedSkillType(){
+	deleteValues(projSounds.getSounds());
+	delete projectileParticleSystemType;
+	delete splashParticleSystemType;
 }
 
 bool TargetBasedSkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const CreatableType *ct){
     bool loadOk = true;
 	SkillType::load(sn, dir, tt, ct);
 	const FactionType *ft = ct->getFactionType();
+
+	//effects
+	const XmlNode *effectsNode = sn->getChild("effects", 0, false);
+	if (effectsNode) {
+		effectTypes.resize(effectsNode->getChildCount());
+		for(int i=0; i < effectsNode->getChildCount(); ++i) {
+			const XmlNode *effectNode = effectsNode->getChild("effect", i);
+			EffectType *effectType = new EffectType();
+			effectType->load(effectNode, dir, tt, ft);
+			effectTypes[i] = effectType;
+		}
+	}
+	//projectile
+	const XmlNode *projectileNode = sn->getChild("projectile", 0, false);
+	if (projectileNode && projectileNode->getAttribute("value")->getBoolValue()) {
+
+		//proj particle
+		const XmlNode *particleNode= projectileNode->getChild("particle", 0, false);
+		if(particleNode && particleNode->getAttribute("value")->getBoolValue()){
+			string path= particleNode->getAttribute("path")->getRestrictedValue();
+			projectileParticleSystemType = new ProjectileType();
+			projectileParticleSystemType->load(dir,  dir + "/" + path);
+			projectile = true;
+		}
+		//proj sounds
+		const XmlNode *soundNode= projectileNode->getChild("sound", 0, false);
+		if(soundNode && soundNode->getAttribute("enabled")->getBoolValue()) {
+			for(int i=0; i<soundNode->getChildCount(); ++i){
+				const XmlNode *soundFileNode= soundNode->getChild("sound-file", i);
+				string path= soundFileNode->getAttribute("path")->getRestrictedValue();
+				StaticSound *sound= new StaticSound();
+				sound->load(dir + "/" + path);
+				projSounds.add(sound);
+			}
+		}
+	}
+	//splash damage and/or special effects
+	const XmlNode *splashNode = sn->getChild("splash", 0, false);
+	splash = splashNode && splashNode->getBoolValue();
+	if (splash) {
+		splashDamageAll = splashNode->getOptionalBoolValue("damage-all", true);
+		splashRadius= splashNode->getChild("radius")->getAttribute("value")->getIntValue();
+
+		//splash particle
+		const XmlNode *particleNode= splashNode->getChild("particle", 0, false);
+		if(particleNode && particleNode->getAttribute("value")->getBoolValue()){
+			string path= particleNode->getAttribute("path")->getRestrictedValue();
+			splashParticleSystemType= new SplashType();
+			splashParticleSystemType->load(dir,  dir + "/" + path);
+		}
+	}
 
 	//fields
 	const XmlNode *attackFieldsNode = sn->getChild("attack-fields", 0, false);
@@ -382,6 +421,10 @@ bool TargetBasedSkillType::load(const XmlNode *sn, const string &dir, const Tech
 
 void TargetBasedSkillType::doChecksum(Checksum &checksum) const {
 	SkillType::doChecksum(checksum);
+	checksum.add(projectile);
+	checksum.add(splash);
+	checksum.add(splashDamageAll);
+	checksum.add(splashRadius);
 	foreach_enum (Zone, z) {
 		checksum.add<bool>(zones.get(z));
 	}
@@ -389,7 +432,6 @@ void TargetBasedSkillType::doChecksum(Checksum &checksum) const {
 
 void TargetBasedSkillType::getDesc(string &str, const Unit *unit, const char* rangeDesc) const {
 	Lang &lang= Lang::getInstance();
-	descEpCost(str, unit);
 	//splash radius
 	if (splashRadius) {
 		str += lang.get("SplashRadius") + ": " + intToStr(splashRadius) + "\n";
@@ -404,10 +446,26 @@ void TargetBasedSkillType::getDesc(string &str, const Unit *unit, const char* ra
 	}
 }
 
+void TargetBasedSkillType::descEffects(string &str, const Unit *unit) const {
+	for(EffectTypes::const_iterator i = effectTypes.begin(); i != effectTypes.end(); ++i) {
+		str += g_lang.get("Effect") + ": ";
+		(*i)->getDesc(str);
+	}
+}
+
+void TargetBasedSkillType::descRange(string &str, const Unit *unit, const char* rangeDesc) const {
+	str+= Lang::getInstance().get(rangeDesc)+": ";
+	if(getMinRange() > 1) {
+		str += 	intToStr(getMinRange()) + "...";
+	}
+	str += intToStr(getMaxRange());
+	EnhancementType::describeModifier(str, unit->getMaxRange(this) - getMaxRange());
+	str+="\n";
+}
+
 // =====================================================
 // 	class AttackSkillType
 // =====================================================
-
 AttackSkillType::~AttackSkillType() {
 //	delete earthquakeType;
 }
@@ -417,10 +475,16 @@ bool AttackSkillType::load(const XmlNode *sn, const string &dir, const TechTree 
 	loadOk = TargetBasedSkillType::load(sn, dir, tt, ct);
 
 	//misc
-	startTime= sn->getOptionalFloatValue("attack-start-time");
     cooldown = 0;
 	if (sn->getOptionalChild("cooldown")) {
         cooldown = sn->getOptionalChild("cooldown")->getAttribute("time")->getIntValue();
+	}
+
+	const XmlNode *attackStatsNode = sn->getChild("attack-stats", 0, false);
+	if (attackStatsNode) {
+        if (!attackStats.load(attackStatsNode, dir)) {
+            loadOk = false;
+        }
 	}
 
     const XmlNode *damageTypesNode = sn->getChild("damage-types", 0, false);
@@ -451,30 +515,25 @@ void AttackSkillType::doChecksum(Checksum &checksum) const {
 
 void AttackSkillType::getDesc(string &str, const Unit *unit) const {
 	Lang &lang= Lang::getInstance();
-
-	// skill-speed and ep-cost first
-	descSpeed(str, unit, "AttackSpeed");
-	descEpCost(str, unit);
+    descSpeed(str, unit, "AttackSpeed");
     str += "Cooldown: ";
     str += intToStr(cooldown);
     str += "\n";
-
-	if (damageTypes.size() > 0) {
-    str += lang.get("Magic Damage")+": ";
-    str += "\n";
-	for (int i = 0; i < damageTypes.size(); ++i) {
-	str += lang.get(damageTypes[i].getTypeName())+": ";
-	str += intToStr(damageTypes[i].getValue());
-	}
-    str += "\n";
-	}
-
-	TargetBasedSkillType::getDesc(str, unit, "AttackDistance");
-	descEffects(str, unit);
+    if (damageTypes.size() > 0) {
+        str += lang.get("Magic Damage")+": ";
+        str += "\n";
+        for (int i = 0; i < damageTypes.size(); ++i) {
+            str += lang.get(damageTypes[i].getTypeName())+": ";
+            str += intToStr(damageTypes[i].getValue());
+        }
+        str += "\n";
+    }
+    TargetBasedSkillType::getDesc(str, unit, "AttackDistance");
+    descEffects(str, unit);
 }
 
 fixed AttackSkillType::getSpeed(const Unit *unit) const {
-	return speed * unit->getAttackStats()->getAttackSpeed().getValueMult() + unit->getAttackStats()->getAttackSpeed().getValue();
+	return getBaseSpeed() * unit->getAttackStats()->getAttackSpeed().getValueMult() + unit->getAttackStats()->getAttackSpeed().getValue();
 }
 
 // ===============================
@@ -482,7 +541,7 @@ fixed AttackSkillType::getSpeed(const Unit *unit) const {
 // ===============================
 
 fixed BuildSkillType::getSpeed(const Unit *unit) const {
-	return speed * unit->getProductionSpeeds()->getRepairSpeed().getValueMult() + unit->getProductionSpeeds()->getRepairSpeed().getValue();
+	return getBaseSpeed() * unit->getProductionSpeeds()->getRepairSpeed().getValueMult() + unit->getProductionSpeeds()->getRepairSpeed().getValue();
 }
 
 // ===============================
@@ -490,7 +549,7 @@ fixed BuildSkillType::getSpeed(const Unit *unit) const {
 // ===============================
 
 fixed ConstructSkillType::getSpeed(const Unit *unit) const {
-	return speed * unit->getProductionSpeeds()->getRepairSpeed().getValueMult() + unit->getProductionSpeeds()->getRepairSpeed().getValue();
+	return getBaseSpeed() * unit->getProductionSpeeds()->getRepairSpeed().getValueMult() + unit->getProductionSpeeds()->getRepairSpeed().getValue();
 }
 
 // ===============================
@@ -498,7 +557,7 @@ fixed ConstructSkillType::getSpeed(const Unit *unit) const {
 // ===============================
 
 fixed HarvestSkillType::getSpeed(const Unit *unit) const {
-	return speed * unit->getProductionSpeeds()->getHarvestSpeed().getValueMult() + unit->getProductionSpeeds()->getHarvestSpeed().getValue();
+	return getBaseSpeed() * unit->getProductionSpeeds()->getHarvestSpeed().getValueMult() + unit->getProductionSpeeds()->getHarvestSpeed().getValue();
 }
 
 // ===============================
@@ -540,8 +599,6 @@ RepairSkillType::RepairSkillType() : SkillType("Repair") {
 
 bool RepairSkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const CreatableType *ct){
     bool loadOk = true;
-	minRange = 1;
-	maxRange = 1;
 	loadOk = SkillType::load(sn, dir, tt, ct);
 
 	XmlNode *n;
@@ -574,14 +631,6 @@ bool RepairSkillType::load(const XmlNode *sn, const string &dir, const TechTree 
 	if(petOnly && selfOnly) {
 		throw runtime_error("Repair skill can't specify pet-only with self-only.");
 	}
-
-	//splash particle
-	const XmlNode *particleNode= sn->getChild("particle", 0, false);
-	if(particleNode && particleNode->getAttribute("value")->getBoolValue()){
-		string path= particleNode->getAttribute("path")->getRestrictedValue();
-		splashParticleSystemType= new SplashType();
-		splashParticleSystemType->load(dir,  dir + "/" + path);
-	}
 	return loadOk;
 }
 
@@ -597,18 +646,17 @@ void RepairSkillType::doChecksum(Checksum &checksum) const {
 void RepairSkillType::getDesc(string &str, const Unit *unit) const {
 	Lang &lang= Lang::getInstance();
 	descSpeed(str, unit, "RepairSpeed");
-	descEpCost(str, unit);
 
 	if(amount) {
 		str+= "\n" + lang.get("HpRestored")+": "+ intToStr(amount);
 	}
-	if(maxRange > 1){
-		str+= "\n" + lang.get("Range")+": "+ intToStr(maxRange);
+	if(getMaxRange() > 1){
+		str+= "\n" + lang.get("Range")+": "+ intToStr(getMaxRange());
 	}
 }
 
 fixed RepairSkillType::getSpeed(const Unit *unit) const {
-	return speed * unit->getProductionSpeeds()->getRepairSpeed().getValueMult() + unit->getProductionSpeeds()->getRepairSpeed().getValue();
+	return getBaseSpeed() * unit->getProductionSpeeds()->getRepairSpeed().getValueMult() + unit->getProductionSpeeds()->getRepairSpeed().getValue();
 }
 
 // ===============================
@@ -625,8 +673,6 @@ MaintainSkillType::MaintainSkillType() : SkillType("Maintain") {
 
 bool MaintainSkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const CreatableType *ct){
     bool loadOk = true;
-	minRange = 1;
-	maxRange = 1;
 	loadOk = SkillType::load(sn, dir, tt, ct);
 
 	XmlNode *n;
@@ -659,14 +705,6 @@ bool MaintainSkillType::load(const XmlNode *sn, const string &dir, const TechTre
 	if(petOnly && selfOnly) {
 		throw runtime_error("Maintain skill can't specify pet-only with self-only.");
 	}
-
-	//splash particle
-	const XmlNode *particleNode= sn->getChild("particle", 0, false);
-	if(particleNode && particleNode->getAttribute("value")->getBoolValue()){
-		string path= particleNode->getAttribute("path")->getRestrictedValue();
-		splashParticleSystemType= new SplashType();
-		splashParticleSystemType->load(dir,  dir + "/" + path);
-	}
 	return loadOk;
 }
 
@@ -682,18 +720,17 @@ void MaintainSkillType::doChecksum(Checksum &checksum) const {
 void MaintainSkillType::getDesc(string &str, const Unit *unit) const {
 	Lang &lang= Lang::getInstance();
 	descSpeed(str, unit, "MaintainSpeed");
-	descEpCost(str, unit);
 
 	if(amount) {
 		str+= "\n" + lang.get("HpRestored")+": "+ intToStr(amount);
 	}
-	if(maxRange > 1){
-		str+= "\n" + lang.get("Range")+": "+ intToStr(maxRange);
+	if(getMaxRange() > 1){
+		str+= "\n" + lang.get("Range")+": "+ intToStr(getMaxRange());
 	}
 }
 
 fixed MaintainSkillType::getSpeed(const Unit *unit) const {
-	return speed * unit->getProductionSpeeds()->getRepairSpeed().getValueMult() + unit->getProductionSpeeds()->getRepairSpeed().getValue();
+	return getBaseSpeed() * unit->getProductionSpeeds()->getRepairSpeed().getValueMult() + unit->getProductionSpeeds()->getRepairSpeed().getValue();
 }
 
 // =====================================================
@@ -724,7 +761,7 @@ void ProduceSkillType::doChecksum(Checksum &checksum) const {
 }
 
 fixed ProduceSkillType::getSpeed(const Unit *unit) const {
-	return speed * unit->getProductionSpeeds()->getProdSpeed().getValueMult() + unit->getProductionSpeeds()->getProdSpeed().getValue();
+	return getBaseSpeed() * unit->getProductionSpeeds()->getProdSpeed().getValueMult() + unit->getProductionSpeeds()->getProdSpeed().getValue();
 }
 
 // =====================================================
@@ -732,7 +769,7 @@ fixed ProduceSkillType::getSpeed(const Unit *unit) const {
 // =====================================================
 
 fixed UpgradeSkillType::getSpeed(const Unit *unit) const {
-	return speed * unit->getProductionSpeeds()->getProdSpeed().getValueMult() + unit->getProductionSpeeds()->getProdSpeed().getValue();
+	return getBaseSpeed() * unit->getProductionSpeeds()->getProdSpeed().getValueMult() + unit->getProductionSpeeds()->getProdSpeed().getValue();
 }
 
 // =====================================================
@@ -740,7 +777,7 @@ fixed UpgradeSkillType::getSpeed(const Unit *unit) const {
 // =====================================================
 
 fixed MorphSkillType::getSpeed(const Unit *unit) const {
-	return speed * unit->getProductionSpeeds()->getProdSpeed().getValueMult() + unit->getProductionSpeeds()->getProdSpeed().getValue();
+	return getBaseSpeed() * unit->getProductionSpeeds()->getProdSpeed().getValueMult() + unit->getProductionSpeeds()->getProdSpeed().getValue();
 }
 
 // =====================================================

@@ -43,6 +43,86 @@ using Sim::CycleInfo;
 using Entities::Unit;
 
 namespace ProtoTypes {
+WRAPPED_ENUM( AnimationsStyle,
+    SINGLE,
+    SEQUENTIAL,
+    RANDOM
+)
+typedef vector<Model *> Animations;
+typedef map<SurfaceType, Model*>         AnimationBySurface;
+typedef pair<SurfaceType, SurfaceType>   SurfacePair;
+typedef map<SurfacePair, Model*>         AnimationBySurfacePair;
+// =====================================================
+// 	class SoundsAndAnimations
+//
+///	Class to hold sounds and animations for skills
+// =====================================================
+class SoundsAndAnimations {
+private:
+	int animSpeed;
+	Animations animations;
+	AnimationsStyle animationsStyle;
+	AnimationBySurface     m_animBySurfaceMap;
+	AnimationBySurfacePair m_animBySurfPairMap;
+
+	SoundContainer sounds;
+	float soundStartTime;
+public:
+    SoundsAndAnimations();
+    virtual ~SoundsAndAnimations();
+
+	int getAnimSpeed() const			{return animSpeed;}
+	virtual bool isStretchyAnim() const {return false;}
+	const Model *getAnimation(SurfaceType from, SurfaceType to) const;
+	const Model *getAnimation(SurfaceType st) const;
+	const Model *getAnimation() const	{return animations.front();}
+
+	StaticSound *getSound() const		{return sounds.getRandSound();}
+	float getSoundStartTime() const		{return soundStartTime;}
+	bool hasSounds() const			    {return !sounds.getSounds().empty();}
+	Sounds getSounds() const	{return sounds.getSounds();}
+
+	bool load(const XmlNode *sn, const string &dir, const TechTree *tt, const CreatableType *ct);
+};
+
+// =====================================================
+// 	class ItemCost
+//
+///	Class detail the costs of a skill
+// =====================================================
+class ItemCost {
+private:
+    int amount;
+    const ItemType *type;
+public:
+    int getAmount() const {return amount;}
+    const ItemType *getType() const {return type;}
+    void init(int amount, const ItemType *type);
+};
+
+typedef vector<ItemCost> ItemCosts;
+typedef vector<ResourceAmount> ResCosts;
+
+class SkillCosts {
+private:
+    ItemCosts itemCosts;
+    ResCosts resourceCosts;
+    int hpCost;
+    int spCost;
+    int epCost;
+public:
+    int getItemCostCount() const {return itemCosts.size();}
+    int getResourceCostCount() const {return resourceCosts.size();}
+
+    const ItemCost *getItemCost(int i) const {return &itemCosts[i];}
+    const ResourceAmount *getResourceCost(int i) const {return &resourceCosts[i];}
+
+    int getHpCost() const {return hpCost;}
+    int getSpCost() const {return spCost;}
+    int getEpCost() const {return epCost;}
+
+    bool load(const XmlNode *sn, const string &dir, const TechTree *tt, const CreatableType *ct);
+};
 
 // =====================================================
 // 	class SkillType
@@ -51,122 +131,51 @@ namespace ProtoTypes {
 ///@todo revise, these seem to hold data/properties for
 /// actions rather than the actions themselves.
 // =====================================================
-
 class SkillType : public NameIdPair {
 	friend class DynamicTypeFactory<SkillClass, SkillType>;
-
-public:
-	typedef vector<Model *> Animations;
-	typedef map<SurfaceType, Model*>         AnimationBySurface;
-	typedef pair<SurfaceType, SurfaceType>   SurfacePair;
-	typedef map<SurfacePair, Model*>         AnimationBySurfacePair;
-
-	WRAPPED_ENUM( AnimationsStyle,
-		SINGLE,
-		SEQUENTIAL,
-		RANDOM
-	)
-
-protected:
-	// protected data... should be private...
-	///@todo privatise
-	int epCost;
-	int speed;
-	int animSpeed;
-	Animations animations;
-	AnimationsStyle animationsStyle;
-	AnimationBySurface     m_animBySurfaceMap;
-	AnimationBySurfacePair m_animBySurfPairMap;
-	SoundContainer sounds;
-	float soundStartTime;
+private:
+    int minRange;
+    int maxRange;
+    SkillCosts skillCosts;
+    SoundsAndAnimations soundsAndAnimations;
 	const char* typeName;
-	int minRange; // Refactor? Push down? Used for anything other than attack?
-	int maxRange; // ditto?
-	bool m_deCloak; // does this skill cause de-cloak
-
+	int speed;
+	bool m_deCloak;
 	float startTime;
-
-	bool projectile;
-	ProjectileType* projectileParticleSystemType;
-	SoundContainer projSounds;
-
-	bool splash;
-	bool splashDamageAll;
-	int splashRadius;
-	SplashType* splashParticleSystemType;
-
-	EffectTypes effectTypes;
 	UnitParticleSystemTypes eyeCandySystems;
 	const CreatableType *m_creatableType;
 
 public:
     const CreatableType *getCreatableType() const {return m_creatableType;}
+    const SoundsAndAnimations *getSoundsAndAnimations() const {return &soundsAndAnimations;}
+    const SkillCosts *getSkillCosts() const {return &skillCosts;}
 	SkillType(const char* typeName);
 	virtual ~SkillType();
 	virtual bool load(const XmlNode *sn, const string &dir, const TechTree *tt, const CreatableType *ct);
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void getDesc(string &str, const Unit *unit) const = 0;
-	void descEffects(string &str, const Unit *unit) const;
-	//void descEffectsRemoved(string &str, const Unit *unit) const;
-	void descSpeed(string &str, const Unit *unit, const char* speedType) const;
-	void descRange(string &str, const Unit *unit, const char* rangeDesc) const;
-
-	void descEpCost(string &str, const Unit *unit) const {
-		if(epCost){
-			str += g_lang.get("EpCost") + ": " + intToStr(epCost) + "\n";
-		}
-	}
+	virtual void descSpeed(string &str, const Unit *unit, const char* speedType) const;
 
 	CycleInfo calculateCycleTime() const;
 
-	//get
+	int getMinRange() const				            {return minRange;}
+	int getMaxRange() const		                    {return maxRange;}
+
 	virtual SkillClass getClass() const	= 0;
+	int getBaseSpeed() const            {return speed;}
 	const string &getName() const		{return m_name;}
-	int getEpCost() const				{return epCost;}
-	int getBaseSpeed() const			{return speed;}
-	virtual fixed getSpeed(const Unit *unit) const	{return speed;}
-	int getAnimSpeed() const			{return animSpeed;}
-	virtual bool isStretchyAnim() const {return false;}
-	const Model *getAnimation(SurfaceType from, SurfaceType to) const;
-	const Model *getAnimation(SurfaceType st) const;
-	const Model *getAnimation() const	{return animations.front();}
-	StaticSound *getSound() const		{return sounds.getRandSound();}
-	float getSoundStartTime() const		{return soundStartTime;}
-	int getMaxRange() const				{return maxRange;}
-	int getMinRange() const				{return minRange;}
 	float getStartTime() const			{return startTime;}
 	bool causesDeCloak() const			{return m_deCloak;}
+
+    virtual fixed getSpeed(const Unit *unit) const	{return speed;}
 
 	unsigned getEyeCandySystemCount() const { return eyeCandySystems.size(); }
 	const UnitParticleSystemType* getEyeCandySystem(unsigned i) const {
 		assert(i < eyeCandySystems.size());
 		return eyeCandySystems[i];
 	}
-
-	// set
 	void setDeCloak(bool v)	{m_deCloak = v;}
-
-	//other
 	virtual string toString() const	{return Lang::getInstance().get(typeName);}
-
-	///REFACTOR: push-down
-	//get proj
-	bool getProjectile() const									{return projectile;}
-	ProjectileType * getProjParticleType() const	{return projectileParticleSystemType;}
-	StaticSound *getProjSound() const							{return projSounds.getRandSound();}
-
-	//get splash
-	bool getSplash() const										{return splash;}
-	bool getSplashDamageAll() const								{return splashDamageAll;}
-	int getSplashRadius() const									{return splashRadius;}
-	SplashType * getSplashParticleType() const	{return splashParticleSystemType;}
-	///END REFACTOR
-
-	// get effects
-	const EffectTypes &getEffectTypes() const	{return effectTypes;}
-	bool hasEffects() const			{return effectTypes.size() > 0;}
-
-	bool hasSounds() const			{return !sounds.getSounds().empty();}
 };
 
 // ===============================
@@ -178,8 +187,7 @@ public:
 	StopSkillType() : SkillType("Stop"){}
 	virtual void getDesc(string &str, const Unit *unit) const override {
 		Lang &lang= Lang::getInstance();
-		str+= lang.get("ReactionSpeed")+": "+ intToStr(speed)+"\n";
-		descEpCost(str, unit);
+		str+= lang.get("ReactionSpeed")+": "+ intToStr(getBaseSpeed())+"\n";
 	}
 	virtual SkillClass getClass() const override { return typeClass(); }
 	static SkillClass typeClass() { return SkillClass::STOP; }
@@ -200,7 +208,6 @@ public:
 	virtual bool load(const XmlNode *sn, const string &dir, const TechTree *tt, const CreatableType *ct) override;
 	virtual void getDesc(string &str, const Unit *unit) const override {
 		descSpeed(str, unit, "WalkSpeed");
-		descEpCost(str, unit);
 	}
 	//virtual void doChecksum(Checksum &checksum) const;
 	bool getVisibleOnly() const { return visibleOnly; }
@@ -208,40 +215,52 @@ public:
 	virtual SkillClass getClass() const override { return typeClass(); }
 	static SkillClass typeClass() { return SkillClass::MOVE; }
 };
-/*
-class RangedType {
-protected:
-	int minRange;
-	int maxRange;
 
-public:
-	RangedType();
-	int getMaxRange() const					{return maxRange;}
-	int getMinRange() const					{return minRange;}
-	virtual bool load(const XmlNode *sn, const string &dir, const TechTree *tt, const FactionType *ft);
-	virtual void getDesc(string &str, const Unit *unit, const char* rangeDesc) const;
-};
-*/
 // ===============================
 // 	class TargetBasedSkillType
 //
 /// Base class for both AttackSkillType and CastSpellSkillType
 // ===============================
-
 class TargetBasedSkillType: public SkillType {
-protected:
+private:
 	Zones zones;
+	bool projectile;
+	ProjectileType* projectileParticleSystemType;
+	SoundContainer projSounds;
+
+	bool splash;
+	bool splashDamageAll;
+	int splashRadius;
+	SplashType* splashParticleSystemType;
+
+	EffectTypes effectTypes;
 
 public:
 	TargetBasedSkillType(const char* typeName);
 	virtual ~TargetBasedSkillType();
+	virtual void doChecksum(Checksum &checksum) const;
+
+	bool getProjectile() const						{return projectile;}
+	ProjectileType * getProjParticleType() const	{return projectileParticleSystemType;}
+	StaticSound *getProjSound() const				{return projSounds.getRandSound();}
+
+	bool getSplash() const							{return splash;}
+	bool getSplashDamageAll() const					{return splashDamageAll;}
+	int getSplashRadius() const						{return splashRadius;}
+	SplashType * getSplashParticleType() const	    {return splashParticleSystemType;}
+
+	const EffectTypes &getEffectTypes() const	    {return effectTypes;}
+	bool hasEffects() const			                {return effectTypes.size() > 0;}
+
+	Zones getZones () const				            {return zones;}
+	bool getZone ( const Zone zone ) const		    {return zones.get(zone);}
+
 	virtual bool load(const XmlNode *sn, const string &dir, const TechTree *tt, const CreatableType *ct) override;
-	virtual void doChecksum(Checksum &checksum) const override;
 	virtual void getDesc(string &str, const Unit *unit) const override {getDesc(str, unit, "Range");}
 	virtual void getDesc(string &str, const Unit *unit, const char* rangeDesc) const;
 
-	Zones getZones () const				{return zones;}
-	bool getZone ( const Zone zone ) const		{return zones.get(zone);}
+	void descEffects(string &str, const Unit *unit) const;
+    void descRange(string &str, const Unit *unit, const char* rangeDesc) const;
 };
 
 // ===============================
@@ -251,9 +270,10 @@ public:
 class AttackSkillType: public TargetBasedSkillType {
 private:
     int cooldown;
+	AttackStats attackStats;
+    DamageTypes damageTypes;
 //	EarthquakeType *earthquakeType;
 public:
-    DamageTypes damageTypes;
 
 	AttackSkillType() : TargetBasedSkillType("Attack"), damageTypes(0) /*, earthquakeType(NULL)*/ {}
 	virtual ~AttackSkillType();
@@ -264,7 +284,11 @@ public:
 
 	//get
 	virtual fixed getSpeed(const Unit *unit) const override;
-	int getCooldown() const				        {return cooldown;} // attempt to add cooldowns
+	const AttackStats *getAttackStats() const		  {return &attackStats;}
+	const DamageTypes *getDamageTypes() const         {return &damageTypes;}
+	int getDamageTypeCount() const                    {return damageTypes.size();}
+	const DamageType *getDamageType(int i) const      {return &damageTypes[i];}
+	int getCooldown() const				              {return cooldown;}
 //	const EarthquakeType *getEarthquakeType() const	{return earthquakeType;}
 
 	virtual SkillClass getClass() const override { return typeClass(); }
@@ -280,7 +304,6 @@ public:
 	ConstructSkillType() : SkillType("Construct") {}
 	void getDesc(string &str, const Unit *unit) const {
 		descSpeed(str, unit, "ConstructSpeed");
-		descEpCost(str, unit);
 	}
 
 	virtual fixed getSpeed(const Unit *unit) const override;
@@ -297,7 +320,6 @@ public:
 	BuildSkillType() : SkillType("Build") {}
 	void getDesc(string &str, const Unit *unit) const {
 		descSpeed(str, unit, "BuildSpeed");
-		descEpCost(str, unit);
 	}
 
 	virtual fixed getSpeed(const Unit *unit) const override;
@@ -426,7 +448,6 @@ public:
 	virtual void doChecksum(Checksum &checksum) const override;
 	virtual void getDesc(string &str, const Unit *unit) const override {
 		descSpeed(str, unit, "ProductionSpeed");
-		descEpCost(str, unit);
 	}
 	virtual fixed getSpeed(const Unit *unit) const override;
 
@@ -447,7 +468,6 @@ public:
 	UpgradeSkillType() : SkillType("Upgrade"){}
 	virtual void getDesc(string &str, const Unit *unit) const override {
 		descSpeed(str, unit, "UpgradeSpeed");
-		descEpCost(str, unit);
 	}
 	virtual fixed getSpeed(const Unit *unit) const override;
 
@@ -468,7 +488,7 @@ public:
 	BeBuiltSkillType() : SkillType("Be built"){}
 	virtual bool load(const XmlNode *sn, const string &dir, const TechTree *tt, const CreatableType *ct) override;
 	virtual void getDesc(string &str, const Unit *unit) const override {}
-	virtual bool isStretchyAnim() const override {return m_stretchy;}
+	virtual bool isStretchyAnim() const {return m_stretchy;}
 	virtual SkillClass getClass() const override { return typeClass(); }
 	static SkillClass typeClass() { return SkillClass::BE_BUILT; }
 };
@@ -482,7 +502,6 @@ public:
 	MorphSkillType() : SkillType("Morph"){}
 	virtual void getDesc(string &str, const Unit *unit) const override {
 		descSpeed(str, unit, "MorphSpeed");
-		descEpCost(str, unit);
 	}
 	virtual fixed getSpeed(const Unit *unit) const override;
 
@@ -521,7 +540,6 @@ public:
 	virtual void doChecksum(Checksum &checksum) const override;
 	virtual void getDesc(string &str, const Unit *unit) const override {
 		descSpeed(str, unit, "Speed");
-		descEpCost(str, unit);
 	}
 
 	virtual SkillClass getClass() const override { return typeClass(); }
@@ -537,7 +555,6 @@ public:
 	UnloadSkillType() : SkillType("Unload"){}
 	virtual void getDesc(string &str, const Unit *unit) const override {
 		descSpeed(str, unit, "Speed");
-		descEpCost(str, unit);
 	}
 
 	virtual SkillClass getClass() const override { return typeClass(); }
@@ -548,13 +565,12 @@ public:
 // 	class CastSpellSkillType
 // ===============================
 
-class CastSpellSkillType : public SkillType {
+class CastSpellSkillType : public TargetBasedSkillType {
 public:
-	CastSpellSkillType() : SkillType("CastSpell") {}
+	CastSpellSkillType() : TargetBasedSkillType("CastSpell") {}
 
 	virtual void getDesc(string &str, const Unit *unit) const override {
 		descSpeed(str, unit, "Speed");
-		descEpCost(str, unit);
 		descEffects(str, unit);
 	}
 
@@ -577,10 +593,8 @@ public:
 	virtual bool load(const XmlNode *sn, const string &dir, const TechTree *tt, const CreatableType *ct) override;
 	virtual void getDesc(string &str, const Unit *unit) const override {
 		descSpeed(str, unit, "Speed");
-		descEpCost(str, unit);
-		descEffects(str, unit);
 	}
-	virtual bool isStretchyAnim() const override {return m_stretchy;}
+	virtual bool isStretchyAnim() const {return m_stretchy;}
 	virtual SkillClass getClass() const override { return typeClass(); }
 	static SkillClass typeClass() { return SkillClass::BUILD_SELF; }
 

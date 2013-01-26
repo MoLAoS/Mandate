@@ -6,8 +6,8 @@
 //  GPL V3, see source/licence.txt
 // ==============================================================
 
-#ifndef _GLEST_GAME_CARRIED_DISPLAY_H_
-#define _GLEST_GAME_CARRIED_DISPLAY_H_
+#ifndef _GLEST_GAME_STATS_DISPLAY_H_
+#define _GLEST_GAME_STATS_DISPLAY_H_
 
 #include <string>
 #include "texture.h"
@@ -36,42 +36,40 @@ using Entities::Faction;
 
 class UserInterface;
 
-WRAPPED_ENUM( CarriedDisplaySection, CARRIED, GARRISONED, CONTAINED )
+WRAPPED_ENUM( StatsDisplaySection, STATS )
 
-struct CarriedDisplayButton {
-	CarriedDisplaySection m_section;
+struct StatsDisplayButton  {
+	StatsDisplaySection m_section;
 	int m_index;
 
-	CarriedDisplayButton(CarriedDisplaySection s, int ndx) : m_section(s), m_index(ndx) {}
+	StatsDisplayButton (StatsDisplaySection s, int ndx) : m_section(s), m_index(ndx) {}
 
-	CarriedDisplayButton& operator=(const CarriedDisplayButton &that) {
+	StatsDisplayButton & operator=(const StatsDisplayButton  &that) {
 		this->m_section = that.m_section;
 		this->m_index = that.m_index;
 		return *this;
 	}
 
-	bool operator==(const CarriedDisplayButton &that) const {
+	bool operator==(const StatsDisplayButton  &that) const {
 		return (this->m_section == that.m_section && this->m_index == that.m_index);
 	}
 
-	bool operator!=(const CarriedDisplayButton &that) const {
+	bool operator!=(const StatsDisplayButton  &that) const {
 		return (this->m_section != that.m_section || this->m_index != that.m_index);
 	}
 };
 
 // =====================================================
-// 	class CarriedWindow
+// 	class StatsWindow
 //
-///	Display for carried units
+///	Display for production
 // =====================================================
 
-class CarriedWindow : public Widget, public MouseWidget, public ImageWidget, public TextWidget {
+class StatsWindow : public Widget, public MouseWidget, public ImageWidget, public TextWidget {
 public:
 	static const int cellWidthCount = 6;
 	static const int cellHeightCount = 4;
-	static const int carriedCellCount = cellWidthCount * cellHeightCount;
-	static const int garrisonedCellCount = cellWidthCount * cellHeightCount;
-	static const int containedCellCount = cellWidthCount * cellHeightCount;
+	static const int statsCellCount = cellWidthCount * cellHeightCount;
 	static const int invalidIndex = -1;
 private:
 	UserInterface *m_ui;
@@ -85,17 +83,15 @@ private:
 	};
 	SizeItemCollection m_sizes;
 	FuzzySize m_fuzzySize;
-	Vec2i m_carriedOffset,
-	m_garrisonedOffset,
-	m_containedOffset;
-	CarriedDisplayButton m_hoverBtn,
+	Vec2i m_statsOffset;
+	StatsDisplayButton  m_hoverBtn,
                       m_pressedBtn;
 	CommandTip *m_toolTip;
 	const FontMetrics *m_fontMetrics;
 private:
 	void layout();
 public:
-	CarriedWindow(Container *parent, UserInterface *ui, Vec2i pos);
+	StatsWindow(Container *parent, UserInterface *ui, Vec2i pos);
 
 	FuzzySize getFuzzySize() const                  {return m_fuzzySize;}
 	int getIndex(int i)								{return index[i];}
@@ -110,24 +106,20 @@ public:
 	//void setDownLighted(int i, bool lighted)			        {downLighted[i] = lighted;}
 	void setIndex(int i, int value)						        {index[i] = value;}
 
-	void CarriedWindow::tick();
+	void StatsWindow::tick();
 
-	void computeCarriedPanel();
-	void computeCarriedInfo(int posDisplay);
-	void computeGarrisonedPanel();
-	void computeGarrisonedInfo(int posDisplay);
-	void computeContainedPanel();
-	void computeContainedInfo(int posDisplay);
+	void computeStatsPanel();
+	void computeStatsInfo(int posDisplay);
 
 	void clear();
 	void resetTipPos(Vec2i i_offset);
-	void resetTipPos() {resetTipPos(m_carriedOffset);}
-	CarriedDisplayButton computeIndex(Vec2i pos, bool screenPos = false);
-	CarriedDisplayButton getHoverButton() const { return m_hoverBtn; }
+	void resetTipPos() {resetTipPos(m_statsOffset);}
+	StatsDisplayButton  computeIndex(Vec2i pos, bool screenPos = false);
+	StatsDisplayButton  getHoverButton() const { return m_hoverBtn; }
 	void persist();
 	void reset();
 
-	void setToolTipText2(const string &hdr, const string &tip, CarriedDisplaySection i_section);
+	void setToolTipText2(const string &hdr, const string &tip, StatsDisplaySection i_section);
 
 	virtual void render() override;
 	virtual string descType() const override { return "DisplayPanel"; }
@@ -140,12 +132,12 @@ public:
 };
 
 // =====================================================
-//  class CarriedDisplayFrame
+//  class StatsDisplayFrame
 // =====================================================
 
-class CarriedDisplayFrame : public Frame {
+class StatsDisplayFrame : public Frame {
 private:
-	CarriedWindow *m_display;
+	StatsWindow *m_display;
 	UserInterface *m_ui;
 
 public:
@@ -153,8 +145,8 @@ public:
 	void onShrink(Widget*);
 
 public:
-	CarriedDisplayFrame(UserInterface *ui, Vec2i pos);
-	CarriedWindow* getCarriedDisplay() {return m_display;}
+	StatsDisplayFrame(UserInterface *ui, Vec2i pos);
+	StatsWindow* getStatsDisplay() {return m_display;}
 
 	void remove(Widget*);
 	void resetSize();

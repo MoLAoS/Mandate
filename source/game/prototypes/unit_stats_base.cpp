@@ -63,12 +63,21 @@ void Stat::doChecksum(Checksum &checksum) const {
 bool Stat::load(const XmlNode *baseNode, const string &dir) {
     bool loadOk = true;
     reset();
-    value = baseNode->getAttribute("value")->getIntValue();
-    valueMult = baseNode->getAttribute("value-mult")->getIntValue();
-    const XmlNode *layerNode = baseNode->getChild("layer", 0, false);
-    if (layerNode) {
-        layerAdd = layerNode->getAttribute("add")->getIntValue();
-        layerMult = layerNode->getAttribute("mult")->getIntValue();
+    const XmlAttribute* statAttibute = baseNode->getAttribute("value", false);
+    if (statAttibute) {
+        value = statAttibute->getIntValue();
+    }
+    statAttibute = baseNode->getAttribute("value-mult", false);
+    if (statAttibute) {
+        valueMult = statAttibute->getIntValue();
+    }
+    statAttibute = baseNode->getAttribute("add", false);
+    if (statAttibute) {
+        layerAdd = statAttibute->getIntValue();
+    }
+    statAttibute = baseNode->getAttribute("mult", false);
+    if (statAttibute) {
+        layerMult = statAttibute->getIntValue();
     }
     return loadOk;
 }

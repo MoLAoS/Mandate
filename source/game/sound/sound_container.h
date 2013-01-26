@@ -3,9 +3,9 @@
 //
 //	Copyright (C) 2001-2008 Martiño Figueroa
 //
-//	You can redistribute this code and/or modify it under 
-//	the terms of the GNU General Public License as published 
-//	by the Free Software Foundation; either version 2 of the 
+//	You can redistribute this code and/or modify it under
+//	the terms of the GNU General Public License as published
+//	by the Free Software Foundation; either version 2 of the
 //	License, or (at your option) any later version
 // ==============================================================
 
@@ -28,11 +28,9 @@ namespace Glest { namespace Sound {
 //
 /// Holds a list of sounds that are usually played at random
 // =====================================================
+typedef vector<StaticSound*> Sounds;
 
 class SoundContainer{
-public:
-	typedef vector<StaticSound*> Sounds;
-
 private:
 	Sounds sounds;
 	mutable Random random;

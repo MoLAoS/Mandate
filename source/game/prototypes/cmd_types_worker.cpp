@@ -353,7 +353,7 @@ void RepairCommandType::update(Unit *unit) const {
 			unit->setTarget(repaired, true, true);
 
 			//shiney
-			if (rst->getSplashParticleType()) {
+			/*if (rst->getSplashParticleType()) {
 				const Tile *sc = g_world.getMap()->getTile(Map::toTileCoords(repaired->getCenteredPos()));
 				bool visible = sc->isVisible(g_world.getThisTeamIndex())
 					&& g_renderer.getCuller().isInside(repaired->getCenteredPos());
@@ -361,7 +361,7 @@ void RepairCommandType::update(Unit *unit) const {
 				Splash *psSplash = rst->getSplashParticleType()->createSplashParticleSystem(visible);
 				psSplash->setPos(repaired->getCurrVector());
 				g_renderer.manageParticleSystem(psSplash, ResourceScope::GAME);
-			}
+			}*/
 
 			bool wasBuilt = repaired->isBuilt();
 
@@ -397,7 +397,7 @@ Command *RepairCommandType::doAutoRepair(Unit *unit) const {
 	}
 	// look for someone to repair
 	Unit *sighted = NULL;
-	if (unit->getEp() >= repairSkillType->getEpCost()
+	if (unit->getEp() >= repairSkillType->getSkillCosts()->getEpCost()
 	&& repairableInSight(unit, &sighted, this, repairSkillType->isSelfAllowed())) {
 		REPAIR_LOG( unit, __FUNCTION__ << "(): Unit:" << *unit << " @ " << unit->getPos()
 			<< ", found someone (" << *sighted << ") to repair @ " << sighted->getPos() );
@@ -840,7 +840,6 @@ void HarvestCommandType::getDesc(string &str, const Unit *unit) const{
 	str += lang.get("HarvestSpeed") + ": " + intToStr(m_harvestSkillType->getBaseSpeed() / m_hitsPerUnit);
 	EnhancementType::describeModifier(str, (unit->getSpeed(m_harvestSkillType) - m_harvestSkillType->getBaseSpeed()) / m_hitsPerUnit);
 	str+= "\n";
-	m_harvestSkillType->descEpCost(str, unit);
 	str += lang.get("MaxLoad") + ": " + intToStr(m_maxLoad) + "\n";
 	str += lang.get("LoadedSpeed") + ": " + intToStr(m_moveLoadedSkillType->getBaseSpeed()) + "\n";
 }
@@ -1134,7 +1133,6 @@ void TransportCommandType::doChecksum(Checksum &checksum) const {
 
 void TransportCommandType::getDesc(string &str, const Unit *unit) const{
 	Lang &lang= Lang::getInstance();
-	m_transportSkillType->descEpCost(str, unit);
 	str += lang.get("LoadedSpeed") + ": " + intToStr(m_moveLoadedSkillType->getBaseSpeed()) + "\n";
 }
 
@@ -1326,7 +1324,6 @@ void SetStoreCommandType::doChecksum(Checksum &checksum) const {
 
 void SetStoreCommandType::getDesc(string &str, const Unit *unit) const{
 	Lang &lang= Lang::getInstance();
-	m_setStructureSkillType->descEpCost(str, unit);
 }
 
 void SetStoreCommandType::descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const {
@@ -1382,7 +1379,6 @@ void SetProducerCommandType::doChecksum(Checksum &checksum) const {
 
 void SetProducerCommandType::getDesc(string &str, const Unit *unit) const{
 	Lang &lang= Lang::getInstance();
-	m_setStructureSkillType->descEpCost(str, unit);
 }
 
 void SetProducerCommandType::descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const {
@@ -1466,7 +1462,6 @@ void TradeCommandType::doChecksum(Checksum &checksum) const {
 
 void TradeCommandType::getDesc(string &str, const Unit *unit) const{
 	Lang &lang= Lang::getInstance();
-	m_transportSkillType->descEpCost(str, unit);
 	str += lang.get("LoadedSpeed") + ": " + intToStr(m_moveLoadedSkillType->getBaseSpeed()) + "\n";
 }
 

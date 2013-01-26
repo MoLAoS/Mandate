@@ -535,12 +535,14 @@ public:
 	 * using the supplied skill after all modifications due to upgrades &
 	 * effects.
 	 */
-	int getMaxRange(const SkillType *st) const {
-		switch(st->getClass()) {
+	int getMaxRange(const TargetBasedSkillType *tbst) const {
+		switch(tbst->getClass()) {
 			case SkillClass::ATTACK:
-				return (st->getMaxRange() * getAttackStats()->getAttackRange().getValueMult() + getAttackStats()->getAttackRange().getValue()).intp();
+				return (tbst->getMaxRange() * getAttackStats()->getAttackRange().getValueMult() + getAttackStats()->getAttackRange().getValue()).intp();
+			case SkillClass::CAST_SPELL:
+				return (tbst->getMaxRange() * getAttackStats()->getAttackRange().getValueMult() + getAttackStats()->getAttackRange().getValue()).intp();
 			default:
-				return st->getMaxRange();
+				return tbst->getMaxRange();
 		}
 	}
 

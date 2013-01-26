@@ -302,7 +302,7 @@ void CreatableType::sortSkillTypes() {
         startSkill = skillTypesByClass[SkillClass::STOP].front();
     }
     foreach (SkillTypes, it, skillTypesByClass[SkillClass::ATTACK]) {
-        if ((*it)->getProjectile()) {
+        if (static_cast<AttackSkillType*>(*it)->getProjectile()) {
             m_hasProjectileAttack = true;
             break;
         }

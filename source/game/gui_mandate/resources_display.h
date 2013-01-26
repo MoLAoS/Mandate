@@ -6,8 +6,8 @@
 //  GPL V3, see source/licence.txt
 // ==============================================================
 
-#ifndef _GLEST_GAME_PRODUCTION_DISPLAY_H_
-#define _GLEST_GAME_PRODUCTION_DISPLAY_H_
+#ifndef _GLEST_GAME_RESOURCES_DISPLAY_H_
+#define _GLEST_GAME_RESOURCES_DISPLAY_H_
 
 #include <string>
 #include "texture.h"
@@ -36,43 +36,40 @@ using Entities::Faction;
 
 class UserInterface;
 
-WRAPPED_ENUM( ProductionDisplaySection, RESOURCES, ITEMS, PROCESSES, UNITS )
+WRAPPED_ENUM( ResourcesDisplaySection, RESOURCES )
 
-struct ProductionDisplayButton {
-	ProductionDisplaySection m_section;
+struct ResourcesDisplayButton  {
+	ResourcesDisplaySection m_section;
 	int m_index;
 
-	ProductionDisplayButton(ProductionDisplaySection s, int ndx) : m_section(s), m_index(ndx) {}
+	ResourcesDisplayButton (ResourcesDisplaySection s, int ndx) : m_section(s), m_index(ndx) {}
 
-	ProductionDisplayButton& operator=(const ProductionDisplayButton &that) {
+	ResourcesDisplayButton & operator=(const ResourcesDisplayButton  &that) {
 		this->m_section = that.m_section;
 		this->m_index = that.m_index;
 		return *this;
 	}
 
-	bool operator==(const ProductionDisplayButton &that) const {
+	bool operator==(const ResourcesDisplayButton  &that) const {
 		return (this->m_section == that.m_section && this->m_index == that.m_index);
 	}
 
-	bool operator!=(const ProductionDisplayButton &that) const {
+	bool operator!=(const ResourcesDisplayButton  &that) const {
 		return (this->m_section != that.m_section || this->m_index != that.m_index);
 	}
 };
 
 // =====================================================
-// 	class ProductionWindow
+// 	class ResourcesWindow
 //
 ///	Display for production
 // =====================================================
 
-class ProductionWindow : public Widget, public MouseWidget, public ImageWidget, public TextWidget {
+class ResourcesWindow : public Widget, public MouseWidget, public ImageWidget, public TextWidget {
 public:
 	static const int cellWidthCount = 6;
 	static const int cellHeightCount = 4;
 	static const int resourceCellCount = cellWidthCount * cellHeightCount;
-	static const int itemCellCount = cellWidthCount * cellHeightCount;
-	static const int processCellCount = cellWidthCount * cellHeightCount;
-	static const int unitCellCount = cellWidthCount * cellHeightCount;
 	static const int invalidIndex = -1;
 private:
 	UserInterface *m_ui;
@@ -86,18 +83,15 @@ private:
 	};
 	SizeItemCollection m_sizes;
 	FuzzySize m_fuzzySize;
-	Vec2i m_resourceOffset,
-	m_itemOffset,
-	m_processOffset,
-	m_unitOffset;
-	ProductionDisplayButton m_hoverBtn,
+	Vec2i m_resourceOffset;
+	ResourcesDisplayButton  m_hoverBtn,
                       m_pressedBtn;
 	CommandTip *m_toolTip;
 	const FontMetrics *m_fontMetrics;
 private:
 	void layout();
 public:
-	ProductionWindow(Container *parent, UserInterface *ui, Vec2i pos);
+	ResourcesWindow(Container *parent, UserInterface *ui, Vec2i pos);
 
 	FuzzySize getFuzzySize() const                  {return m_fuzzySize;}
 	int getIndex(int i)								{return index[i];}
@@ -112,26 +106,20 @@ public:
 	//void setDownLighted(int i, bool lighted)			        {downLighted[i] = lighted;}
 	void setIndex(int i, int value)						        {index[i] = value;}
 
-	void ProductionWindow::tick();
+	void ResourcesWindow::tick();
 
-	void computeResourcesPanel();
-	void computeResourcesInfo(int posDisplay);
-	void computeItemPanel();
-	void computeItemInfo(int posDisplay);
-	void computeProcessPanel();
-	void computeProcessInfo(int posDisplay);
-	void computeUnitPanel();
-	void computeUnitInfo(int posDisplay);
+	void computeStoragePanel();
+	void computeStorageInfo(int posDisplay);
 
 	void clear();
 	void resetTipPos(Vec2i i_offset);
 	void resetTipPos() {resetTipPos(m_resourceOffset);}
-	ProductionDisplayButton computeIndex(Vec2i pos, bool screenPos = false);
-	ProductionDisplayButton getHoverButton() const { return m_hoverBtn; }
+	ResourcesDisplayButton  computeIndex(Vec2i pos, bool screenPos = false);
+	ResourcesDisplayButton  getHoverButton() const { return m_hoverBtn; }
 	void persist();
 	void reset();
 
-	void setToolTipText2(const string &hdr, const string &tip, ProductionDisplaySection i_section);
+	void setToolTipText2(const string &hdr, const string &tip, ResourcesDisplaySection i_section);
 
 	virtual void render() override;
 	virtual string descType() const override { return "DisplayPanel"; }
@@ -144,12 +132,12 @@ public:
 };
 
 // =====================================================
-//  class ItemDisplayFrame
+//  class ResourcesDisplayFrame
 // =====================================================
 
-class ProductionDisplayFrame : public Frame {
+class ResourcesDisplayFrame : public Frame {
 private:
-	ProductionWindow *m_display;
+	ResourcesWindow *m_display;
 	UserInterface *m_ui;
 
 public:
@@ -157,9 +145,10 @@ public:
 	void onShrink(Widget*);
 
 public:
-	ProductionDisplayFrame(UserInterface *ui, Vec2i pos);
-	ProductionWindow* getProductionDisplay() {return m_display;}
+	ResourcesDisplayFrame(UserInterface *ui, Vec2i pos);
+	ResourcesWindow* getResourcesDisplay() {return m_display;}
 
+	void remove(Widget*);
 	void resetSize();
 
 	virtual void render() override;

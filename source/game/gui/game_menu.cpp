@@ -83,6 +83,10 @@ void GameMenu::onSaveWidgets(Widget*) {
 	g_userInterface.getDisplay()->persist();
 	g_userInterface.getFactionDisplay()->persist();
 	g_userInterface.getItemWindow()->persist();
+	g_userInterface.getStatsWindow()->persist();
+	g_userInterface.getCarriedWindow()->persist();
+	g_userInterface.getStorageWindow()->persist();
+	g_userInterface.getProductionWindow()->persist();
 	g_config.save();
 }
 
@@ -93,6 +97,10 @@ void GameMenu::onResetWidgets(Widget*) {
 	g_userInterface.getDisplay()->reset();
 	g_userInterface.getFactionDisplay()->reset();
 	g_userInterface.getItemWindow()->reset();
+	g_userInterface.getStatsWindow()->reset();
+	g_userInterface.getStorageWindow()->reset();
+	g_userInterface.getCarriedWindow()->reset();
+	g_userInterface.getProductionWindow()->reset();
 	g_config.save();
 }
 

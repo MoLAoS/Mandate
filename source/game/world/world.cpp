@@ -425,10 +425,10 @@ void World::damage(Unit *attacker, const AttackSkillType* ast, Unit *attacked, f
     /**< Added by MoLAoS, magic damage and resistances */
     fixed totalDamage = 0 + fDamage;
     const UnitType *uType = attacked->getType();
-    for (int t = 0; t < ast->damageTypes.size(); ++t) {
-    const DamageType dType = ast->damageTypes[t];
-    string damageType = dType.getTypeName();
-    int mDamage = dType.getValue();
+    for (int t = 0; t < ast->getDamageTypes()->size(); ++t) {
+    const DamageType *dType = ast->getDamageType(t);
+    string damageType = dType->getTypeName();
+    int mDamage = dType->getValue();
         for (int i = 0; i < attacked->getResistances()->size(); ++i) {
         const DamageType *rType = attacked->getResistance(i);
         string resistType = rType->getTypeName();

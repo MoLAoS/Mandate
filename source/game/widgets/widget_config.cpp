@@ -925,8 +925,9 @@ void WidgetConfig::load() {
 	loadStyles("UnitBar", WidgetType::UNIT_BAR);
 	loadStyles("MiniMap", WidgetType::MINIMAP);
 	loadStyles("Display", WidgetType::DISPLAY);
-	loadStyles("Faction_Display", WidgetType::FACTION_DISPLAY);
-	loadStyles("Item_Display", WidgetType::ITEM_DISPLAY);
+	loadStyles("FactionDisplay", WidgetType::FACTION_DISPLAY);
+	loadStyles("ItemDisplay", WidgetType::ITEM_DISPLAY);
+	loadStyles("ResourcesDisplay", WidgetType::RESOURCES_DISPLAY);
 	loadStyles("Console", WidgetType::CONSOLE);
 	loadStyles("GameStats", WidgetType::GAME_STATS);
 	loadStyles("OptionsPanel", WidgetType::OPTIONS_PANEL);

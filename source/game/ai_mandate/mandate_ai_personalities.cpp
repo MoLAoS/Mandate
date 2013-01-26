@@ -513,7 +513,7 @@ const CommandType* GoalSystem::selectHealSpell(Unit *unit, Unit *target) {
         const CommandType *testingCommandType = unit->getType()->getCommandType(i);
         if (testingCommandType->getClass() == CmdClass::CAST_SPELL) {
             const CastSpellCommandType *testCommandType = static_cast<const CastSpellCommandType*>(testingCommandType);
-            const SkillType *testSkillType = testCommandType->getCastSpellSkillType();
+            const CastSpellSkillType *testSkillType = testCommandType->getCastSpellSkillType();
             if (testSkillType->hasEffects()) {
                 for (int j = 0; j < testSkillType->getEffectTypes().size(); ++j) {
                     if (testSkillType->getEffectTypes()[i]->getResourcePools()->getHpBoost().getValue() > 0) {
@@ -541,7 +541,7 @@ const CommandType* GoalSystem::selectBuffSpell(Unit *unit, Unit *target) {
         const CommandType *testingCommandType = unit->getType()->getCommandType(i);
         if (testingCommandType->getClass() == CmdClass::CAST_SPELL) {
             const CastSpellCommandType *testCommandType = static_cast<const CastSpellCommandType*>(testingCommandType);
-            const SkillType *testSkillType = testCommandType->getCastSpellSkillType();
+            const CastSpellSkillType *testSkillType = testCommandType->getCastSpellSkillType();
             if (testSkillType->hasEffects()) {
                 for (int j = 0; j < target->buffNames.size(); ++j) {
                     if (testCommandType->getName() == target->buffNames[i]) {
@@ -569,17 +569,17 @@ const CommandType* GoalSystem::selectAttackSpell(Unit *unit, Unit *target) {
             if (testingCommandType->getClass() == CmdClass::ATTACK) {
                 const AttackCommandType *testCommandType = static_cast<const AttackCommandType*>(testingCommandType);
                 const AttackSkillType *testSkillType = testCommandType->AttackCommandTypeBase::getAttackSkillTypes()->getFirstAttackSkill();
-                if (testSkillType->getEpCost() <= unit->getEp()) {
+                if (testSkillType->getSkillCosts()->getEpCost() <= unit->getEp()) {
                     fixed fDamage = 0;
                     if (fDamage < 1) {
                         fDamage = 1;
                     }
                     fixed totalDamage = 0 + fDamage;
                     const UnitType *uType = target->getType();
-                    for (int t = 0; t < testSkillType->damageTypes.size(); ++t) {
-                        const DamageType dType = testSkillType->damageTypes[t];
-                        string damageType = dType.getTypeName();
-                        int mDamage = dType.getValue();
+                    for (int t = 0; t < testSkillType->getDamageTypeCount(); ++t) {
+                        const DamageType *dType = testSkillType->getDamageType(t);
+                        string damageType = dType->getTypeName();
+                        int mDamage = dType->getValue();
                         for (int i = 0; i < uType->getResistances()->size(); ++i) {
                             const DamageType *rType = uType->getResistance(i);
                             string resistType = rType->getTypeName();
@@ -594,12 +594,12 @@ const CommandType* GoalSystem::selectAttackSpell(Unit *unit, Unit *target) {
                         totalDamage += mDamage;
                     }
                     if (currentDamage < totalDamage.intp()) {
-                        currentEp = testSkillType->getEpCost();
+                        currentEp = testSkillType->getSkillCosts()->getEpCost();
                         currentDamage = totalDamage.intp();
                         attackCommandType = testingCommandType;
                     } else if (currentDamage == totalDamage.intp()){
-                        if (testSkillType->getEpCost() < currentEp) {
-                            currentEp = testSkillType->getEpCost();
+                        if (testSkillType->getSkillCosts()->getEpCost() < currentEp) {
+                            currentEp = testSkillType->getSkillCosts()->getEpCost();
                             currentDamage = totalDamage.intp();
                             attackCommandType = testingCommandType;
                         }

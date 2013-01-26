@@ -160,6 +160,7 @@ public:
 	ProductionDisplayFrame(UserInterface *ui, Vec2i pos);
 	ProductionWindow* getProductionDisplay() {return m_display;}
 
+	void remove(Widget*);
 	void resetSize();
 
 	virtual void render() override;

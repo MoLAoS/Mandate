@@ -115,6 +115,8 @@ UserInterface::UserInterface(GameState &game)
 		, m_itemWindow(0)
 		, m_carriedWindow(0)
 		, m_productionWindow(0)
+		, m_resourcesWindow(0)
+		, m_statsWindow(0)
 		, m_factionDisplay(0)
 		, m_resourceBar(0)
 		, m_tradeBar(0)
@@ -279,10 +281,10 @@ void UserInterface::init() {
     m_factionDisplay->setSize();
     m_factionDisplay->init(fac, buildings);
 	if (g_config.getUiLastFactionDisplaySize() >= 2) {
-		displayFrame->onExpand(0);
+		displayFactionFrame->onExpand(0);
 	}
 	if (g_config.getUiLastFactionDisplaySize() == 3) {
-		displayFrame->onExpand(0);
+		displayFactionFrame->onExpand(0);
 	}
 
 	if (g_config.getUiLastItemDisplayPosX() != -1 && g_config.getUiLastItemDisplayPosY() != -1) {
@@ -292,11 +294,12 @@ void UserInterface::init() {
 	ItemDisplayFrame *itemWindow = new ItemDisplayFrame(this, Vec2i(x,y));
 	m_itemWindow = itemWindow->getItemDisplay();
 	m_itemWindow->setSize();
+	m_itemWindow->setVisible(false);
 	if (g_config.getUiLastItemDisplaySize() >= 2) {
-		displayFrame->onExpand(0);
+		itemWindow->onExpand(0);
 	}
 	if (g_config.getUiLastItemDisplaySize() == 3) {
-		displayFrame->onExpand(0);
+		itemWindow->onExpand(0);
 	}
 
 	if (g_config.getUiLastProductionDisplayPosX() != -1 && g_config.getUiLastProductionDisplayPosY() != -1) {
@@ -306,11 +309,12 @@ void UserInterface::init() {
 	ProductionDisplayFrame *productionWindow = new ProductionDisplayFrame(this, Vec2i(x,y));
 	m_productionWindow = productionWindow->getProductionDisplay();
 	m_productionWindow->setSize();
+	m_productionWindow->setVisible(false);
 	if (g_config.getUiLastProductionDisplaySize() >= 2) {
-		displayFrame->onExpand(0);
+		productionWindow->onExpand(0);
 	}
 	if (g_config.getUiLastProductionDisplaySize() == 3) {
-		displayFrame->onExpand(0);
+		productionWindow->onExpand(0);
 	}
 
 	if (g_config.getUiLastCarriedDisplayPosX() != -1 && g_config.getUiLastCarriedDisplayPosY() != -1) {
@@ -320,11 +324,42 @@ void UserInterface::init() {
 	CarriedDisplayFrame *carriedWindow = new CarriedDisplayFrame(this, Vec2i(x,y));
 	m_carriedWindow = carriedWindow->getCarriedDisplay();
 	m_carriedWindow->setSize();
+	m_carriedWindow->setVisible(false);
 	if (g_config.getUiLastCarriedDisplaySize() >= 2) {
-		displayFrame->onExpand(0);
+		carriedWindow->onExpand(0);
 	}
 	if (g_config.getUiLastCarriedDisplaySize() == 3) {
-		displayFrame->onExpand(0);
+		carriedWindow->onExpand(0);
+	}
+
+	if (g_config.getUiLastResourcesDisplayPosX() != -1 && g_config.getUiLastResourcesDisplayPosY() != -1) {
+		x = g_config.getUiLastResourcesDisplayPosX();
+		y = g_config.getUiLastResourcesDisplayPosY();
+	}
+	ResourcesDisplayFrame *resourcesWindow = new ResourcesDisplayFrame(this, Vec2i(x,y));
+	m_resourcesWindow = resourcesWindow->getResourcesDisplay();
+	m_resourcesWindow->setSize();
+	m_resourcesWindow->setVisible(false);
+	if (g_config.getUiLastResourcesDisplaySize() >= 2) {
+		resourcesWindow->onExpand(0);
+	}
+	if (g_config.getUiLastResourcesDisplaySize() == 3) {
+		resourcesWindow->onExpand(0);
+	}
+
+	if (g_config.getUiLastStatsDisplayPosX() != -1 && g_config.getUiLastStatsDisplayPosY() != -1) {
+		x = g_config.getUiLastStatsDisplayPosX();
+		y = g_config.getUiLastStatsDisplayPosY();
+	}
+	StatsDisplayFrame *statsWindow = new StatsDisplayFrame(this, Vec2i(x,y));
+	m_statsWindow = statsWindow->getStatsDisplay();
+	m_statsWindow->setSize();
+	m_statsWindow->setVisible(false);
+	if (g_config.getUiLastStatsDisplaySize() >= 2) {
+		statsWindow->onExpand(0);
+	}
+	if (g_config.getUiLastStatsDisplaySize() == 3) {
+		statsWindow->onExpand(0);
 	}
 }
 
@@ -409,7 +444,9 @@ void UserInterface::onSelectionUpdated() {
     currentGroup = invalidGroupIndex;
     m_display->setSize();
     m_itemWindow->setSize();
+    m_statsWindow->setSize();
     m_carriedWindow->setSize();
+    m_resourcesWindow->setSize();
     m_productionWindow->setSize();
 }
 
@@ -458,7 +495,9 @@ void UserInterface::tick() {
 		}
 	}
 	m_itemWindow->tick();
+	m_statsWindow->tick();
 	m_carriedWindow->tick();
+	m_resourcesWindow->tick();
 	m_productionWindow->tick();
 	m_selectionDirty = false;
 }
@@ -1203,15 +1242,35 @@ void UserInterface::onHierarchySelect(int posDisplay) {
 
 ///@todo move to Display?
 void UserInterface::computePortraitInfo(int posDisplay) {
-	if (selection->getCount() < posDisplay) {
+	if (selection->getCount() < posDisplay && selection->getCount() != 1) {
 		m_display->setToolTipText2("", "", DisplaySection::COMMANDS);
 	} else {
 		if (selection->getCount() == 1 && !selection->isEnemy()) {
 			const Unit *unit = selection->getFrontUnit();
-			string name = g_lang.getTranslatedFactionName(unit->getFaction()->getType()->getName(), unit->getType()->getName());
-			m_display->setToolTipText2(name, unit->getLongDesc(), DisplaySection::SELECTION);
-			if (unit->getType()->hasTag("guildhall") || unit->getType()->hasTag("ordermember")) {
-			}
+			if (posDisplay == 0) {
+                string name = g_lang.getTranslatedFactionName(unit->getFaction()->getType()->getName(), unit->getType()->getName());
+                m_display->setToolTipText2(name, unit->getLongDesc(), DisplaySection::SELECTION);
+                if (unit->getType()->hasTag("guildhall") || unit->getType()->hasTag("ordermember")) {
+                }
+            } else {
+                switch (posDisplay) {
+                    case 1:
+                        m_display->setToolTipText2("Stats", "", DisplaySection::SELECTION);
+                        break;
+                    case 2:
+                        m_display->setToolTipText2("Items", "", DisplaySection::SELECTION);
+                        break;
+                    case 3:
+                        m_display->setToolTipText2("Production", "", DisplaySection::SELECTION);
+                        break;
+                    case 4:
+                        m_display->setToolTipText2("Storage", "", DisplaySection::SELECTION);
+                        break;
+                    case 5:
+                        m_display->setToolTipText2("Transiting", "", DisplaySection::SELECTION);
+                        break;
+                }
+            }
 		} else if (selection->isComandable()) {
 			m_display->setToolTipText2("", g_lang.get("PotraitInfo"), DisplaySection::SELECTION);
 		}
@@ -1228,6 +1287,45 @@ inline string describeAutoCommandState(AutoCmdState state) {
 			return g_lang.get("Mixed");
 	}
 	return "";
+}
+
+void UserInterface::panelButtonPressed(int posDisplay) {
+	WIDGET_LOG( __FUNCTION__ << "( " << posDisplay << " )");
+	if (!selectingPos && !selectingMeetingPoint) {
+		if (selection->isComandable()) {
+		    m_statsWindow->setVisible(false);
+		    m_itemWindow->setVisible(false);
+		    m_productionWindow->setVisible(false);
+		    m_resourcesWindow->setVisible(false);
+		    m_carriedWindow->setVisible(false);
+            switch (posDisplay) {
+                case 1:
+                    m_statsWindow->setVisible(true);
+                    break;
+                case 2:
+                    m_itemWindow->setVisible(true);
+                    break;
+                case 3:
+                    m_productionWindow->setVisible(true);
+                    break;
+                case 4:
+                    m_resourcesWindow->setVisible(true);
+                    break;
+                case 5:
+                    m_carriedWindow->setVisible(true);
+                    break;
+            }
+            Unit *unit = g_world.findUnitById(selection->getFrontUnit()->getId());
+            selection->clear();
+            selection->select(unit);
+			computeDisplay();
+		} else {
+			resetState();
+		}
+		activePos = posDisplay;
+	} else {
+		resetState();
+	}
 }
 
 void UserInterface::taxButtonPressed(int posDisplay) {
@@ -1384,11 +1482,19 @@ void UserInterface::computeSelectionPanel() {
 		} ///@todo else (selectable tileset objects ?)
 		return;
 	}
+	// selection portraits
+	for (int i = 0; i < selection->getCount(); ++i) {
+		m_display->setUpImage(i, selection->getUnit(i)->getType()->getImage());
+	}
 
 	// title, text and progress bar (for single unit selected)
 	if (selection->getCount() == 1) {
 		const Unit *unit = selection->getFrontUnit();
 		bool friendly = unit->getFaction()->getTeam() == thisTeam;
+
+		for (int i = 1; i < 6; ++i) {
+            m_display->setUpImage(i, selection->getFrontUnit()->getType()->getImage());
+		}
 
 		string name = unit->getFullName(); ///@todo tricksy Lang use... will need a %s
 		name = g_lang.getTranslatedFactionName(unit->getFaction()->getType()->getName(), name);
@@ -1421,11 +1527,6 @@ void UserInterface::computeSelectionPanel() {
 				m_display->setOrderQueueText("");
 			}
 		}
-	}
-
-	// selection portraits
-	for (int i = 0; i < selection->getCount(); ++i) {
-		m_display->setUpImage(i, selection->getUnit(i)->getType()->getImage());
 	}
 }
 
@@ -1616,7 +1717,9 @@ void UserInterface::computeDisplay() {
 	// init
 	m_display->clear();
 	m_itemWindow->clear();
+	m_statsWindow->clear();
 	m_carriedWindow->clear();
+	m_resourcesWindow->clear();
 	m_productionWindow->clear();
 
 	// === Selection Panel ===
@@ -1646,7 +1749,13 @@ void UserInterface::computeDisplay() {
     m_productionWindow->computeProcessPanel();
     m_productionWindow->computeUnitPanel();
 
-    // === Production Panels ===
+    // === Carried Panels ===
+    m_statsWindow->computeStatsPanel();
+
+    // === Carried Panels ===
+    m_resourcesWindow->computeStoragePanel();
+
+    // === Carried Panels ===
     m_carriedWindow->computeCarriedPanel();
     m_carriedWindow->computeGarrisonedPanel();
     m_carriedWindow->computeContainedPanel();

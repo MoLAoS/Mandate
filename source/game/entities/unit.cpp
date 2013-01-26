@@ -864,7 +864,7 @@ float Unit::getProgress() const {
 }
 
 float Unit::getAnimProgress() const {
-	if (isBeingBuilt() && currSkill->isStretchyAnim()) {
+	if (isBeingBuilt() && currSkill->getSoundsAndAnimations()->isStretchyAnim()) {
 		return float(getProgress2()) / float(getResourcePools()->getMaxHp().getValue());
 	}
 	return float(g_world.getFrameCount() - lastAnimReset)
@@ -2049,15 +2049,15 @@ const CommandType *Unit::computeCommandType(const Vec2i &pos, const Unit *target
 
 const Model* Unit::getCurrentModel() const {
 	if (getField() == Field::AIR){
-		return getCurrSkill()->getAnimation();
+		return getCurrSkill()->getSoundsAndAnimations()->getAnimation();
 	}
 	if (getCurrSkill()->getClass() == SkillClass::MOVE) {
 		SurfaceType from_st = map->getCell(getLastPos())->getType();
 		SurfaceType to_st = map->getCell(getNextPos())->getType();
-		return getCurrSkill()->getAnimation(from_st, to_st);
+		return getCurrSkill()->getSoundsAndAnimations()->getAnimation(from_st, to_st);
 	} else {
 		SurfaceType st = map->getCell(getPos())->getType();
-		return getCurrSkill()->getAnimation(st);
+		return getCurrSkill()->getSoundsAndAnimations()->getAnimation(st);
 	}
 }
 
@@ -2163,7 +2163,7 @@ void Unit::updateAnimCycle(int frameOffset, int soundOffset, int attackOffset) {
 	if (frameOffset == -1) { // hacky handle move skill
 		assert(currSkill->getClass() == SkillClass::MOVE);
 		static const float speedModifier = 1.f / GameConstants::speedDivider / float(WORLD_FPS);
-		float animSpeed = currSkill->getAnimSpeed() * speedModifier;
+		float animSpeed = currSkill->getSoundsAndAnimations()->getAnimSpeed() * speedModifier;
 		//if moving to a higher cell move slower else move faster
 		float heightDiff = map->getCell(lastPos)->getHeight() - map->getCell(pos)->getHeight();
 		float heightFactor = clamp(1.f + heightDiff / 5.f, 0.2f, 5.f);
@@ -2172,8 +2172,8 @@ void Unit::updateAnimCycle(int frameOffset, int soundOffset, int attackOffset) {
 		// calculate anim cycle length
 		frameOffset = int(1.0000001f / animSpeed);
 
-		if (currSkill->hasSounds()) {
-			soundOffset = int(currSkill->getSoundStartTime() / animSpeed);
+		if (currSkill->getSoundsAndAnimations()->hasSounds()) {
+			soundOffset = int(currSkill->getSoundsAndAnimations()->getSoundStartTime() / animSpeed);
 			if (soundOffset < 1) ++soundOffset;
 			assert(soundOffset > 0);
 		}
@@ -2467,7 +2467,7 @@ bool Unit::update() { ///@todo should this be renamed to hasFinishedCycle()?
 	const int &frame = g_world.getFrameCount();
 
 	// start skill sound ?
-	if (currSkill->getSound() && frame == getSoundStartFrame()) {
+	if (currSkill->getSoundsAndAnimations()->getSound() && frame == getSoundStartFrame()) {
 
 	    Vec2i cellPos;
         Vec3f vec;
@@ -2486,7 +2486,7 @@ bool Unit::update() { ///@todo should this be renamed to hasFinishedCycle()?
         }
 
 		if (map->getTile(Map::toTileCoords(cellPos))->isVisible(g_world.getThisTeamIndex())) {
-			g_soundRenderer.playFx(currSkill->getSound(), vec, g_gameState.getGameCamera()->getPos());
+			g_soundRenderer.playFx(currSkill->getSoundsAndAnimations()->getSound(), vec, g_gameState.getGameCamera()->getPos());
 		}
 	}
 
@@ -2700,7 +2700,7 @@ Unit* Unit::tick() {
 bool Unit::computeEp() {
 
 	// if not enough ep
-	int cost = currSkill->getEpCost();
+	int cost = currSkill->getSkillCosts()->getEpCost();
 	if (cost == 0) {
 		return false;
 	}
@@ -2741,7 +2741,7 @@ bool Unit::repair(int amount, fixed multiplier) {
 		}
 		return true;
 	}
-	if (!isBuilt() && getCurrSkill()->isStretchyAnim()) {
+	if (!isBuilt() && getCurrSkill()->getSoundsAndAnimations()->isStretchyAnim()) {
 		if (hp > getProgress2()) {
 			setProgress2(hp);
 		}
@@ -2895,12 +2895,6 @@ string Unit::getLongDesc() const {
 	string shortDesc = getShortDesc();
 	stringstream ss;
 
-    if (type->hasTag("ordermember") || type->hasTag("orderhouse") || type->hasTag("guildhall") || type->hasTag("shop")) {
-    ss << endl << "Taxed Gold: " << taxedGold;
-    }
-    if (type->hasTag("ordermember") || type->hasTag("orderhouse") || type->hasTag("guildhall") || type->hasTag("shop")) {
-    ss << endl << "Tax Rate: " << taxRate;
-    }
 	if (goalStructure != NULL) {
 	ss << endl << "Reason: " << getGoalReason();
 	}
@@ -2967,111 +2961,7 @@ string Unit::getLongDesc() const {
 				<< ": " << abs(r.getAmount()) << " " << resName;
 		}
 	}
-	/*if (type->getResourceProductionSystem().getStoredResourceCount() > 0) {
-		for (int i = 0; i < type->getResourceProductionSystem().getStoredResourceCount(); ++i) {
-			ResourceAmount r = type->getResourceProductionSystem().getStoredResource(i, getFaction());
-			string resName = lang.getTechString(r.getType()->getName());
-			if (resName == r.getType()->getName()) {
-				resName = formatString(resName);
-			}
-			ss << endl << lang.get("Store") << ": ";
-			ss << r.getAmount() << " " << resName;
-		}
-	}*/
-	if (type->getResourceProductionSystem().getCreatedResourceCount() > 0) {
-		for (int i = 0; i < type->getResourceProductionSystem().getCreatedResourceCount(); ++i) {
-			ResourceAmount r = type->getResourceProductionSystem().getCreatedResource(i, getFaction());
-			string resName = lang.getTechString(r.getType()->getName());
-			Timer tR = type->getResourceProductionSystem().getCreatedResourceTimer(i, getFaction());
-			int cStep = productionSystemTimers.currentSteps[i].currentStep;
-			if (resName == r.getType()->getName()) {
-				resName = formatString(resName);
-			}
-			ss << endl << lang.get("Create") << ": ";
-			ss << r.getAmount() << " " << resName << " " << lang.get("Timer") << ": " << cStep << "/" << tR.getTimerValue();
-		}
-	}
-    if (type->getProcessProductionSystem().getProcessCount() > 0) {
-		for (int i = 0; i < type->getProcessProductionSystem().getProcessCount(); ++i) {
-        ss << endl << lang.get("Process") << ": ";
-        Timer tR = type->getProcessProductionSystem().getProcessTimer(i, getFaction());
-        int cStep = productionSystemTimers.currentProcessSteps[i].currentStep;
-        ss << endl << lang.get("Timer") << ": " << cStep << "/" << tR.getTimerValue();
-        string scope;
-        if (type->getProcessProductionSystem().getProcesses()[i].getScope() == true) {
-        scope = lang.get("local");
-        } else {
-        scope = lang.get("faction");
-        }
-        ss << endl << lang.get("Scope") << ": " << scope;
-        ss << endl << lang.get("Costs") << ": ";
-            for (int c = 0; c < type->getProcessProductionSystem().getProcesses()[i].costs.size(); ++c) {
-            const ResourceType *costsRT = type->getProcessProductionSystem().getProcesses()[i].costs[c].getType();
-            string resName = lang.getTechString(costsRT->getName());
-            if (resName == costsRT->getName()) {
-            resName = formatString(resName);
-			}
-        ss << endl << type->getProcessProductionSystem().getProcesses()[i].costs[c].getAmount() << " " << resName;
-            }
-        ss << endl << lang.get("Products") << ": ";
-            for (int p = 0; p < type->getProcessProductionSystem().getProcesses()[i].products.size(); ++p) {
-            const ResourceType *productsRT = type->getProcessProductionSystem().getProcesses()[i].products[p].getType();
-            string resName = lang.getTechString(productsRT->getName());
-            if (resName == productsRT->getName()) {
-            resName = formatString(resName);
-			}
-        ss << endl << type->getProcessProductionSystem().getProcesses()[i].products[p].getAmount() << " " << resName;
-            }
-        ss << endl << lang.get("Items") << ": ";
-            for (int t = 0; t < type->getProcessProductionSystem().getProcesses()[i].items.size(); ++t) {
-            const ItemType *itemsIT = type->getProcessProductionSystem().getProcesses()[i].items[t].getType();
-            string itemName = lang.getTechString(itemsIT->getName());
-            if (itemName == itemsIT->getName()) {
-            itemName = formatString(itemName);
-			}
-        ss << endl << type->getProcessProductionSystem().getProcesses()[i].items[t].getAmount() << " " << itemName;
-            }
-		}
-	}
-	if (type->getResourceProductionSystem().getStoredResourceCount() > 0 && type->getResourceProductionSystem().getStoredResourceCount() < 5) {
-    ss << endl << lang.get("Storage") << ": ";
-		for (int i = 0; i < type->getResourceProductionSystem().getStoredResourceCount(); ++i) {
-        ResourceAmount r = type->getResourceProductionSystem().getStoredResource(i, getFaction());
-        const StoredResource *res = getSResource(i);
-        string resName = lang.getTechString(r.getType()->getName());
-			if (resName == r.getType()->getName()) {
-            resName = formatString(resName);
-			}
-        ss << endl << lang.get("Stored") << ": ";
-        ss << res->getAmount() << "/" << r.getAmount() << " " << resName;
-		}
-	}
-	if (type->getUnitProductionSystem().getCreatedUnitCount() > 0) {
-		for (int i = 0; i < type->getUnitProductionSystem().getCreatedUnitCount(); ++i) {
-			CreatedUnit u = type->getUnitProductionSystem().getCreatedUnit(i, getFaction());
-			string unitName = lang.getTechString(u.getType()->getName());
-			Timer tR = type->getUnitProductionSystem().getCreatedUnitTimer(i, getFaction());
-			int cUStep = productionSystemTimers.currentUnitSteps[i].currentStep;
-			if (unitName == u.getType()->getName()) {
-				unitName = formatString(unitName);
-			}
-			ss << endl << lang.get("Create") << ": ";
-			ss << u.getAmount() << " " << unitName << "s " <<lang.get("Timer") << ": " << cUStep << "/" << tR.getTimerValue();
-		}
-	}
-	if (type->getItemProductionSystem().getCreatedItemCount() > 0) {
-		for (int i = 0; i < type->getItemProductionSystem().getCreatedItemCount(); ++i) {
-			CreatedItem item = type->getItemProductionSystem().getCreatedItem(i, getFaction());
-			string itemName = lang.getTechString(item.getType()->getName());
-			Timer tR = type->getItemProductionSystem().getCreatedItemTimer(i, getFaction());
-			int cIStep = productionSystemTimers.currentItemSteps[i].currentStep;
-			if (itemName == item.getType()->getName()) {
-				itemName = formatString(itemName);
-			}
-			ss << endl << lang.get("Create") << ": ";
-			ss << item.getAmount() << " " << itemName << "s " <<lang.get("Timer") << ": " << cIStep << "/" << tR.getTimerValue();
-		}
-	}
+
 	if (ownedUnits.size() > 0) {
 		for (int i = 0; i < ownedUnits.size(); ++i) {
 			UnitsOwned uo = ownedUnits[i];
@@ -3094,53 +2984,12 @@ string Unit::getLongDesc() const {
 		}
 	}
 	effects.streamDesc(ss);
-    /*ss << endl << "Live %: " << type->live;
-    if (getType()->hasTag("ordermember")) {
-    ss << endl << "ordermember";
-    ss << endl<< fixed(getResourcePools()->getMaxHp().getValue() * type->live / 100).intp();
-    }
-    if (type->inhuman == true) {
-    ss << endl << "Control: " << "inhuman";
-    }
-    if (getType()->hasTag("building")) {
-    ss << endl << "Tags:";
-    ss << endl << "building";
-    if (getType()->hasTag("fort")) {
-    ss << endl << "fort";
-    }
-    }
-    ss << endl << "Producer ID: " <<  productionRoute.getProducerId();
-    ss << endl << "Store ID: " <<  productionRoute.getStoreId();
-	ss << endl << "Unit Position: " << this->getCenteredPos();
-	if (anyCommand()) {
-	ss << endl << "Goal Position: " << this->getCurrCommand()->getPos();
-	}
-	if (goalStructure != NULL) {
-	ss << endl << "TargetID: " << goalStructure->getId();
-	}*/
-	//ss << endl << "Direction: " << previousDirection;
-    //for (int i = 0; i < type->starterResources.size(); ++i) {
-    //ss << endl << type->starterResources[i].getType()->getName() << ": " << type->starterResources[i].getAmount();
-    //}
-    //ss << endl << "Equipped Items: " << getEquippedItems().size();
     /*ss << endl << "Modification Count: " << modifications.size();
     if (modifications.size() > 0) {
         for (int i = 0; i < modifications.size(); ++i) {
             ss << endl << "Bought: " << modifications[i].getModificationName();
         }
     }*/
-	//int armorBonus = getArmor() - type->getArmor();
-	// armor
-	/*ss << endl << lang.get("Armor") << ": " << type->getArmor();
-	if (armorBonus) {
-		ss << (armorBonus > 0 ? " +" : " ") << armorBonus;
-	}
-	string armourName = lang.getTechString(type->getArmourType()->getName());
-	if (armourName == type->getArmourType()->getName()) {
-		armourName = formatString(armourName);
-	}
-	ss << " (" << armourName << ")";*/
-	// exp given
 	// cloaked ?
 	/*if (isCloaked()) {
 		string gRes, res;

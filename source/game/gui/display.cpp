@@ -815,7 +815,6 @@ bool Display::mouseDown(MouseButton btn, Vec2i pos) {
 	WIDGET_LOG( __FUNCTION__ << "( " << MouseButtonNames[btn] << ", " << pos << " )");
 	Vec2i myPos = getScreenPos();
 	Vec2i mySize = getSize();
-
 	if (btn == MouseButton::LEFT) {
 		if (Widget::isInsideBorders(pos)) {
 			m_hoverBtn = computeIndex(pos, true);
@@ -836,28 +835,31 @@ bool Display::mouseDown(MouseButton btn, Vec2i pos) {
 			} else if (m_hoverBtn.m_section == DisplaySection::GARRISONED) {
 				return true;
 			} else if (m_hoverBtn.m_section == DisplaySection::SELECTION) {
-				RUNTIME_CHECK(m_ui->getSelection()->getCount() > m_hoverBtn.m_index);
-				const Unit *unit = m_ui->getSelection()->getUnit(m_hoverBtn.m_index);
-				RUNTIME_CHECK(unit != 0);
-				if (m_ui->getInput().isCtrlDown()) {
-					if (m_ui->getInput().isShiftDown()) {
-						// remove all of ndx's type from selection
-						m_ui->getSelection()->unSelectAllOfType(unit->getType());
-					} else {
-						// remove ndx from selection
-						m_ui->getSelection()->unSelect(unit);
-					}
-				} else if (m_ui->getInput().isShiftDown()) {
-					// select all of ndx's type in current selection
-					m_ui->getSelection()->unSelectAllNotOfType(unit->getType());
-				} else {
-					m_ui->getSelection()->clear();
-					m_ui->getSelection()->select(const_cast<Unit*>(unit));
-				}
-				m_ui->computeDisplay();
-				m_ui->computePortraitInfo(m_hoverBtn.m_index);
-				m_pressedBtn = m_hoverBtn = DisplayButton(DisplaySection::INVALID, invalidIndex);
-				return true;
+			    if (m_ui->getSelection()->getCount() != 1) {
+                    RUNTIME_CHECK(m_ui->getSelection()->getCount() > m_hoverBtn.m_index);
+                    const Unit *unit = m_ui->getSelection()->getUnit(m_hoverBtn.m_index);
+                    RUNTIME_CHECK(unit != 0);
+                    if (m_ui->getInput().isCtrlDown()) {
+                        if (m_ui->getInput().isShiftDown()) {
+                            m_ui->getSelection()->unSelectAllOfType(unit->getType());
+                        } else {
+                            m_ui->getSelection()->unSelect(unit);
+                        }
+                    } else if (m_ui->getInput().isShiftDown()) {
+                        // select all of ndx's type in current selection
+                        m_ui->getSelection()->unSelectAllNotOfType(unit->getType());
+                    } else {
+                        m_ui->getSelection()->clear();
+                        m_ui->getSelection()->select(const_cast<Unit*>(unit));
+                    }
+                    m_ui->computeDisplay();
+                    m_ui->computePortraitInfo(m_hoverBtn.m_index);
+                    m_pressedBtn = m_hoverBtn = DisplayButton(DisplaySection::INVALID, invalidIndex);
+                    return true;
+			    } else {
+                    m_pressedBtn = m_hoverBtn;
+                    return true;
+			    }
 			} else {
 				m_pressedBtn = DisplayButton(DisplaySection::INVALID, invalidIndex);
 			}
@@ -877,6 +879,9 @@ bool Display::mouseUp(MouseButton btn, Vec2i pos) {
 			if (Widget::isInsideBorders(pos)) {
 				m_hoverBtn = computeIndex(pos, true);
 				if (m_hoverBtn == m_pressedBtn) {
+					if (m_hoverBtn.m_section == DisplaySection::SELECTION) {
+						m_ui->panelButtonPressed(m_hoverBtn.m_index);
+					}
 					if (m_hoverBtn.m_section == DisplaySection::TAX) {
 						m_ui->taxButtonPressed(m_hoverBtn.m_index);
 					}

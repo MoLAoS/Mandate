@@ -110,7 +110,6 @@ void CreateSquadCommandType::doChecksum(Checksum &checksum) const {
 
 void CreateSquadCommandType::getDesc(string &str, const Unit *unit) const{
 	Lang &lang= Lang::getInstance();
-	m_setStructureSkillType->descEpCost(str, unit);
 }
 
 void CreateSquadCommandType::descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const {
@@ -158,7 +157,6 @@ void ExpandSquadCommandType::doChecksum(Checksum &checksum) const {
 
 void ExpandSquadCommandType::getDesc(string &str, const Unit *unit) const{
 	Lang &lang= Lang::getInstance();
-	m_setStructureSkillType->descEpCost(str, unit);
 }
 
 void ExpandSquadCommandType::descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const {
@@ -213,7 +211,6 @@ void SquadMoveCommandType::doChecksum(Checksum &checksum) const {
 
 void SquadMoveCommandType::getDesc(string &str, const Unit *unit) const{
 	Lang &lang= Lang::getInstance();
-	m_moveSkillType->descEpCost(str, unit);
 }
 
 void SquadMoveCommandType::descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const {

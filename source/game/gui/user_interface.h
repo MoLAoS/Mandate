@@ -17,6 +17,8 @@
 #include "item_display.h"
 #include "production_display.h"
 #include "carried_display.h"
+#include "resources_display.h"
+#include "stats_display.h"
 #include "faction_display.h"
 #include "commander.h"
 #include "console.h"
@@ -130,6 +132,8 @@ private:
 	ItemWindow *m_itemWindow;
 	CarriedWindow *m_carriedWindow;
 	ProductionWindow *m_productionWindow;
+	StatsWindow *m_statsWindow;
+	ResourcesWindow *m_resourcesWindow;
 	FactionDisplay *m_factionDisplay;
 	ResourceBar *m_resourceBar;
 	TradeBar *m_tradeBar;
@@ -210,8 +214,12 @@ public:
 	const ItemWindow*       getItemWindow()	const        { return m_itemWindow;       }
 	ProductionWindow*       getProductionWindow()	     { return m_productionWindow; }
 	const ProductionWindow* getProductionWindow() const  { return m_productionWindow; }
-	CarriedWindow*       getCarriedWindow()	     { return m_carriedWindow; }
-	const CarriedWindow* getCarriedWindow() const  { return m_carriedWindow; }
+	CarriedWindow*          getCarriedWindow()	         { return m_carriedWindow;    }
+	const CarriedWindow*    getCarriedWindow() const     { return m_carriedWindow;    }
+	StatsWindow*            getStatsWindow()	         { return m_statsWindow;      }
+	const StatsWindow*      getStatsWindow() const       { return m_statsWindow;      }
+	ResourcesWindow*        getStorageWindow()	         { return m_resourcesWindow;  }
+	const ResourcesWindow*  getStorageWindow() const     { return m_resourcesWindow;  }
 	FactionDisplay*         getFactionDisplay()	         { return m_factionDisplay;   }
 	const FactionDisplay*   getFactionDisplay() const    { return m_factionDisplay;   }
 	const Selection*        getSelection()	const        { return selection;          }
@@ -239,6 +247,7 @@ public:
 
 	void onSelectionUpdated();
 
+	void panelButtonPressed(int posDisplay);
 	void taxButtonPressed(int posDisplay);
 	void commandButtonPressed(int posDisplay);
 	void unloadRequest(int carryIndex);

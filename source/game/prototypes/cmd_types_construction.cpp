@@ -807,7 +807,7 @@ void MaintainCommandType::update(Unit *unit) const {
 			unit->setTarget(repaired, true, true);
 
 			//shiney
-			if (rst->getSplashParticleType()) {
+			/*if (rst->getSplashParticleType()) {
 				const Tile *sc = g_world.getMap()->getTile(Map::toTileCoords(repaired->getCenteredPos()));
 				bool visible = sc->isVisible(g_world.getThisTeamIndex())
 					&& g_renderer.getCuller().isInside(repaired->getCenteredPos());
@@ -815,7 +815,7 @@ void MaintainCommandType::update(Unit *unit) const {
 				Splash *psSplash = rst->getSplashParticleType()->createSplashParticleSystem(visible);
 				psSplash->setPos(repaired->getCurrVector());
 				g_renderer.manageParticleSystem(psSplash, ResourceScope::GAME);
-			}
+			}*/
 
 			bool wasBuilt = repaired->isBuilt();
 
@@ -851,7 +851,7 @@ Command *MaintainCommandType::doAutoMaintain(Unit *unit) const {
 	}
 
 	Unit *sighted = NULL;
-	if (unit->getEp() >= maintainSkillType->getEpCost()
+	if (unit->getEp() >= maintainSkillType->getSkillCosts()->getEpCost()
 	&& maintainableInSight(unit, &sighted, this, maintainSkillType->isSelfAllowed())) {
 		REPAIR_LOG( unit, __FUNCTION__ << "(): Unit:" << *unit << " @ " << unit->getPos()
 			<< ", found someone (" << *sighted << ") to repair @ " << sighted->getPos() );

@@ -129,7 +129,7 @@ bool AttackCommandType::updateGeneric(Unit *unit, Command *command, const Attack
 	}
 	if (attackableInRange(unit, &target, &attackSkillTypes, &ast)) { // found a target in range
 		assert(ast);
-		if (unit->getEp() >= ast->getEpCost()) { // enough ep for skill?
+		if (unit->getEp() >= ast->getSkillCosts()->getEpCost()) { // enough ep for skill?
 			unit->setCurrSkill(ast);
 			unit->setTarget(target);
 		} else {
@@ -421,7 +421,6 @@ void CreateSettlementCommandType::doChecksum(Checksum &checksum) const {
 
 void CreateSettlementCommandType::getDesc(string &str, const Unit *unit) const{
 	Lang &lang= Lang::getInstance();
-	m_setStructureSkillType->descEpCost(str, unit);
 }
 
 void CreateSettlementCommandType::descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const {
@@ -477,7 +476,6 @@ void ExpandSettlementCommandType::doChecksum(Checksum &checksum) const {
 
 void ExpandSettlementCommandType::getDesc(string &str, const Unit *unit) const{
 	Lang &lang= Lang::getInstance();
-	m_setStructureSkillType->descEpCost(str, unit);
 }
 
 void ExpandSettlementCommandType::descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const {

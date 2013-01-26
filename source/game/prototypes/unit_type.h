@@ -150,7 +150,7 @@ public:
 	const CloakType* getCloakType() const        { return m_cloakType; }
 	const DetectorType* getDetectorType() const  { return m_detectorType; }
 	bool isDetector() const                      { return m_detectorType ? true : false; }
-	const Model *getIdleAnimation() const	{return getFirstStOfClass(SkillClass::STOP)->getAnimation();}
+	const Model *getIdleAnimation() const	{return getFirstStOfClass(SkillClass::STOP)->getSoundsAndAnimations()->getAnimation();}
 	bool getMultiSelect() const				{return multiSelect;}
 	bool getLight() const					{return light;}
 	Vec3f getLightColour() const			{return lightColour;}

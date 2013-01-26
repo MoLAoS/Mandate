@@ -925,7 +925,7 @@ void Faction::applyCostsOnInterval(const ResourceType *rt) {
 					if (unit->decHp(unit->getType()->getResourcePools()->getMaxHp().getValue() / 3)) {
 						World::getCurrWorld()->doKill(unit, unit);
 					} else {
-						StaticSound *sound = unit->getType()->getFirstStOfClass(SkillClass::DIE)->getSound();
+						StaticSound *sound = unit->getType()->getFirstStOfClass(SkillClass::DIE)->getSoundsAndAnimations()->getSound();
 						if (sound != NULL && thisFaction) {
 							SoundRenderer::getInstance().playFx(sound);
 						}

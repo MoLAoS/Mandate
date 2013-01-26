@@ -171,6 +171,7 @@ public:
 	ItemDisplayFrame(UserInterface *ui, Vec2i pos);
 	ItemWindow* getItemDisplay() {return m_display;}
 
+	void remove(Widget*);
 	void resetSize();
 
 	virtual void render() override;

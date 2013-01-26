@@ -1207,7 +1207,7 @@ void Renderer::renderUnits() {
 
 			// get model, lerp to animProgess
 			const Model *model = unit->getCurrentModel();
-			bool cycleAnim = unit->isAlive() && !unit->getCurrSkill()->isStretchyAnim();
+			bool cycleAnim = unit->isAlive() && !unit->getCurrSkill()->getSoundsAndAnimations()->isStretchyAnim();
 
 			{
 				SECTION_TIMER(RENDER_INTERPOLATE);

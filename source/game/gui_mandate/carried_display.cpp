@@ -29,7 +29,7 @@ using Global::CoreData;
 // =====================================================
 
 CarriedDisplayFrame::CarriedDisplayFrame(UserInterface *ui, Vec2i pos)
-		: Frame((Container*)WidgetWindow::getInstance(), ButtonFlags::SHRINK | ButtonFlags::EXPAND)
+		: Frame((Container*)WidgetWindow::getInstance(), ButtonFlags::CLOSE | ButtonFlags::SHRINK | ButtonFlags::EXPAND)
 		, m_display(0)
 		, m_ui(ui) {
 	m_ui = ui;
@@ -47,7 +47,12 @@ CarriedDisplayFrame::CarriedDisplayFrame(UserInterface *ui, Vec2i pos)
 	m_titleBar->enableShrinkExpand(false, true);
 	Expand.connect(this, &CarriedDisplayFrame::onExpand);
 	Shrink.connect(this, &CarriedDisplayFrame::onShrink);
+	Close.connect(this, &CarriedDisplayFrame::remove);
 	setPinned(g_config.getUiPinWidgets());
+}
+
+void CarriedDisplayFrame::remove(Widget*) {
+    setVisible(false);
 }
 
 void CarriedDisplayFrame::resetSize() {
@@ -60,7 +65,7 @@ void CarriedDisplayFrame::resetSize() {
 			setSize(size);
 		}
 	} else {
-		setVisible(false);
+		remove(this);
 	}
 }
 
@@ -97,6 +102,11 @@ void CarriedDisplayFrame::onShrink(Widget*) {
 void CarriedDisplayFrame::render() {
 	if (m_ui->getSelection()->isEmpty() && !m_ui->getSelectedObject() && g_config.getUiPhotoMode()) {
 		return;
+	}
+	if (!m_display->isVisible()) {
+        setVisible(false);
+	} else if (m_display->isVisible()) {
+        setVisible(true);
 	}
 	Frame::render();
 }
@@ -256,7 +266,6 @@ void CarriedWindow::setFuzzySize(FuzzySize fuzzySize) {
 
 void CarriedWindow::setSize() {
 	Vec2i sz = m_sizes.displaySize;
-	setVisible(true);
 	Vec2i size = getSize();
 	if (size != sz) {
 		Widget::setSize(sz);
