@@ -54,7 +54,7 @@ void Personality::load(const XmlNode *node, const TechTree* techTree, const Fact
             if (name == goalList[j]) {
                 break;
             } else {
-                newGoal++;
+                ++newGoal;
             }
         }
         int importance = goalNode->getAttribute("importance")->getIntValue();
@@ -213,7 +213,7 @@ Unit *GoalSystem::buildingList(Unit *unit, vector<Unit*> buildingsList) {
         if (unit->isCarried()) {
             uPos = unit->owner->getCenteredPos();
         }
-        Vec2i tPos = Vec2i(NULL);
+        Vec2i tPos = Vec2i(0,0);
         for (int i = 0; i < buildingsList.size(); ++i) {
             Unit *building = buildingsList[i];
             Vec2i bPos = building->getCenteredPos();
@@ -243,7 +243,7 @@ Unit* GoalSystem::findShop(Unit *unit) {
         uPos = unit->owner->getCenteredPos();
     }
     Unit *finalPick = NULL;
-    Vec2i tPos = Vec2i(NULL);
+    Vec2i tPos = Vec2i(0,0);
     for (int i = 0; i < buildingsList.size(); ++i) {
         Unit *building = buildingsList[i];
         Vec2i bPos = building->getCenteredPos();
@@ -777,7 +777,7 @@ void GoalSystem::computeAction(Unit *unit, Focus focus) {
             if (finalPick != NULL) {
                 Vec2i tPos = finalPick->getCenteredPos();
                 const CommandType *ct = unit->getType()->getFirstCtOfClass(CmdClass::REPAIR);
-                if (tPos != Vec2i(NULL)) {
+                if (tPos != Vec2i(0,0)) {
                     if (unit->isCarried()) {
                         ownerUnload(unit);
                     } else {
@@ -804,12 +804,12 @@ void GoalSystem::computeAction(Unit *unit, Focus focus) {
         }
         if (unit->getCurrSkill()->getClass() == SkillClass::STOP) {
             Unit *finalPick = findShop(unit);
-            Vec2i tPos = Vec2i(NULL);
+            Vec2i tPos = Vec2i(0,0);
             if (finalPick != NULL) {
                 tPos = finalPick->getPos();
             }
             const CommandType *ct = unit->getType()->getFirstCtOfClass(CmdClass::MOVE);
-            if (tPos != Vec2i(NULL)) {
+            if (tPos != Vec2i(0,0)) {
                     if (unit->isCarried()) {
                         ownerUnload(unit);
                     } else {
@@ -944,7 +944,7 @@ void GoalSystem::computeAction(Unit *unit, Focus focus) {
         Vec2i position = exploredMap.findNearestUnexploredTile(unitPos, unit->getFaction(), unit->previousDirection);
         pos = position;
         const CommandType *ct = unit->getType()->getFirstCtOfClass(CmdClass::MOVE);
-        if (pos != unitPos && pos != Vec2i(NULL)) {
+        if (pos != unitPos && pos != Vec2i(0,0)) {
             unit->giveCommand(g_world.newCommand(ct, CmdFlags(), pos));
             unit->previousDirection = newDirection(unit->previousDirection);
         } else {
@@ -1067,7 +1067,7 @@ void GoalSystem::computeAction(Unit *unit, Focus focus) {
                 uPos = unit->owner->getCenteredPos();
             }
             Unit *finalPick;
-            Vec2i tPos = Vec2i(NULL);
+            Vec2i tPos = Vec2i(0,0);
             for (int i = 0; i < buildingsList.size(); ++i) {
                 Unit *building = buildingsList[i];
                 Vec2i bPos = building->getCenteredPos();
@@ -1079,7 +1079,7 @@ void GoalSystem::computeAction(Unit *unit, Focus focus) {
                 }
             }
             const CommandType *tct = unit->getType()->getFirstCtOfClass(CmdClass::MOVE);
-            if (tPos != Vec2i(NULL)) {
+            if (tPos != Vec2i(0,0)) {
                 if (unit->isCarried()) {
                     ownerUnload(unit);
                 }
