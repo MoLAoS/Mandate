@@ -1,0 +1,18 @@
+<?xml version="1.0" standalone="no"?>
+
+
+<resource>
+  
+  <image path="images/leadore.png"/>
+
+  <type value="tech" has-model="true">
+
+    <model path="models/lead.g3d"/>
+
+    <default-amount value="2000"/>
+
+    <resource-number value="9"/>
+
+  </type>
+
+</resource>

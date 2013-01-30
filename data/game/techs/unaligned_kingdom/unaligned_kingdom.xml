@@ -1,0 +1,45 @@
+<?xml version="1.0" standalone="no"?>
+
+
+<tech-tree>
+  
+<description value="magitech tech tree"/>
+
+  
+<attack-types>
+    
+<attack-type name="slashing"/>
+    
+<attack-type name="piercing"/>
+    
+<attack-type name="impact"/>
+    
+<attack-type name="energy"/>
+ 
+<attack-type name="test"/>
+ 
+</attack-types>
+
+  
+<armor-types>
+    
+<armor-type name="organic"/>
+    
+<armor-type name="leather"/>
+    
+<armor-type name="wood"/>
+    
+<armor-type name="metal"/>
+    
+<armor-type name="stone"/>
+ 
+<armor-type name="void"/>
+ 
+</armor-types>
+
+  
+<damage-multipliers>
+
+</damage-multipliers>
+
+</tech-tree>

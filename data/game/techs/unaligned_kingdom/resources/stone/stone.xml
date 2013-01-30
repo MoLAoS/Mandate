@@ -1,0 +1,14 @@
+<?xml version="1.0" standalone="no"?>
+
+
+<resource>
+  
+  <image path="images/stone.png"/>
+  <type value="tech" has-model="true">
+    <model path="models/stone.g3d"/>
+    
+    <default-amount value="250"/>
+    
+    <resource-number value="1"/>
+  </type>
+</resource>
