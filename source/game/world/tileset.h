@@ -133,7 +133,7 @@ public:
 	~Tileset();
 
 	void count(const string &dir);
-	void load(const string &dir, TechTree *tt);
+	void load(const string &dir, const TechTree *tt);
 	void doChecksum(Checksum &checksum) const;
 
 	//get

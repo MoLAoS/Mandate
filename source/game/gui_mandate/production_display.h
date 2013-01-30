@@ -112,7 +112,7 @@ public:
 	//void setDownLighted(int i, bool lighted)			        {downLighted[i] = lighted;}
 	void setIndex(int i, int value)						        {index[i] = value;}
 
-	void ProductionWindow::tick();
+	void tick();
 
 	void computeResourcesPanel();
 	void computeResourcesInfo(int posDisplay);

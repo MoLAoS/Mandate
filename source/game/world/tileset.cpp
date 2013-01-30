@@ -102,7 +102,7 @@ void Tileset::count(const string &dir){
 	logger.getProgramLog().setUnitCount(objCount);
 }
 
-void Tileset::load(const string &dir, TechTree *tt){
+void Tileset::load(const string &dir, const TechTree *tt){
 	random.init(time(NULL));
 	name = basename(dir);
 	string path = dir + "/" + name +".xml";
@@ -134,16 +134,20 @@ void Tileset::load(const string &dir, TechTree *tt){
 
 		Logger &logger = Logger::getInstance();
 		//object models
-		const XmlNode *objectsNode= tilesetNode->getChild("objects");
+		const XmlNode *objectsNode = tilesetNode->getChild("objects");
 		for(int i=0; i<objCount; ++i){
-			const XmlNode *objectNode= objectsNode->getChild("object", i);
-			int childCount= objectNode->getChildCount();
+			const XmlNode *objectNode = objectsNode->getChild("object", i);
 			string name = objectNode->getAttribute("name")->getRestrictedValue();
 			string foundation = objectNode->getAttribute("foundation")->getRestrictedValue();
-			objectTypes[i].init(childCount, i, objectNode->getAttribute("walkable")->getBoolValue(), foundation, name);
-			for(int j=0; j<childCount; ++j){
-				const XmlNode *modelNode= objectNode->getChild("model", j);
-				const XmlAttribute *pathAttribute= modelNode->getAttribute("path");
+            const XmlNode *modelsNode = objectNode->getChild("models");
+			objectTypes[i].init(modelsNode->getChildCount(), i, objectNode->getAttribute("walkable")->getBoolValue(), foundation, name);
+            const XmlNode *imageNode = objectNode->getChild("image", 0, false);
+            if (imageNode) {
+                objectTypes[i].load(imageNode, dir);
+            }
+			for(int j=0; j<modelsNode->getChildCount(); ++j){
+				const XmlNode *modelNode = modelsNode->getChild("model", j);
+				const XmlAttribute *pathAttribute = modelNode->getAttribute("path");
 				objectTypes[i].loadModel(dir +"/"+ pathAttribute->getRestrictedValue());
 			}
 			logger.getProgramLog().unitLoaded();

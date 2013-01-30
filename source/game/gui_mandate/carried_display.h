@@ -110,7 +110,7 @@ public:
 	//void setDownLighted(int i, bool lighted)			        {downLighted[i] = lighted;}
 	void setIndex(int i, int value)						        {index[i] = value;}
 
-	void CarriedWindow::tick();
+	void tick();
 
 	void computeCarriedPanel();
 	void computeCarriedInfo(int posDisplay);

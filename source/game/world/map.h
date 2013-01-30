@@ -266,6 +266,10 @@ public:
 	Cell *getCell(const Vec2i &pos) const { return getCell(pos.x, pos.y); }
 
 	Tile *getTile(int sx, int sy) const {
+	    string outString = "Coords: " + intToStr(sx) + ", " + intToStr(sy) + "co-ordinates out of range";
+	    if (!this->isInsideTile(sx,sy)) {
+            throw runtime_error(outString);
+	    }
 		assert(this->isInsideTile(sx,sy) && "co-ordinates out of range");
 		return &tiles[sy * m_tileSize.w + sx];
 	}

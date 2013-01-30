@@ -13,19 +13,20 @@
 #define _MEMFILEOPS_HPP_
 
 #include "FileOps.hpp"
+#include <cstdio>
 
 namespace Shared { namespace PhysFS {
 
 class MemFileOps : public FileOps{
 private:
 	const unsigned char *data;
-	int length; 
+	int length;
 	int pos;
 
 public:
 	MemFileOps();
 	~MemFileOps();
-	
+
 	void openRead(const char *fname);
 	void openWrite(const char *fname);
 	void openAppend(const char *fname);

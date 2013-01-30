@@ -120,7 +120,7 @@ public:
 	void setDownLighted(int i, bool lighted)			        {downLighted[i] = lighted;}
 	void setIndex(int i, int value)						        {index[i] = value;}
 
-	void ItemWindow::tick();
+	void tick();
 
 	void computeButtonsPanel();
 	void computeButtonInfo(int posDisplay);

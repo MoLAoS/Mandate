@@ -20,6 +20,7 @@
 #include "resources_display.h"
 #include "stats_display.h"
 #include "faction_display.h"
+#include "map_display.h"
 #include "commander.h"
 #include "console.h"
 #include "lua_console.h"
@@ -135,6 +136,7 @@ private:
 	StatsWindow *m_statsWindow;
 	ResourcesWindow *m_resourcesWindow;
 	FactionDisplay *m_factionDisplay;
+	MapDisplay *m_mapDisplay;
 	ResourceBar *m_resourceBar;
 	TradeBar *m_tradeBar;
 	UnitBar *m_unitBar;
@@ -222,6 +224,8 @@ public:
 	const ResourcesWindow*  getStorageWindow() const     { return m_resourcesWindow;  }
 	FactionDisplay*         getFactionDisplay()	         { return m_factionDisplay;   }
 	const FactionDisplay*   getFactionDisplay() const    { return m_factionDisplay;   }
+	MapDisplay*             getMapDisplay()	             { return m_mapDisplay;       }
+	const MapDisplay*       getMapDisplay() const        { return m_mapDisplay;       }
 	const Selection*        getSelection()	const        { return selection;          }
 	Selection*              getSelection()               { return selection;          }
 	const SelectionQuad*    getSelectionQuad() const     { return &selectionQuad;     }

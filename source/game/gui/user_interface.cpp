@@ -118,6 +118,7 @@ UserInterface::UserInterface(GameState &game)
 		, m_resourcesWindow(0)
 		, m_statsWindow(0)
 		, m_factionDisplay(0)
+		, m_mapDisplay(0)
 		, m_resourceBar(0)
 		, m_tradeBar(0)
 		//, m_unitBar(0)
@@ -285,6 +286,21 @@ void UserInterface::init() {
 	}
 	if (g_config.getUiLastFactionDisplaySize() == 3) {
 		displayFactionFrame->onExpand(0);
+	}
+
+	if (g_config.getUiLastFactionDisplayPosX() != -1 && g_config.getUiLastFactionDisplayPosY() != -1) {
+		x = g_config.getUiLastFactionDisplayPosX();
+		y = g_config.getUiLastFactionDisplayPosY();
+	}
+    MapDisplayFrame *displayMapFrame = new MapDisplayFrame(this, Vec2i(x,y));
+    m_mapDisplay = displayMapFrame->getMapDisplay();
+    m_mapDisplay->setSize();
+    m_mapDisplay->init(g_world.getTileset());
+	if (g_config.getUiLastFactionDisplaySize() >= 2) {
+		displayMapFrame->onExpand(0);
+	}
+	if (g_config.getUiLastFactionDisplaySize() == 3) {
+		displayMapFrame->onExpand(0);
 	}
 
 	if (g_config.getUiLastItemDisplayPosX() != -1 && g_config.getUiLastItemDisplayPosY() != -1) {
@@ -659,6 +675,8 @@ void UserInterface::mouseDownLeft(int x, int y) {
 
     if (m_factionDisplay->building == true) {
         m_factionDisplay->currentFactionBuild.build(m_factionDisplay->getFaction(), worldPos);
+    } else if (m_mapDisplay->building == true) {
+        m_mapDisplay->currentMapBuild.build(g_world.getTileset(), worldPos);
     } else if (selectingPos) { // give standard orders
 		giveTwoClickOrders(worldPos, (Unit *)targetUnit);
 	} else if (selectingMeetingPoint) { // set meeting point
@@ -1762,6 +1780,9 @@ void UserInterface::computeDisplay() {
 
 	// === Faction Panel ===
 	m_factionDisplay->computeBuildPanel();
+
+	// === Map Panel ===
+	m_mapDisplay->computeBuildPanel();
 }
 
 ///@todo move parts to CommandType classes (hmmm... CommandTypes that need to know about Console ?!? Nope.)

@@ -106,7 +106,7 @@ public:
 	//void setDownLighted(int i, bool lighted)			        {downLighted[i] = lighted;}
 	void setIndex(int i, int value)						        {index[i] = value;}
 
-	void StatsWindow::tick();
+	void tick();
 
 	void computeStatsPanel();
 	void computeStatsInfo(int posDisplay);

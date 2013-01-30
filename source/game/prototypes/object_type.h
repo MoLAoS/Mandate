@@ -15,6 +15,7 @@
 
 #include "model.h"
 #include "vec.h"
+#include "element_type.h"
 
 using std::vector;
 
@@ -29,7 +30,7 @@ using Shared::Math::Vec3f;
 ///	Each of the possible objects of the map: trees, stones ...
 // =====================================================
 
-class MapObjectType {
+class MapObjectType : public DisplayableType {
 private:
 	typedef vector<Model*> Models;
 
