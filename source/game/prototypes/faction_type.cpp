@@ -22,7 +22,7 @@
 #include "program.h"
 #include "sim_interface.h"
 
-#include "core.h"
+//#include "core.h"
 
 #include "leak_dumper.h"
 
