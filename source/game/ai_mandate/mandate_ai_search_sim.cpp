@@ -19,7 +19,7 @@ namespace Glest { namespace Plan {
 // ===============================
 Vec2i ExploredMap::findNearestUnexploredTile(Vec2i unitPos, Faction *faction, UnitDirection direction) {
     UnitDirection newDirection = direction;
-    Vec2i returnType = Vec2i(NULL);
+    Vec2i returnType = Vec2i(0,0);
     int posX = unitPos.x;
     int posY = unitPos.y;
     int realMaxX = g_world.getMap()->getW() - 5;
@@ -68,7 +68,7 @@ Vec2i ExploredMap::findNearestUnexploredTile(Vec2i unitPos, Faction *faction, Un
                 if (tile->isFree() && cell->isFree(Zone::LAND)) {
                     returnType = Vec2i(xPos, yPos);
                 } else {
-                    if (returnType != Vec2i(NULL)) {
+                    if (returnType != Vec2i(0,0)) {
                         return returnType;
                     }
                 }

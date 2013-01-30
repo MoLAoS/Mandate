@@ -123,12 +123,12 @@ Focus MandateAISim::getTopGoal(Unit *unit, string personality) {
                 if (goalName == Goal::DEMOLISH) {
                     if (topGoal.getImportance() != NULL) {
                         int importanceRaid = 0;
-                        Vec2i tPos = Vec2i(NULL);
+                        Vec2i tPos = Vec2i(0,0);
                         Unit *lair = goalSystem.findLair(unit);
                         if (lair != NULL) {
                             tPos = lair->getPos();
                         }
-                        if (tPos != Vec2i(NULL)) {
+                        if (tPos != Vec2i(0,0)) {
                             Vec2i uPos = unit->getPos();
                             int distance = sqrt(pow(float(abs(uPos.x - tPos.x)), 2) + pow(float(abs(uPos.y - tPos.y)), 2));
                             if (distance < 100) {
@@ -145,12 +145,12 @@ Focus MandateAISim::getTopGoal(Unit *unit, string personality) {
                 if (goalName == Goal::RAID) {
                     if (topGoal.getImportance() != NULL) {
                         int importanceRaid = 0;
-                        Vec2i tPos = Vec2i(NULL);
+                        Vec2i tPos = Vec2i(0,0);
                         Unit *lair = goalSystem.findLair(unit);
                         if (lair != NULL) {
                             tPos = lair->getPos();
                         }
-                        if (tPos != Vec2i(NULL)) {
+                        if (tPos != Vec2i(0,0)) {
                             Vec2i uPos = unit->getPos();
                             int distance = sqrt(pow(float(abs(uPos.x - tPos.x)), 2) + pow(float(abs(uPos.y - tPos.y)), 2));
                             if (distance < 50) {
@@ -167,12 +167,12 @@ Focus MandateAISim::getTopGoal(Unit *unit, string personality) {
                 if (goalName == Goal::HUNT) {
                     if (topGoal.getImportance() != NULL) {
                         int importanceHunt = 0;
-                        Vec2i tPos = Vec2i(NULL);
+                        Vec2i tPos = Vec2i(0,0);
                         Unit *creature = goalSystem.findCreature(unit);
                         if (creature != NULL) {
                             tPos = creature->getPos();
                         }
-                        if (tPos != Vec2i(NULL)) {
+                        if (tPos != Vec2i(0,0)) {
                             Vec2i uPos = unit->getPos();
                             int distance = sqrt(pow(float(abs(uPos.x - tPos.x)), 2) + pow(float(abs(uPos.y - tPos.y)), 2));
                             if (distance < 50) {
