@@ -1,0 +1,376 @@
+<?xml version="1.0" standalone="yes" ?> 
+
+<scenario>
+	
+<difficulty value="3"/>
+	
+<players>
+		
+<player control="human" faction="suns" team="1"/>
+		
+<player control="cpu" faction="magic" team="2"/>
+		
+<player control="cpu" faction="tech" team="1"/>
+	
+<player control="cpu" faction="tech" team="3"/>	
+<player control="cpu" faction="tech" team="1"/>
+	
+<player control="cpu" faction="tech" team="1"/>
+	
+<player control="cpu" faction="suns" team="1"/>
+	
+<player control="cpu" faction="suns" team="1"/>
+
+<player control="cpu" faction="suns" team="4"/>
+
+</players>
+	
+<map value="one_thousand_suns"/>
+	
+<tileset value="forest"/>
+	
+<tech-tree value="cotts"/>
+
+<fog-of-war value="false"/>	
+<default-resources value="false"/>
+	
+<default-units value="false"/>
+	
+<default-victory-conditions value="false"/>
+	
+<scripts>
+		
+<startup>
+			
+--disable AI
+			
+			
+disableAi(4)
+	
+disableAi(7)
+
+disableAi(8)
+
+unfogMap(864000, {0,0,1024,512}) 
+
+--set up building records
+buildings = {}
+		
+			
+--player units
+			
+createUnit('castle', 0, startLocation(0))
+createUnit('castle', 8, startLocation(0))
+buildnum0 = lastCreatedUnit()
+table.insert(buildings, buildnum0)
+giveResource('gold', 0, 10000)
+giveResource('wood', 0, 2000)
+giveResource('stone', 0, 1000)
+giveResource('iron', 0, 500)
+giveResource('crystal', 0, 250)
+createUnit('astarroth', 0, startLocation(0))				
+				
+			
+for i=1, 5 do
+
+createUnit('peasant', 0, startLocation(0))
+
+end
+
+--allied units
+
+createUnit('castle', 2, startLocation(2))
+buildnum1 = lastCreatedUnit()
+table.insert(buildings, buildnum1)
+giveResource('gold', 2, 20000)
+giveResource('wood', 2, 5000)
+giveResource('stone', 2, 2000)
+for i=1, 5 do
+
+createUnit('worker', 2, startLocation(2))
+
+end			
+
+--allied units
+createUnit('castle', 4, startLocation(4))
+buildnum2 = lastCreatedUnit()
+table.insert(buildings, buildnum2)
+for i=1, 5 do
+
+createUnit('peasant', 4, startLocation(4))
+
+end
+createUnit('archer_tower', 4, {120, 230})
+
+createUnit('archer_tower', 4, {124, 230})
+
+createUnit('archer_tower', 4, {128, 230})
+
+createUnit('archer_tower', 4, {132, 230})
+
+createUnit('archer_tower', 4, {136, 230})
+
+createUnit('archer_tower', 4, {140, 220})
+
+createUnit('archer_tower', 4, {140, 224})
+
+createUnit('archer_tower', 4, {140, 228})
+
+createUnit('archer_tower', 4, {118, 196})
+
+createUnit('archer_tower', 4, {114, 196})
+
+createUnit('archer_tower', 4, {110, 196})
+
+createUnit('archer_tower', 4, {106, 196})
+
+createUnit('archer_tower', 4, {102, 196})
+
+createUnit('archer_tower', 4, {100, 200})
+
+createUnit('archer_tower', 4, {100, 204})
+
+createUnit('archer_tower', 4, {100, 208})
+
+
+--allied units
+createUnit('castle', 5, startLocation(5))
+buildnum3 = lastCreatedUnit()
+table.insert(buildings, buildnum3)
+for i=1, 5 do
+
+createUnit('worker', 5, startLocation(5))
+
+end
+
+--allied units
+createUnit('castle', 6, startLocation(6))
+buildnum4 = lastCreatedUnit()
+table.insert(buildings, buildnum4)
+for i=1, 5 do
+
+createUnit('worker', 6, startLocation(6))
+
+end
+
+--allied units
+createUnit('achur_mage_guild', 7, startLocation(7))
+buildnum5 = lastCreatedUnit()
+table.insert(buildings, buildnum5)
+createUnit('achur_mage_guild', 7, {400, 320})
+buildnum6 = lastCreatedUnit()
+table.insert(buildings, buildnum6)
+createUnit('achur_mage_guild', 7, {290, 420})
+buildnum7 = lastCreatedUnit()
+table.insert(buildings, buildnum7)
+createUnit('achur_mage_guild', 7, {990, 20})
+buildnum8 = lastCreatedUnit()
+table.insert(buildings, buildnum8)
+createUnit('achur_mage_guild', 7, {340, 110})
+buildnum9 = lastCreatedUnit()
+table.insert(buildings, buildnum9)
+createUnit('achur_mage_guild', 7, {460, 340})
+buildnum10 = lastCreatedUnit()
+table.insert(buildings, buildnum10)
+createUnit('achur_mage_guild', 7, {700, 280})
+buildnum11 = lastCreatedUnit()
+table.insert(buildings, buildnum11)
+createUnit('anima_ward', 7, {268, 327})
+
+buildnum12 = lastCreatedUnit()
+table.insert(buildings, buildnum12)
+createUnit('anima_ward', 7, {268, 345})
+
+buildnum13 = lastCreatedUnit()
+table.insert(buildings, buildnum13)
+createUnit('anima_ward', 7, {268, 333})
+
+buildnum14 = lastCreatedUnit()
+table.insert(buildings, buildnum14)
+createUnit('anima_ward', 7, {268, 339})
+
+buildnum15 = lastCreatedUnit()
+table.insert(buildings, buildnum15)
+createUnit('anima_ward', 7, {274, 333})
+buildnum16 = lastCreatedUnit()
+table.insert(buildings, buildnum16)
+
+createUnit('anima_ward', 7, {274, 339})
+
+buildnum17 = lastCreatedUnit()
+table.insert(buildings, buildnum17)
+createUnit('anima_ward', 7, {280, 333})
+
+buildnum18 = lastCreatedUnit()
+table.insert(buildings, buildnum18)
+createUnit('anima_ward', 7, {280, 339})
+
+buildnum19 = lastCreatedUnit()
+table.insert(buildings, buildnum19)
+createUnit('anima_ward', 7, {286, 333})
+
+buildnum20 = lastCreatedUnit()
+table.insert(buildings, buildnum20)
+createUnit('anima_ward', 7, {286, 339})
+
+
+buildnum21 = lastCreatedUnit()
+table.insert(buildings, buildnum21)	
+		
+--enemy demon units
+
+createUnit('mage_tower', 1, startLocation(1))
+buildnum22 = lastCreatedUnit()
+table.insert(buildings, buildnum22)
+giveResource('gold', 1, 50000)
+giveResource('wood', 1, 20000)
+giveResource('stone', 1, 10000)
+createUnit('daemon', 1, startLocation(1))
+workaround = lastCreatedUnit()
+destroyUnit(workaround, true)
+
+--set timers
+setTimer('taxes', 'game', 2400, true)
+--setTimer('basicassault', 'game', 3600, true)
+--setTimer('heavyassault', 'game', 10800, true)
+--setTimer('buildup', 'game', 7200, true)
+
+--buildup1 = {}
+--i1 = 1
+--buildup2 = {}
+--i2 = 1
+--buildup3 = {}
+--i3 = 1
+
+--enemy death units
+
+createUnit('castle', 3, startLocation(3))
+buildnum23 = lastCreatedUnit()
+table.insert(buildings, buildnum23)
+giveResource('gold', 3, 5000)
+giveResource('wood', 3, 1000)
+giveResource('stone', 3, 500)
+createUnit('barracks', 3, startLocation(3))
+
+buildnum24 = lastCreatedUnit()
+table.insert(buildings, buildnum24)
+createUnit('barracks', 3, startLocation(3))
+
+buildnum25 = lastCreatedUnit()
+table.insert(buildings, buildnum25)
+createUnit('blacksmith', 3, startLocation(3))
+
+buildnum26 = lastCreatedUnit()
+table.insert(buildings, buildnum26)
+createUnit('technodrome', 3, startLocation(3))
+
+buildnum27 = lastCreatedUnit()
+table.insert(buildings, buildnum27)
+for i=1, 5 do
+
+createUnit('worker', 3, startLocation(3))
+
+end	
+
+
+
+
+--objectives
+			
+--objective='Save_Acherost'
+--showMessage('', '')
+--setDisplayText('')
+</startup>
+
+
+<timer name="taxes">
+tax_hut=unitCountOfType(0, 'peasant_hut')
+tax_castle=unitCountOfType(0, 'castle')
+market_count=unitCountOfType(0, 'marketplace')
+if market_count == 0 then market = 0 end
+if market_count == 1 then market = 1 end
+if market_count == 2 then market = 1.5 end
+if market_count == 3 then market = 1.8 end
+if market_count == 4 then market = 2 end
+blacksmith=unitCountOfType(0, 'blacksmith')
+if blacksmith>=0 then econ1 = 1 end
+if blacksmith==0 then econ1 = 0 end
+alchemist=unitCountOfType(0, 'alchemists_guild')
+if alchemist>=0 then econ2 = 1 end
+if alchemist==0 then econ2 = 0 end
+magesmith=unitCountOfType(0, 'magesmith_guild')
+if magesmith>=0 then econ3 = 1 end
+if magesmith==0 then econ3 = 0 end
+tax_market=(econ1+econ2+econ3+market_count/2)*(market+(5*market/2))
+tax_total=tax_hut*100+tax_castle*200+tax_market*100
+giveResource('gold', 0, tax_total)
+</timer>
+ 
+--<timer name="basicassault">
+--for i=1, 5 do
+
+--createUnit('daemon', 1, startLocation(1))
+--givePositionCommand(lastCreatedUnit(), 'move', startLocation(0))
+--end
+--for i=1, 5 do
+--createUnit('daemon', 1, startLocation(1))
+--givePositionCommand(lastCreatedUnit(), 'move', startLocation(2))
+--end
+--</timer>
+
+--<timer name="heavyassault">
+--for i=1, 10 do
+
+--createUnit('daemon', 1, startLocation(1))
+--givePositionCommand(lastCreatedUnit(), 'move', startLocation(0))
+--end
+--for i=1, 10 do
+--createUnit('daemon', 1, startLocation(1))
+--givePositionCommand(lastCreatedUnit(), 'move', startLocation(2))
+--end
+--</timer>
+
+--<timer name="buildup">
+--for i=i1, i1+5 do
+--createUnit('daemon', 1, startLocation(1))
+--givePositionCommand(lastCreatedUnit(), 'move', {260,130})
+--buildup1[i] = lastCreatedUnit()
+--if i==25 then
+--for ni=1, 25 do
+
+--givePositionCommand(buildup1[ni], 'move', {270, 70})
+--end
+--end
+--end
+--for i=i2, i2+5 do
+
+--createUnit('daemon', 1, startLocation(1))
+--givePositionCommand(lastCreatedUnit(), 'move', {170,160})
+--buildup2[i] = lastCreatedUnit()
+--if i==50 then
+--for ni=1, 50 do
+
+--givePositionCommand(buildup2[i], 'move', {40, 280})
+--end
+--end
+--end
+--for i=i3, i3+5 do
+--createUnit('daemon', 1, startLocation(1))
+--givePositionCommand(lastCreatedUnit(), 'move', {250,220})
+--buildup3[i] = lastCreatedUnit()
+--if i==75 then
+--for i=1, 75 do
+
+--givePositionCommand(buildup3[i], 'move', {300, 340})
+--end
+--end
+--end
+--i1=i1+5
+--i2=i2+5
+--i3=i3+5
+--</timer>
+
+	
+</scripts>		
+
+</scenario>

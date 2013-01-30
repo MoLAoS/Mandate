@@ -1,0 +1,46 @@
+<?xml version="1.0" standalone="yes" ?>
+<scenario>
+
+<difficulty value="2"/>
+
+<players>
+
+<player control="human" faction="test" team="2"/>
+
+<player control="human" faction="test" team="1"/>
+
+</players>
+
+<map value="map_editor_test"/>
+
+<tileset value="forest"/>
+
+<tech-tree value="unaligned_kingdom"/>
+
+<fog-of-war value="false"/>
+<shroud-of-darkness value="false"/>
+<default-resources value="false"/>
+
+<default-units value="false"/>
+
+<default-victory-conditions value="false"/>
+
+<scripts>
+
+<startup>
+
+
+--disable AI
+
+
+--enemy units
+
+--player units
+
+createUnit('adarite', 1, startLocation(1))
+
+</startup>
+
+
+</scripts>
+</scenario>
