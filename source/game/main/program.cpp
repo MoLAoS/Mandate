@@ -35,12 +35,6 @@
 
 #include "interpolation.h"
 
-#include "core.h"
-#include "debugger.h"
-#include "system_interface.h"
-#include "render_interface.h"
-
-using namespace Rocket;
 using namespace Glest::Net;
 
 using namespace Shared::Util;
