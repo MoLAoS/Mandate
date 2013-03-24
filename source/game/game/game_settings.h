@@ -55,6 +55,8 @@ private:
 	bool shroudOfDarkness;
 	bool randomStartLocs;
 
+	bool mapEditor;
+
 public:
 	GameSettings() { clear(); }
 	GameSettings(const XmlNode *node);
@@ -83,7 +85,7 @@ public:
 	int getTeam(int i) const						{ASSERT_I(); return teams[i];}
 	int getStartLocationIndex(int i) const			{ASSERT_I(); return startLocationIndex[i];}
 	int getColourIndex(int i) const					{ASSERT_I(); return colourIndices[i];}
-	
+
 	bool getDefaultUnits() const					{return defaultUnits;}
 	bool getDefaultResources() const				{return defaultResources;}
 	bool getDefaultVictoryConditions() const		{return defaultVictoryConditions;}
@@ -114,6 +116,8 @@ public:
 	void setFogOfWar(bool v)						{fogOfWar = v;}
 	void setShroudOfDarkness(bool v)				{shroudOfDarkness = v;}
 	void setRandomStartLocs(bool v)					{randomStartLocs = v;}
+	void enableMapEditor()					        {mapEditor = true;}
+	bool getMapEditor()                             {return mapEditor;}
 
 	//misc
 	void randomiseFactions(const vector<string> &possibleFactions);

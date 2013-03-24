@@ -664,30 +664,25 @@ void World::tick() {
 	}
 
 	cartographer->tick();
-
+    /*
+	// manage list of current attackers
 	for (int i = 0; i < getFactionCount(); ++i) {
 		for (int j = 0; j < getFaction(i)->getUnitCount(); ++j) {
 		    Unit *unit = getFaction(i)->getUnit(j);
 		    for (int k = 0; k < unit->attackers.size(); ++k) {
+                // erase units that haven't attacked in a while
                 unit->attackers[k].incTimer();
                 if (unit->attackers[k].getTimer() == 4) {
                     unit->attackers.erase(unit->attackers.begin() + k);
                 }
-		    }
-		}
-	}
-
-	for (int i = 0; i < getFactionCount(); ++i) {
-		for (int j = 0; j < getFaction(i)->getUnitCount(); ++j) {
-		    Unit *unit = getFaction(i)->getUnit(j);
-		    for (int k = 0; k < unit->attackers.size(); ++k) {
+                // erase units that have died
                 if (!unit->attackers[k].getUnit()->isAlive()) {
                     unit->attackers.erase(unit->attackers.begin() + k);
                 }
 		    }
 		}
 	}
-
+    // manage skill cooldowns
 	for (int i = 0; i < getFactionCount(); ++i) {
 		for (int j = 0; j < getFaction(i)->getUnitCount(); ++j) {
 		    Unit *unit = getFaction(i)->getUnit(j);
@@ -700,7 +695,7 @@ void World::tick() {
 		    }
 		}
 	}
-
+    // manage stat boosts based on the time of day
 	for (int i = 0; i < getFactionCount(); ++i) {
 		for (int j = 0; j < getFaction(i)->getUnitCount(); ++j) {
 		    Unit *unit = getFaction(i)->getUnit(j);
@@ -713,7 +708,7 @@ void World::tick() {
 		    }
 		}
 	}
-
+    */
 	//apply regen/degen
 	for (int i = 0; i < getFactionCount(); ++i) {
 		for (int j = 0; j < getFaction(i)->getUnitCount(); ++j) {
@@ -756,7 +751,7 @@ void World::tick() {
         for (int j = 0; j < faction->getUnitCount(); ++j) {
             const Unit *u = faction->getUnit(j);
             if (u->isOperative()) {
-                /**< Added by MoLAoS, resource generation */
+                // resource generation
                 Unit *unit = faction->getUnit(j);
                 for (int i = 0; i < unit->getType()->getResourceProductionSystem().getCreatedResourceCount(); ++i) {
                     CreatedResource cr = unit->getType()->getResourceProductionSystem().getCreatedResources()[i];
@@ -782,7 +777,7 @@ void World::tick() {
                         bonusPower->getResourceProductionSystem().update(cr, unit, cTime, timeStep);
                     }
                 }
-                /**< Added by MoLAoS, resource processing */
+                // resource processing
                 for (int s = 0; s < unit->getType()->getProcessProductionSystem().getProcessCount(); ++s) {
                     Process process = unit->getType()->getProcessProductionSystem().getProcess(s, faction);
                     bool toUpdate = true;
@@ -858,7 +853,7 @@ void World::tick() {
                         }
                     }
                 }
-                /**< Added by MoLAoS, item generation */
+                // item generation
                 for (int i = 0; i < unit->getType()->getItemProductionSystem().getCreatedItemCount(); ++i) {
                     CreatedItem createdItem = unit->getType()->getItemProductionSystem().getCreatedItem(i, faction);
                     bool updating = true;
@@ -925,7 +920,7 @@ void World::tick() {
                         }
                     }
                 }
-                /**< Added by MoLAoS, unit generation */
+                // unit generation
                 for (int i = 0; i < unit->getType()->getUnitProductionSystem().getCreatedUnitCount(); ++i) {
                     CreatedUnit createdUnit = unit->getType()->getUnitProductionSystem().getCreatedUnit(i, faction);
                     int cTime = unit->getType()->getUnitProductionSystem().getCreatedUnitTimer(i, faction).getTimerValue();

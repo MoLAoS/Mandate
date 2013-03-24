@@ -238,6 +238,9 @@ bool SimulationInterface::updateWorld() {
 	if (speed == GameSpeed::PAUSED) {
 		return false;
 	}
+	//if (gameSettings.getMapEditor() == true && g_gameState.getWorldFps() > 10) {
+    //    return false;
+	//}
 	// Ai-Interfaces
 	for (int i = 0; i < world->getFactionCount(); ++i) {
 		if (world->getFaction(i)->getCpuControl()

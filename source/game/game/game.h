@@ -133,6 +133,9 @@ public:
 	DebugStats* getDebugStats()             {return &m_debugStats;}
 	Vec2i getMousePos() const				{return Vec2i(mouseX, mouseY);}
 
+    int getWorldFps()                       {return worldFps;}
+    int getRenderFps()                      {return renderFps;}
+
     //Rocket::Core::Context* getContext() const {return context;}
 
 	// ProgramState implementation

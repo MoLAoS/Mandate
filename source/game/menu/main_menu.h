@@ -43,6 +43,7 @@ WRAPPED_ENUM( MenuStates,
 	JOIN_GAME,
 	SCENARIO,
 	LOAD_GAME,
+	MAP_EDITOR,
 	OPTIONS,
 	ABOUT,
 	GFX_INFO
@@ -118,7 +119,7 @@ public:
 
 	virtual ~MenuState() {}
 	virtual void update();
-	
+
 	virtual MenuStates getIndex() const = 0;
 
 	void doFadeIn() { m_fadeIn = true; m_fadeOut = false; }

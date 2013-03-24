@@ -27,6 +27,7 @@
 #include "metrics.h"
 #include "menu_state_new_game.h"
 #include "menu_state_join_game.h"
+#include "menu_state_map_editor.h"
 #include "sim_interface.h"
 #include "network_interface.h"
 #include "test_pane.h"

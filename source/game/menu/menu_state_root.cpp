@@ -22,6 +22,7 @@
 #include "menu_state_join_game.h"
 #include "menu_state_scenario.h"
 #include "menu_state_load_game.h"
+#include "menu_state_map_editor.h"
 #include "menu_state_options.h"
 #include "menu_state_about.h"
 #include "metrics.h"
@@ -207,6 +208,7 @@ void MenuStateRoot::onButtonClick(Widget *source) {
 		case RootMenuItem::SCENARIO: targetState = MenuStates::SCENARIO;	break;
 		case RootMenuItem::OPTIONS:  targetState = MenuStates::OPTIONS;		break;
 		case RootMenuItem::LOADGAME: targetState = MenuStates::LOAD_GAME;	break;
+		case RootMenuItem::MAPEDITOR: targetState = MenuStates::MAP_EDITOR;	break;
 		case RootMenuItem::ABOUT:	 targetState = MenuStates::ABOUT;		break;
 		default: break;
 	}
@@ -234,6 +236,7 @@ void MenuStateRoot::update(){
 			case RootMenuItem::SCENARIO: newState = new MenuStateScenario(program, mainMenu); break;
 			case RootMenuItem::OPTIONS: newState = new MenuStateOptions(program, mainMenu); break;
 			case RootMenuItem::LOADGAME: newState = new MenuStateLoadGame(program, mainMenu); break;
+			case RootMenuItem::MAPEDITOR: newState = new MenuStateMapEditor(program, mainMenu); break;
 			case RootMenuItem::ABOUT: newState = new MenuStateAbout(program, mainMenu); break;
 			default: break;
 		}

@@ -4,9 +4,9 @@
 //	Copyright (C) 2001-2005 Martiño Figueroa
 //				  2010 James McCulloch <silnarm at gmail>
 //
-//	You can redistribute this code and/or modify it under 
-//	the terms of the GNU General Public License as published 
-//	by the Free Software Foundation; either version 2 of the 
+//	You can redistribute this code and/or modify it under
+//	the terms of the GNU General Public License as published
+//	by the Free Software Foundation; either version 2 of the
 //	License, or (at your option) any later version
 // ==============================================================
 
@@ -18,7 +18,7 @@
 namespace Glest { namespace Menu {
 
 // ===============================
-// 	class MenuStateRoot  
+// 	class MenuStateRoot
 // ===============================
 
 STRINGY_ENUM( RootMenuItem,
@@ -26,6 +26,7 @@ STRINGY_ENUM( RootMenuItem,
 	JOINGAME,
 	SCENARIO,
 	LOADGAME,
+	MAPEDITOR,
 	OPTIONS,
 	ABOUT,
 	EXIT

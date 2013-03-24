@@ -61,6 +61,7 @@ GameSettings::GameSettings(const XmlNode *node) {
 		colourIndices[i] = -1;
 		resourceMultipliers[i] = 1.f;
 	}
+	mapEditor = false;
 }
 
 bool GameSettings::hasNetworkSlots() const {
@@ -95,6 +96,7 @@ void GameSettings::clear() {
 	fogOfWar = true;
 	shroudOfDarkness = true;
 	randomStartLocs = false;
+	mapEditor = false;
 }
 
 void GameSettings::setPreviewSettings() {
@@ -107,6 +109,7 @@ void GameSettings::setPreviewSettings() {
 	fogOfWar = false;
 	shroudOfDarkness = false;
 	factionCount = 0;
+	mapEditor = false;
 }
 
 void GameSettings::compact() {
@@ -175,6 +178,7 @@ void GameSettings::save(XmlNode *node) const {
 		factionNode->addChild("colourIndex", colourIndices[i]);
 		factionNode->addChild("resourceMultiplier", resourceMultipliers[i]);
 	}
+	node->addChild("map-editor", mapEditor);
 }
 
 void GameSettings::randomiseFactions(const vector<string> &possibleFactions) {
