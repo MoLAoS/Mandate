@@ -662,9 +662,7 @@ void World::tick() {
 	if (!fogOfWarSmoothing) {
 		g_userInterface.getMinimap()->updateFowTex(1.f);
 	}
-
 	cartographer->tick();
-    /*
 	// manage list of current attackers
 	for (int i = 0; i < getFactionCount(); ++i) {
 		for (int j = 0; j < getFaction(i)->getUnitCount(); ++j) {
@@ -708,7 +706,7 @@ void World::tick() {
 		    }
 		}
 	}
-    */
+
 	//apply regen/degen
 	for (int i = 0; i < getFactionCount(); ++i) {
 		for (int j = 0; j < getFaction(i)->getUnitCount(); ++j) {

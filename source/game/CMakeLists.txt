@@ -4,6 +4,7 @@ set(folders
 	.
 	ai
 	ai_mandate
+	creatable_types
 	entities
 	facilities
 	game
