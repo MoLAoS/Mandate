@@ -1,0 +1,11 @@
+The gong sounds used for attack notices for the magic faction are all 
+from http://www.freesound.org.
+
+gong1 is by 'Rodcencko'
+http://www.freesound.org/samplesViewSingle.php?id=16594
+
+gong2 is by 'gezortenplotz'
+http://www.freesound.org/samplesViewSingle.php?id=20134
+
+gong3 id by 'SuperDaveOsbourne'
+http://www.freesound.org/samplesViewSingle.php?id=63643

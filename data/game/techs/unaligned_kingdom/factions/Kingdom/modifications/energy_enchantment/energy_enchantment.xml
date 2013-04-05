@@ -1,0 +1,29 @@
+<?xml version="1.0" standalone="yes"?>
+<modification>
+  <parameters>
+    <resource-requirements>
+      <resource name="wealth" amount="300" plus="0" multiply="0"/>
+    </resource-requirements>
+    <unit-requirements/>
+    <upgrade-requirements/>
+    <resource-requirements/>
+    <image path="images/worker_repair.bmp"/>
+    <service scope="faction"/>
+    <equipment-types>
+      <equipment-type name="magic_weapon"/>
+      <equipment-type name="magical_weapon"/>
+    </equipment-types>
+    <damage-types>
+      <damage-type type="energy" value="50"/>
+    </damage-types>
+    <effects>
+      <effect name="energy" bias="detrimental" stacking="extend" target="foe" duration="5">
+	<damage-types>
+	  <damage-type type="energy" value="2"/>
+	</damage-types>
+	<flags/>
+	<recourse-effects/>
+      </effect>
+    </effects>
+  </parameters>
+</modification>

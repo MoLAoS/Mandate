@@ -117,7 +117,6 @@ void UpgradeManager::updateUpgrade(const Upgrade *upgrade, Faction *f) {
     if(fit!=f->upgradeStages.end()){
         if ((*fit).getUpgradeStage()>0) {
             if ((*fit).getUpgradeStage()<(*fit).getMaxStage()) {
-            const FactionType *factionType = it->getType()->getFactionType();
                 for (int i = 0; i < (*fit).m_enhancements.size(); ++i) {
                     (*fit).m_enhancements[i].m_enhancement.modify();
                 }

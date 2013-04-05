@@ -1,0 +1,163 @@
+<?xml version="1.0" standalone="no"?>
+<unit>
+  <parameters>
+    <armor-type value="void"/>
+    <time value="25"/>
+    <multi-selection value="true"/>
+    <fields>
+      <field value="land"/>
+    </fields>
+    <properties/>
+    <meeting-point value="false"/>
+    <cellmap value="false"/>
+  </parameters>
+  <item-limit limit="60"/>
+  <creatable-type>
+    <size value="1"/>
+    <height value="2"/>
+    <stats>
+      <max-hp value="100" regeneration="0"/>
+      <max-ep value="0" regeneration="0"/>
+      <max-sp value="0" regeneration="0"/>
+      <max-cp value="-1" />
+      <sight value="10"/>
+      <armor value="0"/>
+    </stats>
+    <producible>
+      <time value="10"/>
+      <properties/>
+      <light enabled="false"/>
+      <unit-requirements/>
+      <upgrade-requirements/>
+        <resource-requirements>
+          <resource name="wealth" amount="200" plus="0" multiply="0"/>
+        </resource-requirements>
+      <image path="images/swordman.bmp"/>
+      <image-cancel path="../ranger/images/tech_cancel.bmp"/>
+      </producible>
+    <resource-production>
+      <resources-stored>
+        <resource name="wealth" amount="100000"/>
+      </resources-stored>
+    </resource-production>
+    <actions>
+      <skills>
+		<skill>
+			<type value="stop"/>
+			<name value="stop_skill"/>		
+			<ep-cost value="0"/>
+			<speed value="1000"/>
+			<anim-speed value="45"/>
+			<animation path="models/speer_man_stand.g3d"/>
+			<sound enabled="false"/>
+		</skill>
+		<skill>
+			<type value="move"/>
+			<name value="move_skill"/>		
+			<ep-cost value="0"/>
+			<speed value="220"/>
+			<anim-speed value="90"/>
+			<animation path="models/speer_man_walk.g3d"/>
+			<sound enabled="false"/>
+		</skill>
+		<skill>
+			<type value="move"/>
+			<name value="charge_skill"/>		
+			<ep-cost value="0"/>
+			<speed value="250"/>
+			<anim-speed value="125"/>
+			<animation path="models/speer_man_walk.g3d"/>
+			<sound enabled="false"/>
+		</skill>
+		<skill>
+			<type value="attack"/>
+			<name value="attack_skill"/>		
+			<ep-cost value="0"/>
+			<speed value="35"/>
+			<anim-speed value="90"/>
+			<animation path="models/speer_man_attack.g3d"/>
+			<animation path="models/speer_man_attack.g3d"/>
+			<sound enabled="true" start-time="0.47">
+				<sound-file path="sounds/swordman_attack1.wav"/>
+				<sound-file path="sounds/swordman_attack2.wav"/>
+				<sound-file path="sounds/swordman_attack3.wav"/>
+				<sound-file path="sounds/swordman_attack4.wav"/>
+				<sound-file path="sounds/swordman_attack5.wav"/>
+				<sound-file path="sounds/swordman_attack6.wav"/>
+				<sound-file path="sounds/swordman_attack7.wav"/>
+				<sound-file path="sounds/swordman_attack8.wav"/>
+				<sound-file path="sounds/swordman_attack9.wav"/>
+				<sound-file path="sounds/swordman_attack10.wav"/>
+				<sound-file path="sounds/swordman_attack11.wav"/>
+				<sound-file path="sounds/swordman_attack12.wav"/>
+			</sound> 
+			<attack-strenght value="0"/>
+			<attack-var value="15"/>
+			<attack-range value="2"/>
+			<attack-type value="piercing"/>
+			<attack-fields>
+				<field value="land"/>
+			</attack-fields>
+			<attack-start-time value="0"/>
+          		<damage-types>
+        			<damage-type type="slashing" value="10"/>
+          		</damage-types>
+			<projectile value="false"/>
+			<splash value="false"/>
+		</skill>	
+		<skill>
+			<type value="die"/>
+			<name value="die_skill"/>		
+			<ep-cost value="0"/>
+			<speed value="60"/>
+			<anim-speed value="60"/>
+			<animation path="models/speer_man_die.g3d"/>
+			<sound enabled="false"/>			
+			<fade value="false"/>
+		</skill>
+      </skills>
+      <commands>
+		<command>
+			<type value="stop"/>
+			<name value="stop"/>
+			<image path="images/tech_stop.bmp"/>
+			<unit-requirements/>
+			<upgrade-requirements/>
+			<stop-skill value="stop_skill"/>
+		</command>
+		<command>
+			<type value="move"/>
+			<name value="move"/>
+			<image path="images/tech_move.bmp"/>
+			<unit-requirements/>
+			<upgrade-requirements/>
+			<move-skill value="move_skill"/>
+		</command>
+		<command>
+			<type value="attack"/>
+			<name value="attack"/>
+			<image path="images/swordman_attack.bmp"/>
+			<unit-requirements/>
+			<upgrade-requirements/>
+			<move-skill value="charge_skill"/>
+			<attack-skill value="attack_skill"/>
+		</command>
+      </commands>
+    </actions>
+  </creatable-type>
+	<selection-sounds enabled="true">
+		<sound path="sounds/swordman_select1.wav"/>
+		<sound path="sounds/swordman_select2.wav"/>
+		<sound path="sounds/swordman_select3.wav"/>			<sound path="sounds/swordman_select4.wav"/>
+		<sound path="sounds/swordman_select5.wav"/>
+		<sound path="sounds/swordman_select6.wav"/>			<sound path="sounds/swordman_select7.wav"/>
+	</selection-sounds>
+	<command-sounds enabled="true">
+		<sound path="sounds/swordman_ack1.wav"/>
+		<sound path="sounds/swordman_ack2.wav"/>
+		<sound path="sounds/swordman_ack3.wav"/>
+		<sound path="sounds/swordman_ack4.wav"/>
+		<sound path="sounds/swordman_ack5.wav"/>
+		<sound path="sounds/swordman_ack6.wav"/>
+	</command-sounds>
+</unit>

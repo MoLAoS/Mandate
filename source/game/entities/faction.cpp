@@ -208,6 +208,9 @@ void Faction::init(const FactionType *factionType, ControlType control, string p
 	for (int i=0; i < factionType->getUnitTypeCount(); ++i) {
 		m_unitCountMap[factionType->getUnitType(i)] = 0;
 	}
+	for (int i=0; i < factionType->getItemTypeCount(); ++i) {
+		m_itemCountMap[factionType->getItemType(i)] = 0;
+	}
 
 	if (factionIndex != -1) { // !Glestimals
 		sresources.resize(techTree->getResourceTypeCount());
@@ -241,12 +244,27 @@ void Faction::init(const FactionType *factionType, ControlType control, string p
         World *world = &g_world;
 		mandateAISim.init(world, this);
 
-        upgradeStages.resize(factionType->getUpgradeTypeCount());
+        int upgradeCount = factionType->getUpgradeTypeCount();
+        for (int i = 0; i < getType()->getFactionTypeNames().size(); ++i) {
+            for (int j = 0; j < world->getTechTree()->getFactionType(getType()->getFactionTypeNames()[i])->getUpgradeTypeCount(); ++j) {
+                upgradeCount++;
+            }
+        }
+        upgradeStages.resize(upgradeCount);
 		for (int i = 0; i < factionType->getUpgradeTypeCount(); ++i) {
 			const UpgradeType *ut = factionType->getUpgradeType(i);
 			upgradeStages[i].init(ut, 0, ut->maxStage, ut->m_names, ut->m_enhancements,
             ut->m_unitsAffected, ut->m_enhancementMap);
 		}
+        for (int i = 0, k = factionType->getUpgradeTypeCount(); i < getType()->getFactionTypeNames().size(); ++i) {
+            const FactionType *ft = world->getTechTree()->getFactionType(getType()->getFactionTypeNames()[i]);
+            for (int j = 0; j < ft->getUpgradeTypeCount(); ++j) {
+                const UpgradeType *ut = ft->getUpgradeType(i);
+                upgradeStages[k].init(ut, 0, ut->maxStage, ut->m_names, ut->m_enhancements,
+                ut->m_unitsAffected, ut->m_enhancementMap);
+                ++k;
+            }
+        }
 
 		texture = g_renderer.newTexture2D(ResourceScope::GAME);
 		Pixmap2D *pixmap = texture->getPixmap();
@@ -569,22 +587,27 @@ Modifier Faction::getCreatedUnitModifier(const UnitType *ut, const UnitType *sut
 bool Faction::reqsOk(const RequirableType *rt) const {
 	// required units
 	for (int i = 0; i < rt->getUnitReqCount(); ++i) {
-		if (!getCountOfUnitType(rt->getUnitReq(i))) {
+		if (!getCountOfUnitType(rt->getUnitReq(i).getUnitType())) {
+			return false;
+		}
+	}
+	for (int i = 0; i < rt->getItemReqCount(); ++i) {
+		if (!getCountOfItemType(rt->getItemReq(i).getItemType())) {
 			return false;
 		}
 	}
 	// required upgrades
 	for (int i = 0; i < rt->getUpgradeReqCount(); ++i) {
-		if (upgradeManager.isUpgraded(rt->getUpgradeReq(i).reqType)) {
-		} else if (upgradeManager.isPartial(rt->getUpgradeReq(i).reqType)) {
+		if (upgradeManager.isUpgraded(rt->getUpgradeReq(i).getUpgradeType())) {
+		} else if (upgradeManager.isPartial(rt->getUpgradeReq(i).getUpgradeType())) {
 		    Faction *f;
 		    for (int j = 0; j < g_world.getFactionCount(); ++j) {
 		        if (this == g_world.getFaction(j)) {
                     f = g_world.getFaction(j);
 		        }
 		    }
-		    int stage = f->getCurrentStage(rt->getUpgradeReq(i).reqType);
-            if (rt->getUpgradeReq(i).stage == stage) {
+		    int stage = f->getCurrentStage(rt->getUpgradeReq(i).getUpgradeType());
+            if (rt->getUpgradeReq(i).getStage() == stage) {
 
             } else {
                 return false;
@@ -671,7 +694,7 @@ bool Faction::isAvailable(const CommandType *ct, const ProducibleType *pt) const
 void Faction::reportReqs(const RequirableType *rt, CommandCheckResult &out_result, bool checkDups) const {
 	// required units
 	for (int i = 0; i < rt->getUnitReqCount(); ++i) {
-		const UnitType *ut = rt->getUnitReq(i);
+		const UnitType *ut = rt->getUnitReq(i).getUnitType();
 		if (checkDups) {
 			bool duplicate = false;
 			foreach (UnitReqResults, it, out_result.m_unitReqResults) {
@@ -689,7 +712,7 @@ void Faction::reportReqs(const RequirableType *rt, CommandCheckResult &out_resul
 	}
 	// required upgrades
 	for (int i = 0; i < rt->getUpgradeReqCount(); ++i) {
-		const UpgradeType *ut = rt->getUpgradeReq(i).reqType;
+		const UpgradeType *ut = rt->getUpgradeReq(i).getUpgradeType();
 		if (checkDups) {
 			bool duplicate = false;
 			foreach (UpgradeReqResults, it, out_result.m_upgradeReqResults) {

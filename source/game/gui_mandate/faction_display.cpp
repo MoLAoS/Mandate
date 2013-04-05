@@ -359,7 +359,13 @@ void FactionDisplay::render() {
     int count = getBuildingCount();
     ss << "Faction: " << count;
     string faction = m_faction->getType()->getName();
-    setPortraitTitle(faction);
+    ss << faction;
+    if (m_faction->getType()->getFactionTypeNames().size() > 0) {
+        for (int i = 0; i < m_faction->getType()->getFactionTypeNames().size(); ++i) {
+            ss << "/" << m_faction->getType()->getFactionTypeNames()[i];
+        }
+    }
+    setPortraitTitle(ss.str());
 	//TextWidget::setText("Faction", 1);
 
 	Widget::render();

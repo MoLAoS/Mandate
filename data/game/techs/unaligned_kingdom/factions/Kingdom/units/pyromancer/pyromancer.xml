@@ -1,0 +1,187 @@
+<?xml version="1.0" standalone="no"?>
+<unit>
+  <parameters>
+    <armor-type value="void"/>
+    <time value="5"/>
+    <multi-selection value="true"/>
+    <cellmap value="false"/>
+    <fields>
+      <field value="land"/>
+    </fields>
+    <properties/>
+    <tags>
+      <tag value="ordermember"/>
+    </tags>
+    <meeting-point value="false"/>
+  </parameters>
+  <equipment>
+  </equipment>
+  <item-limit limit="60"/>
+  <control type="inhuman">
+    <personality type="pyromancer"/>
+  </control>
+  <creatable-type>
+    <size value="1"/>
+    <height value="2"/>
+    <stats>
+      <max-hp value="50" regeneration="0"/>
+      <max-ep value="0" regeneration="0"/>
+      <max-sp value="0" regeneration="0"/>
+      <max-cp value="-1" />
+      <sight value="10"/>
+      <armor value="0"/>
+    </stats>
+    <producible>
+      <time value="10"/>
+      <properties/>
+      <light enabled="false"/>
+      <unit-requirements/>
+      <upgrade-requirements/>
+      <local-requirements>
+        <resource name="wealth" amount="300" plus="0" multiply="0"/>
+      </local-requirements>
+      <image path="images/summoner.bmp"/>
+      <image-cancel path="../ranger/images/tech_cancel.bmp"/>
+    </producible>
+    <resource-production>
+      <resources-stored>
+        <resource name="wealth" amount="100000"/>
+      </resources-stored>
+    </resource-production>
+    <actions>
+      <skills>
+        <skill>
+          <type value="stop"/>
+          <name value="stop_skill"/>
+          <ep-cost value="0"/>
+          <speed value="1000"/>
+          <anim-speed value="40"/>
+          <animation path="models/summoner_standing.g3d"/>
+          <sound enabled="false"/>
+        </skill>
+        <skill>
+          <type value="move"/>
+          <name value="move_skill"/>
+          <ep-cost value="0"/>
+          <speed value="150"/>
+          <anim-speed value="120"/>
+          <animation path="models/summoner_walking.g3d"/>
+          <sound enabled="false"/>
+        </skill>
+        <skill>
+          <type value="attack"/>
+          <name value="attack_skill"/>
+          <ep-cost value="100"/>
+          <speed value="60"/>
+          <anim-speed value="60"/>
+          <animation path="models/summoner_attacking.g3d"/>
+          <sound enabled="true" start-time="0.5">
+            <sound-file path="sounds/summoner_attack1.wav"/>
+            <sound-file path="sounds/summoner_attack2.wav"/>
+            <sound-file path="sounds/summoner_attack3.wav"/>
+            <sound-file path="sounds/summoner_attack4.wav"/>
+            <sound-file path="sounds/summoner_attack5.wav"/>
+            <sound-file path="sounds/summoner_attack6.wav"/>
+            <sound-file path="sounds/summoner_attack7.wav"/>
+            <sound-file path="sounds/summoner_attack8.wav"/>
+          </sound>
+          <attack-strenght value="170"/>
+          <attack-life-leech value="0"/>
+          <attack-mana-burn value="0"/>
+          <attack-capture value="0"/>
+          <attack-var value="50"/>
+          <attack-range value="8"/>
+          <attack-type value="energy"/>
+          <attack-fields>
+            <field value="land"/>
+            <field value="air"/>
+          </attack-fields>
+          <attack-start-time value="0.5"/>
+          <projectile value="true">
+            <particle value="true" path="particle_proj.xml"/>
+            <sound enabled="true">
+              <sound-file path="sounds/summoner_hit1.wav"/>
+              <sound-file path="sounds/summoner_hit2.wav"/>
+              <sound-file path="sounds/summoner_hit3.wav"/>
+              <sound-file path="sounds/summoner_hit4.wav"/>
+            </sound>
+          </projectile>
+          <splash value="true">
+            <radius value="1"/>
+            <damage-all value="true"/>
+            <particle value="true" path="particle_splash.xml"/>
+          </splash>
+        </skill>
+        <skill>
+          <type value="die"/>
+          <name value="die_skill"/>
+          <ep-cost value="0"/>
+          <speed value="80"/>
+          <anim-speed value="80"/>
+          <animation path="models/summoner_dying.g3d"/>
+          <sound enabled="true" start-time="0">
+            <sound-file path="sounds/summoner_die1.wav"/>
+            <sound-file path="sounds/summoner_die2.wav"/>
+            <sound-file path="sounds/summoner_die3.wav"/>
+            <sound-file path="sounds/summoner_die4.wav"/>
+          </sound>
+          <fade value="false"/>
+        </skill>
+      </skills>
+      <commands>
+        <command>
+          <type value= "stop"/>
+          <name value="stop"/>
+          <image path="../wizard/images/magic_stop.bmp"/>
+          <unit-requirements/>
+          <upgrade-requirements/>
+          <stop-skill value="stop_skill"/>
+        </command>
+        <command>
+          <type value= "move"/>
+          <name value="move"/>
+          <image path="../wizard/images/magic_move.bmp"/>
+          <unit-requirements/>
+          <upgrade-requirements/>
+          <move-skill value="move_skill"/>
+        </command>
+        <command>
+          <type value= "attack"/>
+          <name value="flare"/>
+          <image path="images/summoner_attack.bmp"/>
+          <unit-requirements/>
+          <upgrade-requirements/>
+          <move-skill value="move_skill"/>
+          <attack-skill value="attack_skill"/>
+        </command>
+      </commands>
+    </actions>
+  </creatable-type>
+    <selection-sounds enabled="true">
+      <sound path="sounds/summoner_select2.wav"/>
+      <sound path="sounds/summoner_select3.wav"/>
+      <sound path="sounds/summoner_select5.wav"/>
+      <sound path="sounds/summoner_select6.wav"/>
+      <sound path="sounds/summoner_select7.wav"/>
+      <sound path="sounds/summoner_select10.wav"/>
+      <sound path="sounds/summoner_select11.wav"/>
+      <sound path="sounds/summoner_select14.wav"/>
+      <sound path="sounds/summoner_select15.wav"/>
+      <sound path="sounds/summoner_select16.wav"/>
+      <sound path="sounds/summoner_select17.wav"/>
+    </selection-sounds>
+    <command-sounds enabled="true">
+      <sound path="sounds/summoner_ack1.wav"/>
+      <sound path="sounds/summoner_ack2.wav"/>
+      <sound path="sounds/summoner_ack3.wav"/>
+      <sound path="sounds/summoner_ack4.wav"/>
+      <sound path="sounds/summoner_ack5.wav"/>
+      <sound path="sounds/summoner_ack6.wav"/>
+      <sound path="sounds/summoner_ack7.wav"/>
+      <sound path="sounds/summoner_ack8.wav"/>
+      <sound path="sounds/summoner_ack9.wav"/>
+      <sound path="sounds/summoner_ack10.wav"/>
+      <sound path="sounds/summoner_ack11.wav"/>
+      <sound path="sounds/summoner_ack12.wav"/>
+    </command-sounds>
+</unit>

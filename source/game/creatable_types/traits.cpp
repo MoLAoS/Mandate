@@ -15,11 +15,11 @@ namespace Glest { namespace ProtoTypes {
 // =====================================================
 // 	class Traits
 // =====================================================
-void Traits::preLoad(const string &dir){
+void Trait::preLoad(const string &dir){
 	m_name = basename(dir);
 }
 
-bool Traits::load(const string &dir, const TechTree *techTree, const FactionType *factionType) {
+bool Trait::load(const string &dir, const TechTree *techTree, const FactionType *factionType) {
 	g_logger.logProgramEvent("Traits: " + dir, true);
 	bool loadOk = true;
 
@@ -51,13 +51,6 @@ bool Traits::load(const string &dir, const TechTree *techTree, const FactionType
 		loadOk = false;
 	}
 	try {
-	    const XmlNode *serviceNode = parametersNode->getChild("service");
-	    service = serviceNode->getAttribute("scope")->getRestrictedValue();
-	} catch (runtime_error e) {
-		g_logger.logXmlError(dir, e.what());
-		loadOk = false;
-	}
-	try {
 	    const XmlNode *equipmentNode = parametersNode->getChild("equipment-types", 0, false);
 		if(equipmentNode) {
 			for(int i = 0; i < equipmentNode->getChildCount(); ++i) {
@@ -72,28 +65,6 @@ bool Traits::load(const string &dir, const TechTree *techTree, const FactionType
 			}
 		}
 
-	} catch (runtime_error e) {
-		g_logger.logXmlError(dir, e.what());
-		loadOk = false;
-	}
-	try {
-		const XmlNode *resourceRequirementsNode = parametersNode->getChild("resource-requirements", 0, false);
-		if(resourceRequirementsNode) {
-			costs.resize(resourceRequirementsNode->getChildCount());
-			for(int i = 0; i < costs.size(); ++i) {
-				try {
-					const XmlNode *resourceNode = resourceRequirementsNode->getChild("resource", i);
-					string rname = resourceNode->getAttribute("name")->getRestrictedValue();
-					int amount = resourceNode->getAttribute("amount")->getIntValue();
-                    int amount_plus = resourceNode->getAttribute("plus")->getIntValue();
-                    fixed amount_multiply = resourceNode->getAttribute("multiply")->getFixedValue();
-                    costs[i].init(techTree->getResourceType(rname), amount, amount_plus, amount_multiply);
-				} catch (runtime_error e) {
-					g_logger.logXmlError(dir, e.what());
-					loadOk = false;
-				}
-			}
-		}
 	} catch (runtime_error e) {
 		g_logger.logXmlError(dir, e.what());
 		loadOk = false;

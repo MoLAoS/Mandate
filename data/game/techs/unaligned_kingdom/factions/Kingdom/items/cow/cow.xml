@@ -1,0 +1,24 @@
+<?xml version="1.0" standalone="no"?>
+<item>
+  <parameters>
+    <type-tag type="stock"/>
+    <tier value="1"/>
+  </parameters>
+  <creatable-type>
+    <size value="0"/>
+    <height value="0"/>
+    <producible>
+      <time value="1"/>
+      <properties/>
+      <light enabled="false"/>
+      <unit-requirements/>
+      <upgrade-requirements/>
+      <local-requirements>
+        <resource name="cow" amount="-1" plus="0" multiply="0"/>
+        <resource name="wealth" amount="50" plus="0" multiply="0"/>
+      </local-requirements>
+      <image path="images/cow.bmp"/>
+      <image-cancel path="images/tech_cancel.bmp"/>
+    </producible>
+  </creatable-type>
+</item>

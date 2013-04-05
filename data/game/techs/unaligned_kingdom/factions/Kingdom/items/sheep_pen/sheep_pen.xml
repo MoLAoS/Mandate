@@ -1,0 +1,53 @@
+<?xml version="1.0" standalone="no"?>
+<item>
+  <parameters>
+    <type-tag type="animal_pen"/>
+    <tier value="1"/>
+  </parameters>
+  <creatable-type>
+    <size value="0"/>
+    <height value="0"/>
+    <enhancement>
+      <static-modifiers>
+	  <max-hp value="200" additive="0"/>
+      </static-modifiers>
+    </enhancement>
+    <producible>
+      <time value="1"/>
+      <properties/>
+      <light enabled="false"/>
+      <unit-requirements/>
+      <upgrade-requirements/>
+      <resource-requirements>
+        <resource name="population" amount="5" plus="0" multiply="0"/>
+      </resource-requirements>
+      <local-requirements>
+        <resource name="wealth" amount="750" plus="0" multiply="0"/>
+        <resource name="space" amount="4" plus="0" multiply="0"/>
+        <resource name="sheep" amount="-8" plus="0" multiply="0"/>
+      </local-requirements>
+      <image path="images/undead_build.bmp"/>
+      <image-cancel path="images/tech_cancel.bmp"/>
+    </producible>
+    <processing>
+        <processes>
+          <process timer="30" count="4" scope="local">
+            <costs>
+              <cost name="sheep" consume="false" amount="6"/>
+            </costs>
+            <products>
+              <product name="sheep" amount="1"/>
+            </products>
+          </process>
+          <process timer="30" count="8" scope="local">
+            <costs>
+              <cost name="sheep" amount="2" consume="false"/>
+            </costs>
+            <products>
+              <product name="manure" amount="1"/>
+            </products>
+          </process>
+        </processes>
+    </processing>
+  </creatable-type>
+</item>

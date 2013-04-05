@@ -1,0 +1,212 @@
+<?xml version="1.0" standalone="no"?>
+<unit>
+  <parameters>
+    <armor-type value="void"/>
+    <time value="5"/>
+    <multi-selection value="true"/>
+    <cellmap value="false"/>
+    <fields>
+      <field value="land"/>
+    </fields>
+    <properties/>
+    <tags>
+      <tag value="ordermember"/>
+      <tag value="defender"/>
+    </tags>
+    <meeting-point value="false"/>
+  </parameters>
+  <equipment>
+  </equipment>
+  <item-limit limit="60"/>
+  <control type="inhuman">
+    <personality type="guardian"/>
+  </control>
+    <equipment>
+      <type type="melee_weapon" value="2"/>
+      <type type="heavy_cuirass" value="1"/>
+      <type type="heavy_shield" value="1"/>
+      <type type="heavy_boots" value="1"/>
+      <type type="heavy_greaves" value="1"/>
+      <type type="heavy_pauldrons" value="1"/>
+      <type type="heavy_gauntlets" value="1"/>
+    </equipment>
+    <starter-items>
+      <type type="wooden_sword"/>
+      <type type="wooden_sword"/>
+      <type type="wooden_cuirass"/>
+    </starter-items>
+    <levels>
+      <level name="recruit" exp="1000" count="15">
+	<static-modifiers>
+	  <max-hp value="15" additive="0"/>
+	  <attack-strength value="1" additive="0"/>
+	</static-modifiers>
+      </level>
+      <level name="regular" exp="1200" count="15">
+        <static-modifiers>
+          <max-hp value="18" additive="0"/>
+          <attack-strength value="1" additive="0"/>
+        </static-modifiers>
+      </level>
+      <level name="veteran" exp="1400" count="15">
+        <static-modifiers>
+          <max-hp value="21" additive="0"/>
+          <attack-strength value="2" additive="0"/>
+        </static-modifiers>
+      </level>
+      <level name="elite" exp="1600" count="15">
+        <static-modifiers>
+          <max-hp value="24" additive="0"/>
+          <attack-strength value="2" additive="0"/>
+        </static-modifiers>
+      </level>
+      <level name="legend" exp="1800" count="15">
+        <static-modifiers>
+          <max-hp value="27" additive="0"/>
+          <attack-strength value="3" additive="0"/>
+        </static-modifiers>
+      </level>
+    </levels>
+  <creatable-type>
+    <size value="1"/>
+    <height value="2"/>
+    <statistics>
+      <enhancement>
+	<resource-pools>
+	  <max-hp value="200"/>
+	</resource-pools>
+	<unit-stats>
+	  <sight value="10" value-mult="0"/>
+	</unit-stats>
+      </enhancement>
+    </statistics>
+    <producible>
+      <time value="10"/>
+      <properties/>
+      <light enabled="false"/>
+      <unit-requirements/>
+      <upgrade-requirements/>
+      <local-requirements>
+        <resource name="wealth" amount="400" plus="0" multiply="0"/>
+      </local-requirements>
+      <image path="images/guard.bmp"/>
+      <image-cancel path="../ranger/images/tech_cancel.bmp"/>
+    </producible>
+    <resource-production>
+      <resources-stored>
+        <resource name="wealth" amount="100000"/>
+      </resources-stored>
+    </resource-production>
+    <actions>
+      <skills>
+        <skill>
+          <type value="stop"/>
+          <name value="stop_skill"/>
+          <ep-cost value="0"/>
+          <speed value="1000"/>
+	  <sounds-animations>
+            <anim-speed value="45"/>
+            <animation path="models/sword_man_stand.g3d"/>
+            <sound enabled="false"/>
+	  </sounds-animations>
+        </skill>
+        <skill>
+          <type value="move"/>
+          <name value="move_skill"/>
+          <ep-cost value="0"/>
+          <speed value="220"/>
+	  <sounds-animations>
+            <anim-speed value="90"/>
+            <animation path="models/sword_man_walk.g3d"/>
+            <sound enabled="false"/>
+	  </sounds-animations>
+        </skill>
+        <skill>
+          <type value="attack"/>
+          <name value="attack_skill"/>
+          <ep-cost value="0"/>
+          <speed value="100"/>
+	  <max-range value="1"/>
+	  <sounds-animations>
+            <anim-speed value="100"/>
+            <animation path="models/sword_man_attack.g3d"/>
+            <sound enabled="true" start-time="0.47">
+              <sound-file path="sounds/guard_attack1.wav"/>
+              <sound-file path="sounds/guard_attack2.wav"/>
+              <sound-file path="sounds/guard_attack3.wav"/>
+              <sound-file path="sounds/guard_attack4.wav"/>
+              <sound-file path="sounds/guard_attack5.wav"/>
+              <sound-file path="sounds/guard_attack6.wav"/>
+            </sound>
+	  </sounds-animations>
+          <attack-fields>
+            <field value="land"/>
+          </attack-fields>
+          <attack-start-time value="0.5"/>
+          <damage-types>
+            <damage-type type="slashing" value="50"/>
+          </damage-types>
+          <projectile value="false"/>
+          <splash value="false"/>
+        </skill>
+        <skill>
+          <type value="die"/>
+          <name value="die_skill"/>
+          <ep-cost value="0"/>
+          <speed value="60"/>
+	  <sounds-animations>
+            <anim-speed value="60"/>
+            <animation path="models/sword_man_die.g3d"/>
+            <sound enabled="true" start-time="0">
+              <sound-file path="sounds/guard_die1.wav"/>
+              <sound-file path="sounds/guard_die2.wav"/>
+            </sound>
+	  </sounds-animations>
+          <fade value="false"/>
+        </skill>
+      </skills>
+      <commands>
+        <command>
+          <type value="stop"/>
+          <name value="stop"/>
+          <image path="../ranger/images/tech_stop.bmp"/>
+          <unit-requirements/>
+          <upgrade-requirements/>
+          <stop-skill value="stop_skill"/>
+        </command>
+        <command>
+          <type value="move"/>
+          <name value="move"/>
+          <image path="../ranger/images/tech_move.bmp"/>
+          <unit-requirements/>
+          <upgrade-requirements/>
+          <move-skill value="move_skill"/>
+        </command>
+        <command>
+          <type value="attack"/>
+          <name value="attack"/>
+          <image path="images/guard_attack.bmp"/>
+          <unit-requirements/>
+          <upgrade-requirements/>
+          <move-skill value="move_skill"/>
+          <attack-skill value="attack_skill"/>
+        </command>
+      </commands>
+    </actions>
+  </creatable-type>
+    <selection-sounds enabled="true">
+      <sound path="sounds/guard_select1.wav"/>
+      <sound path="sounds/guard_select2.wav"/>
+      <sound path="sounds/guard_select3.wav"/>
+      <sound path="sounds/guard_select4.wav"/>
+      <sound path="sounds/guard_select5.wav"/>
+    </selection-sounds>
+    <command-sounds enabled="true">
+      <sound path="sounds/guard_ack1.wav"/>
+      <sound path="sounds/guard_ack2.wav"/>
+      <sound path="sounds/guard_ack3.wav"/>
+      <sound path="sounds/guard_ack4.wav"/>
+      <sound path="sounds/guard_ack5.wav"/>
+      <sound path="sounds/guard_ack6.wav"/>
+  </command-sounds>
+</unit>

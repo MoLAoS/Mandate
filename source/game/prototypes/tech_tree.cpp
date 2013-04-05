@@ -39,7 +39,6 @@ using Main::Program;
 bool TechTree::preload(const string &dir, const set<string> &factionNames){
 	Logger &logger = Logger::getInstance();
 	bool loadOk = true;
-
 	//load tech tree xml info
 	XmlTree	xmlTree;
 	string path;
@@ -59,19 +58,66 @@ bool TechTree::preload(const string &dir, const set<string> &factionNames){
 		return false;
 	}
 
-	//load factions
-	factionTypes.resize(factionNames.size());
-	int i = 0;
-	set<string>::const_iterator fn;
+    // check for included factions
+    vector<string> factionTypeNameList;
+    vector<string> factionTypeNames;
+	set<string>::const_iterator ftn;
+    for (ftn = factionNames.begin(); ftn != factionNames.end(); ++ftn) {
+        factionTypeNames.push_back(*ftn);
+    }
 
+    for (int i = 0; i < factionTypeNames.size(); ++i) {
+        // 1. Open xml file to get included faction names
+        string path = dir + "/factions/" + factionTypeNames[i] + "/" + factionTypeNames[i] + ".xml";
+        XmlTree xmlTrees;
+        try {
+            xmlTrees.load(path);
+        } catch (runtime_error e) {
+            g_logger.logXmlError(path, "File missing or wrongly named.");
+            return false; // bail
+        }
+        const XmlNode *factionNode;
+        try {
+            factionNode = xmlTrees.getRootNode();
+        } catch (runtime_error e) {
+            g_logger.logXmlError(path, "File appears to lack contents.");
+            return false; // bail
+        }
+        try {
+            const XmlNode *factionTypeNamesNode = factionNode->getChild("faction-type-names", 0, false);
+            if (factionTypeNamesNode) {
+                for (int i = 0; i < factionTypeNamesNode->getChildCount(); ++i) {
+                    try {
+                        const XmlNode *factionTypeNameNode = factionTypeNamesNode->getChild("faction-type", i, false);
+                        if (factionTypeNameNode) {
+                            string factionTypeName = factionTypeNameNode->getAttribute("name")->getRestrictedValue();
+                            factionTypeNameList.push_back(factionTypeName);
+                        }
+                    } catch (runtime_error e) {
+                    g_logger.logXmlError(path, e.what());
+                    loadOk = false;
+                    }
+                }
+            }
+        } catch (runtime_error e) {
+            g_logger.logXmlError(path, e.what());
+            loadOk = false;
+        }
+    }
+
+    for (int i = 0; i < factionTypeNames.size(); ++i) {
+        factionTypeNameList.push_back(factionTypeNames[i]);
+    }
+	//load factions
+	factionTypes.resize(factionTypeNameList.size());
 	int numUnitTypes = 0;
-	for (fn = factionNames.begin(); fn != factionNames.end(); ++fn, ++i) {
-		if (!factionTypes[i].preLoad(dir + "/factions/" + *fn, this)) {
+	for (int i = 0; i < factionTypeNameList.size(); ++i) {
+		if (!factionTypes[i].preLoad(dir + "/factions/" + factionTypeNameList[i], this)) {
 			loadOk = false;
 		} else {
 			numUnitTypes += factionTypes[i].getUnitTypeCount();
 		}
-		if (!factionTypes[i].guiPreLoad(dir + "/factions/" + *fn, this)) {
+		if (!factionTypes[i].guiPreLoad(dir + "/factions/" + factionTypeNameList[i], this)) {
 			loadOk = false;
 		}
 	}
@@ -84,8 +130,6 @@ bool TechTree::preload(const string &dir, const set<string> &factionNames){
 }
 
 bool TechTree::load(const string &dir, const set<string> &factionNames){
-	int i;
-	set<string>::const_iterator fn;
 	bool loadOk=true;
 
 	Logger &logger = Logger::getInstance();
@@ -106,7 +150,7 @@ bool TechTree::load(const string &dir, const set<string> &factionNames){
 		g_logger.logXmlError(str, "Glest Advanced Engine currently only supports 256 resource types.");
 		loadOk = false;
 	} else {
-		for(i=0; i<filenames.size(); ++i){
+		for(int i=0; i<filenames.size(); ++i){
 			str=dir+"/resources/"+filenames[i];
 			if (!resourceTypes[i].load(str, i)) {
 				loadOk = false;
@@ -115,13 +159,70 @@ bool TechTree::load(const string &dir, const set<string> &factionNames){
 		}
 	}
 
-	for (i = 0, fn = factionNames.begin(); fn != factionNames.end(); ++fn, ++i) {
-		if (!factionTypes[i].load(i, dir + "/factions/" + *fn, this)) {
+    // check for included factions
+    vector<string> factionTypeNameList;
+    vector<string> factionTypeNames;
+	set<string>::const_iterator ftn;
+    for (ftn = factionNames.begin(); ftn != factionNames.end(); ++ftn) {
+        factionTypeNames.push_back(*ftn);
+    }
+    for (int i = 0; i < factionTypeNames.size(); ++i) {
+        // 1. Open xml file to get included faction names
+        string factn = factionTypeNames[i];
+        string path = dir + "/factions/" + factn + "/" + factn + ".xml";
+        XmlTree xmlTrees;
+        try {
+            xmlTrees.load(path);
+        } catch (runtime_error e) {
+            g_logger.logXmlError(path, "File missing or wrongly named.");
+            return false; // bail
+        }
+        const XmlNode *factionNode;
+        try {
+            factionNode = xmlTrees.getRootNode();
+        } catch (runtime_error e) {
+            g_logger.logXmlError(path, "File appears to lack contents.");
+            return false; // bail
+        }
+        try {
+            const XmlNode *factionTypeNamesNode = factionNode->getChild("faction-type-names", 0, false);
+            if (factionTypeNamesNode) {
+                for (int i = 0; i < factionTypeNamesNode->getChildCount(); ++i) {
+                    try {
+                        const XmlNode *factionTypeNameNode = factionTypeNamesNode->getChild("faction-type", i, false);
+                        if (factionTypeNameNode) {
+                            string factionTypeName = factionTypeNameNode->getAttribute("name")->getRestrictedValue();
+                            factionTypeNameList.push_back(factionTypeName);
+                        }
+                    } catch (runtime_error e) {
+                    g_logger.logXmlError(path, e.what());
+                    loadOk = false;
+                    }
+                }
+            }
+        } catch (runtime_error e) {
+            g_logger.logXmlError(path, e.what());
+            loadOk = false;
+        }
+    }
+
+    for (int i = 0; i < factionTypeNames.size(); ++i) {
+        factionTypeNameList.push_back(factionTypeNames[i]);
+    }
+
+	for (int i = 0; i < factionTypeNameList.size(); ++i) {
+		if (!factionTypes[i].load(i, dir + "/factions/" + factionTypeNameList[i], this)) {
 			loadOk = false;
 		} else {
-			factionTypeMap[*fn] = &factionTypes[i];
+			factionTypeMap[factionTypeNameList[i]] = &factionTypes[i];
 		}
 	}
+	set<string> names;
+	for (int i = 0; i < factionTypeNameList.size(); ++i) {
+        names.insert(factionTypeNameList[i]);
+	}
+	string techName = basename(dir);
+	g_lang.loadFactionStrings(techName, names);
 	return loadOk;
 }
 

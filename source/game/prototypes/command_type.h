@@ -848,7 +848,7 @@ public:
 	virtual void subDesc(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const override;
 	virtual void descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt = 0) const override;
 	virtual void update(Unit *unit) const;
-	virtual string getReqDesc(const Faction *f) const;
+	virtual string getReqDesc(const Faction *f, const FactionType *ft) const;
 
 	int getProducedNumber(const UnitType* ut) const;
 	bool isChild() const {return m_child;}
@@ -895,7 +895,7 @@ public:
 	virtual void subDesc(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const override;
 	virtual void descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt = 0) const override;
 	virtual void update(Unit *unit) const;
-	virtual string getReqDesc(const Faction *f) const;
+	virtual string getReqDesc(const Faction *f, const FactionType *ft) const;
 
 	int getCreatedNumber(const ItemType* it) const;
 	bool isChild() const {return m_child;}
@@ -940,7 +940,7 @@ public:
 	virtual void subDesc(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const override;
 	virtual void descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt = 0) const override;
 	virtual void update(Unit *unit) const;
-	virtual string getReqDesc(const Faction *f) const;
+	virtual string getReqDesc(const Faction *f, const FactionType *ft) const;
 	StaticSound *getFinishedSound() const	{return m_finishedSounds.getRandSound();}
 
 	//get
@@ -975,7 +975,7 @@ public:
 	UpgradeCommandType() : CommandType("Upgrade", Clicks::ONE, true), m_upgradeSkillType(0) { }
 	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct);
 	virtual void doChecksum(Checksum &checksum) const;
-	virtual string getReqDesc(const Faction *f) const;
+	virtual string getReqDesc(const Faction *f, const FactionType *ft) const;
 	//virtual ProdTypePtr getProduced() const;
 	virtual void getDesc(string &str, const Unit *unit) const;
 	virtual void subDesc(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const override;
@@ -1034,7 +1034,7 @@ public:
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void getDesc(string &str, const Unit *unit) const;
 	virtual void update(Unit *unit) const;
-	virtual string getReqDesc(const Faction *f) const;
+	virtual string getReqDesc(const Faction *f, const FactionType *ft) const;
 	virtual void descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt = 0) const override;
 	virtual void subDesc(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const override;
 
@@ -1117,7 +1117,7 @@ public:
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void getDesc(string &str, const Unit *unit) const;
 	virtual void update(Unit *unit) const;
-	virtual string getReqDesc(const Faction *f) const;
+	virtual string getReqDesc(const Faction *f, const FactionType *ft) const;
 	virtual void subDesc(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const override;
 	virtual void descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt = 0) const override;
 	virtual CmdResult check(const Unit *unit, const Command &command) const;
@@ -1155,7 +1155,7 @@ public:
 	virtual void getDesc(string &str, const Unit *unit) const;
 	virtual void descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt = 0) const override;
 	virtual void update(Unit *unit) const;
-	virtual string getReqDesc(const Faction *f) const;
+	virtual string getReqDesc(const Faction *f, const FactionType *ft) const;
 	virtual void start(Unit *unit, Command *command) const;
 
 	//get
@@ -1195,7 +1195,7 @@ public:
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void getDesc(string &str, const Unit *unit) const;
 	virtual void update(Unit *unit) const;
-	virtual string getReqDesc(const Faction *f) const;
+	virtual string getReqDesc(const Faction *f, const FactionType *ft) const;
 	virtual void subDesc(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const override;
 	virtual void descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt = 0) const override;
 	virtual CmdResult check(const Unit *unit, const Command &command) const;
@@ -1233,7 +1233,7 @@ public:
 	virtual void getDesc(string &str, const Unit *unit) const;
 	virtual void descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt = 0) const override;
 	virtual void update(Unit *unit) const;
-	virtual string getReqDesc(const Faction *f) const;
+	virtual string getReqDesc(const Faction *f, const FactionType *ft) const;
 	virtual void start(Unit *unit, Command *command) const;
 
 	//get
@@ -1273,7 +1273,7 @@ public:
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void getDesc(string &str, const Unit *unit) const;
 	virtual void update(Unit *unit) const;
-	virtual string getReqDesc(const Faction *f) const;
+	virtual string getReqDesc(const Faction *f, const FactionType *ft) const;
 	virtual void subDesc(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const override;
 	virtual void descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt = 0) const override;
 	virtual CmdResult check(const Unit *unit, const Command &command) const;
@@ -1311,7 +1311,7 @@ public:
 	virtual void getDesc(string &str, const Unit *unit) const;
 	virtual void descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt = 0) const override;
 	virtual void update(Unit *unit) const;
-	virtual string getReqDesc(const Faction *f) const;
+	virtual string getReqDesc(const Faction *f, const FactionType *ft) const;
 	virtual void start(Unit *unit, Command *command) const;
 
 	//get
@@ -1340,7 +1340,7 @@ public:
 	virtual void doChecksum(Checksum &checksum) const {}
 	virtual void getDesc(string &str, const Unit *unit) const {}
 	virtual void update(Unit *unit) const;
-	virtual string getReqDesc(const Faction *f) const {return "";}
+	virtual string getReqDesc(const Faction *f, const FactionType *ft) const {return "";}
 
 	virtual void descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt = 0) const override {}
 

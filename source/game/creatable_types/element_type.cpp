@@ -67,19 +67,36 @@ bool DisplayableType::load(const XmlNode *baseNode, const string &dir) {
 // =====================================================
 // 	class RequirableType
 // =====================================================
+void UnitReq::init(const UnitType* type, int value) {
+    unitType = type;
+    amount = value;
+}
 
-string RequirableType::getReqDesc(const Faction *f) const{
+void ItemReq::init(const ItemType* type, int value) {
+    itemType = type;
+    amount = value;
+}
+
+void UpgradeReq::init(const UpgradeType* type, int value) {
+    upgradeType = type;
+    stage = value;
+}
+
+string RequirableType::getReqDesc(const Faction *f, const FactionType *ft) const{
 	stringstream ss;
-	if (unitReqs.empty() && upgradeReqs.empty()) {
+	if (unitReqs.empty() && upgradeReqs.empty() && itemReqs.empty()) {
 		return ss.str();
 	}
-	ss << g_lang.getFactionString(f->getType()->getName(), m_name)
+	ss << g_lang.getFactionString(ft->getName(), m_name)
 	   << " " << g_lang.get("Reqs") << ":\n";
-	foreach_const (UnitReqs, it, unitReqs) {
-		ss << "  " << (*it)->getName() << endl;
+	for (int i = 0; i < getUnitReqCount(); ++i) {
+		ss << "  " << unitReqs[i].getUnitType()->getName() << ": " << unitReqs[i].getAmount()  << endl;
 	}
-	foreach_const (UpgradeReqs, it, upgradeReqs) {
-		ss << "  " << (*it).reqType->getName() << endl;
+	for (int i = 0; i < getItemReqCount(); ++i) {
+		ss << "  " << itemReqs[i].getItemType()->getName() << ": " << itemReqs[i].getAmount()  << endl;
+	}
+	for (int i = 0; i < getUpgradeReqCount(); ++i) {
+		ss << "  " << upgradeReqs[i].getUpgradeType()->getName() << ": " << upgradeReqs[i].getStage() << endl;
 	}
 	return ss.str();
 }
@@ -93,7 +110,10 @@ bool RequirableType::load(const XmlNode *baseNode, const string &dir, const Tech
 			for(int i = 0; i < unitRequirementsNode->getChildCount(); ++i) {
 				const XmlNode *unitNode = unitRequirementsNode->getChild("unit", i);
 				string name = unitNode->getRestrictedAttribute("name");
-				unitReqs.push_back(ft->getUnitType(name));
+				int value = unitNode->getIntAttribute("amount");
+				UnitReq unitReq;
+				unitReq.init(ft->getUnitType(name), value);
+				unitReqs.push_back(unitReq);
 			}
 		}
 	} catch (runtime_error e) {
@@ -107,7 +127,10 @@ bool RequirableType::load(const XmlNode *baseNode, const string &dir, const Tech
 			for(int i = 0; i < itemRequirementsNode->getChildCount(); ++i) {
 				const XmlNode *itemNode = itemRequirementsNode->getChild("item", i);
 				string name = itemNode->getRestrictedAttribute("name");
-				itemReqs.push_back(ft->getItemType(name));
+				int value = itemNode->getIntAttribute("amount");
+				ItemReq itemReq;
+				itemReq.init(ft->getItemType(name), value);
+				itemReqs.push_back(itemReq);
 			}
 		}
 	} catch (runtime_error e) {
@@ -122,10 +145,9 @@ bool RequirableType::load(const XmlNode *baseNode, const string &dir, const Tech
 				const XmlNode *upgradeReqNode = upgradeRequirementsNode->getChild("upgrade", i);
 				string name = upgradeReqNode->getRestrictedAttribute("name");
 				int stage = upgradeReqNode->getIntAttribute("value");
-				UpgradeReq newReq;
-				newReq.reqType = ft->getUpgradeType(name);
-				newReq.stage = stage;
-				upgradeReqs.push_back(newReq);
+				UpgradeReq upgradeReq;
+				upgradeReq.init(ft->getUpgradeType(name), stage);
+				upgradeReqs.push_back(upgradeReq);
 			}
 		}
 	} catch (runtime_error e) {
@@ -152,13 +174,17 @@ bool RequirableType::load(const XmlNode *baseNode, const string &dir, const Tech
 
 void RequirableType::doChecksum(Checksum &checksum) const {
 	NameIdPair::doChecksum(checksum);
-	foreach_const (UnitReqs, it, unitReqs) {
-		checksum.add((*it)->getName());
-		checksum.add((*it)->getId());
+	for (int i = 0; i < getUnitReqCount(); ++i) {
+		checksum.add(unitReqs[i].getUnitType()->getName());
+		checksum.add(unitReqs[i].getUnitType()->getId());
 	}
-	foreach_const (UpgradeReqs, it, upgradeReqs) {
-		checksum.add((*it).reqType->getName());
-		checksum.add((*it).reqType->getId());
+	for (int i = 0; i < getItemReqCount(); ++i) {
+		checksum.add(itemReqs[i].getItemType()->getName());
+		checksum.add(itemReqs[i].getItemType()->getId());
+	}
+	for (int i = 0; i < getUpgradeReqCount(); ++i) {
+		checksum.add(upgradeReqs[i].getUpgradeType()->getName());
+		checksum.add(upgradeReqs[i].getUpgradeType()->getId());
 	}
 	checksum.add(subfactionsReqs);
 }
@@ -211,17 +237,17 @@ ResourceAmount ProducibleType::getLocalCost(const ResourceType *rt, const Factio
 	return ResourceAmount();
 }
 
-string ProducibleType::getReqDesc(const Faction *f) const {
+string ProducibleType::getReqDesc(const Faction *f, const FactionType *ft) const {
 	Lang &lang = g_lang;
 	stringstream ss;
 	if (unitReqs.empty() && upgradeReqs.empty() && costs.empty()) {
 		return ss.str();
 	}
-	ss << lang.getFactionString(f->getType()->getName(), m_name)
+	ss << lang.getFactionString(ft->getName(), m_name)
 	   << " " << g_lang.get("Reqs") << ":\n";
 	for (int i=0; i < getCostCount(); ++i) {
 		ResourceAmount r = getCost(i, f);
-		string resName = lang.getFactionString(f->getType()->getName(), r.getType()->getName());
+		string resName = lang.getFactionString(ft->getName(), r.getType()->getName());
 		if (resName == r.getType()->getName()) {
 			resName = lang.getTechString(r.getType()->getName());
 			if (resName == r.getType()->getName()) {
@@ -230,11 +256,14 @@ string ProducibleType::getReqDesc(const Faction *f) const {
 		}
 		ss << "  " << resName << ": " << r.getAmount() << endl;
 	}
-	foreach_const (UnitReqs, it, unitReqs) {
-		ss << "  " << (*it)->getName() << endl;
+	for (int i = 0; i < getUnitReqCount(); ++i) {
+		ss << "  " << unitReqs[i].getUnitType()->getName() << ": " << unitReqs[i].getAmount()  << endl;
 	}
-	foreach_const (UpgradeReqs, it, upgradeReqs) {
-		ss << "  " << (*it).reqType->getName() << endl;
+	for (int i = 0; i < getItemReqCount(); ++i) {
+		ss << "  " << itemReqs[i].getItemType()->getName() << ": " << itemReqs[i].getAmount()  << endl;
+	}
+	for (int i = 0; i < getUpgradeReqCount(); ++i) {
+		ss << "  " << upgradeReqs[i].getUpgradeType()->getName() << ": " << upgradeReqs[i].getStage() << endl;
 	}
 	return ss.str();
 }

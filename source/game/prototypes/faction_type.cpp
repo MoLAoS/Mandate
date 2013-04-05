@@ -176,6 +176,27 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 		return false; // bail
 	}
 
+    try {
+        const XmlNode *factionTypeNamesNode = factionNode->getChild("faction-type-names", 0, false);
+        if (factionTypeNamesNode) {
+            for (int i = 0; i < factionTypeNamesNode->getChildCount(); ++i) {
+                try {
+                    const XmlNode *factionTypeNameNode = factionTypeNamesNode->getChild("faction-type", i, false);
+                    if (factionTypeNameNode) {
+                        string factionTypeName = factionTypeNameNode->getAttribute("name")->getRestrictedValue();
+                        factionTypeNames.push_back(factionTypeName);
+                    }
+                } catch (runtime_error e) {
+                g_logger.logXmlError(path, e.what());
+                loadOk = false;
+                }
+            }
+        }
+	} catch (runtime_error e) {
+		g_logger.logXmlError(path, e.what());
+		loadOk = false;
+	}
+
 	// 2. Read subfaction list
 	const XmlNode *subfactionsNode = factionNode->getChild("subfactions", 0, false);
 	if (subfactionsNode) {
@@ -187,7 +208,6 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 			subfactions.push_back(subfactionsNode->getChild("subfaction", i)->getAttribute("name")->getRestrictedValue());
 		}
 	}
-
 
     personalityDirectory = dir + "/ai/" + "personalities.xml";
     XmlTree personalityXmlTree;

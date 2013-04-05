@@ -662,14 +662,14 @@ void ProduceCommandType::getDesc(string &str, const Unit *unit) const {
 	string msg;
 	m_produceSkillType->getDesc(msg, unit);
 	if (m_producedUnits.size() == 1) {
-		str += "\n" + m_producedUnits[0]->getReqDesc(unit->getFaction());
+		str += "\n" + m_producedUnits[0]->getReqDesc(unit->getFaction(), unit->getType()->getFactionType());
 	}
 }
 
-string ProduceCommandType::getReqDesc(const Faction *f) const {
-	string res = RequirableType::getReqDesc(f);
+string ProduceCommandType::getReqDesc(const Faction *f, const FactionType *ft) const {
+	string res = RequirableType::getReqDesc(f, ft);
 	if (m_producedUnits.size() == 1) {
-		res += m_producedUnits[0]->getReqDesc(f);
+		res += m_producedUnits[0]->getReqDesc(f, ft);
 	}
 	return res;
 }
@@ -831,7 +831,7 @@ void GenerateCommandType::doChecksum(Checksum &checksum) const {
 void GenerateCommandType::getDesc(string &str, const Unit *unit) const {
 	m_produceSkillType->getDesc(str, unit);
 	if (m_producibles.size() == 1) {
-		str += "\n" + m_producibles[0]->getReqDesc(unit->getFaction());
+		str += "\n" + m_producibles[0]->getReqDesc(unit->getFaction(), unit->getType()->getFactionType());
 	}
 }
 
@@ -859,10 +859,10 @@ void GenerateCommandType::subDesc(const Unit *unit, CmdDescriptor *callback, Pro
 	}
 }
 
-string GenerateCommandType::getReqDesc(const Faction *f) const {
-	string res = RequirableType::getReqDesc(f);
+string GenerateCommandType::getReqDesc(const Faction *f, const FactionType *ft) const {
+	string res = RequirableType::getReqDesc(f, ft);
 	if (m_producibles.size() == 1) {
-		res += m_producibles[0]->getReqDesc(f);
+		res += m_producibles[0]->getReqDesc(f, ft);
 	}
 	return res;
 }
@@ -972,10 +972,10 @@ void UpgradeCommandType::doChecksum(Checksum &checksum) const {
 	}
 }
 
-string UpgradeCommandType::getReqDesc(const Faction *f) const {
-	string res = RequirableType::getReqDesc(f);
+string UpgradeCommandType::getReqDesc(const Faction *f, const FactionType *ft) const {
+	string res = RequirableType::getReqDesc(f, ft);
 	if (clicks == Clicks::ONE) {
-		res += "\n" + getProducedUpgrade(0)->getReqDesc(f);
+		res += "\n" + getProducedUpgrade(0)->getReqDesc(f, ft);
 	}
 	return res;
 }
@@ -1186,7 +1186,7 @@ void MorphCommandType::getDesc(string &str, const Unit *unit) const {
 		str += lang.get("Refund") + ": " + intToStr(m_refund) + "%\n";
 	}
 	if (m_morphUnits.size() == 1) {
-		str += "\n" + m_morphUnits[0]->getReqDesc(unit->getFaction());
+		str += "\n" + m_morphUnits[0]->getReqDesc(unit->getFaction(), unit->getType()->getFactionType());
 	}
 }
 
@@ -1220,10 +1220,10 @@ void MorphCommandType::subDesc(const Unit *unit, CmdDescriptor *callback, ProdTy
 	}
 }
 
-string MorphCommandType::getReqDesc(const Faction *f) const{
-	string res = RequirableType::getReqDesc(f);
+string MorphCommandType::getReqDesc(const Faction *f, const FactionType *ft) const{
+	string res = RequirableType::getReqDesc(f, ft);
 	if (m_morphUnits.size() == 1) {
-		res += m_morphUnits[0]->getReqDesc(f);
+		res += m_morphUnits[0]->getReqDesc(f, ft);
 	}
 	return res;
 }
@@ -1454,8 +1454,8 @@ void LoadCommandType::getDesc(string &str, const Unit *unit) const {
 	str+= "\n" + loadSkillType->getName();
 }
 
-string LoadCommandType::getReqDesc(const Faction *f) const {
-	return RequirableType::getReqDesc(f);
+string LoadCommandType::getReqDesc(const Faction *f, const FactionType *ft) const {
+	return RequirableType::getReqDesc(f, ft);
 }
 
 void LoadCommandType::descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const {
@@ -1622,8 +1622,8 @@ void UnloadCommandType::getDesc(string &str, const Unit *unit) const {
 	str+= "\n" + unloadSkillType->getName();
 }
 
-string UnloadCommandType::getReqDesc(const Faction *f) const {
-	return RequirableType::getReqDesc(f) /*+ "\n" + getProduced()->getReqDesc()*/;
+string UnloadCommandType::getReqDesc(const Faction *f, const FactionType *ft) const {
+	return RequirableType::getReqDesc(f, ft) /*+ "\n" + getProduced()->getReqDesc()*/;
 }
 
 void UnloadCommandType::descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const {
@@ -1748,8 +1748,8 @@ void FactionLoadCommandType::getDesc(string &str, const Unit *unit) const {
 	str+= "\n" + loadSkillType->getName();
 }
 
-string FactionLoadCommandType::getReqDesc(const Faction *f) const {
-	return RequirableType::getReqDesc(f);
+string FactionLoadCommandType::getReqDesc(const Faction *f, const FactionType *ft) const {
+	return RequirableType::getReqDesc(f, ft);
 }
 
 void FactionLoadCommandType::descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const {
@@ -1889,8 +1889,8 @@ void FactionUnloadCommandType::getDesc(string &str, const Unit *unit) const {
 	str+= "\n" + unloadSkillType->getName();
 }
 
-string FactionUnloadCommandType::getReqDesc(const Faction *f) const {
-	return RequirableType::getReqDesc(f) /*+ "\n" + getProduced()->getReqDesc()*/;
+string FactionUnloadCommandType::getReqDesc(const Faction *f, const FactionType *ft) const {
+	return RequirableType::getReqDesc(f, ft) /*+ "\n" + getProduced()->getReqDesc()*/;
 }
 
 void FactionUnloadCommandType::descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const {
@@ -2017,8 +2017,8 @@ void GarrisonCommandType::getDesc(string &str, const Unit *unit) const {
 	str+= "\n" + loadSkillType->getName();
 }
 
-string GarrisonCommandType::getReqDesc(const Faction *f) const {
-	return RequirableType::getReqDesc(f);
+string GarrisonCommandType::getReqDesc(const Faction *f, const FactionType *ft) const {
+	return RequirableType::getReqDesc(f, ft);
 }
 
 void GarrisonCommandType::descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const {
@@ -2159,8 +2159,8 @@ void DegarrisonCommandType::getDesc(string &str, const Unit *unit) const {
 	str+= "\n" + unloadSkillType->getName();
 }
 
-string DegarrisonCommandType::getReqDesc(const Faction *f) const {
-	return RequirableType::getReqDesc(f) /*+ "\n" + getProduced()->getReqDesc()*/;
+string DegarrisonCommandType::getReqDesc(const Faction *f, const FactionType *ft) const {
+	return RequirableType::getReqDesc(f, ft) /*+ "\n" + getProduced()->getReqDesc()*/;
 }
 
 void DegarrisonCommandType::descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const {

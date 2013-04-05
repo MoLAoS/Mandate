@@ -6,6 +6,7 @@ set(folders
 	ai_mandate
 	creatable_types
 	entities
+	events
 	facilities
 	game
 	global
@@ -13,12 +14,10 @@ set(folders
 	gui
 	gui_mandate
 	hierarchy
-	html_interface
 	main
 	menu
 	network
 	prototypes
-	Rocket
 	script
 	search
 	sound

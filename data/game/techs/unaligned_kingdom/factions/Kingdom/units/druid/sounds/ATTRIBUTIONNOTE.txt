@@ -1,0 +1,14 @@
+NOTES ABOUT SOME OF THE SOUND FILES.
+
+falcon_attack1.wav is derived from "whoosh.wav" by Benboncan, on www.freesound.org
+http://www.freesound.org/samplesViewSingle.php?id=62260
+
+falcon_attack2.wav is derived from "whoosh04.wav" by FreqMan, on www.freesound.org
+http://www.freesound.org/samplesViewSingle.php?id=25073
+
+falcon_attack3.wav is a blend of "whoosh.wav" by Benboncan and "Peregrin_Falcon_2.wav" by digifishmusic, on www.freesound.org
+http://www.freesound.org/samplesViewSingle.php?id=62260, and,
+http://www.freesound.org/samplesViewSingle.php?id=54083 respectively.
+
+All these sounds are under a Creative Commons Sampling Plus 1.0 License.
+http://creativecommons.org/licenses/sampling+/1.0/

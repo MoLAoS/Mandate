@@ -1,0 +1,193 @@
+<?xml version="1.0" standalone="no"?>
+<unit>
+  <parameters>
+    <armor-type value="void"/>
+    <time value="5"/>
+    <multi-selection value="true"/>
+    <cellmap value="false"/>
+    <fields>
+      <field value="land"/>
+    </fields>
+    <properties/>
+    <tags>
+      <tag value="ordermember"/>
+    </tags>
+    <meeting-point value="false"/>
+  </parameters>
+  <equipment>
+  </equipment>
+  <item-limit limit="60"/>
+  <control type="inhuman">
+    <personality type="druid"/>
+  </control>
+  <creatable-type>
+    <size value="1"/>
+    <height value="2"/>
+    <stats>
+      <max-hp value="50" regeneration="0"/>
+      <max-ep value="0" regeneration="0"/>
+      <max-sp value="0" regeneration="0"/>
+      <max-cp value="-1" />
+      <sight value="10"/>
+      <armor value="0"/>
+    </stats>
+    <producible>
+      <time value="10"/>
+      <properties/>
+      <light enabled="false"/>
+      <unit-requirements/>
+      <upgrade-requirements/>
+      <local-requirements>
+        <resource name="wealth" amount="300" plus="0" multiply="0"/>
+      </local-requirements>
+      <image path="images/falconer.bmp"/>
+      <image-cancel path="../ranger/images/tech_cancel.bmp"/>
+    </producible>
+    <resource-production>
+      <resources-stored>
+        <resource name="wealth" amount="100000"/>
+      </resources-stored>
+    </resource-production>
+    <actions>
+      <skills>
+      <skill>
+	<type value="stop"/>
+	<name value="stop_skill"/>
+	<ep-cost value="0"/>
+	<speed value="1000"/>
+	<anim-speed value="50"/>
+	<animation path="models/falconer_stand.g3d"/>
+	<sound enabled="false"/>
+      </skill>	
+      <skill>
+	<type value="move"/>
+	<name value="move_skill"/>		
+	<ep-cost value="0"/>
+	<speed value="220"/>
+	<anim-speed value="125"/>
+	<animation path="models/falconer_walk.g3d"/>
+	<sound enabled="false"/>
+      </skill>
+      <skill>
+	<type value="attack"/>
+	<name value="attack_skill"/>		
+	<ep-cost value="0"/>
+	<speed value="45"/>
+	<anim-speed value="45"/>
+	<animation path="models/falconer_attack.g3d"/>
+	<sound enabled="true" start-time="0.1">
+	  <sound-file path="sounds/falcon_attack1.wav"/>
+	  <sound-file path="sounds/falcon_attack2.wav"/>
+	  <sound-file path="sounds/falcon_attack3.wav"/>
+	</sound>
+	<attack-strenght value="195"/>
+	<attack-var value="50"/>
+	<attack-range value="10"/>
+	<attack-type value="slashing"/>
+	<attack-start-time value="0.5"/>
+	<attack-fields>
+	  <field value="land"/>
+	</attack-fields>
+	<projectile value="true">
+	  <particle value="false"/>
+	  <sound enabled="false"/>
+	</projectile>
+	<splash value="false"/>
+      </skill>	
+      <skill>
+	<type value="attack"/>
+	<name value="attack_air_skill"/>		
+	<ep-cost value="0"/>
+	<speed value="50"/>
+	<anim-speed value="50"/>
+	<animation path="models/falconer_attack_air.g3d"/>
+	<sound enabled="true" start-time="0.1">
+	  <sound-file path="sounds/falcon_attack1.wav"/>
+	  <sound-file path="sounds/falcon_attack2.wav"/>
+	  <sound-file path="sounds/falcon_attack3.wav"/>
+	</sound>
+	<attack-strenght value="170"/>
+	<attack-var value="50"/>
+	<attack-range value="10"/>
+	<attack-type value="slashing"/>
+	<attack-start-time value="0.5"/>
+	<attack-fields>
+	  <field value="air"/>
+	</attack-fields>
+	<projectile value="true">
+          <particle value="false"/>
+	  <sound enabled="false"/>
+	</projectile>			
+	<splash value="false"/>
+      </skill>
+      <skill>
+	<type value="die"/>	
+	<name value="die_skill"/>		
+	<ep-cost value="0"/>
+	<speed value="60"/>
+	<anim-speed value="60"/>
+	<animation path="models/falconer_die.g3d"/>
+	<sound enabled="true" start-time="0">
+	  <sound-file path="sounds/guard_die1.wav"/>
+          <sound-file path="sounds/guard_die2.wav"/>
+	  <sound-file path="sounds/guard_die3.wav"/>
+	  <sound-file path="sounds/guard_die4.wav"/>
+	</sound>
+	<fade value="false"/>
+      </skill>
+      </skills>
+      <commands>
+      <command>
+	<type value="stop"/>
+	<name value="stop"/>
+	<image path="images/stop.bmp"/>
+	<unit-requirements/>
+	<upgrade-requirements/>
+	<stop-skill value="stop_skill"/>
+      </command>
+      <command>
+	<type value="move"/>
+	<name value="move"/>
+	<image path="images/move.bmp"/>
+	<unit-requirements/>
+	<upgrade-requirements/>
+	<move-skill value="move_skill"/>
+      </command>
+      <command>
+	<type value="attack"/>
+	<name value="attack"/>
+	<image path="images/falcon.bmp"/>
+	<unit-requirements/>
+	<upgrade-requirements/>
+	<move-skill value="move_skill"/>
+	<attack-skill value="attack_skill"/>
+      </command>
+      <command>
+	<type value="attack"/>
+	<name value="aerial_attack"/>
+	<image path="images/falcon.bmp"/>
+	<unit-requirements/>
+	<upgrade-requirements/>
+	<move-skill value="move_skill"/>
+	<attack-skill value="attack_air_skill"/>
+      </command>
+      </commands>
+    </actions>
+  </creatable-type>
+    <selection-sounds enabled="true">
+	<sound path="sounds/guard_select1.wav"/>
+	<sound path="sounds/guard_select2.wav"/>
+	<sound path="sounds/guard_select3.wav"/>
+	<sound path="sounds/guard_select4.wav"/>
+	<sound path="sounds/guard_select5.wav"/>
+    </selection-sounds>
+    <command-sounds enabled="true">
+	<sound path="sounds/guard_ack1.wav"/>
+	<sound path="sounds/guard_ack2.wav"/>
+	<sound path="sounds/guard_ack3.wav"/>
+	<sound path="sounds/guard_ack4.wav"/>
+	<sound path="sounds/guard_ack5.wav"/>
+	<sound path="sounds/guard_ack6.wav"/>
+	<sound path="sounds/guard_ack7.wav"/>
+  </command-sounds>
+</unit>

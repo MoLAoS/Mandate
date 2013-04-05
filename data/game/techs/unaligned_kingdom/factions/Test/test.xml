@@ -4,6 +4,9 @@
   <item-images>
     <item-image image-path="units/adarite/images/summoner_armor.bmp"/>
   </item-images>
+  <faction-type-names>
+    <faction-type name="testing"/>
+  </faction-type-names>
   <starting-resources>
     <resource name="wealth" amount="500"/>
   </starting-resources>

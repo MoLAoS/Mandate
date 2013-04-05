@@ -140,14 +140,14 @@ void CreateItemCommandType::getDesc(string &str, const Unit *unit) const {
 	string msg;
 	m_produceSkillType->getDesc(msg, unit);
 	if (m_createdItems.size() == 1) {
-		str += "\n" + m_createdItems[0]->getReqDesc(unit->getFaction());
+		str += "\n" + m_createdItems[0]->getReqDesc(unit->getFaction(), unit->getType()->getFactionType());
 	}
 }
 
-string CreateItemCommandType::getReqDesc(const Faction *f) const {
-	string res = RequirableType::getReqDesc(f);
+string CreateItemCommandType::getReqDesc(const Faction *f, const FactionType *ft) const {
+	string res = RequirableType::getReqDesc(f, ft);
 	if (m_createdItems.size() == 1) {
-		res += m_createdItems[0]->getReqDesc(f);
+		res += m_createdItems[0]->getReqDesc(f, ft);
 	}
 	return res;
 }

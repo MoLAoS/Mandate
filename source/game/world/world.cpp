@@ -206,7 +206,6 @@ void World::preload() {
 	techTree.preload(gs.getTechPath(), names);
 	string techName = basename(gs.getTechPath());
 	g_lang.loadTechStrings(techName);
-	g_lang.loadFactionStrings(techName, names);
 }
 
 //load tileset
@@ -667,13 +666,15 @@ void World::tick() {
 	for (int i = 0; i < getFactionCount(); ++i) {
 		for (int j = 0; j < getFaction(i)->getUnitCount(); ++j) {
 		    Unit *unit = getFaction(i)->getUnit(j);
+		    // erase units that haven't attacked in a while
 		    for (int k = 0; k < unit->attackers.size(); ++k) {
-                // erase units that haven't attacked in a while
                 unit->attackers[k].incTimer();
                 if (unit->attackers[k].getTimer() == 4) {
                     unit->attackers.erase(unit->attackers.begin() + k);
                 }
-                // erase units that have died
+		    }
+            // erase units that have died
+		    for (int k = 0; k < unit->attackers.size(); ++k) {
                 if (!unit->attackers[k].getUnit()->isAlive()) {
                     unit->attackers.erase(unit->attackers.begin() + k);
                 }
@@ -1042,8 +1043,11 @@ int World::createUnit(const string &unitName, int factionIndex, const Vec2i &pos
 	if (factionIndex  < 0 && factionIndex >= factions.size()) {
 		return LuaCmdResult::INVALID_FACTION_INDEX;
 	}
-	Faction* faction= &factions[factionIndex];
-	const FactionType* ft= faction->getType();
+	Faction* faction = &factions[factionIndex];
+	const FactionType* ft;
+	for (int i = 0; i < getTechTree()->getFactionTypeCount(); ++i) {
+        ft = getTechTree()->getFactionType(i);
+	}
 	const UnitType* ut;
 	try{
 		ut = ft->getUnitType(unitName);
@@ -1390,7 +1394,7 @@ void World::initFactions() {
 	//create factions
 	factions.resize(gs.getFactionCount());
 	for (int i = 0; i < factions.size(); ++i) {
-		const FactionType *ft= techTree.getFactionType(gs.getFactionTypeName(i));
+		const FactionType *ft = techTree.getFactionType(gs.getFactionTypeName(i));
 		factions[i].init(
 			ft, gs.getFactionControl(i), gs.getPlayerName(i), &techTree, i, gs.getTeam(i),
 			gs.getStartLocationIndex(i), gs.getColourIndex(i),

@@ -1,0 +1,69 @@
+<?xml version="1.0" standalone="no"?>
+<item>
+  <parameters>
+    <type-tag type="threader"/>
+    <tier value="1"/>
+  </parameters>
+  <creatable-type>
+    <size value="0"/>
+    <height value="0"/>
+    <enhancement>
+      <static-modifiers>
+	  <max-hp value="100" additive="0"/>
+      </static-modifiers>
+    </enhancement>
+    <producible>
+      <time value="1"/>
+      <properties/>
+      <light enabled="false"/>
+      <unit-requirements/>
+      <upgrade-requirements/>
+      <resource-requirements>
+        <resource name="population" amount="4" plus="0" multiply="0"/>
+      </resource-requirements>
+      <local-requirements>
+        <resource name="wealth" amount="1000" plus="0" multiply="0"/>
+        <resource name="logs" amount="10" plus="0" multiply="0"/>
+        <resource name="space" amount="2" plus="0" multiply="0"/>
+      </local-requirements>
+      <image path="images/undead_build.bmp"/>
+      <image-cancel path="images/tech_cancel.bmp"/>
+    </producible>
+    <processing>
+        <processes>
+          <process timer="30" count="10" scope="local">
+            <costs>
+              <cost name="flax" consume="true" amount="20"/>
+            </costs>
+            <products>
+              <product name="flax_thread" amount="4"/>
+            </products>
+          </process>
+          <process timer="30" count="10" scope="local">
+            <costs>
+              <cost name="cotton" consume="true" amount="20"/>
+            </costs>
+            <products>
+              <product name="cotton_thread" amount="4"/>
+            </products>
+          </process>
+          <process timer="30" count="10" scope="local">
+            <costs>
+              <cost name="hemp" consume="true" amount="20"/>
+            </costs>
+            <products>
+              <product name="hemp" amount="4"/>
+            </products>
+          </process>
+          <process timer="30" count="10" scope="local">
+            <costs>
+              <cost name="wool" consume="true" amount="10"/>
+            </costs>
+            <products>
+              <product name="wool_thread" amount="8"/>
+            </products>
+          </process>
+        </processes>
+    </processing>
+  </creatable-type>
+</item>

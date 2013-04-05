@@ -136,13 +136,14 @@ public:
 
 class Faction : public NameIdPair {
 public:
-    typedef vector<Item*>                               Items;
+    typedef vector<Item*>                              Items;
 	typedef vector<const ResourceType *>               ResourceTypes;
 	typedef map<const ResourceType*, Modifier>         CostModifiers;
 	typedef map<const ProducibleType*, CostModifiers>  UnitCostModifiers;
 	typedef map<const UnitType*, CostModifiers>        StoreModifiers;
     typedef map<const UnitType*, CostModifiers>        CreateModifiers;
 	typedef map<const UnitType*, int>                  UnitTypeCountMap;
+	typedef map<const ItemType*, int>                  ItemTypeCountMap;
 	typedef map<const UnitType*, Modifier>             CreateUnitModifiers;
 	typedef map<const UnitType*, CreateUnitModifiers>  CreatedUnitModifiers;
 
@@ -179,6 +180,7 @@ private:
 	UnitMap unitMap;
 	Products products;
 	UnitTypeCountMap  m_unitCountMap;  // count of each 'operative' UnitType in factionType.
+	ItemTypeCountMap  m_itemCountMap;  // count of each 'operative' ItemType in factionType.
 
 typedef int                 UnitId;
 typedef list<UnitId>        UnitIdList;
@@ -257,6 +259,7 @@ public:
 	int getCreateAmount(const ResourceType *rt) const;
 
 	int getCountOfUnitType(const UnitType *ut) const    { return m_unitCountMap.find(ut)->second; }
+	int getCountOfItemType(const ItemType *it) const    { return m_itemCountMap.find(it)->second; }
 
 	const FactionType *getType() const					{return factionType;}
 	int getIndex() const								{return m_id;}

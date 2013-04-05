@@ -26,9 +26,17 @@ void MandateAISim::init(World *newWorld, Faction *newFaction) {
     faction = newFaction;
     world = newWorld;
     goalSystem.init();
-    personalities.resize(faction->getType()->getPersonalities().size());
     for (int i = 0; i < faction->getType()->getPersonalities().size(); ++i) {
         personalities.push_back(faction->getType()->getPersonalities()[i]);
+    }
+    if (faction->getType()->getFactionTypeNames().size() > 0) {
+        for (int i = 0; i < faction->getType()->getFactionTypeNames().size(); ++i) {
+            string name = faction->getType()->getFactionTypeNames()[i];
+            const FactionType *ft = world->getTechTree()->getFactionType(name);
+            for (int j = 0; j < ft->getPersonalities().size(); ++j) {
+                personalities.push_back(ft->getPersonalities()[j]);
+            }
+        }
     }
 }
 

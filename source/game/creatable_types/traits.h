@@ -15,25 +15,20 @@
 namespace Glest{ namespace ProtoTypes {
 
 // =====================================================
-// 	class Modification
+// 	class Traits
 // =====================================================
-class Traits : public Statistics, public RequirableType {
+class Trait : public Statistics, public RequirableType {
 private:
-    typedef vector<ResourceAmount> Costs;
     typedef vector<string> Equipment;
-    Costs costs;
-    string service;
+    int progress;
 	EffectTypes effectTypes;
     Equipment equipment;
     const FactionType* m_factionType;
     string name;
 public:
 	const FactionType* getFactionType() const { return m_factionType; }
-    string getModificationName() const {return name;}
+    string getTraitName() const {return name;}
     Equipment getEquipment() const {return equipment;}
-    string getService() const {return service;}
-    int getCostCount() const {return costs.size();}
-    ResourceAmount getCost(int i) const {return costs[i];}
     int getEffectTypeCount() const {return effectTypes.size();}
     const EffectTypes &getEffectTypes() const {return effectTypes;}
     const EffectType *getEffectType(int i) const {return effectTypes[i];}

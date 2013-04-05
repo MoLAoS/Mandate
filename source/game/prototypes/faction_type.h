@@ -64,9 +64,9 @@ private:
     typedef vector<Personality> Personalities;
 	typedef vector<ResourceAmount> ResourceTrades;
 
-
-
 private:
+    typedef vector<string> FactionTypeNames;
+    FactionTypeNames factionTypeNames;
     ResourceTrades resourceTrades;
     string guiDirectory;
     GuiFileNames guiFileNames;
@@ -94,6 +94,7 @@ public:
     ResourceTrades getResourceTrades() const {return resourceTrades;}
     Personalities getPersonalities() const {return personalities;}
     Modifications getModifications() const {return modifications;}
+    FactionTypeNames getFactionTypeNames() const {return factionTypeNames;}
 
     bool getOnHitExp() const {return onHitExp;}
 	//init

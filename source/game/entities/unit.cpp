@@ -319,7 +319,7 @@ Unit::Unit(LoadParams params) //const XmlNode *node, Faction *faction, Map *map,
 	deadCount = node->getChildIntValue("deadCount");
 	kills = node->getChildIntValue("kills");
 	exp = node->getChildIntValue("exp");
-	type = faction->getType()->getUnitType(node->getChildStringValue("type"));
+	type = getType()->getFactionType()->getUnitType(node->getChildStringValue("type"));
 
 	s = node->getChildStringValue("loadType");
 	loadType = s == "null_value" ? NULL : g_world.getTechTree()->getResourceType(s);
@@ -1541,7 +1541,7 @@ void Unit::born(bool reborn) {
 		}
 
         for (int i = 0; i < type->getStarterItems().size(); ++i) {
-            const ItemType *prodType = faction->getType()->getItemType(type->getStarterItems()[i]);
+            const ItemType *prodType = getType()->getFactionType()->getItemType(type->getStarterItems()[i]);
             Item *newItem = g_world.newItem(faction->getItemCount(), prodType, faction);
             faction->addItem(newItem);
             accessStorageAdd(faction->getItemCount()-1);
@@ -2852,7 +2852,7 @@ string Unit::getShortDesc() const {
 		ss << endl << g_lang.get("Cp") << ": " << cp << "/" << getResourcePools()->getMaxCp().getValue();
 	}
 	if (!commands.empty()) { // Show current command being executed
-		string factionName = faction->getType()->getName();
+		string factionName = getType()->getFactionType()->getName();
 		string commandName = commands.front()->getType()->getName();
 		string nameString = g_lang.getFactionString(factionName, commandName);
 		if (nameString == commandName) {

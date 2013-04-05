@@ -1,0 +1,32 @@
+<?xml version="1.0" standalone="no"?>
+<item>
+  <!-- *** parameters *** -->
+  <parameters>
+    <type-tag type="shield"/>
+    <tier value="1"/>
+  </parameters>
+  <creatable-type>
+    <size value="0"/>
+    <height value="0"/>
+    <resistances>
+      <resistance type="slashing" value="10"/>
+      <resistance type="piercing" value="10"/>
+      <resistance type="crushing" value="10"/>
+    </resistances>
+    <enhancement>
+      <static-modifiers>
+	<max-hp value="10" additive="0"/>
+      </static-modifiers>
+    </enhancement>
+    <producible>
+      <time value="10"/>
+      <properties/>
+      <light enabled="false"/>
+      <unit-requirements/>
+      <upgrade-requirements/>
+      <resource-requirements/>
+      <image path="images/tech_hold.bmp"/>
+      <image-cancel path="images/tech_cancel.bmp"/>
+    </producible>
+  </creatable-type>
+</item>

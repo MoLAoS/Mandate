@@ -1,0 +1,188 @@
+<?xml version="1.0" standalone="no"?>
+<unit>
+  <parameters>
+    <armor-type value="void"/>
+    <time value="25"/>
+    <multi-selection value="true"/>
+    <fields>
+      <field value="land"/>
+    </fields>
+    <properties>
+      <property value="burnable"/>
+    </properties>
+    <tags>
+      <tag value="building"/>
+    </tags>
+    <meeting-point value="false"/>
+    <cellmap value="false"/>
+  </parameters>
+  <item-limit limit="60"/>
+  <load-bonuses>
+    <load-bonus>
+      <source>
+	<loadable-unit name="city_archer"/>
+      </source>
+      <enhancement>
+	<static-modifiers>
+	  <attack-speed value="100" additive="0"/>
+	</static-modifiers>
+      </enhancement>
+    </load-bonus>
+  </load-bonuses>
+  <creatable-type>
+    <size value="2"/>
+    <height value="3"/>
+    <stats>
+      <max-hp value="2000" regeneration="0"/>
+      <max-ep value="0" regeneration="0"/>
+      <max-sp value="0" regeneration="0"/>
+      <max-cp value="-1" />
+      <sight value="25"/>
+      <armor value="0"/>
+    </stats>
+    <producible>
+      <time value="10"/>
+      <light enabled="false"/>
+      <unit-requirements/>
+      <upgrade-requirements/>
+        <resource-requirements>
+          <resource name="wealth" amount="2000" plus="0" multiply="0"/>
+        </resource-requirements>
+      <image path="images/defense_tower.bmp"/>
+      <image-cancel path="../ranger/images/tech_cancel.bmp"/>
+      </producible>
+    <resource-production>
+      <resources-stored>
+        <resource name="wealth" amount="100000"/>
+      </resources-stored>
+    </resource-production>
+    <actions>
+      <skills>
+		<skill>
+			<type value="stop"/>
+			<name value="stop_skill"/>		
+			<ep-cost value="0"/>
+			<speed value="300"/>
+			<anim-speed value="100"/>
+			<animation path="models/guard_tower.g3d"/>
+			<sound enabled="false"/>
+		</skill>
+		<skill>
+			<type value="be_built"/>
+			<name value="be_built_skill"/>		
+			<ep-cost value="0"/>
+			<speed value="300"/>
+			<anim-speed value="300"/>
+			<animation path="models/archmage_tower_construction.g3d"/>
+			<sound enabled="false"/>
+		</skill>
+		<skill>
+			<type value="attack"/>
+			<name value="attack_skill"/>		
+			<ep-cost value="0"/>
+			<speed value="100"/>
+			<anim-speed value="100"/>
+			<animation path="models/guard_tower.g3d"/>
+			<sound enabled="true" start-time="0">
+				<sound-file path="sounds/defense_tower_attack1.wav"/>
+				<sound-file path="sounds/defense_tower_attack2.wav"/>
+			</sound>
+			<attack-strenght value="0"/>
+			<attack-var value="0"/>
+			<attack-range value="12"/>
+			<attack-type value="piercing"/>
+			<attack-start-time value="0.3"/>
+			<attack-fields>
+				<field value="land"/>
+				<field value="air"/>
+			</attack-fields>
+			<projectile value="true">
+				<particle value="true" path="particle_proj.xml"/>
+				<sound enabled="false"/>
+			</projectile>
+			<splash value="false"/>
+            		<damage-types>
+                		<damage-type type="piercing" value="25"/>
+            		</damage-types>
+		</skill>
+		<skill>
+			<type value="die"/>
+			<name value="die_skill"/>		
+			<ep-cost value="0"/>
+			<speed value="300"/>
+			<anim-speed value="300"/>
+			<animation path="models/archmage_tower_destruction.g3d"/>
+			<sound enabled="false"/>			
+			<fade value="false"/>
+		</skill>
+        	<skill> 
+          		<type value="load" /> 
+          		<name value="load_skill" /> 
+          		<ep-cost value="0" /> 
+          		<speed value="120" /> 
+          		<anim-speed value="120" /> 
+          		<animation path="models/guard_tower.g3d" /> 
+          		<sound enabled="false"/>
+          		<max-range value="3" /> 
+          		<particles value="false"/>
+        	</skill>
+        	<skill>
+        		<type value="unload"/>
+        		<name value="unload_skill"/>
+        		<ep-cost value="0"/>
+        		<speed value="120"/>
+        		<anim-speed value="120"/>
+        		<animation path="models/guard_tower.g3d"/>
+        		<sound enabled="false"/>
+        		<max-range value="3"/>
+        	</skill>
+      </skills>
+      <commands>
+		<command>
+			<type value="stop"/>
+			<name value="attack_off"/>
+			<image path="images/defense_tower_attack_off.bmp"/>
+			<unit-requirements/>
+			<upgrade-requirements/>
+			<stop-skill value="stop_skill"/>
+		</command>
+		<command>
+			<type value="attack_stopped"/>
+			<name value="attack_on"/>
+			<image path="images/defense_tower_attack_on.bmp"/>
+			<unit-requirements/>
+			<upgrade-requirements/>
+			<attack-skill value="attack_skill"/>
+            		<stop-skill value="stop_skill"/>
+		</command>
+        	<command>
+        		<type value="garrison"/>
+        		<name value="garrison"/>
+        		<image path="images/defense_tower.bmp"/>
+        		<unit-requirements/>
+        		<upgrade-requirements/>
+        		<load-skill value="load_skill"/>
+        		<units-carried>
+        			<unit value="city_archer"/>
+        		</units-carried>
+        		<load-capacity value="12" />
+         	 	<allow-projectiles value="false"/>
+        	</command>
+        	<command>
+        		<type value="degarrison"/>
+        		<name value="degarrison"/>
+        		<image path="images/defense_tower.bmp"/>
+        		<unit-requirements/>
+        		<upgrade-requirements/>
+        		<unload-skill value="unload_skill"/>
+        	</command>
+      </commands>
+    </actions>
+  </creatable-type>
+    <selection-sounds enabled="true">
+      <sound path="sounds/tech_click.wav" />
+    </selection-sounds>
+    <command-sounds enabled="true">
+      <sound path="sounds/tech_click.wav" />
+    </command-sounds>
+</unit>

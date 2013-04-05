@@ -1,0 +1,221 @@
+﻿<?xml version="1.0" standalone="no"?>
+<unit>
+  <parameters>
+    <armor-type value="void"/>
+    <time value="25"/>
+    <multi-selection value="true"/>
+    <cellmap value="false"/>
+    <fields>
+      <field value="land"/>
+    </fields>
+    <properties>
+      <property value="burnable"/>
+    </properties>
+    <tags>
+      <tag value="building"/>
+      <tag value="guildhall"/>
+      <tag value="faction"/>
+    </tags>
+    <meeting-point value="false"/>
+  </parameters>
+  <item-limit limit="60"/>
+  <resource-stores>
+    <resource status="stockpile" type="wealth" stored="1000"/>
+    <resource status="stockpile" type="logs" stored="100"/>
+    <resource status="stockpile" type="stone" stored="50"/>
+    <resource status="stockpile" type="flax" stored="500"/>
+    <resource status="stockpile" type="hemp" stored="500"/>
+    <resource status="stockpile" type="cotton" stored="500"/>
+    <resource status="stockpile" type="wool" stored="500"/>
+  </resource-stores>
+  <equipment>
+    <type type="loom" value="6"/>
+    <type type="threader" value="6"/>
+  </equipment>
+  <creatable-type>
+    <size value="5"/>
+    <height value="2"/>
+    <stats>
+      <max-hp value="2000" regeneration="0"/>
+      <max-ep value="0" regeneration="0"/>
+      <max-sp value="0" regeneration="0"/>
+      <max-cp value="-1" />
+      <sight value="10"/>
+      <armor value="0"/>
+    </stats>
+    <producible>
+      <time value="10"/>
+      <properties/>
+      <light enabled="false"/>
+      <unit-requirements/>
+      <upgrade-requirements/>
+      <resource-requirements>
+        <resource name="wealth" amount="2000" plus="0" multiply="0"/>
+        <resource name="population" amount="10" plus="0" multiply="0"/>
+        <resource name="logs" amount="50" plus="0" multiply="0"/>
+        <resource name="stone" amount="50" plus="0" multiply="0"/>
+      </resource-requirements>
+      <image path="images/meeting_point.bmp"/>
+      <image-cancel path="../ranger/images/tech_cancel.bmp"/>
+      </producible>
+    <resource-production>
+      <resources-stored>
+        <resource name="wealth" amount="100000"/>
+        <resource name="logs" amount="100000"/>
+        <resource name="stone" amount="100000"/>
+        <resource name="hemp" amount="100000"/>
+        <resource name="cotton" amount="100000"/>
+        <resource name="flax" amount="100000"/>
+        <resource name="hemp_thread" amount="100000"/>
+        <resource name="cotton_thread" amount="100000"/>
+        <resource name="flax_thread" amount="100000"/>
+        <resource name="wool" amount="100000"/>
+        <resource name="wool_thread" amount="100000"/>
+        <resource name="wool_cloth" amount="100000"/>
+        <resource name="cloth" amount="100000"/>
+        <resource name="linen" amount="100000"/>
+        <resource name="rope" amount="100000"/>
+      </resources-stored>
+      <starter-resources>
+        <resource name="wealth" amount="3000"/>
+      </starter-resources>
+    </resource-production>
+    <actions>
+      <skills>
+        <skill>
+            <type value="stop" />
+            <name value="stop_skill"/>		
+            <ep-cost value="0" />
+            <speed value="300" />
+            <anim-speed value="100" />
+            <animation path="models/tavern.g3d" />
+            <particles value="false"/>
+            <sound enabled="false" />
+        </skill>
+        <skill>
+            <type value="be_built" />
+            <name value="be_built_skill"/>		
+            <ep-cost value="0" />
+            <speed value="300" />
+            <anim-speed value="300" />
+            <animation path="models/tavern_build.g3d" />
+            <sound enabled="false" />
+        </skill>
+        <skill> 
+          <type value="load" /> 
+          <name value="load_skill" /> 
+          <ep-cost value="0" /> 
+          <speed value="120" /> 
+          <anim-speed value="120" /> 
+          <animation path="models/tavern.g3d" /> 
+          <sound enabled="false"/>
+          <max-range value="3" /> 
+          <particles value="false"/>
+        </skill>
+        <skill>
+          <type value="unload"/>
+          <name value="unload_skill"/>
+          <ep-cost value="0"/>
+          <speed value="120"/>
+          <anim-speed value="120"/>
+          <animation path="models/tavern.g3d"/>
+          <sound enabled="false"/>
+          <max-range value="3"/>
+        </skill>	
+        <skill>
+            <type value="produce"/>
+            <name value="produce_skill"/>
+            <ep-cost value="0"/>
+            <speed value="300"/>
+            <anim-speed value="100"/>
+            <animation path="models/tavern.g3d"/>
+            <particles value="false"/>
+            <sound enabled="false"/>
+        </skill>		
+        <skill>
+            <type value="die" />
+            <name value="die_skill"/>		
+            <ep-cost value="0" />
+            <speed value="300" />
+            <anim-speed value="300" />
+            <animation path="models/tavern_die.g3d" />
+            <particles value="false"/>
+            <sound enabled="false"/>	
+            <fade value="false"/>
+        </skill>
+        <skill>
+          <type value="build"/>
+          <name value="build_skill"/>
+          <ep-cost value="0"/>
+          <speed value="500"/>
+          <anim-speed value="100"/>
+          <animation path="models/tavern.g3d"/>
+          <sound enabled="false"/>
+        </skill>
+      </skills>
+      <commands>
+        <command>
+          <type value="produce"/>
+          <name value="produce_quartermaster" tip="quartermaster_info"/>
+          <image path="../quartermaster/images/worker.bmp"/>
+          <unit-requirements />
+          <upgrade-requirements />
+          <produce-skill value="produce_skill"/>
+          <produced-unit name="quartermaster"/>
+        </command>
+        <command>
+          <type value="create-item"/>
+          <name value="build_threaders"/>
+          <image path="images/worker_build_basic.bmp"/>
+          <unit-requirements />
+          <upgrade-requirements />
+          <produce-skill value="produce_skill"/>
+          <created-items>
+            <created-item name="spindle_and_distaff"/>
+            <created-item name="spinning_wheel"/>
+          </created-items>
+        </command>
+        <command>
+          <type value="create-item"/>
+          <name value="build_looms"/>
+          <image path="images/worker_build_advanced.bmp"/>
+          <unit-requirements />
+          <upgrade-requirements />
+          <produce-skill value="produce_skill"/>
+          <created-items>
+            <created-item name="rigid_heddle_loom"/>
+            <created-item name="loom"/>
+            <created-item name="floor_loom"/>
+          </created-items>
+        </command>
+        <command>
+          <type value="load"/>
+          <name value="load"/>
+          <image path="images/meeting_point.bmp"/>
+          <unit-requirements/>
+          <upgrade-requirements/>
+          <load-skill value="load_skill"/>
+          <units-carried>
+            <unit value="quartermaster"/>
+          </units-carried>
+          <load-capacity value="12" />
+          <allow-projectiles value="false"/> 
+        </command>
+        <command>
+          <type value="unload"/>
+          <name value="unload"/>
+          <image path="images/meeting_point.bmp"/>
+          <unit-requirements/>
+          <upgrade-requirements/>
+          <unload-skill value="unload_skill"/>
+        </command>
+      </commands>
+    </actions>
+  </creatable-type>
+    <selection-sounds enabled="true">
+      <sound path="sounds/tech_click.wav" />
+    </selection-sounds>
+    <command-sounds enabled="true">
+      <sound path="sounds/tech_click.wav" />
+    </command-sounds>
+</unit>

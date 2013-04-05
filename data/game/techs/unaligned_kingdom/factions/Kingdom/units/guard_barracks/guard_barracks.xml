@@ -1,0 +1,129 @@
+<?xml version="1.0" standalone="no"?>
+<unit>
+  <parameters>
+    <armor-type value="void"/>
+    <multi-selection value="true"/>
+    <fields>
+      <field value="land"/>
+    </fields>
+    <properties>
+      <property value="burnable"/>
+    </properties>
+    <tags>
+      <tag value="building"/>
+    </tags>
+    <meeting-point value="false"/>
+    <cellmap value="false"/>
+  </parameters>
+  <item-limit limit="60"/>
+  <creatable-type>
+    <size value="7"/>
+    <height value="2"/>
+    <stats>
+      <max-hp value="8000" regeneration="0"/>
+      <max-ep value="0" regeneration="0"/>
+      <max-sp value="0" regeneration="0"/>
+      <max-cp value="-1" />
+      <sight value="10"/>
+      <armor value="0"/>
+    </stats>
+    <producible>
+      <time value="25"/>
+      <light enabled="false"/>
+      <unit-requirements/>
+      <upgrade-requirements/>
+        <resource-requirements>
+          <resource name="wealth" amount="8000" plus="0" multiply="0"/>
+          <resource name="population" amount="20" plus="0" multiply="0"/>
+        </resource-requirements>
+      <image path="images/castle.bmp"/>
+      <image-cancel path="../ranger/images/tech_cancel.bmp"/>
+      </producible>
+    <resource-production>
+      <resources-stored>
+        <resource name="wealth" amount="100000"/>
+      </resources-stored>
+    </resource-production>
+    <units-owned>
+      <unit name="city_guard" limit="8"/>
+      <unit name="city_archer" limit="4"/>
+    </units-owned>
+    <actions>
+      <skills>
+	<skill>
+		<type value="stop" />
+		<name value="stop_skill"/>		
+		<ep-cost value="0" />
+		<speed value="300" />
+		<anim-speed value="100" />
+		<animation path="models/castle.g3d" />
+		<sound enabled="false" />
+	</skill>
+	<skill>
+		<type value="be_built" />
+		<name value="be_built_skill"/>		
+		<ep-cost value="0" />
+		<speed value="300" />
+		<anim-speed value="300" />
+		<animation path="models/castle_build.g3d" />
+		<sound enabled="false" />
+	</skill>	
+	<skill>
+		<type value="produce" />
+		<name value="produce_skill"/>		
+		<ep-cost value="0" />
+		<speed value="300" />
+		<anim-speed value="300" />
+		<animation path="models/castle.g3d" />
+		<sound enabled="false" />
+	</skill>	
+	<skill>
+		<type value="die" />
+		<name value="die_skill"/>		
+		<ep-cost value="0" />
+		<speed value="300" />
+		<anim-speed value="300" />
+		<animation path="models/castle_destruction.g3d" />
+		<particles value="false"/>
+		<sound enabled="false"/>		
+		<fade value="false"/>
+	</skill>
+        <skill>
+          <type value="build"/>
+          <name value="build_skill"/>
+          <ep-cost value="0"/>
+          <speed value="500"/>
+          <anim-speed value="100"/>
+          <animation path="models/castle.g3d"/>
+          <sound enabled="false"/>
+        </skill>
+      </skills>
+      <commands>
+        <command>
+          <type value="produce"/>
+          <name value="produce_city_guard" tip="city_guard_info"/>
+          <image path="../city_guard/images/swordman.bmp"/>
+          <unit-requirements />
+          <upgrade-requirements />
+          <produce-skill value="produce_skill"/>
+          <produced-unit name="city_guard"/>
+        </command>
+        <command>
+          <type value="produce"/>
+          <name value="produce_city_archer" tip="city_archer_info"/>
+          <image path="../city_archer/images/archer.bmp"/>
+          <unit-requirements />
+          <upgrade-requirements />
+          <produce-skill value="produce_skill"/>
+          <produced-unit name="city_archer"/>
+        </command>
+      </commands>
+    </actions>
+  </creatable-type>
+    <selection-sounds enabled="true">
+      <sound path="sounds/tech_click.wav" />
+    </selection-sounds>
+    <command-sounds enabled="true">
+      <sound path="sounds/tech_click.wav" />
+    </command-sounds>
+</unit>

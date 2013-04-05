@@ -127,17 +127,41 @@ public:
 //
 ///	Base class for anything that has requirements
 // =====================================================
-class UpgradeReq {
+class ItemReq {
+private:
+    const ItemType* itemType;
+    int amount;
 public:
-    const UpgradeType* reqType;
+    const ItemType *getItemType() const {return itemType;}
+    int getAmount() const {return amount;}
+    void init(const ItemType* type, int value);
+};
+
+class UnitReq {
+private:
+    const UnitType* unitType;
+    int amount;
+public:
+    const UnitType *getUnitType() const {return unitType;}
+    int getAmount() const {return amount;}
+    void init(const UnitType* type, int value);
+};
+
+class UpgradeReq {
+private:
+    const UpgradeType* upgradeType;
     int stage;
+public:
+    const UpgradeType *getUpgradeType() const {return upgradeType;}
+    int getStage() const {return stage;}
+    void init(const UpgradeType* type, int value);
 };
 
 class RequirableType: public DisplayableType {
 public:
-	typedef vector<const UnitType*> UnitReqs;
-	typedef vector<const ItemType*> ItemReqs;
-	typedef vector<UpgradeReq> UpgradeReqs;
+	typedef vector<const UnitReq> UnitReqs;
+	typedef vector<const ItemReq> ItemReqs;
+	typedef vector<const UpgradeReq> UpgradeReqs;
 
 protected:
 	UnitReqs unitReqs;			//needed units
@@ -157,13 +181,13 @@ public:
 	int getUnitReqCount() const							{return unitReqs.size();}
 	int getItemReqCount() const							{return itemReqs.size();}
 	const UpgradeReq getUpgradeReq(int i) const		    {return upgradeReqs[i];}
-	const UnitType *getUnitReq(int i) const				{return unitReqs[i];}
-	const ItemType *getItemReq(int i) const				{return itemReqs[i];}
+	const UnitReq getUnitReq(int i) const				{return unitReqs[i];}
+	const ItemReq getItemReq(int i) const				{return itemReqs[i];}
 	int getSubfactionsReqs() const						{return subfactionsReqs;}
 	bool isAvailableInSubfaction(int subfaction) const	{return (bool)(1 << subfaction & subfactionsReqs);}
 
     //other
-    virtual string getReqDesc(const Faction *f) const;
+    string getReqDesc(const Faction *f, const FactionType *ft) const;
 	virtual bool load(const XmlNode *baseNode, const string &dir, const TechTree *tt, const FactionType *ft);
 };
 
@@ -216,7 +240,7 @@ public:
 	virtual bool load(const XmlNode *baseNode, const string &dir, const TechTree *techTree, const FactionType *factionType);
 
 	virtual void doChecksum(Checksum &checksum) const;
-	virtual string getReqDesc(const Faction *f) const;
+	string getReqDesc(const Faction *f, const FactionType *ft) const;
 
 	virtual ProducibleClass getClass() const = 0;
 };
