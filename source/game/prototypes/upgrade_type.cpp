@@ -83,23 +83,6 @@ bool UpgradeType::loadNewStyle(const XmlNode *node, const string &dir, const Tec
 			loadOk = false;
 			continue;
 		}
-		if (!m_enhancements[i].m_enhancement.load(enhancementNode, dir, techTree, factionType)) {
-			loadOk = false;
-		}
-		try {
-			if (const XmlNode *costModsNode = enhancementNode->getOptionalChild("cost-modifiers")) {
-				loadResourceModifier(costModsNode, m_enhancements[i].m_costModifiers, techTree);
-			}
-			if (const XmlNode *storeModsNode = enhancementNode->getOptionalChild("store-modifiers")) {
-				loadResourceModifier(storeModsNode, m_enhancements[i].m_storeModifiers, techTree);
-			}
-			if (const XmlNode *createModsNode = enhancementNode->getOptionalChild("create-modifiers")) {
-				loadResourceModifier(createModsNode, m_enhancements[i].m_createModifiers, techTree);
-			}
-		} catch (runtime_error e) {
-			g_logger.logXmlError(dir, e.what());
-			loadOk = false;
-		}
 		try {
 			const XmlNode *affectsNode = enhanceNode->getChild("affects", 0);
 			for (int j=0; j < affectsNode->getChildCount(); ++j) {
@@ -124,6 +107,35 @@ bool UpgradeType::loadNewStyle(const XmlNode *node, const string &dir, const Tec
 					g_logger.logXmlError(dir, msg.c_str());
 					loadOk = false;
 				}
+			}
+		} catch (runtime_error e) {
+			g_logger.logXmlError(dir, e.what());
+			loadOk = false;
+		}
+		const UnitType *ctype = factionType->getUnitType(m_unitsAffected[0][0]);
+        try {
+            const XmlNode *actionsNode = node->getChild("actions", 0, false);
+            if (actionsNode) {
+                if (!m_enhancements[i].actions.load(actionsNode, dir, techTree, factionType, true, ctype)) {
+                    loadOk = false;
+                }
+            }
+        } catch (runtime_error e) {
+            g_logger.logXmlError(dir, e.what());
+            loadOk = false;
+        }
+		if (!m_enhancements[i].m_enhancement.load(enhancementNode, dir, techTree, factionType)) {
+			loadOk = false;
+		}
+		try {
+			if (const XmlNode *costModsNode = enhancementNode->getOptionalChild("cost-modifiers")) {
+				loadResourceModifier(costModsNode, m_enhancements[i].m_costModifiers, techTree);
+			}
+			if (const XmlNode *storeModsNode = enhancementNode->getOptionalChild("store-modifiers")) {
+				loadResourceModifier(storeModsNode, m_enhancements[i].m_storeModifiers, techTree);
+			}
+			if (const XmlNode *createModsNode = enhancementNode->getOptionalChild("create-modifiers")) {
+				loadResourceModifier(createModsNode, m_enhancements[i].m_createModifiers, techTree);
 			}
 		} catch (runtime_error e) {
 			g_logger.logXmlError(dir, e.what());

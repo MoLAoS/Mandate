@@ -273,7 +273,7 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
     }
 	try {
         const XmlNode *creatableTypeNode = unitNode->getChild("creatable-type");
-        if (!CreatableType::load(creatableTypeNode, dir, techTree, factionType)) {
+        if (!CreatableType::load(creatableTypeNode, dir, techTree, factionType, false)) {
             loadOk = false;
         }
     }
@@ -441,11 +441,11 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 		return false;
 	}
 	for (int i = 0; i < leader.squadCommands.size(); ++i) {
-        addSquadCommand(leader.squadCommands[i]);
+        getsActions()->addSquadCommand(leader.squadCommands[i]);
 	}
 	if (meetingPoint) {
 		CommandType *smpct = g_prototypeFactory.newCommandType(CmdClass::SET_MEETING_POINT, this);
-		addCommand(smpct);
+		getsActions()->addCommand(smpct);
 		g_prototypeFactory.setChecksum(smpct);
 	}
 	try {
@@ -580,14 +580,28 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 		}
 	}
 	display = true;
+	if (getActions()->getFirstStOfClass(SkillClass::BE_BUILT)) {
+        startSkill = getActions()->getFirstStOfClass(SkillClass::BE_BUILT);
+    } else {
+        startSkill = getActions()->getFirstStOfClass(SkillClass::STOP);
+    }
+    SkillTypes attackSkills = getsActions()->getSkillTypeCountOfClass(SkillClass::ATTACK);
+    foreach (SkillTypes, it, attackSkills) {
+        if (static_cast<AttackSkillType*>(*it)->getProjectile()) {
+            m_hasProjectileAttack = true;
+            break;
+        }
+    }
+	halfSize = getSize() / fixed(2);
+	halfHeight = getHeight() / fixed(2);
 	return loadOk;
 }
 
 void UnitType::addBeLoadedCommand() {
 	CommandType *blct = g_prototypeFactory.newCommandType(CmdClass::BE_LOADED, this);
-	const MoveSkillType *mst = static_cast<const MoveSkillType*>(CreatableType::getFirstStOfClass(SkillClass::MOVE));
+	MoveSkillType *mst = static_cast<MoveSkillType*>(getActions()->getFirstStOfClass(SkillClass::MOVE));
 	static_cast<BeLoadedCommandType*>(blct)->setMoveSkill(mst);
-	CreatableType::addBeLoadedCommand(blct);
+	getsActions()->addBeLoadedCommand(blct);
 	g_prototypeFactory.setChecksum(blct);
 }
 
@@ -605,19 +619,19 @@ void UnitType::doChecksum(Checksum &checksum) const {
 bool UnitType::isOfClass(UnitClass uc) const{
 	switch (uc) {
 		case UnitClass::WARRIOR:
-			return hasSkillClass(SkillClass::ATTACK)
-				&& !hasSkillClass(SkillClass::HARVEST);
+			return getActions()->hasSkillClass(SkillClass::ATTACK)
+				&& !getActions()->hasSkillClass(SkillClass::HARVEST);
 		case UnitClass::WORKER:
-			return hasSkillClass(SkillClass::BUILD)
-                || hasSkillClass(SkillClass::CONSTRUCT)
-				|| hasSkillClass(SkillClass::REPAIR)
-				|| hasSkillClass(SkillClass::HARVEST);
+			return getActions()->hasSkillClass(SkillClass::BUILD)
+                || getActions()->hasSkillClass(SkillClass::CONSTRUCT)
+				|| getActions()->hasSkillClass(SkillClass::REPAIR)
+				|| getActions()->hasSkillClass(SkillClass::HARVEST);
 		case UnitClass::BUILDING:
-			return hasSkillClass(SkillClass::BE_BUILT)
-				&& !hasSkillClass(SkillClass::MOVE);
+			return getActions()->hasSkillClass(SkillClass::BE_BUILT)
+				&& !getActions()->hasSkillClass(SkillClass::MOVE);
 		case UnitClass::CARRIER:
-			return hasSkillClass(SkillClass::LOAD)
-				&& hasSkillClass(SkillClass::UNLOAD);
+			return getActions()->hasSkillClass(SkillClass::LOAD)
+				&& getActions()->hasSkillClass(SkillClass::UNLOAD);
 		default:
 			throw runtime_error("Unknown UnitClass passed to UnitType::isOfClass()");
 	}

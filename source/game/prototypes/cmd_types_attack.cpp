@@ -51,7 +51,7 @@ bool AttackCommandTypeBase::load(const XmlNode *n, const string &dir, const Tech
 	if(attackSkillNode) {
 		try {
 			skillName = attackSkillNode->getAttribute("value")->getRestrictedValue();
-			ast = static_cast<const AttackSkillType*>(ct->getSkillType(skillName, SkillClass::ATTACK));
+			ast = static_cast<const AttackSkillType*>(ct->getActions()->getSkillType(skillName, SkillClass::ATTACK));
 			attackSkillTypes.push_back(ast, AttackSkillPreferences());
 		} catch (runtime_error e) {
 			g_logger.logXmlError(dir, e.what ());
@@ -72,7 +72,7 @@ bool AttackCommandTypeBase::load(const XmlNode *n, const string &dir, const Tech
 					AttackSkillPreferences prefs;
 					attackSkillNode = attackSkillsNode->getChild("attack-skill", i);
 					skillName = attackSkillNode->getAttribute("value")->getRestrictedValue();
-					ast = static_cast<const AttackSkillType*>(ct->getSkillType(skillName, SkillClass::ATTACK));
+					ast = static_cast<const AttackSkillType*>(ct->getActions()->getSkillType(skillName, SkillClass::ATTACK));
 					flagsNode = attackSkillNode->getChild("flags", 0, false);
 					if(flagsNode) {
 						prefs.load(flagsNode, dir, tt, ft);
@@ -378,7 +378,7 @@ void Targets::record(Unit *target, fixed dist) {
 
 Unit* Targets::getNearestSkillClass(SkillClass sc) {
 	foreach(Targets, it, *this) {
-		if (it->first->getType()->hasSkillClass(sc)) {
+		if (it->first->getType()->getActions()->hasSkillClass(sc)) {
 			return it->first;
 		}
 	}
@@ -405,7 +405,7 @@ bool CreateSettlementCommandType::load(const XmlNode *n, const string &dir, cons
 	// set structure
 	try {
 		skillName = n->getChild("set-structure-skill")->getAttribute("value")->getRestrictedValue();
-		m_setStructureSkillType = static_cast<const SetStructureSkillType*>(creatableType->getSkillType(skillName, SkillClass::SET_STRUCTURE));
+		m_setStructureSkillType = static_cast<const SetStructureSkillType*>(creatableType->getActions()->getSkillType(skillName, SkillClass::SET_STRUCTURE));
 	} catch (runtime_error e) {
 		g_logger.logXmlError(dir, e.what());
 		loadOk = false;
@@ -460,7 +460,7 @@ bool ExpandSettlementCommandType::load(const XmlNode *n, const string &dir, cons
 	// set structure
 	try {
 		skillName = n->getChild("set-structure-skill")->getAttribute("value")->getRestrictedValue();
-		m_setStructureSkillType = static_cast<const SetStructureSkillType*>(creatableType->getSkillType(skillName, SkillClass::SET_STRUCTURE));
+		m_setStructureSkillType = static_cast<const SetStructureSkillType*>(creatableType->getActions()->getSkillType(skillName, SkillClass::SET_STRUCTURE));
 	} catch (runtime_error e) {
 		g_logger.logXmlError(dir, e.what());
 		loadOk = false;

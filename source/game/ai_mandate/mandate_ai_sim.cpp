@@ -43,10 +43,10 @@ void MandateAISim::init(World *newWorld, Faction *newFaction) {
 Focus MandateAISim::getTopGoal(Unit *unit, string personality) {
     Focus topGoal;
     topGoal.init(Goal::EMPTY, NULL);
-    for (int i = 0; i < getPersonalities().size(); ++i) {
-        if (personality == getPersonality(i).getPersonalityName()) {
-            for (int k = 0; k < getPersonality(i).getGoals().size(); ++k) {
-                Focus goal = getPersonality(i).getGoal(k);
+    for (int i = 0; i < getPersonalities()->size(); ++i) {
+        if (personality == getPersonality(i)->getPersonalityName()) {
+            for (int k = 0; k < getPersonality(i)->getGoals().size(); ++k) {
+                Focus goal = getPersonality(i)->getGoal(k);
                 Goal goalName = goal.getName();
                 int goalImportance = goal.getImportance();
                 if (goalName == Goal::LIVE) {
@@ -287,8 +287,8 @@ void MandateAISim::computeAction(Unit *unit, string personality, string reason) 
             Vec2i posGoal = unit->getGoalStructure()->getPos();
             int distance = sqrt(pow(float(abs(posUnit.x - posGoal.x)), 2) + pow(float(abs(posUnit.y - posGoal.y)), 2));
             if (distance < 3) {
-                for (int i = 0; i < unit->getType()->getResourceProductionSystem().getStoredResourceCount(); ++i) {
-                    const ResourceType *rt = unit->getType()->getResourceProductionSystem().getStoredResource(i, unit->getFaction()).getType();
+                for (int i = 0; i < unit->getType()->getResourceProductionSystem()->getStoredResourceCount(); ++i) {
+                    const ResourceType *rt = unit->getType()->getResourceProductionSystem()->getStoredResource(i, unit->getFaction()).getType();
                     int taxes = 0;
                     if (unit->getGoalStructure()->getType()->hasTag("orderhouse") || unit->getGoalStructure()->getType()->hasTag("guildhall")
                          || unit->getGoalStructure()->getType()->hasTag("shop") || unit->getGoalStructure()->getType()->hasTag("producer")
@@ -308,7 +308,7 @@ void MandateAISim::computeAction(Unit *unit, string personality, string reason) 
                 }
                 unit->setGoalReason("deliver");
                 unit->setGoalStructure(unit->owner);
-                const CommandType *ct = unit->getType()->getFirstCtOfClass(CmdClass::MOVE);
+                const CommandType *ct = unit->getType()->getActions()->getFirstCtOfClass(CmdClass::MOVE);
                 unit->giveCommand(g_world.newCommand(ct, CmdFlags(), unit->getGoalStructure()->getPos()));
             }
         }
@@ -318,8 +318,8 @@ void MandateAISim::computeAction(Unit *unit, string personality, string reason) 
             Vec2i posGoal = unit->owner->getPos();
             int distance = sqrt(pow(float(abs(posUnit.x - posGoal.x)), 2) + pow(float(abs(posUnit.y - posGoal.y)), 2));
             if (distance < 3) {
-                for (int i = 0; i < unit->getType()->getResourceProductionSystem().getStoredResourceCount(); ++i) {
-                    const ResourceType *rt = unit->getType()->getResourceProductionSystem().getStoredResource(i, unit->getFaction()).getType();
+                for (int i = 0; i < unit->getType()->getResourceProductionSystem()->getStoredResourceCount(); ++i) {
+                    const ResourceType *rt = unit->getType()->getResourceProductionSystem()->getStoredResource(i, unit->getFaction()).getType();
                     int taxes = unit->getSResource(rt)->getAmount();
                     unit->incResourceAmount(rt, -taxes);
                     unit->getGoalStructure()->getFaction()->incResourceAmount(rt, taxes);

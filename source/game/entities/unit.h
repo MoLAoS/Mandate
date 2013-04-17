@@ -197,9 +197,11 @@ public:
     void consumeItem(int ident);
     Storage getStorage() const {return storage;}
     Storage getEquipment() const {return equipment;}
-
 /**< system for items */
 
+private:
+    Actions actions;
+public:
     Modifications modifications;
     EffectTypes effectTypes;
     bool dayCycle;
@@ -240,6 +242,8 @@ public:
 	string getGoalReason() const {return goalReason;}
 	void setGoalReason(string string) {goalReason = string;}
 	void shop();
+
+    Actions *getActions() {return &actions;}
 
 	Attackers attackers;
 
@@ -590,7 +594,7 @@ public:
 	bool isBuilt() const				{return !isBeingBuilt();}
 	// set
 	void setCurrSkill(const SkillType *currSkill);
-	void setCurrSkill(SkillClass sc)					{setCurrSkill(getType()->getFirstStOfClass(sc));}
+	void setCurrSkill(SkillClass sc)					{setCurrSkill(getType()->getActions()->getFirstStOfClass(sc));}
 	void setLoadCount(int loadCount)					{this->loadCount = loadCount;}
 	void setLoadType(const ResourceType *loadType)		{this->loadType = loadType;}
 

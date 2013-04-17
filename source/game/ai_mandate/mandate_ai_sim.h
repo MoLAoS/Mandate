@@ -31,8 +31,8 @@ private:
     GoalSystem goalSystem;
 
 public:
-    Personalities getPersonalities() const {return personalities;}
-    Personality getPersonality(int i) const {return personalities[i];}
+    const Personalities *getPersonalities() const {return &personalities;}
+    const Personality *getPersonality(int i) const {return &personalities[i];}
 
     GoalSystem getGoalSystem() const {return goalSystem;}
 

@@ -167,7 +167,7 @@ Unit::Unit(CreateParams params)
 		, cp_above_trigger(0)
 		, attacked_trigger(false) {
 	Random random(id);
-	currSkill = getType()->getFirstStOfClass(SkillClass::STOP);	//starting skill
+	currSkill = getType()->getActions()->getFirstStOfClass(SkillClass::STOP);	//starting skill
 	foreach_enum (AutoCmdFlag, f) {
 	    if (type->inhuman == false) {
             m_autoCmdEnable[f] = true;
@@ -207,44 +207,44 @@ Unit::Unit(CreateParams params)
 
 	levelNumber = 1;
 
-	productionSystemTimers.currentSteps.resize(type->getResourceProductionSystem().getCreatedResourceCount());
+	productionSystemTimers.currentSteps.resize(type->getResourceProductionSystem()->getCreatedResourceCount());
 	for (int i = 0; i < productionSystemTimers.currentSteps.size(); ++i) {
         productionSystemTimers.currentSteps[i].currentStep = 0;
 	}
-	productionSystemTimers.currentProcessSteps.resize(type->getProcessProductionSystem().getProcessCount());
+	productionSystemTimers.currentProcessSteps.resize(type->getProcessProductionSystem()->getProcessCount());
 	for (int i = 0; i < productionSystemTimers.currentProcessSteps.size(); ++i) {
         productionSystemTimers.currentProcessSteps[i].currentStep = 0;
 	}
-	productionSystemTimers.currentUnitSteps.resize(type->getUnitProductionSystem().getCreatedUnitCount());
+	productionSystemTimers.currentUnitSteps.resize(type->getUnitProductionSystem()->getCreatedUnitCount());
 	for (int i = 0; i < productionSystemTimers.currentUnitSteps.size(); ++i) {
         productionSystemTimers.currentUnitSteps[i].currentStep = 0;
 	}
-	productionSystemTimers.currentItemSteps.resize(type->getItemProductionSystem().getCreatedItemCount());
+	productionSystemTimers.currentItemSteps.resize(type->getItemProductionSystem()->getCreatedItemCount());
 	for (int i = 0; i < productionSystemTimers.currentItemSteps.size(); ++i) {
         productionSystemTimers.currentItemSteps[i].currentStep = 0;
 	}
 
 	bonusPowerTimers.resize(type->getBonusPowerCount());
 	for (int j = 0; j < bonusPowerTimers.size(); ++j) {
-        bonusPowerTimers[j].currentSteps.resize(type->getBonusPower(j)->getResourceProductionSystem().getCreatedResourceCount());
+        bonusPowerTimers[j].currentSteps.resize(type->getBonusPower(j)->getResourceProductionSystem()->getCreatedResourceCount());
         for (int i = 0; i < bonusPowerTimers[j].currentSteps.size(); ++i) {
             bonusPowerTimers[j].currentSteps[i].currentStep = 0;
         }
-        bonusPowerTimers[j].currentProcessSteps.resize(type->getBonusPower(j)->getProcessProductionSystem().getProcessCount());
+        bonusPowerTimers[j].currentProcessSteps.resize(type->getBonusPower(j)->getProcessProductionSystem()->getProcessCount());
         for (int i = 0; i < bonusPowerTimers[j].currentProcessSteps.size(); ++i) {
             bonusPowerTimers[j].currentProcessSteps[i].currentStep = 0;
         }
-        bonusPowerTimers[j].currentUnitSteps.resize(type->getBonusPower(j)->getUnitProductionSystem().getCreatedUnitCount());
+        bonusPowerTimers[j].currentUnitSteps.resize(type->getBonusPower(j)->getUnitProductionSystem()->getCreatedUnitCount());
         for (int i = 0; i < bonusPowerTimers[j].currentUnitSteps.size(); ++i) {
             bonusPowerTimers[j].currentUnitSteps[i].currentStep = 0;
         }
-        bonusPowerTimers[j].currentItemSteps.resize(type->getBonusPower(j)->getItemProductionSystem().getCreatedItemCount());
+        bonusPowerTimers[j].currentItemSteps.resize(type->getBonusPower(j)->getItemProductionSystem()->getCreatedItemCount());
         for (int i = 0; i < bonusPowerTimers[j].currentItemSteps.size(); ++i) {
             bonusPowerTimers[j].currentItemSteps[i].currentStep = 0;
         }
 	}
 
-	currentCommandCooldowns.resize(type->getCommandTypeCount());
+	currentCommandCooldowns.resize(type->getActions()->getCommandTypeCount());
 	for (int i = 0; i < currentCommandCooldowns.size(); ++i) {
 	currentCommandCooldowns[i].currentStep = 0;
 	}
@@ -277,9 +277,9 @@ Unit::Unit(CreateParams params)
         equipment[i].init(1, 0, nameTag, nameTag);
     }
 
-    sresources.resize(getType()->getResourceProductionSystem().getStoredResourceCount());
-    for (int i = 0; i < getType()->getResourceProductionSystem().getStoredResourceCount(); ++i) {
-        const ResourceType *rt = getType()->getResourceProductionSystem().getStoredResource(i, getFaction()).getType();
+    sresources.resize(getType()->getResourceProductionSystem()->getStoredResourceCount());
+    for (int i = 0; i < getType()->getResourceProductionSystem()->getStoredResourceCount(); ++i) {
+        const ResourceType *rt = getType()->getResourceProductionSystem()->getStoredResource(i, getFaction()).getType();
         sresources[i].init(rt, 0);
     }
 
@@ -297,7 +297,14 @@ Unit::Unit(CreateParams params)
 
 	if (getType()->getIsHero() == true) {
 	}
-
+    for (int i =0; i < type->getActions()->getSkillTypeCount(); ++i) {
+        actions.addSkillType(type->getActions()->getSkillType(i));
+    }
+    for (int i =0; i < type->getActions()->getCommandTypeCount(); ++i) {
+        actions.addCommand(type->getActions()->getCommandType(i));
+    }
+    actions.sortSkillTypes();
+    actions.sortCommandTypes();
 }
 
 Unit::Unit(LoadParams params) //const XmlNode *node, Faction *faction, Map *map, const TechTree *tt, bool putInWorld)
@@ -341,7 +348,7 @@ Unit::Unit(LoadParams params) //const XmlNode *node, Faction *faction, Map *map,
 	faceTarget = node->getChildBoolValue("faceTarget");
 	useNearestOccupiedCell = node->getChildBoolValue("useNearestOccupiedCell");
 	s = node->getChildStringValue("currSkill");
-	currSkill = s == "null_value" ? NULL : type->getSkillType(s);
+	currSkill = s == "null_value" ? NULL : type->getActions()->getSkillType(s);
 
 	nextCommandUpdate = node->getChildIntValue("nextCommandUpdate");
 	lastCommandUpdate = node->getChildIntValue("lastCommandUpdate");
@@ -439,7 +446,7 @@ Unit::Unit(LoadParams params) //const XmlNode *node, Faction *faction, Map *map,
 	} else {
 		ULC_UNIT_LOG( this, " constructed dead." );
 	}
-	if (type->hasSkillClass(SkillClass::BE_BUILT) && !type->hasSkillClass(SkillClass::MOVE)) {
+	if (type->getActions()->hasSkillClass(SkillClass::BE_BUILT) && !type->getActions()->hasSkillClass(SkillClass::MOVE)) {
 		map->flatternTerrain(this);
 		// was previously in World::initUnits but seems to work fine here
 		g_cartographer.updateMapMetrics(getPos(), getSize());
@@ -672,8 +679,8 @@ void Unit::addStore(const ResourceType *rt, int amount) {
 }
 
 void Unit::addStore(const UnitType *unitType) {
-	for (int i = 0; i < unitType->getResourceProductionSystem().getStoredResourceCount(); ++i) {
-		ResourceAmount r = unitType->getResourceProductionSystem().getStoredResource(i, getFaction());
+	for (int i = 0; i < unitType->getResourceProductionSystem()->getStoredResourceCount(); ++i) {
+		ResourceAmount r = unitType->getResourceProductionSystem()->getStoredResource(i, getFaction());
 		for (int j = 0; j < sresources.size(); ++j) {
 			if (sresources[j].getType() == r.getType()) {
 				sresources[j].setStorage(sresources[j].getStorage() + r.getAmount());
@@ -801,7 +808,7 @@ float Unit::getRenderAlpha() const {
 bool Unit::isInteresting(InterestingUnitType iut) const{
 	switch (iut) {
 		case InterestingUnitType::IDLE_HARVESTER:
-			if (type->hasCommandClass(CmdClass::HARVEST)) {
+			if (type->getActions()->hasCommandClass(CmdClass::HARVEST)) {
 				if (!commands.empty()) {
 					const CommandType *ct = commands.front()->getType();
 					if (ct) {
@@ -813,13 +820,13 @@ bool Unit::isInteresting(InterestingUnitType iut) const{
 
 		case InterestingUnitType::BUILT_BUILDING:
 			return isBuilt() &&
-				(type->hasSkillClass(SkillClass::BE_BUILT) || type->hasSkillClass(SkillClass::BUILD_SELF));
+				(type->getActions()->hasSkillClass(SkillClass::BE_BUILT) || type->getActions()->hasSkillClass(SkillClass::BUILD_SELF));
 		case InterestingUnitType::PRODUCER:
-			return type->hasSkillClass(SkillClass::PRODUCE);
+			return type->getActions()->hasSkillClass(SkillClass::PRODUCE);
 		case InterestingUnitType::DAMAGED:
 			return isDamaged();
 		case InterestingUnitType::STORE:
-			return type->getResourceProductionSystem().getStoredResourceCount() > 0;
+			return type->getResourceProductionSystem()->getStoredResourceCount() > 0;
 		default:
 			return false;
 	}
@@ -835,7 +842,7 @@ bool Unit::isActive() const {
 }
 
 bool Unit::isBuilding() const {
-	return ((getType()->hasSkillClass(SkillClass::BE_BUILT) || getType()->hasSkillClass(SkillClass::BUILD_SELF))
+	return ((getType()->getActions()->hasSkillClass(SkillClass::BE_BUILT) || getType()->getActions()->hasSkillClass(SkillClass::BUILD_SELF))
 		&& isAlive()
         //&& !getType()->getProperty(Property::WALL)
         );
@@ -846,8 +853,8 @@ bool Unit::isBuilding() const {
   * @return a RepairCommandType that can repair u, or NULL
   */
 const RepairCommandType * Unit::getRepairCommandType(const Unit *u) const {
-	for (int i = 0; i < type->getCommandTypeCount<RepairCommandType>(); i++) {
-		const RepairCommandType *rct = type->getCommandType<RepairCommandType>(i);
+	for (int i = 0; i < type->getActions()->getCommandTypeCount<RepairCommandType>(); i++) {
+		const RepairCommandType *rct = type->getActions()->getCommandType<RepairCommandType>(i);
 		const RepairSkillType *rst = rct->getRepairSkillType();
 		if ((!rst->isSelfOnly() || this == u)
 		&& (rst->isSelfAllowed() || this != u)
@@ -960,7 +967,7 @@ Projectile* Unit::launchProjectile(ProjectileType *projType, const Vec3f &endPos
 		RUNTIME_CHECK(!carrier->isCarried() && !carrier->isGarrisoned() && carrier->getPos().x >= 0 && carrier->getPos().y >= 0);
 		startPos = carrier->getCurrVectorFlat();
 		const LoadCommandType *lct =
-			static_cast<const LoadCommandType *>(carrier->getType()->getFirstCtOfClass(CmdClass::LOAD));
+			static_cast<const LoadCommandType *>(carrier->getType()->getActions()->getFirstCtOfClass(CmdClass::LOAD));
 		assert(lct->areProjectilesAllowed());
 		Vec2f offsets = lct->getProjectileOffset();
 		startPos.y += offsets.y;
@@ -979,7 +986,7 @@ Projectile* Unit::launchProjectile(ProjectileType *projType, const Vec3f &endPos
 		RUNTIME_CHECK(!garrison->isGarrisoned() && !garrison->isCarried() && garrison->getPos().x >= 0 && garrison->getPos().y >= 0);
 		startPos = garrison->getCurrVectorFlat();
 		const GarrisonCommandType *gct =
-			static_cast<const GarrisonCommandType *>(garrison->getType()->getFirstCtOfClass(CmdClass::GARRISON));
+			static_cast<const GarrisonCommandType *>(garrison->getType()->getActions()->getFirstCtOfClass(CmdClass::GARRISON));
 		assert(gct->areProjectilesAllowed());
 		Vec2f offsets = gct->getProjectileOffset();
 		startPos.y += offsets.y;
@@ -1152,7 +1159,7 @@ Vec3f Unit::getCurrVectorFlat() const {
   */
 const CommandType *Unit::getFirstAvailableCt(CmdClass commandClass) const {
 	typedef vector<CommandType*> CommandTypes;
-	const  CommandTypes &cmdTypes = type->getCommandTypes(commandClass);
+	const  CommandTypes &cmdTypes = type->getActions()->getCommandTypes(commandClass);
 	foreach_const (CommandTypes, it, cmdTypes) {
 		if (faction->reqsOk(*it)) {
 			return *it;
@@ -1160,8 +1167,8 @@ const CommandType *Unit::getFirstAvailableCt(CmdClass commandClass) const {
 	}
 	return 0;
 	/*
-	for(int i = 0; i < type->getCommandTypeCount(); ++i) {
-		const CommandType *ct = type->getCommandType(i);
+	for(int i = 0; i < type->getActions()->getCommandTypeCount(); ++i) {
+		const CommandType *ct = type->getActions()->getCommandType(i);
 		if(ct && ct->getClass() == commandClass && faction->reqsOk(ct)) {
 			return ct;
 		}
@@ -1523,8 +1530,8 @@ void Unit::born(bool reborn) {
 	if (!reborn) {
 		faction->addStore(type);
 		addStore(type);
-        for (int i = 0; i < type->getResourceProductionSystem().getStarterResources().size(); ++i) {
-            ResourceAmount ra = type->getResourceProductionSystem().getStarterResources()[i];
+        for (int i = 0; i < type->getResourceProductionSystem()->getStarterResources().size(); ++i) {
+            ResourceAmount ra = type->getResourceProductionSystem()->getStarterResources()[i];
             incResourceAmount(ra.getType(), ra.getAmount());
             if (ra.getType()->getName() == "wealth") {
                 taxedGold = ra.getAmount();
@@ -1553,7 +1560,7 @@ void Unit::born(bool reborn) {
 		g_simInterface.doUnitBorn(this);
 		faction->applyUpgradeBoosts(this);
 		if (faction->isThisFaction() && !g_config.getGsAutoRepairEnabled()
-		&& type->getFirstCtOfClass(CmdClass::REPAIR)) {
+		&& type->getActions()->getFirstCtOfClass(CmdClass::REPAIR)) {
 			CmdFlags cmdFlags = CmdFlags(CmdProps::MISC_ENABLE, false);
 			Command *cmd = g_world.newCommand(CmdDirective::SET_AUTO_REPAIR, cmdFlags, invalidPos, this);
 			g_simInterface.getCommander()->pushCommand(cmd);
@@ -1995,30 +2002,30 @@ const CommandType *Unit::computeCommandType(const Vec2i &pos, const Unit *target
 	if (targetUnit) {
 		//attack enemies
 		if (!isAlly(targetUnit)) {
-			commandType = type->getAttackCommand(targetUnit->getCurrZone());
+			commandType = type->getActions()->getAttackCommand(targetUnit->getCurrZone());
 		} else if (targetUnit->getFactionIndex() == getFactionIndex()) {
 			const UnitType *tType = targetUnit->getType();
 			if (tType->isOfClass(UnitClass::CARRIER)) {
-                if (tType->getCommandType<LoadCommandType>(0)->canCarry(type)) {
+                if (tType->getActions()->getCommandType<LoadCommandType>(0)->canCarry(type)) {
 				//move to be loaded
-				commandType = type->getFirstCtOfClass(CmdClass::BE_LOADED);
-                } else if (tType->getCommandType<FactionLoadCommandType>(0)->canCarry(type)) {
+				commandType = type->getActions()->getFirstCtOfClass(CmdClass::BE_LOADED);
+                } else if (tType->getActions()->getCommandType<FactionLoadCommandType>(0)->canCarry(type)) {
                 //move to be loaded
-				commandType = type->getFirstCtOfClass(CmdClass::BE_LOADED);
+				commandType = type->getActions()->getFirstCtOfClass(CmdClass::BE_LOADED);
                 } else {
                 //move to be loaded
-				commandType = type->getFirstCtOfClass(CmdClass::BE_LOADED);
+				commandType = type->getActions()->getFirstCtOfClass(CmdClass::BE_LOADED);
                 }
 			} else if (getType()->isOfClass(UnitClass::CARRIER)) {
-			    if (type->getCommandType<LoadCommandType>(0)->canCarry(tType)) {
+			    if (type->getActions()->getCommandType<LoadCommandType>(0)->canCarry(tType)) {
 			    //load
-			    commandType = type->getFirstCtOfClass(CmdClass::LOAD);
-			    } else if (type->getCommandType<FactionLoadCommandType>(0)->canCarry(tType)) {
+			    commandType = type->getActions()->getFirstCtOfClass(CmdClass::LOAD);
+			    } else if (type->getActions()->getCommandType<FactionLoadCommandType>(0)->canCarry(tType)) {
 			    //load
-			    commandType = type->getFirstCtOfClass(CmdClass::FACTIONLOAD);
+			    commandType = type->getActions()->getFirstCtOfClass(CmdClass::FACTIONLOAD);
 			    } else {
 			    //load
-			    commandType = type->getFirstCtOfClass(CmdClass::GARRISON);
+			    commandType = type->getActions()->getFirstCtOfClass(CmdClass::GARRISON);
 			    }
         } else {
 				// repair
@@ -2031,17 +2038,17 @@ const CommandType *Unit::computeCommandType(const Vec2i &pos, const Unit *target
 		//check harvest command
 		MapResource *resource = sc->getResource();
 		if (resource != NULL) {
-			commandType = type->getHarvestCommand(resource->getType());
+			commandType = type->getActions()->getHarvestCommand(resource->getType());
 		}
 	}
 
 	//default command is move command
 	if (!commandType) {
-		commandType = type->getFirstCtOfClass(CmdClass::MOVE);
+		commandType = type->getActions()->getFirstCtOfClass(CmdClass::MOVE);
 	}
 
 	if (!commandType && type->hasMeetingPoint()) {
-		commandType = type->getFirstCtOfClass(CmdClass::SET_MEETING_POINT);
+		commandType = type->getActions()->getFirstCtOfClass(CmdClass::SET_MEETING_POINT);
 	}
 
 	return commandType;
@@ -2121,8 +2128,8 @@ void Unit::doUpdateCommand() {
 	if (!anyCommand() && isOperative()) {
 		const UnitType *ut = getType();
 		setCurrSkill(SkillClass::STOP);
-		if (ut->hasCommandClass(CmdClass::STOP)) {
-			giveCommand(g_world.newCommand(ut->getFirstCtOfClass(CmdClass::STOP), CmdFlags()));
+		if (ut->getActions()->hasCommandClass(CmdClass::STOP)) {
+			giveCommand(g_world.newCommand(ut->getActions()->getFirstCtOfClass(CmdClass::STOP), CmdFlags()));
 		}
 	}
 	//if unit is out of EP, it stops
@@ -2303,6 +2310,12 @@ void Unit::accessStorageExchange(Unit *storage) {
 
 void Unit::equipItem(int ident) {
     Item *item = getStoredItem(ident);
+    bool unique = true;
+    for (int i = 0; i < getEquippedItems().size(); ++i) {
+        if (getEquippedItem(i)->getType() == item->getType()) {
+            unique = false;
+        }
+    }
     for (int i = 0; i < getType()->getEquipment().size(); ++i) {
         if (item->getType()->getTypeTag() == equipment[i].getTypeTag()) {
             if (equipment[i].getCurrent() == 0) {
@@ -2323,6 +2336,16 @@ void Unit::equipItem(int ident) {
                 break;
             }
         }
+    }
+    if (unique == true) {
+        for (int j =0; j < item->getType()->getActions()->getSkillTypeCount(); ++j) {
+            actions.addSkillType(item->getType()->getActions()->getSkillType(j));
+        }
+        for (int j =0; j < item->getType()->getActions()->getCommandTypeCount(); ++j) {
+            actions.addCommand(item->getType()->getActions()->getCommandType(j));
+        }
+        actions.sortSkillTypes();
+        actions.sortCommandTypes();
     }
     computeTotalUpgrade();
 }
@@ -2493,9 +2516,9 @@ bool Unit::update() { ///@todo should this be renamed to hasFinishedCycle()?
 	// start attack/spell systems ?
 	if (frame == getSystemStartFrame()) {
 		if (currSkill->getClass() == SkillClass::ATTACK) {
-		    for (int i = 0; i < getType()->getCommandTypeCount(); ++i) {
-		        if (getType()->getCommandType(i)->getClass() == CmdClass::ATTACK) {
-                    const AttackCommandType *act = static_cast<const AttackCommandType*>(getType()->getCommandType(i));
+		    for (int i = 0; i < getType()->getActions()->getCommandTypeCount(); ++i) {
+		        if (getType()->getActions()->getCommandType(i)->getClass() == CmdClass::ATTACK) {
+                    const AttackCommandType *act = static_cast<const AttackCommandType*>(getType()->getActions()->getCommandType(i));
                     const AttackSkillType *ast = act->AttackCommandTypeBase::getAttackSkillTypes()->getFirstAttackSkill();
                     if (ast == currSkill) {
                         currentCommandCooldowns[i].currentStep = ast->getCooldown();
@@ -2550,7 +2573,7 @@ bool Unit::update() { ///@todo should this be renamed to hasFinishedCycle()?
 	if (currSkill->getClass() != SkillClass::STOP) {
 		const float rotFactor = 2.f;
 		if (getProgress() < 1.f / rotFactor) {
-			if (type->getFirstStOfClass(SkillClass::MOVE) || type->getFirstStOfClass(SkillClass::MORPH)) {
+			if (type->getActions()->getFirstStOfClass(SkillClass::MOVE) || type->getActions()->getFirstStOfClass(SkillClass::MORPH)) {
 				rotated = true;
 				if (abs(lastRotation - targetRotation) < 180) {
 					rotation = lastRotation + (targetRotation - lastRotation) * getProgress() * rotFactor;
@@ -2701,7 +2724,7 @@ bool Unit::computeEp() {
 
 	// if not enough ep
 	int cost = currSkill->getSkillCosts()->getEpCost();
-	if (cost == 0) {
+	if (cost <= 0) {
 		return false;
 	}
 	if (decEp(cost)) {
@@ -2925,9 +2948,9 @@ string Unit::getLongDesc() const {
 	}
 	if (getType()->personality != "") {
 	ss << endl << getType()->personality;
-	for (int i = 0; i < getFaction()->getMandateAiSim().getPersonalities().size(); ++i) {
-        if (getFaction()->getMandateAiSim().getPersonality(i).getPersonalityName() == getType()->personality) {
-            ss << endl << "Found: " << getFaction()->getMandateAiSim().getPersonality(i).getPersonalityName();
+	for (int i = 0; i < getFaction()->getMandateAiSim().getPersonalities()->size(); ++i) {
+        if (getFaction()->getMandateAiSim().getPersonality(i)->getPersonalityName() == getType()->personality) {
+            ss << endl << "Found: " << getFaction()->getMandateAiSim().getPersonality(i)->getPersonalityName();
         }
 	}
 	ss << endl << "Current Focus: " << getCurrentFocus();
@@ -3383,10 +3406,10 @@ bool Unit::morph(const MorphCommandType *mct, const UnitType *ut, Vec2i offset, 
 			// add (any) remaining if possible
 			for (; i != commands.end(); ++i) {
 				// first see if the new unit type has a command by the same name
-				const CommandType *newCmdType = type->getCommandType((*i)->getType()->getName());
+				const CommandType *newCmdType = type->getActions()->getCommandType((*i)->getType()->getName());
 				// if not, lets see if we can find any command of the same class
 				if (!newCmdType) {
-					newCmdType = type->getFirstCtOfClass((*i)->getType()->getClass());
+					newCmdType = type->getActions()->getFirstCtOfClass((*i)->getType()->getClass());
 				}
 				// if still not found, we drop the comand, otherwise, we add it to the new list
 				if (newCmdType) {
@@ -3405,7 +3428,7 @@ bool Unit::morph(const MorphCommandType *mct, const UnitType *ut, Vec2i offset, 
 }
 
 bool Unit::transform(const TransformCommandType *tct, const UnitType *ut, Vec2i pos, CardinalDir facing) {
-	RUNTIME_CHECK(ut->getFirstCtOfClass(CmdClass::BUILD_SELF) != 0);
+	RUNTIME_CHECK(ut->getActions()->getFirstCtOfClass(CmdClass::BUILD_SELF) != 0);
 	Vec2i offset = pos - this->pos;
 	m_facing = facing; // needs to be set for putUnitCells() [happens in morph()]
 	const UnitType *oldType = type;
@@ -3426,7 +3449,7 @@ bool Unit::transform(const TransformCommandType *tct, const UnitType *ut, Vec2i 
 			}
 		}
 		commands.clear();
-		giveCommand(g_world.newCommand(type->getFirstCtOfClass(CmdClass::BUILD_SELF), CmdFlags()));
+		giveCommand(g_world.newCommand(type->getActions()->getFirstCtOfClass(CmdClass::BUILD_SELF), CmdFlags()));
 		setCurrSkill(SkillClass::BUILD_SELF);
 		return true;
 	}
@@ -3523,7 +3546,7 @@ CmdResult Unit::checkCommand(const Command &command) const {
 	}
 
 	//if not operative or has not command type => fail
-	if (!isOperative() || command.getUnit() == this || !getType()->hasCommandType(ct)) {
+	if (!isOperative() || command.getUnit() == this || !actions.hasCommandType(ct)) {
 		return CmdResult::FAIL_UNDEFINED;
 	}
 

@@ -752,33 +752,33 @@ void World::tick() {
             if (u->isOperative()) {
                 // resource generation
                 Unit *unit = faction->getUnit(j);
-                for (int i = 0; i < unit->getType()->getResourceProductionSystem().getCreatedResourceCount(); ++i) {
-                    CreatedResource cr = unit->getType()->getResourceProductionSystem().getCreatedResources()[i];
-                    int cTime = unit->getType()->getResourceProductionSystem().getCreatedResourceTimer(i, faction).getTimerValue();
+                for (int i = 0; i < unit->getType()->getResourceProductionSystem()->getCreatedResourceCount(); ++i) {
+                    CreatedResource cr = unit->getType()->getResourceProductionSystem()->getCreatedResources()[i];
+                    int cTime = unit->getType()->getResourceProductionSystem()->getCreatedResourceTimer(i, faction).getTimerValue();
                     TimerStep *timeStep = &unit->productionSystemTimers.currentSteps[i];
-                    unit->getType()->getResourceProductionSystem().update(cr, unit, cTime, timeStep);
+                    unit->getType()->getResourceProductionSystem()->update(cr, unit, cTime, timeStep);
                 }
                 for (int m = 0; m < unit->getEquippedItems().size(); ++m) {
                     Item *item = unit->getEquippedItem(m);
-                    for (int i = 0; i < item->getType()->getResourceProductionSystem().getCreatedResourceCount(); ++i) {
-                        CreatedResource cr = item->getType()->getResourceProductionSystem().getCreatedResources()[i];
-                        int cTime = item->getType()->getResourceProductionSystem().getCreatedResourceTimer(i, faction).getTimerValue();
+                    for (int i = 0; i < item->getType()->getResourceProductionSystem()->getCreatedResourceCount(); ++i) {
+                        CreatedResource cr = item->getType()->getResourceProductionSystem()->getCreatedResources()[i];
+                        int cTime = item->getType()->getResourceProductionSystem()->getCreatedResourceTimer(i, faction).getTimerValue();
                         TimerStep *timeStep = &item->currentSteps[i];
-                        item->getType()->getResourceProductionSystem().update(cr, unit, cTime, timeStep);
+                        item->getType()->getResourceProductionSystem()->update(cr, unit, cTime, timeStep);
                     }
                 }
                 for (int m = 0; m < unit->getType()->getBonusPowerCount(); ++m) {
                     const BonusPower *bonusPower = unit->getType()->getBonusPower(m);
-                    for (int i = 0; i < bonusPower->getResourceProductionSystem().getCreatedResourceCount(); ++i) {
-                        CreatedResource cr = bonusPower->getResourceProductionSystem().getCreatedResources()[i];
-                        int cTime = bonusPower->getResourceProductionSystem().getCreatedResourceTimer(i, faction).getTimerValue();
+                    for (int i = 0; i < bonusPower->getResourceProductionSystem()->getCreatedResourceCount(); ++i) {
+                        CreatedResource cr = bonusPower->getResourceProductionSystem()->getCreatedResources()[i];
+                        int cTime = bonusPower->getResourceProductionSystem()->getCreatedResourceTimer(i, faction).getTimerValue();
                         TimerStep *timeStep = &unit->bonusPowerTimers[m].currentSteps[i];
-                        bonusPower->getResourceProductionSystem().update(cr, unit, cTime, timeStep);
+                        bonusPower->getResourceProductionSystem()->update(cr, unit, cTime, timeStep);
                     }
                 }
                 // resource processing
-                for (int s = 0; s < unit->getType()->getProcessProductionSystem().getProcessCount(); ++s) {
-                    Process process = unit->getType()->getProcessProductionSystem().getProcess(s, faction);
+                for (int s = 0; s < unit->getType()->getProcessProductionSystem()->getProcessCount(); ++s) {
+                    Process process = unit->getType()->getProcessProductionSystem()->getProcess(s, faction);
                     bool toUpdate = true;
                     for (int d = 0; d < process.items.size(); ++d) {
                         for (int e = 0; e < unit->getType()->getItemStores().size(); ++e) {
@@ -795,15 +795,15 @@ void World::tick() {
                         }
                     }
                     if (toUpdate == true) {
-                        int cTime = unit->getType()->getProcessProductionSystem().getProcessTimer(s, faction).getTimerValue();
+                        int cTime = unit->getType()->getProcessProductionSystem()->getProcessTimer(s, faction).getTimerValue();
                         TimerStep *timeStep = &unit->productionSystemTimers.currentProcessSteps[s];
-                        unit->getType()->getProcessProductionSystem().update(process, unit, cTime, timeStep);
+                        unit->getType()->getProcessProductionSystem()->update(process, unit, cTime, timeStep);
                     }
                 }
                 for (int m = 0; m < unit->getEquippedItems().size(); ++m) {
                     Item *item = unit->getEquippedItem(m);
-                    for (int s = 0; s < item->getType()->getProcessProductionSystem().getProcessCount(); ++s) {
-                        Process process = item->getType()->getProcessProductionSystem().getProcess(s, faction);
+                    for (int s = 0; s < item->getType()->getProcessProductionSystem()->getProcessCount(); ++s) {
+                        Process process = item->getType()->getProcessProductionSystem()->getProcess(s, faction);
                         bool toUpdate = true;
                         for (int d = 0; d < process.items.size(); ++d) {
                             for (int e = 0; e < unit->getType()->getItemStores().size(); ++e) {
@@ -820,16 +820,16 @@ void World::tick() {
                             }
                         }
                         if (toUpdate == true) {
-                            int cTime = item->getType()->getProcessProductionSystem().getProcessTimer(s, faction).getTimerValue();
+                            int cTime = item->getType()->getProcessProductionSystem()->getProcessTimer(s, faction).getTimerValue();
                             TimerStep *timeStep = &item->currentProcessSteps[s];
-                            item->getType()->getProcessProductionSystem().update(process, unit, cTime, timeStep);
+                            item->getType()->getProcessProductionSystem()->update(process, unit, cTime, timeStep);
                         }
                     }
                 }
                 for (int m = 0; m < unit->getType()->getBonusPowerCount(); ++m) {
                     const BonusPower *bonusPower = unit->getType()->getBonusPower(m);
-                    for (int s = 0; s < bonusPower->getProcessProductionSystem().getProcessCount(); ++s) {
-                        Process process = bonusPower->getProcessProductionSystem().getProcess(s, faction);
+                    for (int s = 0; s < bonusPower->getProcessProductionSystem()->getProcessCount(); ++s) {
+                        Process process = bonusPower->getProcessProductionSystem()->getProcess(s, faction);
                         bool toUpdate = true;
                         for (int d = 0; d < process.items.size(); ++d) {
                             for (int e = 0; e < unit->getType()->getItemStores().size(); ++e) {
@@ -846,15 +846,15 @@ void World::tick() {
                             }
                         }
                         if (toUpdate == true) {
-                            int cTime = bonusPower->getProcessProductionSystem().getProcessTimer(s, faction).getTimerValue();
+                            int cTime = bonusPower->getProcessProductionSystem()->getProcessTimer(s, faction).getTimerValue();
                             TimerStep *timeStep = &unit->bonusPowerTimers[m].currentProcessSteps[s];
-                            bonusPower->getProcessProductionSystem().update(process, unit, cTime, timeStep);
+                            bonusPower->getProcessProductionSystem()->update(process, unit, cTime, timeStep);
                         }
                     }
                 }
                 // item generation
-                for (int i = 0; i < unit->getType()->getItemProductionSystem().getCreatedItemCount(); ++i) {
-                    CreatedItem createdItem = unit->getType()->getItemProductionSystem().getCreatedItem(i, faction);
+                for (int i = 0; i < unit->getType()->getItemProductionSystem()->getCreatedItemCount(); ++i) {
+                    CreatedItem createdItem = unit->getType()->getItemProductionSystem()->getCreatedItem(i, faction);
                     bool updating = true;
                     for (int e = 0; e < unit->getType()->getItemStores().size(); ++e) {
                         if (createdItem.getType() == unit->getType()->getItemStores()[e].getType()) {
@@ -868,15 +868,15 @@ void World::tick() {
                         }
                     }
                     if (updating == true) {
-                        int cTime = unit->getType()->getItemProductionSystem().getCreatedItemTimer(i, faction).getTimerValue();
+                        int cTime = unit->getType()->getItemProductionSystem()->getCreatedItemTimer(i, faction).getTimerValue();
                         TimerStep *timeStep = &unit->productionSystemTimers.currentItemSteps[i];
-                        unit->getType()->getItemProductionSystem().update(createdItem, unit, cTime, timeStep);
+                        unit->getType()->getItemProductionSystem()->update(createdItem, unit, cTime, timeStep);
                     }
                 }
                 for (int m = 0; m < unit->getEquippedItems().size(); ++m) {
                     Item *item = unit->getEquippedItem(m);
-                    for (int i = 0; i < item->getType()->getItemProductionSystem().getCreatedItemCount(); ++i) {
-                        CreatedItem createdItem = item->getType()->getItemProductionSystem().getCreatedItem(i, faction);
+                    for (int i = 0; i < item->getType()->getItemProductionSystem()->getCreatedItemCount(); ++i) {
+                        CreatedItem createdItem = item->getType()->getItemProductionSystem()->getCreatedItem(i, faction);
                         bool updating = true;
                         for (int e = 0; e < unit->getType()->getItemStores().size(); ++e) {
                             if (createdItem.getType() == unit->getType()->getItemStores()[e].getType()) {
@@ -890,16 +890,16 @@ void World::tick() {
                             }
                         }
                         if (updating == true) {
-                            int cTime = item->getType()->getItemProductionSystem().getCreatedItemTimer(i, faction).getTimerValue();
+                            int cTime = item->getType()->getItemProductionSystem()->getCreatedItemTimer(i, faction).getTimerValue();
                             TimerStep *timeStep = &item->currentItemSteps[i];
-                            item->getType()->getItemProductionSystem().update(createdItem, unit, cTime, timeStep);
+                            item->getType()->getItemProductionSystem()->update(createdItem, unit, cTime, timeStep);
                         }
                     }
                 }
                 for (int m = 0; m < unit->getType()->getBonusPowerCount(); ++m) {
                     const BonusPower *bonusPower = unit->getType()->getBonusPower(m);
-                    for (int i = 0; i < bonusPower->getItemProductionSystem().getCreatedItemCount(); ++i) {
-                        CreatedItem createdItem = bonusPower->getItemProductionSystem().getCreatedItem(i, faction);
+                    for (int i = 0; i < bonusPower->getItemProductionSystem()->getCreatedItemCount(); ++i) {
+                        CreatedItem createdItem = bonusPower->getItemProductionSystem()->getCreatedItem(i, faction);
                         bool updating = true;
                         for (int e = 0; e < unit->getType()->getItemStores().size(); ++e) {
                             if (createdItem.getType() == unit->getType()->getItemStores()[e].getType()) {
@@ -913,35 +913,35 @@ void World::tick() {
                             }
                         }
                         if (updating == true) {
-                            int cTime = bonusPower->getItemProductionSystem().getCreatedItemTimer(i, faction).getTimerValue();
+                            int cTime = bonusPower->getItemProductionSystem()->getCreatedItemTimer(i, faction).getTimerValue();
                             TimerStep *timeStep = &unit->bonusPowerTimers[m].currentItemSteps[i];
-                            bonusPower->getItemProductionSystem().update(createdItem, unit, cTime, timeStep);
+                            bonusPower->getItemProductionSystem()->update(createdItem, unit, cTime, timeStep);
                         }
                     }
                 }
                 // unit generation
-                for (int i = 0; i < unit->getType()->getUnitProductionSystem().getCreatedUnitCount(); ++i) {
-                    CreatedUnit createdUnit = unit->getType()->getUnitProductionSystem().getCreatedUnit(i, faction);
-                    int cTime = unit->getType()->getUnitProductionSystem().getCreatedUnitTimer(i, faction).getTimerValue();
+                for (int i = 0; i < unit->getType()->getUnitProductionSystem()->getCreatedUnitCount(); ++i) {
+                    CreatedUnit createdUnit = unit->getType()->getUnitProductionSystem()->getCreatedUnit(i, faction);
+                    int cTime = unit->getType()->getUnitProductionSystem()->getCreatedUnitTimer(i, faction).getTimerValue();
                     TimerStep *timeStep = &unit->productionSystemTimers.currentUnitSteps[i];
-                    unit->getType()->getUnitProductionSystem().update(createdUnit, unit, cTime, timeStep);
+                    unit->getType()->getUnitProductionSystem()->update(createdUnit, unit, cTime, timeStep);
                 }
                 for (int m = 0; m < unit->getEquippedItems().size(); ++m) {
                     Item *item = unit->getEquippedItem(m);
-                    for (int i = 0; i < item->getType()->getUnitProductionSystem().getCreatedUnitCount(); ++i) {
-                        CreatedUnit createdUnit = item->getType()->getUnitProductionSystem().getCreatedUnit(i, faction);
-                        int cTime = item->getType()->getUnitProductionSystem().getCreatedUnitTimer(i, faction).getTimerValue();
+                    for (int i = 0; i < item->getType()->getUnitProductionSystem()->getCreatedUnitCount(); ++i) {
+                        CreatedUnit createdUnit = item->getType()->getUnitProductionSystem()->getCreatedUnit(i, faction);
+                        int cTime = item->getType()->getUnitProductionSystem()->getCreatedUnitTimer(i, faction).getTimerValue();
                         TimerStep *timeStep = &item->currentUnitSteps[i];
-                        item->getType()->getUnitProductionSystem().update(createdUnit, unit, cTime, timeStep);
+                        item->getType()->getUnitProductionSystem()->update(createdUnit, unit, cTime, timeStep);
                     }
                 }
                 for (int m = 0; m < unit->getType()->getBonusPowerCount(); ++m) {
                     const BonusPower *bonusPower = unit->getType()->getBonusPower(m);
-                    for (int i = 0; i < bonusPower->getUnitProductionSystem().getCreatedUnitCount(); ++i) {
-                        CreatedUnit createdUnit = bonusPower->getUnitProductionSystem().getCreatedUnit(i, faction);
-                        int cTime = bonusPower->getUnitProductionSystem().getCreatedUnitTimer(i, faction).getTimerValue();
+                    for (int i = 0; i < bonusPower->getUnitProductionSystem()->getCreatedUnitCount(); ++i) {
+                        CreatedUnit createdUnit = bonusPower->getUnitProductionSystem()->getCreatedUnit(i, faction);
+                        int cTime = bonusPower->getUnitProductionSystem()->getCreatedUnitTimer(i, faction).getTimerValue();
                         TimerStep *timeStep = &unit->bonusPowerTimers[m].currentUnitSteps[i];
-                        bonusPower->getUnitProductionSystem().update(createdUnit, unit, cTime, timeStep);
+                        bonusPower->getUnitProductionSystem()->update(createdUnit, unit, cTime, timeStep);
                     }
                 }
             }
@@ -1030,7 +1030,7 @@ Unit *World::nearestStore(const Vec2i &pos, int factionIndex, const ResourceType
 	for (int i = 0; i < f->getUnitCount(); ++i) {
 		Unit *u = f->getUnit(i);
 		float tmpDist = u->getPos().dist(pos);
-		if (tmpDist < currDist && u->getType()->getResourceProductionSystem().getStore(rt, f) > 0 && u->isOperative()) {
+		if (tmpDist < currDist && u->getType()->getResourceProductionSystem()->getStore(rt, f) > 0 && u->isOperative()) {
 			currDist = tmpDist;
 			currUnit = u;
 		}
@@ -1114,20 +1114,20 @@ int World::givePositionCommand(int unitId, const string &commandName, const Vec2
 	const CommandType *cmdType = 0;
 
 	if (commandName == "move") {
-		cmdType = unit->getType()->getFirstCtOfClass(CmdClass::MOVE);
+		cmdType = unit->getType()->getActions()->getFirstCtOfClass(CmdClass::MOVE);
 	} else if (commandName == "attack") {
-		cmdType = unit->getType()->getFirstCtOfClass(CmdClass::ATTACK);
+		cmdType = unit->getType()->getActions()->getFirstCtOfClass(CmdClass::ATTACK);
 	} else if (commandName == "harvest") {
 		MapResource *r = map.getTile(Map::toTileCoords(pos))->getResource();
 		bool found = false;
-		if (!unit->getType()->getFirstCtOfClass(CmdClass::HARVEST)) {
+		if (!unit->getType()->getActions()->getFirstCtOfClass(CmdClass::HARVEST)) {
 			return LuaCmdResult::NO_CAPABLE_COMMAND;
 		}
 		if (!r) {
-			cmdType = unit->getType()->getFirstCtOfClass(CmdClass::HARVEST);
+			cmdType = unit->getType()->getActions()->getFirstCtOfClass(CmdClass::HARVEST);
 		} else {
-			for (int i=0; i < unit->getType()->getCommandTypeCount<HarvestCommandType>(); ++i) {
-				const HarvestCommandType *hct = unit->getType()->getCommandType<HarvestCommandType>(i);
+			for (int i=0; i < unit->getType()->getActions()->getCommandTypeCount<HarvestCommandType>(); ++i) {
+				const HarvestCommandType *hct = unit->getType()->getActions()->getCommandType<HarvestCommandType>(i);
 				if (hct->canHarvest(r->getType())) {
 					found = true;
 					cmdType = hct;
@@ -1135,13 +1135,13 @@ int World::givePositionCommand(int unitId, const string &commandName, const Vec2
 				}
 			}
 			if (!found) {
-				cmdType = unit->getType()->getFirstCtOfClass(CmdClass::HARVEST);
+				cmdType = unit->getType()->getActions()->getFirstCtOfClass(CmdClass::HARVEST);
 			}
 		}
 	} else if (commandName == "patrol") {
-		cmdType = unit->getType()->getFirstCtOfClass(CmdClass::PATROL);
+		cmdType = unit->getType()->getActions()->getFirstCtOfClass(CmdClass::PATROL);
 	} else if (commandName == "guard") {
-		cmdType = unit->getType()->getFirstCtOfClass(CmdClass::GUARD);
+		cmdType = unit->getType()->getActions()->getFirstCtOfClass(CmdClass::GUARD);
 	} else {
 		return LuaCmdResult::INVALID_COMMAND_CLASS;
 	}
@@ -1166,8 +1166,8 @@ int World::giveBuildCommand(int unitId, const string &commandName, const string 
 	const CommandType *cmdType = 0;
 
 	if (commandName == "build") {
-		for (int i=0; i < ut->getCommandTypeCount<BuildCommandType>(); ++i) {
-			const BuildCommandType *bct = ut->getCommandType<BuildCommandType>(i);
+		for (int i=0; i < ut->getActions()->getCommandTypeCount<BuildCommandType>(); ++i) {
+			const BuildCommandType *bct = ut->getActions()->getCommandType<BuildCommandType>(i);
 			if (bct->canBuild(but)) {
 				return unit->giveCommand(newCommand(bct, CmdFlags(), pos, but, CardinalDir::NORTH));
 			}
@@ -1189,23 +1189,23 @@ int World::giveTargetCommand (int unitId, const string & cmdName, int targetId) 
 	}
 	const CommandType *cmdType = 0;
 	if (cmdName == "attack") {
-		const AttackCommandType *act = unit->getType()->getAttackCommand(target->getCurrZone());
+		const AttackCommandType *act = unit->getType()->getActions()->getAttackCommand(target->getCurrZone());
 		if (act) {
 			return unit->giveCommand(newCommand(act, CmdFlags(), target));
 		} else {
 			return LuaCmdResult::NO_CAPABLE_COMMAND;
 		}
 	} else if (cmdName == "repair") {
-		const RepairCommandType *rct = unit->getType()->getRepairCommand(target->getType());
+		const RepairCommandType *rct = unit->getType()->getActions()->getRepairCommand(target->getType());
 		if (rct) {
 			return unit->giveCommand(newCommand(rct, CmdFlags(), target));
 		} else {
 			return LuaCmdResult::NO_CAPABLE_COMMAND;
 		}
 	} else if (cmdName == "guard") {
-		cmdType = unit->getType()->getFirstCtOfClass(CmdClass::GUARD);
+		cmdType = unit->getType()->getActions()->getFirstCtOfClass(CmdClass::GUARD);
 	} else if (cmdName == "patrol") {
-		cmdType = unit->getType()->getFirstCtOfClass(CmdClass::PATROL);
+		cmdType = unit->getType()->getActions()->getFirstCtOfClass(CmdClass::PATROL);
 	} else {
 		return LuaCmdResult::INVALID_COMMAND_CLASS;
 	}
@@ -1222,7 +1222,7 @@ int World::giveStopCommand(int unitId, const string &cmdName) {
 		return LuaCmdResult::INVALID_UNIT_ID;
 	}
 	if (cmdName == "stop") {
-		const StopCommandType *sct = (StopCommandType*)unit->getType()->getFirstCtOfClass(CmdClass::STOP);
+		const StopCommandType *sct = (StopCommandType*)unit->getType()->getActions()->getFirstCtOfClass(CmdClass::STOP);
 		if (sct) {
 			// return CmdResult
 			return unit->giveCommand(newCommand(sct, CmdFlags()));
@@ -1231,7 +1231,7 @@ int World::giveStopCommand(int unitId, const string &cmdName) {
 		}
 	} else if (cmdName == "attack-stopped") {
 		const AttackStoppedCommandType *asct =
-			(AttackStoppedCommandType *)unit->getType()->getFirstCtOfClass(CmdClass::ATTACK_STOPPED);
+			(AttackStoppedCommandType *)unit->getType()->getActions()->getFirstCtOfClass(CmdClass::ATTACK_STOPPED);
 		if (asct) {
 			return unit->giveCommand(newCommand(asct, CmdFlags()));
 		} else {
@@ -1249,8 +1249,8 @@ int World::giveProductionCommand(int unitId, const string &producedName) {
 	}
 	const UnitType *ut = unit->getType();
 	// Search for a command that can produce the producible
-	for (int i=0; i < ut->getCommandTypeCount(); ++i) {
-		const CommandType* ct= ut->getCommandType(i);
+	for (int i=0; i < unit->getActions()->getCommandTypeCount(); ++i) {
+		const CommandType* ct= unit->getActions()->getCommandType(i);
 		for (int j=0; j < ct->getProducedCount(); ++j) {
 			const ProducibleType *pt = ct->getProduced(j);
 			if (pt->getName() == producedName) {
@@ -1277,8 +1277,8 @@ int World::giveUpgradeCommand(int unitId, const string &upgradeName) {
 	}
 	const UnitType *ut= unit->getType();
 	//Search for a command that can produce the upgrade
-	for(int i= 0; i < ut->getCommandTypeCount<UpgradeCommandType>(); ++i) {
-		const UpgradeCommandType* uct = ut->getCommandType<UpgradeCommandType>(i);
+	for(int i= 0; i < ut->getActions()->getCommandTypeCount<UpgradeCommandType>(); ++i) {
+		const UpgradeCommandType* uct = ut->getActions()->getCommandType<UpgradeCommandType>(i);
 		for (int i=0; i < uct->getProducedCount(); ++i) {
 			if (uct->getProducedUpgrade(i) == upgrd) {
 				CmdResult cmdRes = unit->giveCommand(newCommand(uct, CmdFlags(), invalidPos, upgrd, CardinalDir::NORTH));
@@ -1447,7 +1447,7 @@ void World::initUnits() {
 		foreach_const (Units, uIt, fIt->getUnits()) {
 			const Unit* const &unit = *uIt;
 			const UnitType *ut = unit->getType();
-			if (ut->hasSkillClass(SkillClass::BE_BUILT) && !ut->hasSkillClass(SkillClass::MOVE)) {
+			if (ut->getActions()->hasSkillClass(SkillClass::BE_BUILT) && !ut->getActions()->hasSkillClass(SkillClass::MOVE)) {
 				map.prepareTerrain(unit);
 				cartographer->updateMapMetrics(unit->getPos(), unit->getSize());
 			}

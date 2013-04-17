@@ -14,7 +14,10 @@
 
 #include <algorithm>
 
+#include "forward_decs.h"
 #include "element_type.h"
+#include "actions.h"
+
 #include "checksum.h"
 #include "xml_parser.h"
 #include "statistics.h"
@@ -26,6 +29,7 @@ using namespace Shared::Xml;
 using Shared::Util::Checksum;
 using Shared::Util::SingleTypeFactory;
 using Glest::Entities::Unit;
+using Glest::Sim::World;
 
 namespace Glest { namespace ProtoTypes {
 
@@ -39,9 +43,10 @@ struct UpgradeEffect {
 	ResModifierMap   m_costModifiers;
 	ResModifierMap   m_storeModifiers;
 	ResModifierMap   m_createModifiers;
+    Actions          actions;
 
+    Actions *getActions() {return &actions;}
 	const Statistics* getStatistics() const { return &m_enhancement; }
-
 };
 
 // ===============================
@@ -64,7 +69,6 @@ public:
 
 	Enhancements       m_enhancements;
 	AffectedUnits      m_unitsAffected;
-
 
 private:
 	bool loadNewStyle(const XmlNode *node, const string &dir, const TechTree *techTree, const FactionType *factionType);

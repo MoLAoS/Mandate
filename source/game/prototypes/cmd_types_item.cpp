@@ -60,7 +60,7 @@ bool CreateItemCommandType::load(const XmlNode *n, const string &dir, const Tech
 	//produce
 	try {
 		string skillName = n->getChild("produce-skill")->getAttribute("value")->getRestrictedValue();
-		m_produceSkillType = static_cast<const ProduceSkillType*>(creatableType->getSkillType(skillName, SkillClass::PRODUCE));
+		m_produceSkillType = static_cast<const ProduceSkillType*>(creatableType->getActions()->getSkillType(skillName, SkillClass::PRODUCE));
 	} catch (runtime_error e) {
 		g_logger.logXmlError(dir, e.what ());
 		loadOk = false;
@@ -202,6 +202,7 @@ void CreateItemCommandType::update(Unit *unit) const {
                     unit->getFaction()->addItem(newItem);
                     unit->accessStorageAdd(unit->getFaction()->getItemCount()-1);
                 } else if (prodType->getTypeTag() == "stock") {
+
                 }
             }
             unit->finishCommand();

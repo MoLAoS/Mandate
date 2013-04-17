@@ -339,8 +339,8 @@ bool AiRuleAddTasks::canProduce(UnitClass unitClass) const {
 	// Find the first UnitType who can produce/morph-to UnitTypes of UnitClass requested and that have reqsOk
 	for (int i=0; i < ft->getUnitTypeCount(); ++i) {
 		const UnitType *ut = ft->getUnitType(i);
-		for (int j=0; j < ut->getCommandTypeCount(); ++j) {
-			const CommandType *ct = ut->getCommandType(j);
+		for (int j=0; j < ut->getActions()->getCommandTypeCount(); ++j) {
+			const CommandType *ct = ut->getActions()->getCommandType(j);
 			if (!faction->reqsOk(ct)
 			|| (ct->getClass() != CmdClass::PRODUCE && ct->getClass() != CmdClass::MORPH)) {
 				continue;
@@ -373,8 +373,8 @@ bool AiRuleBuildOneFarm::test() {
 	for(int i = 0; i < aiInterface->getMyFactionType()->getUnitTypeCount(); ++i) {
 		const UnitType *ut = aiInterface->getMyFactionType()->getUnitType(i);
 		// for all produce commands
-		for(int j = 0; j < ut->getCommandTypeCount<ProduceCommandType>(); ++j) {
-			const ProduceCommandType *pct = ut->getCommandType<ProduceCommandType>(j);
+		for(int j = 0; j < ut->getActions()->getCommandTypeCount<ProduceCommandType>(); ++j) {
+			const ProduceCommandType *pct = ut->getActions()->getCommandType<ProduceCommandType>(j);
 			for (int k=0; k < pct->getProducedCount(); ++k) {
 				const UnitType *pt = pct->getProducedUnit(k);
 				//for all resources
@@ -512,8 +512,8 @@ void AiRuleProduce::produceResources(const ProduceTask *task) {
 	// negative for pt->resourceType and has reqsOk() for Producible)
 	for (int i=0; i < ft->getUnitTypeCount(); ++i) {
 		const UnitType *ut = ft->getUnitType(i);
-		for (int j=0; j < ut->getCommandTypeCount(); ++j) {
-			const CommandType *ct = ut->getCommandType(j);
+		for (int j=0; j < ut->getActions()->getCommandTypeCount(); ++j) {
+			const CommandType *ct = ut->getActions()->getCommandType(j);
 			if (!faction->reqsOk(ct)) {
 				continue;
 			}
@@ -594,8 +594,8 @@ void AiRuleProduce::produceGeneric(const ProduceTask *task) {
 	// 1. Find all UnitTypes who can produce/morph-to UnitTypes of UnitClass requested and that have reqsOk
 	for (int i=0; i < ft->getUnitTypeCount(); ++i) {
 		const UnitType *ut = ft->getUnitType(i);
-		for (int j=0; j < ut->getCommandTypeCount(); ++j) {
-			const CommandType *ct = ut->getCommandType(j);
+		for (int j=0; j < ut->getActions()->getCommandTypeCount(); ++j) {
+			const CommandType *ct = ut->getActions()->getCommandType(j);
 			if (!faction->reqsOk(ct)
 			|| (ct->getClass() != CmdClass::PRODUCE && ct->getClass() != CmdClass::MORPH)) {
 				continue;
@@ -674,8 +674,8 @@ void AiRuleProduce::produceSpecific(const ProduceTask *task) {
 		//if (!faction->reqsOk(ut)) {
 		//	continue;
 		//}
-		for (int j=0; j < ut->getCommandTypeCount(); ++j) {
-			const CommandType *ct = ut->getCommandType(j);
+		for (int j=0; j < ut->getActions()->getCommandTypeCount(); ++j) {
+			const CommandType *ct = ut->getActions()->getCommandType(j);
 			if (!faction->reqsOk(ct)
 			|| (ct->getClass() != CmdClass::PRODUCE && ct->getClass() != CmdClass::MORPH)) {
 				continue;
@@ -786,8 +786,8 @@ void AiRuleBuild::findBuildingTypes(UnitTypeList &utList, const ResourceType *rt
 		if (!ai->getCountOfType(ut)) {
 			continue;
 		}
-		for(int j = 0; j < ut->getCommandTypeCount(); ++j) {
-			const CommandType *ct = ut->getCommandType(j);
+		for(int j = 0; j < ut->getActions()->getCommandTypeCount(); ++j) {
+			const CommandType *ct = ut->getActions()->getCommandType(j);
 			if (ct->getClass() == CmdClass::BUILD) { // if the command is build
 				const BuildCommandType *bct= static_cast<const BuildCommandType*>(ct);
 				//for each building
@@ -877,8 +877,8 @@ void AiRuleBuild::findBuilderTypes(const UnitType *buildingType, CmdByUtMap &cmd
 		if (!ai->getCountOfType(ut)) {
 			continue;
 		}
-		for(int j = 0; j < ut->getCommandTypeCount(); ++j) {
-			const CommandType *ct = ut->getCommandType(j);
+		for(int j = 0; j < ut->getActions()->getCommandTypeCount(); ++j) {
+			const CommandType *ct = ut->getActions()->getCommandType(j);
 			if (ct->getClass() == CmdClass::BUILD) { // if the command is build
 				const BuildCommandType *bct= static_cast<const BuildCommandType*>(ct);
 				for (int k=0; k < bct->getBuildingCount(); ++k) { // for each building
@@ -950,7 +950,7 @@ void AiRuleBuild::buildSpecific(const BuildTask *bt){
 }
 
 bool AiRuleBuild::isDefensive(const UnitType *building){
-	return building->hasSkillClass(SkillClass::ATTACK);
+	return building->getActions()->hasSkillClass(SkillClass::ATTACK);
 }
 
 bool AiRuleBuild::isResourceProducer(const UnitType *building){
@@ -963,8 +963,8 @@ bool AiRuleBuild::isResourceProducer(const UnitType *building){
 }
 
 bool AiRuleBuild::isWarriorProducer(const UnitType *building){
-	for (int i= 0; i < building->getCommandTypeCount(); i++) {
-		const CommandType *ct= building->getCommandType(i);
+	for (int i= 0; i < building->getActions()->getCommandTypeCount(); i++) {
+		const CommandType *ct= building->getActions()->getCommandType(i);
 		if (ct->getClass() == CmdClass::PRODUCE) {
 			const ProduceCommandType *pt = static_cast<const ProduceCommandType*>(ct);
 			for (int j=0; j < pt->getProducedUnitCount(); ++j) {
@@ -1015,8 +1015,8 @@ void AiRuleUpgrade::upgradeGeneric(const UpgradeTask *upgt) {
 	UpgradeTypes upgrades;
 	for (int i=0; i < aiInterface->getMyUnitCount(); ++i) { // foreach unit
 		const UnitType *ut = aiInterface->getMyUnit(i)->getType();
-		for (int j=0; j < ut->getCommandTypeCount<UpgradeCommandType>(); ++j) { // for each upgrade command
-			const UpgradeCommandType *upgct = ut->getCommandType<UpgradeCommandType>(j);
+		for (int j=0; j < ut->getActions()->getCommandTypeCount<UpgradeCommandType>(); ++j) { // for each upgrade command
+			const UpgradeCommandType *upgct = ut->getActions()->getCommandType<UpgradeCommandType>(j);
 			for (int k=0; k < upgct->getProducedCount(); ++k) {
 				const UpgradeType *upgrade = upgct->getProducedUpgrade(k);
 				if (aiInterface->reqsOk(upgct)) { ///@todo: does this weed out already/in-progress ?
@@ -1050,8 +1050,8 @@ void AiRuleUpgrade::upgradeSpecific(const UpgradeTask *upgt) {
 		for (int i=0; i < aiInterface->getMyUnitCount(); ++i) {
 			// for each upgrade command
 			const UnitType *ut = aiInterface->getMyUnit(i)->getType();
-			for (int j=0; j < ut->getCommandTypeCount<UpgradeCommandType>(); ++j) {
-				const UpgradeCommandType *uct = ut->getCommandType<UpgradeCommandType>(j);
+			for (int j=0; j < ut->getActions()->getCommandTypeCount<UpgradeCommandType>(); ++j) {
+				const UpgradeCommandType *uct = ut->getActions()->getCommandType<UpgradeCommandType>(j);
 				for (int k=0; k < uct->getProducedCount(); ++k) {
 					const UpgradeType *producedUpgrade = uct->getProducedUpgrade(k);
 
@@ -1091,7 +1091,7 @@ bool AiRuleExpand::test() {
 				for (int j=0; j < aiInterface->getMyUnitCount(); ++j) { // foreach unit
 					const Unit *u = aiInterface->getMyUnit(j);
 					const UnitType *ut = aiInterface->getMyUnit(j)->getType();
-					if (ut->getResourceProductionSystem().getStore(rt, ai->getAiInterface()->getFaction()) > 0) { // store ?
+					if (ut->getResourceProductionSystem()->getStore(rt, ai->getAiInterface()->getFaction()) > 0) { // store ?
 						storeType = ut;
 						int distance = static_cast<int>(u->getPos().dist(expandPos));
 						if (distance < minDistance) {

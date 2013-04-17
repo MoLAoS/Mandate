@@ -214,7 +214,7 @@ public:
 	// load resource system
 	bool load(const XmlNode *resourceProductionNode, const string &dir, const TechTree *techTree, const FactionType *factionType);
 
-    void update(CreatedResource cr, Unit *unit, int timer, TimerStep *timerStep);
+    void update(CreatedResource cr, Unit *unit, int timer, TimerStep *timerStep) const;
 };
 // =====================================================
 // 	class ItemProductionSystem
@@ -237,7 +237,7 @@ public:
 	// load resource system
 	bool load(const XmlNode *itemProductionNode, const string &dir, const TechTree *techTree, const FactionType *factionType);
 
-    void update(CreatedItem ci, Unit *unit, int timer, TimerStep *timerStep);
+    void update(CreatedItem ci, Unit *unit, int timer, TimerStep *timerStep) const;
 };
 // =====================================================
 // 	class ProcessProductionSystem
@@ -260,7 +260,7 @@ public:
 	// load resource system
 	bool load(const XmlNode *processProductionNode, const string &dir, const TechTree *techTree, const FactionType *factionType);
 
-    void update(Process proc, Unit *unit, int timer, TimerStep *timerStep);
+    void update(Process proc, Unit *unit, int timer, TimerStep *timerStep) const;
 };
 // =====================================================
 // 	class UnitProductionSystem
@@ -283,7 +283,7 @@ public:
 	// load resource system
 	bool load(const XmlNode *unitProductionNode, const string &dir, const TechTree *techTree, const FactionType *factionType);
 
-    void update(CreatedUnit ci, Unit *unit, int timer, TimerStep *timerStep);
+    void update(CreatedUnit ci, Unit *unit, int timer, TimerStep *timerStep) const;
 };
 
 }}// end namespace

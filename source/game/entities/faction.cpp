@@ -597,15 +597,15 @@ bool Faction::reqsOk(const RequirableType *rt) const {
 		}
 	}
 	// required upgrades
+	Faction *f;
+    for (int j = 0; j < g_world.getFactionCount(); ++j) {
+        if (this == g_world.getFaction(j)) {
+            f = g_world.getFaction(j);
+        }
+    }
 	for (int i = 0; i < rt->getUpgradeReqCount(); ++i) {
 		if (upgradeManager.isUpgraded(rt->getUpgradeReq(i).getUpgradeType())) {
 		} else if (upgradeManager.isPartial(rt->getUpgradeReq(i).getUpgradeType())) {
-		    Faction *f;
-		    for (int j = 0; j < g_world.getFactionCount(); ++j) {
-		        if (this == g_world.getFaction(j)) {
-                    f = g_world.getFaction(j);
-		        }
-		    }
 		    int stage = f->getCurrentStage(rt->getUpgradeReq(i).getUpgradeType());
             if (rt->getUpgradeReq(i).getStage() == stage) {
 
@@ -661,7 +661,17 @@ bool Faction::reqsOk(const CommandType *ct, const ProducibleType *pt) const {
 			return false;
 		}
 	}
-
+	Faction *f;
+    for (int j = 0; j < g_world.getFactionCount(); ++j) {
+        if (this == g_world.getFaction(j)) {
+            f = g_world.getFaction(j);
+        }
+    }
+    if (pt != 0) {
+        if (!f->checkCosts(pt)) {
+            return false;
+        }
+    }
 	return reqsOk(static_cast<const RequirableType*>(ct));
 }
 
@@ -707,8 +717,28 @@ void Faction::reportReqs(const RequirableType *rt, CommandCheckResult &out_resul
 				continue;
 			}
 		}
+		bool local = rt->getUnitReq(i).getScope();
 		bool ok = getCountOfUnitType(ut);
-		out_result.m_unitReqResults.push_back(UnitReqResult(ut, ok));
+		out_result.m_unitReqResults.push_back(UnitReqResult(ut, ok, local));
+	}
+	// required items
+	for (int i = 0; i < rt->getItemReqCount(); ++i) {
+		const ItemType *itype = rt->getItemReq(i).getItemType();
+		if (checkDups) {
+			bool duplicate = false;
+			foreach (ItemReqResults, it, out_result.m_itemReqResults) {
+				if (it->getItemType() == itype) {
+					duplicate = true;
+					break;
+				}
+			}
+			if (duplicate) {
+				continue;
+			}
+		}
+		bool local = rt->getItemReq(i).getScope();
+		bool ok = getCountOfItemType(itype);
+		out_result.m_itemReqResults.push_back(ItemReqResult(itype, ok, local));
 	}
 	// required upgrades
 	for (int i = 0; i < rt->getUpgradeReqCount(); ++i) {
@@ -753,7 +783,16 @@ void Faction::reportReqsAndCosts(const CommandType *ct, const ProducibleType *pt
 				out_result.m_resourceMadeResults.push_back(ResourceMadeResult(res.getType(), -res.getAmount()));
 			} else {
 				int stored = getSResource(res.getType())->getAmount();
-				out_result.m_resourceCostResults.push_back(ResourceCostResult(res.getType(), res.getAmount(), stored));
+				out_result.m_resourceCostResults.push_back(ResourceCostResult(res.getType(), res.getAmount(), stored, false));
+			}
+		}
+		for (int i=0; i < pt->getLocalCostCount(); ++i) {
+			ResourceAmount res = pt->getLocalCost(i, this);
+			if (res.getAmount() < 0) {
+				out_result.m_resourceMadeResults.push_back(ResourceMadeResult(res.getType(), -res.getAmount()));
+			} else {
+				int stored = getSResource(res.getType())->getAmount();
+				out_result.m_resourceCostResults.push_back(ResourceCostResult(res.getType(), res.getAmount(), stored, true));
 			}
 		}
 		if (out_result.m_availableInSubFaction) { // don't overwrite false
@@ -948,7 +987,7 @@ void Faction::applyCostsOnInterval(const ResourceType *rt) {
 					if (unit->decHp(unit->getType()->getResourcePools()->getMaxHp().getValue() / 3)) {
 						World::getCurrWorld()->doKill(unit, unit);
 					} else {
-						StaticSound *sound = unit->getType()->getFirstStOfClass(SkillClass::DIE)->getSoundsAndAnimations()->getSound();
+						StaticSound *sound = unit->getType()->getActions()->getFirstStOfClass(SkillClass::DIE)->getSoundsAndAnimations()->getSound();
 						if (sound != NULL && thisFaction) {
 							SoundRenderer::getInstance().playFx(sound);
 						}
@@ -1106,8 +1145,8 @@ void Faction::reEvaluateStore() {
 		// don't want the resources of dead units to be included
 		if (!(*it)->isDead()) {
 			const UnitType *ut = (*it)->getType();
-			for (int j=0; j < ut->getResourceProductionSystem().getStoredResourceCount(); ++j) {
-				ResourceAmount res = ut->getResourceProductionSystem().getStoredResource(j, this);
+			for (int j=0; j < ut->getResourceProductionSystem()->getStoredResourceCount(); ++j) {
+				ResourceAmount res = ut->getResourceProductionSystem()->getStoredResource(j, this);
 				storeMap[res.getType()] += res.getAmount();
 			}
 		}
@@ -1128,8 +1167,8 @@ void Faction::addStore(const ResourceType *rt, int amount) {
 }
 
 void Faction::addStore(const UnitType *unitType) {
-	for (int i = 0; i < unitType->getResourceProductionSystem().getStoredResourceCount(); ++i) {
-		ResourceAmount r = unitType->getResourceProductionSystem().getStoredResource(i, this);
+	for (int i = 0; i < unitType->getResourceProductionSystem()->getStoredResourceCount(); ++i) {
+		ResourceAmount r = unitType->getResourceProductionSystem()->getStoredResource(i, this);
 		for (int j = 0; j < sresources.size(); ++j) {
 			if (sresources[j].getType() == r.getType()) {
 				sresources[j].setStorage(sresources[j].getStorage() + r.getAmount());

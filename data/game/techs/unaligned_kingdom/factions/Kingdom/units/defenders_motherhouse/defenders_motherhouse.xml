@@ -219,6 +219,7 @@
             <unit value="defender"/>
             <unit value="guardian"/>
             <unit value="preceptor"/>
+            <unit value="hauler"/>
         </units-carried>
         <load-capacity value="48" />
           <allow-projectiles value="true"> 

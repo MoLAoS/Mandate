@@ -184,9 +184,9 @@ void Ai::updateUsableResources() {
 		if (!faction->reqsOk(ut)) {
 			continue;
 		}
-		int n = ut->getCommandTypeCount();
+		int n = ut->getActions()->getCommandTypeCount();
 		for (int i=0; i < n; ++i) {
-			const CommandType *ct = ut->getCommandType(i);
+			const CommandType *ct = ut->getActions()->getCommandType(i);
 			if (!faction->reqsOk(ct)) {
 				continue;
 			}
@@ -208,9 +208,9 @@ void Ai::updateUsableResources() {
 	// 2. Find all currently harvestable resources, and put any also found in step 1 in usableResources
 	foreach (UnitTypeCount, it, unitTypeCount) {
 		const UnitType *ut = it->first;
-		int n = ut->getCommandTypeCount<HarvestCommandType>();
+		int n = ut->getActions()->getCommandTypeCount<HarvestCommandType>();
 		for (int i=0; i < n; ++i) {
-			const HarvestCommandType *hct = ut->getCommandType<HarvestCommandType>(i);
+			const HarvestCommandType *hct = ut->getActions()->getCommandType<HarvestCommandType>(i);
 			int rn = hct->getHarvestedResourceCount();
 			for (int j=0; j < rn; ++j) {
 				const ResourceType *rt = hct->getHarvestedResource(j);
@@ -378,7 +378,7 @@ bool Ai::findAbleUnit(int *unitIndex, CmdClass ability, bool idleOnly) {
 	*unitIndex = -1;
 	for (int i = 0; i < aiInterface->getMyUnitCount(); ++i) {
 		const Unit *unit = aiInterface->getMyUnit(i);
-		if (unit->getType()->hasCommandClass(ability)) {
+		if (unit->getType()->getActions()->hasCommandClass(ability)) {
 			if ((!idleOnly || !unit->anyCommand() || unit->getCurrCommand()->getType()->getClass() == CmdClass::STOP)) {
 				units.push_back(i);
 			}
@@ -399,7 +399,7 @@ bool Ai::findAbleUnit(int *unitIndex, CmdClass ability, CmdClass currentCommand)
 	*unitIndex = -1;
 	for (int i = 0; i < aiInterface->getMyUnitCount(); ++i) {
 		const Unit *unit = aiInterface->getMyUnit(i);
-		if (unit->getType()->hasCommandClass(ability)) {
+		if (unit->getType()->getActions()->hasCommandClass(ability)) {
 			if (unit->anyCommand() && unit->getCurrCommand()->getType()->getClass() == currentCommand) {
 				units.push_back(i);
 			}
@@ -460,8 +460,8 @@ void Ai::updateStatistics() {
 	for(uti = unitTypeCount.begin(); uti != unitTypeCount.end(); ++uti) {
 
 		// build commands
-		for (int i=0; i < uti->first->getCommandTypeCount<BuildCommandType>(); ++i) {
-			const BuildCommandType *bct = uti->first->getCommandType<BuildCommandType>(i);
+		for (int i=0; i < uti->first->getActions()->getCommandTypeCount<BuildCommandType>(); ++i) {
+			const BuildCommandType *bct = uti->first->getActions()->getCommandType<BuildCommandType>(i);
 
 			//all buildings that we can build now
 			for(int j = 0; j < bct->getBuildingCount(); ++j) {
@@ -478,8 +478,8 @@ void Ai::updateStatistics() {
 			}
 		}
 		// upgrade commands
-		for (int i=0; i < uti->first->getCommandTypeCount<UpgradeCommandType>(); ++i) {
-			const UpgradeCommandType *uct = uti->first->getCommandType<UpgradeCommandType>(i);
+		for (int i=0; i < uti->first->getActions()->getCommandTypeCount<UpgradeCommandType>(); ++i) {
+			const UpgradeCommandType *uct = uti->first->getActions()->getCommandType<UpgradeCommandType>(i);
 			for (int j=0; j < uct->getProducedCount(); ++j) {
 				const UpgradeType *upgrade = uct->getProducedUpgrade(j);
 				if (aiInterface->reqsOk(uct) && aiInterface->reqsOk(upgrade)) {
@@ -487,7 +487,7 @@ void Ai::updateStatistics() {
 				}
 			}
 		}
-		if (uti->first->hasSkillClass(SkillClass::BE_BUILT)) {
+		if (uti->first->getActions()->hasSkillClass(SkillClass::BE_BUILT)) {
 			buildingTypeCount[uti->first] = uti->second;
 		}
 	}
@@ -617,9 +617,9 @@ void Ai::massiveAttack(const Vec2i &pos, Field field, bool ultraAttack){
     for (int i=0; i < aiInterface->getMyUnitCount(); ++i) {
     	bool isWarrior;
         const Unit *unit = aiInterface->getMyUnit(i);
-		const AttackCommandType *act = unit->getType()->getAttackCommand(field==Field::AIR?Zone::AIR:Zone::LAND);
+		const AttackCommandType *act = unit->getType()->getActions()->getAttackCommand(field==Field::AIR?Zone::AIR:Zone::LAND);
 
-		if (act && unit->getType()->hasCommandClass(CmdClass::PRODUCE)) {
+		if (act && unit->getType()->getActions()->hasCommandClass(CmdClass::PRODUCE)) {
 			++producerWarriorCount;
 		}
 
@@ -633,14 +633,14 @@ void Ai::massiveAttack(const Vec2i &pos, Field field, bool ultraAttack){
 					AI_LOG( MILITARY, 3, "Ai::massiveAttack: candidate is producer and currently producing." );
 					isWarrior = false;
 				} else {
-					isWarrior = !unit->getType()->hasCommandClass(CmdClass::HARVEST);
+					isWarrior = !unit->getType()->getActions()->hasCommandClass(CmdClass::HARVEST);
 				}
 			//} else {
-			//	isWarrior = !unit->getType()->hasCommandClass(CmdClass::HARVEST) && !unit->getType()->hasCommandClass(CmdClass::PRODUCE);
+			//	isWarrior = !unit->getType()->getActions()->hasCommandClass(CmdClass::HARVEST) && !unit->getType()->getActions()->hasCommandClass(CmdClass::PRODUCE);
 			//}
 		} else {
-			isWarrior = !unit->getType()->hasCommandClass(CmdClass::HARVEST) &&
-			!unit->getType()->hasCommandClass(CmdClass::PRODUCE);
+			isWarrior = !unit->getType()->getActions()->hasCommandClass(CmdClass::HARVEST) &&
+			!unit->getType()->getActions()->hasCommandClass(CmdClass::PRODUCE);
 		}
 		if (act) {
 			bool alreadyAttacking = unit->getCurrSkill()->getClass() == SkillClass::ATTACK;
@@ -687,7 +687,7 @@ void Ai::harvest(int unitIndex) {
 		AI_LOG( ECONOMY, 1, "Ai::harvest: No needed resources!?!" );
 		return;
 	}
-	const HarvestCommandType *hct = aiInterface->getMyUnit(unitIndex)->getType()->getHarvestCommand(rt);
+	const HarvestCommandType *hct = aiInterface->getMyUnit(unitIndex)->getType()->getActions()->getHarvestCommand(rt);
 	if (!hct) {
 		AI_LOG( ECONOMY, 1, "Ai::harvest: worker " << unitIndex
 			<< " [type=" << aiInterface->getMyUnit(unitIndex)->getType()->getName() << "] "

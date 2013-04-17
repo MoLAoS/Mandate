@@ -131,20 +131,24 @@ class ItemReq {
 private:
     const ItemType* itemType;
     int amount;
+    bool local;
 public:
     const ItemType *getItemType() const {return itemType;}
+    bool getScope() const {return local;}
     int getAmount() const {return amount;}
-    void init(const ItemType* type, int value);
+    void init(const ItemType* type, int value, bool scope);
 };
 
 class UnitReq {
 private:
     const UnitType* unitType;
     int amount;
+    bool local;
 public:
     const UnitType *getUnitType() const {return unitType;}
+    bool getScope() const {return local;}
     int getAmount() const {return amount;}
-    void init(const UnitType* type, int value);
+    void init(const UnitType* type, int value, bool scope);
 };
 
 class UpgradeReq {
@@ -265,11 +269,26 @@ class UnitReqResult {
 private:
 	const UnitType     *m_unitType;
 	bool                m_ok;
+	bool                m_local;
 
 public:
-	UnitReqResult(const UnitType *unitType, bool ok) : m_unitType(unitType) , m_ok(ok) {}
+	UnitReqResult(const UnitType *unitType, bool ok, bool local) : m_unitType(unitType), m_ok(ok), m_local(local) {}
+	bool isLocal() const { return m_local; }
 	bool isRequirementMet() const { return m_ok; }
 	const UnitType*    getUnitType() const { return m_unitType; }
+};
+
+class ItemReqResult {
+private:
+	const ItemType     *m_itemType;
+	bool                m_ok;
+	bool                m_local;
+
+public:
+	ItemReqResult(const ItemType *itemType, bool ok, bool local) : m_itemType(itemType), m_ok(ok), m_local(local) {}
+	bool isLocal() const { return m_local; }
+	bool isRequirementMet() const { return m_ok; }
+	const ItemType*    getItemType() const { return m_itemType; }
 };
 
 class UpgradeReqResult {
@@ -287,13 +306,15 @@ class ResourceCostResult {
 private:
 	const ResourceType  *m_type;  // resource type of this cost
 	int                  m_cost;  // required amount
-	int                  m_store; // amount faction has
+	int                  m_store; // amount entity has
+	bool                 m_local; // is cost local
 
 public:
-	ResourceCostResult(const ResourceType *resourcType, int cost, int store)
-		: m_type(resourcType), m_cost(cost), m_store(store) {}
+	ResourceCostResult(const ResourceType *resourcType, int cost, int store, bool local)
+		: m_type(resourcType), m_cost(cost), m_store(store), m_local(local) {}
 
 	bool isCostMet() const { return m_cost <= m_store; }
+	bool isLocal() const { return m_local; }
 	int  getCost() const { return m_cost; }
 	int  getDifference() const { assert (m_cost > m_store); return m_cost - m_store; }
 	const ResourceType* getResourceType() const { return m_type; }
@@ -312,6 +333,7 @@ public:
 	const ResourceType* getResourceType() const { return m_type; }
 };
 
+typedef vector<ItemReqResult>      ItemReqResults;
 typedef vector<UnitReqResult>      UnitReqResults;
 typedef vector<UpgradeReqResult>   UpgradeReqResults;
 typedef vector<ResourceCostResult> ResourceCostResults;
@@ -320,6 +342,7 @@ typedef vector<ResourceMadeResult> ResourceMadeResults;
 struct CommandCheckResult {
 	const CommandType    *m_commandType;
 	const ProducibleType *m_producibleType;
+	ItemReqResults        m_itemReqResults;
 	UnitReqResults        m_unitReqResults;
 	UpgradeReqResults     m_upgradeReqResults;
 	ResourceCostResults   m_resourceCostResults;

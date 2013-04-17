@@ -17,7 +17,7 @@
       <properties/>
       <light enabled="false"/>
       <unit-requirements>
-	<unit name="livestock_farm" amount="1"/>
+	<unit name="livestock_farm" amount="1" scope="faction"/>
       </unit-requirements>
       <upgrade-requirements/>
       <resource-requirements>

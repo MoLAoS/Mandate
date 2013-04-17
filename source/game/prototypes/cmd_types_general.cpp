@@ -102,12 +102,12 @@ Command* CommandType::doAutoCommand(Unit *unit) const {
 	if (unit->isCarried()) {
 		Unit *carrier = g_world.getUnit(unit->getCarrier());
 		if (const LoadCommandType *lct =
-		    static_cast<const LoadCommandType *>(carrier->getType()->getFirstCtOfClass(CmdClass::LOAD))) {
+		    static_cast<const LoadCommandType *>(carrier->getType()->getActions()->getFirstCtOfClass(CmdClass::LOAD))) {
             if (!lct->areProjectilesAllowed() || !unit->getType()->hasProjectileAttack()) {
 			return 0;
             }
         } else if (const FactionLoadCommandType *flct =
-		    static_cast<const FactionLoadCommandType *>(carrier->getType()->getFirstCtOfClass(CmdClass::FACTIONLOAD))) {
+		    static_cast<const FactionLoadCommandType *>(carrier->getType()->getActions()->getFirstCtOfClass(CmdClass::FACTIONLOAD))) {
             if (!flct->areProjectilesAllowed() || !unit->getType()->hasProjectileAttack()) {
 			return 0;
             }
@@ -117,18 +117,18 @@ Command* CommandType::doAutoCommand(Unit *unit) const {
 	if (unit->isGarrisoned()) {
 		Unit *garrison = g_world.getUnit(unit->getGarrison());
         const GarrisonCommandType *gct =
-        static_cast<const GarrisonCommandType *>(garrison->getType()->getFirstCtOfClass(CmdClass::GARRISON));
+        static_cast<const GarrisonCommandType *>(garrison->getType()->getActions()->getFirstCtOfClass(CmdClass::GARRISON));
         if (!gct->areProjectilesAllowed() || !unit->getType()->hasProjectileAttack()) {
             return 0;
         }
     }
 	// can we attack any enemy ? ///@todo check all attack commands
-	const AttackCommandType *act = ut->getAttackCommand(Zone::LAND);
+	const AttackCommandType *act = ut->getActions()->getAttackCommand(Zone::LAND);
 	if (act && (autoCmd = act->doAutoAttack(unit))) {
 		return autoCmd;
 	}
 	///@todo check all attack-stopped commands
-	AttackStoppedCmd asct = static_cast<AttackStoppedCmd>(ut->getFirstCtOfClass(CmdClass::ATTACK_STOPPED));
+	AttackStoppedCmd asct = static_cast<AttackStoppedCmd>(ut->getActions()->getFirstCtOfClass(CmdClass::ATTACK_STOPPED));
 	if (asct && (autoCmd = asct->doAutoAttack(unit))) {
 		return autoCmd;
 	}
@@ -139,7 +139,7 @@ Command* CommandType::doAutoCommand(Unit *unit) const {
 		return 0;
 	}
 	// can we repair any ally ? ///@todo check all repair commands
-	RepairCmd rct = static_cast<RepairCmd>(ut->getFirstCtOfClass(CmdClass::REPAIR));
+	RepairCmd rct = static_cast<RepairCmd>(ut->getActions()->getFirstCtOfClass(CmdClass::REPAIR));
 	if (!unit->getFaction()->getCpuControl() && rct && (autoCmd = rct->doAutoRepair(unit))) {
 		//REMOVE
 		if (autoCmd->getUnit()) {
@@ -152,7 +152,7 @@ Command* CommandType::doAutoCommand(Unit *unit) const {
 		return autoCmd;
 	}
 	// can we see an enemy we cant attack ? can we run ?
-	MoveBaseCmdType mct = static_cast<MoveBaseCmdType>(ut->getFirstCtOfClass(CmdClass::MOVE));
+	MoveBaseCmdType mct = static_cast<MoveBaseCmdType>(ut->getActions()->getFirstCtOfClass(CmdClass::MOVE));
 	if (mct && (autoCmd = mct->doAutoFlee(unit))) {
 		return autoCmd;
 	}
@@ -219,7 +219,7 @@ void CommandType::apply(Unit *unit, Faction *faction, const Command &command) co
                 prodct = pct->isChild();
 		    } else if (sct != NULL) {
                 structct = sct->isChild();
-		    } else if (sct != NULL) {
+		    } else if (cct != NULL) {
                 createct = cct->isChild();
 		    }
             if (prodct || structct || createct) {
@@ -309,6 +309,7 @@ void CommandType::describe(const Unit *unit, CmdDescriptor *callback, ProdTypePt
 	} else if (!cmdCheckResult.m_availableInSubFaction) {
 		callback->addItem(this, g_lang.get("NotAvailableInSubfaction"));
 	} else {
+		vector<ItemReqResult> &itemReqs = cmdCheckResult.m_itemReqResults;
 		vector<UnitReqResult> &unitReqs = cmdCheckResult.m_unitReqResults;
 		vector<UpgradeReqResult> &upgradeReqs = cmdCheckResult.m_upgradeReqResults;
 		if (!unitReqs.empty() || !upgradeReqs.empty()) {
@@ -331,7 +332,13 @@ void CommandType::describe(const Unit *unit, CmdDescriptor *callback, ProdTypePt
 				callback->addElement(g_lang.get("Costs") + ":");
 				foreach (ResourceCostResults, it, cmdCheckResult.m_resourceCostResults) {
 					string name = g_lang.getTranslatedTechName(it->getResourceType()->getName());
-					string msg = name + " (" + intToStr(it->getCost()) + ")";
+					string local;
+					if (it->isLocal()) {
+                        local = g_lang.getTranslatedTechName("Local| ");
+					} else {
+                        local = "";
+					}
+					string msg = name + local + " (" + intToStr(it->getCost()) + ")";
 					if (!it->isCostMet()) {
 						msg += " [-" + intToStr(it->getDifference()) + "]";
 					}
@@ -361,7 +368,7 @@ bool MoveBaseCommandType::load(const XmlNode *n, const string &dir, const TechTr
 	//move
 	try {
 		string skillName = n->getChild("move-skill")->getAttribute("value")->getRestrictedValue();
-		const SkillType *st = creatableType->getSkillType(skillName, SkillClass::MOVE);
+		const SkillType *st = creatableType->getActions()->getSkillType(skillName, SkillClass::MOVE);
 		m_moveSkillType = static_cast<const MoveSkillType*>(st);
 	} catch (runtime_error e) {
 		g_logger.logXmlError(dir, e.what());
@@ -527,7 +534,7 @@ bool StopBaseCommandType::load(const XmlNode *n, const string &dir, const TechTr
 	//stop
 	try {
 		string skillName = n->getChild("stop-skill")->getAttribute("value")->getRestrictedValue();
-		m_stopSkillType = static_cast<const StopSkillType*>(creatableType->getSkillType(skillName, SkillClass::STOP));
+		m_stopSkillType = static_cast<const StopSkillType*>(creatableType->getActions()->getSkillType(skillName, SkillClass::STOP));
 	} catch (runtime_error e) {
 		g_logger.logXmlError(dir, e.what());
 		return false;
@@ -582,7 +589,7 @@ bool ProduceCommandType::load(const XmlNode *n, const string &dir, const TechTre
 	//produce
 	try {
 		string skillName = n->getChild("produce-skill")->getAttribute("value")->getRestrictedValue();
-		m_produceSkillType = static_cast<const ProduceSkillType*>(creatableType->getSkillType(skillName, SkillClass::PRODUCE));
+		m_produceSkillType = static_cast<const ProduceSkillType*>(creatableType->getActions()->getSkillType(skillName, SkillClass::PRODUCE));
 	} catch (runtime_error e) {
 		g_logger.logXmlError(dir, e.what ());
 		loadOk = false;
@@ -779,7 +786,7 @@ bool GenerateCommandType::load(const XmlNode *n, const string &dir, const TechTr
 	// produce skill
 	try {
 		string skillName= n->getChild("produce-skill")->getAttribute("value")->getRestrictedValue();
-		m_produceSkillType= static_cast<const ProduceSkillType*>(creatableType->getSkillType(skillName, SkillClass::PRODUCE));
+		m_produceSkillType= static_cast<const ProduceSkillType*>(creatableType->getActions()->getSkillType(skillName, SkillClass::PRODUCE));
 	} catch (runtime_error e) {
 		g_logger.logXmlError(dir, e.what ());
 		loadOk = false;
@@ -904,7 +911,7 @@ bool UpgradeCommandType::load(const XmlNode *n, const string &dir, const TechTre
 	// upgrade skill
 	try {
 		string skillName = n->getChild("upgrade-skill")->getAttribute("value")->getRestrictedValue();
-		m_upgradeSkillType = static_cast<const UpgradeSkillType*>(creatableType->getSkillType(skillName, SkillClass::UPGRADE));
+		m_upgradeSkillType = static_cast<const UpgradeSkillType*>(creatableType->getActions()->getSkillType(skillName, SkillClass::UPGRADE));
 	} catch (runtime_error e) {
 		g_logger.logXmlError(dir, e.what ());
 		loadOk = false;
@@ -1088,7 +1095,7 @@ bool MorphCommandType::load(const XmlNode *n, const string &dir, const TechTree 
 	const FactionType *ft = ct->getFactionType();
 	try { // morph skill
 		string skillName = n->getChild("morph-skill")->getAttribute("value")->getRestrictedValue();
-		m_morphSkillType = static_cast<const MorphSkillType*>(creatableType->getSkillType(skillName, SkillClass::MORPH));
+		m_morphSkillType = static_cast<const MorphSkillType*>(creatableType->getActions()->getSkillType(skillName, SkillClass::MORPH));
 	} catch (runtime_error e) {
 		g_logger.logXmlError(dir, e.what());
 		loadOk = false;
@@ -1295,7 +1302,7 @@ bool TransformCommandType::load(const XmlNode *n, const string &dir, const TechT
 	try {
 		const XmlNode *skillNode = n->getChild("move-skill");
 		string skillName = skillNode->getAttribute("value")->getRestrictedValue();
-		m_moveSkillType = static_cast<const MoveSkillType*>(creatableType->getSkillType(skillName, SkillClass::MOVE));
+		m_moveSkillType = static_cast<const MoveSkillType*>(creatableType->getActions()->getSkillType(skillName, SkillClass::MOVE));
 		m_position = n->getChildVec2iValue("position");
 		m_rotation = n->getOptionalFloatValue("rotation");
 		string policy = n->getChildRestrictedValue("hp-policy");
@@ -1398,7 +1405,7 @@ bool LoadCommandType::load(const XmlNode *n, const string &dir, const TechTree *
 		const XmlNode *moveSkillNode = n->getOptionalChild("move-skill");
 		if (moveSkillNode) {
 			string skillName = moveSkillNode->getAttribute("value")->getRestrictedValue();
-			const SkillType *st = creatableType->getSkillType(skillName, SkillClass::MOVE);
+			const SkillType *st = creatableType->getActions()->getSkillType(skillName, SkillClass::MOVE);
 			moveSkillType= static_cast<const MoveSkillType*>(st);
 		}
 	} catch (runtime_error e) {
@@ -1409,7 +1416,7 @@ bool LoadCommandType::load(const XmlNode *n, const string &dir, const TechTree *
 	//load skill
 	try {
 		string skillName= n->getChild("load-skill")->getAttribute("value")->getRestrictedValue();
-		loadSkillType= static_cast<const LoadSkillType*>(creatableType->getSkillType(skillName, SkillClass::LOAD));
+		loadSkillType= static_cast<const LoadSkillType*>(creatableType->getActions()->getSkillType(skillName, SkillClass::LOAD));
 	} catch (runtime_error e) {
 		g_logger.logXmlError(dir, e.what());
 		loadOk = false;
@@ -1537,7 +1544,7 @@ void LoadCommandType::update(Unit *unit) const {
 		if (unit->getCarriedCount() == m_loadCapacity && !unitsToCarry.empty()) {
 			foreach (UnitIdList, it, unitsToCarry) {
 				Unit *unit = g_world.getUnit(*it);
-				if (unit->getType()->getFirstCtOfClass(CmdClass::MOVE)) {
+				if (unit->getType()->getActions()->getFirstCtOfClass(CmdClass::MOVE)) {
 					assert(unit->getCurrCommand());
 					assert(unit->getCurrCommand()->getType()->getClass() == CmdClass::BE_LOADED);
 					unit->cancelCommand();
@@ -1594,7 +1601,7 @@ bool UnloadCommandType::load(const XmlNode *n, const string &dir, const TechTree
 		const XmlNode *moveSkillNode = n->getOptionalChild("move-skill");
 		if (moveSkillNode) {
 			string skillName = moveSkillNode->getAttribute("value")->getRestrictedValue();
-			const SkillType *st = creatableType->getSkillType(skillName, SkillClass::MOVE);
+			const SkillType *st = creatableType->getActions()->getSkillType(skillName, SkillClass::MOVE);
 			moveSkillType= static_cast<const MoveSkillType*>(st);
 		}
 	} catch (runtime_error e) {
@@ -1604,7 +1611,7 @@ bool UnloadCommandType::load(const XmlNode *n, const string &dir, const TechTree
 	// unload skill
 	try {
 		string skillName= n->getChild("unload-skill")->getAttribute("value")->getRestrictedValue();
-		unloadSkillType= static_cast<const UnloadSkillType*>(creatableType->getSkillType(skillName, SkillClass::UNLOAD));
+		unloadSkillType= static_cast<const UnloadSkillType*>(creatableType->getActions()->getSkillType(skillName, SkillClass::UNLOAD));
 	} catch (runtime_error e) {
 		g_logger.logXmlError(dir, e.what());
 		loadOk = false;
@@ -1692,7 +1699,7 @@ bool FactionLoadCommandType::load(const XmlNode *n, const string &dir, const Tec
 		const XmlNode *moveSkillNode = n->getOptionalChild("move-skill");
 		if (moveSkillNode) {
 			string skillName = moveSkillNode->getAttribute("value")->getRestrictedValue();
-			const SkillType *st = creatableType->getSkillType(skillName, SkillClass::MOVE);
+			const SkillType *st = creatableType->getActions()->getSkillType(skillName, SkillClass::MOVE);
 			moveSkillType= static_cast<const MoveSkillType*>(st);
 		}
 	} catch (runtime_error e) {
@@ -1703,7 +1710,7 @@ bool FactionLoadCommandType::load(const XmlNode *n, const string &dir, const Tec
 	//load skill
 	try {
 		string skillName= n->getChild("load-skill")->getAttribute("value")->getRestrictedValue();
-		loadSkillType= static_cast<const LoadSkillType*>(creatableType->getSkillType(skillName, SkillClass::LOAD));
+		loadSkillType= static_cast<const LoadSkillType*>(creatableType->getActions()->getSkillType(skillName, SkillClass::LOAD));
 	} catch (runtime_error e) {
 		g_logger.logXmlError(dir, e.what());
 		loadOk = false;
@@ -1807,7 +1814,7 @@ void FactionLoadCommandType::update(Unit *unit) const {
 		if (unit->getCarriedCount() == m_loadCapacity && !unitsToTransit.empty()) {
 			foreach (UnitIdList, it, unitsToTransit) {
 				Unit *unit = g_world.getUnit(*it);
-				if (unit->getType()->getFirstCtOfClass(CmdClass::MOVE)) {
+				if (unit->getType()->getActions()->getFirstCtOfClass(CmdClass::MOVE)) {
 					assert(unit->getCurrCommand());
 					assert(unit->getCurrCommand()->getType()->getClass() == CmdClass::BE_LOADED);
 					unit->cancelCommand();
@@ -1861,7 +1868,7 @@ bool FactionUnloadCommandType::load(const XmlNode *n, const string &dir, const T
 		const XmlNode *moveSkillNode = n->getOptionalChild("move-skill");
 		if (moveSkillNode) {
 			string skillName = moveSkillNode->getAttribute("value")->getRestrictedValue();
-			const SkillType *st = creatableType->getSkillType(skillName, SkillClass::MOVE);
+			const SkillType *st = creatableType->getActions()->getSkillType(skillName, SkillClass::MOVE);
 			moveSkillType= static_cast<const MoveSkillType*>(st);
 		}
 	} catch (runtime_error e) {
@@ -1871,7 +1878,7 @@ bool FactionUnloadCommandType::load(const XmlNode *n, const string &dir, const T
 	// unload skill
 	try {
 		string skillName= n->getChild("unload-skill")->getAttribute("value")->getRestrictedValue();
-		unloadSkillType= static_cast<const UnloadSkillType*>(creatableType->getSkillType(skillName, SkillClass::UNLOAD));
+		unloadSkillType= static_cast<const UnloadSkillType*>(creatableType->getActions()->getSkillType(skillName, SkillClass::UNLOAD));
 	} catch (runtime_error e) {
 		g_logger.logXmlError(dir, e.what());
 		loadOk = false;
@@ -1960,7 +1967,7 @@ bool GarrisonCommandType::load(const XmlNode *n, const string &dir, const TechTr
 		const XmlNode *moveSkillNode = n->getOptionalChild("move-skill");
 		if (moveSkillNode) {
 			string skillName = moveSkillNode->getAttribute("value")->getRestrictedValue();
-			const SkillType *st = creatableType->getSkillType(skillName, SkillClass::MOVE);
+			const SkillType *st = creatableType->getActions()->getSkillType(skillName, SkillClass::MOVE);
 			moveSkillType= static_cast<const MoveSkillType*>(st);
 		}
 	} catch (runtime_error e) {
@@ -1971,7 +1978,7 @@ bool GarrisonCommandType::load(const XmlNode *n, const string &dir, const TechTr
 	//load skill
 	try {
 		string skillName= n->getChild("load-skill")->getAttribute("value")->getRestrictedValue();
-		loadSkillType= static_cast<const LoadSkillType*>(creatableType->getSkillType(skillName, SkillClass::LOAD));
+		loadSkillType= static_cast<const LoadSkillType*>(creatableType->getActions()->getSkillType(skillName, SkillClass::LOAD));
 	} catch (runtime_error e) {
 		g_logger.logXmlError(dir, e.what());
 		loadOk = false;
@@ -2077,7 +2084,7 @@ void GarrisonCommandType::update(Unit *unit) const {
 		if (unit->getGarrisonedCount() == m_loadCapacity && !unitsToGarrison.empty()) {
 			foreach (UnitIdList, it, unitsToGarrison) {
 				Unit *unit = g_world.getUnit(*it);
-				if (unit->getType()->getFirstCtOfClass(CmdClass::MOVE)) {
+				if (unit->getType()->getActions()->getFirstCtOfClass(CmdClass::MOVE)) {
 					assert(unit->getCurrCommand());
 					assert(unit->getCurrCommand()->getType()->getClass() == CmdClass::BE_LOADED);
 					unit->cancelCommand();
@@ -2131,7 +2138,7 @@ bool DegarrisonCommandType::load(const XmlNode *n, const string &dir, const Tech
 		const XmlNode *moveSkillNode = n->getOptionalChild("move-skill");
 		if (moveSkillNode) {
 			string skillName = moveSkillNode->getAttribute("value")->getRestrictedValue();
-			const SkillType *st = creatableType->getSkillType(skillName, SkillClass::MOVE);
+			const SkillType *st = creatableType->getActions()->getSkillType(skillName, SkillClass::MOVE);
 			moveSkillType= static_cast<const MoveSkillType*>(st);
 		}
 	} catch (runtime_error e) {
@@ -2141,7 +2148,7 @@ bool DegarrisonCommandType::load(const XmlNode *n, const string &dir, const Tech
 	// unload skill
 	try {
 		string skillName= n->getChild("unload-skill")->getAttribute("value")->getRestrictedValue();
-		unloadSkillType= static_cast<const UnloadSkillType*>(creatableType->getSkillType(skillName, SkillClass::UNLOAD));
+		unloadSkillType= static_cast<const UnloadSkillType*>(creatableType->getActions()->getSkillType(skillName, SkillClass::UNLOAD));
 	} catch (runtime_error e) {
 		g_logger.logXmlError(dir, e.what());
 		loadOk = false;
@@ -2249,7 +2256,7 @@ bool CastSpellCommandType::load(const XmlNode *n, const string &dir, const TechT
 		const XmlNode *genSkillNode = n->getChild("cast-spell-skill");
 		m_cycle = genSkillNode->getOptionalBoolValue("cycle");
 		string skillName = genSkillNode->getAttribute("value")->getRestrictedValue();
-		const SkillType *st = creatableType->getSkillType(skillName, SkillClass::CAST_SPELL);
+		const SkillType *st = creatableType->getActions()->getSkillType(skillName, SkillClass::CAST_SPELL);
 		m_castSpellSkillType = static_cast<const CastSpellSkillType*>(st);
 
 		string str = n->getChild("affect")->getRestrictedValue();
@@ -2306,7 +2313,7 @@ bool BuildSelfCommandType::load(const XmlNode *n, const string &dir, const TechT
 	bool ok = CommandType::load(n, dir, tt, ct);
 	try {
 		string bsSkillName = n->getChildRestrictedValue("build-self-skill");
-		const SkillType *st = creatableType->getSkillType(bsSkillName, SkillClass::BUILD_SELF);
+		const SkillType *st = creatableType->getActions()->getSkillType(bsSkillName, SkillClass::BUILD_SELF);
 		m_buildSelfSkill = static_cast<const BuildSelfSkillType*>(st);
 		const XmlNode *repairFlagNode = n->getOptionalChild("allow-repair");
 		if (!repairFlagNode || repairFlagNode->getBoolValue()) {
@@ -2423,7 +2430,7 @@ bool CommandType::unitInRange(const Unit *unit, int range, Unit **rangedPtr,
 							}
 						}
 						// If bad guy has an attack command we can short circut this loop now
-						if (possibleEnemy->getType()->hasCommandClass(CmdClass::ATTACK)) {
+						if (possibleEnemy->getType()->getActions()->hasCommandClass(CmdClass::ATTACK)) {
 							*rangedPtr = possibleEnemy;
 							goto unitOnRange_exitLoop;
 						}

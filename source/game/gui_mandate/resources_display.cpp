@@ -292,11 +292,11 @@ void ResourcesWindow::computeStoragePanel() {
     if (m_ui->getSelection()->isComandable()) {
         const Unit *u = m_ui->getSelection()->getFrontUnit();
         if (u->isBuilt()) {
-            for (int i = 0; i < u->getType()->getResourceProductionSystem().getStoredResourceCount(); ++i) {
-                const Texture2D *image = u->getType()->getResourceProductionSystem().getStoredResource(i, u->getFaction()).getType()->getImage();
+            for (int i = 0; i < u->getType()->getResourceProductionSystem()->getStoredResourceCount(); ++i) {
+                const Texture2D *image = u->getType()->getResourceProductionSystem()->getStoredResource(i, u->getFaction()).getType()->getImage();
                 setDownImage(i, image);
 
-                const ResourceType *rt = u->getType()->getResourceProductionSystem().getStoredResource(i, u->getFaction()).getType();
+                const ResourceType *rt = u->getType()->getResourceProductionSystem()->getStoredResource(i, u->getFaction()).getType();
                 int stored = u->getSResource(rt)->getAmount();
                 stringstream ss;
                 if (stored > 9999) {
@@ -319,9 +319,9 @@ void ResourcesWindow::computeStorageInfo(int posDisplay) {
         if (u->isBuilt()) {
             Lang &lang = g_lang;
             stringstream ss;
-            const ResourceType *rt = u->getType()->getResourceProductionSystem().getStoredResource(posDisplay, u->getFaction()).getType();
+            const ResourceType *rt = u->getType()->getResourceProductionSystem()->getStoredResource(posDisplay, u->getFaction()).getType();
             ss << rt->getName() << ": " << u->getSResource(rt)->getAmount() << "/"
-            << u->getType()->getResourceProductionSystem().getStoredResource(posDisplay, u->getFaction()).getAmount();
+            << u->getType()->getResourceProductionSystem()->getStoredResource(posDisplay, u->getFaction()).getAmount();
             setToolTipText2("Stored:", ss.str(), ResourcesDisplaySection::RESOURCES);
         }
     }

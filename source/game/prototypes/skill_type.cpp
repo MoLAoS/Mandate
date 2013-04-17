@@ -143,8 +143,17 @@ void ItemCost::init(int amount, const ItemType *type) {
 // =====================================================
 // 	class SkillCosts
 // =====================================================
+void SkillCosts::init() {
+    hpCost = 0;
+    spCost = 0;
+    epCost = 0;
+}
+
 bool SkillCosts::load(const XmlNode *sn, const string &dir, const TechTree *tt, const CreatableType *ct) {
     bool loadOk = true;
+    hpCost = 0;
+    spCost = 0;
+    epCost = 0;
     const FactionType *ft = ct->getFactionType();
     const XmlNode *hpCostNode = sn->getChild("hp-cost", 0, false);
     if (hpCostNode) {
@@ -220,6 +229,8 @@ bool SkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, c
         if(!skillCosts.load(skillCostsNode, dir, tt, ct)) {
            loadOk = false;
         }
+    } else {
+        skillCosts.init();
     }
 
     const XmlNode *soundsAndAnimationsNode = sn->getChild("sounds-animations", 0, false);

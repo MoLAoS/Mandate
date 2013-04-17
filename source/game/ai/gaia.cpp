@@ -85,9 +85,9 @@ void Gaia::update() {
 			m_updateTable[glestimal->getId()] = frame + m_rand.randRange(minUpdateDelay, maxUpdateDelay);
 			const UnitType *ut = glestimal->getType();
 
-			const CommandType *ct = ut->getFirstCtOfClass(CmdClass::ATTACK);
+			const CommandType *ct = ut->getActions()->getFirstCtOfClass(CmdClass::ATTACK);
 			if (!ct) {
-				ct = ut->getFirstCtOfClass(CmdClass::MOVE);
+				ct = ut->getActions()->getFirstCtOfClass(CmdClass::MOVE);
 			}
 			if (!ct) {
 				continue;

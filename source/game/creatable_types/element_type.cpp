@@ -67,14 +67,16 @@ bool DisplayableType::load(const XmlNode *baseNode, const string &dir) {
 // =====================================================
 // 	class RequirableType
 // =====================================================
-void UnitReq::init(const UnitType* type, int value) {
+void UnitReq::init(const UnitType* type, int value, bool scope) {
     unitType = type;
     amount = value;
+    local = scope;
 }
 
-void ItemReq::init(const ItemType* type, int value) {
+void ItemReq::init(const ItemType* type, int value, bool scope) {
     itemType = type;
     amount = value;
+    local = scope;
 }
 
 void UpgradeReq::init(const UpgradeType* type, int value) {
@@ -110,9 +112,14 @@ bool RequirableType::load(const XmlNode *baseNode, const string &dir, const Tech
 			for(int i = 0; i < unitRequirementsNode->getChildCount(); ++i) {
 				const XmlNode *unitNode = unitRequirementsNode->getChild("unit", i);
 				string name = unitNode->getRestrictedAttribute("name");
+				bool scope = false;
+				string local = unitNode->getRestrictedAttribute("scope");
+				if (local == "local") {
+                    scope = true;
+				}
 				int value = unitNode->getIntAttribute("amount");
 				UnitReq unitReq;
-				unitReq.init(ft->getUnitType(name), value);
+				unitReq.init(ft->getUnitType(name), value, scope);
 				unitReqs.push_back(unitReq);
 			}
 		}
@@ -127,9 +134,14 @@ bool RequirableType::load(const XmlNode *baseNode, const string &dir, const Tech
 			for(int i = 0; i < itemRequirementsNode->getChildCount(); ++i) {
 				const XmlNode *itemNode = itemRequirementsNode->getChild("item", i);
 				string name = itemNode->getRestrictedAttribute("name");
+				bool scope = false;
+				string local = itemNode->getRestrictedAttribute("scope");
+				if (local == "local") {
+                    scope = true;
+				}
 				int value = itemNode->getIntAttribute("amount");
 				ItemReq itemReq;
-				itemReq.init(ft->getItemType(name), value);
+				itemReq.init(ft->getItemType(name), value, scope);
 				itemReqs.push_back(itemReq);
 			}
 		}

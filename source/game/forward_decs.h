@@ -39,6 +39,7 @@ namespace Glest {
 		class UnitStats;
 		class Fields;
 		class Zones;
+		class Actions;
 		class UnitProperties;
 		class EnhancementType;
 		class Statistics;
@@ -150,6 +151,7 @@ namespace Glest {
 		class GameCamera;
 		class Console;
 		class ChatManager;
+		class CharacterCreator;
 	}
 
 	namespace Gui_Mandate {

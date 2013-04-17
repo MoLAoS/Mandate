@@ -86,11 +86,11 @@ void GoalSystem::init() {
 }
 
 void GoalSystem::ownerLoad(Unit *unit) {
-    if (unit->owner->getId() != unit->getId() && unit->owner->getType()->hasCommandClass(CmdClass::LOAD)) {
-        const CommandType *oct = unit->owner->getType()->getFirstCtOfClass(CmdClass::LOAD);
+    if (unit->owner->getId() != unit->getId() && unit->owner->getType()->getActions()->hasCommandClass(CmdClass::LOAD)) {
+        const CommandType *oct = unit->owner->getType()->getActions()->getFirstCtOfClass(CmdClass::LOAD);
         const LoadCommandType *olct = static_cast<const LoadCommandType*>(oct);
         if (unit->getCurrSkill()->getClass() != SkillClass::MOVE) {
-            const CommandType *ct = unit->getType()->getFirstCtOfClass(CmdClass::MOVE);
+            const CommandType *ct = unit->getType()->getActions()->getFirstCtOfClass(CmdClass::MOVE);
             Vec2i pos = unit->owner->getPos();
             float distanceX = (pos.x - unit->getPos().x) * (pos.x - unit->getPos().x);
             float distanceY = (pos.y - unit->getPos().y) * (pos.y - unit->getPos().y);
@@ -100,8 +100,8 @@ void GoalSystem::ownerLoad(Unit *unit) {
                     unit->giveCommand(g_world.newCommand(ct, CmdFlags(), pos));
                 }
                 Unit *home = unit->owner;
-                for (int i = 0; i < unit->getType()->getResourceProductionSystem().getStoredResourceCount(); ++i) {
-                    const ResourceType *rt = unit->getType()->getResourceProductionSystem().getStoredResource(i, unit->getFaction()).getType();
+                for (int i = 0; i < unit->getType()->getResourceProductionSystem()->getStoredResourceCount(); ++i) {
+                    const ResourceType *rt = unit->getType()->getResourceProductionSystem()->getStoredResource(i, unit->getFaction()).getType();
                     int carried = unit->getSResource(rt)->getAmount();
                     if (carried > 0) {
                         unit->incResourceAmount(rt, -carried);
@@ -122,7 +122,7 @@ void GoalSystem::ownerLoad(Unit *unit) {
 }
 
 void GoalSystem::ownerUnload(Unit *unit) {
-    const CommandType *oct = unit->owner->getType()->getFirstCtOfClass(CmdClass::UNLOAD);
+    const CommandType *oct = unit->owner->getType()->getActions()->getFirstCtOfClass(CmdClass::UNLOAD);
     const UnloadCommandType *ouct = static_cast<const UnloadCommandType*>(oct);
     int maxRange = ouct->getUnloadSkillType()->getMaxRange();
     if (g_world.placeUnit(unit->owner->getCenteredPos(), maxRange, unit)) {
@@ -249,9 +249,9 @@ Unit* GoalSystem::findShop(Unit *unit) {
         Vec2i bPos = building->getCenteredPos();
         int newDistance = sqrt(pow(float(abs(uPos.x - bPos.x)), 2) + pow(float(abs(uPos.y - bPos.y)), 2));
         if (newDistance < distance) {
-            if (building->getType()->getItemProductionSystem().getCreatedItemCount() > 0) {
-                for (int j = 0; j < building->getType()->getItemProductionSystem().getCreatedItemCount(); ++j) {
-                    const ItemType *itemType = building->getType()->getItemProductionSystem().getCreatedItem(j, unit->getFaction()).getType();
+            if (building->getType()->getItemProductionSystem()->getCreatedItemCount() > 0) {
+                for (int j = 0; j < building->getType()->getItemProductionSystem()->getCreatedItemCount(); ++j) {
+                    const ItemType *itemType = building->getType()->getItemProductionSystem()->getCreatedItem(j, unit->getFaction()).getType();
                     string typeTag = itemType->getTypeTag();
                     bool stored = false;
                     for (int l = 0; l < building->getStorage().size(); ++l) {
@@ -355,8 +355,8 @@ Unit* GoalSystem::findProducer(Unit* unit) {
     for (int i = 0; i < f->getUnitCount(); ++i) {
         Unit *building = f->getUnit(i);
         if (building->getType()->hasTag("building") && building->getType()->hasTag("producer")) {
-            for (int k = 0; k < building->getType()->getResourceProductionSystem().getStoredResourceCount(); ++k) {
-                const ResourceType *producedType = building->getType()->getResourceProductionSystem().getStoredResource(k, building->getFaction()).getType();
+            for (int k = 0; k < building->getType()->getResourceProductionSystem()->getStoredResourceCount(); ++k) {
+                const ResourceType *producedType = building->getType()->getResourceProductionSystem()->getStoredResource(k, building->getFaction()).getType();
                 int amount = building->getSResource(producedType)->getAmount();
                 for (int n = 0; n < building->getType()->getResourceStores().size(); ++n) {
                     const ResourceType *resType = building->getType()->getResourceStores()[n].getType();
@@ -365,10 +365,10 @@ Unit* GoalSystem::findProducer(Unit* unit) {
                     }
                 }
                 if (amount > 50 && producedType->getName() != "wealth") {
-                    for (int j = 0; j < unit->getType()->getResourceProductionSystem().getStoredResourceCount(); ++j) {
-                        const ResourceType *transportedType = unit->getType()->getResourceProductionSystem().getStoredResource(j, unit->getFaction()).getType();
-                        for (int l = 0; l < unit->owner->getType()->getResourceProductionSystem().getStoredResourceCount(); ++l) {
-                            const ResourceType *storedType = unit->owner->getType()->getResourceProductionSystem().getStoredResource(l, unit->getFaction()).getType();
+                    for (int j = 0; j < unit->getType()->getResourceProductionSystem()->getStoredResourceCount(); ++j) {
+                        const ResourceType *transportedType = unit->getType()->getResourceProductionSystem()->getStoredResource(j, unit->getFaction()).getType();
+                        for (int l = 0; l < unit->owner->getType()->getResourceProductionSystem()->getStoredResourceCount(); ++l) {
+                            const ResourceType *storedType = unit->owner->getType()->getResourceProductionSystem()->getStoredResource(l, unit->getFaction()).getType();
                             if (transportedType == storedType && storedType == producedType &&
                                 transportedType == producedType) {
                                 bool previousTarget = false;
@@ -413,8 +413,8 @@ Unit* GoalSystem::findGuild(Unit* unit) {
             buy = true;
         }
         if (buy == true) {
-            for (int j = 0; j < building->getType()->getResourceProductionSystem().getStoredResourceCount(); ++j) {
-                const ResourceType *producedType = building->getType()->getResourceProductionSystem().
+            for (int j = 0; j < building->getType()->getResourceProductionSystem()->getStoredResourceCount(); ++j) {
+                const ResourceType *producedType = building->getType()->getResourceProductionSystem()->
                                                    getStoredResource(j, building->getFaction()).getType();
                 bool status = false;
                 for (int n = 0; n < building->getType()->getResourceStores().size(); ++n) {
@@ -425,12 +425,12 @@ Unit* GoalSystem::findGuild(Unit* unit) {
                     }
                 }
                 if (producedType->getName() != "wealth" && !status) {
-                    for (int k = 0; k < unit->getType()->getResourceProductionSystem().getStoredResourceCount(); ++k) {
-                        const ResourceType *transportedType = unit->getType()->getResourceProductionSystem().
+                    for (int k = 0; k < unit->getType()->getResourceProductionSystem()->getStoredResourceCount(); ++k) {
+                        const ResourceType *transportedType = unit->getType()->getResourceProductionSystem()->
                                                               getStoredResource(k, unit->getFaction()).getType();
                         if (producedType == transportedType) {
-                            for (int l = 0; l < unit->owner->getType()->getResourceProductionSystem().getStoredResourceCount(); ++l) {
-                                const ResourceType *storedType = unit->owner->getType()->getResourceProductionSystem().
+                            for (int l = 0; l < unit->owner->getType()->getResourceProductionSystem()->getStoredResourceCount(); ++l) {
+                                const ResourceType *storedType = unit->owner->getType()->getResourceProductionSystem()->
                                                                  getStoredResource(l, unit->getFaction()).getType();
                                 if (producedType == storedType) {
                                     for (int m = 0; m < unit->owner->getType()->getResourceStores().size(); ++m) {
@@ -509,8 +509,8 @@ Unit* GoalSystem::findNearbyAlly(Unit* unit, Focus focus) {
 const CommandType* GoalSystem::selectHealSpell(Unit *unit, Unit *target) {
     const CastSpellCommandType *healCommandType = NULL;
     int healthToHeal = target->getResourcePools()->getHpRegeneration().getValue() - target->getHp();
-    for (int i = 0; i < unit->getType()->getCommandTypeCount(); ++i) {
-        const CommandType *testingCommandType = unit->getType()->getCommandType(i);
+    for (int i = 0; i < unit->getType()->getActions()->getCommandTypeCount(); ++i) {
+        const CommandType *testingCommandType = unit->getType()->getActions()->getCommandType(i);
         if (testingCommandType->getClass() == CmdClass::CAST_SPELL) {
             const CastSpellCommandType *testCommandType = static_cast<const CastSpellCommandType*>(testingCommandType);
             const CastSpellSkillType *testSkillType = testCommandType->getCastSpellSkillType();
@@ -537,8 +537,8 @@ const CommandType* GoalSystem::selectHealSpell(Unit *unit, Unit *target) {
 const CommandType* GoalSystem::selectBuffSpell(Unit *unit, Unit *target) {
     const CastSpellCommandType *buffCommandType = NULL;
     bool useSpell = true;
-    for (int i = 0; i < unit->getType()->getCommandTypeCount(); ++i) {
-        const CommandType *testingCommandType = unit->getType()->getCommandType(i);
+    for (int i = 0; i < unit->getType()->getActions()->getCommandTypeCount(); ++i) {
+        const CommandType *testingCommandType = unit->getType()->getActions()->getCommandType(i);
         if (testingCommandType->getClass() == CmdClass::CAST_SPELL) {
             const CastSpellCommandType *testCommandType = static_cast<const CastSpellCommandType*>(testingCommandType);
             const CastSpellSkillType *testSkillType = testCommandType->getCastSpellSkillType();
@@ -563,9 +563,9 @@ const CommandType* GoalSystem::selectAttackSpell(Unit *unit, Unit *target) {
     const CommandType *attackCommandType = NULL;
     int currentDamage = 0;
     int currentEp;
-    for (int i = 0; i < unit->getType()->getCommandTypeCount(); ++i) {
+    for (int i = 0; i < unit->getType()->getActions()->getCommandTypeCount(); ++i) {
         if (unit->currentCommandCooldowns[i].currentStep == 0) {
-            const CommandType *testingCommandType = unit->getType()->getCommandType(i);
+            const CommandType *testingCommandType = unit->getType()->getActions()->getCommandType(i);
             if (testingCommandType->getClass() == CmdClass::ATTACK) {
                 const AttackCommandType *testCommandType = static_cast<const AttackCommandType*>(testingCommandType);
                 const AttackSkillType *testSkillType = testCommandType->AttackCommandTypeBase::getAttackSkillTypes()->getFirstAttackSkill();
@@ -776,7 +776,7 @@ void GoalSystem::computeAction(Unit *unit, Focus focus) {
             Unit *finalPick = findBuilding(unit);
             if (finalPick != NULL) {
                 Vec2i tPos = finalPick->getCenteredPos();
-                const CommandType *ct = unit->getType()->getFirstCtOfClass(CmdClass::REPAIR);
+                const CommandType *ct = unit->getType()->getActions()->getFirstCtOfClass(CmdClass::REPAIR);
                 if (tPos != Vec2i(0,0)) {
                     if (unit->isCarried()) {
                         ownerUnload(unit);
@@ -808,7 +808,7 @@ void GoalSystem::computeAction(Unit *unit, Focus focus) {
             if (finalPick != NULL) {
                 tPos = finalPick->getPos();
             }
-            const CommandType *ct = unit->getType()->getFirstCtOfClass(CmdClass::MOVE);
+            const CommandType *ct = unit->getType()->getActions()->getFirstCtOfClass(CmdClass::MOVE);
             if (tPos != Vec2i(0,0)) {
                     if (unit->isCarried()) {
                         ownerUnload(unit);
@@ -943,7 +943,7 @@ void GoalSystem::computeAction(Unit *unit, Focus focus) {
         Vec2i pos = unitPos;
         Vec2i position = exploredMap.findNearestUnexploredTile(unitPos, unit->getFaction(), unit->previousDirection);
         pos = position;
-        const CommandType *ct = unit->getType()->getFirstCtOfClass(CmdClass::MOVE);
+        const CommandType *ct = unit->getType()->getActions()->getFirstCtOfClass(CmdClass::MOVE);
         if (pos != unitPos && pos != Vec2i(0,0)) {
             unit->giveCommand(g_world.newCommand(ct, CmdFlags(), pos));
             unit->previousDirection = newDirection(unit->previousDirection);
@@ -997,7 +997,7 @@ void GoalSystem::computeAction(Unit *unit, Focus focus) {
                     if (unit->isCarried()) {
                         ownerUnload(unit);
                     }
-                    const CommandType *tct = unit->getType()->getFirstCtOfClass(CmdClass::TRANSPORT);
+                    const CommandType *tct = unit->getType()->getActions()->getFirstCtOfClass(CmdClass::TRANSPORT);
                     unit->giveCommand(g_world.newCommand(tct, CmdFlags(), unit->getGoalStructure()));
                 }
             }
@@ -1019,8 +1019,10 @@ void GoalSystem::computeAction(Unit *unit, Focus focus) {
                     if (unit->isCarried()) {
                         ownerUnload(unit);
                     }
-                    const CommandType *tct = unit->getType()->getFirstCtOfClass(CmdClass::TRADE);
-                    unit->giveCommand(g_world.newCommand(tct, CmdFlags(), unit->getGoalStructure()));
+                    const CommandType *tct = unit->getType()->getActions()->getFirstCtOfClass(CmdClass::TRADE);
+                    if (tct != 0) {
+                        unit->giveCommand(g_world.newCommand(tct, CmdFlags(), unit->getGoalStructure()));
+                    }
                 }
             }
         }
@@ -1032,7 +1034,7 @@ void GoalSystem::computeAction(Unit *unit, Focus focus) {
         }
         if (unit->getCurrSkill()->getClass() == SkillClass::STOP) {
             if (unit->getGoalReason() == "deliver") {
-                const CommandType *tct = unit->getType()->getFirstCtOfClass(CmdClass::MOVE);
+                const CommandType *tct = unit->getType()->getActions()->getFirstCtOfClass(CmdClass::MOVE);
                 unit->giveCommand(g_world.newCommand(tct, CmdFlags(), unit->getGoalStructure()));
             }
             Faction *f = unit->getFaction();
@@ -1078,7 +1080,7 @@ void GoalSystem::computeAction(Unit *unit, Focus focus) {
                     tPos = bPos;
                 }
             }
-            const CommandType *tct = unit->getType()->getFirstCtOfClass(CmdClass::MOVE);
+            const CommandType *tct = unit->getType()->getActions()->getFirstCtOfClass(CmdClass::MOVE);
             if (tPos != Vec2i(0,0)) {
                 if (unit->isCarried()) {
                     ownerUnload(unit);

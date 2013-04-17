@@ -61,14 +61,14 @@ void FormationCommand::describe(Formation formation, FormationDescriptor *callba
 void FormationCommand::issue(Formation formation, const Squad *squad) {
     const Unit *unit = squad->leader;
     Unit *leader = g_world.getUnit(squad->leader->getId());
-    Command *command = g_world.newCommand(leader->getType()->getFirstCtOfClass(CmdClass::MOVE), CmdFlags());
+    Command *command = g_world.newCommand(leader->getType()->getActions()->getFirstCtOfClass(CmdClass::MOVE), CmdFlags());
     Vec2i position = leader->getPos();
     command->setPos(position);
     leader->giveCommand(command);
     for (int i = 0; i < squad->subordinates.size(); ++i) {
         const Unit *subordinate = squad->subordinates[i];
         Unit *sub = g_world.getUnit(subordinate->getId());
-        Command *subCommand = g_world.newCommand(sub->getType()->getFirstCtOfClass(CmdClass::MOVE), CmdFlags());
+        Command *subCommand = g_world.newCommand(sub->getType()->getActions()->getFirstCtOfClass(CmdClass::MOVE), CmdFlags());
         if (i >= formation.lines[0].line.size()) {
             int newPos = formation.lines[0].line.size() - 1;
             Vec2i newOffset = position + formation.lines[0].line[newPos];
@@ -94,7 +94,7 @@ bool CreateSquadCommandType::load(const XmlNode *n, const string &dir, const Tec
 
 	try {
 		skillName = n->getChild("set-structure-skill")->getAttribute("value")->getRestrictedValue();
-		m_setStructureSkillType = static_cast<const SetStructureSkillType*>(creatableType->getSkillType(skillName, SkillClass::SET_STRUCTURE));
+		m_setStructureSkillType = static_cast<const SetStructureSkillType*>(creatableType->getActions()->getSkillType(skillName, SkillClass::SET_STRUCTURE));
 	} catch (runtime_error e) {
 		g_logger.logXmlError(dir, e.what());
 		loadOk = false;
@@ -141,7 +141,7 @@ bool ExpandSquadCommandType::load(const XmlNode *n, const string &dir, const Tec
 
 	try {
 		skillName = n->getChild("set-structure-skill")->getAttribute("value")->getRestrictedValue();
-		m_setStructureSkillType = static_cast<const SetStructureSkillType*>(creatableType->getSkillType(skillName, SkillClass::SET_STRUCTURE));
+		m_setStructureSkillType = static_cast<const SetStructureSkillType*>(creatableType->getActions()->getSkillType(skillName, SkillClass::SET_STRUCTURE));
 	} catch (runtime_error e) {
 		g_logger.logXmlError(dir, e.what());
 		loadOk = false;
@@ -195,7 +195,7 @@ bool SquadMoveCommandType::load(const XmlNode *n, const string &dir, const TechT
 
 	try {
 		skillName = n->getChild("move-skill")->getAttribute("value")->getRestrictedValue();
-		m_moveSkillType = static_cast<const MoveSkillType*>(creatableType->getSkillType(skillName, SkillClass::MOVE));
+		m_moveSkillType = static_cast<const MoveSkillType*>(creatableType->getActions()->getSkillType(skillName, SkillClass::MOVE));
 	} catch (runtime_error e) {
 		g_logger.logXmlError(dir, e.what());
 		loadOk = false;
@@ -229,14 +229,14 @@ void SquadMoveCommandType::update(Unit *unit) const {
 	assert(command->getType() == this);
 	Map *map = g_world.getMap();
     Unit *leader = g_world.getUnit(unit->getId());
-    Command *leaderCommand = g_world.newCommand(leader->getType()->getFirstCtOfClass(CmdClass::MOVE), CmdFlags());
+    Command *leaderCommand = g_world.newCommand(leader->getType()->getActions()->getFirstCtOfClass(CmdClass::MOVE), CmdFlags());
     Vec2i position = command->getPos();
     leaderCommand->setPos(position);
     leader->giveCommand(leaderCommand);
     for (int i = 0; i < leader->getType()->leader.squad.subordinates.size(); ++i) {
         const Unit *subordinate = leader->getType()->leader.squad.subordinates[i];
         Unit *sub = g_world.getUnit(subordinate->getId());
-        Command *subCommand = g_world.newCommand(sub->getType()->getFirstCtOfClass(CmdClass::MOVE), CmdFlags());
+        Command *subCommand = g_world.newCommand(sub->getType()->getActions()->getFirstCtOfClass(CmdClass::MOVE), CmdFlags());
         Vec2i offset = position + leader->getType()->leader.squad.leaderOffsets[i];
         subCommand->setPos(offset);
         sub->giveCommand(subCommand);

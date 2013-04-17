@@ -77,6 +77,21 @@
         <resource name="space" amount="20"/>
       </starter-resources>
     </resource-production>
+    <processing>
+      <processes>
+        <process timer="10" count="1" scope="local">
+          <costs>
+            <cost name="wheat" consume="false" amount="0"/>
+          </costs>
+          <bonuses>
+            <cost cost-name="manure" prod-name="wheat" count="5" consume="true" amount="2" plus="20" multiply="1"/>
+          </bonuses>
+          <products>
+            <product name="wheat" amount="100"/>
+          </products>
+        </process>
+      </processes>
+    </processing>
     <actions>
       <skills>
         <skill>

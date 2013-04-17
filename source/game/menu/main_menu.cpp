@@ -89,6 +89,7 @@ const string MainMenu::stateNames[] = {
 	"join-game",
 	"scenario",
 	"loadgame",
+	"character-creator",
 	"map-editor",
 	"config",
 	"about",

@@ -31,5 +31,31 @@
       <image path="images/undead_build.bmp"/>
       <image-cancel path="images/tech_cancel.bmp"/>
     </producible>
+    <actions>
+      <skills>
+        <skill>
+          <type value="produce" />
+          <name value="produce_skill"/>
+          <ep-cost value="0" />
+          <speed value="300" />
+	  <sounds-animations>
+            <anim-speed value="300" />
+            <animation path="../../units/castle/models/castle.g3d" />
+            <sound enabled="false" />
+	  </sounds-animations>
+        </skill>
+      </skills>
+      <commands>
+        <command>
+          <type value="produce"/>
+          <name value="produce_hauler" tip="hauler_info"/>
+          <image path="../../units/hauler/images/worker.bmp"/>
+          <unit-requirements />
+          <upgrade-requirements />
+          <produce-skill value="produce_skill"/>
+          <produced-unit name="hauler"/>
+        </command>
+      </commands>
+    </actions>
   </creatable-type>
 </item>

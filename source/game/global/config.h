@@ -125,6 +125,7 @@ private:
 	int uiLastMinimapPosY;
 	int uiLastMinimapSize;
 	int uiLastOptionsPage;
+	int uiLastCharacterCreatorPage;
 	int uiLastResourceBarPosX;
 	int uiLastResourceBarPosY;
 	int uiLastResourceBarSize;
@@ -253,6 +254,7 @@ public:
 	int getUiLastMinimapPosX() const			{return uiLastMinimapPosX;}
 	int getUiLastMinimapPosY() const			{return uiLastMinimapPosY;}
 	int getUiLastMinimapSize() const			{return uiLastMinimapSize;}
+	int getUiLastCharacterCreatorPage() const	{return uiLastCharacterCreatorPage;}
 	int getUiLastOptionsPage() const			{return uiLastOptionsPage;}
 	int getUiLastResourceBarPosX() const		{return uiLastResourceBarPosX;}
 	int getUiLastResourceBarPosY() const		{return uiLastResourceBarPosY;}
@@ -364,6 +366,7 @@ public:
 	void setUiLastMinimapPosX(int val)			{uiLastMinimapPosX = val;}
 	void setUiLastMinimapPosY(int val)			{uiLastMinimapPosY = val;}
 	void setUiLastMinimapSize(int val)			{uiLastMinimapSize = val;}
+	void setUiLastCharacterCreatorPage(int val)	{uiLastCharacterCreatorPage = val;}
 	void setUiLastOptionsPage(int val)			{uiLastOptionsPage = val;}
 	void setUiLastResourceBarPosX(int val)		{uiLastResourceBarPosX = val;}
 	void setUiLastResourceBarPosY(int val)		{uiLastResourceBarPosY = val;}

@@ -1223,7 +1223,8 @@ void UserInterface::onSecondTierSelect(int posDisplay) {
 				g_program.getMouseCursor().setAppearance(MouseAppearance::CMD_ICON, choosenBuildingType->getImage());
 			}
 		} else {
-			if (world->getFaction(factionIndex)->reqsOk(pt)) {
+		    Faction *faction = g_world.getFaction(factionIndex);
+			if (world->getFaction(factionIndex)->reqsOk(pt) && faction->checkCosts(pt)) {
 				CmdResult result = commander->tryGiveCommand(selection, CmdFlags(),
 					activeCommandType, CmdClass::NULL_COMMAND, Command::invalidPos, 0, pt);
 				addOrdersResultToConsole(activeCommandClass, result);
@@ -1639,7 +1640,7 @@ void UserInterface::computeCommandPanel() {
 		m_display->setSelectedCommandPos(activePos);
         const Unit *test = selection->getFrontUnit();
         const UnitType *utest = test->getType();
-		if (m_display->getSelectedCommandIndex() > utest->getCommandTypeCount() - utest->leader.squadCommands.size()) {
+		if (m_display->getSelectedCommandIndex() > utest->getActions()->getCommandTypeCount() - utest->leader.squadCommands.size()) {
             m_display->setSelectedCommandPos(m_display->invalidIndex);
 		}
 	}
@@ -1687,9 +1688,10 @@ void UserInterface::computeCommandPanel() {
 
 			if (selection->isUniform()) { // uniform selection
 				if (u->isBuilt()) {
+				    Unit *unit = g_world.findUnitById(u->getId());
 					int morphPos = cellWidthCount * 2;
-					for (int i = 0, j = 0; i < ut->getCommandTypeCount() - ut->leader.squadCommands.size(); ++i) {
-						const CommandType *ct = ut->getCommandType(i);
+					for (int i = 0, j = 0; i < unit->getActions()->getCommandTypeCount() - ut->leader.squadCommands.size(); ++i) {
+						const CommandType *ct = unit->getActions()->getCommandType(i);
 						int displayPos = ct->getClass() == CmdClass::MORPH ? morphPos++ : j;
 						if (u->getFaction()->isAvailable(ct) && !ct->isInvisible()) {
 							m_display->setDownImage(displayPos, ct->getImage());
@@ -1704,7 +1706,7 @@ void UserInterface::computeCommandPanel() {
 				foreach_enum (CmdClass, cc) {
 					if (selection->isSharedCommandClass(cc) && !isProductionCmdClass(cc)) {
 						m_display->setDownLighted(lastCommand, true);
-						m_display->setDownImage(lastCommand, ut->getFirstCtOfClass(cc)->getImage());
+						m_display->setDownImage(lastCommand, ut->getActions()->getFirstCtOfClass(cc)->getImage());
 						m_display->setCommandClass(lastCommand, cc);
 						lastCommand++;
 					}
@@ -1764,9 +1766,6 @@ void UserInterface::computeDisplay() {
 	m_itemWindow->computeEquipmentPanel();
 	m_itemWindow->computeButtonsPanel();
 	m_itemWindow->computeInventoryPanel();
-
-    // === Resource Panels ===
-	m_itemWindow->computeResourcesPanel();
 
     // === Production Panels ===
     m_productionWindow->computeResourcesPanel();

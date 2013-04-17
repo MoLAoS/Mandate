@@ -26,14 +26,16 @@
   <creatable-type>
     <size value="5"/>
     <height value="2"/>
-    <stats>
-      <max-hp value="15000" regeneration="0"/>
-      <max-ep value="0" regeneration="0"/>
-      <max-sp value="0" regeneration="0"/>
-      <max-cp value="-1" />
-      <sight value="10"/>
-      <armor value="0"/>
-    </stats>
+    <statistics>
+      <enhancement>
+	<resource-pools>
+	  <max-hp value="8000"/>
+	</resource-pools>
+	<unit-stats>
+	  <sight value="10" value-mult="0"/>
+	</unit-stats>
+      </enhancement>
+    </statistics>
     <producible>
       <time value="10"/>
       <properties/>

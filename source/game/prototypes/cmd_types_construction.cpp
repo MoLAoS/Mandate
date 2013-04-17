@@ -68,7 +68,7 @@ bool StructureCommandType::load(const XmlNode *n, const string &dir, const TechT
 	}
 	try {
 		string skillName = n->getChild("build-skill")->getAttribute("value")->getRestrictedValue();
-		m_buildSkillType = static_cast<const BuildSkillType*>(creatableType->getSkillType(skillName, SkillClass::BUILD));
+		m_buildSkillType = static_cast<const BuildSkillType*>(creatableType->getActions()->getSkillType(skillName, SkillClass::BUILD));
 	} catch (runtime_error e) {
 		g_logger.logXmlError(dir, e.what());
 		loadOk = false;
@@ -315,7 +315,7 @@ bool ConstructCommandType::load(const XmlNode *n, const string &dir, const TechT
 	const FactionType *ft = ct->getFactionType();
 	try {
 		string skillName = n->getChild("construct-skill")->getAttribute("value")->getRestrictedValue();
-		m_constructSkillType = static_cast<const ConstructSkillType*>(creatableType->getSkillType(skillName, SkillClass::CONSTRUCT));
+		m_constructSkillType = static_cast<const ConstructSkillType*>(creatableType->getActions()->getSkillType(skillName, SkillClass::CONSTRUCT));
 	} catch (runtime_error e) {
 		g_logger.logXmlError(dir, e.what());
 		loadOk = false;
@@ -557,7 +557,7 @@ bool MaintainCommandType::load(const XmlNode *n, const string &dir, const TechTr
 	//repair
 	try {
 		string skillName = n->getChild("maintain-skill")->getAttribute("value")->getRestrictedValue();
-		maintainSkillType = static_cast<const MaintainSkillType*>(creatableType->getSkillType(skillName, SkillClass::MAINTAIN));
+		maintainSkillType = static_cast<const MaintainSkillType*>(creatableType->getActions()->getSkillType(skillName, SkillClass::MAINTAIN));
 	} catch (runtime_error e) {
 		g_logger.logXmlError(dir, e.what ());
 		loadOk = false;
@@ -828,7 +828,7 @@ void MaintainCommandType::update(Unit *unit) const {
 					ScriptManager::onUnitCreated(repaired);
 					if (unit->getFactionIndex() == g_world.getThisFactionIndex()) {
 
-						BuildCommandType *bct = (BuildCommandType *)unit->getType()->getFirstCtOfClass(CmdClass::CONSTRUCT);
+						BuildCommandType *bct = (BuildCommandType *)unit->getType()->getActions()->getFirstCtOfClass(CmdClass::CONSTRUCT);
 						if (bct) {
 							RUNTIME_CHECK(!unit->isCarried() && !unit->isGarrisoned());
 							g_soundRenderer.playFx(bct->getBuiltSound(),
@@ -919,7 +919,7 @@ bool MaintainCommandType::maintainableInRange(const Unit *unit, Vec2i centre, in
 			&& unit->isAlly(candidate)
 			&& (!bsct || bsct->allowRepair())
 			&& (!damagedOnly || candidate->isDamaged())
-			&& (!militaryOnly || candidate->getType()->hasCommandClass(CmdClass::ATTACK))
+			&& (!militaryOnly || candidate->getType()->getActions()->hasCommandClass(CmdClass::ATTACK))
 			&& rct->canMaintain(candidate->getType())) {
 				//record the nearest distance to target (target may be on multiple cells)
 				maintainables.record(candidate, distance);

@@ -255,7 +255,7 @@ void Selection::update() {
 		m_canMove = true;
 		m_canRepair = true;
 		m_canCloak = false;
-		if (frontUT->hasCommandClass(CmdClass::REPAIR)) {
+		if (frontUT->getActions()->hasCommandClass(CmdClass::REPAIR)) {
 			if (m_selectedUnits.front()->isAutoCmdEnabled(AutoCmdFlag::REPAIR)) {
 				m_autoCmdStates[AutoCmdFlag::REPAIR] = AutoCmdState::ALL_ON;
 			} else {
@@ -266,7 +266,7 @@ void Selection::update() {
 		}
 		removeCarried(); /// @todo: probably not needed if individual units are removed in load command
 
-		if (frontUT->hasCommandClass(CmdClass::ATTACK)) {
+		if (frontUT->getActions()->hasCommandClass(CmdClass::ATTACK)) {
 			if (m_selectedUnits.front()->isAutoCmdEnabled(AutoCmdFlag::ATTACK)) {
 				m_autoCmdStates[AutoCmdFlag::ATTACK] = AutoCmdState::ALL_ON;
 			} else {
@@ -276,7 +276,7 @@ void Selection::update() {
 			m_autoCmdStates[AutoCmdFlag::ATTACK] = AutoCmdState::NONE;
 		}
 
-		if (frontUT->hasCommandClass(CmdClass::MOVE)) {
+		if (frontUT->getActions()->hasCommandClass(CmdClass::MOVE)) {
 			if (m_selectedUnits.front()->isAutoCmdEnabled(AutoCmdFlag::FLEE)) {
 				m_autoCmdStates[AutoCmdFlag::FLEE] = AutoCmdState::ALL_ON;
 			} else {
@@ -297,7 +297,7 @@ void Selection::update() {
 			if ((*i)->getGarrisonedCount()) {
 				m_garrisoned = true;
 			}
-			if (ut->hasCommandClass(CmdClass::REPAIR)) {
+			if (ut->getActions()->hasCommandClass(CmdClass::REPAIR)) {
 				if (((*i)->isAutoCmdEnabled(AutoCmdFlag::REPAIR))) {
 					if (m_autoCmdStates[AutoCmdFlag::REPAIR] == AutoCmdState::ALL_OFF) {
 						m_autoCmdStates[AutoCmdFlag::REPAIR] = AutoCmdState::MIXED;
@@ -312,7 +312,7 @@ void Selection::update() {
 					} // else MIXED or ALL_OFF already
 				}
 			}
-			if (ut->hasCommandClass(CmdClass::ATTACK)) {
+			if (ut->getActions()->hasCommandClass(CmdClass::ATTACK)) {
 				if (((*i)->isAutoCmdEnabled(AutoCmdFlag::ATTACK))) {
 					if (m_autoCmdStates[AutoCmdFlag::ATTACK] == AutoCmdState::ALL_OFF) {
 						m_autoCmdStates[AutoCmdFlag::ATTACK] = AutoCmdState::MIXED;
@@ -327,7 +327,7 @@ void Selection::update() {
 					} // else MIXED or ALL_OFF already
 				}
 			}
-			if (ut->hasCommandClass(CmdClass::MOVE)) {
+			if (ut->getActions()->hasCommandClass(CmdClass::MOVE)) {
 				if (((*i)->isAutoCmdEnabled(AutoCmdFlag::FLEE))) {
 					if (m_autoCmdStates[AutoCmdFlag::FLEE] == AutoCmdState::ALL_OFF) {
 						m_autoCmdStates[AutoCmdFlag::FLEE] = AutoCmdState::MIXED;
@@ -363,7 +363,7 @@ void Selection::update() {
 
 const Texture2D* Selection::getCommandImage(CmdClass cc) const {
 	foreach_const (UnitVector, it, m_selectedUnits) {
-		const CommandType *ct = (*it)->getType()->getFirstCtOfClass(cc);
+		const CommandType *ct = (*it)->getType()->getActions()->getFirstCtOfClass(cc);
 		if (ct) {
 			return ct->getImage();
 		}

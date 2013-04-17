@@ -122,6 +122,7 @@ public:
     int getEpCost() const {return epCost;}
 
     bool load(const XmlNode *sn, const string &dir, const TechTree *tt, const CreatableType *ct);
+    void init();
 };
 
 // =====================================================

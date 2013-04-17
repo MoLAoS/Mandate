@@ -266,11 +266,11 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 	// 4a. Discover which mobile unit types can be loaded(/housed) in other units
 	foreach_const (UnitTypes, uit, unitTypes) {
 		const UnitType *ut = *uit;
-		for (int i=0; i < ut->getCommandTypeCount<LoadCommandType>(); ++i) {
-			const LoadCommandType *lct = ut->getCommandType<LoadCommandType>(i);
+		for (int i=0; i < ut->getActions()->getCommandTypeCount<LoadCommandType>(); ++i) {
+			const LoadCommandType *lct = ut->getActions()->getCommandType<LoadCommandType>(i);
 			foreach (UnitTypes, luit, unitTypes) {
 				UnitType *lut = *luit;
-				if (lct->canCarry(lut) && lut->getFirstCtOfClass(CmdClass::MOVE)) {
+				if (lct->canCarry(lut) && lut->getActions()->getFirstCtOfClass(CmdClass::MOVE)) {
 					loadableUnitTypes.insert(lut);
 				}
 			}
@@ -280,11 +280,11 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 
 	foreach_const (UnitTypes, uit, unitTypes) {
 		const UnitType *ut = *uit;
-		for (int i=0; i < ut->getCommandTypeCount<FactionLoadCommandType>(); ++i) {
-			const FactionLoadCommandType *lct = ut->getCommandType<FactionLoadCommandType>(i);
+		for (int i=0; i < ut->getActions()->getCommandTypeCount<FactionLoadCommandType>(); ++i) {
+			const FactionLoadCommandType *lct = ut->getActions()->getCommandType<FactionLoadCommandType>(i);
 			foreach (UnitTypes, luit, unitTypes) {
 				UnitType *lut = *luit;
-				if (lct->canCarry(lut) && lut->getFirstCtOfClass(CmdClass::MOVE)) {
+				if (lct->canCarry(lut) && lut->getActions()->getFirstCtOfClass(CmdClass::MOVE)) {
 					loadableUnitTypes.insert(lut);
 				}
 			}
@@ -294,11 +294,11 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 
 	foreach_const (UnitTypes, uit, unitTypes) {
 		const UnitType *ut = *uit;
-		for (int i=0; i < ut->getCommandTypeCount<GarrisonCommandType>(); ++i) {
-			const GarrisonCommandType *lct = ut->getCommandType<GarrisonCommandType>(i);
+		for (int i=0; i < ut->getActions()->getCommandTypeCount<GarrisonCommandType>(); ++i) {
+			const GarrisonCommandType *lct = ut->getActions()->getCommandType<GarrisonCommandType>(i);
 			foreach (UnitTypes, luit, unitTypes) {
 				UnitType *lut = *luit;
-				if (lct->canCarry(lut) && lut->getFirstCtOfClass(CmdClass::MOVE)) {
+				if (lct->canCarry(lut) && lut->getActions()->getFirstCtOfClass(CmdClass::MOVE)) {
 					loadableUnitTypes.insert(lut);
 				}
 			}

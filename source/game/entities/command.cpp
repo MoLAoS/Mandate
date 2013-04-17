@@ -99,7 +99,7 @@ Command::Command(CreateParamsLoad params) {// const XmlNode *node, const UnitTyp
 	unitRef = node->getOptionalIntValue("unitRef", -1);
 	unitRef2 = node->getOptionalIntValue("unitRef2", -1);
 	archetype = CmdDirective(node->getChildIntValue("archetype"));
-	type = params.ut->getCommandType(node->getChildStringValue("type"));
+	type = params.ut->getActions()->getCommandType(node->getChildStringValue("type"));
 	flags.flags = node->getChildIntValue("flags");
 	pos = node->getChildVec2iValue("pos");
 	pos2 = node->getChildVec2iValue("pos2");

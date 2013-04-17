@@ -365,8 +365,8 @@ void ProductionWindow::computeResourcesPanel() {
     if (m_ui->getSelection()->isComandable()) {
         const Unit *u = m_ui->getSelection()->getFrontUnit();
         if (u->isBuilt()) {
-            for (int i = 0; i < u->getType()->getResourceProductionSystem().getCreatedResourceCount(); ++i) {
-                const Texture2D *image = u->getType()->getResourceProductionSystem().getCreatedResource(i, u->getFaction()).getType()->getImage();
+            for (int i = 0; i < u->getType()->getResourceProductionSystem()->getCreatedResourceCount(); ++i) {
+                const Texture2D *image = u->getType()->getResourceProductionSystem()->getCreatedResource(i, u->getFaction()).getType()->getImage();
                 setDownImage(i, image);
             }
         }
@@ -379,9 +379,9 @@ void ProductionWindow::computeResourcesInfo(int posDisplay) {
         if (u->isBuilt()) {
             Lang &lang = g_lang;
             stringstream ss;
-            ResourceAmount r = u->getType()->getResourceProductionSystem().getCreatedResource(posDisplay, u->getFaction());
+            ResourceAmount r = u->getType()->getResourceProductionSystem()->getCreatedResource(posDisplay, u->getFaction());
             string resName = lang.getTechString(r.getType()->getName());
-            Timer tR = u->getType()->getResourceProductionSystem().getCreatedResourceTimer(posDisplay, u->getFaction());
+            Timer tR = u->getType()->getResourceProductionSystem()->getCreatedResourceTimer(posDisplay, u->getFaction());
             int cStep = u->productionSystemTimers.currentSteps[posDisplay].currentStep;
             if (resName == r.getType()->getName()) {
                 resName = formatString(resName);
@@ -397,8 +397,8 @@ void ProductionWindow::computeItemPanel() {
     if (m_ui->getSelection()->isComandable()) {
         const Unit *u = m_ui->getSelection()->getFrontUnit();
         if (u->isBuilt()) {
-            for (int i = 0; i < u->getType()->getItemProductionSystem().getCreatedItemCount(); ++i) {
-                const Texture2D *image = u->getType()->getItemProductionSystem().getCreatedItem(i, u->getFaction()).getType()->getImage();
+            for (int i = 0; i < u->getType()->getItemProductionSystem()->getCreatedItemCount(); ++i) {
+                const Texture2D *image = u->getType()->getItemProductionSystem()->getCreatedItem(i, u->getFaction()).getType()->getImage();
                 setDownImage(i + resourceCellCount, image);
             }
         }
@@ -411,9 +411,9 @@ void ProductionWindow::computeItemInfo(int posDisplay) {
         if (u->isBuilt()) {
             Lang &lang = g_lang;
             stringstream ss;
-            CreatedItem cr = u->getType()->getItemProductionSystem().getCreatedItem(posDisplay, u->getFaction());
+            CreatedItem cr = u->getType()->getItemProductionSystem()->getCreatedItem(posDisplay, u->getFaction());
             string resName = lang.getTechString(cr.getType()->getName());
-            Timer tR = u->getType()->getItemProductionSystem().getCreatedItemTimer(posDisplay, u->getFaction());
+            Timer tR = u->getType()->getItemProductionSystem()->getCreatedItemTimer(posDisplay, u->getFaction());
             int cStep = u->productionSystemTimers.currentItemSteps[posDisplay].currentStep;
             if (resName == cr.getType()->getName()) {
                 resName = formatString(resName);
@@ -429,8 +429,8 @@ void ProductionWindow::computeProcessPanel() {
     if (m_ui->getSelection()->isComandable()) {
         const Unit *u = m_ui->getSelection()->getFrontUnit();
         if (u->isBuilt()) {
-            for (int i = 0; i < u->getType()->getProcessProductionSystem().getProcessCount(); ++i) {
-                const Texture2D *image = u->getType()->getProcessProductionSystem().getProcess(i, u->getFaction()).costs[0].getType()->getImage();
+            for (int i = 0; i < u->getType()->getProcessProductionSystem()->getProcessCount(); ++i) {
+                const Texture2D *image = u->getType()->getProcessProductionSystem()->getProcess(i, u->getFaction()).products[0].getType()->getImage();
                 setDownImage(i + resourceCellCount + itemCellCount, image);
             }
         }
@@ -444,42 +444,42 @@ void ProductionWindow::computeProcessInfo(int posDisplay) {
             Lang &lang = g_lang;
             stringstream ss;
             ss << endl << lang.get("Process") << ": ";
-            Timer tR = u->getType()->getProcessProductionSystem().getProcessTimer(posDisplay, u->getFaction());
+            Timer tR = u->getType()->getProcessProductionSystem()->getProcessTimer(posDisplay, u->getFaction());
             int cStep = u->productionSystemTimers.currentProcessSteps[posDisplay].currentStep;
             ss << endl << lang.get("Timer") << ": " << cStep << "/" << tR.getTimerValue();
             string scope;
-            if (u->getType()->getProcessProductionSystem().getProcesses()[posDisplay].getScope() == true) {
+            if (u->getType()->getProcessProductionSystem()->getProcesses()[posDisplay].getScope() == true) {
                 scope = lang.get("local");
             } else {
                 scope = lang.get("faction");
             }
             ss << endl << lang.get("Scope") << ": " << scope;
             ss << endl << lang.get("Costs") << ": ";
-            for (int c = 0; c < u->getType()->getProcessProductionSystem().getProcesses()[posDisplay].costs.size(); ++c) {
-                const ResourceType *costsRT = u->getType()->getProcessProductionSystem().getProcesses()[posDisplay].costs[c].getType();
+            for (int c = 0; c < u->getType()->getProcessProductionSystem()->getProcesses()[posDisplay].costs.size(); ++c) {
+                const ResourceType *costsRT = u->getType()->getProcessProductionSystem()->getProcesses()[posDisplay].costs[c].getType();
                 string resName = lang.getTechString(costsRT->getName());
                 if (resName == costsRT->getName()) {
                     resName = formatString(resName);
                 }
-                ss << endl << u->getType()->getProcessProductionSystem().getProcesses()[posDisplay].costs[c].getAmount() << " " << resName;
+                ss << endl << u->getType()->getProcessProductionSystem()->getProcesses()[posDisplay].costs[c].getAmount() << " " << resName;
             }
             ss << endl << lang.get("Products") << ": ";
-            for (int p = 0; p < u->getType()->getProcessProductionSystem().getProcesses()[posDisplay].products.size(); ++p) {
-                const ResourceType *productsRT = u->getType()->getProcessProductionSystem().getProcesses()[posDisplay].products[p].getType();
+            for (int p = 0; p < u->getType()->getProcessProductionSystem()->getProcesses()[posDisplay].products.size(); ++p) {
+                const ResourceType *productsRT = u->getType()->getProcessProductionSystem()->getProcesses()[posDisplay].products[p].getType();
                 string resName = lang.getTechString(productsRT->getName());
                 if (resName == productsRT->getName()) {
                     resName = formatString(resName);
                 }
-                ss << endl << u->getType()->getProcessProductionSystem().getProcesses()[posDisplay].products[p].getAmount() << " " << resName;
+                ss << endl << u->getType()->getProcessProductionSystem()->getProcesses()[posDisplay].products[p].getAmount() << " " << resName;
             }
             ss << endl << lang.get("Items") << ": ";
-            for (int t = 0; t < u->getType()->getProcessProductionSystem().getProcesses()[posDisplay].items.size(); ++t) {
-                const ItemType *itemsIT = u->getType()->getProcessProductionSystem().getProcesses()[posDisplay].items[t].getType();
+            for (int t = 0; t < u->getType()->getProcessProductionSystem()->getProcesses()[posDisplay].items.size(); ++t) {
+                const ItemType *itemsIT = u->getType()->getProcessProductionSystem()->getProcesses()[posDisplay].items[t].getType();
                 string itemName = lang.getTechString(itemsIT->getName());
                 if (itemName == itemsIT->getName()) {
                     itemName = formatString(itemName);
                 }
-                ss << endl << u->getType()->getProcessProductionSystem().getProcesses()[posDisplay].items[t].getAmount() << " " << itemName;
+                ss << endl << u->getType()->getProcessProductionSystem()->getProcesses()[posDisplay].items[t].getAmount() << " " << itemName;
             }
             setToolTipText2("Process", ss.str(), ProductionDisplaySection::PROCESSES);
         }
@@ -490,8 +490,8 @@ void ProductionWindow::computeUnitPanel() {
     if (m_ui->getSelection()->isComandable()) {
         const Unit *u = m_ui->getSelection()->getFrontUnit();
         if (u->isBuilt()) {
-            for (int i = 0; i < u->getType()->getUnitProductionSystem().getCreatedUnitCount(); ++i) {
-                const Texture2D *image = u->getType()->getUnitProductionSystem().getCreatedUnit(i, u->getFaction()).getType()->getImage();
+            for (int i = 0; i < u->getType()->getUnitProductionSystem()->getCreatedUnitCount(); ++i) {
+                const Texture2D *image = u->getType()->getUnitProductionSystem()->getCreatedUnit(i, u->getFaction()).getType()->getImage();
                 setDownImage(i + resourceCellCount + itemCellCount + processCellCount, image);
             }
         }
@@ -504,9 +504,9 @@ void ProductionWindow::computeUnitInfo(int posDisplay) {
         if (u->isBuilt()) {
             Lang &lang = g_lang;
             stringstream ss;
-            CreatedUnit cu = u->getType()->getUnitProductionSystem().getCreatedUnit(posDisplay, u->getFaction());
+            CreatedUnit cu = u->getType()->getUnitProductionSystem()->getCreatedUnit(posDisplay, u->getFaction());
             string resName = lang.getTechString(cu.getType()->getName());
-            Timer tR = u->getType()->getUnitProductionSystem().getCreatedUnitTimer(posDisplay, u->getFaction());
+            Timer tR = u->getType()->getUnitProductionSystem()->getCreatedUnitTimer(posDisplay, u->getFaction());
             int cStep = u->productionSystemTimers.currentUnitSteps[posDisplay].currentStep;
             if (resName == cu.getType()->getName()) {
                 resName = formatString(resName);

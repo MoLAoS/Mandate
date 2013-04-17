@@ -59,7 +59,7 @@ void GlestAiInterface::update(){
 // ==================== interaction ====================
 
 CmdResult GlestAiInterface::giveCommand(int unitIndex, CmdClass commandClass, const Vec2i &pos){
-	Command *c = g_world.newCommand(faction->getUnit(unitIndex)->getType()->getFirstCtOfClass(commandClass), CmdFlags(), pos);
+	Command *c = g_world.newCommand(faction->getUnit(unitIndex)->getType()->getActions()->getFirstCtOfClass(commandClass), CmdFlags(), pos);
 	return faction->getUnit(unitIndex)->giveCommand(c);
 }
 

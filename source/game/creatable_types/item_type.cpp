@@ -92,7 +92,7 @@ bool ItemType::load(const string &dir, const TechTree *techTree, const FactionTy
 	}
 	try {
         const XmlNode *creatableTypeNode = itemNode->getChild("creatable-type");
-        if (!CreatableType::load(creatableTypeNode, dir, techTree, factionType)) {
+        if (!CreatableType::load(creatableTypeNode, dir, techTree, factionType, true)) {
             loadOk = false;
         }
     }

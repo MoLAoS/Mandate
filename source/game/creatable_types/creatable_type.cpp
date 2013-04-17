@@ -27,7 +27,7 @@ namespace Glest { namespace ProtoTypes {
 // =====================================================
 // 	class CreatableType
 // =====================================================
-bool CreatableType::load(const XmlNode *creatableTypeNode, const string &dir, const TechTree *techTree, const FactionType *factionType) {
+bool CreatableType::load(const XmlNode *creatableTypeNode, const string &dir, const TechTree *techTree, const FactionType *factionType, bool isItem) {
     bool loadOk = true;
 	m_factionType = factionType;
 	size = 0;
@@ -43,8 +43,6 @@ bool CreatableType::load(const XmlNode *creatableTypeNode, const string &dir, co
 		g_logger.logXmlError(dir, e.what());
 		loadOk = false;
 	}
-	halfSize = size / fixed(2);
-	halfHeight = height / fixed(2);
 	try {
         const XmlNode *statisticsNode = creatableTypeNode->getChild("statistics", 0, false);
         if (statisticsNode) {
@@ -182,204 +180,13 @@ bool CreatableType::load(const XmlNode *creatableTypeNode, const string &dir, co
 	try {
         const XmlNode *actionsNode = creatableTypeNode->getChild("actions", 0, false);
         if (actionsNode) {
-            vector<string> deCloakOnSkills;
-            vector<SkillClass> deCloakOnSkillClasses;
-            try {
-                const XmlNode *skillsNode = actionsNode->getChild("skills");
-                for (int i=0; i < skillsNode->getChildCount(); ++i) {
-                    const XmlNode *skillNode = skillsNode->getChild("skill", i);
-                    const XmlNode *typeNode = skillNode->getChild("type");
-                    string classId = typeNode->getAttribute("value")->getRestrictedValue();
-                    SkillType *skillType = g_prototypeFactory.newSkillType(SkillClassNames.match(classId.c_str()));
-                    skillType->load(skillNode, dir, techTree, this);
-                    skillTypes.push_back(skillType);
-                    g_prototypeFactory.setChecksum(skillType);
-                }
-            } catch (runtime_error e) {
-                g_logger.logXmlError(dir, e.what());
-                loadOk = false;
-            }
-            sortSkillTypes();
-            setDeCloakSkills(deCloakOnSkills, deCloakOnSkillClasses);
-            try {
-                if(!getFirstStOfClass(SkillClass::STOP)) {
-                    throw runtime_error("Every unit must have at least one stop skill: "+ dir);
-                }
-                if(!getFirstStOfClass(SkillClass::DIE)) {
-                    throw runtime_error("Every unit must have at least one die skill: "+ dir);
-                }
-            } catch (runtime_error e) {
-                g_logger.logXmlError(dir, e.what());
-                loadOk = false;
-            }
-            try {
-                const XmlNode *commandsNode = actionsNode->getChild("commands");
-                for (int i = 0; i < commandsNode->getChildCount(); ++i) {
-                    const XmlNode *commandNode = commandsNode->getChild(i);
-                    if (commandNode->getName() != "command") continue;
-                    string classId = commandNode->getChildRestrictedValue("type");
-                    CommandType *commandType = g_prototypeFactory.newCommandType(CmdClassNames.match(classId.c_str()), this);
-                    loadOk = commandType->load(commandNode, dir, techTree, this) && loadOk;
-                    commandTypes.push_back(commandType);
-                    g_prototypeFactory.setChecksum(commandType);
-                }
-            } catch (runtime_error e) {
-                g_logger.logXmlError(dir, e.what());
-                loadOk = false;
-            }
-            sortCommandTypes();
+            actions.load(actionsNode, dir, techTree, factionType, isItem, this);
         }
     } catch (runtime_error e) {
         g_logger.logXmlError(dir, e.what());
         loadOk = false;
     }
 	return loadOk;
-}
-
-void CreatableType::setDeCloakSkills(const vector<string> &names, const vector<SkillClass> &classes) {
-	foreach_const (vector<string>, it, names) {
-		bool found = false;
-		foreach (SkillTypes, sit, skillTypes) {
-			if (*it == (*sit)->getName()) {
-				found = true;
-				(*sit)->setDeCloak(true);
-				break;
-			}
-		}
-		if (!found) {
-			throw runtime_error("de-cloak is set for skill: skill_name, which was not found.");
-		}
-	}
-	foreach_const (vector<SkillClass>, it, classes) {
-		foreach (SkillTypes, sit, skillTypesByClass[*it]) {
-			(*sit)->setDeCloak(true);
-		}
-	}
-}
-
-bool CreatableType::hasSkillClass(SkillClass skillClass) const {
-	return !skillTypesByClass[skillClass].empty();
-}
-
-bool CreatableType::hasSkillType(const SkillType *st) const {
-	assert(st);
-	foreach_const (SkillTypes, it, skillTypesByClass[st->getClass()]) {
-		if (*it == st) {
-			return true;
-		}
-	}
-	return false;
-}
-
-const SkillType *CreatableType::getSkillType(const string &skillName, SkillClass skillClass) const{
-	for (int i=0; i < skillTypes.size(); ++i) {
-		if (skillTypes[i]->getName() == skillName) {
-			if (skillTypes[i]->getClass() == skillClass || skillClass == SkillClass::COUNT) {
-				return skillTypes[i];
-			} else {
-				throw runtime_error("Skill '" + skillName + "' is not of class " + SkillClassNames[skillClass]);
-			}
-		}
-	}
-	throw runtime_error("No skill named '" + skillName + "'");
-}
-
-void CreatableType::addSkillType(SkillType *skillType) {
-    skillTypes.push_back(skillType);
-}
-
-void CreatableType::sortSkillTypes() {
-	foreach_enum (SkillClass, sc) {
-		foreach (SkillTypes, it, skillTypes) {
-			if ((*it)->getClass() == sc) {
-				skillTypesByClass[sc].push_back(*it);
-			}
-		}
-	}
-	if (!skillTypesByClass[SkillClass::BE_BUILT].empty()) {
-        startSkill = skillTypesByClass[SkillClass::BE_BUILT].front();
-    } else {
-        startSkill = skillTypesByClass[SkillClass::STOP].front();
-    }
-    foreach (SkillTypes, it, skillTypesByClass[SkillClass::ATTACK]) {
-        if (static_cast<AttackSkillType*>(*it)->getProjectile()) {
-            m_hasProjectileAttack = true;
-            break;
-        }
-    }
-}
-
-void CreatableType::addCommand(CommandType *ct) {
-    commandTypes.push_back(ct);
-}
-
-void CreatableType::addBeLoadedCommand(CommandType *ct) {
-    commandTypes.push_back(ct);
-    commandTypesByClass[CmdClass::BE_LOADED].push_back(ct);
-}
-
-void CreatableType::addSquadCommand(CommandType *ct) {
-   squadCommands.push_back(ct);
-   commandTypes.push_back(ct);
-}
-
-bool CreatableType::hasCommandType(const CommandType *ct) const {
-	assert(ct);
-	foreach_const (CommandTypes, it, commandTypesByClass[ct->getClass()]) {
-		if (*it == ct) {
-			return true;
-		}
-	}
-	return false;
-}
-
-void CreatableType::sortCommandTypes() {
-	foreach_enum (CmdClass, cc) {
-		foreach (CommandTypes, it, commandTypes) {
-			if ((*it)->getClass() == cc) {
-				commandTypesByClass[cc].push_back(*it);
-			}
-		}
-	}
-}
-
-const CommandType *CreatableType::getCommandType(const string &m_name) const {
-	for (CommandTypes::const_iterator i = commandTypes.begin(); i != commandTypes.end(); ++i) {
-		if ((*i)->getName() == m_name) {
-			return (*i);
-		}
-	}
-	return NULL;
-}
-
-const HarvestCommandType *CreatableType::getHarvestCommand(const ResourceType *rt) const {
-	foreach_const (CommandTypes, it, commandTypesByClass[CmdClass::HARVEST]) {
-		const HarvestCommandType *hct = static_cast<const HarvestCommandType*>(*it);
-		if (hct->canHarvest(rt)) {
-			return hct;
-		}
-	}
-	return 0;
-}
-
-const AttackCommandType *CreatableType::getAttackCommand(Zone zone) const {
-	foreach_const (CommandTypes, it, commandTypesByClass[CmdClass::ATTACK]) {
-		const AttackCommandType *act = static_cast<const AttackCommandType*>(*it);
-		if (act->getAttackSkillTypes()->getZone(zone)) {
-			return act;
-		}
-	}
-	return 0;
-}
-
-const RepairCommandType *CreatableType::getRepairCommand(const UnitType *repaired) const {
-	foreach_const (CommandTypes, it, commandTypesByClass[CmdClass::REPAIR]) {
-		const RepairCommandType *rct = static_cast<const RepairCommandType*>(*it);
-		if (rct->canRepair(repaired)) {
-			return rct;
-		}
-	}
-	return 0;
 }
 
 }}//end namespace

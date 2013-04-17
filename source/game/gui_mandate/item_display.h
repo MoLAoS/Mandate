@@ -36,7 +36,7 @@ using Entities::Faction;
 
 class UserInterface;
 
-WRAPPED_ENUM( ItemDisplaySection, BUTTONS, EQUIPMENT, INVENTORY, RESOURCES )
+WRAPPED_ENUM( ItemDisplaySection, BUTTONS, EQUIPMENT, INVENTORY )
 
 struct ItemDisplayButton {
 	ItemDisplaySection m_section;
@@ -72,7 +72,6 @@ public:
 	static const int buttonCellCount = cellWidthCount * cellHeightCount;
 	static const int equipmentCellCount = cellWidthCount * cellHeightCount * 3;
 	static const int inventoryCellCount = cellWidthCount * cellHeightCount *3;
-	static const int resourcesCellCount = cellWidthCount * cellHeightCount * 10;
 	static const int invalidIndex = -1;
 private:
 	UserInterface *m_ui;
@@ -131,8 +130,6 @@ public:
 	void computeEquipmentInfo(int posDisplay);
 	void computeInventoryPanel();
 	void computeInventoryInfo(int posDisplay);
-	void computeResourcesPanel();
-	void computeResourcesInfo(int posDisplay);
 
 	void clear();
 	void resetTipPos(Vec2i i_offset);

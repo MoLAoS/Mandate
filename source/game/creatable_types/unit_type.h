@@ -52,10 +52,10 @@ private:
     UnitProductionSystem unitGeneration;
     ProcessProductionSystem processingSystem;
 public:
-    ResourceProductionSystem getResourceProductionSystem() const {return resourceGeneration;}
-    ItemProductionSystem getItemProductionSystem() const {return itemGeneration;}
-    UnitProductionSystem getUnitProductionSystem() const {return unitGeneration;}
-    ProcessProductionSystem getProcessProductionSystem() const {return processingSystem;}
+    const ResourceProductionSystem *getResourceProductionSystem() const {return &resourceGeneration;}
+    const ItemProductionSystem *getItemProductionSystem() const {return &itemGeneration;}
+    const UnitProductionSystem *getUnitProductionSystem() const {return &unitGeneration;}
+    const ProcessProductionSystem *getProcessProductionSystem() const {return &processingSystem;}
     bool load(const XmlNode *bonusPowerNode, const string &dir, const TechTree *techTree, const FactionType *factionType);
 };
 
@@ -130,6 +130,10 @@ private:
 	UnitProperties properties;
 	Field field;
 	Zone zone;
+	fixed halfSize;
+	fixed halfHeight;
+	const SkillType *startSkill;
+	bool m_hasProjectileAttack;
 public:
     ResourceStores getResourceStores() const {return resourceStores;}
 
@@ -150,7 +154,7 @@ public:
 	const CloakType* getCloakType() const        { return m_cloakType; }
 	const DetectorType* getDetectorType() const  { return m_detectorType; }
 	bool isDetector() const                      { return m_detectorType ? true : false; }
-	const Model *getIdleAnimation() const	{return getFirstStOfClass(SkillClass::STOP)->getSoundsAndAnimations()->getAnimation();}
+	const Model *getIdleAnimation() const	{return getActions()->getFirstStOfClass(SkillClass::STOP)->getSoundsAndAnimations()->getAnimation();}
 	bool getMultiSelect() const				{return multiSelect;}
 	bool getLight() const					{return light;}
 	Vec3f getLightColour() const			{return lightColour;}
@@ -160,14 +164,18 @@ public:
 	const UnitProperties &getProperties() const	{return properties;}
 	bool getProperty(Property property) const	{return properties.get(property);}
 	const MoveSkillType *getFirstMoveSkill() const			{
-		return getFirstStOfClass(SkillClass::MOVE) ? 0
-			: static_cast<const MoveSkillType *>(getFirstStOfClass(SkillClass::MOVE));
+		return getActions()->getFirstStOfClass(SkillClass::MOVE) ? 0
+			: static_cast<const MoveSkillType *>(getActions()->getFirstStOfClass(SkillClass::MOVE));
 	}
+    const SkillType *getStartSkill() const				{return startSkill;}
+	fixed getHalfSize() const							{return halfSize;}
+	fixed getHalfHeight() const							{return halfHeight;}
+	bool hasProjectileAttack() const				    {return m_hasProjectileAttack;}
 	const Level *getLevel(int i) const					{return &levels[i];}
 	int getLevelCount() const							{return levels.size();}
 	bool isMultiBuild() const							{return multiBuild;}
 	bool isMobile () const {
-		const SkillType *st = getFirstStOfClass(SkillClass::MOVE);
+		const SkillType *st = getActions()->getFirstStOfClass(SkillClass::MOVE);
 		return st && st->getBaseSpeed() > 0 ? true: false;
 	}
 	bool getCellMapCell(Vec2i pos, CardinalDir facing) const;

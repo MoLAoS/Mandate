@@ -245,11 +245,11 @@ ResourceAmount ResourceProductionSystem::getStoredResource(int i, const Faction 
     return res;
 }
 
-void ResourceProductionSystem::update(CreatedResource cr, Unit *unit, int timer, TimerStep *timerStep) {
+void ResourceProductionSystem::update(CreatedResource cr, Unit *unit, int timer, TimerStep *timerStep) const {
     const ResourceType *srt;
     Faction *faction = unit->getFaction();
-    for (int s = 0; s < unit->getType()->getResourceProductionSystem().getStoredResourceCount(); ++s) {
-        srt = unit->getType()->getResourceProductionSystem().getStoredResource(s, faction).getType();
+    for (int s = 0; s < unit->getType()->getResourceProductionSystem()->getStoredResourceCount(); ++s) {
+        srt = unit->getType()->getResourceProductionSystem()->getStoredResource(s, faction).getType();
         if (srt == cr.getType()) {
             break;
         }
@@ -319,7 +319,7 @@ Timer ItemProductionSystem::getCreatedItemTimer(int i, const Faction *f) const {
 	return timer;
 }
 
-void ItemProductionSystem::update(CreatedItem ci, Unit *unit, int timer, TimerStep *timerStep) {
+void ItemProductionSystem::update(CreatedItem ci, Unit *unit, int timer, TimerStep *timerStep) const {
     Faction *faction = unit->getFaction();
     int cTimeStep = timerStep->currentStep;
     int newStep = cTimeStep + 1;
@@ -453,7 +453,7 @@ Timer ProcessProductionSystem::getProcessTimer(int i, const Faction *f) const {
 	return timer;
 }
 
-void ProcessProductionSystem::update(Process process, Unit *unit, int timer, TimerStep *timerStep) {
+void ProcessProductionSystem::update(Process process, Unit *unit, int timer, TimerStep *timerStep) const {
     vector<int> counts;
     Faction *faction = unit->getFaction();
     int cTimeStep = timerStep->currentStep;
@@ -652,7 +652,7 @@ Timer UnitProductionSystem::getCreatedUnitTimer(int i, const Faction *f) const {
 	return timer;
 }
 
-void UnitProductionSystem::update(CreatedUnit cu, Unit *unit, int timer, TimerStep *timerStep) {
+void UnitProductionSystem::update(CreatedUnit cu, Unit *unit, int timer, TimerStep *timerStep) const {
     Faction *faction = unit->getFaction();
     int cTimeStep = timerStep->currentStep;
     int newStep = cTimeStep + 1;

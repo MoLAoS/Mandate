@@ -217,7 +217,7 @@ Minimap::Minimap(bool FoW, bool SoD, Container* parent, Vec2i pos)
 
 void Minimap::init(int w, int h, const World *world, bool resumingGame) {
 	CHECK_HEAP();
-	
+
 	#pragma region set size, determine aspect ratio, zoom level, min & max zoom
 
 	m_w = w;
@@ -292,7 +292,7 @@ void Minimap::init(int w, int h, const World *world, bool resumingGame) {
 	m_unitsPMap = new TypeMap<int8>(Rectangle(0, 0, m_w, m_h), -1);
 	m_unitsPMap->clearMap(-1);
 	#pragma endregion
-	
+
 	m_attackNoticeTex = g_renderer.newTexture2D(ResourceScope::GAME);
 	m_attackNoticeTex->getPixmap()->load("data/core/misc_textures/attack_notice.png");
 
@@ -308,7 +308,7 @@ Minimap::~Minimap(){
 }
 
 void Minimap::update(int frameCount) {
-	if (frameCount % 5 == 0) {
+	if (frameCount % 20 == 0) {
 		updateUnitTex();
 	}
 	AttackNotices::iterator it = m_attackNotices.begin();
@@ -433,7 +433,7 @@ void Minimap::setMinimapSize(FuzzySize ms) {
 	Colour blank((uint8)0u);
 	m_unitsTex->getPixmap()->setPixels(blank.ptr());
 	m_unitsTex->init();
-	
+
 	Widget::setSize(size);
 	updateUnitTex();
 }
@@ -503,7 +503,7 @@ void buildUnitOverlay(TypeMap<int8>* overlayMap) {
 	buildVisLists(srfList, airList);
 
 	overlayMap->clearMap(-1);
-	
+
 	processList(srfList, overlayMap);
 	processList(airList, overlayMap);
 }
@@ -747,7 +747,7 @@ void Minimap::render() {
 	assertGl();
 }
 
-Vec2i Minimap::toCellPos(Vec2i mmPos) const { 
+Vec2i Minimap::toCellPos(Vec2i mmPos) const {
 	return Vec2i((mmPos.x / m_currZoom).intp(), (mmPos.y / m_currZoom).intp());
 }
 Vec2i Minimap::toMiniMapPos(Vec2i cellPos) const {
