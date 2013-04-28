@@ -35,6 +35,8 @@ using namespace Widgets;
 
 class CharacterCreator : public TabWidget {
 private:
+
+
 	DropList	*m_langList;
 
 	CheckBox	*m_fullscreenCheckBox;

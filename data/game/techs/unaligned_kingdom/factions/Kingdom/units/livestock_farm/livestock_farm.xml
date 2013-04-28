@@ -54,7 +54,7 @@
           <resource name="logs" amount="250" plus="0" multiply="0" />
         </resource-requirements>
       <image path="images/farm.bmp"/>
-      <image-cancel path="../ranger/images/tech_cancel.bmp"/>
+      <image-cancel path="../castle/images/tech_cancel.bmp"/>
       </producible>
     <resource-production>
       <resources-stored>

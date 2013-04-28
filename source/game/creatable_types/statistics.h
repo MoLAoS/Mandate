@@ -70,6 +70,8 @@ private:
     Statistics statistics;
     int count;
 	int exp;
+	int expAdd;
+	fixed expMult;
 public:
 	virtual bool load(const XmlNode *prn, const string &dir, const TechTree *tt, const FactionType *ft);
 	virtual void doChecksum(Checksum &checksum) const {
@@ -78,6 +80,8 @@ public:
 	const Statistics *getStatistics() const {return &statistics;}
 	int getCount() const {return count;}
 	int getExp() const {return exp;}
+	int getExpAdd() const {return expAdd;}
+	fixed getExpMult() const {return expMult;}
 };
 
 }}//end namespace

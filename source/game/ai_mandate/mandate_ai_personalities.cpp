@@ -576,8 +576,9 @@ const CommandType* GoalSystem::selectAttackSpell(Unit *unit, Unit *target) {
                     }
                     fixed totalDamage = 0 + fDamage;
                     const UnitType *uType = target->getType();
-                    for (int t = 0; t < testSkillType->getDamageTypeCount(); ++t) {
-                        const DamageType *dType = testSkillType->getDamageType(t);
+                    const AttackLevel *aLevel = testSkillType->getLevel(testSkillType->getCurrentLevel());
+                    for (int t = 0; t < aLevel->getDamageTypeCount(); ++t) {
+                        const DamageType *dType = aLevel->getDamageType(t);
                         string damageType = dType->getTypeName();
                         int mDamage = dType->getValue();
                         for (int i = 0; i < uType->getResistances()->size(); ++i) {

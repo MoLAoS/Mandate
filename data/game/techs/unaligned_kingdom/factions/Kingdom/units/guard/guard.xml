@@ -38,7 +38,7 @@
         <resource name="wealth" amount="150" plus="0" multiply="0"/>
       </resource-requirements>
       <image path="images/guard.bmp"/>
-      <image-cancel path="../ranger/images/tech_cancel.bmp"/>
+      <image-cancel path="../castle/images/tech_cancel.bmp"/>
     </producible>
     <resource-production>
       <resources-stored>
@@ -88,8 +88,6 @@
         <sound-file path="sounds/guard_attack13.wav"/>
         <sound-file path="sounds/guard_attack14.wav"/>
       </sound>
-      <attack-strenght value="0"/>
-      <attack-var value="0"/>
       <attack-range value="1"/>
       <attack-type value="slashing"/>
       <attack-fields>
@@ -98,9 +96,13 @@
       <attack-start-time value="0"/>
       <projectile value="false"/>
       <splash value="false"/>
-      <damage-types>
-        <damage-type type="piercing" value="10"/>
-      </damage-types>
+	  <attack-levels>
+	    <attack-level>
+              <damage-types>
+                <damage-type type="slashing" value="10"/>
+              </damage-types>
+	    </attack-level>
+	  </attack-levels>
     </skill>
     <skill>
       <type value="die"/>
@@ -131,7 +133,7 @@
     <command>
       <type value="stop"/>
       <name value="stop"/>
-      <image path="../ranger/images/tech_stop.bmp"/>
+      <image path="../castle/images/tech_stop.bmp"/>
       <unit-requirements/>
       <upgrade-requirements/>
       <stop-skill value="stop_skill"/>
@@ -139,7 +141,7 @@
     <command>
       <type value="move"/>
       <name value="move"/>
-      <image path="../ranger/images/tech_move.bmp"/>
+      <image path="../castle/images/tech_move.bmp"/>
       <unit-requirements/>
       <upgrade-requirements/>
       <move-skill value="move_skill"/>

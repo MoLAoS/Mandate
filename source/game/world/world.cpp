@@ -424,8 +424,9 @@ void World::damage(Unit *attacker, const AttackSkillType* ast, Unit *attacked, f
     /**< Added by MoLAoS, magic damage and resistances */
     fixed totalDamage = 0 + fDamage;
     const UnitType *uType = attacked->getType();
-    for (int t = 0; t < ast->getDamageTypes()->size(); ++t) {
-    const DamageType *dType = ast->getDamageType(t);
+    const AttackLevel *aLevel = ast->getLevel(ast->getCurrentLevel());
+    for (int t = 0; t < aLevel->getDamageTypes()->size(); ++t) {
+    const DamageType *dType = aLevel->getDamageType(t);
     string damageType = dType->getTypeName();
     int mDamage = dType->getValue();
         for (int i = 0; i < attacked->getResistances()->size(); ++i) {

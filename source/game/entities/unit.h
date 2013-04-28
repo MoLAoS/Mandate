@@ -469,6 +469,7 @@ public:
 	Faction *getFaction() const					{return faction;}
 	const ResourceType *getLoadType() const		{return loadType;}
 
+	bool reqsOk(const RequirableType *rt) const;
 
 	const UnitType *getType() const				{return type;}
 	const SkillType *getCurrSkill() const		{return currSkill;}

@@ -50,7 +50,7 @@
         <resource name="stone" amount="50" plus="0" multiply="0"/>
       </resource-requirements>
       <image path="images/castle.bmp"/>
-      <image-cancel path="../ranger/images/tech_cancel.bmp"/>
+      <image-cancel path="../castle/images/tech_cancel.bmp"/>
       </producible>
     <resource-production>
       <resources-stored>

@@ -107,6 +107,7 @@ class SkillCosts {
 private:
     ItemCosts itemCosts;
     ResCosts resourceCosts;
+    int levelReq;
     int hpCost;
     int spCost;
     int epCost;
@@ -116,6 +117,8 @@ public:
 
     const ItemCost *getItemCost(int i) const {return &itemCosts[i];}
     const ResourceAmount *getResourceCost(int i) const {return &resourceCosts[i];}
+
+    int getLevelReq() {return levelReq;}
 
     int getHpCost() const {return hpCost;}
     int getSpCost() const {return spCost;}
@@ -267,16 +270,33 @@ public:
 // ===============================
 // 	class AttackSkillType
 // ===============================
-
-class AttackSkillType: public TargetBasedSkillType {
+class AttackLevel {
 private:
     int cooldown;
 	AttackStats attackStats;
     DamageTypes damageTypes;
+public:
+	const AttackStats *getAttackStats() const		  {return &attackStats;}
+	const DamageTypes *getDamageTypes() const         {return &damageTypes;}
+	int getDamageTypeCount() const                    {return damageTypes.size();}
+	const DamageType *getDamageType(int i) const      {return &damageTypes[i];}
+	int getCooldown() const				              {return cooldown;}
+
+	void levelUp(AttackStats *aStats) {attackStats.sum(aStats);}
+
+	bool load(const XmlNode *attackLevelNode, const string &dir);
+};
+
+typedef vector<AttackLevel> AttackLevels;
+
+class AttackSkillType: public TargetBasedSkillType {
+private:
+    AttackLevels levels;
+    int skillLevel;
 //	EarthquakeType *earthquakeType;
 public:
 
-	AttackSkillType() : TargetBasedSkillType("Attack"), damageTypes(0) /*, earthquakeType(NULL)*/ {}
+	AttackSkillType() : TargetBasedSkillType("Attack"), skillLevel(0) /*, earthquakeType(NULL)*/ {}
 	virtual ~AttackSkillType();
 
 	virtual bool load(const XmlNode *sn, const string &dir, const TechTree *tt, const CreatableType *ct) override;
@@ -285,12 +305,13 @@ public:
 
 	//get
 	virtual fixed getSpeed(const Unit *unit) const override;
-	const AttackStats *getAttackStats() const		  {return &attackStats;}
-	const DamageTypes *getDamageTypes() const         {return &damageTypes;}
-	int getDamageTypeCount() const                    {return damageTypes.size();}
-	const DamageType *getDamageType(int i) const      {return &damageTypes[i];}
-	int getCooldown() const				              {return cooldown;}
+	int getAttackLevelCount() const {return levels.size();}
+	const AttackLevels *getLevels() const {return &levels;}
+	const AttackLevel *getLevel(int i) const {return &levels[i];}
 //	const EarthquakeType *getEarthquakeType() const	{return earthquakeType;}
+
+    int getCurrentLevel() const {return skillLevel;}
+    void levelUp() {++skillLevel;}
 
 	virtual SkillClass getClass() const override { return typeClass(); }
 	static SkillClass typeClass() { return SkillClass::ATTACK; }

@@ -162,6 +162,10 @@ public:
 	void applyMultipliers(const ResourcePools *rp);
 	void clampMultipliers();
 	void sanitiseResourcePools();
+	void sum(const ResourcePools *rPools) {
+		addStatic(rPools);
+		addMultipliers(rPools);
+	}
 };
 
 // ===============================
@@ -193,6 +197,10 @@ public:
 	void applyMultipliers(const ProductionSpeeds *ps);
 	void clampMultipliers();
 	void sanitiseProductionSpeeds();
+	void sum(const ProductionSpeeds *pSpeeds) {
+		addStatic(pSpeeds);
+		addMultipliers(pSpeeds);
+	}
 };
 
 // ===============================
@@ -226,6 +234,10 @@ public:
 	void applyMultipliers(const AttackStats *as);
 	void clampMultipliers();
 	void sanitiseAttackStats();
+	void sum(const AttackStats *aStats) {
+		addStatic(aStats);
+		addMultipliers(aStats);
+	}
 };
 
 // ===============================

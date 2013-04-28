@@ -4,6 +4,7 @@ set(folders
 	.
 	ai
 	ai_mandate
+	characters
 	creatable_types
 	entities
 	events

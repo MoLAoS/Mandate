@@ -1722,14 +1722,14 @@ void UserInterface::computeCommandPanel() {
 				if (unit->getFaction()->isAvailable(pt)) {
 					m_display->setDownImage(j, pt->getImage());
 					m_display->setDownLighted(j, unit->getFaction()->reqsOk(activeCommandType, pt));
-						m_display->setIndex(j, i);
-						++j;
-					}
-				}
-				if (activePos >= activeCommandType->getProducedCount()) {
-					activePos = invalidPos;
-				}
-			}
+                    m_display->setIndex(j, i);
+                    ++j;
+                }
+            }
+            if (activePos >= activeCommandType->getProducedCount()) {
+                activePos = invalidPos;
+            }
+        }
 	} // end if (selection->isComandable())
 }
 

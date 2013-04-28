@@ -154,6 +154,7 @@ bool SkillCosts::load(const XmlNode *sn, const string &dir, const TechTree *tt, 
     hpCost = 0;
     spCost = 0;
     epCost = 0;
+    levelReq = 0;
     const FactionType *ft = ct->getFactionType();
     const XmlNode *hpCostNode = sn->getChild("hp-cost", 0, false);
     if (hpCostNode) {
@@ -166,6 +167,10 @@ bool SkillCosts::load(const XmlNode *sn, const string &dir, const TechTree *tt, 
     const XmlNode *epCostNode = sn->getChild("ep-cost", 0, false);
     if (epCostNode) {
         epCost = epCostNode->getAttribute("amount")->getIntValue();
+    }
+    const XmlNode *levelReqNode = sn->getChild("level-req", 0, false);
+    if (levelReqNode) {
+        levelReq = levelReqNode->getAttribute("level")->getIntValue();
     }
     const XmlNode *itemCostsNode = sn->getChild("item-costs", 0, false);
     if (itemCostsNode) {
@@ -477,28 +482,21 @@ void TargetBasedSkillType::descRange(string &str, const Unit *unit, const char* 
 // =====================================================
 // 	class AttackSkillType
 // =====================================================
-AttackSkillType::~AttackSkillType() {
-//	delete earthquakeType;
-}
-
-bool AttackSkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const CreatableType *ct){
+bool AttackLevel::load(const XmlNode *attackLevelNode, const string &dir) {
     bool loadOk = true;
-	loadOk = TargetBasedSkillType::load(sn, dir, tt, ct);
-
-	//misc
     cooldown = 0;
-	if (sn->getOptionalChild("cooldown")) {
-        cooldown = sn->getOptionalChild("cooldown")->getAttribute("time")->getIntValue();
+	if (attackLevelNode->getOptionalChild("cooldown")) {
+        cooldown = attackLevelNode->getOptionalChild("cooldown")->getAttribute("time")->getIntValue();
 	}
 
-	const XmlNode *attackStatsNode = sn->getChild("attack-stats", 0, false);
+	const XmlNode *attackStatsNode = attackLevelNode->getChild("attack-stats", 0, false);
 	if (attackStatsNode) {
         if (!attackStats.load(attackStatsNode, dir)) {
             loadOk = false;
         }
 	}
 
-    const XmlNode *damageTypesNode = sn->getChild("damage-types", 0, false);
+    const XmlNode *damageTypesNode = attackLevelNode->getChild("damage-types", 0, false);
 	if (damageTypesNode) {
 	    damageTypes.resize(damageTypesNode->getChildCount());
 	    for (int i = 0; i < damageTypesNode->getChildCount(); ++i) {
@@ -508,6 +506,24 @@ bool AttackSkillType::load(const XmlNode *sn, const string &dir, const TechTree 
             damageTypes[i].init(damageTypeName, amount);
 	    }
 	}
+	return loadOk;
+}
+
+AttackSkillType::~AttackSkillType() {
+//	delete earthquakeType;
+}
+
+bool AttackSkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const CreatableType *ct){
+    bool loadOk = true;
+	loadOk = TargetBasedSkillType::load(sn, dir, tt, ct);
+    const XmlNode *attackLevelsNode = sn->getChild("attack-levels");
+    levels.resize(attackLevelsNode->getChildCount());
+    for (int i = 0; i < attackLevelsNode->getChildCount(); ++i) {
+        const XmlNode *attackLevelNode = attackLevelsNode->getChild("attack-level", i);
+       levels[i].load(attackLevelNode, dir);
+    }
+
+	//misc
 #ifdef EARTHQUAKE_CODE
 	earthquakeType = NULL;
 	XmlNode *earthquakeNode = sn->getChild("earthquake", 0, false);
@@ -526,16 +542,17 @@ void AttackSkillType::doChecksum(Checksum &checksum) const {
 
 void AttackSkillType::getDesc(string &str, const Unit *unit) const {
 	Lang &lang= Lang::getInstance();
+	const AttackLevel *aLevel = &levels[skillLevel];
     descSpeed(str, unit, "AttackSpeed");
     str += "Cooldown: ";
-    str += intToStr(cooldown);
+    str += intToStr(aLevel->getCooldown());
     str += "\n";
-    if (damageTypes.size() > 0) {
+    if (aLevel->getDamageTypeCount() > 0) {
         str += lang.get("Magic Damage")+": ";
         str += "\n";
-        for (int i = 0; i < damageTypes.size(); ++i) {
-            str += lang.get(damageTypes[i].getTypeName())+": ";
-            str += intToStr(damageTypes[i].getValue());
+        for (int i = 0; i < aLevel->getDamageTypeCount(); ++i) {
+            str += lang.get(aLevel->getDamageType(i)->getTypeName())+": ";
+            str += intToStr(aLevel->getDamageType(i)->getValue());
         }
         str += "\n";
     }

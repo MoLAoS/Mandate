@@ -587,14 +587,18 @@ Modifier Faction::getCreatedUnitModifier(const UnitType *ut, const UnitType *sut
 bool Faction::reqsOk(const RequirableType *rt) const {
 	// required units
 	for (int i = 0; i < rt->getUnitReqCount(); ++i) {
-		if (!getCountOfUnitType(rt->getUnitReq(i).getUnitType())) {
-			return false;
-		}
+	    if (!rt->getUnitReq(i).getScope()) {
+            if (getCountOfUnitType(rt->getUnitReq(i).getUnitType()) <= rt->getUnitReq(i).getAmount()) {
+                return false;
+            }
+        }
 	}
 	for (int i = 0; i < rt->getItemReqCount(); ++i) {
-		if (!getCountOfItemType(rt->getItemReq(i).getItemType())) {
-			return false;
-		}
+	    if (!rt->getItemReq(i).getScope()) {
+            if (getCountOfItemType(rt->getItemReq(i).getItemType()) <= rt->getItemReq(i).getAmount()) {
+                return false;
+            }
+        }
 	}
 	// required upgrades
 	Faction *f;
@@ -604,17 +608,19 @@ bool Faction::reqsOk(const RequirableType *rt) const {
         }
     }
 	for (int i = 0; i < rt->getUpgradeReqCount(); ++i) {
-		if (upgradeManager.isUpgraded(rt->getUpgradeReq(i).getUpgradeType())) {
-		} else if (upgradeManager.isPartial(rt->getUpgradeReq(i).getUpgradeType())) {
-		    int stage = f->getCurrentStage(rt->getUpgradeReq(i).getUpgradeType());
-            if (rt->getUpgradeReq(i).getStage() == stage) {
+	    //if (!rt->getUpgradeReq(i).getScope()) {
+            if (upgradeManager.isUpgraded(rt->getUpgradeReq(i).getUpgradeType())) {
+            } else if (upgradeManager.isPartial(rt->getUpgradeReq(i).getUpgradeType())) {
+                int stage = f->getCurrentStage(rt->getUpgradeReq(i).getUpgradeType());
+                if (rt->getUpgradeReq(i).getStage() == stage) {
 
+                } else {
+                    return false;
+                }
             } else {
                 return false;
             }
-		} else {
-            return false;
-		}
+	    //}
 	}
 	// available in subfaction ?
 	return rt->isAvailableInSubfaction(subfaction);

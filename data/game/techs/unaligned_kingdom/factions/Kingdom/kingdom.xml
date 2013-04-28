@@ -1,7 +1,7 @@
 <?xml version="1.0" standalone="no"?>
 <faction>
 	<item-images>
-	  <item-image image-path="/units/blacksmith/images/blacksmith.bmp"/>
+	  <item-image image-path="/units/castle/images/castle.bmp"/>
 	</item-images>
 	<starting-resources>
 		<resource name="wealth" amount="50000"/>

@@ -76,7 +76,6 @@ private:
 	bool multiSelect;
 public:
     Hero hero;
-    Mage mage;
     Leader leader;
     bool inhuman;
     string personality;

@@ -90,7 +90,7 @@
         <resource name="wealth" amount="400" plus="0" multiply="0"/>
       </local-requirements>
       <image path="images/guard.bmp"/>
-      <image-cancel path="../ranger/images/tech_cancel.bmp"/>
+      <image-cancel path="../castle/images/tech_cancel.bmp"/>
     </producible>
     <resource-production>
       <resources-stored>
@@ -169,7 +169,7 @@
         <command>
           <type value="stop"/>
           <name value="stop"/>
-          <image path="../ranger/images/tech_stop.bmp"/>
+          <image path="../castle/images/tech_stop.bmp"/>
           <unit-requirements/>
           <upgrade-requirements/>
           <stop-skill value="stop_skill"/>
@@ -177,7 +177,7 @@
         <command>
           <type value="move"/>
           <name value="move"/>
-          <image path="../ranger/images/tech_move.bmp"/>
+          <image path="../castle/images/tech_move.bmp"/>
           <unit-requirements/>
           <upgrade-requirements/>
           <move-skill value="move_skill"/>

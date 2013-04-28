@@ -56,7 +56,7 @@
         <resource name="stone" amount="500" plus="0" multiply="0"/>
       </resource-requirements>
       <image path="images/castle.bmp"/>
-      <image-cancel path="../ranger/images/tech_cancel.bmp"/>
+      <image-cancel path="../castle/images/tech_cancel.bmp"/>
       </producible>
     <resource-production>
       <resources-stored>
@@ -201,7 +201,7 @@
           <upgrade-requirements/>
           <unload-skill value="unload_skill"/>
         </command>
-	<command>
+	<*command>
 	  <type value="morph"/>
 	  <name value="morph" tip="keep"/>
 	  <image path="../keep/images/castle.bmp"/>
@@ -213,7 +213,7 @@
 	  </morph-units>
 	  <cost-modifier value="0"/>
 	  <finished-sound enabled="false"/>
-	</command>
+	<*/command>
       </commands>
     </actions>
   </creatable-type>

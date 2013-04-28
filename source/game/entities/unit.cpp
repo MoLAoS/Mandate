@@ -760,6 +760,64 @@ const Level *Unit::getNextLevel() const{
 	return 0;
 }
 
+bool Unit::reqsOk(const RequirableType *rt) const {
+	// required units
+	for (int i = 0; i < rt->getUnitReqCount(); ++i) {
+	    if (rt->getUnitReq(i).getScope()) {
+	        int unitCount = 0;
+            UnitIdList garrisonedUnits = getGarrisonedUnits();
+            if (getGarrisonedCount() > 0) {
+                foreach (UnitIdList, it, garrisonedUnits) {
+                    Unit *garUnit = g_world.getUnit(*it);
+                    const UnitType* ut = garUnit->getType();
+                    if (ut == rt->getUnitReq(i).getUnitType()) {
+                        ++unitCount;
+                    }
+                }
+            }
+            if (unitCount <= rt->getUnitReq(i).getAmount()) {
+                return false;
+            }
+        }
+	}
+	for (int i = 0; i < rt->getItemReqCount(); ++i) {
+	    if (rt->getItemReq(i).getScope()) {
+	        int itemCount = 0;
+	        for (int j = 0; j < getEquippedItems().size(); ++j) {
+                if (getEquippedItem(j)->getType() == rt->getItemReq(i).getItemType()) {
+                    ++itemCount;
+                }
+            }
+            if (itemCount <= rt->getItemReq(i).getAmount()) {
+                return false;
+            }
+        }
+	}
+	// required upgrades
+	/*Faction *f;
+    for (int j = 0; j < g_world.getFactionCount(); ++j) {
+        if (getFaction() == g_world.getFaction(j)) {
+            f = g_world.getFaction(j);
+        }
+    }
+	for (int i = 0; i < rt->getUpgradeReqCount(); ++i) {
+	    //if (!rt->getUpgradeReq(i).getScope()) {
+            if (upgradeManager.isUpgraded(rt->getUpgradeReq(i).getUpgradeType())) {
+            } else if (upgradeManager.isPartial(rt->getUpgradeReq(i).getUpgradeType())) {
+                int stage = f->getCurrentStage(rt->getUpgradeReq(i).getUpgradeType());
+                if (rt->getUpgradeReq(i).getStage() == stage) {
+
+                } else {
+                    return false;
+                }
+            } else {
+                return false;
+            }
+	    //}
+	}*/
+	return true;
+}
+
 /** retrieve name description, levelName + unitTypeName */
 string Unit::getFullName() const{
 	string str;
@@ -2521,7 +2579,8 @@ bool Unit::update() { ///@todo should this be renamed to hasFinishedCycle()?
                     const AttackCommandType *act = static_cast<const AttackCommandType*>(getType()->getActions()->getCommandType(i));
                     const AttackSkillType *ast = act->AttackCommandTypeBase::getAttackSkillTypes()->getFirstAttackSkill();
                     if (ast == currSkill) {
-                        currentCommandCooldowns[i].currentStep = ast->getCooldown();
+                        int cooldown = ast->getLevel(ast->getCurrentLevel())->getCooldown();
+                        currentCommandCooldowns[i].currentStep = cooldown;
                     }
 		        }
 		    }
@@ -2723,11 +2782,17 @@ Unit* Unit::tick() {
 bool Unit::computeEp() {
 
 	// if not enough ep
-	int cost = currSkill->getSkillCosts()->getEpCost();
-	if (cost <= 0) {
+	int epCost = currSkill->getSkillCosts()->getEpCost();
+	int hpCost = currSkill->getSkillCosts()->getHpCost();
+	int spCost = currSkill->getSkillCosts()->getSpCost();
+	if (epCost <= 0 && hpCost <= 0 && spCost <= 0) {
 		return false;
 	}
-	if (decEp(cost)) {
+	if (ep >= epCost && hp >= hpCost && sp >= spCost) {
+        hp = hp - hpCost;
+        sp = sp - spCost;
+	}
+	if (decEp(epCost)) {
 		if (ep > getResourcePools()->getMaxEp().getValue()) {
 			ep = getResourcePools()->getMaxEp().getValue();
 		}
@@ -3071,7 +3136,7 @@ void Unit::applyUpgrade(const UpgradeType *upgradeType) {
 
 
 	for (int i = 0; i < us->m_enhancements.size(); ++i) {
-        const Statistics *stats = &us->m_enhancements[i].m_enhancement;
+        const Statistics *stats = us->m_enhancements[i].getStatistics();
         if (stats) {
             totalUpgrade.sum(stats);
             recalculateStats();
@@ -3079,6 +3144,15 @@ void Unit::applyUpgrade(const UpgradeType *upgradeType) {
                     stats->getResourcePools()->getSpBoost().getValue(),
                     stats->getResourcePools()->getEpBoost().getValue());
         }
+        Actions *action = us->m_enhancements[i].getActions();
+        for (int j =0; j < action->getSkillTypeCount(); ++j) {
+            actions.addSkillType(action->getSkillType(j));
+        }
+        for (int j =0; j < action->getCommandTypeCount(); ++j) {
+            actions.addCommand(action->getCommandType(j));
+        }
+        actions.sortSkillTypes();
+        actions.sortCommandTypes();
     }
 }
 
@@ -3131,8 +3205,15 @@ void Unit::computeTotalUpgrade() {
 	for (int i = 0; i < type->getLevelCount(); ++i) {
 		const Level *typeLevel = type->getLevel(i);
         for (int j = 0; j < typeLevel->getCount(); ++j) {
-            if (totalExp >= typeLevel->getExp()) {
+            bool nextLevel = false;
+            if (j == 0 && totalExp >= typeLevel->getExp()) {
                 totalExp -= typeLevel->getExp();
+                nextLevel = true;
+            } else if (totalExp >= ((typeLevel->getExp() + typeLevel->getExpAdd()) * typeLevel->getExpMult()).intp()) {
+                totalExp -= ((typeLevel->getExp() + typeLevel->getExpAdd()) * typeLevel->getExpMult().intp());
+                nextLevel = true;
+            }
+            if (nextLevel == true) {
                 this->level = typeLevel;
                 totalUpgrade.sum(level->getStatistics());
                 ++levelInt;
