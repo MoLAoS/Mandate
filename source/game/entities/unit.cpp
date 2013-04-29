@@ -594,8 +594,8 @@ void Unit::incResourceAmount(const ResourceType *rt, int amount) {
 	assert(false);
 }
 
-bool Unit::applyCosts(const ProducibleType *p) {
-	if (!checkCosts(p)) {
+bool Unit::applyCosts(const CommandType *ct, const ProducibleType* p) {
+	if (!checkCosts(ct, p)) {
 		return false;
 	}
 	for (int i = 0; i < p->getLocalCostCount(); ++i) {
@@ -624,6 +624,16 @@ bool Unit::applyCosts(const ProducibleType *p) {
 			incResourceAmount(rt, -(cost));
 		}
 	}
+    for (int i = 0; i < ct->getSkillCosts()->getResourceCostCount(); ++i) {
+        const ResourceAmount *res = ct->getSkillCosts()->getResourceCost(i);
+        if (res->getType()->getName() == "wealth") {
+            int untaxedGold = getSResource(res->getType())->getAmount() - taxedGold;
+            if (res->getAmount() > untaxedGold) {
+                taxedGold = taxedGold - (res->getAmount() - untaxedGold);
+            }
+        }
+        incResourceAmount(res->getType(), -res->getAmount());
+    }
 	return true;
 }
 
@@ -640,18 +650,37 @@ void Unit::applyStaticCosts(const ProducibleType *p) {
 	}
 }
 
-bool Unit::checkCosts(const ProducibleType *pt) {
+bool Unit::checkCosts(const CommandType *ct, const ProducibleType *pt) {
 	bool ok = true;
 	for (int i = 0; i < pt->getLocalCostCount(); ++i) {
 		ResourceAmount ra = pt->getLocalCost(i, faction);
 		const ResourceType *rt = ra.getType();
 		int cost = ra.getAmount();
-		if (cost > 0) {
-			int available = getSResource(rt)->getAmount();
-			if (cost > available) {
-				ok = false;
-			}
+		for (int j = 0; j < ct->getSkillCosts()->getResourceCostCount(); ++j) {
+		    const ResourceAmount *res = ct->getSkillCosts()->getResourceCost(j);
+            if (rt == res->getType()) {
+                cost += res->getAmount();
+            }
 		}
+        if (cost > 0) {
+            int available = getSResource(rt)->getAmount();
+            if (cost > available) {
+                ok = false;
+            }
+        }
+        for (int i = 0; i < ct->getSkillCosts()->getItemCostCount(); ++i) {
+            const ItemCost *iCost = ct->getSkillCosts()->getItemCost(i);
+            int available = 0;
+            for (int j = 0; j < getStoredItems().size(); ++j) {
+                Item *item = getStoredItem(j);
+                if (item->getType() == iCost->getType()) {
+                    ++available;
+                }
+            }
+            if (available < iCost->getAmount()) {
+                ok = false;
+            }
+        }
 	}
 	return ok;
 }
@@ -1295,8 +1324,38 @@ CmdResult Unit::giveCommand(Command *command) {
 
 	// check command
 	CmdResult result = checkCommand(*command);
-	bool energyRes = checkEnergy(command->getType());
-	if (result == CmdResult::SUCCESS && energyRes) {
+
+    bool requirements = false;
+    if (command->getType()->getClass() == CmdClass::CREATE_ITEM) {
+        int epCost = command->getType()->getSkillCosts()->getEpCost();
+        int hpCost = command->getType()->getSkillCosts()->getHpCost();
+        int spCost = command->getType()->getSkillCosts()->getSpCost();
+        for (int i = 0; i < command->getType()->getSkillCosts()->getItemCostCount(); ++i) {
+            const ItemCost *iCost = command->getType()->getSkillCosts()->getItemCost(i);
+            for (int k = 0; k < iCost->getAmount(); ++k) {
+                for (int j = 0; j < getStoredItems().size(); ++j) {
+                    Item *item = getStoredItem(j);
+                    if (item->getType() == iCost->getType()) {
+                        consumeItem(j);
+                    }
+                }
+            }
+        }
+        if (epCost <= 0 && hpCost <= 0 && spCost <= 0) {
+            requirements = true;
+        } else if (ep >= epCost && hp >= hpCost && sp >= spCost) {
+            int newHp = hp - hpCost;
+            int newSp = sp - spCost;
+            hp = newHp;
+            sp = newSp;
+            decEp(epCost);
+            requirements = true;
+        }
+    } else {
+        requirements = true;
+    }
+
+	if (result == CmdResult::SUCCESS && requirements) {
 		applyCommand(*command);
 
 		// start the command type
@@ -1306,7 +1365,7 @@ CmdResult Unit::giveCommand(Command *command) {
 			commands.push_back(command);
 		}
 	} else {
-		if (!energyRes && getFaction()->isThisFaction()) {
+		if (!requirements && getFaction()->isThisFaction()) {
 			g_console.addLine(g_lang.get("InsufficientEnergy"));
 		}
 		g_world.deleteCommand(command);
@@ -2780,18 +2839,8 @@ Unit* Unit::tick() {
   *	@return false if the skill can commence, true if energy requirements are not met
   */
 bool Unit::computeEp() {
-
 	// if not enough ep
 	int epCost = currSkill->getSkillCosts()->getEpCost();
-	int hpCost = currSkill->getSkillCosts()->getHpCost();
-	int spCost = currSkill->getSkillCosts()->getSpCost();
-	if (epCost <= 0 && hpCost <= 0 && spCost <= 0) {
-		return false;
-	}
-	if (ep >= epCost && hp >= hpCost && sp >= spCost) {
-        hp = hp - hpCost;
-        sp = sp - spCost;
-	}
 	if (decEp(epCost)) {
 		if (ep > getResourcePools()->getMaxEp().getValue()) {
 			ep = getResourcePools()->getMaxEp().getValue();

@@ -182,11 +182,11 @@ bool Level::load(const XmlNode *levelNode, const string &dir, const TechTree *tt
 	}
 	try {
 		exp = levelNode->getAttribute("exp")->getIntValue();
-		const const XmlAttribute *expAddNode = levelNode->getAttribute("add", false);
+		const XmlAttribute *expAddNode = levelNode->getAttribute("add", false);
         if (expAddNode) {
             expAdd = expAddNode->getIntValue();
         }
-		const const XmlAttribute *expMultNode = levelNode->getAttribute("mult", false);
+		const XmlAttribute *expMultNode = levelNode->getAttribute("mult", false);
         if (expMultNode) {
             expMult = expMultNode->getIntValue();
         }

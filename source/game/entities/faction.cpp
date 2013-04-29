@@ -792,15 +792,6 @@ void Faction::reportReqsAndCosts(const CommandType *ct, const ProducibleType *pt
 				out_result.m_resourceCostResults.push_back(ResourceCostResult(res.getType(), res.getAmount(), stored, false));
 			}
 		}
-		for (int i=0; i < pt->getLocalCostCount(); ++i) {
-			ResourceAmount res = pt->getLocalCost(i, this);
-			if (res.getAmount() < 0) {
-				out_result.m_resourceMadeResults.push_back(ResourceMadeResult(res.getType(), -res.getAmount()));
-			} else {
-				int stored = getSResource(res.getType())->getAmount();
-				out_result.m_resourceCostResults.push_back(ResourceCostResult(res.getType(), res.getAmount(), stored, true));
-			}
-		}
 		if (out_result.m_availableInSubFaction) { // don't overwrite false
 			out_result.m_availableInSubFaction = isAvailable(pt);
 		}

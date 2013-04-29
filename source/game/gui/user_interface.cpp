@@ -1130,24 +1130,35 @@ void UserInterface::onFirstTierSelect(int posDisplay) {
 		selectingMeetingPoint= true;
 	} else {
 		// posDisplay is for a real command...
-		const Unit *unit= selection->getFrontUnit();
-
+		const Unit *unit = selection->getFrontUnit();
+		Unit *u = g_world.getUnit(unit->getId());
 		if (selection->isUniform()) { // uniform selection, use activeCommandType
-        if (posDisplay >= 24) {
-            int displayPos = posDisplay - 24;
-            activeCommandType = m_display->getHierarchyCommand(displayPos);
-            activeCommandClass = activeCommandType->getClass();
-        } else {
-			if (unit->getFaction()->reqsOk(m_display->getCommandType(posDisplay))) {
-				activeCommandType = m_display->getCommandType(posDisplay);
-				activeCommandClass = activeCommandType->getClass();
-			} else {
-				posDisplay = invalidPos;
-				activeCommandType = 0;
-				activeCommandClass = CmdClass::STOP;
-				return;
-			}
-        }
+            if (posDisplay >= 24) {
+                int displayPos = posDisplay - 24;
+                activeCommandType = m_display->getHierarchyCommand(displayPos);
+                activeCommandClass = activeCommandType->getClass();
+            } else {
+                bool requirements = false;
+                const CommandType *ct = m_display->getCommandType(posDisplay);
+                if (unit->getFaction()->reqsOk(ct)) {
+                    if (ct->getProducedCount() == 1 && unit->reqsOk(ct->getProduced(0)) && u->checkCosts(ct, ct->getProduced(0))) {
+                        requirements = true;
+                    } else if (ct->getProducedCount() > 1) {
+                        requirements = true;
+                    } else if (ct->getProducedCount() == 0) {
+                        requirements = true;
+                    }
+                }
+                if (requirements) {
+                    activeCommandType = m_display->getCommandType(posDisplay);
+                    activeCommandClass = activeCommandType->getClass();
+                } else {
+                    posDisplay = invalidPos;
+                    activeCommandType = 0;
+                    activeCommandClass = CmdClass::STOP;
+                    return;
+                }
+            }
 		} else { // non uniform selection, use activeCommandClass
 			activeCommandType = 0;
 			activeCommandClass = m_display->getCommandClass(posDisplay);
@@ -1696,7 +1707,17 @@ void UserInterface::computeCommandPanel() {
 						if (u->getFaction()->isAvailable(ct) && !ct->isInvisible()) {
 							m_display->setDownImage(displayPos, ct->getImage());
 							m_display->setCommandType(displayPos, ct);
-							m_display->setDownLighted(displayPos, u->getFaction()->reqsOk(ct));
+							bool downLight = false;
+							if (u->getFaction()->reqsOk(ct)) {
+							    if (ct->getProducedCount() == 1 && u->reqsOk(ct->getProduced(0)) && unit->checkCosts(ct, ct->getProduced(0))) {
+                                    downLight = true;
+                                } else if (ct->getProducedCount() > 1) {
+                                    downLight = true;
+                                } else if (ct->getProducedCount() == 0) {
+                                    downLight = true;
+                                }
+							}
+							m_display->setDownLighted(displayPos, downLight);
 							++j;
 						}
 					}
@@ -1715,13 +1736,25 @@ void UserInterface::computeCommandPanel() {
 		} else { // two-tier select
 			RUNTIME_CHECK(activeCommandType != 0 && activeCommandType->getProducedCount() > 0);
 			const Unit *unit = selection->getFrontUnit();
+			Unit *u = g_world.getUnit(unit->getId());
 			m_display->setDownImage(cancelPos, selection->getFrontUnit()->getType()->getCancelImage());
 			m_display->setDownLighted(cancelPos, true);
 			for (int i=0, j=0; i < activeCommandType->getProducedCount(); ++i) {
 				const ProducibleType *pt = activeCommandType->getProduced(i);
 				if (unit->getFaction()->isAvailable(pt)) {
 					m_display->setDownImage(j, pt->getImage());
-					m_display->setDownLighted(j, unit->getFaction()->reqsOk(activeCommandType, pt));
+                    bool downLight = false;
+                    if (unit->getFaction()->reqsOk(activeCommandType, pt)) {
+                        if (activeCommandType->getProducedCount() == 1 &&
+                            unit->reqsOk(activeCommandType->getProduced(0)) && u->checkCosts(activeCommandType, activeCommandType->getProduced(0))) {
+                            downLight = true;
+                        } else if (activeCommandType->getProducedCount() > 1) {
+                            downLight = true;
+                        } else if (activeCommandType->getProducedCount() == 0) {
+                            downLight = true;
+                        }
+                    }
+					m_display->setDownLighted(j, downLight);
                     m_display->setIndex(j, i);
                     ++j;
                 }

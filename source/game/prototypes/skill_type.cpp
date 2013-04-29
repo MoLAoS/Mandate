@@ -174,6 +174,7 @@ bool SkillCosts::load(const XmlNode *sn, const string &dir, const TechTree *tt, 
     }
     const XmlNode *itemCostsNode = sn->getChild("item-costs", 0, false);
     if (itemCostsNode) {
+        itemCosts.resize(itemCostsNode->getChildCount());
         for (int i = 0; i < itemCostsNode->getChildCount(); ++i) {
             const XmlNode *costNode = itemCostsNode->getChild("cost", i);
             string typeString = costNode->getAttribute("type")->getRestrictedValue();
@@ -184,6 +185,7 @@ bool SkillCosts::load(const XmlNode *sn, const string &dir, const TechTree *tt, 
     }
     const XmlNode *resourceCostsNode = sn->getChild("resource-costs", 0, false);
     if (resourceCostsNode) {
+        resourceCosts.resize(resourceCostsNode->getChildCount());
         for (int i = 0; i < resourceCostsNode->getChildCount(); ++i) {
             const XmlNode *costNode = resourceCostsNode->getChild("cost", i);
             string typeString = costNode->getAttribute("type")->getRestrictedValue();

@@ -58,6 +58,7 @@ CommandType::CommandType(const char* name, Clicks clicks, bool queuable)
 }
 
 bool CommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct) {
+    bool loadOk = true;
 	const XmlNode *nameNode = n->getChild("name");
 	m_name = nameNode->getRestrictedValue();
 	const FactionType *ft = ct->getFactionType();
@@ -82,8 +83,17 @@ bool CommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, 
 		m_display = displayNode->getBoolValue();
 	}
 
-	bool ok = DisplayableType::load(n, dir);
-	return RequirableType::load(n, dir, tt, ft) && ok;
+    const XmlNode *skillCostsNode = n->getChild("skill-costs", 0, false);
+    if (skillCostsNode) {
+        if(!skillCosts.load(skillCostsNode, dir, tt, ct)) {
+           loadOk = false;
+        }
+    } else {
+        skillCosts.init();
+    }
+
+	loadOk = DisplayableType::load(n, dir) && loadOk;
+	return RequirableType::load(n, dir, tt, ft) && loadOk;
 }
 
 void CommandType::doChecksum(Checksum &checksum) const {
@@ -198,8 +208,6 @@ void CommandType::apply(Unit *unit, Faction *faction, const Command &command) co
 		} else {
 			faction->applyCosts(produced);
 		}
-		if (command.getType()->getClass() == CmdClass::CREATE_ITEM) {
-		}
 		if (command.getType()->getClass() == CmdClass::PRODUCE || command.getType()->getClass() == CmdClass::STRUCTURE
             || command.getType()->getClass() == CmdClass::CREATE_ITEM) {
 		    const ProduceCommandType *pct = NULL;
@@ -223,9 +231,9 @@ void CommandType::apply(Unit *unit, Faction *faction, const Command &command) co
                 createct = cct->isChild();
 		    }
             if (prodct || structct || createct) {
-                unit->owner->applyCosts(produced);
+                unit->owner->applyCosts(command.getType(), produced);
             } else if (!prodct && !structct && !createct) {
-                unit->applyCosts(produced);
+                unit->applyCosts(command.getType(), produced);
             }
 		}
 	}
@@ -299,7 +307,17 @@ void CommandType::describe(const Unit *unit, CmdDescriptor *callback, ProdTypePt
 
 	CommandCheckResult cmdCheckResult;
 	unit->getFaction()->reportReqsAndCosts(this, pt, cmdCheckResult);
-
+	if (pt) {
+        for (int i=0; i < pt->getLocalCostCount(); ++i) {
+            ResourceAmount res = pt->getLocalCost(i, unit->getFaction());
+            if (res.getAmount() < 0) {
+                cmdCheckResult.m_resourceMadeResults.push_back(ResourceMadeResult(res.getType(), -res.getAmount()));
+            } else {
+                int stored = unit->getSResource(res.getType())->getAmount();
+                cmdCheckResult.m_resourceCostResults.push_back(ResourceCostResult(res.getType(), res.getAmount(), stored, true));
+            }
+        }
+	}
 	if (cmdCheckResult.m_upgradedAlready) {
 		callback->addItem(pt, g_lang.get("AlreadyUpgraded"));
 	} else if (cmdCheckResult.m_upgradingAlready) {
@@ -338,11 +356,19 @@ void CommandType::describe(const Unit *unit, CmdDescriptor *callback, ProdTypePt
 					} else {
                         local = "";
 					}
-					string msg = name + local + " (" + intToStr(it->getCost()) + ")";
-					if (!it->isCostMet()) {
-						msg += " [-" + intToStr(it->getDifference()) + "]";
+					int amount = 0;
+                    for (int i = 0; i < getSkillCosts()->getResourceCostCount(); ++i) {
+                        const ResourceAmount *res = getSkillCosts()->getResourceCost(i);
+                        if (res->getType() == it->getResourceType()) {
+                            amount = res->getAmount();
+                            break;
+                        }
+                    }
+					string msg = local + name + " (" + intToStr(it->getCost() + amount) + ")";
+					if (!it->isCostMet(amount)) {
+						msg += " [-" + intToStr(it->getDifference(amount)) + "]";
 					}
-					callback->addReq(it->getResourceType(), it->isCostMet(), msg);
+					callback->addReq(it->getResourceType(), it->isCostMet(amount), msg);
 				}
 			}
 			if (!cmdCheckResult.m_resourceMadeResults.empty()) {
@@ -351,6 +377,69 @@ void CommandType::describe(const Unit *unit, CmdDescriptor *callback, ProdTypePt
 					string name = g_lang.getTranslatedTechName(it->getResourceType()->getName());
 					string msg = name + " (" + intToStr(it->getAmount()) + ")";
 					callback->addItem(it->getResourceType(), msg);
+				}
+			}
+			if (getSkillCosts()->getItemCostCount() > 0) {
+				callback->addElement(g_lang.get("Costs") + ":");
+				for (int i = 0; i < getSkillCosts()->getItemCostCount(); ++i) {
+                    const ItemCost *iCost = getSkillCosts()->getItemCost(i);
+					string name = g_lang.getTranslatedTechName(iCost->getType()->getName());
+					string msg = "Local| " + name + " (" + intToStr(iCost->getAmount()) + ")";
+					bool costMet = false;
+					int available = 0;
+                    for (int j = 0; j < unit->getStoredItems().size(); ++j) {
+                        Item *item = unit->getStoredItem(j);
+                        if (item->getType() == iCost->getType()) {
+                            ++available;
+                        }
+                    }
+                    if (available >= iCost->getAmount()) {
+                        costMet = true;
+                    }
+					if (available < iCost->getAmount()) {
+						msg += " [-" + intToStr(iCost->getAmount() - available) + "]";
+					}
+					callback->addReq(iCost->getType(), costMet, msg);
+				}
+			}
+		}
+		if (!pt) {
+			if (getSkillCosts()->getResourceCostCount() > 0) {
+				callback->addElement(g_lang.get("Costs") + ":");
+				for (int i = 0; i < getSkillCosts()->getResourceCostCount(); ++i) {
+                    const ResourceAmount *res = getSkillCosts()->getResourceCost(i);
+					string name = g_lang.getTranslatedTechName(res->getType()->getName());
+					string msg = "Local| " + name + " (" + intToStr(res->getAmount()) + ")";
+					bool costMet = true;
+                    int stored = unit->getSResource(res->getType())->getAmount();
+					if (stored < res->getAmount()) {
+						msg += " [-" + intToStr(stored - res->getAmount()) + "]";
+						costMet = false;
+					}
+					callback->addReq(res->getType(), costMet, msg);
+				}
+			}
+			if (getSkillCosts()->getItemCostCount() > 0) {
+				callback->addElement(g_lang.get("Costs") + ":");
+				for (int i = 0; i < getSkillCosts()->getItemCostCount(); ++i) {
+                    const ItemCost *iCost = getSkillCosts()->getItemCost(i);
+					string name = g_lang.getTranslatedTechName(iCost->getType()->getName());
+					string msg = "Local| " + name + " (" + intToStr(iCost->getAmount()) + ")";
+					bool costMet = false;
+					int available = 0;
+                    for (int j = 0; j < unit->getStoredItems().size(); ++j) {
+                        Item *item = unit->getStoredItem(j);
+                        if (item->getType() == iCost->getType()) {
+                            ++available;
+                        }
+                    }
+                    if (available = iCost->getAmount()) {
+                        costMet = true;
+                    }
+					if (available < iCost->getAmount()) {
+						msg += " [-" + intToStr(iCost->getAmount() - available) + "]";
+					}
+					callback->addReq(iCost->getType(), costMet, msg);
 				}
 			}
 		}

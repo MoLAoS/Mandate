@@ -96,6 +96,7 @@ protected:
 	string          m_tipKey;
 	string          m_tipHeaderKey;
 	int             energyCost;
+    SkillCosts      skillCosts;
 	bool            m_display;
 
 	void setId(int v) { m_id = v; }
@@ -105,6 +106,8 @@ protected:
 
 public:
 	CommandType(const char* name, Clicks clicks, bool queuable = false);
+
+    const SkillCosts *getSkillCosts() const {return &skillCosts;}
 
 	// describe(), and virtual helpers descSkills() and subDesc()
 	void describe(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt = 0) const;

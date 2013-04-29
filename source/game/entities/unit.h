@@ -368,9 +368,9 @@ private:
 	bool attacked_trigger;
 
 public:
-	bool applyCosts(const ProducibleType *p);
+	bool applyCosts(const CommandType *ct, const ProducibleType *pt);
 	void applyStaticCosts(const ProducibleType *p);
-	bool checkCosts(const ProducibleType *pt);
+	bool checkCosts(const CommandType *ct, const ProducibleType *pt);
 
 	MEMORY_CHECK_DECLARATIONS(Unit)
 

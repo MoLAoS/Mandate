@@ -313,10 +313,10 @@ public:
 	ResourceCostResult(const ResourceType *resourcType, int cost, int store, bool local)
 		: m_type(resourcType), m_cost(cost), m_store(store), m_local(local) {}
 
-	bool isCostMet() const { return m_cost <= m_store; }
+	bool isCostMet(int other) const { return (m_cost + other) <= m_store; }
 	bool isLocal() const { return m_local; }
 	int  getCost() const { return m_cost; }
-	int  getDifference() const { assert (m_cost > m_store); return m_cost - m_store; }
+	int  getDifference(int other) const { assert ((m_cost + other) > m_store); return (m_cost + other) - m_store; }
 	const ResourceType* getResourceType() const { return m_type; }
 };
 
