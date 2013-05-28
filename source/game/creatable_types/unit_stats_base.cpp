@@ -146,7 +146,7 @@ void Stat::formatModifier(string &str, const char *pre, string label, int base, 
 		if (base > 0) {
 			str += "+";
 		}
-		str += intToStr(base);
+		str += intToStr(layer);
 	}
 	if (layerMultiplier != 0) {
 		if(base) {

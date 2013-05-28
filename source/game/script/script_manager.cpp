@@ -1413,7 +1413,7 @@ int ScriptManager::giveUpgrade(LuaHandle* luaHandle) {
 			const FactionType *ft = faction->getType();
 			try {
 				const UpgradeType *ut = ft->getUpgradeType(upgrade);
-				faction->startUpgrade(ut);
+				faction->startUpgrade(ut, 1);
 				faction->finishUpgrade(ut);
 			} catch (runtime_error &e) {
 				addErrorMessage("Error: giveUpgrade(): invalid upgrade '" + upgrade + "'");

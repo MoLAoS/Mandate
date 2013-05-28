@@ -609,18 +609,6 @@ void World::tick() {
 	for (int i = 0; i < getFactionCount(); ++i) {
 		for (int j = 0; j < getFaction(i)->getUnitCount(); ++j) {
 		    Unit *unit = getFaction(i)->getUnit(j);
-		    if (unit->getType()->getName() == "defender") {
-		        Trait *trait = g_world.getTechTree()->getTraitById(3);
-		        bool traitTest = false;
-		        for (int k = 0; k < unit->getTraitCount(); ++k) {
-                    if (unit->getTrait(k)->getId() == 3) {
-                        traitTest = true;
-                    }
-		        }
-		        if (traitTest == false) {
-                    unit->addTrait(trait);
-		        }
-		    }
 		}
 	}
 	for (int i = 0; i < getFactionCount(); ++i) {

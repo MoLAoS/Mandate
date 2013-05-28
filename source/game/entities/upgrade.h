@@ -39,6 +39,7 @@ class Upgrade {
 
 private:
 	int m_id;
+	int stage;
 	UpgradeState state;
 	int factionIndex;
 	const UpgradeType *type;
@@ -47,8 +48,9 @@ public:
 	struct CreateParams {
 		const UpgradeType *upgradeType;
 		int factionIndex;
-		CreateParams(const UpgradeType *type, int fNdx) :
-		upgradeType(type), factionIndex(fNdx)
+		int upgradeStage;
+		CreateParams(const UpgradeType *type, int fNdx, int stage) :
+		upgradeType(type), factionIndex(fNdx), upgradeStage(stage)
         {}
 	};
 	struct LoadParams {
@@ -68,6 +70,8 @@ public:
 	int getId() const { return m_id; }
 	const UpgradeType *getType() const;
 	UpgradeState getState() const;
+	int setStage(int v) {stage = v;}
+	int getStage() {return stage;}
 
 	void save(XmlNode *node) const;
 
@@ -97,7 +101,7 @@ public:
 	int getUpgradeCount() const		{return upgrades.size();}
 	const Upgrade &getUpgrade(int i) const	{return *upgrades[i];}
 
-	void startUpgrade(const UpgradeType *upgradeType, int factionIndex);
+	void startUpgrade(const UpgradeType *upgradeType, int factionIndex, int upgradeStage);
 	void cancelUpgrade(const UpgradeType *upgradeType);
 	void finishUpgrade(const UpgradeType *upgradeType, Faction *f);
     void wrapUpdateUpgrade(const UpgradeType *upgradeType, Faction *f);

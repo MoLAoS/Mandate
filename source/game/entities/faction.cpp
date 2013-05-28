@@ -122,6 +122,15 @@ void UpgradeStage::doChecksum(Checksum &checksum) const {
 	ProducibleType::doChecksum(checksum);
 }
 
+const Statistics *UpgradeStage::getStatistics(const UnitType *ut, int stage) const {
+    for (int i = 0; i < m_upgradeMap.size(); ++i) {
+        if (m_upgradeMap[i].getUnitType() == ut) {
+            return m_upgrades[i].getStatistics(stage);
+        }
+    }
+    return 0;
+}
+
 // =====================================================
 //  class Faction
 // =====================================================
@@ -432,8 +441,8 @@ int Faction::getCurrentStage(const UpgradeType *ut) {
 
 // ==================== upgrade manager ====================
 
-void Faction::startUpgrade(const UpgradeType *ut) {
-	upgradeManager.startUpgrade(ut, m_id);
+void Faction::startUpgrade(const UpgradeType *ut, int upgradeStage) {
+	upgradeManager.startUpgrade(ut, m_id, upgradeStage);
 }
 
 void Faction::cancelUpgrade(const UpgradeType *ut) {
@@ -442,15 +451,11 @@ void Faction::cancelUpgrade(const UpgradeType *ut) {
 
 void Faction::finishUpgrade(const UpgradeType *ut) {
 	upgradeManager.finishUpgrade(ut, this);
-
 	for (int i = 0; i < getUnitCount(); ++i) {
 		getUnit(i)->applyUpgrade(ut);
 	}
-
     upgradeManager.wrapUpdateUpgrade(ut, this);
-
     const UpgradeStage *us = getUpgradeStage(ut);
-
 	// update unit cost & store modifiers
 	const TechTree *tt = g_world.getTechTree();
 	for (int i=0; i < factionType->getUnitTypeCount(); ++i) {
@@ -470,7 +475,6 @@ void Faction::finishUpgrade(const UpgradeType *ut) {
 			m_createModifiers[unitType][resType].m_multiplier += (mod.getMultiplier() - 1);
 		}
 	}
-
 	// update store caps
 	reEvaluateStore();
 }

@@ -38,7 +38,12 @@ namespace Glest { namespace ProtoTypes {
 // =====================================================
 // 	class UpgradeType
 // =====================================================
-
+void UpgradeEffect::init() {
+    for (int i = 1; i < m_statisticsSet.size(); ++i) {
+        m_statisticsSet[i] = m_statisticsSet[i-1];
+        m_statisticsSet[i].modify();
+    }
+}
 // ==================== misc ====================
 
 UpgradeType::UpgradeType()
@@ -172,7 +177,8 @@ bool UpgradeType::load(const string &dir) {
 		try {
             const XmlNode *statisticsNode = upgradeNode->getChild("statistics", 0, false);
             if (statisticsNode) {
-                if (!m_upgrades[i].m_statistics.load(statisticsNode, dir)) {
+                m_upgrades[i].m_statisticsSet.resize(maxStage);
+                if (!m_upgrades[i].m_statisticsSet[0].load(statisticsNode, dir)) {
                     loadOk = false;
                 }
             }
@@ -183,8 +189,9 @@ bool UpgradeType::load(const string &dir) {
         try {
             const XmlNode *actionsNode = upgradeNode->getChild("actions", 0, false);
             if (actionsNode) {
+                m_upgrades[i].actionsSet.resize(maxStage);
                 const CreatableType *ct = 0;
-                if (!m_upgrades[i].actions.load(actionsNode, dir, true, ft, ct)) {
+                if (!m_upgrades[i].actionsSet[0].load(actionsNode, dir, true, ft, ct)) {
                     loadOk = false;
                 }
             }
@@ -193,19 +200,23 @@ bool UpgradeType::load(const string &dir) {
             loadOk = false;
         }
 		try {
+		    m_upgrades[i].m_costModifiers.resize(1);
 			if (const XmlNode *costModsNode = upgradeNode->getOptionalChild("cost-modifiers")) {
-				loadResourceModifier(costModsNode, m_upgrades[i].m_costModifiers);
+				loadResourceModifier(costModsNode, m_upgrades[i].m_costModifiers[0]);
 			}
+			m_upgrades[i].m_storeModifiers.resize(1);
 			if (const XmlNode *storeModsNode = upgradeNode->getOptionalChild("store-modifiers")) {
-				loadResourceModifier(storeModsNode, m_upgrades[i].m_storeModifiers);
+				loadResourceModifier(storeModsNode, m_upgrades[i].m_storeModifiers[0]);
 			}
+			m_upgrades[i].m_createModifiers.resize(1);
 			if (const XmlNode *createModsNode = upgradeNode->getOptionalChild("create-modifiers")) {
-				loadResourceModifier(createModsNode, m_upgrades[i].m_createModifiers);
+				loadResourceModifier(createModsNode, m_upgrades[i].m_createModifiers[0]);
 			}
 		} catch (runtime_error e) {
 			g_logger.logXmlError(dir, e.what());
 			loadOk = false;
 		}
+		m_upgrades[i].init();
 	}
 	return loadOk;
 }
@@ -266,51 +277,52 @@ string UpgradeType::getDesc(Faction *f) const {
 			break;
 		}
 	}
-
-	if (!(*fit).getUpgradeType()->m_upgrades.empty()) {
-		for (int i=0; i < (*fit).getUpgradeType()->m_upgrades.size(); ++i) {
-			str += "\n" + lang.get("Affects") + ":";
-			for (int j=0; j < (*fit).getUpgradeType()->m_unitsAffected[i].size(); ++j) {
-				str += (j == 0 ? " " : j == ((*fit).getUpgradeType()->m_unitsAffected[i].size() - 1) ? " & " : ", ");
-				str += lang.getFactionString(f->getType()->getName(), (*fit).getUpgradeType()->m_unitsAffected[i][j]);
-			}
-			(*fit).upgradeType->m_upgrades[i].m_statistics.getDesc(str, "\n");
-			if (!(*fit).getUpgradeType()->m_upgrades[i].m_costModifiers.empty()) {
-				str += "\n" + lang.get("CostModifiers") + ":";
-				foreach_const (ResModifierMap, it, (*fit).getUpgradeType()->m_upgrades[i].m_costModifiers) {
-					descResourceModifier(*it, str);
-				}
-			}
-			if (!(*fit).getUpgradeType()->m_upgrades[i].m_storeModifiers.empty()) {
-				str += "\n" + lang.get("StoreModifiers") + ":";
-				foreach_const (ResModifierMap, it, (*fit).getUpgradeType()->m_upgrades[i].m_storeModifiers) {
-					descResourceModifier(*it, str);
-				}
-			}
-			if (!(*fit).getUpgradeType()->m_upgrades[i].m_createModifiers.empty()) {
-				str += "\n" + lang.get("CreateModifiers") + ":";
-				foreach_const (ResModifierMap, it, (*fit).getUpgradeType()->m_upgrades[i].m_createModifiers) {
-					descResourceModifier(*it, str);
-				}
-			}
-			if (i != (*fit).getUpgradeType()->m_upgrades.size() - 1) {
-				str += "\n";
-			}
-		}
-        stringstream ss;
-		ss << (*fit).getUpgradeStage();
-		string string;
-		ss >> string;
-        str += "\n" + string;
-	}
+    if ((*fit).getUpgradeStage() < (*fit).getMaxStage()) {
+        if (!(*fit).m_upgrades.empty()) {
+            for (int i=0; i < (*fit).m_upgrades.size(); ++i) {
+                str += "\n" + lang.get("Affects") + ":";
+                for (int j=0; j < (*fit).m_unitsAffected[i].size(); ++j) {
+                    str += (j == 0 ? " " : j == ((*fit).m_unitsAffected[i].size() - 1) ? " & " : ", ");
+                    str += lang.getFactionString(f->getType()->getName(), (*fit).m_unitsAffected[i][j]);
+                }
+                (*fit).m_upgrades[i].m_statisticsSet[(*fit).getUpgradeStage()].getDesc(str, "\n");
+                if (!(*fit).m_upgrades[i].m_costModifiers[0].empty()) {
+                    str += "\n" + lang.get("CostModifiers") + ":";
+                    foreach_const (ResModifierMap, it, (*fit).m_upgrades[i].m_costModifiers[0]) {
+                        descResourceModifier(*it, str);
+                    }
+                }
+                if (!(*fit).m_upgrades[i].m_storeModifiers[0].empty()) {
+                    str += "\n" + lang.get("StoreModifiers") + ":";
+                    foreach_const (ResModifierMap, it, (*fit).m_upgrades[i].m_storeModifiers[0]) {
+                        descResourceModifier(*it, str);
+                    }
+                }
+                if (!(*fit).m_upgrades[i].m_createModifiers[0].empty()) {
+                    str += "\n" + lang.get("CreateModifiers") + ":";
+                    foreach_const (ResModifierMap, it, (*fit).m_upgrades[i].m_createModifiers[0]) {
+                        descResourceModifier(*it, str);
+                    }
+                }
+                if (i != (*fit).m_upgrades.size() - 1) {
+                    str += "\n";
+                }
+            }
+            stringstream ss;
+            ss << (*fit).getUpgradeStage();
+            string string;
+            ss >> string;
+            str += "\n" + string;
+        }
+    }
 	return str;
 }
 
 Modifier UpgradeType::getCostModifier(const UnitType *ut, const ResourceType *rt) const {
 	for (int i = 0; i < m_upgradeMap.size(); ++i) {
 		if (m_upgradeMap[i].getUnitType() == ut) {
-		    ResModifierMap::const_iterator rit = m_upgradeMap[i].getUpgradeEffect()->m_costModifiers.find(rt);
-            if (rit != m_upgradeMap[i].getUpgradeEffect()->m_costModifiers.end()) {
+		    ResModifierMap::const_iterator rit = m_upgradeMap[i].getUpgradeEffect()->m_costModifiers[0].find(rt);
+            if (rit != m_upgradeMap[i].getUpgradeEffect()->m_costModifiers[0].end()) {
                 return rit->second;
             }
 		}
@@ -321,8 +333,8 @@ Modifier UpgradeType::getCostModifier(const UnitType *ut, const ResourceType *rt
 Modifier UpgradeType::getStoreModifier(const UnitType *ut, const ResourceType *rt) const {
 	for (int i = 0; i < m_upgradeMap.size(); ++i) {
 		if (m_upgradeMap[i].getUnitType() == ut) {
-		    ResModifierMap::const_iterator rit = m_upgradeMap[i].getUpgradeEffect()->m_storeModifiers.find(rt);
-            if (rit != m_upgradeMap[i].getUpgradeEffect()->m_storeModifiers.end()) {
+		    ResModifierMap::const_iterator rit = m_upgradeMap[i].getUpgradeEffect()->m_storeModifiers[0].find(rt);
+            if (rit != m_upgradeMap[i].getUpgradeEffect()->m_storeModifiers[0].end()) {
                 return rit->second;
             }
 		}
@@ -333,8 +345,8 @@ Modifier UpgradeType::getStoreModifier(const UnitType *ut, const ResourceType *r
 Modifier UpgradeType::getCreateModifier(const UnitType *ut, const ResourceType *rt) const {
 	for (int i = 0; i < m_upgradeMap.size(); ++i) {
 		if (m_upgradeMap[i].getUnitType() == ut) {
-		    ResModifierMap::const_iterator rit = m_upgradeMap[i].getUpgradeEffect()->m_createModifiers.find(rt);
-            if (rit != m_upgradeMap[i].getUpgradeEffect()->m_createModifiers.end()) {
+		    ResModifierMap::const_iterator rit = m_upgradeMap[i].getUpgradeEffect()->m_createModifiers[0].find(rt);
+            if (rit != m_upgradeMap[i].getUpgradeEffect()->m_createModifiers[0].end()) {
                 return rit->second;
             }
 		}
@@ -345,7 +357,7 @@ Modifier UpgradeType::getCreateModifier(const UnitType *ut, const ResourceType *
 void UpgradeType::doChecksum(Checksum &checksum) const {
 	ProducibleType::doChecksum(checksum);
 	foreach_const (Upgrades, it, m_upgrades) {
-		it->m_statistics.getEnhancement()->doChecksum(checksum);
+		it->m_statisticsSet[0].getEnhancement()->doChecksum(checksum);
 	}
 }
 

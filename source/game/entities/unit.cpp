@@ -3048,7 +3048,6 @@ void Unit::applyUpgrade(const UpgradeType *upgradeType) {
 			break;
 		}
 	}
-
     int ii = 0;
     for (ii = 0; ii < f->upgradeStages.size(); ++ii) {
         if (f->upgradeStages[ii].getUpgradeType() == (*fit).getUpgradeType()) {
@@ -3056,43 +3055,43 @@ void Unit::applyUpgrade(const UpgradeType *upgradeType) {
         }
     }
     UpgradeStage *us = &f->upgradeStages[ii];
-
-
-	for (int i = 0; i < us->upgradeType->m_upgrades.size(); ++i) {
-	    if (us->upgradeType->m_upgradeMap[i].affectsThis(type, &(us->upgradeType->m_upgrades[i]))) {
-            const Statistics *stats = us->upgradeType->m_upgrades[i].getStatistics();
+	for (int i = 0; i < us->m_upgrades.size(); ++i) {
+	    if (us->m_upgradeMap[i].affectsThis(type, &(us->upgradeType->m_upgrades[i]))) {
+            const Statistics *stats = us->m_upgrades[i].getStatistics(us->getUpgradeStage());
             if (stats) {
                 totalUpgrade.sum(stats);
-                recalculateStats();
+                computeTotalUpgrade();
                 doRegen(stats->getEnhancement()->getResourcePools()->getHealth()->getBoostStat()->getValue());
             }
-            Actions *tActions = us->m_upgrades[i].getActions();
-            for (int i = 0; i < tActions->getSkillTypeCount(); ++i) {
-                string loadAnim = "techs/" + g_world.getTechTree()->getName() + "/factions/" + type->getFactionType()->getName()
-                    + "/units/" + type->getName() + tActions->getSkillType(i)->getSoundsAndAnimations()->getLoadValue();
-                tActions->getSkillType(i)->getSoundsAndAnimations()->addAnimation(cleanPath(loadAnim), type->getSize(), type->getHeight());
-                actions.addSkillType(tActions->getSkillType(i));
-            }
-            actions.sortSkillTypes();
-            for (int i = 0; i < tActions->getCommandTypeCount(); ++i) {
-                string imgPath = "techs/" + g_world.getTechTree()->getName() + "/factions/" + type->getFactionType()->getName()
-                    + "/units/" + type->getName() + tActions->getCommandType(i)->getImagePath();
-                tActions->getCommandType(i)->addImage(imgPath);
-                if (tActions->getCommandType(i)->getClass() == CmdClass::ATTACK) {
-                    MoveBaseCommandType *mbct = static_cast<MoveBaseCommandType*>(tActions->getCommandType(i));
-                    mbct->initMoveSkill(this);
+            if (us->getUpgradeStage() == 0 && us->m_upgrades[i].getActionsCount() > 0) {
+                Actions *tActions = us->m_upgrades[i].getActions(0);
+                for (int i = 0; i < tActions->getSkillTypeCount(); ++i) {
+                    string loadAnim = "techs/" + g_world.getTechTree()->getName() + "/factions/" + type->getFactionType()->getName()
+                        + "/units/" + type->getName() + tActions->getSkillType(i)->getSoundsAndAnimations()->getLoadValue();
+                    tActions->getSkillType(i)->getSoundsAndAnimations()->addAnimation(cleanPath(loadAnim), type->getSize(), type->getHeight());
+                    actions.addSkillType(tActions->getSkillType(i));
                 }
-                if (tActions->getCommandType(i)->getClass() == CmdClass::ATTACK) {
-                    AttackCommandType *act = static_cast<AttackCommandType*>(tActions->getCommandType(i));
-                    act->initAttackSkill(this);
-                    act->attackSkillsInit();
+                actions.sortSkillTypes();
+                for (int i = 0; i < tActions->getCommandTypeCount(); ++i) {
+                    string imgPath = "techs/" + g_world.getTechTree()->getName() + "/factions/" + type->getFactionType()->getName()
+                        + "/units/" + type->getName() + tActions->getCommandType(i)->getImagePath();
+                    tActions->getCommandType(i)->addImage(imgPath);
+                    if (tActions->getCommandType(i)->getClass() == CmdClass::ATTACK) {
+                        MoveBaseCommandType *mbct = static_cast<MoveBaseCommandType*>(tActions->getCommandType(i));
+                        mbct->initMoveSkill(this);
+                    }
+                    if (tActions->getCommandType(i)->getClass() == CmdClass::ATTACK) {
+                        AttackCommandType *act = static_cast<AttackCommandType*>(tActions->getCommandType(i));
+                        act->initAttackSkill(this);
+                        act->attackSkillsInit();
+                    }
+                    actions.addCommand(tActions->getCommandType(i));
+                    TimerStep newCooldown;
+                    newCooldown.setCurrentStep(0);
+                    currentCommandCooldowns.push_back(newCooldown);
                 }
-                actions.addCommand(tActions->getCommandType(i));
-                TimerStep newCooldown;
-                newCooldown.setCurrentStep(0);
-                currentCommandCooldowns.push_back(newCooldown);
+                actions.sortCommandTypes();
             }
-            actions.sortCommandTypes();
         }
 	}
 }
@@ -3218,14 +3217,13 @@ void Unit::recalculateStats() {
 
 	statistics.applyMultipliers(stats->getEnhancement());
 	statistics.addStatic(stats->getEnhancement());
+    statistics.addResistancesAndDamage(stats);
 
 	for (Effects::const_iterator i = effects.begin(); i != effects.end(); ++i) {
 		statistics.addStatic((*i)->getType()->getStatistics()->getEnhancement(), (*i)->getStrength());
 		statistics.getEnhancement()->getResourcePools()->getHealth()->getRegenStat()->incValue((*i)->getActualHpRegen()
         - (*i)->getType()->getStatistics()->getEnhancement()->getResourcePools()->getHealth()->getRegenStat()->getValue());
 	}
-
-    statistics.addResistancesAndDamage(stats);
 
 	effects.clearDirty();
 
@@ -3420,7 +3418,6 @@ void Unit::incKills() {
 void Unit::incExp(int addExp) {
     exp += addExp;
     computeTotalUpgrade();
-    recalculateStats();
 }
 
 /** Perform a morph @param mct the CommandType describing the morph @return true if successful */

@@ -101,8 +101,8 @@ public:
 
 	}
 
-	Upgrade* newUpgrade(const UpgradeType *type, int factionNdx) {
-		Upgrade::CreateParams params(type, factionNdx);
+	Upgrade* newUpgrade(const UpgradeType *type, int factionNdx, int upgradeStage) {
+		Upgrade::CreateParams params(type, factionNdx, upgradeStage);
 		return m_upgradeFactory.newInstance(params);
 	}
 

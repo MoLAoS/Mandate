@@ -1184,8 +1184,16 @@ void UpgradeCommandType::start(Unit *unit, Command &command) const {
 
 void UpgradeCommandType::apply(Unit *unit, Faction *faction, const Command &command) const {
 	CommandType::apply(unit, faction, command);
-
-	faction->startUpgrade(static_cast<const UpgradeType*>(command.getProdType()));
+	const UpgradeType *ut = static_cast<const UpgradeType*>(command.getProdType());
+    int stage = 1;
+    Faction::UpgradeStages::iterator fit;
+    for(fit=faction->upgradeStages.begin(); fit!=faction->upgradeStages.end(); ++fit) {
+        if((*fit).getUpgradeType()==ut) {
+            stage = (*fit).getUpgradeStage();
+            break;
+        }
+    }
+	faction->startUpgrade(ut, stage);
 }
 
 void UpgradeCommandType::undo(Unit *unit, const Command &command) const {

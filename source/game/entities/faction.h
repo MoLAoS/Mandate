@@ -109,6 +109,8 @@ public:
 
 	virtual void doChecksum(Checksum &checksum) const;
 
+    const Statistics *getStatistics(const UnitType *ut, int stage) const;
+
     UpgradeStage();
     ~UpgradeStage();
 
@@ -286,7 +288,7 @@ public:
 	void setDefeated()	{ defeated = true; }
 
 	// upgrades
-	void startUpgrade(const UpgradeType *ut);
+	void startUpgrade(const UpgradeType *ut, int upgradeStage);
 	void cancelUpgrade(const UpgradeType *ut);
 	void finishUpgrade(const UpgradeType *ut);
 

@@ -35,15 +35,23 @@ namespace Glest { namespace ProtoTypes {
 
 typedef map<const ResourceType*, Modifier> ResModifierMap;
 
-struct UpgradeEffect {
-	Statistics       m_statistics;
-	ResModifierMap   m_costModifiers;
-	ResModifierMap   m_storeModifiers;
-	ResModifierMap   m_createModifiers;
-    Actions          actions;
+class UpgradeEffect {
+public:
+    typedef vector<Statistics>      StatisticSet;
+    typedef vector<Actions>         ActionsSet;
+    typedef vector<ResModifierMap>  ResModifierMapSet;
+	StatisticSet        m_statisticsSet;
+	ResModifierMapSet   m_costModifiers;
+	ResModifierMapSet   m_storeModifiers;
+	ResModifierMapSet   m_createModifiers;
+    ActionsSet          actionsSet;
 
-    Actions *getActions() {return &actions;}
-	const Statistics* getStatistics() const { return &m_statistics; }
+    void init();
+
+    int getActionsCount() {return actionsSet.size();}
+    Actions *getActions(int i) {return &actionsSet[i];}
+	int getStatisticsCount() const { return m_statisticsSet.size(); }
+	const Statistics* getStatistics(int i) const { return &m_statisticsSet[i]; }
 };
 
 // ===============================
@@ -105,7 +113,7 @@ public:
     const Statistics *getStatistics(const UnitType *ut) const {
         for (int i = 0; i < m_upgradeMap.size(); ++i) {
             if (m_upgradeMap[i].getUnitType() == ut) {
-                return m_upgradeMap[i].getUpgradeEffect()->getStatistics();
+                return m_upgradeMap[i].getUpgradeEffect()->getStatistics(maxStage);
             }
         }
         return 0;

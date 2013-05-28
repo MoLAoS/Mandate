@@ -4,7 +4,7 @@
     <image-cancel path="images/tech_cancel.bmp"/>
 	<time value="5"/>
 	<stage>
-		<max-stage value="1"/>
+		<max-stage value="5"/>
 	</stage>
 	<names>
 		<stage-name name="strong"/>
@@ -18,65 +18,14 @@
 				<enhancement>
 					<resource-pools>
 					  <health name="health">
-						<max-stat value="25"/>
+						<max-stat value="25" add="5"/>
 					  </health>
 					</resource-pools>
 				</enhancement>
 				<damage-types>
-					<damage-type type="slashing" value="50"/>
+					<damage-type type="slashing" value="10"/>
 				</damage-types>
 			</statistics>
-			<actions>
-				<skills>
-					<skill faction="humans">
-						<type value="attack"/>
-						<name value="power_attack"/>
-						<ep-cost value="0"/>
-						<max-range value="1"/>
-						<speed value="150"/>
-						<sounds-animations>
-							<anim-speed value="150"/>
-							<animation load="true" path="models/attack_one.g3d"/>
-							<sound enabled="false"/>
-						</sounds-animations>
-						<attack-fields>
-							<field value="land"/>
-						</attack-fields>
-						<attack-start-time value="0.4"/>
-						<attack-levels>
-							<attack-level>
-								<statistics>
-									<damage-types>
-										<damage-type type="slashing" value="25"/>
-									</damage-types>
-								</statistics>
-							</attack-level>
-						</attack-levels>
-						<projectile value="false"/>
-						<splash value="false"/>
-					</skill>
-				</skills>
-				<commands>
-					<command faction="humans" add="true">
-						<type value="attack"/>
-						<name value="great_attack"/>
-						<image path="images/swordman_attack.bmp"/>
-						<unit-requirements/>
-						<upgrade-requirements/>
-						<move-skill value="charge_skill"/>
-						<attack-skill value="power_attack"/>
-					</command>
-					<command faction="humans" add="true">
-						<type value="attack"/>
-						<name value="mighty_attack"/>
-						<image path="images/swordman_attack.bmp"/>
-						<unit-requirements/>
-						<upgrade-requirements/>
-						<move-skill value="charge_skill"/>
-						<attack-skill value="power_attack"/>
-					</command>
-				</commands>
-			</actions>
 		</upgrade>
 	</upgrades>
 </upgrade-type>

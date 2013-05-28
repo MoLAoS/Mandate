@@ -44,6 +44,7 @@ Upgrade::Upgrade(CreateParams params) { //const UpgradeType *type, int factionIn
 	state = UpgradeState::UPGRADING;
 	this->factionIndex = params.factionIndex;
 	this->type = params.upgradeType;
+	this->stage = params.upgradeStage;
 }
 
 void Upgrade::save(XmlNode *node) const {
@@ -63,7 +64,7 @@ int Upgrade::getFactionIndex() const{
 	return factionIndex;
 }
 
-const UpgradeType * Upgrade::getType() const{
+const UpgradeType *Upgrade::getType() const{
 	return type;
 }
 
@@ -81,8 +82,8 @@ UpgradeManager::~UpgradeManager(){
 	deleteValues(upgrades.begin(), upgrades.end());
 }
 
-void UpgradeManager::startUpgrade(const UpgradeType *upgradeType, int factionIndex){
-	upgrades.push_back(g_world.newUpgrade(upgradeType, factionIndex));
+void UpgradeManager::startUpgrade(const UpgradeType *upgradeType, int factionIndex, int upgradeStage){
+	upgrades.push_back(g_world.newUpgrade(upgradeType, factionIndex, upgradeStage));
 }
 
 void UpgradeManager::cancelUpgrade(const UpgradeType *upgradeType){
@@ -106,24 +107,25 @@ void UpgradeManager::cancelUpgrade(const UpgradeType *upgradeType){
 }
 
 void UpgradeManager::updateUpgrade(const Upgrade *upgrade, Faction *f) {
-    const Upgrade *it = upgrade;
+    /*const Upgrade *it = upgrade;
     if (f->getIndex() == it->getFactionIndex()) {
-    Faction::UpgradeStages::iterator fit;
-	for(fit=f->upgradeStages.begin(); fit!=f->upgradeStages.end(); ++fit){
-		if((*fit).getUpgradeType()==it->getType()){
-			break;
-		}
-	}
-    if(fit!=f->upgradeStages.end()){
+        Faction::UpgradeStages::iterator fit;
+        for(fit=f->upgradeStages.begin(); fit!=f->upgradeStages.end(); ++fit) {
+            if((*fit).getUpgradeType()==it->getType()) {
+                it->setStage((*fit).getUpgradeStage());
+                break;
+            }
+        }
+    }*/
+    /*if(fit!=f->upgradeStages.end()){
         if ((*fit).getUpgradeStage()>0) {
             if ((*fit).getUpgradeStage()<(*fit).getMaxStage()) {
                 for (int i = 0; i < (*fit).upgradeType->m_upgrades.size(); ++i) {
-                    (*fit).m_upgrades[i].m_statistics.modify();
+                    (*fit).m_upgrades[i].m_statisticsSet[(*fit).getUpgradeStage()].modify();
                 }
             }
         }
-    }
-    }
+    }*/
 }
 
 void UpgradeManager::wrapUpdateUpgrade(const UpgradeType *upgradeType, Faction *f){
@@ -155,41 +157,40 @@ void UpgradeManager::finishUpgrade(const UpgradeType *upgradeType, Faction *f){
 
 	for(it=upgrades.begin(); it!=upgrades.end(); ++it){
 		if((*it)->getType()==upgradeType){
-			break;
+            if(it!=upgrades.end()){
+                Faction::UpgradeStages::iterator fit;
+                for(fit=f->upgradeStages.begin(); fit!=f->upgradeStages.end(); ++fit){
+                    if((*fit).getUpgradeType()==upgradeType){
+                        break;
+                    }
+                }
+
+                if(fit!=f->upgradeStages.end()){
+                    if ((*fit).getUpgradeStage()==(*it)->getType()->getMaxStage()-1) {
+                        (*it)->setState(UpgradeState::UPGRADED);
+                    }
+                    else if ((*fit).getUpgradeStage()<(*it)->getType()->getMaxStage()) {
+                        (*it)->setState(UpgradeState::PARTIAL);
+                    }
+                }
+            } else {
+                throw runtime_error("Error finishing upgrade, upgrade not found in upgrade manager");
+            }
 		}
 	}
-
-	if(it!=upgrades.end()){
-    Faction::UpgradeStages::iterator fit;
-	for(fit=f->upgradeStages.begin(); fit!=f->upgradeStages.end(); ++fit){
-		if((*fit).getUpgradeType()==upgradeType){
-			break;
-		}
-	}
-
-    if(fit!=f->upgradeStages.end()){
-	    if ((*fit).getUpgradeStage()>=(*it)->getType()->getMaxStage()) {
-		    (*it)->setState(UpgradeState::UPGRADED);
-	    }
-	    else if ((*fit).getUpgradeStage()<(*it)->getType()->getMaxStage()) {
-            (*it)->setState(UpgradeState::PARTIAL);
-	    }
-    }
-
-	} else { throw runtime_error("Error finishing upgrade, upgrade not found in upgrade manager"); }
 }
 
-bool UpgradeManager::isUpgradingOrUpgraded(const UpgradeType *upgradeType, const Faction *f) const{
+bool UpgradeManager::isUpgradingOrUpgraded(const UpgradeType *upgradeType, const Faction *f) const {
     Upgrades::const_iterator it;
-	for(it = upgrades.begin(); it!=upgrades.end(); ++it){
+	for(it = upgrades.begin(); it!=upgrades.end(); ++it) {
         Faction::UpgradeStages::const_iterator fit;
-	    for(fit = f->upgradeStages.begin(); fit!=f->upgradeStages.end(); ++fit){
-		    if((*fit).getUpgradeType()==upgradeType){
+	    for(fit = f->upgradeStages.begin(); fit!=f->upgradeStages.end(); ++fit) {
+		    if((*fit).getUpgradeType()==upgradeType) {
 			    break;
 		    }
 	    }
-        if(fit!=f->upgradeStages.end()){
-		    if((*it)->getType()==upgradeType && (*fit).getUpgradeStage()>=(*it)->getType()->getMaxStage()){
+        if(fit!=f->upgradeStages.end()) {
+		    if((*it)->getType()==upgradeType && (*it)->getStage() == (*fit).getUpgradeStage()) {
 			    return true;
 		    }
         }
@@ -197,9 +198,8 @@ bool UpgradeManager::isUpgradingOrUpgraded(const UpgradeType *upgradeType, const
 	return false;
 }
 
-bool UpgradeManager::isUpgraded(const UpgradeType *upgradeType) const{
+bool UpgradeManager::isUpgraded(const UpgradeType *upgradeType) const {
     Upgrades::const_iterator it;
-
 	for(it = upgrades.begin(); it!=upgrades.end(); ++it){
 		if((*it)->getType()==upgradeType && (*it)->getState()==UpgradeState::UPGRADED){
 			return true;
@@ -208,7 +208,7 @@ bool UpgradeManager::isUpgraded(const UpgradeType *upgradeType) const{
 	return false;
 }
 
-bool UpgradeManager::isUpgrading(const UpgradeType *upgradeType) const{
+bool UpgradeManager::isUpgrading(const UpgradeType *upgradeType) const {
     Upgrades::const_iterator it;
 
 	for(it = upgrades.begin(); it!=upgrades.end(); ++it){
@@ -242,7 +242,7 @@ void UpgradeManager::addPointBoosts(Unit *unit) const {
                         break;
                     }
                 }
-                const Statistics &stats = *(*fit).upgradeType->getStatistics(unit->getType());
+                const Statistics &stats = *(*fit).getStatistics(unit->getType(), (*it)->getStage());
                 unit->doRegen(stats.getEnhancement()->getResourcePools()->getHealth()->getBoostStat()->getValue());
 		    }
 		}
@@ -250,22 +250,17 @@ void UpgradeManager::addPointBoosts(Unit *unit) const {
 }
 
 void UpgradeManager::computeTotalUpgrade(const Unit *unit, Statistics *totalUpgrade) const{
-	totalUpgrade->enhancement.reset();
     Faction *f = unit->getFaction();
 	foreach_const (Upgrades, it, upgrades) {
         if ((*it)->getFactionIndex() == unit->getFactionIndex()
             && (*it)->getType()->isAffected(unit->getType())) {
-            for (int i = 0; i < f->getCurrentStage((*it)->getType()); ++i) {
-                Faction::UpgradeStages::iterator fit;
-                for(fit=f->upgradeStages.begin(); fit!=f->upgradeStages.end(); ++fit){
-                    if((*fit).getUpgradeType()==(*it)->getType()){
-                        break;
-                    }
+            Faction::UpgradeStages::iterator fit;
+            for(fit=f->upgradeStages.begin(); fit!=f->upgradeStages.end(); ++fit){
+                if((*fit).getUpgradeType()==(*it)->getType()){
+                    break;
                 }
-                for (int i = 0; i < f->getCurrentStage((*it)->getType()); ++i) {
-                    totalUpgrade->sum((*fit).getUpgradeType()->getStatistics(unit->getType()));
-                }
-		    }
+            }
+            totalUpgrade->sum((*fit).getStatistics(unit->getType(), (*it)->getStage()));
 		}
 	}
 }
