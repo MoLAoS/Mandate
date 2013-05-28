@@ -139,6 +139,8 @@ public:
     string getName() const {return name;}
     void setName(string newName) {name = newName;}
     string getTypeTag() const {return typeTag;}
+    void getDesc(string &str, const char *pre, string name);
+    void save(XmlNode *node) const;
 
     void init(int max, int current, string name, string typeTag);
 };

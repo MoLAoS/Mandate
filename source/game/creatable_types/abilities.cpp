@@ -71,6 +71,17 @@ void Equipment::init(int newMax, int newCurrent, string newName, string newTypeT
     name = newName;
 }
 
+void Equipment::getDesc(string &str, const char *pre, string name) {
+    str += pre;
+    str += "Type: " + typeTag;
+    str += " |Amount: " + intToStr(max);
+}
+
+void Equipment::save(XmlNode *node) const {
+    node->addAttribute("type", typeTag);
+    node->addAttribute("value", max);
+}
+
 // =====================================================
 // 	class Attackers
 // =====================================================

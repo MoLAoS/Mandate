@@ -44,9 +44,9 @@ namespace Glest { namespace ProtoTypes {
 // =====================================================
 
 
-bool CreateItemCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct) {
-	bool loadOk = CommandType::load(n, dir, tt, ct);
-    const FactionType *ft = ct->getFactionType();	try {
+bool CreateItemCommandType::load(const XmlNode *n, const string &dir, const FactionType *ft, const CreatableType *ct) {
+	bool loadOk = CommandType::load(n, dir, ft, ct);
+    try {
     const XmlNode *childNode = n->getChild("child-structure", 0, false);
 	    if (childNode) {
             m_child = childNode->getAttribute("child-building")->getBoolValue();

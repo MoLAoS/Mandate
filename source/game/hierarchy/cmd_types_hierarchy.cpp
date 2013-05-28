@@ -87,8 +87,8 @@ void FormationCommand::issue(Formation formation, const Squad *squad) {
 // 	class CreateSquadCommandType
 // =====================================================
 
-bool CreateSquadCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct) {
-	bool loadOk = StopBaseCommandType::load(n, dir, tt, ct);
+bool CreateSquadCommandType::load(const XmlNode *n, const string &dir, const FactionType *ft, const CreatableType *ct) {
+	bool loadOk = StopBaseCommandType::load(n, dir, ft, ct);
 
 	string skillName;
 
@@ -134,8 +134,8 @@ void CreateSquadCommandType::update(Unit *unit) const {
 // 	class ExpandSquadCommandType
 // =====================================================
 
-bool ExpandSquadCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct) {
-	bool loadOk = StopBaseCommandType::load(n, dir, tt, ct);
+bool ExpandSquadCommandType::load(const XmlNode *n, const string &dir, const FactionType *ft, const CreatableType *ct) {
+	bool loadOk = StopBaseCommandType::load(n, dir, ft, ct);
 
 	string skillName;
 
@@ -188,8 +188,8 @@ void ExpandSquadCommandType::update(Unit *unit) const {
 // 	class SquadMoveCommandType
 // =====================================================
 
-bool SquadMoveCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct) {
-	bool loadOk = MoveBaseCommandType::load(n, dir, tt, ct);
+bool SquadMoveCommandType::load(const XmlNode *n, const string &dir, const FactionType *ft, const CreatableType *ct) {
+	bool loadOk = MoveBaseCommandType::load(n, dir, ft, ct);
 
 	string skillName;
 

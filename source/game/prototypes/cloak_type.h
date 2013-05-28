@@ -32,7 +32,7 @@ using Shared::Graphics::ShaderProgram;
 // =====================================================
 
 class CloakType : public RequirableType {
-	
+
 	friend class Sim::SingleTypeFactory<CloakType>;
 
 private:
@@ -59,7 +59,6 @@ public:
 	CloakClass getClass() const            { return m_class; }
 	bool isCloakGroup(int group) const     { return m_group == group; }
 	int  getCloakGroup() const             { return m_group; }
-	int  getEnergyCost() const             { return m_cost; }
 	StaticSound* getCloakSound() const     { return m_cloakSound; }
 	StaticSound* getDeCloakSound() const   { return m_deCloakSound; }
 	ShaderProgram* getAllyShader() const   { return m_allyShader; }
@@ -97,7 +96,6 @@ public:
 
 	const UnitType* getUnitType() const    { return m_unitType; }
 	DetectorClass getClass() const         { return m_class; }
-	int  getEnergyCost() const             { return m_cost; }
 	bool detectsCloakGroup(int group) const;
 	int  getGroupCount() const             { return m_groups.size(); }
 	int  getGroup(int i) const             { return m_groups[i]; }

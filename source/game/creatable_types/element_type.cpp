@@ -25,6 +25,7 @@
 #include "util.h"
 #include "leak_dumper.h"
 #include "faction.h"
+#include "world.h"
 
 using Glest::Util::Logger;
 using namespace Shared::Util;
@@ -42,14 +43,21 @@ void NameIdPair::doChecksum(Shared::Util::Checksum &checksum) const {
 // =====================================================
 // 	class DisplayableType
 // =====================================================
+void DisplayableType::addImage(string imgPath) {
+    image = g_renderer.getTexture2D(ResourceScope::GAME, imgPath);
+}
 
-bool DisplayableType::load(const XmlNode *baseNode, const string &dir) {
+bool DisplayableType::load(const XmlNode *baseNode, const string &dir, bool add) {
 	string xmlPath = dir + "/" + basename(dir) + ".xml";
 	string imgPath;
 	try {
 		const XmlNode *imageNode = baseNode->getChild("image");
 		imgPath = dir + "/" + imageNode->getAttribute("path")->getRestrictedValue();
-		image = g_renderer.getTexture2D(ResourceScope::GAME, imgPath);
+		if (add == false) {
+            image = g_renderer.getTexture2D(ResourceScope::GAME, imgPath);
+		} else {
+            imagePath = "/" + imageNode->getAttribute("path")->getRestrictedValue();
+		}
 		if (baseNode->getOptionalChild("name")) {
 			m_name = baseNode->getChild("name")->getStringValue();
 		}
@@ -103,9 +111,20 @@ string RequirableType::getReqDesc(const Faction *f, const FactionType *ft) const
 	return ss.str();
 }
 
-bool RequirableType::load(const XmlNode *baseNode, const string &dir, const TechTree *tt, const FactionType *ft) {
-	bool loadOk = DisplayableType::load(baseNode, dir);
-
+bool RequirableType::load(const XmlNode *baseNode, const string &dir, bool add) {
+	bool loadOk = DisplayableType::load(baseNode, dir, add);
+	const FactionType *ft = 0;
+	for (int i = 0; i < g_world.getTechTree()->getFactionTypeCount(); ++i) {
+        ft = g_world.getTechTree()->getFactionType(i);
+        for (int j = 0; j < ft->getUnitTypeCount(); ++j) {
+            if (m_name == ft->getUnitType(i)->getName()) {
+                break;
+            }
+        }
+	}
+    if (ft == 0) {
+        loadOk = false;
+    }
 	try { // Unit requirements
 		const XmlNode *unitRequirementsNode = baseNode->getChild("unit-requirements", 0, false);
 		if(unitRequirementsNode) {
@@ -166,21 +185,6 @@ bool RequirableType::load(const XmlNode *baseNode, const string &dir, const Tech
 		g_logger.logXmlError(dir, e.what ());
 		loadOk = false;
 	}
-
-	try { // Subfactions required
-		const XmlNode *subfactionsNode = baseNode->getChild("subfaction-restrictions", 0, false);
-		if(subfactionsNode) {
-			for(int i = 0; i < subfactionsNode->getChildCount(); ++i) {
-				string name = subfactionsNode->getChild("subfaction", i)->getRestrictedAttribute("name");
-				subfactionsReqs |= 1 << ft->getSubfactionIndex(name);
-			}
-		} else {
-			subfactionsReqs = -1; //all subfactions
-		}
-	} catch (runtime_error e) {
-		g_logger.logXmlError(dir, e.what ());
-		loadOk = false;
-	}
 	return loadOk;
 }
 
@@ -198,7 +202,6 @@ void RequirableType::doChecksum(Checksum &checksum) const {
 		checksum.add(upgradeReqs[i].getUpgradeType()->getName());
 		checksum.add(upgradeReqs[i].getUpgradeType()->getId());
 	}
-	checksum.add(subfactionsReqs);
 }
 
 // =====================================================
@@ -209,9 +212,7 @@ ProducibleType::ProducibleType() :
 		RequirableType(),
 		costs(),
 		cancelImage(NULL),
-		productionTime(0),
-		advancesToSubfaction(-1),
-		advancementIsImmediate(false) {
+		productionTime(0) {
 }
 
 ProducibleType::~ProducibleType() {
@@ -280,10 +281,10 @@ string ProducibleType::getReqDesc(const Faction *f, const FactionType *ft) const
 	return ss.str();
 }
 
-bool ProducibleType::load(const XmlNode *baseNode, const string &dir, const TechTree *techTree, const FactionType *factionType) {
+bool ProducibleType::load(const XmlNode *baseNode, const string &dir) {
 	string xmlPath = dir + "/" + basename(dir) + ".xml";
 	bool loadOk = true;
-	if (!RequirableType::load(baseNode, dir, techTree, factionType)) {
+	if (!RequirableType::load(baseNode, dir)) {
 		loadOk = false;
 	}
 
@@ -320,7 +321,7 @@ bool ProducibleType::load(const XmlNode *baseNode, const string &dir, const Tech
 					int amount = resourceNode->getAttribute("amount")->getIntValue();
                     int amount_plus = resourceNode->getAttribute("plus")->getIntValue();
                     fixed amount_multiply = resourceNode->getAttribute("multiply")->getFixedValue();
-                    costs[i].init(techTree->getResourceType(name), amount, amount_plus, amount_multiply);
+                    costs[i].init(g_world.getTechTree()->getResourceType(name), amount, amount_plus, amount_multiply);
 				} catch (runtime_error e) {
 					g_logger.logXmlError(dir, e.what());
 					loadOk = false;
@@ -343,25 +344,12 @@ bool ProducibleType::load(const XmlNode *baseNode, const string &dir, const Tech
 					int amount = resourceNode->getAttribute("amount")->getIntValue();
                     int amount_plus = resourceNode->getAttribute("plus")->getIntValue();
                     fixed amount_multiply = resourceNode->getAttribute("multiply")->getFixedValue();
-                    localCosts[i].init(techTree->getResourceType(name), amount, amount_plus, amount_multiply);
+                    localCosts[i].init(g_world.getTechTree()->getResourceType(name), amount, amount_plus, amount_multiply);
 				} catch (runtime_error e) {
 					g_logger.logXmlError(dir, e.what());
 					loadOk = false;
 				}
 			}
-		}
-	} catch (runtime_error e) {
-		g_logger.logXmlError(dir, e.what());
-		loadOk = false;
-	}
-
-	//subfaction advancement
-	try {
-		const XmlNode *advancementNode = baseNode->getChild("advances-to-subfaction", 0, false);
-		if(advancementNode) {
-			advancesToSubfaction = factionType->getSubfactionIndex(
-				advancementNode->getAttribute("name")->getRestrictedValue());
-			advancementIsImmediate = advancementNode->getAttribute("is-immediate")->getBoolValue();
 		}
 	} catch (runtime_error e) {
 		g_logger.logXmlError(dir, e.what());
@@ -378,8 +366,6 @@ void ProducibleType::doChecksum(Checksum &checksum) const {
 		checksum.add(it->getAmount());
 	}
 	checksum.add(productionTime);
-	checksum.add(advancesToSubfaction);
-	checksum.add(advancementIsImmediate);
 }
 
 }}//end namespace

@@ -257,6 +257,7 @@ public:
 	const Map *getMap() const 						{return &map;}
 	const Tileset *getTileset() const 				{return &tileset;}
 	const TechTree *getTechTree() const 			{return &techTree;}
+	TechTree *getTechTree()              			{return &techTree;}
 	const Scenario* getScenario () const			{return scenario;}
 	const TimeFlow *getTimeFlow() const				{return &timeFlow;}
 	Tileset *getTileset() 							{return &tileset;}
@@ -308,10 +309,6 @@ public:
 	void hit(Unit *attacker, const AttackSkillType* ast, const Vec2i &targetPos, Field targetField, Unit *attacked = NULL);
 	void damage(Unit *attacker, const AttackSkillType* ast, Unit *attacked, fixed distance);
 	void damage(Unit *unit, int hp);
-	void lifeleech(Unit *attacker, const AttackSkillType* ast, Unit *attacked, fixed distance); /**< Added by MoLAoS, lifesteal */
-	void lifeleech(Unit *unit, int hp); /**< Added by MoLAoS, lifesteal */
-	void manaburn(Unit *attacker, const AttackSkillType* ast, Unit *attacked, fixed distance); /**< Added by MoLAoS, manaburn */
-	void manaburn(Unit *unit, int ep); /**< Added by MoLAoS, manaburn */
 	void capture(Unit *attacker, const AttackSkillType* ast, Unit *attacked, fixed distance); /**< Added by MoLAoS, capturing */
 	void capture(Unit *unit, int cp); /**< Added by MoLAoS, capturing */
 

@@ -45,13 +45,15 @@ Vec2i rotateCellOffset(const Vec2i &offsetconst, const int unitSize, const Cardi
 ///	A bonus from another
 /// map object or building
 // ===============================
-class BonusPower : public Statistics {
+class BonusPower {
 private:
+    Statistics statistics;
     ResourceProductionSystem resourceGeneration;
     ItemProductionSystem itemGeneration;
     UnitProductionSystem unitGeneration;
     ProcessProductionSystem processingSystem;
 public:
+    const Statistics *getStatistics() const {return &statistics;}
     const ResourceProductionSystem *getResourceProductionSystem() const {return &resourceGeneration;}
     const ItemProductionSystem *getItemProductionSystem() const {return &itemGeneration;}
     const UnitProductionSystem *getUnitProductionSystem() const {return &unitGeneration;}
@@ -75,6 +77,7 @@ private:
 	bool multiBuild;
 	bool multiSelect;
 public:
+    Sovereign sovereign;
     Hero hero;
     Leader leader;
     bool inhuman;

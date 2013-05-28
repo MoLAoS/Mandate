@@ -140,8 +140,7 @@ public:
 	 * class should in turn call the protected load method passing the
 	 * appropriate values for childNodeName and flagNames.
 	 */
-	virtual void load(const XmlNode *node, const string &dir,
-			const TechTree *tt, const FactionType *ft) = 0;
+	virtual void load(const XmlNode *node, const string &dir) = 0;
 
 protected:
 	/**
@@ -164,9 +163,8 @@ protected:
 	 * @param flagNames the EnumNames object for E.
 	 *
 	 */
-	void load(const XmlNode *baseNode, const string &dir, const TechTree *tt,
-			const FactionType *ft, const char* childNodeName,
-			const EnumNames<E> &flagNames) {
+	void load(const XmlNode *baseNode, const string &dir,
+           const char* childNodeName, const EnumNames<E> &flagNames) {
 		string nodeName;
 		string flagName;
 		const XmlNode *node;

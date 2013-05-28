@@ -143,12 +143,11 @@ bool RepairCommandType::repairableInRange(const Unit *unit, Unit **rangedPtr,
 
 bool RepairCommandType::repairableInSight(const Unit *unit, Unit **rangedPtr,
 							const RepairCommandType *rct, bool allowSelf) {
-	return repairableInRange(unit, rangedPtr, rct, unit->getUnitStats()->getSight().getValue(), allowSelf);
+	return repairableInRange(unit, rangedPtr, rct, unit->getStatistics()->getEnhancement()->getUnitStats()->getSight()->getValue(), allowSelf);
 }
 
-bool RepairCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct) {
-	bool loadOk = MoveBaseCommandType::load(n, dir, tt, ct);
-    const FactionType *ft = ct->getFactionType();
+bool RepairCommandType::load(const XmlNode *n, const string &dir, const FactionType *ft, const CreatableType *ct) {
+	bool loadOk = MoveBaseCommandType::load(n, dir, ft, ct);
 	//repair
 	try {
 		string skillName= n->getChild("repair-skill")->getAttribute("value")->getRestrictedValue();
@@ -192,9 +191,7 @@ void RepairCommandType::getDesc(string &str, const Unit *unit) const{
 	} else {
 		for(int i=0; i<repairableUnits.size(); ++i){
 			const UnitType *ut = (const UnitType*)repairableUnits[i];
-			if(ut->isAvailableInSubfaction(unit->getFaction()->getSubfaction())) {
-				str+= ut->getName()+"\n";
-			}
+            str+= ut->getName()+"\n";
 		}
 	}
 }
@@ -392,13 +389,12 @@ void RepairCommandType::tick(const Unit *unit, Command &command) const {
 }
 
 Command *RepairCommandType::doAutoRepair(Unit *unit) const {
-	if (!unit->isAutoCmdEnabled(AutoCmdFlag::REPAIR) || !unit->getFaction()->isAvailable(this)) {
+	if (!unit->isAutoCmdEnabled(AutoCmdFlag::REPAIR)) {
 		return 0;
 	}
 	// look for someone to repair
 	Unit *sighted = NULL;
-	if (unit->getEp() >= repairSkillType->getSkillCosts()->getEpCost()
-	&& repairableInSight(unit, &sighted, this, repairSkillType->isSelfAllowed())) {
+	if (unit->checkSkillCosts(this) && repairableInSight(unit, &sighted, this, repairSkillType->isSelfAllowed())) {
 		REPAIR_LOG( unit, __FUNCTION__ << "(): Unit:" << *unit << " @ " << unit->getPos()
 			<< ", found someone (" << *sighted << ") to repair @ " << sighted->getPos() );
 		Command *newCommand;
@@ -422,9 +418,8 @@ BuildCommandType::~BuildCommandType(){
 	deleteValues(m_startSounds.getSounds().begin(), m_startSounds.getSounds().end());
 }
 
-bool BuildCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct) {
-	bool loadOk = MoveBaseCommandType::load(n, dir, tt, ct);
-    const FactionType *ft = ct->getFactionType();
+bool BuildCommandType::load(const XmlNode *n, const string &dir, const FactionType *ft, const CreatableType *ct) {
+	bool loadOk = MoveBaseCommandType::load(n, dir, ft, ct);
 	//build
 	try {
 		string skillName = n->getChild("build-skill")->getAttribute("value")->getRestrictedValue();
@@ -712,8 +707,6 @@ void BuildCommandType::acceptBuild(Unit *unit, Command *command, const UnitType 
 	unit->setCurrSkill(m_buildSkillType);
 	unit->setTarget(builtUnit, true, true);
 
-	unit->getFaction()->checkAdvanceSubfaction(builtUnit->getType(), false);
-
 	Vec2i tilePos = Map::toTileCoords(builtUnit->getCenteredPos());
 	if (builtUnitType->getField() == Field::LAND
 	|| (builtUnitType->getField() == Field::AMPHIBIOUS && !map->isTileSubmerged(tilePos))) {
@@ -745,7 +738,6 @@ void BuildCommandType::continueBuild(Unit *unit, const Command *command, const U
 		//building finished
 		unit->finishCommand();
 		unit->setCurrSkill(SkillClass::STOP);
-		unit->getFaction()->checkAdvanceSubfaction(builtUnit->getType(), true);
 		ScriptManager::onUnitCreated(builtUnit);
 		if (unit->getFactionIndex() == g_world.getThisFactionIndex()) {
 			RUNTIME_CHECK(!unit->isCarried() && !unit->isGarrisoned());
@@ -759,9 +751,8 @@ void BuildCommandType::continueBuild(Unit *unit, const Command *command, const U
 // 	class HarvestCommandType
 // =====================================================
 
-bool HarvestCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct) {
-	bool loadOk = MoveBaseCommandType::load(n, dir, tt, ct);
-    const FactionType *ft = ct->getFactionType();
+bool HarvestCommandType::load(const XmlNode *n, const string &dir, const FactionType *ft, const CreatableType *ct) {
+	bool loadOk = MoveBaseCommandType::load(n, dir, ft, ct);
 	string skillName;
 	try {
 		string storage = n->getChild("storage")->getAttribute("type")->getRestrictedValue();
@@ -804,7 +795,7 @@ bool HarvestCommandType::load(const XmlNode *n, const string &dir, const TechTre
 		const XmlNode *resourcesNode = n->getChild("harvested-resources");
 		for(int i = 0; i < resourcesNode->getChildCount(); ++i){
 			const XmlNode *resourceNode = resourcesNode->getChild("resource", i);
-			m_harvestedResources.push_back(tt->getResourceType(resourceNode->getAttribute("name")->getRestrictedValue()));
+			m_harvestedResources.push_back(g_world.getTechTree()->getResourceType(resourceNode->getAttribute("name")->getRestrictedValue()));
 		}
 	} catch (runtime_error e) {
 		g_logger.logXmlError(dir, e.what());
@@ -1068,9 +1059,8 @@ void HarvestCommandType::update(Unit *unit) const {
 // 	class TransportCommandType
 // =====================================================
 
-bool TransportCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct) {
-	bool loadOk = MoveBaseCommandType::load(n, dir, tt, ct);
-    const FactionType *ft = ct->getFactionType();
+bool TransportCommandType::load(const XmlNode *n, const string &dir, const FactionType *ft, const CreatableType *ct) {
+	bool loadOk = MoveBaseCommandType::load(n, dir, ft, ct);
 	string skillName;
 	try {
 		string storage = n->getChild("storage")->getAttribute("value")->getRestrictedValue();
@@ -1112,7 +1102,7 @@ bool TransportCommandType::load(const XmlNode *n, const string &dir, const TechT
 		const XmlNode *resourcesNode = n->getChild("transported-resources");
 		for(int i = 0; i < resourcesNode->getChildCount(); ++i){
 			const XmlNode *resourceNode = resourcesNode->getChild("resource", i);
-			m_transportedResources.push_back(tt->getResourceType(resourceNode->getAttribute("name")->getRestrictedValue()));
+			m_transportedResources.push_back(g_world.getTechTree()->getResourceType(resourceNode->getAttribute("name")->getRestrictedValue()));
 		}
 	} catch (runtime_error e) {
 		g_logger.logXmlError(dir, e.what());
@@ -1301,8 +1291,8 @@ void TransportCommandType::update(Unit *unit) const {
 // 	class SetStoreCommandType
 // =====================================================
 
-bool SetStoreCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct) {
-	bool loadOk = StopBaseCommandType::load(n, dir, tt, ct);
+bool SetStoreCommandType::load(const XmlNode *n, const string &dir, const FactionType *ft, const CreatableType *ct) {
+	bool loadOk = StopBaseCommandType::load(n, dir, ft, ct);
 
 	string skillName;
 	// set structure
@@ -1356,8 +1346,8 @@ void SetStoreCommandType::update(Unit *unit) const {
 // 	class SetProducerCommandType
 // =====================================================
 
-bool SetProducerCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct) {
-	bool loadOk = StopBaseCommandType::load(n, dir, tt, ct);
+bool SetProducerCommandType::load(const XmlNode *n, const string &dir, const FactionType *ft, const CreatableType *ct) {
+	bool loadOk = StopBaseCommandType::load(n, dir, ft, ct);
 
 	string skillName;
 	// set structure
@@ -1411,9 +1401,8 @@ void SetProducerCommandType::update(Unit *unit) const {
 // 	class TradeCommandType
 // =====================================================
 
-bool TradeCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct) {
-	bool loadOk = MoveBaseCommandType::load(n, dir, tt, ct);
-    const FactionType *ft = ct->getFactionType();
+bool TradeCommandType::load(const XmlNode *n, const string &dir, const FactionType *ft, const CreatableType *ct) {
+	bool loadOk = MoveBaseCommandType::load(n, dir, ft, ct);
 	string skillName;
 	try {
 		string storage = n->getChild("storage")->getAttribute("value")->getRestrictedValue();

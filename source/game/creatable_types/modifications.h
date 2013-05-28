@@ -17,8 +17,9 @@ namespace Glest{ namespace ProtoTypes {
 // =====================================================
 // 	class Modification
 // =====================================================
-class Modification : public Statistics, public RequirableType {
+class Modification : public RequirableType {
 private:
+    Statistics statistics;
     typedef vector<ResourceAmount> Costs;
     typedef vector<string> Equipment;
     Costs costs;
@@ -28,6 +29,7 @@ private:
     const FactionType* m_factionType;
     string name;
 public:
+    const Statistics *getStatistics() const {return &statistics;}
 	const FactionType* getFactionType() const { return m_factionType; }
     string getModificationName() const {return name;}
     Equipment getEquipment() const {return equipment;}
@@ -39,7 +41,7 @@ public:
     const EffectType *getEffectType(int i) const {return effectTypes[i];}
 	bool hasEffects() const {return effectTypes.size() > 0;}
 	void preLoad(const string &dir);
-	bool load(const string &dir, const TechTree *techTree, const FactionType *factionType);
+	bool load(const string &dir);
 };
 
 }}//end namespace

@@ -73,7 +73,7 @@ private:
 public:
 	CreateSquadCommandType() : StopBaseCommandType("CreateSquad", Clicks::ONE),
 		m_setStructureSkillType(0) {}
-	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct);
+	virtual bool load(const XmlNode *n, const string &dir, const FactionType *ft, const CreatableType *ct);
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void getDesc(string &str, const Unit *unit) const;
 	virtual void subDesc(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const override;
@@ -98,7 +98,7 @@ private:
 public:
 	ExpandSquadCommandType() : StopBaseCommandType("ExpandSquad", Clicks::TWO),
 		m_setStructureSkillType(0) {}
-	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct);
+	virtual bool load(const XmlNode *n, const string &dir, const FactionType *ft, const CreatableType *ct);
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void getDesc(string &str, const Unit *unit) const;
 	virtual void subDesc(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const override;
@@ -123,7 +123,7 @@ private:
 public:
 	SquadMoveCommandType() : MoveBaseCommandType("MoveSquad", Clicks::TWO),
 		m_moveSkillType(0) {}
-	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct);
+	virtual bool load(const XmlNode *n, const string &dir, const FactionType *ft, const CreatableType *ct);
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void getDesc(string &str, const Unit *unit) const;
 	virtual void subDesc(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const override;

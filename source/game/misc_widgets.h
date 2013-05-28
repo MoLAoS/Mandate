@@ -10,8 +10,11 @@
 #define _GLEST_WIDGETS__MISC_WIDGETS_H_
 
 #include "list_widgets.h"
+#include "hero.h"
 
 namespace Glest { namespace Widgets {
+using namespace ProtoTypes;
+using Gui::CharacterCreator;
 
 class OptionContainer : public Container {
 private:
@@ -110,7 +113,7 @@ public:
 
 	void setRanges(int min, int max) { m_minValue = min; m_maxValue = max; }
 	void setIncrement(int inc) { m_increment = inc; }
-	void setValue(int val) { 
+	void setValue(int val) {
 		m_value = clamp(val, m_minValue, m_maxValue);
 		m_valueBox->setText(intToStr(m_value));
 	}
@@ -186,12 +189,36 @@ public:
 	}
 };
 
-typedef std::pair<Spinner*,Spinner*> SpinnerPair;
+// =====================================================
+// 	class Display
+///	Display for unit commands, and unit selection
+// =====================================================
+typedef vector<Specialization*> ListSpecs;
+class TraitsDisplay : public Widget, public MouseWidget, public TextWidget {
+private:
+    Traits traits;
+    ListSpecs specializations;
+    CharacterCreator *charCreator;
+	FuzzySize m_fuzzySize;
+	const FontMetrics *m_fontMetrics;
+private:
+	void layout();
+public:
+	TraitsDisplay(Container *parent, Traits traitslist, ListSpecs specs, CharacterCreator *characterCreator);
+	FuzzySize getFuzzySize() const          {return m_fuzzySize;}
+	void setSize();
+	void setFuzzySize(FuzzySize fSize);
+	void clear();
+	void persist();
+	void reset();
+	virtual void render() override;
+	virtual string descType() const override { return "TraitsDisplay"; }
+};
 
 // =====================================================
 //  class OptionPanel
 // =====================================================
-
+typedef std::pair<Spinner*,Spinner*> SpinnerPair;
 class OptionPanel : public CellStrip, public MouseWidget, public sigslot::has_slots {
 private:
 	CellStrip *m_list;
@@ -209,13 +236,14 @@ private:
 public:
 	OptionPanel(CellStrip *parent, int cell);
 
-	ListBoxItem* addHeading(OptionPanel* headingPnl, const string &txt);
-	ListBoxItem* addLabel(const string &txt);
-	CheckBox*   addCheckBox(const string &lbl, bool checked);
-	TextBox*    addTextBox(const string &lbl, const string &txt);
-	DropList*   addDropList(const string &lbl, bool compact = false);
-	Spinner*    addSpinner(const string &lbl);
-	SpinnerPair addSpinnerPair(const string &lbl, const string &lbl1, const string &lbl2);
+	ListBoxItem*            addHeading(OptionPanel* headingPnl, const string &txt);
+	ListBoxItem*            addLabel(const string &txt);
+	CheckBox*               addCheckBox(const string &lbl, bool checked);
+	TextBox*                addTextBox(const string &lbl, const string &txt);
+	TraitsDisplay*          addTraitsDisplay(Traits traits, ListSpecs specs, CharacterCreator *charCreator);
+	DropList*               addDropList(const string &lbl, bool compact = false);
+	Spinner*                addSpinner(const string &lbl);
+	SpinnerPair             addSpinnerPair(const string &lbl, const string &lbl1, const string &lbl2);
 
 	void setSplitDistance(int v) { m_splitDistance = v; }
 	void setScrollPosition(float v) { m_scrollBar->setThumbPos(v); }

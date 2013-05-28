@@ -45,7 +45,6 @@ FactionType::FactionType()
 		, enemyNoticeDelay(0)
 		, m_logoTeamColour(0)
 		, m_logoRgba(0) {
-	subfactions.push_back(string("base"));
 }
 
 bool FactionType::preLoad(const string &dir, const TechTree *techTree) {
@@ -197,18 +196,6 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 		loadOk = false;
 	}
 
-	// 2. Read subfaction list
-	const XmlNode *subfactionsNode = factionNode->getChild("subfactions", 0, false);
-	if (subfactionsNode) {
-		for (int i = 0; i < subfactionsNode->getChildCount(); ++i) {
-			// can't have more subfactions than an int has bits
-			if (i >= sizeof(int) * 8) {
-				throw runtime_error("Too many goddam subfactions.  Go write some code. " + dir);
-			}
-			subfactions.push_back(subfactionsNode->getChild("subfaction", i)->getAttribute("name")->getRestrictedValue());
-		}
-	}
-
     personalityDirectory = dir + "/ai/" + "personalities.xml";
     XmlTree personalityXmlTree;
 	try { personalityXmlTree.load(personalityDirectory); }
@@ -229,14 +216,14 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 	    personalities.resize(personalitiesNode->getChildCount());
 		for (int i = 0; i < personalitiesNode->getChildCount(); ++i) {
 		    const XmlNode *personalityNode = personalitiesNode->getChild("personality", i);
-		    personalities[i].load(personalityNode, techTree, this);
+		    personalities[i].load(personalityNode);
 
 		}
 	}
 	// 3.75. Load modifications
 	for (int i = 0; i < modifications.size(); ++i) {
 		string str = dir + "/modifications/" + modifications[i].getName();
-		if (modifications[i].load(str, techTree, this)) {
+		if (modifications[i].load(str)) {
 		} else {
 			loadOk = false;
 		}
@@ -314,7 +301,7 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 	// 5. Load upgrades
 	for (int i = 0; i < upgradeTypes.size(); ++i) {
 		string str = dir + "/upgrades/" + upgradeTypes[i]->getName();
-		if (upgradeTypes[i]->load(str, techTree, this)) {
+		if (upgradeTypes[i]->load(str)) {
 			g_prototypeFactory.setChecksum(upgradeTypes[i]);
 		} else {
 			loadOk = false;
@@ -574,9 +561,6 @@ void FactionType::doChecksum(Checksum &checksum) const {
 		checksum.add(it->getType()->getName());
 		checksum.add<int>(it->getAmount());
 	}
-	foreach_const (Subfactions, it, subfactions) {
-		checksum.add(*it);
-	}
 }
 
 FactionType::~FactionType() {
@@ -598,16 +582,6 @@ FactionType::~FactionType() {
 }
 
 // ==================== get ====================
-
-int FactionType::getSubfactionIndex(const string &m_name) const {
-    for (int i = 0; i < subfactions.size();i++) {
-		if (subfactions[i] == m_name) {
-            return i;
-		}
-    }
-	throw runtime_error("Subfaction not found: " + m_name);
-}
-
 const UnitType *FactionType::getUnitType(const string &m_name) const{
     for (int i = 0; i < unitTypes.size(); ++i) {
 		if (unitTypes[i]->getName() == m_name) {

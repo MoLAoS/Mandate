@@ -127,6 +127,7 @@ typedef set<const Unit*>    UnitSet;
 typedef list<Unit*>         UnitList;
 typedef list<UnitId>        UnitIdList;
 
+typedef vector<StatCost>    Pools;
 // ===============================
 // 	class Unit
 //
@@ -137,7 +138,7 @@ typedef list<UnitId>        UnitIdList;
   * Statistics as a mechanism to maintain a cache of it's current
   * stat values. These values are only recalculated when an effect is added
   * or removed, an upgrade is applied or the unit levels up or garrisons a unit. */
-class Unit : public Statistics {
+class Unit {
 	friend class EntityFactory<Unit>;
 
 public:
@@ -200,19 +201,24 @@ public:
 /**< system for items */
 
 private:
+    Statistics statistics;
+    Traits traits;
     Actions actions;
+
 public:
     Modifications modifications;
     EffectTypes effectTypes;
     bool dayCycle;
 
+    const Statistics *getStatistics() const {return &statistics;}
+
 private:
 	// basic stats
 	int id;					/**< unique identifier  */
 	int hp;					/**< current hit points */
-	int sp;                 /**< current shield points */
-	int ep;					/**< current energy points */
     int cp;					/**< current capture points */
+    Pools resPools;         /**< current resource pools */
+    Pools defPools;         /**< current resource pools */
 	int loadCount;			/**< current 'load' (resources carried) */
 	int deadCount;			/**< how many frames this unit has been dead */
 	int progress2;			/**< 'secondary' skill progress counter (progress for Production) */
@@ -243,6 +249,8 @@ public:
 	void setGoalReason(string string) {goalReason = string;}
 	void shop();
 
+    int getTraitCount() {return traits.size();}
+    Trait *getTrait(int i) {return traits[i];}
     Actions *getActions() {return &actions;}
 
 	Attackers attackers;
@@ -368,6 +376,8 @@ private:
 	bool attacked_trigger;
 
 public:
+    bool checkSkillCosts(const CommandType *ct);
+    bool applySkillCosts(const CommandType *ct);
 	bool applyCosts(const CommandType *ct, const ProducibleType *pt);
 	void applyStaticCosts(const ProducibleType *p);
 	bool checkCosts(const CommandType *ct, const ProducibleType *pt);
@@ -446,19 +456,18 @@ public:
 	int getFactionIndex() const					{return faction->getIndex();}
 	int getTeam() const							{return faction->getTeam();}
 	int getHp() const							{return hp;}
-	int getSp() const							{return sp;}
-	int getEp() const							{return ep;}
+	int getResourcePoolCount() const            {return resPools.size();}
+	const StatCost *getResource(int i) const    {return &resPools[i];}
+	int getDefensePoolCount() const             {return defPools.size();}
+	const StatCost *getDefense(int i) const     {return &defPools[i];}
     int getCp() const							{return cp;}
 
 
 	int getProductionPercent() const;
-	float getHpRatio() const					{return clamp(float(hp) / getResourcePools()->getMaxHp().getValue(), 0.f, 1.f);}
-	fixed getHpRatioFixed() const				{ return fixed(hp) / getResourcePools()->getMaxHp().getValue(); }
-	float getSpRatio() const					{return clamp(float(sp) / getResourcePools()->getMaxSp().getValue(), 0.f, 1.f);}
-	fixed getSpRatioFixed() const				{ return fixed(sp) / getResourcePools()->getMaxSp().getValue(); }
-	float getEpRatio() const					{return !type->getResourcePools()->getMaxEp().getValue() ? 0.0f :
-                                                clamp(float(ep) / getResourcePools()->getMaxEp().getValue(), 0.f, 1.f);}
-    float getCpRatio() const					{return clamp(float(cp) / getResourcePools()->getMaxCp().getValue(), 0.f, 1.f);}
+	float getHpRatio() const					{return clamp(float(hp) / getStatistics()->getEnhancement()->getResourcePools()->
+                                                 getHealth()->getMaxStat()->getValue(), 0.f, 1.f);}
+	fixed getHpRatioFixed() const				{ return fixed(hp) / getStatistics()->getEnhancement()->getResourcePools()->getHealth()->getMaxStat()->getValue(); }
+    float getCpRatio() const					{return clamp(float(cp) / getStatistics()->getEnhancement()->getResourcePools()->getMaxCp()->getValue(), 0.f, 1.f);}
 	bool getToBeUndertaken() const				{return toBeUndertaken;}
 	UnitId getTarget() const					{return targetRef;}
 	Vec2i getNextPos() const					{return nextPos;}
@@ -473,7 +482,7 @@ public:
 
 	const UnitType *getType() const				{return type;}
 	const SkillType *getCurrSkill() const		{return currSkill;}
-	const EnhancementType *getTotalUpgrade() const	{return &totalUpgrade;}
+	const Statistics *getTotalUpgrade() const	{return &totalUpgrade;}
 	float getRotation() const					{return rotation;}
 	Vec2f getVerticalRotation() const			{return Vec2f(0.f);}
 	ParticleSystem *getFire() const				{return fire;}
@@ -543,16 +552,19 @@ public:
 	int getMaxRange(const TargetBasedSkillType *tbst) const {
 		switch(tbst->getClass()) {
 			case SkillClass::ATTACK:
-				return (tbst->getMaxRange() * getAttackStats()->getAttackRange().getValueMult() + getAttackStats()->getAttackRange().getValue()).intp();
+				return (tbst->getMaxRange() * getStatistics()->getEnhancement()->getAttackStats()->getAttackRange()->getValueMult() +
+                getStatistics()->getEnhancement()->getAttackStats()->getAttackRange()->getValue()).intp();
 			case SkillClass::CAST_SPELL:
-				return (tbst->getMaxRange() * getAttackStats()->getAttackRange().getValueMult() + getAttackStats()->getAttackRange().getValue()).intp();
+				return (tbst->getMaxRange() * getStatistics()->getEnhancement()->getAttackStats()->getAttackRange()->getValueMult() +
+                getStatistics()->getEnhancement()->getAttackStats()->getAttackRange()->getValue()).intp();
 			default:
 				return tbst->getMaxRange();
 		}
 	}
 
 	int getMaxRange(const AttackSkillTypes *asts) const {
-		return (asts->getMaxRange() * getAttackStats()->getAttackRange().getValueMult() + getAttackStats()->getAttackRange().getValue()).intp();
+		return (asts->getMaxRange() * getStatistics()->getEnhancement()->getAttackStats()->getAttackRange()->getValueMult() +
+          getStatistics()->getEnhancement()->getAttackStats()->getAttackRange()->getValue()).intp();
 	}
 
 	// pos
@@ -586,7 +598,7 @@ public:
 	bool isBuilding() const;
 	bool isDead() const					{return !hp;}
 	bool isAlive() const				{return hp;}
-	bool isDamaged() const				{return hp < getResourcePools()->getMaxHp().getValue();}
+	bool isDamaged() const				{return hp < getStatistics()->getEnhancement()->getResourcePools()->getHealth()->getMaxStat()->getValue();}
 	bool isOperative() const			{return isAlive() && isBuilt();}
 	bool isBeingBuilt() const			{
 		return currSkill->getClass() == SkillClass::BE_BUILT
@@ -675,11 +687,9 @@ public:
 	int getQueuedOrderCount() const { return (commands.size() > 1 ? commands.size() - 1 : 0); }
 	string getLongDesc() const;
 
-	bool computeEp();
+	bool computePools();
 	bool repair(int amount = 0, fixed multiplier = 1);
 	bool decHp(int i);
-	bool decSp(int i);
-	bool decEp(int i);
     bool decCp(int i);
 	int update2()										{return ++progress2;}
 	TravelState travel(const Vec2i &pos, const MoveSkillType *moveSkill);
@@ -718,8 +728,7 @@ public:
 	bool morph(const MorphCommandType *mct, const UnitType *ut, Vec2i offset = Vec2i(0), bool reprocessCommands = true);
 	bool transform(const TransformCommandType *tct, const UnitType *ut, Vec2i pos, CardinalDir facing);
 	CmdResult checkCommand(const Command &command) const;
-	bool checkEnergy(const CommandType *ct) const { return ep >= ct->getEnergyCost(); }
-	void applyCommand(const Command &command);
+	bool applyCommand(const Command &command);
 	void startAttackSystems(const AttackSkillType *ast);
 	void startSpellSystems(const CastSpellSkillType *sst);
 	Projectile* launchProjectile(ProjectileType *projType, const Vec3f &endPos);
@@ -728,10 +737,13 @@ public:
 	int getCarriedCount() const { return m_carriedUnits.size(); }
 	int getGarrisonedCount() const { return m_garrisonedUnits.size(); }
 
+	void addTrait(Trait *trait);
+	void processTraits();
+
 	bool add(Effect *e);
 	void remove(Effect *e);
 	void effectExpired(Effect *effect);
-	bool doRegen(int hpRegeneration, int spRegeneration, int epRegeneration);
+	bool doRegen(int hpRegeneration);
 
 	void cloak();
 	void deCloak();

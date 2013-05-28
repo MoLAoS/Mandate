@@ -9,27 +9,42 @@
 #ifndef _GLEST_GAME_SPECIALIZATION_H_
 #define _GLEST_GAME_SPECIALIZATION_H_
 
-#include "statistics.h"
+#include "pch.h"
+#include "abilities.h"
+#include "character.h"
+#include "actions.h"
+#include "traits.h"
 #include "effect_type.h"
 
 namespace Glest{ namespace ProtoTypes {
-
 // =====================================================
 // 	class Specialization
 // =====================================================
 class Specialization {
 private:
-    typedef vector<string> Skills;
+    CharacterStats characterStats;
+    CraftingStats craftingStats;
+    EffectTypes effectTypes;
     Statistics statistics;
-    Equipment equipment;
-    Skills skills;
+    Equipments equipment;
+    Knowledge knowledge;
+    Actions actions;
+    Traits traits;
     string name;
 public:
-    string getSpecName() const {return name;}
+    CraftingStats *getCraftingStats() {return &craftingStats;}
+    CharacterStats *getCharacterStats() {return &characterStats;}
+    Actions *getActions() {return &actions;}
+    Knowledge *getKnowledge() {return &knowledge;}
     Statistics *getStatistics() {return &statistics;}
-    Equipment getEquipment() const {return equipment;}
+    int getEquipmentCount() {return equipment.size();}
+    Equipments *getEquipments() {return &equipment;}
+    Equipment *getEquipment(int i) {return &equipment[i];}
+    string getSpecName() const {return name;}
+    void reset();
+	void save(XmlNode *node) const;
 	void preLoad(const string &dir);
-	bool load(const string &dir, const TechTree *techTree, const FactionType *factionType);
+	bool load(const string &dir);
 };
 
 }}//end namespace

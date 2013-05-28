@@ -46,7 +46,7 @@ bool CreatableType::load(const XmlNode *creatableTypeNode, const string &dir, co
 	try {
         const XmlNode *statisticsNode = creatableTypeNode->getChild("statistics", 0, false);
         if (statisticsNode) {
-            if (!Statistics::load(statisticsNode, dir, techTree, factionType)) {
+            if (!statistics.load(statisticsNode, dir)) {
                 loadOk = false;
             }
         }
@@ -56,7 +56,7 @@ bool CreatableType::load(const XmlNode *creatableTypeNode, const string &dir, co
 	}
 	try {
         const XmlNode *producibleNode = creatableTypeNode->getChild("producible");
-        if (!ProducibleType::load(producibleNode, dir, techTree, factionType)) {
+        if (!ProducibleType::load(producibleNode, dir)) {
             loadOk = false;
         }
 	} catch (runtime_error e) {
@@ -86,7 +86,7 @@ bool CreatableType::load(const XmlNode *creatableTypeNode, const string &dir, co
                 try {
                     const XmlNode *emanationNode = emanationsNode->getChild("emanation", i);
                     EmanationType *emanation = g_prototypeFactory.newEmanationType();
-                    emanation->load(emanationNode, dir, techTree, factionType);
+                    emanation->load(emanationNode, dir);
                     emanations[i] = emanation;
                 } catch (runtime_error e) {
                     g_logger.logXmlError(dir, e.what());
@@ -125,7 +125,7 @@ bool CreatableType::load(const XmlNode *creatableTypeNode, const string &dir, co
 		for(int i=0; i < effectsNode->getChildCount(); ++i) {
 			const XmlNode *effectNode = effectsNode->getChild("effect", i);
 			EffectType *effectType = new EffectType();
-			effectType->load(effectNode, dir, techTree, factionType);
+			effectType->load(effectNode, dir);
 			effectTypes[i] = effectType;
 		}
 	}
@@ -180,7 +180,7 @@ bool CreatableType::load(const XmlNode *creatableTypeNode, const string &dir, co
 	try {
         const XmlNode *actionsNode = creatableTypeNode->getChild("actions", 0, false);
         if (actionsNode) {
-            actions.load(actionsNode, dir, techTree, factionType, isItem, this);
+            actions.load(actionsNode, dir, isItem, factionType, this);
         }
     } catch (runtime_error e) {
         g_logger.logXmlError(dir, e.what());

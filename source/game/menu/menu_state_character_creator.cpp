@@ -30,9 +30,8 @@ using namespace Shared::Util;
 namespace Glest { namespace Menu {
 
 // =====================================================
-// 	class MenuStateOptions
+// 	class MenuStateCharacterCreator
 // =====================================================
-
 MenuStateCharacterCreator::MenuStateCharacterCreator(Program &program, MainMenu *mainMenu)
 		: MenuState(program, mainMenu)
 		, m_transitionTarget(Transition::INVALID) {
@@ -44,6 +43,7 @@ MenuStateCharacterCreator::MenuStateCharacterCreator(Program &program, MainMenu 
 
 	CellStrip *rootStrip = new CellStrip((Container*)&program, Orientation::VERTICAL, 2);
 	Vec2i pad(15, 25);
+
 	rootStrip->setPos(pad);
 	rootStrip->setSize(Vec2i(g_config.getDisplayWidth() - pad.w * 2, g_config.getDisplayHeight() - pad.h * 2));
 
@@ -54,8 +54,6 @@ MenuStateCharacterCreator::MenuStateCharacterCreator(Program &program, MainMenu 
 	m_characterCreator->setCell(0);
 	m_characterCreator->setPos(pad);
 	m_characterCreator->setSize(Vec2i(g_config.getDisplayWidth() - pad.w * 2, g_config.getDisplayHeight()));
-	//m_options->setSizeHint(0, SizeHint(-1, s));
-	//m_options->setSizeHint(1, SizeHint(-1, 1000));
 
 	Anchors anchors(Anchor(AnchorType::RIGID, 0));
 
@@ -75,6 +73,12 @@ MenuStateCharacterCreator::MenuStateCharacterCreator(Program &program, MainMenu 
 	m_returnButton->setText(lang.get("Return"));
 	m_returnButton->Clicked.connect(this, &MenuStateCharacterCreator::onButtonClick);
 
+	m_saveButton = new Button(btnPanel, Vec2i(0), sz);
+	m_saveButton->setCell(1);
+	m_saveButton->setAnchors(anchors);
+	m_saveButton->setText(lang.get("Save"));
+	m_saveButton->Clicked.connect(this, &MenuStateCharacterCreator::onButtonClick);
+
 	program.setFade(0.f);
 }
 
@@ -84,37 +88,38 @@ void MenuStateCharacterCreator::onButtonClick(Widget *source) {
 
 	if (source == m_returnButton) {
 		soundRenderer.playFx(coreData.getClickSoundA());
-		saveConfig();
 		m_transitionTarget = Transition::RETURN;
 		mainMenu->setCameraTarget(MenuStates::ROOT);
+	} else if (source == m_saveButton) {
+		soundRenderer.playFx(coreData.getClickSoundA());
+		m_transitionTarget = Transition::SAVE;
 	}
-	doFadeOut();
+    doFadeOut();
 }
 
 void MenuStateCharacterCreator::update() {
 	MenuState::update();
 	if (m_transition) {
-		program.clear();
 		switch (m_transitionTarget) {
 			case Transition::RETURN:
+                program.clear();
 				mainMenu->setState(new MenuStateRoot(program, mainMenu));
 				break;
+			case Transition::RE_LOAD:
+                program.clear();
+				mainMenu->setState(this);
+				break;
+            case Transition::SAVE:
+                m_characterCreator->save();
+                program.clear();
+				mainMenu->setState(new MenuStateRoot(program, mainMenu));
+                break;
 		}
 	}
 }
 
 void MenuStateCharacterCreator::reload() {
 	m_transitionTarget = Transition::RE_LOAD;
-	int foo = m_characterCreator->getActivePage();
-	g_config.setUiLastCharacterCreatorPage(foo);
-	doFadeOut();
-}
-
-// private
-
-void MenuStateCharacterCreator::saveConfig(){
-	Renderer::getInstance().loadConfig();
-	SoundRenderer::getInstance().loadConfig();
 }
 
 }}//end namespace

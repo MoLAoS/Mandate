@@ -25,8 +25,7 @@ namespace Glest { namespace ProtoTypes {
 // =====================================================
 // 	class Actions
 // =====================================================
-bool Actions::load(const XmlNode *actionsNode, const string &dir, const TechTree *techTree,
-                   const FactionType *factionType, bool isItem, const CreatableType *cType) {
+bool Actions::load(const XmlNode *actionsNode, const string &dir, bool isItem, const FactionType *ft, const CreatableType *cType) {
     bool loadOk = true;
     vector<string> deCloakOnSkills;
     vector<SkillClass> deCloakOnSkillClasses;
@@ -38,7 +37,7 @@ bool Actions::load(const XmlNode *actionsNode, const string &dir, const TechTree
                 const XmlNode *typeNode = skillNode->getChild("type");
                 string classId = typeNode->getAttribute("value")->getRestrictedValue();
                 SkillType *skillType = g_prototypeFactory.newSkillType(SkillClassNames.match(classId.c_str()));
-                skillType->load(skillNode, dir, techTree, cType);
+                skillType->load(skillNode, dir, ft, cType);
                 skillTypes.push_back(skillType);
                 g_prototypeFactory.setChecksum(skillType);
             }
@@ -70,9 +69,9 @@ bool Actions::load(const XmlNode *actionsNode, const string &dir, const TechTree
                 if (commandNode->getName() != "command") continue;
                 string classId = commandNode->getChildRestrictedValue("type");
                 CommandType *commandType = g_prototypeFactory.newCommandType(CmdClassNames.match(classId.c_str()), cType);
-                loadOk = commandType->load(commandNode, dir, techTree, cType) && loadOk;
+                loadOk = commandType->load(commandNode, dir, ft, cType) && loadOk;
                 commandTypes.push_back(commandType);
-                g_prototypeFactory.setChecksum(commandType);
+                //g_prototypeFactory.setChecksum(commandType);
             }
         }
     } catch (runtime_error e) {
@@ -81,6 +80,10 @@ bool Actions::load(const XmlNode *actionsNode, const string &dir, const TechTree
     }
     sortCommandTypes();
     return loadOk;
+}
+
+void Actions::save(XmlNode *node) const {
+
 }
 
 void Actions::setDeCloakSkills(const vector<string> &names, const vector<SkillClass> &classes) {

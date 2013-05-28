@@ -1,0 +1,5 @@
+<?xml version="1.0" standalone="no"?>
+<resource>
+  <image path="images/beer.png"/>
+  <type value="static"/>
+</resource>

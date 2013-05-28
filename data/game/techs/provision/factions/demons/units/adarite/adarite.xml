@@ -1,0 +1,215 @@
+<?xml version="1.0" standalone="no"?>
+<unit>
+  <parameters>
+    <time value="25"/>
+    <multi-selection value="true"/>
+    <cellmap value="false"/>
+    <fields>
+      <field value="land"/>
+    </fields>
+    <properties/>
+    <meeting-point value="false"/>
+  </parameters>
+  <creatable-type>
+    <statistics>
+      <enhancement>
+	<resource-pools>
+	  <max-hp value="100"/>
+	</resource-pools>
+	<unit-stats>
+	  <sight value="10" value-mult="0"/>
+	</unit-stats>
+      </enhancement>
+    </statistics>
+    <size value="1"/>
+    <height value="2"/>
+    <producible>
+      <time value="10"/>
+      <properties/>
+      <light enabled="false"/>
+      <unit-requirements/>
+      <upgrade-requirements/>
+      <resource-requirements>
+	<resource name="wealth" amount="10" plus="0" multiply="0"/>
+      </resource-requirements>
+      <image path="images/daemon.bmp"/>
+      <image-cancel path="../adarite/images/magic_cancel.bmp"/>
+    </producible>
+    <resource-production>
+      <resources-stored>
+        <resource name="wealth" amount="500000"/>
+      </resources-stored>
+      <starter-resources>
+        <resource name="wealth" amount="150000"/>
+      </starter-resources>
+    </resource-production>
+    <actions>
+      <skills>
+        <skill>
+          <type value="stop"/>
+          <name value="stop_skill"/>
+          <speed value="1000"/>
+	  <sounds-animations>
+            <anim-speed value="40"/>
+            <animation path="models/daemon_standing.g3d"/>
+            <sound enabled="false"/>
+	  </sounds-animations>
+        </skill>
+        <skill>
+          <type value="move"/>
+          <name value="move_skill"/>
+          <speed value="250"/>
+	  <sounds-animations>
+            <anim-speed value="150"/>
+            <animation path="models/daemon_walking.g3d"/>
+            <sound enabled="false"/>
+	  </sounds-animations>
+        </skill>
+        <skill>
+          <type value="attack"/>
+          <name value="attack_skill"/>
+          <speed value="100"/>
+	  <max-range value="1"/>
+	  <sounds-animations>
+            <anim-speed value="100"/>
+            <animation path="models/daemon_attacking.g3d"/>
+            <sound enabled="true" start-time="0.5">
+              <sound-file path="sounds/daemon_attack1.wav"/>
+              <sound-file path="sounds/daemon_attack2.wav"/>
+              <sound-file path="sounds/daemon_attack3.wav"/>
+              <sound-file path="sounds/daemon_attack4.wav"/>
+              <sound-file path="sounds/daemon_attack5.wav"/>
+              <sound-file path="sounds/daemon_attack6.wav"/>
+              <sound-file path="sounds/daemon_attack7.wav"/>
+              <sound-file path="sounds/daemon_attack8.wav"/>
+              <sound-file path="sounds/daemon_attack9.wav"/>
+              <sound-file path="sounds/daemon_attack10.wav"/>
+              <sound-file path="sounds/daemon_attack11.wav"/>
+              <sound-file path="sounds/daemon_attack12.wav"/>
+              <sound-file path="sounds/daemon_attack13.wav"/>
+              <sound-file path="sounds/daemon_attack14.wav"/>
+              <sound-file path="sounds/daemon_attack15.wav"/>
+              <sound-file path="sounds/daemon_attack16.wav"/>
+            </sound>
+	  </sounds-animations>
+          <attack-levels>
+            <attack-level>
+              <damage-types>
+	        <damage-type type="slashing" value="5"/>
+              </damage-types>
+            </attack-level>
+          </attack-levels>
+          <attack-fields>
+            <field value="land"/>
+          </attack-fields>
+          <attack-start-time value="0.3"/>
+          <projectile value="false"/>
+          <splash value="false"/>
+        </skill>
+        <skill>
+          <type value="die"/>
+          <name value="die_skill"/>
+          <ep-cost value="0"/>
+          <speed value="120"/>
+	  <sounds-animations>
+            <anim-speed value="80"/>
+            <animation path="models/daemon_dying.g3d"/>
+            <sound enabled="true" start-time="0">
+              <sound-file path="sounds/daemon_die1.wav"/>
+              <sound-file path="sounds/daemon_die2.wav"/>
+              <sound-file path="sounds/daemon_die3.wav"/>
+              <sound-file path="sounds/daemon_die4.wav"/>
+            </sound>
+	  </sounds-animations>
+          <fade value="false"/>
+        </skill>
+        <skill> 
+          <type value="load"/> 
+          <name value="load_skill"/>
+          <speed value="120"/>
+          <max-range value="3"/>
+          <particles value="false"/>
+	  <sounds-animations>
+            <anim-speed value="120"/> 
+            <animation path="models/daemon_standing.g3d"/> 
+            <sound enabled="false"/>
+	  </sounds-animations>
+        </skill>
+        <skill>
+          <type value="unload"/>
+          <name value="unload_skill"/>
+          <ep-cost value="0"/>
+          <speed value="120"/>
+          <max-range value="3"/>
+	  <sounds-animations>
+            <anim-speed value="120"/>
+            <animation path="models/daemon_standing.g3d"/>
+            <sound enabled="false"/>
+	  </sounds-animations>
+        </skill>
+      </skills>
+      <commands>
+        <command>
+          <type value="stop"/>
+          <name value="stop"/>
+          <image path="../adarite/images/magic_stop.bmp"/>
+          <unit-requirements/>
+          <upgrade-requirements/>
+          <stop-skill value="stop_skill"/>
+        </command>
+        <command>
+          <type value="move"/>
+          <name value="move"/>
+          <image path="../adarite/images/magic_move.bmp"/>
+          <unit-requirements/>
+          <upgrade-requirements/>
+          <move-skill value="move_skill"/>
+        </command>
+        <command>
+          <type value="attack"/>
+          <name value="attack"/>
+          <image path="images/daemon_attack.bmp"/>
+          <unit-requirements/>
+          <upgrade-requirements/>
+          <move-skill value="move_skill"/>
+          <attack-skill value="attack_skill"/>
+        </command>
+        <command>
+          <type value="load"/>
+          <name value="load"/>
+          <image path="images/daemon.bmp"/>
+          <load-skill value="load_skill"/>
+          <units-carried>
+            <unit value="adarite"/>
+          </units-carried>
+          <load-capacity value="12" />
+          <allow-projectiles value="false"/>
+        </command>
+        <command>
+          <type value="unload"/>
+          <name value="unload"/>
+          <image path="images/daemon.bmp"/>
+          <unit-requirements/>
+          <upgrade-requirements/>
+          <unload-skill value="unload_skill"/>
+        </command>
+      </commands>
+    </actions>
+  </creatable-type>
+  <selection-sounds enabled="true">
+    <sound path="sounds/daemon_select1.wav"/>
+    <sound path="sounds/daemon_select2.wav"/>
+    <sound path="sounds/daemon_select3.wav"/>
+    <sound path="sounds/daemon_select4.wav"/>
+    <sound path="sounds/daemon_select5.wav"/>
+    <sound path="sounds/daemon_select6.wav"/>
+    <sound path="sounds/daemon_select7.wav"/>
+  </selection-sounds>
+  <command-sounds enabled="true">
+    <sound path="sounds/daemon_ack1.wav"/>
+    <sound path="sounds/daemon_ack2.wav"/>
+    <sound path="sounds/daemon_ack3.wav"/>
+    <sound path="sounds/daemon_ack4.wav"/>
+    <sound path="sounds/daemon_ack5.wav"/>
+  </command-sounds>
+</unit>

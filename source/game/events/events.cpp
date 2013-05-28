@@ -52,7 +52,7 @@ bool Event::load(const string &dir, const TechTree *techTree, const FactionType 
 		g_logger.logXmlError(path, e.what());
 		return false;
 	}
-	if (!RequirableType::load(parametersNode, dir, techTree, factionType)) {
+	if (!RequirableType::load(parametersNode, dir)) {
 		loadOk = false;
 	}
 	try {

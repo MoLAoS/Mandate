@@ -1,0 +1,38 @@
+<specialization>
+	<statistics>
+		<enhancement>
+			<resource-pools>
+				<health name="health">
+					<max-stat value="10"/>
+				</health>
+			</resource-pools>
+		</enhancement>
+		<damage-types>
+			<damage-type type="fire" value="10"/>
+		</damage-types>
+		<resistances>
+			<resistance type="fire" value="10"/>
+		</resistances>
+	</statistics>
+	<character-stats>
+		<conception value="10"/>
+		<might value="10"/>
+		<potency value="10"/>
+	</character-stats>
+	<equipment>
+		<type type="melee_weapon" value="1"/>
+		<type type="ring" value="2"/>
+		<type type="reading_glasses" value="1"/>
+	</equipment>
+	<knowledge>
+		<languages>
+			<language name="arelian" value="1"/>
+		</languages>
+		<histories>
+			<history name="arelian" value="1"/>
+		</histories>
+		<customs>
+			<custom name="arelian" value="1"/>
+		</customs>
+	</knowledge>
+</specialization>

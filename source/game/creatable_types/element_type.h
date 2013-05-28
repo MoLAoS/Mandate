@@ -107,6 +107,7 @@ public:
 
 class DisplayableType : public NameIdPair {
 protected:
+    string imagePath;
 	Texture2D *image;	//portrait
 
 public:
@@ -115,7 +116,9 @@ public:
 			NameIdPair(id, name), image(image) {}
 	virtual ~DisplayableType() {};
 
-	virtual bool load(const XmlNode *baseNode, const string &dir);
+    string getImagePath() {return imagePath;}
+	virtual bool load(const XmlNode *baseNode, const string &dir, bool add=false);
+	void addImage(string imgPath);
 
 	//get
 	const Texture2D *getImage() const	{return image;}
@@ -171,12 +174,11 @@ protected:
 	UnitReqs unitReqs;			//needed units
 	ItemReqs itemReqs;			//needed items
 	UpgradeReqs upgradeReqs;	//needed upgrades
-	int subfactionsReqs;		//bitmask of subfactions producable is restricted to
 
 public:
-	RequirableType() : DisplayableType(), subfactionsReqs(0) {}
+	RequirableType() : DisplayableType() {}
 	RequirableType(int id, const char *name, Texture2D *image) :
-			DisplayableType(id, name, image), subfactionsReqs(0) {}
+			DisplayableType(id, name, image) {}
 
 	virtual void doChecksum(Checksum &checksum) const;
 
@@ -187,12 +189,10 @@ public:
 	const UpgradeReq getUpgradeReq(int i) const		    {return upgradeReqs[i];}
 	const UnitReq getUnitReq(int i) const				{return unitReqs[i];}
 	const ItemReq getItemReq(int i) const				{return itemReqs[i];}
-	int getSubfactionsReqs() const						{return subfactionsReqs;}
-	bool isAvailableInSubfaction(int subfaction) const	{return (bool)(1 << subfaction & subfactionsReqs);}
 
     //other
     string getReqDesc(const Faction *f, const FactionType *ft) const;
-	virtual bool load(const XmlNode *baseNode, const string &dir, const TechTree *tt, const FactionType *ft);
+	virtual bool load(const XmlNode *baseNode, const string &dir, bool add=false);
 };
 
 // =====================================================
@@ -210,8 +210,6 @@ protected:
     Costs localCosts;
     Texture2D *cancelImage;
 	int productionTime;
-	int advancesToSubfaction;
-	bool advancementIsImmediate;
 
 public:
     ProducibleType();
@@ -219,15 +217,6 @@ public:
 
     // get
 	int getCostCount() const						{return costs.size();}
-	//const ResourceAmount *getCost(int i) const			{return &costs[i];}
-	//const ResourceAmount *getCost(const ResourceType *rt) const {
-	//	for(int i = 0; i < costs.size(); ++i){
-	//		if(costs[i].getType() == rt){
-	//			return &costs[i];
-	//		}
-	//	}
-	//	return NULL;
-	//}
 	ResourceAmount getCost(int i, const Faction *f) const;
 	ResourceAmount getCost(const ResourceType *rt, const Faction *f) const;
 
@@ -237,11 +226,8 @@ public:
 
 	int getProductionTime() const					{return productionTime;}
 	const Texture2D *getCancelImage() const			{return cancelImage;}
-	int getAdvancesToSubfaction() const				{return advancesToSubfaction;}
-	bool isAdvanceImmediately() const				{return advancementIsImmediate;}
 
-    // varios
-	virtual bool load(const XmlNode *baseNode, const string &dir, const TechTree *techTree, const FactionType *factionType);
+	virtual bool load(const XmlNode *baseNode, const string &dir);
 
 	virtual void doChecksum(Checksum &checksum) const;
 	string getReqDesc(const Faction *f, const FactionType *ft) const;
@@ -350,7 +336,6 @@ struct CommandCheckResult {
 	bool                  m_upgradedAlready;
 	bool                  m_upgradingAlready;
 	bool                  m_partiallyUpgraded;
-	bool                  m_availableInSubFaction;
 };
 
 }}//end namespace

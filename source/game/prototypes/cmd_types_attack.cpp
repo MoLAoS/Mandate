@@ -40,19 +40,35 @@ namespace Glest { namespace ProtoTypes {
 // ===============================
 // 	class AttackCommandTypeBase
 // ===============================
+void AttackCommandTypeBase::initAttackSkill(Unit *unit) {
+    attackSkillTypes.clear();
+    const SkillType *st = unit->getActions()->getSkillType(attackSkillTypeName, SkillClass::ATTACK);
+    const AttackSkillType *ast = static_cast<const AttackSkillType*>(st);
+    attackSkillTypes.push_back(ast, AttackSkillPreferences());
+}
 
-bool AttackCommandTypeBase::load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct) {
+bool AttackCommandTypeBase::load(const XmlNode *n, const string &dir, const FactionType *ft, const CreatableType *ct) {
 	const AttackSkillType *ast;
 	string skillName;
 	const XmlNode *attackSkillNode = n->getChild("attack-skill", 0, false);
 	bool loadOk = true;
-	const FactionType *ft = ct->getFactionType();
+    if (ft == 0) {
+        const XmlAttribute *factionAttribute = n->getAttribute("faction");
+        string faction = factionAttribute->getRestrictedValue();
+        ft = g_world.getTechTree()->getFactionType(faction);
+    }
 	//single attack skill
 	if(attackSkillNode) {
 		try {
 			skillName = attackSkillNode->getAttribute("value")->getRestrictedValue();
-			ast = static_cast<const AttackSkillType*>(ct->getActions()->getSkillType(skillName, SkillClass::ATTACK));
-			attackSkillTypes.push_back(ast, AttackSkillPreferences());
+            if (ct != NULL) {
+                ast = static_cast<const AttackSkillType*>(ct->getActions()->getSkillType(skillName, SkillClass::ATTACK));
+                attackSkillTypes.push_back(ast, AttackSkillPreferences());
+            } else {
+                const AttackSkillType *ast = 0;
+                attackSkillTypes.push_back(ast, AttackSkillPreferences());
+                attackSkillTypeName = skillName;
+            }
 		} catch (runtime_error e) {
 			g_logger.logXmlError(dir, e.what ());
 			loadOk = false;
@@ -75,7 +91,7 @@ bool AttackCommandTypeBase::load(const XmlNode *n, const string &dir, const Tech
 					ast = static_cast<const AttackSkillType*>(ct->getActions()->getSkillType(skillName, SkillClass::ATTACK));
 					flagsNode = attackSkillNode->getChild("flags", 0, false);
 					if(flagsNode) {
-						prefs.load(flagsNode, dir, tt, ft);
+						prefs.load(flagsNode, dir);
 					}
 					attackSkillTypes.push_back(ast, prefs);
 				}
@@ -129,7 +145,7 @@ bool AttackCommandType::updateGeneric(Unit *unit, Command *command, const Attack
 	}
 	if (attackableInRange(unit, &target, &attackSkillTypes, &ast)) { // found a target in range
 		assert(ast);
-		if (unit->getEp() >= ast->getSkillCosts()->getEpCost()) { // enough ep for skill?
+		if (unit->checkSkillCosts(act)) {
 			unit->setCurrSkill(ast);
 			unit->setTarget(target);
 		} else {
@@ -184,9 +200,9 @@ void AttackCommandType::update(Unit *unit) const {
 	}
 }
 
-bool AttackCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct) {
-	bool ok = MoveBaseCommandType::load(n, dir, tt, ct);
-	return AttackCommandTypeBase::load(n, dir, tt, ct) && ok;
+bool AttackCommandType::load(const XmlNode *n, const string &dir, const FactionType *ft, const CreatableType *ct) {
+	bool ok = MoveBaseCommandType::load(n, dir, ft, ct);
+	return AttackCommandTypeBase::load(n, dir, ft, ct) && ok;
 }
 
 void AttackCommandType::descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const {
@@ -202,8 +218,7 @@ Command *AttackCommandType::doAutoAttack(Unit *unit) const {
 	}
 	// look for someone to smite
 	Unit *sighted = NULL;
-	if (!unit->getFaction()->isAvailable(this)
-	|| !attackableInSight(unit, &sighted, &attackSkillTypes, NULL)) {
+	if (!attackableInSight(unit, &sighted, &attackSkillTypes, NULL)) {
 		return 0;
 	}
 	Command *newCommand = g_world.newCommand(this, CmdFlags(CmdProps::AUTO, true), sighted->getPos());
@@ -230,15 +245,15 @@ void AttackStoppedCommandType::update(Unit *unit) const {
 	}
 }
 
-bool AttackStoppedCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct) {
-	bool ok = StopBaseCommandType::load(n, dir, tt, ct);
-	return AttackCommandTypeBase::load(n, dir, tt, ct) && ok;
+bool AttackStoppedCommandType::load(const XmlNode *n, const string &dir, const FactionType *ft, const CreatableType *ct) {
+	bool ok = StopBaseCommandType::load(n, dir, ft, ct);
+	return AttackCommandTypeBase::load(n, dir, ft, ct) && ok;
 }
 
 Command *AttackStoppedCommandType::doAutoAttack(Unit *unit) const {
 	// look for someone to smite
 	Unit *sighted = NULL;
-	if (!unit->getFaction()->isAvailable(this) || !attackableInRange(unit, &sighted, &attackSkillTypes, NULL)) {
+	if (!attackableInRange(unit, &sighted, &attackSkillTypes, NULL)) {
 		return 0;
 	}
 	Command *newCommand = g_world.newCommand(this, CmdFlags(CmdProps::AUTO, true), sighted->getPos());
@@ -336,8 +351,8 @@ void GuardCommandType::tick(const Unit *unit, Command &command) const {
 	replaceDeadReferences(command);
 }
 
-bool GuardCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct) {
-	bool loadOk = AttackCommandType::load(n, dir, tt, ct);
+bool GuardCommandType::load(const XmlNode *n, const string &dir, const FactionType *ft, const CreatableType *ct) {
+	bool loadOk = AttackCommandType::load(n, dir, ft, ct);
 
 	//distance
 	try { m_maxDistance = n->getChild("max-distance")->getAttribute("value")->getIntValue(); }
@@ -398,8 +413,8 @@ Unit* Targets::getNearestHpRatio(fixed hpRatio) {
 // 	class CreateSettlementCommandType
 // =====================================================
 
-bool CreateSettlementCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct) {
-	bool loadOk = StopBaseCommandType::load(n, dir, tt, ct);
+bool CreateSettlementCommandType::load(const XmlNode *n, const string &dir, const FactionType *ft, const CreatableType *ct) {
+	bool loadOk = StopBaseCommandType::load(n, dir, ft, ct);
 
 	string skillName;
 	// set structure
@@ -453,8 +468,8 @@ void CreateSettlementCommandType::update(Unit *unit) const {
 // 	class ExpandSettlementCommandType
 // =====================================================
 
-bool ExpandSettlementCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct) {
-	bool loadOk = StopBaseCommandType::load(n, dir, tt, ct);
+bool ExpandSettlementCommandType::load(const XmlNode *n, const string &dir, const FactionType *ft, const CreatableType *ct) {
+	bool loadOk = StopBaseCommandType::load(n, dir, ft, ct);
 
 	string skillName;
 	// set structure

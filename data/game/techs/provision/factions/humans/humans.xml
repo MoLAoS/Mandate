@@ -1,0 +1,29 @@
+<?xml version="1.0" standalone="no"?>
+<faction>
+	<item-images>
+	  <item-image image-path="/units/castle/images/castle.bmp"/>
+	</item-images>
+	<starting-resources>
+		<resource name="wealth" amount="50000"/>
+		<resource name="stone" amount="5000"/>
+		<resource name="logs" amount="5000"/>
+	</starting-resources>
+	<starting-units>
+		<unit name="house" amount="4"/>
+		<unit name="crop_farm" amount="1"/>
+		<unit name="defender" amount="1"/>
+		<unit name="castle" amount="1"/>
+		<unit name="defenders_motherhouse" amount="1"/>
+	</starting-units>
+	<exp-type type="hit"/>
+	<music value="true" path="music/music_tech.ogg"/>
+	<logo value="true">
+		<team-colour path="tech_logo_team.png" />
+		<rgba-colour path="tech_logo_rgba.png" />
+	</logo>
+	<attack-notice enabled="true" min-delay="35">
+		<sound-file path="bugle_charge.wav" />
+		<sound-file path="bugle_alarm.wav" />
+		<sound-file path="bugle_call_to_arms.wav" />
+	</attack-notice>
+</faction>

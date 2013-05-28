@@ -104,7 +104,7 @@ string Item::getShortDesc() const {
 	return ss.str();
 }
 
-string Item::getLongDesc() const {
+string Item::getLongDesc() {
 	Lang &lang = g_lang;
 	World &world = g_world;
 	string shortDesc = getShortDesc();
@@ -116,16 +116,8 @@ string Item::getLongDesc() const {
 	ss << "Weapon Class: " << getType()->getTypeTag();
 	ss << endl << "Quality Tier: " << getType()->getQualityTier();
 	ss << endl << "Bonuses: ";
-	getDesc(str, "\n");
+	statistics.getDesc(str, "\n");
     ss << str;
-	if (type->getResistances()->size() > 0) {
-	ss << endl << lang.get("Resistances") << ":";
-	for (int i = 0; i < type->getResistances()->size(); ++i) {
-	ss << endl << lang.get(type->getResistance(i)->getTypeName()) << ": ";
-	ss << type->getResistance(i)->getValue();
-	}
-	ss << endl;
-	}
 	// can create resources
 	if (type->getResourceProductionSystem()->getCreatedResourceCount() > 0) {
 		for (int i = 0; i < type->getResourceProductionSystem()->getCreatedResourceCount(); ++i) {
@@ -230,6 +222,11 @@ string Item::getLongDesc() const {
 	//effects.streamDesc(ss);
 
 	return (ss.str());
+}
+
+void Item::computeTotalUpgrade() {
+    statistics.cleanse();
+    statistics.sum(type->getStatistics());
 }
 
 // =====================================================

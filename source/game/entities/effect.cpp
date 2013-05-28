@@ -43,14 +43,14 @@ Effect::Effect(CreateParams params)
 	this->strength = params.strength;
 	this->duration = type->getDuration();
 	this->recourse = params.root != NULL;
-	this->actualHpRegen = type->getResourcePools()->getHpRegeneration().getValue();
-	if (type->getResourcePools()->getHpRegeneration().getValue() < 0) {
-        this->actualHpRegen = type->getResourcePools()->getHpRegeneration().getValue();
-    } else if (type->getDamageTypeCount() > 0) {
-        for (int i = 0; i < type->getDamageTypeCount(); ++i) {
-            const DamageType *damage = type->getDamageType(i);
-            for (int j = 0; j < params.recipient->getResistanceCount(); ++j) {
-                const DamageType *resistance = params.recipient->getResistance(j);
+	this->actualHpRegen = type->getStatistics()->getEnhancement()->getResourcePools()->getHealth()->getRegenStat()->getValue();
+	if (type->getStatistics()->getEnhancement()->getResourcePools()->getHealth()->getRegenStat()->getValue() < 0) {
+        this->actualHpRegen = type->getStatistics()->getEnhancement()->getResourcePools()->getHealth()->getRegenStat()->getValue();
+    } else if (type->getStatistics()->getDamageTypeCount() > 0) {
+        for (int i = 0; i < type->getStatistics()->getDamageTypeCount(); ++i) {
+            const DamageType *damage = type->getStatistics()->getDamageType(i);
+            for (int j = 0; j < params.recipient->getStatistics()->getResistanceCount(); ++j) {
+                const DamageType *resistance = params.recipient->getStatistics()->getResistance(j);
                 if (damage->getTypeName() == resistance->getTypeName()) {
                     int damageChange = damage->getValue() - resistance->getValue();
                     if (damageChange > 0) {
@@ -239,7 +239,7 @@ void Effects::getDesc(string &str) const {
 			str += "\n" + lang.get("Effects") + ": ";
 		}
 		string rawName = (*uei).first->getName();
-		string name = lang.getFactionString(uei->first->getFactionType()->getName(), rawName);
+		string name = rawName;
 		str += name + " (" + intToStr((*uei).second.maxDuration) + ")";
 		if((*uei).second.count > 1) {
 			str += " x" + intToStr((*uei).second.count);
@@ -257,7 +257,8 @@ Unit *Effects::getKiller() const {
 		//If more than two other units hit this unit with a DOT and it died,
 		//credit goes to the one 1st in the list.
 
-		if ((*i)->getType()->getResourcePools()->getHpRegeneration().getValue() < 0 && source != NULL && source->isAlive()) {
+		if ((*i)->getType()->getStatistics()->getEnhancement()->getResourcePools()->getHealth()->getRegenStat()->getValue()
+            < 0 && source != NULL && source->isAlive()) {
 			return source;
 		}
 	}

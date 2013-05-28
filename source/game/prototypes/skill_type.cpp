@@ -45,7 +45,12 @@ SoundsAndAnimations::~SoundsAndAnimations(){
 	deleteValues(sounds.getSounds());
 }
 
-bool SoundsAndAnimations::load(const XmlNode *sn, const string &dir, const TechTree *tt, const CreatableType *ct){
+void SoundsAndAnimations::addAnimation(string load, int s, int h) {
+	ModelFactory &modelFactory = g_world.getModelFactory();
+    animations.push_back(modelFactory.getModel(cleanPath(load), s, h));
+}
+
+bool SoundsAndAnimations::load(const XmlNode *sn, const string &dir, const CreatableType *ct){
     bool loadOk = true;
 	animSpeed = sn->getChildIntValue("anim-speed");
 	ModelFactory &modelFactory = g_world.getModelFactory();
@@ -53,7 +58,16 @@ bool SoundsAndAnimations::load(const XmlNode *sn, const string &dir, const TechT
 	const XmlAttribute *animPathAttrib = animNode->getAttribute("path", false);
 	if (animPathAttrib) { // single animation, lagacy style
 		string path = dir + "/" + animPathAttrib->getRestrictedValue();
-		animations.push_back(modelFactory.getModel(cleanPath(path), ct->getSize(), ct->getHeight()));
+        const XmlAttribute *animLoadAttrib = animNode->getAttribute("load", false);
+        bool loadBool = false;
+        if (animLoadAttrib) {
+            loadBool = animLoadAttrib->getBoolValue();
+        }
+        if (loadBool) {
+            loadValue = "/" + animPathAttrib->getRestrictedValue();
+        } else {
+            animations.push_back(modelFactory.getModel(cleanPath(path), ct->getSize(), ct->getHeight()));
+        }
 		animationsStyle = AnimationsStyle::SINGLE;
 	} else { // multi-anim or anim-by-surface-type, new style
 		for (int i=0; i < animNode->getChildCount(); ++i) {
@@ -133,10 +147,15 @@ const Model* SoundsAndAnimations::getAnimation(SurfaceType st) const {
 }
 
 // =====================================================
-// 	class ItemCost
+// 	class ItemCost && StatCost
 // =====================================================
 void ItemCost::init(int amount, const ItemType *type) {
     this->type = type;
+    this->amount = amount;
+}
+
+void StatCost::init(int amount, string name) {
+    this->name = name;
     this->amount = amount;
 }
 
@@ -145,32 +164,39 @@ void ItemCost::init(int amount, const ItemType *type) {
 // =====================================================
 void SkillCosts::init() {
     hpCost = 0;
-    spCost = 0;
-    epCost = 0;
 }
 
-bool SkillCosts::load(const XmlNode *sn, const string &dir, const TechTree *tt, const CreatableType *ct) {
+bool SkillCosts::load(const XmlNode *sn, const string &dir, const FactionType *ft) {
     bool loadOk = true;
     hpCost = 0;
-    spCost = 0;
-    epCost = 0;
     levelReq = 0;
-    const FactionType *ft = ct->getFactionType();
     const XmlNode *hpCostNode = sn->getChild("hp-cost", 0, false);
     if (hpCostNode) {
         hpCost = hpCostNode->getAttribute("amount")->getIntValue();
     }
-    const XmlNode *spCostNode = sn->getChild("sp-cost", 0, false);
-    if (spCostNode) {
-        spCost = spCostNode->getAttribute("amount")->getIntValue();
-    }
-    const XmlNode *epCostNode = sn->getChild("ep-cost", 0, false);
-    if (epCostNode) {
-        epCost = epCostNode->getAttribute("amount")->getIntValue();
-    }
     const XmlNode *levelReqNode = sn->getChild("level-req", 0, false);
     if (levelReqNode) {
         levelReq = levelReqNode->getAttribute("level")->getIntValue();
+    }
+    const XmlNode *resourcesNode = sn->getChild("res-pools", 0, false);
+    if (resourcesNode) {
+        resources.resize(resourcesNode->getChildCount());
+        for (int i = 0; i < resourcesNode->getChildCount(); ++i) {
+            const XmlNode *costNode = resourcesNode->getChild("cost", i);
+            string name = costNode->getAttribute("name")->getRestrictedValue();
+            int amount = costNode->getAttribute("amount")->getIntValue();
+            resources[i].init(amount, name);
+        }
+    }
+    const XmlNode *defensesNode = sn->getChild("def-pools", 0, false);
+    if (defensesNode) {
+        defenses.resize(defensesNode->getChildCount());
+        for (int i = 0; i < defensesNode->getChildCount(); ++i) {
+            const XmlNode *costNode = defensesNode->getChild("cost", i);
+            string name = costNode->getAttribute("name")->getRestrictedValue();
+            int amount = costNode->getAttribute("amount")->getIntValue();
+            defenses[i].init(amount, name);
+        }
     }
     const XmlNode *itemCostsNode = sn->getChild("item-costs", 0, false);
     if (itemCostsNode) {
@@ -214,10 +240,14 @@ SkillType::~SkillType(){
 	deleteValues(eyeCandySystems);
 }
 
-bool SkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const CreatableType *ct){
+bool SkillType::load(const XmlNode *sn, const string &dir, const FactionType *ft, const CreatableType *ct){
     bool loadOk = true;
 	m_creatableType = ct;
-    const FactionType *ft = ct->getFactionType();
+    if (ft == 0) {
+        const XmlAttribute *factionAttribute = sn->getAttribute("faction");
+        string faction = factionAttribute->getRestrictedValue();
+        ft = g_world.getTechTree()->getFactionType(faction);
+    }
 	m_name = sn->getChildStringValue("name");
 	speed = sn->getChildIntValue("speed");
 
@@ -233,7 +263,7 @@ bool SkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, c
 
     const XmlNode *skillCostsNode = sn->getChild("skill-costs", 0, false);
     if (skillCostsNode) {
-        if(!skillCosts.load(skillCostsNode, dir, tt, ct)) {
+        if(!skillCosts.load(skillCostsNode, dir, ft)) {
            loadOk = false;
         }
     } else {
@@ -242,7 +272,7 @@ bool SkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, c
 
     const XmlNode *soundsAndAnimationsNode = sn->getChild("sounds-animations", 0, false);
     if (soundsAndAnimationsNode) {
-        if(!soundsAndAnimations.load(soundsAndAnimationsNode, dir, tt, ct)) {
+        if(!soundsAndAnimations.load(soundsAndAnimationsNode, dir, ct)) {
            loadOk = false;
         }
     }
@@ -333,9 +363,14 @@ CycleInfo SkillType::calculateCycleTime() const {
 // 	class MoveSkillType
 // =====================================================
 
-bool MoveSkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const CreatableType *ct){
+bool MoveSkillType::load(const XmlNode *sn, const string &dir, const FactionType *ft, const CreatableType *ct){
     bool loadOk = true;
-	loadOk = SkillType::load(sn, dir, tt, ct);
+    if (ft == 0) {
+        const XmlAttribute *factionAttribute = sn->getAttribute("faction");
+        string faction = factionAttribute->getRestrictedValue();
+        ft = g_world.getTechTree()->getFactionType(faction);
+    }
+	loadOk = SkillType::load(sn, dir, ft, ct);
 
 	XmlNode *visibleOnlyNode = sn->getOptionalChild("visible-only");
 	if (visibleOnlyNode) {
@@ -345,7 +380,8 @@ bool MoveSkillType::load(const XmlNode *sn, const string &dir, const TechTree *t
 }
 
 fixed MoveSkillType::getSpeed(const Unit *unit) const {
-	return getBaseSpeed() * unit->getUnitStats()->getMoveSpeed().getValueMult() + unit->getUnitStats()->getMoveSpeed().getValue();
+	return getBaseSpeed() * unit->getStatistics()->getEnhancement()->getUnitStats()->getMoveSpeed()->getValueMult() +
+	unit->getStatistics()->getEnhancement()->getUnitStats()->getMoveSpeed()->getValue();
 }
 
 // =====================================================
@@ -368,10 +404,14 @@ TargetBasedSkillType::~TargetBasedSkillType(){
 	delete splashParticleSystemType;
 }
 
-bool TargetBasedSkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const CreatableType *ct){
+bool TargetBasedSkillType::load(const XmlNode *sn, const string &dir, const FactionType *ft, const CreatableType *ct){
     bool loadOk = true;
-	SkillType::load(sn, dir, tt, ct);
-	const FactionType *ft = ct->getFactionType();
+    if (ft == 0) {
+        const XmlAttribute *factionAttribute = sn->getAttribute("faction");
+        string faction = factionAttribute->getRestrictedValue();
+        ft = g_world.getTechTree()->getFactionType(faction);
+    }
+	SkillType::load(sn, dir, ft, ct);
 
 	//effects
 	const XmlNode *effectsNode = sn->getChild("effects", 0, false);
@@ -380,7 +420,7 @@ bool TargetBasedSkillType::load(const XmlNode *sn, const string &dir, const Tech
 		for(int i=0; i < effectsNode->getChildCount(); ++i) {
 			const XmlNode *effectNode = effectsNode->getChild("effect", i);
 			EffectType *effectType = new EffectType();
-			effectType->load(effectNode, dir, tt, ft);
+			effectType->load(effectNode, dir);
 			effectTypes[i] = effectType;
 		}
 	}
@@ -433,7 +473,7 @@ bool TargetBasedSkillType::load(const XmlNode *sn, const string &dir, const Tech
 	if(!attackFieldsNode && !fieldsNode) {
 		throw runtime_error("Must specify either <attack-fields> or <fields>.");
 	}
-	zones.load(fieldsNode ? fieldsNode : attackFieldsNode, dir, tt, ft);
+	zones.load(fieldsNode ? fieldsNode : attackFieldsNode, dir);
 	return loadOk;
 }
 
@@ -491,22 +531,11 @@ bool AttackLevel::load(const XmlNode *attackLevelNode, const string &dir) {
         cooldown = attackLevelNode->getOptionalChild("cooldown")->getAttribute("time")->getIntValue();
 	}
 
-	const XmlNode *attackStatsNode = attackLevelNode->getChild("attack-stats", 0, false);
-	if (attackStatsNode) {
-        if (!attackStats.load(attackStatsNode, dir)) {
+	const XmlNode *statisticsNode = attackLevelNode->getChild("statistics", 0, false);
+	if (statisticsNode) {
+        if (!statistics.load(statisticsNode, dir)) {
             loadOk = false;
         }
-	}
-
-    const XmlNode *damageTypesNode = attackLevelNode->getChild("damage-types", 0, false);
-	if (damageTypesNode) {
-	    damageTypes.resize(damageTypesNode->getChildCount());
-	    for (int i = 0; i < damageTypesNode->getChildCount(); ++i) {
-            const XmlNode *damageTypeNode = damageTypesNode->getChild("damage-type", i);
-            string damageTypeName = damageTypeNode->getAttribute("type")->getRestrictedValue();
-            int amount = damageTypeNode->getAttribute("value")->getIntValue();
-            damageTypes[i].init(damageTypeName, amount);
-	    }
 	}
 	return loadOk;
 }
@@ -515,9 +544,9 @@ AttackSkillType::~AttackSkillType() {
 //	delete earthquakeType;
 }
 
-bool AttackSkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const CreatableType *ct){
+bool AttackSkillType::load(const XmlNode *sn, const string &dir, const FactionType *ft, const CreatableType *ct){
     bool loadOk = true;
-	loadOk = TargetBasedSkillType::load(sn, dir, tt, ct);
+	loadOk = TargetBasedSkillType::load(sn, dir, ft, ct);
     const XmlNode *attackLevelsNode = sn->getChild("attack-levels");
     levels.resize(attackLevelsNode->getChildCount());
     for (int i = 0; i < attackLevelsNode->getChildCount(); ++i) {
@@ -531,7 +560,7 @@ bool AttackSkillType::load(const XmlNode *sn, const string &dir, const TechTree 
 	XmlNode *earthquakeNode = sn->getChild("earthquake", 0, false);
 	if(earthquakeNode) {
 		earthquakeType = new EarthquakeType(float(0));
-		earthquakeType->load(earthquakeNode, dir, tt, ft);
+		earthquakeType->load(earthquakeNode, dir, ft);
 	}
 #endif
     return loadOk;
@@ -549,12 +578,14 @@ void AttackSkillType::getDesc(string &str, const Unit *unit) const {
     str += "Cooldown: ";
     str += intToStr(aLevel->getCooldown());
     str += "\n";
-    if (aLevel->getDamageTypeCount() > 0) {
-        str += lang.get("Magic Damage")+": ";
+    if (aLevel->getStatistics()->getDamageTypeCount() > 0) {
+        str += lang.get("Damage")+": ";
         str += "\n";
-        for (int i = 0; i < aLevel->getDamageTypeCount(); ++i) {
-            str += lang.get(aLevel->getDamageType(i)->getTypeName())+": ";
-            str += intToStr(aLevel->getDamageType(i)->getValue());
+        for (int i = 0; i < aLevel->getStatistics()->getDamageTypeCount(); ++i) {
+            if (aLevel->getStatistics()->getDamageType(i)->getValue() + unit->getStatistics()->getDamageType(i)->getValue() > 0) {
+                str += lang.get(aLevel->getStatistics()->getDamageType(i)->getTypeName())+": ";
+                str += intToStr(aLevel->getStatistics()->getDamageType(i)->getValue() + unit->getStatistics()->getDamageType(i)->getValue());
+            }
         }
         str += "\n";
     }
@@ -563,7 +594,8 @@ void AttackSkillType::getDesc(string &str, const Unit *unit) const {
 }
 
 fixed AttackSkillType::getSpeed(const Unit *unit) const {
-	return getBaseSpeed() * unit->getAttackStats()->getAttackSpeed().getValueMult() + unit->getAttackStats()->getAttackSpeed().getValue();
+	return getBaseSpeed() * unit->getStatistics()->getEnhancement()->getAttackStats()->getAttackSpeed()->getValueMult() +
+	unit->getStatistics()->getEnhancement()->getAttackStats()->getAttackSpeed()->getValue();
 }
 
 // ===============================
@@ -571,7 +603,8 @@ fixed AttackSkillType::getSpeed(const Unit *unit) const {
 // ===============================
 
 fixed BuildSkillType::getSpeed(const Unit *unit) const {
-	return getBaseSpeed() * unit->getProductionSpeeds()->getRepairSpeed().getValueMult() + unit->getProductionSpeeds()->getRepairSpeed().getValue();
+	return getBaseSpeed() * unit->getStatistics()->getEnhancement()->getProductionSpeeds()->getRepairSpeed()->getValueMult() +
+	unit->getStatistics()->getEnhancement()->getProductionSpeeds()->getRepairSpeed()->getValue();
 }
 
 // ===============================
@@ -579,7 +612,8 @@ fixed BuildSkillType::getSpeed(const Unit *unit) const {
 // ===============================
 
 fixed ConstructSkillType::getSpeed(const Unit *unit) const {
-	return getBaseSpeed() * unit->getProductionSpeeds()->getRepairSpeed().getValueMult() + unit->getProductionSpeeds()->getRepairSpeed().getValue();
+	return getBaseSpeed() * unit->getStatistics()->getEnhancement()->getProductionSpeeds()->getRepairSpeed()->getValueMult() +
+	unit->getStatistics()->getEnhancement()->getProductionSpeeds()->getRepairSpeed()->getValue();
 }
 
 // ===============================
@@ -587,7 +621,8 @@ fixed ConstructSkillType::getSpeed(const Unit *unit) const {
 // ===============================
 
 fixed HarvestSkillType::getSpeed(const Unit *unit) const {
-	return getBaseSpeed() * unit->getProductionSpeeds()->getHarvestSpeed().getValueMult() + unit->getProductionSpeeds()->getHarvestSpeed().getValue();
+	return getBaseSpeed() * unit->getStatistics()->getEnhancement()->getProductionSpeeds()->getHarvestSpeed()->getValueMult() +
+	unit->getStatistics()->getEnhancement()->getProductionSpeeds()->getHarvestSpeed()->getValue();
 }
 
 // ===============================
@@ -607,9 +642,9 @@ void DieSkillType::doChecksum(Checksum &checksum) const {
 	checksum.add<bool>(fade);
 }
 
-bool DieSkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const CreatableType *ct){
+bool DieSkillType::load(const XmlNode *sn, const string &dir, const FactionType *ft, const CreatableType *ct) {
     bool loadOk = true;
-	loadOk = SkillType::load(sn, dir, tt, ct);
+	loadOk = SkillType::load(sn, dir, ft, ct);
 
 	fade= sn->getChild("fade")->getAttribute("value")->getBoolValue();
 	return loadOk;
@@ -627,9 +662,9 @@ RepairSkillType::RepairSkillType() : SkillType("Repair") {
 	selfOnly = false;
 }
 
-bool RepairSkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const CreatableType *ct){
+bool RepairSkillType::load(const XmlNode *sn, const string &dir, const FactionType *ft, const CreatableType *ct){
     bool loadOk = true;
-	loadOk = SkillType::load(sn, dir, tt, ct);
+	loadOk = SkillType::load(sn, dir, ft, ct);
 
 	XmlNode *n;
 
@@ -686,7 +721,8 @@ void RepairSkillType::getDesc(string &str, const Unit *unit) const {
 }
 
 fixed RepairSkillType::getSpeed(const Unit *unit) const {
-	return getBaseSpeed() * unit->getProductionSpeeds()->getRepairSpeed().getValueMult() + unit->getProductionSpeeds()->getRepairSpeed().getValue();
+	return getBaseSpeed() * unit->getStatistics()->getEnhancement()->getProductionSpeeds()->getRepairSpeed()->getValueMult() +
+	unit->getStatistics()->getEnhancement()->getProductionSpeeds()->getRepairSpeed()->getValue();
 }
 
 // ===============================
@@ -701,9 +737,9 @@ MaintainSkillType::MaintainSkillType() : SkillType("Maintain") {
 	selfOnly = false;
 }
 
-bool MaintainSkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const CreatableType *ct){
+bool MaintainSkillType::load(const XmlNode *sn, const string &dir, const FactionType *ft, const CreatableType *ct){
     bool loadOk = true;
-	loadOk = SkillType::load(sn, dir, tt, ct);
+	loadOk = SkillType::load(sn, dir, ft, ct);
 
 	XmlNode *n;
 
@@ -760,7 +796,8 @@ void MaintainSkillType::getDesc(string &str, const Unit *unit) const {
 }
 
 fixed MaintainSkillType::getSpeed(const Unit *unit) const {
-	return getBaseSpeed() * unit->getProductionSpeeds()->getRepairSpeed().getValueMult() + unit->getProductionSpeeds()->getRepairSpeed().getValue();
+	return getBaseSpeed() * unit->getStatistics()->getEnhancement()->getProductionSpeeds()->getRepairSpeed()->getValueMult() +
+	unit->getStatistics()->getEnhancement()->getProductionSpeeds()->getRepairSpeed()->getValue();
 }
 
 // =====================================================
@@ -772,9 +809,9 @@ ProduceSkillType::ProduceSkillType() : SkillType("Produce") {
 	maxPets = 0;
 }
 
-bool ProduceSkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const CreatableType *ct){
+bool ProduceSkillType::load(const XmlNode *sn, const string &dir, const FactionType *ft, const CreatableType *ct){
     bool loadOk = true;
-	loadOk = SkillType::load(sn, dir, tt, ct);
+	loadOk = SkillType::load(sn, dir, ft, ct);
 
 	XmlNode *petNode = sn->getChild("pet", 0, false);
 	if(petNode) {
@@ -791,7 +828,8 @@ void ProduceSkillType::doChecksum(Checksum &checksum) const {
 }
 
 fixed ProduceSkillType::getSpeed(const Unit *unit) const {
-	return getBaseSpeed() * unit->getProductionSpeeds()->getProdSpeed().getValueMult() + unit->getProductionSpeeds()->getProdSpeed().getValue();
+	return getBaseSpeed() * unit->getStatistics()->getEnhancement()->getProductionSpeeds()->getProdSpeed()->getValueMult() +
+	unit->getStatistics()->getEnhancement()->getProductionSpeeds()->getProdSpeed()->getValue();
 }
 
 // =====================================================
@@ -799,7 +837,8 @@ fixed ProduceSkillType::getSpeed(const Unit *unit) const {
 // =====================================================
 
 fixed UpgradeSkillType::getSpeed(const Unit *unit) const {
-	return getBaseSpeed() * unit->getProductionSpeeds()->getProdSpeed().getValueMult() + unit->getProductionSpeeds()->getProdSpeed().getValue();
+	return getBaseSpeed() * unit->getStatistics()->getEnhancement()->getProductionSpeeds()->getProdSpeed()->getValueMult() +
+	unit->getStatistics()->getEnhancement()->getProductionSpeeds()->getProdSpeed()->getValue();
 }
 
 // =====================================================
@@ -807,7 +846,8 @@ fixed UpgradeSkillType::getSpeed(const Unit *unit) const {
 // =====================================================
 
 fixed MorphSkillType::getSpeed(const Unit *unit) const {
-	return getBaseSpeed() * unit->getProductionSpeeds()->getProdSpeed().getValueMult() + unit->getProductionSpeeds()->getProdSpeed().getValue();
+	return getBaseSpeed() * unit->getStatistics()->getEnhancement()->getProductionSpeeds()->getProdSpeed()->getValueMult() +
+	unit->getStatistics()->getEnhancement()->getProductionSpeeds()->getProdSpeed()->getValue();
 }
 
 // =====================================================
@@ -817,9 +857,9 @@ fixed MorphSkillType::getSpeed(const Unit *unit) const {
 LoadSkillType::LoadSkillType() : SkillType("Load") {
 }
 
-bool LoadSkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const CreatableType *ct){
+bool LoadSkillType::load(const XmlNode *sn, const string &dir, const FactionType *ft, const CreatableType *ct){
     bool loadOk = true;
-	loadOk = SkillType::load(sn, dir, tt, ct);
+	loadOk = SkillType::load(sn, dir, ft, ct);
 	return loadOk;
 }
 
@@ -831,9 +871,9 @@ void LoadSkillType::doChecksum(Checksum &checksum) const {
 // 	class BeBuiltSkillType
 // =====================================================
 
-bool BeBuiltSkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const CreatableType *ct){
+bool BeBuiltSkillType::load(const XmlNode *sn, const string &dir, const FactionType *ft, const CreatableType *ct){
     bool loadOk = true;
-	loadOk = SkillType::load(sn, dir, tt, ct);
+	loadOk = SkillType::load(sn, dir, ft, ct);
 	m_stretchy = sn->getOptionalBoolValue("anim-stretch", false);
 	return loadOk;
 }
@@ -842,9 +882,9 @@ bool BeBuiltSkillType::load(const XmlNode *sn, const string &dir, const TechTree
 // 	class BuildSelfSkillType
 // =====================================================
 
-bool BuildSelfSkillType::load(const XmlNode *sn, const string &dir, const TechTree *tt, const CreatableType *ct){
+bool BuildSelfSkillType::load(const XmlNode *sn, const string &dir, const FactionType *ft, const CreatableType *ct){
     bool loadOk = true;
-	loadOk = SkillType::load(sn, dir, tt, ct);
+	loadOk = SkillType::load(sn, dir, ft, ct);
 	m_stretchy = sn->getOptionalBoolValue("anim-stretch", false);
 	return loadOk;
 }
@@ -879,18 +919,29 @@ Model* ModelFactory::getModel(const string &path, int size, int height) {
 // =====================================================
 // 	class AttackSkillTypes & enum AttackSkillPreferenceFlags
 // =====================================================
+void AttackSkillTypes::doChecksum(Checksum &checksum) const {
+    for (int i=0; i < types.size(); ++i) {
+        if (types[i] != 0) {
+            checksum.add(types[i]->getName());
+        } else {
+            checksum.add("default");
+        }
+    }
+}
 
 void AttackSkillTypes::init() {
 	maxRange = 0;
 
 	assert(types.size() == associatedPrefs.size());
-	for(int i = 0; i < types.size(); ++i) {
-		if(types[i]->getMaxRange() > maxRange) {
-			maxRange = types[i]->getMaxRange();
-		}
-		zones.flags |= types[i]->getZones().flags;
-		allPrefs.flags |= associatedPrefs[i].flags;
-	}
+	if (types[0] != 0) {
+        for(int i = 0; i < types.size(); ++i) {
+            if(types[i]->getMaxRange() > maxRange) {
+                maxRange = types[i]->getMaxRange();
+            }
+            zones.flags |= types[i]->getZones().flags;
+            allPrefs.flags |= associatedPrefs[i].flags;
+        }
+    }
 }
 
 void AttackSkillTypes::getDesc(string &str, const Unit *unit) const {

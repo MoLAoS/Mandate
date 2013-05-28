@@ -46,7 +46,7 @@ public:
     string getPersonalityName() const {return personalityName;}
     Goals getGoals() const {return goals;}
     Focus getGoal(int i) const {return goals[i];}
-    void load(const XmlNode *node, const TechTree* techTree, const FactionType* factionType);
+    void load(const XmlNode *node);
 };
 
 // ===============================

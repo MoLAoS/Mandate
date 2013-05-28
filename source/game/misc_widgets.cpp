@@ -10,6 +10,7 @@
 
 #include "misc_widgets.h"
 #include "widget_window.h"
+#include "character_creator.h"
 
 namespace Glest { namespace Widgets {
 
@@ -96,7 +97,7 @@ void ScrollText::init() {
 	// Not anchored to left border, so we must set size (width will be respected, height will not)
 	Anchors anchors(Anchor(AnchorType::NONE, 0), Anchor(AnchorType::RIGID, 0), // left, top
 		Anchor(AnchorType::RIGID, 0), Anchor(AnchorType::RIGID, 0));           // right, bottom
-	
+
 	m_scrollBar = new ScrollBar(this, true, 10);
 	m_scrollBar->setCell(0);
 	m_scrollBar->setAnchors(anchors);
@@ -258,9 +259,117 @@ void Spinner::onButtonFired(Widget *source) {
 }
 
 // =====================================================
+// 	class TraitsDisplay
+// =====================================================
+TraitsDisplay::TraitsDisplay(Container *parent, Traits traitlist, ListSpecs specs, CharacterCreator *characterCreator)
+		: Widget(parent)
+		, MouseWidget(this)
+		, TextWidget(this)
+		, charCreator(characterCreator)
+		, traits(traitlist)
+		, specializations(specs)
+		, m_fuzzySize(FuzzySize::SMALL) {
+	CHECK_HEAP();
+	setWidgetStyle(WidgetType::DISPLAY);
+	TextWidget::setAlignment(Alignment::NONE);
+	TextWidget::addText("");
+    layout();
+	clear();
+	CHECK_HEAP();
+}
+
+void TraitsDisplay::layout() {
+	int x = 0;
+	int y = 0;
+
+	const Font *font = getSmallFont();
+	int fontIndex = m_textStyle.m_smallFontIndex != -1 ? m_textStyle.m_smallFontIndex : m_textStyle.m_fontIndex;
+
+	if (m_fuzzySize== FuzzySize::SMALL) {
+		font = getSmallFont();
+		fontIndex = m_textStyle.m_smallFontIndex != -1 ? m_textStyle.m_smallFontIndex : m_textStyle.m_fontIndex;
+	} else if (m_fuzzySize == FuzzySize::MEDIUM) {
+		font = getFont();
+		fontIndex = m_textStyle.m_fontIndex;
+	} else if (m_fuzzySize == FuzzySize::LARGE) {
+		font = getBigFont();
+		fontIndex = m_textStyle.m_largeFontIndex != -1 ? m_textStyle.m_largeFontIndex : m_textStyle.m_fontIndex;
+	}
+	m_fontMetrics = font->getMetrics();
+
+
+    string str = "";
+    if (charCreator->getSovereignState() == false) {
+        int j = 0;
+        for (int i = 0; i < specializations.size(); ++i) {
+            if (specializations[i]->getSpecName() == charCreator->getCurrentSpec()) {
+                j = i;
+                break;
+            }
+        }
+        str += specializations[j]->getSpecName();
+        str += "\n";
+        specializations[j]->getCharacterStats()->getDesc(str, "\n");
+        specializations[j]->getStatistics()->enhancement.getDesc(str, "\n");
+        for (int i = 0; i < specializations[j]->getEquipmentCount(); ++i) {
+            Equipment *equip = specializations[j]->getEquipment(i);
+            equip->getDesc(str, "\n", "");
+        }
+        specializations[j]->getKnowledge()->getDesc(str, "\n");
+    } else if (charCreator->getSovereignState() == true) {
+        int j = 0;
+        for (int i = 0; i < traits.size(); ++i) {
+            if (traits[i]->getName() == charCreator->getCurrentTrait()) {
+                j = i;
+                break;
+            }
+        }
+        traits[j]->getDesc(str, "\n");
+    }
+
+    TextWidget::setTextPos(Vec2i(5, y), 0);
+    TextWidget::setText(str, 0);
+
+	for (int i=0; i < 1; ++i) {
+		setTextFont(fontIndex, i);
+	}
+}
+
+void TraitsDisplay::persist() {
+	Vec2i pos = m_parent->getPos();
+	int sz = getFuzzySize() + 1;
+}
+
+void TraitsDisplay::reset() {
+    layout();
+}
+
+void TraitsDisplay::setFuzzySize(FuzzySize fuzzySize) {
+	m_fuzzySize = fuzzySize;
+	layout();
+	setSize();
+}
+
+void TraitsDisplay::setSize() {
+}
+
+void TraitsDisplay::clear() {
+	WIDGET_LOG( __FUNCTION__ << "()" );
+}
+
+void TraitsDisplay::render() {
+	if (!isVisible()) {
+		return;
+	}
+	Widget::render();
+	if (!TextWidget::getText(0).empty()) {
+		TextWidget::renderTextShadowed(0);
+	}
+}
+
+// =====================================================
 //  class OptionPanel
 // =====================================================
-
 OptionPanel::OptionPanel(CellStrip *parent, int cell)
 		: CellStrip(parent, Orientation::HORIZONTAL, Origin::FROM_LEFT, 2), m_scrollOffset(0)
 		, MouseWidget(this) {
@@ -278,7 +387,7 @@ OptionPanel::OptionPanel(CellStrip *parent, int cell)
 	m_list->setCell(0);
 	m_list->setAnchors(Anchors::getFillAnchors());
 	setSizeHint(0, SizeHint());
-	
+
 	m_scrollBar = new ScrollBar(this, true, sbw);
 	m_scrollBar->setCell(1);
 	m_scrollBar->setAnchors(Anchors::getFillAnchors());
@@ -368,7 +477,7 @@ CheckBox* OptionPanel::addCheckBox(const string &txt, bool checked) {
 	checkBox->setCell(1);
 	checkBox->setAnchors(squashAnchors);
 	checkBox->setChecked(checked);
-	
+
 	return checkBox;
 }
 
@@ -389,8 +498,28 @@ TextBox* OptionPanel::addTextBox(const string &lbl, const string &txt) {
 	textBox->setCell(1);
 	textBox->setAnchors(squashAnchors);
 	textBox->setText(txt);
-	
+
 	return textBox;
+}
+
+TraitsDisplay* OptionPanel::addTraitsDisplay(Traits traits, ListSpecs specs, CharacterCreator *characterCreator) {
+	int h  = int(g_widgetConfig.getDefaultItemHeight() * 1.5f);
+	int squashAmount = (h - g_widgetConfig.getDefaultItemHeight()) / 2;
+	Anchors fillAnchors(Anchor(AnchorType::SPRINGY, 2));
+	Anchors squashAnchors(Anchor(AnchorType::RIGID, 0), Anchor(AnchorType::RIGID, squashAmount));
+
+	CellStrip *ow = new CellStrip(m_list, Orientation::HORIZONTAL, Origin::FROM_LEFT, 2);
+	m_list->addCells(1);
+	ow->setAnchors(fillAnchors);
+	ow->setCell(m_list->getCellCount() - 1);
+	ow->setSizeHint(0, 0);
+	m_list->setSizeHint(m_list->getCellCount() - 1, SizeHint(-1, h*11));
+
+	TraitsDisplay *traitsDisplay = new TraitsDisplay(ow, traits, specs, characterCreator);
+	traitsDisplay->setCell(1);
+	traitsDisplay->setAnchors(squashAnchors);
+
+	return traitsDisplay;
 }
 
 DropList* OptionPanel::addDropList(const string &lbl, bool compact) {
@@ -412,7 +541,7 @@ DropList* OptionPanel::addDropList(const string &lbl, bool compact) {
 	DropList *dropList = new DropList(ow);
 	dropList->setCell(1);
 	dropList->setAnchors(squashAnchors);
-	
+
 	return dropList;
 }
 
@@ -432,7 +561,7 @@ Spinner* OptionPanel::addSpinner(const string &lbl) {
 	Spinner *spinner = new Spinner(ow);
 	spinner->setCell(1);
 	spinner->setAnchors(squashAnchors);
-	
+
 	return spinner;
 }
 
@@ -451,7 +580,7 @@ SpinnerPair OptionPanel::addSpinnerPair(const string &lbl, const string &lbl1, c
 
 	DoubleOption *dow = new DoubleOption(ow, lbl1, lbl2);
 	ow->setOptionWidget(dow);
-	
+
 	Spinner *spinner1 = new Spinner(dow);
 	dow->setOptionWidget(true, spinner1);
 	spinner1->setAnchors(squashAnchors);
@@ -459,7 +588,7 @@ SpinnerPair OptionPanel::addSpinnerPair(const string &lbl, const string &lbl1, c
 	Spinner *spinner2 = new Spinner(dow);
 	dow->setOptionWidget(false, spinner2);
 	spinner2->setAnchors(squashAnchors);
-	
+
 	dow->setCustomSplit(true, 20);
 	dow->setCustomSplit(false, 20);
 	return std::make_pair(spinner1, spinner2);

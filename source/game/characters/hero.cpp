@@ -18,7 +18,42 @@
 
 namespace Glest { namespace ProtoTypes {
 using namespace Hierarchy;
-
+// ===============================
+// 	class Sovereign
+// ===============================
+void Sovereign::save(XmlNode *node) const {
+    node->addAttribute("name", sovName);
+    XmlNode *n;
+    n = node->addChild("specialization");
+    n->addAttribute("name", specialization->getSpecName());
+    n = node->addChild("traits");
+    for (int i = 0; i < traits.size();++i) {
+        XmlNode *traitNode = n->addChild("trait");
+        traitNode->addAttribute("id", intToStr(traits[i]->getId()));
+        traitNode->addAttribute("name", traits[i]->getName());
+    }
+    if (!characterStats.isEmpty()) {
+        characterStats.save(node->addChild("characterStats"));
+    }
+    if (!statistics.isEmpty()) {
+        statistics.save(node->addChild("statistics"));
+    }
+    if (!knowledge.isEmpty()) {
+        knowledge.save(node->addChild("knowledge"));
+    }
+    if (equipment.size() > 0) {
+        n = node->addChild("equipment");
+        for (int i = 0; i < equipment.size(); ++i) {
+            equipment[i].save(n->addChild("type"));
+        }
+    }
+    //n = node->addChild("effect-types");
+    //for (int i = 0; i < effectTypes.size(); ++i) {
+        //effectTypes[i]->save(n->addChild("effect-type"));
+    //}
+    //craftingStats.save(node->addChild("craftingStats"));
+    //actions.save(node->addChild("actions"));
+}
 // ===============================
 // 	class Hero
 // ===============================
@@ -31,8 +66,7 @@ using namespace Hierarchy;
 // 	class Leader
 // ===============================
 
-bool Leader::load(const XmlNode *leaderNode, const string &dir, const TechTree *techTree,
-                  const FactionType *factionType, const UnitType *unitType, const string &path) {
+bool Leader::load(const XmlNode *leaderNode, const string &dir, const UnitType *unitType, const string &path) {
     bool loadOk = true;
     try { const XmlNode *formationsNode = leaderNode->getChild("formations", 0, false);
     if (formationsNode) {
@@ -73,18 +107,18 @@ bool Leader::load(const XmlNode *leaderNode, const string &dir, const TechTree *
             }
         }
     }*/
-		const XmlNode *squadCommandsNode = squadNode->getChild("squad_commands", 0, false);
-		if (squadCommandsNode) {
-		for (int i = 0; i < squadCommandsNode->getChildCount(); ++i) {
-			const XmlNode *squadCommandNode = squadCommandsNode->getChild(i);
-			if (squadCommandNode->getName() != "command") continue;
-			string classId = squadCommandNode->getChildRestrictedValue("type");
-			CommandType *commandType = g_prototypeFactory.newCommandType(CmdClassNames.match(classId.c_str()), unitType);
-			loadOk = commandType->load(squadCommandNode, dir, techTree, unitType) && loadOk;
-			squadCommands.push_back(commandType);
-			g_prototypeFactory.setChecksum(commandType);
-		}
-		}
+        const XmlNode *squadCommandsNode = squadNode->getChild("squad_commands", 0, false);
+        if (squadCommandsNode) {
+            for (int i = 0; i < squadCommandsNode->getChildCount(); ++i) {
+                const XmlNode *squadCommandNode = squadCommandsNode->getChild(i);
+                if (squadCommandNode->getName() != "command") continue;
+                string classId = squadCommandNode->getChildRestrictedValue("type");
+                CommandType *commandType = g_prototypeFactory.newCommandType(CmdClassNames.match(classId.c_str()), unitType);
+                loadOk = commandType->load(squadCommandNode, dir, unitType->getFactionType(), unitType) && loadOk;
+                squadCommands.push_back(commandType);
+                g_prototypeFactory.setChecksum(commandType);
+            }
+        }
     }
 	} catch (runtime_error e) {
 		g_logger.logXmlError(path, e.what());

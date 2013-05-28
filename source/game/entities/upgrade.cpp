@@ -117,8 +117,8 @@ void UpgradeManager::updateUpgrade(const Upgrade *upgrade, Faction *f) {
     if(fit!=f->upgradeStages.end()){
         if ((*fit).getUpgradeStage()>0) {
             if ((*fit).getUpgradeStage()<(*fit).getMaxStage()) {
-                for (int i = 0; i < (*fit).m_enhancements.size(); ++i) {
-                    (*fit).m_enhancements[i].m_enhancement.modify();
+                for (int i = 0; i < (*fit).upgradeType->m_upgrades.size(); ++i) {
+                    (*fit).m_upgrades[i].m_statistics.modify();
                 }
             }
         }
@@ -242,17 +242,15 @@ void UpgradeManager::addPointBoosts(Unit *unit) const {
                         break;
                     }
                 }
-                const Statistics &stats = *(*fit).getStatistics(unit->getType());
-                unit->doRegen(stats.getResourcePools()->getHpBoost().getValue(),
-                              stats.getResourcePools()->getSpBoost().getValue(),
-                              stats.getResourcePools()->getEpBoost().getValue());
+                const Statistics &stats = *(*fit).upgradeType->getStatistics(unit->getType());
+                unit->doRegen(stats.getEnhancement()->getResourcePools()->getHealth()->getBoostStat()->getValue());
 		    }
 		}
 	}
 }
 
 void UpgradeManager::computeTotalUpgrade(const Unit *unit, Statistics *totalUpgrade) const{
-	totalUpgrade->reset();
+	totalUpgrade->enhancement.reset();
     Faction *f = unit->getFaction();
 	foreach_const (Upgrades, it, upgrades) {
         if ((*it)->getFactionIndex() == unit->getFactionIndex()
@@ -265,7 +263,7 @@ void UpgradeManager::computeTotalUpgrade(const Unit *unit, Statistics *totalUpgr
                     }
                 }
                 for (int i = 0; i < f->getCurrentStage((*it)->getType()); ++i) {
-                    totalUpgrade->sum((*fit).getStatistics(unit->getType()));
+                    totalUpgrade->sum((*fit).getUpgradeType()->getStatistics(unit->getType()));
                 }
 		    }
 		}

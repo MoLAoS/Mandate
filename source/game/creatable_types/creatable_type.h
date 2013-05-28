@@ -34,8 +34,9 @@ namespace Glest { namespace ProtoTypes {
 // =====================================================
 // 	class CreatableType
 // =====================================================
-class CreatableType : public ProducibleType, public Statistics {
+class CreatableType : public ProducibleType {
 private:
+    Statistics statistics;
     typedef vector<string> ModifyNames;
     typedef vector<Modification> Modifications;
     typedef vector<EmanationType*> Emanations;
@@ -56,6 +57,7 @@ private:
     int size;
     int height;
 public:
+    const Statistics *getStatistics() const {return &statistics;}
     const ResourceProductionSystem *getResourceProductionSystem() const {return &resourceGeneration;}
     const ItemProductionSystem *getItemProductionSystem() const {return &itemGeneration;}
     const UnitProductionSystem *getUnitProductionSystem() const {return &unitGeneration;}

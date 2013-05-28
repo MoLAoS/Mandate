@@ -28,19 +28,6 @@ namespace Glest{ namespace ProtoTypes {
 class TechTree;
 
 // =====================================================
-// 	class SubfactionType
-//
-// =====================================================
-/*
-// TODO: Impelement
-class SubfactionType{
-private:
-	string name;
-	SoundContainer *advancementNotice;
-};
-*/
-
-// =====================================================
 // 	class FactionType
 //
 ///	Each of the possible factions the user can select
@@ -55,7 +42,6 @@ private:
 	typedef vector<PairPUnitTypeInt> StartingUnits;
 	typedef vector<StoredResource> SResources;
     typedef vector<CreatedResource> CResources;
-	typedef vector<string> Subfactions;
 	typedef vector<Modification> Modifications;
 	typedef vector<ItemType*> ItemTypes;
 	typedef vector<Texture2D*> ItemImages;
@@ -77,7 +63,6 @@ private:
 	ItemTypes itemTypes;
 	StartingUnits startingUnits;
 	SResources startingResources;
-	Subfactions subfactions;
 	StrSound *music;
 	SoundContainer *attackNotice;
 	SoundContainer *enemyNotice;
@@ -120,12 +105,9 @@ public:
 	int getItemImagesCount() const                      {return itemImages.size();}
 	Texture2D *getItemImage(int i) const                {return itemImages[i];}
     int getItemTypeCount() const						{return itemTypes.size();}
-	int getSubfactionCount() const						{return subfactions.size();}
 	const UnitType *getUnitType(int i) const			{return unitTypes[i];}
 	const ItemType *getItemType(int i) const			{return itemTypes[i];}
 	const UpgradeType *getUpgradeType(int i) const		{return upgradeTypes[i];}
-	const string &getSubfaction(int i) const			{return subfactions[i];}
-	int getSubfactionIndex(const string &name) const;
 	StrSound *getMusic() const							{return music;}
 	int getStartingUnitCount() const					{return startingUnits.size();}
 	const UnitType *getStartingUnit(int i) const		{return startingUnits[i].first;}

@@ -42,8 +42,8 @@ class FactionType;
  */
 class EffectTypeFlags : public XmlBasedFlags<EffectTypeFlag, EffectTypeFlag::COUNT>{
 public:
-	void load(const XmlNode *node, const string &dir, const TechTree *tt, const FactionType *ft) {
-		XmlBasedFlags<EffectTypeFlag, EffectTypeFlag::COUNT>::load(node, dir, tt, ft, "flag", EffectTypeFlagNames);
+	void load(const XmlNode *node, const string &dir) {
+		XmlBasedFlags<EffectTypeFlag, EffectTypeFlag::COUNT>::load(node, dir, "flag", EffectTypeFlagNames);
 	}
 };
 
@@ -55,8 +55,9 @@ typedef vector<EffectType*> EffectTypes;
  * stats, regeneration/degeneration and possibly other behaviors &
  * attributes of a Unit.
  */
-class EffectType: public Statistics, public DisplayableType {
+class EffectType: public DisplayableType {
 private:
+    Statistics statistics;
 	EffectBias bias;
 	EffectStacking stacking;
 	int duration;
@@ -69,19 +70,18 @@ private:
 	EffectTypes recourse;
 	EffectTypeFlags flags;
 	string affectTag;
-    DamageTypes damageTypes;
 	bool display;
 	UnitParticleSystemTypes particleSystems;
-	const FactionType *factionType;
 public:
 	static EffectClass typeClass() { return EffectClass::EFFECT; }
 public:
 	EffectType();
 	virtual ~EffectType() { delete sound; }
-	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
+	virtual bool load(const XmlNode *n, const string &dir);
 	virtual void doChecksum(Checksum &checksum) const;
 
-	const FactionType* getFactionType() const {return factionType;}
+    const Statistics *getStatistics() const {return &statistics;}
+
 	EffectBias getBias() const				 {return bias;}
 	EffectStacking getStacking() const		 {return stacking;}
 	const EffectTypeFlags &getFlags() const	 {return flags;}
@@ -112,7 +112,8 @@ public:
 	float getSoundStartTime() const						{return soundStartTime;}
 	bool isLoopSound() const							{return loopSound;}
 	const EffectTypes &getRecourse() const				{return recourse;}
-	void getDesc(string &str) const;
+	void getDesc(string &str);
+	void save(XmlNode *node) const;
 };
 
 class EmanationType : public EffectType {
@@ -124,7 +125,7 @@ public:
 
 public:
 	virtual ~EmanationType() {}
-	virtual bool load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft);
+	virtual bool load(const XmlNode *n, const string &dir);
 	virtual void doChecksum(Checksum &checksum) const;
 	int getRadius() const	{return radius;}
 };

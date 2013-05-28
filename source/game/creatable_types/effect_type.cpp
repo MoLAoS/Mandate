@@ -13,6 +13,7 @@
 #include "effect_type.h"
 #include "renderer.h"
 #include "tech_tree.h"
+#include "world.h"
 #include "logger.h"
 
 #include "leak_dumper.h"
@@ -35,12 +36,10 @@ EffectType::EffectType() : lightColour(0.0f) {
 	sound = NULL;
 	soundStartTime = 0.0f;
 	loopSound = false;
-	factionType = 0;
 	display = true;
 }
 
-bool EffectType::load(const XmlNode *en, const string &dir, const TechTree *tt, const FactionType *ft) {
-	factionType = ft;
+bool EffectType::load(const XmlNode *en, const string &dir) {
 	string tmp;
 	const XmlAttribute *attr;
 	bool loadOk = true;
@@ -53,7 +52,8 @@ bool EffectType::load(const XmlNode *en, const string &dir, const TechTree *tt, 
 	}
 
 	// bigtime hack (REFACTOR: Move to EffectTypeFactory)
-	m_id = const_cast<TechTree*>(tt)->addEffectType(this);
+	TechTree *techTree = const_cast<TechTree *>(g_world.getTechTree());
+	m_id = techTree->addEffectType(this);
 
 	try { // bias
 		tmp = en->getAttribute("bias")->getRestrictedValue();
@@ -158,10 +158,10 @@ bool EffectType::load(const XmlNode *en, const string &dir, const TechTree *tt, 
 	// flags
 	const XmlNode *flagsNode = en->getChild("flags", 0, false);
 	if (flagsNode) {
-		flags.load(flagsNode, dir, tt, ft);
+		flags.load(flagsNode, dir);
 	}
 
-	Statistics::load(en, dir, tt, ft);
+	statistics.load(en, dir);
 
 	try { // light & lightColour
 		const XmlNode *lightNode = en->getChild("light", 0, false);
@@ -218,7 +218,7 @@ bool EffectType::load(const XmlNode *en, const string &dir, const TechTree *tt, 
 			for(int i = 0; i < recourseEffectsNode->getChildCount(); ++i) {
 				const XmlNode *recourseEffectNode = recourseEffectsNode->getChild("effect", i);
 				EffectType *effectType = new EffectType();
-				effectType->load(recourseEffectNode, dir, tt, ft);
+				effectType->load(recourseEffectNode, dir);
 				recourse[i] = effectType;
 			}
 		}
@@ -229,9 +229,13 @@ bool EffectType::load(const XmlNode *en, const string &dir, const TechTree *tt, 
 	return loadOk;
 }
 
+void EffectType::save(XmlNode *node) const {
+
+}
+
 void EffectType::doChecksum(Checksum &checksum) const {
 	NameIdPair::doChecksum(checksum);
-	EnhancementType::doChecksum(checksum);
+	getStatistics()->getEnhancement()->doChecksum(checksum);
 
 	checksum.add(bias);
 	checksum.add(stacking);
@@ -253,12 +257,12 @@ void EffectType::doChecksum(Checksum &checksum) const {
 	checksum.add(display);
 }
 
-void EffectType::getDesc(string &str) const {
+void EffectType::getDesc(string &str) {
 	if (!display) {
 		return;
 	}
 
-	str += g_lang.getFactionString(getFactionType()->getName(), getName());
+	str += getName();
 
 	// effected units
 	if (isEffectsPetsOnly() || isEffectsFoe() || isEffectsAlly()) {
@@ -284,7 +288,7 @@ void EffectType::getDesc(string &str) const {
 		str += intToStr(duration);
 	}
 
-	EnhancementType::getDesc(str, "\n   ");
+	statistics.getDesc(str, "\n");
 	str += "\n";
 }
 
@@ -292,8 +296,8 @@ void EffectType::getDesc(string &str) const {
 //  class EmanationType
 // =====================================================
 
-bool EmanationType::load(const XmlNode *n, const string &dir, const TechTree *tt, const FactionType *ft) {
-	EffectType::load(n, dir, tt, ft);
+bool EmanationType::load(const XmlNode *n, const string &dir) {
+	EffectType::load(n, dir);
 
 	//radius
 	try { radius = n->getAttribute("radius")->getIntValue(); }

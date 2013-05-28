@@ -12,6 +12,7 @@
 
 #include "forward_decs.h"
 #include "settlement.h"
+#include "specialization.h"
 #include "formations.h"
 #include "cmd_types_hierarchy.h"
 #include "abilities.h"
@@ -22,7 +23,42 @@ using namespace Hierarchy;
 // 	class Sovereign
 // ===============================
 class Sovereign {
+private:
+    Specialization *specialization;
+    CharacterStats characterStats;
+    CraftingStats craftingStats;
+    EffectTypes effectTypes;
+    Statistics statistics;
+    Equipments equipment;
+    Knowledge knowledge;
+    Actions actions;
+    Traits traits;
+    string sovName;
+public:
+    Specialization *getSpecialization() {return specialization;}
+    CraftingStats *getCraftingStats() {return &craftingStats;}
+    CharacterStats *getCharacterStats() {return &characterStats;}
+    Actions *getActions() {return &actions;}
+    Statistics *getStatistics() {return &statistics;}
+    int getEquipmentCount() {return equipment.size();}
+    Equipments *getEquipments() {return &equipment;}
+    Equipment *getEquipment(int i) {return &equipment[i];}
+    string getSovName() const {return sovName;}
+	void preLoad(const string &dir);
+	bool load(const string &dir);
+	void save(XmlNode *node) const;
 
+	void addName(string newName) {sovName = newName;}
+	void addTrait(Trait *trait) {traits.push_back(trait);}
+	void addSpecialization(Specialization *spec) {specialization = spec;}
+	void addStatistics(const Statistics *statistic) {statistics.sum(statistic);}
+	void addCharacterStats(const CharacterStats *charStats) {characterStats.sum(charStats);}
+	void addKnowledge(Knowledge knowledges) {knowledge.sum(knowledges);}
+
+	//void addCraftingStats()
+	//void addEquipment();
+	//void addEffect();
+	//void AddAction();
 };
 
 // ===============================
@@ -65,8 +101,7 @@ public:
     CommandTypes squadCommands;
 
 public:
-    bool load(const XmlNode *leaderNode, const string &dir, const TechTree *techtree,
-              const FactionType *factionType, const UnitType* unitType, const string &path);
+    bool load(const XmlNode *leaderNode, const string &dir, const UnitType* unitType, const string &path);
 
 };
 

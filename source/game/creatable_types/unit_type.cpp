@@ -41,7 +41,7 @@ bool BonusPower::load(const XmlNode *bonusPowerNode, const string &dir, const Te
 	try {
         const XmlNode *statisticsNode = bonusPowerNode->getChild("statistics", 0, false);
         if (statisticsNode) {
-            if (!Statistics::load(statisticsNode, dir, techTree, factionType)) {
+            if (!statistics.load(statisticsNode, dir)) {
                 loadOk = false;
             }
         }
@@ -131,7 +131,6 @@ UnitType::UnitType()
 		, bonusObjectName("")
 		, m_cellMap(0), m_colourMap(0)
 		, display(true) {
-	reset();
 }
 
 UnitType::~UnitType(){
@@ -161,6 +160,18 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 	catch (runtime_error e) {
 		g_logger.logXmlError(path, e.what());
 		return false;
+	}
+	try {
+	    const XmlNode *sovereignNode = unitNode->getChild("sovereign", 0, false);
+	    if (sovereignNode) {
+	        //if (!sovereign.load(dir)) {
+            //    loadOk = false;
+	        //}
+	    }
+	}
+	catch (runtime_error e) {
+		g_logger.logXmlError(dir, e.what());
+		loadOk = false;
 	}
 	const XmlNode *parametersNode;
 	try { parametersNode = unitNode->getChild("parameters"); }
@@ -206,7 +217,7 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 	} else {
 		Fields fields;
 		try {
-			fields.load(parametersNode->getChild("fields"), dir, techTree, factionType);
+			fields.load(parametersNode->getChild("fields"), dir);
 			field = Field::INVALID;
 			if (fields.get(Field::AMPHIBIOUS))		field = Field::AMPHIBIOUS;
 			else if (fields.get(Field::ANY_WATER))	field = Field::ANY_WATER;
@@ -222,7 +233,7 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 	}
 	vector<string> deCloakOnSkills;
 	vector<SkillClass> deCloakOnSkillClasses;
-    try { properties.load(parametersNode->getChild("properties"), dir, techTree, factionType); }
+    try { properties.load(parametersNode->getChild("properties"), dir); }
     catch (runtime_error e) {
         g_logger.logXmlError(path, e.what());
         loadOk = false;
@@ -376,7 +387,7 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 	    if (dayNode) {
 	        const XmlNode *enhancementNode = dayNode->getChild("enhancement", 0, false);
 	        if (enhancementNode) {
-                if(!dayPower.load(enhancementNode, dir, techTree, factionType)) {
+                if(!dayPower.load(enhancementNode, dir)) {
                     loadOk = false;
                 }
 	        }
@@ -391,7 +402,7 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 	    if (nightNode) {
 	        const XmlNode *enhancementNode = nightNode->getChild("enhancement", 0, false);
 	        if (enhancementNode) {
-                if(!nightPower.load(enhancementNode, dir, techTree, factionType)) {
+                if(!nightPower.load(enhancementNode, dir)) {
                     loadOk = false;
                 }
 	        }
@@ -431,7 +442,7 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
         const XmlNode *leaderNode = unitNode->getChild("leader", 0, false);
         if (leaderNode) {
             isLeader = true;
-            if (!leader.load(leaderNode, dir, techTree, factionType, this, path)) {
+            if (!leader.load(leaderNode, dir, this, path)) {
                 loadOk = false;
             }
         }

@@ -25,11 +25,12 @@ using namespace Gui;
 
 class MenuStateCharacterCreator: public MenuState {
 private:
-	WRAPPED_ENUM( Transition, RETURN, RE_LOAD );
+	WRAPPED_ENUM( Transition, RETURN, RE_LOAD, SAVE );
 
 private:
 	Transition m_transitionTarget;
-	Button		        *m_returnButton;
+	Button		        *m_returnButton,
+                        *m_saveButton;
 	CharacterCreator	*m_characterCreator;
 
 private:
@@ -45,7 +46,6 @@ public:
 	void reload();
 
 private:
-	void saveConfig();
 	void onButtonClick(Widget *source);
 };
 

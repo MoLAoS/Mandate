@@ -67,10 +67,13 @@ private:
 
 	SoundContainer sounds;
 	float soundStartTime;
+
+	string loadValue;
 public:
     SoundsAndAnimations();
     virtual ~SoundsAndAnimations();
 
+    string getLoadValue() const         {return loadValue;}
 	int getAnimSpeed() const			{return animSpeed;}
 	virtual bool isStretchyAnim() const {return false;}
 	const Model *getAnimation(SurfaceType from, SurfaceType to) const;
@@ -82,11 +85,12 @@ public:
 	bool hasSounds() const			    {return !sounds.getSounds().empty();}
 	Sounds getSounds() const	{return sounds.getSounds();}
 
-	bool load(const XmlNode *sn, const string &dir, const TechTree *tt, const CreatableType *ct);
+	bool load(const XmlNode *sn, const string &dir, const CreatableType *ct);
+	void addAnimation(string load, int s, int h);
 };
 
 // =====================================================
-// 	class ItemCost
+// 	class SkillCost
 //
 ///	Class detail the costs of a skill
 // =====================================================
@@ -99,9 +103,20 @@ public:
     const ItemType *getType() const {return type;}
     void init(int amount, const ItemType *type);
 };
+class StatCost {
+private:
+    int amount;
+    string name;
+public:
+    int getAmount() const {return amount;}
+    string getName() const {return name;}
+    void setAmount(int i) {amount += i;}
+    void init(int amount, string name);
+};
 
 typedef vector<ItemCost> ItemCosts;
 typedef vector<ResourceAmount> ResCosts;
+typedef vector<StatCost> Pool;
 
 class SkillCosts {
 private:
@@ -109,8 +124,9 @@ private:
     ResCosts resourceCosts;
     int levelReq;
     int hpCost;
-    int spCost;
-    int epCost;
+    Pool resources;
+    Pool defenses;
+
 public:
     int getItemCostCount() const {return itemCosts.size();}
     int getResourceCostCount() const {return resourceCosts.size();}
@@ -121,10 +137,14 @@ public:
     int getLevelReq() {return levelReq;}
 
     int getHpCost() const {return hpCost;}
-    int getSpCost() const {return spCost;}
-    int getEpCost() const {return epCost;}
 
-    bool load(const XmlNode *sn, const string &dir, const TechTree *tt, const CreatableType *ct);
+    int getResourceCount() const {return resources.size();}
+    int getDefenseCount() const {return defenses.size();}
+
+    const StatCost *getResource(int i) const {return &resources[i];}
+    const StatCost *getDefense(int i) const {return &defenses[i];}
+
+    bool load(const XmlNode *sn, const string &dir, const FactionType *ft);
     void init();
 };
 
@@ -152,10 +172,11 @@ private:
 public:
     const CreatableType *getCreatableType() const {return m_creatableType;}
     const SoundsAndAnimations *getSoundsAndAnimations() const {return &soundsAndAnimations;}
+    SoundsAndAnimations *getSoundsAndAnimations()             {return &soundsAndAnimations;}
     const SkillCosts *getSkillCosts() const {return &skillCosts;}
 	SkillType(const char* typeName);
 	virtual ~SkillType();
-	virtual bool load(const XmlNode *sn, const string &dir, const TechTree *tt, const CreatableType *ct);
+	virtual bool load(const XmlNode *sn, const string &dir, const FactionType *ft, const CreatableType *ct);
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void getDesc(string &str, const Unit *unit) const = 0;
 	virtual void descSpeed(string &str, const Unit *unit, const char* speedType) const;
@@ -209,7 +230,7 @@ private:
 
 public:
 	MoveSkillType() : SkillType("Move"), visibleOnly(false) {}
-	virtual bool load(const XmlNode *sn, const string &dir, const TechTree *tt, const CreatableType *ct) override;
+	virtual bool load(const XmlNode *sn, const string &dir, const FactionType *ft, const CreatableType *ct) override;
 	virtual void getDesc(string &str, const Unit *unit) const override {
 		descSpeed(str, unit, "WalkSpeed");
 	}
@@ -259,7 +280,7 @@ public:
 	Zones getZones () const				            {return zones;}
 	bool getZone ( const Zone zone ) const		    {return zones.get(zone);}
 
-	virtual bool load(const XmlNode *sn, const string &dir, const TechTree *tt, const CreatableType *ct) override;
+	virtual bool load(const XmlNode *sn, const string &dir, const FactionType *ft, const CreatableType *ct) override;
 	virtual void getDesc(string &str, const Unit *unit) const override {getDesc(str, unit, "Range");}
 	virtual void getDesc(string &str, const Unit *unit, const char* rangeDesc) const;
 
@@ -273,16 +294,10 @@ public:
 class AttackLevel {
 private:
     int cooldown;
-	AttackStats attackStats;
-    DamageTypes damageTypes;
+    Statistics statistics;
 public:
-	const AttackStats *getAttackStats() const		  {return &attackStats;}
-	const DamageTypes *getDamageTypes() const         {return &damageTypes;}
-	int getDamageTypeCount() const                    {return damageTypes.size();}
-	const DamageType *getDamageType(int i) const      {return &damageTypes[i];}
+	const Statistics *getStatistics() const		      {return &statistics;}
 	int getCooldown() const				              {return cooldown;}
-
-	void levelUp(AttackStats *aStats) {attackStats.sum(aStats);}
 
 	bool load(const XmlNode *attackLevelNode, const string &dir);
 };
@@ -299,7 +314,7 @@ public:
 	AttackSkillType() : TargetBasedSkillType("Attack"), skillLevel(0) /*, earthquakeType(NULL)*/ {}
 	virtual ~AttackSkillType();
 
-	virtual bool load(const XmlNode *sn, const string &dir, const TechTree *tt, const CreatableType *ct) override;
+	virtual bool load(const XmlNode *sn, const string &dir, const FactionType *ft, const CreatableType *ct) override;
 	virtual void getDesc(string &str, const Unit *unit) const override;
 	virtual void doChecksum(Checksum &checksum) const override;
 
@@ -407,7 +422,7 @@ public:
 	RepairSkillType();
 	virtual ~RepairSkillType(){}// { delete splashParticleSystemType; }
 
-	virtual bool load(const XmlNode *sn, const string &dir, const TechTree *tt, const CreatableType *ct) override;
+	virtual bool load(const XmlNode *sn, const string &dir, const FactionType *ft, const CreatableType *ct) override;
 	virtual void doChecksum(Checksum &checksum) const override;
 	virtual void getDesc(string &str, const Unit *unit) const override;
 
@@ -439,7 +454,7 @@ public:
 	MaintainSkillType();
 	virtual ~MaintainSkillType(){}
 
-	virtual bool load(const XmlNode *sn, const string &dir, const TechTree *tt, const CreatableType *ct) override;
+	virtual bool load(const XmlNode *sn, const string &dir, const FactionType *ft, const CreatableType *ct) override;
 	virtual void doChecksum(Checksum &checksum) const override;
 	virtual void getDesc(string &str, const Unit *unit) const override;
 
@@ -466,7 +481,7 @@ private:
 
 public:
 	ProduceSkillType();
-	virtual bool load(const XmlNode *sn, const string &dir, const TechTree *tt, const CreatableType *ct) override;
+	virtual bool load(const XmlNode *sn, const string &dir, const FactionType *ft, const CreatableType *ct) override;
 	virtual void doChecksum(Checksum &checksum) const override;
 	virtual void getDesc(string &str, const Unit *unit) const override {
 		descSpeed(str, unit, "ProductionSpeed");
@@ -508,7 +523,7 @@ private:
 
 public:
 	BeBuiltSkillType() : SkillType("Be built"){}
-	virtual bool load(const XmlNode *sn, const string &dir, const TechTree *tt, const CreatableType *ct) override;
+	virtual bool load(const XmlNode *sn, const string &dir, const FactionType *ft, const CreatableType *ct) override;
 	virtual void getDesc(string &str, const Unit *unit) const override {}
 	virtual bool isStretchyAnim() const {return m_stretchy;}
 	virtual SkillClass getClass() const override { return typeClass(); }
@@ -543,7 +558,7 @@ public:
 	DieSkillType() : SkillType("Die"), fade(0.0f) {}
 	bool getFade() const	{return fade;}
 
-	virtual bool load(const XmlNode *sn, const string &dir, const TechTree *tt, const CreatableType *ct) override;
+	virtual bool load(const XmlNode *sn, const string &dir, const FactionType *ft, const CreatableType *ct) override;
 	virtual void doChecksum(Checksum &checksum) const override;
 	virtual void getDesc(string &str, const Unit *unit) const override {}
 
@@ -558,7 +573,7 @@ public:
 class LoadSkillType: public SkillType{
 public:
 	LoadSkillType();
-	virtual bool load(const XmlNode *sn, const string &dir, const TechTree *tt, const CreatableType *ct) override;
+	virtual bool load(const XmlNode *sn, const string &dir, const FactionType *ft, const CreatableType *ct) override;
 	virtual void doChecksum(Checksum &checksum) const override;
 	virtual void getDesc(string &str, const Unit *unit) const override {
 		descSpeed(str, unit, "Speed");
@@ -612,7 +627,7 @@ private:
 public:
 	BuildSelfSkillType() : SkillType("BuildSelf") {}
 
-	virtual bool load(const XmlNode *sn, const string &dir, const TechTree *tt, const CreatableType *ct) override;
+	virtual bool load(const XmlNode *sn, const string &dir, const FactionType *ft, const CreatableType *ct) override;
 	virtual void getDesc(string &str, const Unit *unit) const override {
 		descSpeed(str, unit, "Speed");
 	}
@@ -649,8 +664,8 @@ public:
 
 class AttackSkillPreferences : public XmlBasedFlags<AttackSkillPreference, AttackSkillPreference::COUNT> {
 public:
-	void load(const XmlNode *node, const string &dir, const TechTree *tt, const FactionType *ft) {
-		XmlBasedFlags<AttackSkillPreference, AttackSkillPreference::COUNT>::load(node, dir, tt, ft, "flag", AttackSkillPreferenceNames);
+	void load(const XmlNode *node, const string &dir) {
+		XmlBasedFlags<AttackSkillPreference, AttackSkillPreference::COUNT>::load(node, dir, "flag", AttackSkillPreferenceNames);
 	}
 };
 
@@ -686,11 +701,12 @@ public:
 		associatedPrefs.push_back(pref);
 	}
 
-	void doChecksum(Checksum &checksum) const {
-		for (int i=0; i < types.size(); ++i) {
-			checksum.add(types[i]->getName());
-		}
+	void clear() {
+		types.clear();
+		associatedPrefs.clear();
 	}
+
+	void doChecksum(Checksum &checksum) const;
 };
 
 

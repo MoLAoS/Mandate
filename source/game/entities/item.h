@@ -41,15 +41,16 @@ namespace Glest { namespace Entities {
 //typedef vector<Effect> EffectsCreated;
 
 using namespace ProtoTypes;
-class Item : public Statistics {
+class Item {
 	friend class EntityFactory<Item>;
-
 private:
+    Statistics statistics;
 	typedef vector<Modification*> Modifications;
 public:
 	int id;	/**< unique identifier  */
 	Faction *faction;
 
+    const Statistics *getStatistics() const {return &statistics;}
     CurrentStep currentSteps; /**< current timer step for resource creation */
     CurrentStep currentUnitSteps; /**< current timer step for unit creation */
     CurrentStep currentItemSteps; /**< current timer step for unit creation */
@@ -59,6 +60,7 @@ public:
 
     Modifications modifications;
 
+    void computeTotalUpgrade();
     //EffectsCreated effectsCreated; /**< All effects created by this item. */
 
 public:
@@ -87,7 +89,7 @@ public:
     const ItemType *getType() const {return type;}
 	Faction *getFaction() const {return faction;}
     string getShortDesc() const;
-    string getLongDesc() const;
+    string getLongDesc();
 
     void init(int ident, const ItemType* type, Faction *faction);
 };

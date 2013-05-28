@@ -9,6 +9,7 @@
 #include "pch.h"
 #include "modifications.h"
 #include "tech_tree.h"
+#include "world.h"
 
 namespace Glest { namespace ProtoTypes {
 
@@ -19,11 +20,10 @@ void Modification::preLoad(const string &dir){
 	m_name = basename(dir);
 }
 
-bool Modification::load(const string &dir, const TechTree *techTree, const FactionType *factionType) {
+bool Modification::load(const string &dir) {
 	g_logger.logProgramEvent("Modification: " + dir, true);
 	bool loadOk = true;
 
-	m_factionType = factionType;
 	string path = dir + "/" + m_name + ".xml";
 
 	name = m_name;
@@ -47,7 +47,7 @@ bool Modification::load(const string &dir, const TechTree *techTree, const Facti
 		g_logger.logXmlError(path, e.what());
 		return false;
 	}
-	if (!RequirableType::load(parametersNode, dir, techTree, factionType)) {
+	if (!RequirableType::load(parametersNode, dir)) {
 		loadOk = false;
 	}
 	try {
@@ -87,7 +87,7 @@ bool Modification::load(const string &dir, const TechTree *techTree, const Facti
 					int amount = resourceNode->getAttribute("amount")->getIntValue();
                     int amount_plus = resourceNode->getAttribute("plus")->getIntValue();
                     fixed amount_multiply = resourceNode->getAttribute("multiply")->getFixedValue();
-                    costs[i].init(techTree->getResourceType(rname), amount, amount_plus, amount_multiply);
+                    costs[i].init(g_world.getTechTree()->getResourceType(rname), amount, amount_plus, amount_multiply);
 				} catch (runtime_error e) {
 					g_logger.logXmlError(dir, e.what());
 					loadOk = false;
@@ -101,7 +101,7 @@ bool Modification::load(const string &dir, const TechTree *techTree, const Facti
 	try {
         const XmlNode *statisticsNode = parametersNode->getChild("statistics", 0, false);
 	    if (statisticsNode) {
-            if (!Statistics::load(statisticsNode, dir, techTree, factionType)) {
+            if (!statistics.load(statisticsNode, dir)) {
                 loadOk = false;
             }
 	    }
@@ -116,7 +116,7 @@ bool Modification::load(const string &dir, const TechTree *techTree, const Facti
 		for(int i=0; i < effectsNode->getChildCount(); ++i) {
 			const XmlNode *effectNode = effectsNode->getChild("effect", i);
 			EffectType *effectType = new EffectType();
-			effectType->load(effectNode, dir, techTree, factionType);
+			effectType->load(effectNode, dir);
 			effectTypes[i] = effectType;
 		}
 	}

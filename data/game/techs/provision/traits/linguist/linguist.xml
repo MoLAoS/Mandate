@@ -1,0 +1,10 @@
+<trait id="1" progress="1">
+	<character-stats>
+		<conception value="5"/>
+	</character-stats>
+	<knowledge>
+		<languages>
+			<language name="arelian" value="2"/>
+		</languages>
+	</knowledge>
+</trait>

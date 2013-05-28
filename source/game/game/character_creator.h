@@ -18,6 +18,7 @@
 #include "slider.h"
 #include "sigslot.h"
 #include "platform_util.h"
+#include "hero.h"
 
 namespace Glest { namespace Menu {
 	class MenuStateCharacterCreator;
@@ -25,6 +26,7 @@ namespace Glest { namespace Menu {
 
 namespace Glest { namespace Gui {
 using namespace Widgets;
+using namespace ProtoTypes;
 
 // =====================================================
 // 	class Character Creator
@@ -32,26 +34,67 @@ using namespace Widgets;
 //	Gui for creating a sovereign character
 //  in the menu and game
 // =====================================================
-
+typedef vector<Specialization> ListSpec;
+typedef vector<Spinner*> Spinners;
 class CharacterCreator : public TabWidget {
 private:
-
-
-	DropList	*m_langList;
-
-	CheckBox	*m_fullscreenCheckBox;
-
-	Slider2		*m_volFxSlider;
-
-	Spinner     *m_minCamAltitudeSpinner;
-
-	MessageDialog *m_messageDialog;
-
-	map<string,string>  m_langMap;
-
-	// can be null, some options are disabled if in game
-	Glest::Menu::MenuStateCharacterCreator *m_characterCreatorMenu;
-
+	Glest::Menu::MenuStateCharacterCreator
+                           *m_characterCreatorMenu;
+    CharacterStats         characterStats;
+    CraftingStats          craftingStats;
+    CraftStats             resourceStats;
+    CraftStats             weaponStats;
+    CraftStats             armorStats;
+    CraftStats             accessoryStats;
+    Statistics             statistics;
+    EnhancementType        enhancement;
+    DamageTypes            damageTypes;
+    DamageTypes            resistances;
+    Equipments             equipment;
+    Knowledge              knowledge;
+    Sovereign              sovereign;
+    Specialization         specialization;
+    ListSpec               specializations;
+    ListTraits             traits;
+    ListTraits             sovTraits;
+    string                 sov_name;
+    string                 m_techTree,
+                           m_spec,
+                           m_trait;
+	DropList	           *m_focusList,
+                           *m_traitsList,
+                           *m_techTreeList;
+	CheckBox	           *m_fullscreenCheckBox;
+	Slider2		           *m_volFxSlider;
+	Spinner                *m_minCamAltitudeSpinner;
+	MessageDialog          *m_messageDialog;
+	map<string,string>     m_langMap;
+	TraitsDisplay          *traitsDisplay;
+	Button		           *m_selectButton;
+	bool                   sovereignState;
+	Spinner                *conception,
+                           *might,
+                           *potency,
+                           *spirit,
+                           *awareness,
+                           *acumen,
+                           *authority,
+                           *finesse,
+                           *mettle,
+                           *fortitude,
+                           *movespeed,
+                           *attackspeed,
+                           *sight,
+                           *health;
+    Spinners               resourceSpinners,
+                           weaponSpinners,
+                           armorSpinners,
+                           accessorySpinners,
+                           statSpinners,
+                           resistanceSpinners,
+                           damageSpinners,
+                           defenseSpinners,
+                           poolSpinners;
 public:
 	CharacterCreator(CellStrip *parent, Glest::Menu::MenuStateCharacterCreator *characterCreatorMenu);
 	virtual ~CharacterCreator();
@@ -59,47 +102,41 @@ public:
 	void save();
 	virtual string descType() const override { return "CharacterCreator"; }
 
+	string getCurrentTrait() {return m_trait;}
+	string getCurrentSpec() {return m_spec;}
+	Sovereign *getSovereign() {return &sovereign;}
+
+	bool getSovereignState() {return sovereignState;}
+
 private:
 	void disableWidgets();
-	void setupListBoxLang();
+	void setupListBoxFocus();
+	void setupListBoxTraits();
+	void setupListBoxTechTree();
+	void onButtonClick(Widget *source);
 
 	// Build tabs
 	void buildSovereignTab();
-	void buildHeroTab();
-	void buildLeaderTab();
-	void buildMageTab();
-	void buildUnitTab();
+	void buildStatsTab();
+	void buildDamageTab();
+	void buildResourceTab();
+	void buildWeaponTab();
+	void buildArmorTab();
+	void buildAccessoryTab();
 
 	// Event callbacks
-	void onCheckBoxCahnged(Widget *source);
+	void onCheckBoxChanged(Widget *source);
 	void onSliderValueChanged(Widget *source);
 	void onSpinnerValueChanged(Widget *source);
+	void onWeaponSpinnersValueChanged(Widget *source);
+	void onArmorSpinnersValueChanged(Widget *source);
+	void onAccessorySpinnersValueChanged(Widget *source);
+	void onResourceSpinnersValueChanged(Widget *source);
+	void onStatsSpinnersValueChanged(Widget *source);
+	void onDamageSpinnersValueChanged(Widget *source);
+	void onResistanceSpinnersValueChanged(Widget *source);
 	void onDropListSelectionChanged(Widget *source);
 	void onSovereignNameChanged(Widget *source);
-};
-
-// =====================================================
-// 	class CharacterCreatorFrame
-//
-//	Window for in-game sovereign creation
-// =====================================================
-
-class CharacterCreatorFrame : public Frame {
-private:
-	Button		        *m_saveButton;
-	CharacterCreator	*m_characterCreator;
-	CellStrip	        *m_characterCreatorPanel;
-
-protected:
-	void init();
-	void onButtonClicked(Widget*);
-
-public:
-	CharacterCreatorFrame(WidgetWindow* window);
-	CharacterCreatorFrame(Container* parent);
-	void init(Vec2i pos, Vec2i size, const string &title);
-
-	virtual string descType() const override { return "CharacterCreatorFrame"; }
 };
 
 }}//end namespace

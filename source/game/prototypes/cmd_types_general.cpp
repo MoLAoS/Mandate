@@ -53,15 +53,26 @@ CommandType::CommandType(const char* name, Clicks clicks, bool queuable)
 		, clicks(clicks)
 		, queuable(queuable)
 		, creatableType(NULL)
-		, energyCost(0)
 		, m_display(true) {
 }
 
-bool CommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct) {
+bool CommandType::load(const XmlNode *n, const string &dir, const FactionType *ft, const CreatableType *ct) {
     bool loadOk = true;
 	const XmlNode *nameNode = n->getChild("name");
+	const XmlAttribute *addAttr = n->getAttribute("add", false);
+	bool add = false;
+	if (addAttr) {
+        add = addAttr->getBoolValue();
+	}
 	m_name = nameNode->getRestrictedValue();
-	const FactionType *ft = ct->getFactionType();
+    if (ft == 0) {
+        const XmlAttribute *factionAttribute = n->getAttribute("faction");
+        string faction = factionAttribute->getRestrictedValue();
+        ft = g_world.getTechTree()->getFactionType(faction);
+    }
+    if (ct != 0) {
+        creatableType = ct;
+    }
 	XmlAttribute *tipAttrib = nameNode->getAttribute("tip", false);
 	if (tipAttrib) {
 		m_tipKey = tipAttrib->getRestrictedValue();
@@ -74,10 +85,6 @@ bool CommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, 
 	} else {
 		m_tipHeaderKey = "";
 	}
-	const XmlNode *energyNode = n->getOptionalChild("ep-cost");
-	if (energyNode) {
-		energyCost = energyNode->getIntValue();
-	}
 	const XmlNode *displayNode = n->getOptionalChild("display");
 	if (displayNode) {
 		m_display = displayNode->getBoolValue();
@@ -85,15 +92,15 @@ bool CommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, 
 
     const XmlNode *skillCostsNode = n->getChild("skill-costs", 0, false);
     if (skillCostsNode) {
-        if(!skillCosts.load(skillCostsNode, dir, tt, ct)) {
+        if(!skillCosts.load(skillCostsNode, dir, ft)) {
            loadOk = false;
         }
     } else {
         skillCosts.init();
     }
 
-	loadOk = DisplayableType::load(n, dir) && loadOk;
-	return RequirableType::load(n, dir, tt, ft) && loadOk;
+	loadOk = DisplayableType::load(n, dir, add) && loadOk;
+	return RequirableType::load(n, dir, add) && loadOk;
 }
 
 void CommandType::doChecksum(Checksum &checksum) const {
@@ -324,8 +331,6 @@ void CommandType::describe(const Unit *unit, CmdDescriptor *callback, ProdTypePt
 		callback->addItem(pt, g_lang.get("Upgrading"));
 	} else if (cmdCheckResult.m_partiallyUpgraded) {
 		callback->addItem(pt, g_lang.get("Incomplete"));
-	} else if (!cmdCheckResult.m_availableInSubFaction) {
-		callback->addItem(this, g_lang.get("NotAvailableInSubfaction"));
 	} else {
 		vector<ItemReqResult> &itemReqs = cmdCheckResult.m_itemReqResults;
 		vector<UnitReqResult> &unitReqs = cmdCheckResult.m_unitReqResults;
@@ -346,6 +351,23 @@ void CommandType::describe(const Unit *unit, CmdDescriptor *callback, ProdTypePt
 			}
 		}
 		if (pt) {
+			if (getSkillCosts()->getResourceCount() > 0) {
+				callback->addElement(g_lang.get("Costs") + ":");
+				for (int i = 0; i < getSkillCosts()->getResourceCount(); ++i) {
+                    const StatCost *iCost = getSkillCosts()->getResource(i);
+					string name = g_lang.getTranslatedTechName(iCost->getName());
+					string msg = name + " (" + intToStr(iCost->getAmount()) + ")";
+                    for (int j = 0; j < unit->getResourcePoolCount(); ++j) {
+                        const StatCost *pool = unit->getResource(j);
+                        if (iCost->getName() == pool->getName()) {
+                            if (iCost->getAmount() > pool->getAmount()) {
+                                msg += " [-" + intToStr(iCost->getAmount() - pool->getAmount()) + "]";
+                            }
+                        }
+                    }
+					callback->addElement(msg);
+				}
+			}
 			if (!cmdCheckResult.m_resourceCostResults.empty()) {
 				callback->addElement(g_lang.get("Costs") + ":");
 				foreach (ResourceCostResults, it, cmdCheckResult.m_resourceCostResults) {
@@ -398,12 +420,30 @@ void CommandType::describe(const Unit *unit, CmdDescriptor *callback, ProdTypePt
                     }
 					if (available < iCost->getAmount()) {
 						msg += " [-" + intToStr(iCost->getAmount() - available) + "]";
+						costMet = false;
 					}
 					callback->addReq(iCost->getType(), costMet, msg);
 				}
 			}
 		}
 		if (!pt) {
+			if (getSkillCosts()->getResourceCount() > 0) {
+				callback->addElement(g_lang.get("Costs") + ":");
+				for (int i = 0; i < getSkillCosts()->getResourceCount(); ++i) {
+                    const StatCost *iCost = getSkillCosts()->getResource(i);
+					string name = g_lang.getTranslatedTechName(iCost->getName());
+					string msg = name + " (" + intToStr(iCost->getAmount()) + ")";
+                    for (int j = 0; j < unit->getResourcePoolCount(); ++j) {
+                        const StatCost *pool = unit->getResource(j);
+                        if (iCost->getName() == pool->getName()) {
+                            if (iCost->getAmount() > pool->getAmount()) {
+                                msg += " [-" + intToStr(iCost->getAmount() - pool->getAmount()) + "]";
+                            }
+                        }
+                    }
+					callback->addElement(msg);
+				}
+			}
 			if (getSkillCosts()->getResourceCostCount() > 0) {
 				callback->addElement(g_lang.get("Costs") + ":");
 				for (int i = 0; i < getSkillCosts()->getResourceCostCount(); ++i) {
@@ -450,15 +490,23 @@ void CommandType::describe(const Unit *unit, CmdDescriptor *callback, ProdTypePt
 // =====================================================
 // 	class MoveBaseCommandType
 // =====================================================
+void MoveBaseCommandType::initMoveSkill(Unit *unit) {
+    const SkillType *st = unit->getActions()->getSkillType(moveSkillTypeName, SkillClass::MOVE);
+    m_moveSkillType = static_cast<const MoveSkillType*>(st);
+}
 
-bool MoveBaseCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct) {
-	bool loadOk = CommandType::load(n, dir, tt, ct);
+bool MoveBaseCommandType::load(const XmlNode *n, const string &dir, const FactionType *ft, const CreatableType *ct) {
+	bool loadOk = CommandType::load(n, dir, ft, ct);
 
 	//move
 	try {
 		string skillName = n->getChild("move-skill")->getAttribute("value")->getRestrictedValue();
-		const SkillType *st = creatableType->getActions()->getSkillType(skillName, SkillClass::MOVE);
-		m_moveSkillType = static_cast<const MoveSkillType*>(st);
+		if (creatableType != NULL) {
+            const SkillType *st = creatableType->getActions()->getSkillType(skillName, SkillClass::MOVE);
+            m_moveSkillType = static_cast<const MoveSkillType*>(st);
+        } else {
+            moveSkillTypeName = skillName;
+        }
 	} catch (runtime_error e) {
 		g_logger.logXmlError(dir, e.what());
 		loadOk = false;
@@ -617,8 +665,8 @@ void TeleportCommandType::descSkills(const Unit *unit, CmdDescriptor *callback, 
 // 	class StopBaseCommandType
 // =====================================================
 
-bool StopBaseCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct) {
-	bool loadOk = CommandType::load(n, dir, tt, ct);
+bool StopBaseCommandType::load(const XmlNode *n, const string &dir, const FactionType *ft, const CreatableType *ct) {
+	bool loadOk = CommandType::load(n, dir, ft, ct);
 
 	//stop
 	try {
@@ -661,9 +709,8 @@ void StopCommandType::update(Unit *unit) const {
 // =====================================================
 
 //varios
-bool ProduceCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct) {
-	bool loadOk = CommandType::load(n, dir, tt, ct);
-    const FactionType *ft = ct->getFactionType();
+bool ProduceCommandType::load(const XmlNode *n, const string &dir, const FactionType *ft, const CreatableType *ct) {
+	bool loadOk = CommandType::load(n, dir, ft, ct);
 	try {
 	    const XmlNode *childNode = n->getChild("child-structure", 0, false);
 	    if (childNode) {
@@ -810,7 +857,6 @@ void ProduceCommandType::update(Unit *unit) const {
 	assert(command->getType() == this);
 	if (unit->getCurrSkill()->getClass() != SkillClass::PRODUCE) {
 		unit->setCurrSkill(m_produceSkillType);
-		unit->getFaction()->checkAdvanceSubfaction(command->getProdType(), false);
 	} else {
 		unit->update2();
 		const UnitType *prodType = static_cast<const UnitType*>(command->getProdType());
@@ -834,7 +880,6 @@ void ProduceCommandType::update(Unit *unit) const {
 					g_world.getUnitFactory().deleteUnit(unit);
 					return;
 				} else {
-                    unit->getFaction()->checkAdvanceSubfaction(command->getProdType(), true);
                     produced->setOwner(unit);
                     for (int z = 0; z < unit->ownedUnits.size(); ++z) {
                         if (unit->ownedUnits[z].getType() == produced->getType()) {
@@ -869,9 +914,8 @@ void ProduceCommandType::update(Unit *unit) const {
 // 	class GenerateCommandType
 // =====================================================
 
-bool GenerateCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct) {
-	bool loadOk = CommandType::load(n, dir, tt, ct);
-    const FactionType *ft = ct->getFactionType();
+bool GenerateCommandType::load(const XmlNode *n, const string &dir, const FactionType *ft, const CreatableType *ct) {
+	bool loadOk = CommandType::load(n, dir, ft, ct);
 	// produce skill
 	try {
 		string skillName= n->getChild("produce-skill")->getAttribute("value")->getRestrictedValue();
@@ -890,7 +934,7 @@ bool GenerateCommandType::load(const XmlNode *n, const string &dir, const TechTr
 		return false;
 	}
 	GeneratedType *gt = g_prototypeFactory.newGeneratedType();
-	if (!gt->load(producibleNode, dir, tt, ft)) {
+	if (!gt->load(producibleNode, dir)) {
 		loadOk = false;
 	}
 	m_producibles.push_back(gt);
@@ -972,12 +1016,10 @@ void GenerateCommandType::update(Unit *unit) const {
 	if (unit->getCurrSkill() != m_produceSkillType) {
 		// if not producing
 		unit->setCurrSkill(m_produceSkillType);
-		faction->checkAdvanceSubfaction(command->getProdType(), false);
 	} else {
 		unit->update2();
 		if (unit->getProgress2() > command->getProdType()->getProductionTime()) {
 			faction->addProduct(static_cast<const GeneratedType*>(command->getProdType()));
-			faction->checkAdvanceSubfaction(command->getProdType(), true);
 			faction->applyStaticProduction(command->getProdType());
 			unit->setCurrSkill(SkillClass::STOP);
 			unit->finishCommand();
@@ -994,9 +1036,8 @@ void GenerateCommandType::update(Unit *unit) const {
 // 	class UpgradeCommandType
 // =====================================================
 
-bool UpgradeCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct) {
-	bool loadOk = CommandType::load(n, dir, tt, ct);
-    const FactionType *ft = ct->getFactionType();
+bool UpgradeCommandType::load(const XmlNode *n, const string &dir, const FactionType *ft, const CreatableType *ct) {
+	bool loadOk = CommandType::load(n, dir, ft, ct);
 	// upgrade skill
 	try {
 		string skillName = n->getChild("upgrade-skill")->getAttribute("value")->getRestrictedValue();
@@ -1118,7 +1159,6 @@ void UpgradeCommandType::update(Unit *unit) const {
 	if (unit->getCurrSkill() != m_upgradeSkillType) {
 		//if not producing
 		unit->setCurrSkill(m_upgradeSkillType);
-		faction->checkAdvanceSubfaction(upgrade, false);
 	} else {
 		//if producing
 		unit->update2();
@@ -1126,7 +1166,6 @@ void UpgradeCommandType::update(Unit *unit) const {
 			unit->finishCommand();
 			unit->setCurrSkill(SkillClass::STOP);
 			faction->finishUpgrade(upgrade);
-			faction->checkAdvanceSubfaction(upgrade, true);
 			if (unit->getFactionIndex() == g_world.getThisFactionIndex()) {
 				RUNTIME_CHECK(!unit->isCarried() && !unit->isGarrisoned());
 				g_soundRenderer.playFx(getFinishedSound(), unit->getCurrVector(),
@@ -1179,9 +1218,8 @@ MorphCommandType::MorphCommandType(const char* name)
 		, m_discount(0), m_refund(0) {
 }
 
-bool MorphCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct) {
-	bool loadOk = CommandType::load(n, dir, tt, ct);
-	const FactionType *ft = ct->getFactionType();
+bool MorphCommandType::load(const XmlNode *n, const string &dir, const FactionType *ft, const CreatableType *ct) {
+	bool loadOk = CommandType::load(n, dir, ft, ct);
 	try { // morph skill
 		string skillName = n->getChild("morph-skill")->getAttribute("value")->getRestrictedValue();
 		m_morphSkillType = static_cast<const MorphSkillType*>(creatableType->getActions()->getSkillType(skillName, SkillClass::MORPH));
@@ -1336,7 +1374,6 @@ void MorphCommandType::update(Unit *unit) const {
 		Field mf = morphToUnit->getField();
 		if (map->areFreeCellsOrHasUnit(unit->getPos(), morphToUnit->getSize(), mf, unit)) {
 			unit->setCurrSkill(m_morphSkillType);
-			unit->getFaction()->checkAdvanceSubfaction(morphToUnit, false);
 		} else {
 			if (unit->getFactionIndex() == g_world.getThisFactionIndex()) {
 				g_console.addStdMessage("InvalidPosition");
@@ -1353,7 +1390,6 @@ void MorphCommandType::update(Unit *unit) const {
 				if (g_userInterface.isSelected(unit)) {
 					g_userInterface.onSelectionChanged();
 				}
-				unit->getFaction()->checkAdvanceSubfaction(morphToUnit, true);
 				ScriptManager::onUnitCreated(unit);
 				if (mapUpdate) {
 					// obstacle added or removed, update annotated maps
@@ -1386,8 +1422,8 @@ TransformCommandType::TransformCommandType()
 		, m_rotation(0.f) {
 }
 
-bool TransformCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct) {
-	bool loadOk = MorphCommandType::load(n, dir, tt, ct);
+bool TransformCommandType::load(const XmlNode *n, const string &dir, const FactionType *ft, const CreatableType *ct) {
+	bool loadOk = MorphCommandType::load(n, dir, ft, ct);
 	try {
 		const XmlNode *skillNode = n->getChild("move-skill");
 		string skillName = skillNode->getAttribute("value")->getRestrictedValue();
@@ -1443,7 +1479,6 @@ void TransformCommandType::update(Unit *unit) const {
 				if (g_userInterface.isSelected(unit)) {
 					g_userInterface.onSelectionChanged();
 				}
-				unit->getFaction()->checkAdvanceSubfaction(morphToUnit, true);
 				// obstacle added, update annotated maps
 				g_world.getCartographer()->updateMapMetrics(unit->getPos(), biggerSize);
 				if (unit->getFactionIndex() == g_world.getThisFactionIndex()) {
@@ -1486,9 +1521,8 @@ void TransformCommandType::update(Unit *unit) const {
 // 	class LoadCommandType
 // =====================================================
 
-bool LoadCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct) {
-	bool loadOk = CommandType::load(n, dir, tt, ct);
-    const FactionType *ft = ct->getFactionType();
+bool LoadCommandType::load(const XmlNode *n, const string &dir, const FactionType *ft, const CreatableType *ct) {
+	bool loadOk = CommandType::load(n, dir, ft, ct);
 	//move
 	try {
 		const XmlNode *moveSkillNode = n->getOptionalChild("move-skill");
@@ -1682,8 +1716,8 @@ CmdResult LoadCommandType::check(const Unit *unit, const Command &command) const
 // 	class UnloadCommandType
 // =====================================================
 
-bool UnloadCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct) {
-	bool loadOk = CommandType::load(n, dir, tt, ct);
+bool UnloadCommandType::load(const XmlNode *n, const string &dir, const FactionType *ft, const CreatableType *ct) {
+	bool loadOk = CommandType::load(n, dir, ft, ct);
 
 	// move
 	try {
@@ -1780,9 +1814,8 @@ void UnloadCommandType::start(Unit *unit, Command *command) const {
 // 	class FactionLoadCommandType
 // =====================================================
 
-bool FactionLoadCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct) {
-	bool loadOk = CommandType::load(n, dir, tt, ct);
-    const FactionType *ft = ct->getFactionType();
+bool FactionLoadCommandType::load(const XmlNode *n, const string &dir, const FactionType *ft, const CreatableType *ct) {
+	bool loadOk = CommandType::load(n, dir, ft, ct);
 	//move
 	try {
 		const XmlNode *moveSkillNode = n->getOptionalChild("move-skill");
@@ -1949,8 +1982,8 @@ CmdResult FactionLoadCommandType::check(const Unit *unit, const Command &command
 // 	class FactionUnloadCommandType
 // =====================================================
 
-bool FactionUnloadCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct) {
-	bool loadOk = CommandType::load(n, dir, tt, ct);
+bool FactionUnloadCommandType::load(const XmlNode *n, const string &dir, const FactionType *ft, const CreatableType *ct) {
+	bool loadOk = CommandType::load(n, dir, ft, ct);
 
 	// move
 	try {
@@ -2048,9 +2081,8 @@ void FactionUnloadCommandType::start(Unit *unit, Command *command) const {
 // 	class GarrisonCommandType
 // =====================================================
 
-bool GarrisonCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct) {
-	bool loadOk = CommandType::load(n, dir, tt, ct);
-    const FactionType *ft = ct->getFactionType();
+bool GarrisonCommandType::load(const XmlNode *n, const string &dir, const FactionType *ft, const CreatableType *ct) {
+	bool loadOk = CommandType::load(n, dir, ft, ct);
 	//move
 	try {
 		const XmlNode *moveSkillNode = n->getOptionalChild("move-skill");
@@ -2219,8 +2251,8 @@ CmdResult GarrisonCommandType::check(const Unit *unit, const Command &command) c
 // 	class DegarrisonCommandType
 // =====================================================
 
-bool DegarrisonCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct) {
-	bool loadOk = CommandType::load(n, dir, tt, ct);
+bool DegarrisonCommandType::load(const XmlNode *n, const string &dir, const FactionType *ft, const CreatableType *ct) {
+	bool loadOk = CommandType::load(n, dir, ft, ct);
 
 	// move
 	try {
@@ -2337,8 +2369,8 @@ void BeLoadedCommandType::update(Unit *unit) const {
 //  class CastSpellCommandType
 // ===============================
 
-bool CastSpellCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct) {
-	bool loadOk = CommandType::load(n, dir, tt, ct);
+bool CastSpellCommandType::load(const XmlNode *n, const string &dir, const FactionType *ft, const CreatableType *ct) {
+	bool loadOk = CommandType::load(n, dir, ft, ct);
 
 	// cast skill
 	try {
@@ -2398,8 +2430,8 @@ void CastSpellCommandType::update(Unit *unit) const {
 // ===============================
 
 
-bool BuildSelfCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct) {
-	bool ok = CommandType::load(n, dir, tt, ct);
+bool BuildSelfCommandType::load(const XmlNode *n, const string &dir, const FactionType *ft, const CreatableType *ct) {
+	bool ok = CommandType::load(n, dir, ft, ct);
 	try {
 		string bsSkillName = n->getChildRestrictedValue("build-self-skill");
 		const SkillType *st = creatableType->getActions()->getSkillType(bsSkillName, SkillClass::BUILD_SELF);
@@ -2553,7 +2585,7 @@ unitOnRange_exitLoop:
 }
 
 bool CommandType::attackerInSight(const Unit *unit, Unit **rangedPtr) {
-	return unitInRange(unit, unit->getUnitStats()->getSight().getValue(), rangedPtr, NULL, NULL);
+	return unitInRange(unit, unit->getStatistics()->getEnhancement()->getUnitStats()->getSight()->getValue(), rangedPtr, NULL, NULL);
 }
 
 bool CommandType::attackableInRange(const Unit *unit, Unit **rangedPtr,
@@ -2564,7 +2596,7 @@ bool CommandType::attackableInRange(const Unit *unit, Unit **rangedPtr,
 
 bool CommandType::attackableInSight(const Unit *unit, Unit **rangedPtr,
 			const AttackSkillTypes *asts, const AttackSkillType **past) {
-	return unitInRange(unit, unit->getUnitStats()->getSight().getValue(), rangedPtr, asts, past);
+	return unitInRange(unit, unit->getStatistics()->getEnhancement()->getUnitStats()->getSight()->getValue(), rangedPtr, asts, past);
 }
 
 }}//end namespace

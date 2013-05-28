@@ -52,7 +52,7 @@ bool Biome::load(const XmlNode *baseNode, const string &dir, const TechTree *tt,
         emanations.resize(emanationsNode->getChildCount());
         for (int i = 0; i < emanationsNode->getChildCount(); ++i) {
             const XmlNode *emanationNode = emanationsNode->getChild("emanation", i);
-            if (!emanations[i]->load(emanationNode, dir, tt, ft)) {
+            if (!emanations[i]->load(emanationNode, dir)) {
                 loadOk = false;
             }
         }

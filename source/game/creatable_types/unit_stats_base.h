@@ -38,8 +38,8 @@ class UpgradeType;
 /** Fields of travel, and indirectly zone of occupance */
 class Fields : public XmlBasedFlags<Field, Field::COUNT> {
 public:
-	void load(const XmlNode *node, const string &dir, const TechTree *tt, const FactionType *ft) {
-		XmlBasedFlags<Field, Field::COUNT>::load(node, dir, tt, ft, "field", FieldNames);
+	void load(const XmlNode *node, const string &dir) {
+		XmlBasedFlags<Field, Field::COUNT>::load(node, dir, "field", FieldNames);
 	}
 };
 
@@ -59,8 +59,8 @@ inline Field dominantField(const Fields &fields) {
 /** Zones of attack (air, surface, etc.) */
 class Zones : public XmlBasedFlags<Zone, Zone::COUNT> {
 public:
-	void load(const XmlNode *node, const string &dir, const TechTree *tt, const FactionType *ft) {
-		XmlBasedFlags<Zone, Zone::COUNT>::load(node, dir, tt, ft, "field", ZoneNames);
+	void load(const XmlNode *node, const string &dir) {
+		XmlBasedFlags<Zone, Zone::COUNT>::load(node, dir, "field", ZoneNames);
 	}
 };
 
@@ -74,8 +74,8 @@ private:
 	//static const char *names[pCount];
 
 public:
-	void load(const XmlNode *node, const string &dir, const TechTree *tt, const FactionType *ft) {
-		XmlBasedFlags<Property, Property::COUNT>::load(node, dir, tt, ft, "property", PropertyNames);
+	void load(const XmlNode *node, const string &dir) {
+		XmlBasedFlags<Property, Property::COUNT>::load(node, dir, "property", PropertyNames);
 	}
 };
 
@@ -109,52 +109,97 @@ public:
 
     void getDesc(string &str, const char *pre, string name) const;
 
+    void formatModifier(string &str, const char *pre, string label, int value, fixed multiplier, int layer, fixed layerMult) const;
 	void doChecksum(Checksum &checksum) const;
     void init(int value, fixed valueMult, int layerAdd, fixed layerMult);
-    bool load(const XmlNode *baseNode, const string &dir);
+    bool load(const XmlNode *baseNode);
+    void save(XmlNode *node) const;
     void reset();
     void modify();
+    bool isEmpty() const;
 	void clampMultipliers();
     void sanitiseStat(int safety);
 };
 
 // ===============================
-// 	class ResourcePools
+// 	class StatGroup
 // ===============================
 /** health, shield, energy, mana, stamina */
+class StatGroup {
+private:
+    string name;
+    Stat maxStat;
+    Stat regenStat;
+    Stat boostStat;
+public:
+    StatGroup() { reset(); }
+    string getName() const {return name;}
+
+    Stat *getMaxStat()   {return &maxStat;}
+    Stat *getRegenStat() {return &regenStat;}
+    Stat *getBoostStat() {return &boostStat;}
+
+    const Stat *getMaxStat() const {return &maxStat;}
+    const Stat *getRegenStat() const {return &regenStat;}
+    const Stat *getBoostStat() const {return &boostStat;}
+
+    void setName(string newName) {name = newName;}
+    void getDesc(string &str, const char *pre) const;
+	virtual void doChecksum(Checksum &checksum) const;
+
+	void reset();
+	void modify();
+	bool isEmpty() const;
+	bool load(const XmlNode *baseNode, const string &dir);
+	void save(XmlNode *node) const;
+	void addStatic(const StatGroup *rp, fixed strength = 1);
+	void addMultipliers(const StatGroup *rp, fixed strength = 1);
+	void applyMultipliers(const StatGroup *rp);
+	void clampMultipliers();
+	void sanitiseStatGroup();
+	void sum(const StatGroup *statGroup) {
+		addStatic(statGroup);
+		addMultipliers(statGroup);
+	}
+};
+
+typedef vector<StatGroup> StatGroups;
+
 class ResourcePools {
 private:
-	Stat maxHp;
-	Stat hpRegeneration;
-	Stat maxSp;
-	Stat spRegeneration;
-    Stat maxEp;
-	Stat epRegeneration;
+    StatGroup health;
+
+	StatGroups resources;
+	StatGroups defenses;
+
     Stat maxCp;
-	Stat hpBoost;
-	Stat spBoost;
-	Stat epBoost;
+
 public:
 	ResourcePools() { reset(); }
 	virtual ~ResourcePools() {}
 
 	virtual void doChecksum(Checksum &checksum) const;
 
-	Stat getMaxHp() const					{return maxHp;}
-	Stat getHpRegeneration() const			{return hpRegeneration;}
-	Stat getMaxSp() const					{return maxSp;}
-	Stat getSpRegeneration() const			{return spRegeneration;}
-	Stat getMaxEp() const					{return maxEp;}
-	Stat getEpRegeneration() const			{return epRegeneration;}
-	Stat getMaxCp() const					{return maxCp;}
-	Stat getHpBoost() const					{return hpBoost;}
-	Stat getSpBoost() const					{return spBoost;}
-	Stat getEpBoost() const					{return epBoost;}
+    StatGroup *getHealth()            {return &health;}
+    StatGroup *getResource(int i)     {return &resources[i];}
+    StatGroup *getDefense(int i)      {return &defenses[i];}
+	Stat *getMaxCp()                  {return &maxCp;}
+
+	const StatGroup *getHealth() const {return &health;}
+    int getResourceCount() const {return resources.size();}
+    const StatGroup *getResource(int i) const {return &resources[i];}
+    int getDefenseCount() const {return defenses.size();}
+    const StatGroup *getDefense(int i) const {return &defenses[i];}
+	const Stat *getMaxCp() const {return &maxCp;}
+
+    void addResources(StatGroups statGroups);
+    void addDefenses(StatGroups statGroups);
 
     void getDesc(string &str, const char *pre) const;
 
 	void reset();
 	void modify();
+	bool isEmpty() const;
 	bool load(const XmlNode *baseNode, const string &dir);
 	void save(XmlNode *node) const;
 	void addStatic(const ResourcePools *rp, fixed strength = 1);
@@ -182,14 +227,19 @@ public:
 
 	virtual void doChecksum(Checksum &checksum) const;
 
-	Stat getProdSpeed() const				{return prodSpeed;}
-	Stat getRepairSpeed() const				{return repairSpeed;}
-	Stat getHarvestSpeed() const				{return harvestSpeed;}
+	Stat *getProdSpeed()    {return &prodSpeed;}
+	Stat *getRepairSpeed() 	{return &repairSpeed;}
+	Stat *getHarvestSpeed() {return &harvestSpeed;}
+
+	const Stat *getProdSpeed() const	{return &prodSpeed;}
+	const Stat *getRepairSpeed() const	{return &repairSpeed;}
+	const Stat *getHarvestSpeed() const {return &harvestSpeed;}
 
     void getDesc(string &str, const char *pre) const;
 
 	virtual void reset();
 	void modify();
+	bool isEmpty() const;
 	bool load(const XmlNode *parametersNode, const string &dir);
 	virtual void save(XmlNode *node) const;
 	void addStatic(const ProductionSpeeds *ps, fixed strength = 1);
@@ -218,17 +268,23 @@ public:
 
 	virtual void doChecksum(Checksum &checksum) const;
 
-	Stat getAttackRange() const	    {return attackRange;}
-	Stat getAttackSpeed() const	    {return attackSpeed;}
-	Stat getAttackStrength() const	{return attackStrength;}
-	Stat getAttackPotency() const   {return attackPotency;}
+	Stat *getAttackRange() 	{return &attackRange;}
+	Stat *getAttackSpeed() 	{return &attackSpeed;}
+	Stat *getAttackStrength() {return &attackStrength;}
+	Stat *getAttackPotency()  {return &attackPotency;}
+
+	const Stat *getAttackRange() const	    {return &attackRange;}
+	const Stat *getAttackSpeed() const	    {return &attackSpeed;}
+	const Stat *getAttackStrength() const	{return &attackStrength;}
+	const Stat *getAttackPotency() const    {return &attackPotency;}
 
     void getDesc(string &str, const char *pre) const;
 
 	virtual void reset();
 	void modify();
+	bool isEmpty() const;
 	bool load(const XmlNode *parametersNode, const string &dir);
-	virtual void save(XmlNode *node) const;
+	void save(XmlNode *node) const;
 	void addStatic(const AttackStats *as, fixed strength = 1);
 	void addMultipliers(const AttackStats *as, fixed strength = 1);
 	void applyMultipliers(const AttackStats *as);
@@ -256,19 +312,25 @@ public:
 
 	virtual void doChecksum(Checksum &checksum) const;
 
-	Stat getSight() const					{return sight;}
-	Stat getExpGiven() const				{return expGiven;}
-	Stat getMorale() const					{return morale;}
+	Stat *getSight() 			    {return &sight;}
+	Stat *getExpGiven() 		    {return &expGiven;}
+	Stat *getMorale() 			    {return &morale;}
+	Stat *getMoveSpeed() 	        {return &moveSpeed;}
+	Stat *getEffectStrength() 	    {return &effectStrength;}
 
-	Stat getMoveSpeed() const				{return moveSpeed;}
-	Stat getEffectStrength() const			{return effectStrength;}
+	const Stat *getSight() const			{return &sight;}
+	const Stat *getExpGiven() const		    {return &expGiven;}
+	const Stat *getMorale() const			{return &morale;}
+	const Stat *getMoveSpeed() const		{return &moveSpeed;}
+	const Stat *getEffectStrength() const	{return &effectStrength;}
 
     void getDesc(string &str, const char *pre) const;
 
 	virtual void reset();
 	void modify();
+	bool isEmpty() const;
 	bool load(const XmlNode *parametersNode, const string &dir);
-	virtual void save(XmlNode *node) const;
+	void save(XmlNode *node) const;
 	void addStatic(const UnitStats *us, fixed strength = 1);
 	void addMultipliers(const UnitStats *us, fixed strength = 1);
 	void applyMultipliers(const UnitStats *us);
@@ -288,6 +350,11 @@ private:
 public:
 	EnhancementType() { reset(); }
 
+    ResourcePools *getResourcePools()       {return &resourcePools;}
+    ProductionSpeeds *getProductionSpeeds() {return &productionSpeeds;}
+    AttackStats *getAttackStats()           {return &attackStats;}
+    UnitStats *getUnitStats()               {return &unitStats;}
+
     const ResourcePools *getResourcePools() const {return &resourcePools;}
     const ProductionSpeeds *getProductionSpeeds() const {return &productionSpeeds;}
     const AttackStats *getAttackStats() const {return &attackStats;}
@@ -301,10 +368,11 @@ public:
     void sanitiseEnhancement();
 	void reset();
 	void modify();
+	bool isEmpty() const;
 	void getDesc(string &str, const char *prefix) const;
-	bool load(const XmlNode *baseNode, const string &dir, const TechTree *tt, const FactionType *ft);
+	bool load(const XmlNode *baseNode, const string &dir);
 	virtual void doChecksum(Checksum &checksum) const;
-	virtual void save(XmlNode *node) const;
+	void save(XmlNode *node) const;
 	static void describeModifier(string &str, int value) {
 		if (value != 0) {
 			if (value > 0) {

@@ -368,8 +368,6 @@ void World::hit(Unit *attacker, const AttackSkillType* ast, const Vec2i &targetP
 		foreach (DistMap, it, hitSet) {
 		    if (it->first->getFaction()->getTeam() != attacker->getFaction()->getTeam()) {
                 damage(attacker, ast, it->first, it->second);
-                lifeleech(attacker, ast, it->first, it->second); /**< Added by MoLAoS, lifeleech */
-                manaburn(attacker, ast, it->first, it->second); /**< Added by MoLAoS, manaburn */
                 capture(attacker, ast, it->first, it->second); /**< Added by MoLAoS, capturing */
                 if (ast->hasEffects()) {
                     applyEffects(attacker, ast->getEffectTypes(), it->first, it->second);
@@ -401,8 +399,6 @@ void World::hit(Unit *attacker, const AttackSkillType* ast, const Vec2i &targetP
                 }
 		    }
 			damage(attacker, ast, attacked, 0);
-			lifeleech(attacker, ast, attacked, 0); /**< Added by MoLAoS, lifeleech */
-			manaburn(attacker, ast, attacked, 0); /**< Added by MoLAoS, manaburn */
 			capture(attacker, ast, attacked, 0); /**< Added by MoLAoS, capturing */
 			if (ast->hasEffects()) {
 				applyEffects(attacker, ast->getEffectTypes(), attacked, 0);
@@ -423,14 +419,18 @@ void World::damage(Unit *attacker, const AttackSkillType* ast, Unit *attacked, f
 	fixed fDamage = 0;
     /**< Added by MoLAoS, magic damage and resistances */
     fixed totalDamage = 0 + fDamage;
-    const UnitType *uType = attacked->getType();
+
     const AttackLevel *aLevel = ast->getLevel(ast->getCurrentLevel());
-    for (int t = 0; t < aLevel->getDamageTypes()->size(); ++t) {
-    const DamageType *dType = aLevel->getDamageType(t);
+    const Statistics *stats = aLevel->getStatistics();
+    Statistics damages;
+    damages.addResistancesAndDamage(stats);
+    damages.addResistancesAndDamage(attacker->getStatistics());
+    for (int t = 0; t < damages.getDamageTypes()->size(); ++t) {
+    const DamageType *dType = damages.getDamageType(t);
     string damageType = dType->getTypeName();
     int mDamage = dType->getValue();
-        for (int i = 0; i < attacked->getResistances()->size(); ++i) {
-        const DamageType *rType = attacked->getResistance(i);
+        for (int i = 0; i < attacked->getStatistics()->getResistances()->size(); ++i) {
+        const DamageType *rType = attacked->getStatistics()->getResistance(i);
         string resistType = rType->getTypeName();
             if (damageType==resistType) {
                 int resist = rType->getValue();
@@ -466,64 +466,6 @@ void World::damage(Unit *unit, int hp) {
 		}
 	}
 }
-
-void World::lifeleech(Unit *attacker, const AttackSkillType* ast, Unit *attacked, fixed distance) { /**< Added by MoLAoS, lifeleech */
-	int health = attacker->getHp();
-	int maxHealth = attacker->getResourcePools()->getMaxHp().getValue();
-    // compute lifeleech
-    fixed fDamage = 0;
-    fixed fLifeLeech = 0;
-    fDamage = fDamage / (distance + 1);
-	fLifeLeech = fDamage * (fLifeLeech / 100);
-	if (fLifeLeech < 1) {
-		fLifeLeech = 0;
-	}
-    if (health >= maxHealth) {
-        fLifeLeech=0;
-    }
-	int lifeleech = fLifeLeech.intp();
-	if (attacker->decHp(-lifeleech)) {
-	}
-    if (health > maxHealth) {
-        int fixHealth = health - maxHealth;
-        attacker->decHp(fixHealth);
-    }
-} /**< Added by MoLAoS, lifeleech */
-
-void World::lifeleech(Unit *unit, int hp) { /**< Added by MoLAoS, lifeleech */
-	if (unit->decHp(-hp)) {
-		ScriptManager::onUnitDied(unit);
-		unit->kill();
-		if (!unit->isMobile()) { // obstacle removed
-			cartographer->updateMapMetrics(unit->getPos(), unit->getSize());
-		}
-	}
-} /**< Added by MoLAoS, lifeleech */
-
-void World::manaburn(Unit *attacker, const AttackSkillType* ast, Unit *attacked, fixed distance) { /**< Added by MoLAoS, manaburn */
-    int ep = attacked->getEp();
-    // compute manaburn
-    fixed fDamage = 0;
-    fixed fManaBurn = 0;
-    fDamage = fDamage / (distance + 1);
-	fManaBurn = fDamage * (fManaBurn / 100);
-	if (fManaBurn < 1) {
-		fManaBurn = 0;
-	}
-	int manaburn = fManaBurn.intp();
-		if (attacked->decEp(manaburn)) {
-	}
-} /**< Added by MoLAoS, manaburn */
-
-void World::manaburn(Unit *unit, int ep) { /**< Added by MoLAoS, manaburn */
-	if (unit->decEp(ep)) {
-		ScriptManager::onUnitDied(unit);
-		unit->kill();
-		if (!unit->isMobile()) { // obstacle removed
-			cartographer->updateMapMetrics(unit->getPos(), unit->getSize());
-		}
-	}
-} /**< Added by MoLAoS, manaburn */
 
 void World::capture(Unit *attacker, const AttackSkillType* ast, Unit *attacked, fixed distance) { /**< Added by MoLAoS, capturing */
     int cp = attacked->getCp();
@@ -664,6 +606,23 @@ void World::tick() {
 	}
 	cartographer->tick();
 	// manage list of current attackers
+	for (int i = 0; i < getFactionCount(); ++i) {
+		for (int j = 0; j < getFaction(i)->getUnitCount(); ++j) {
+		    Unit *unit = getFaction(i)->getUnit(j);
+		    if (unit->getType()->getName() == "defender") {
+		        Trait *trait = g_world.getTechTree()->getTraitById(3);
+		        bool traitTest = false;
+		        for (int k = 0; k < unit->getTraitCount(); ++k) {
+                    if (unit->getTrait(k)->getId() == 3) {
+                        traitTest = true;
+                    }
+		        }
+		        if (traitTest == false) {
+                    unit->addTrait(trait);
+		        }
+		    }
+		}
+	}
 	for (int i = 0; i < getFactionCount(); ++i) {
 		for (int j = 0; j < getFaction(i)->getUnitCount(); ++j) {
 		    Unit *unit = getFaction(i)->getUnit(j);
@@ -1562,7 +1521,7 @@ void World::computeFow() {
 		for (int j = 0; j < getFaction(i)->getUnitCount(); ++j) {
 			Unit *unit = getFaction(i)->getUnit(j);
 			if (unit->isOperative() && !unit->isCarried()  && !unit->isGarrisoned()) {
-				exploreCells(unit->getCenteredPos(), unit->getUnitStats()->getSight().getValue(), unit->getTeam());
+				exploreCells(unit->getCenteredPos(), unit->getStatistics()->getEnhancement()->getUnitStats()->getSight()->getValue(), unit->getTeam());
 			}
 		}
 	}
@@ -1593,7 +1552,7 @@ void World::computeFow() {
 		for (int j = 0; j < faction->getUnitCount(); ++j) {
 			const Unit *unit = faction->getUnit(j);
 			if (unit->isOperative() && !unit->isCarried()  && !unit->isGarrisoned()) {
-				int sightRange = unit->getUnitStats()->getSight().getValue();
+				int sightRange = unit->getStatistics()->getEnhancement()->getUnitStats()->getSight()->getValue();
 				Vec2i pos;
 				float distance;
 

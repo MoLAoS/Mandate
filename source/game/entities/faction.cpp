@@ -103,81 +103,23 @@ Vec3f  Faction::getColourV3f() const {
 // =====================================================
 //  class UpgradeStage
 // =====================================================
-    UpgradeStage::UpgradeStage()
-    {}
+UpgradeStage::UpgradeStage() {}
 
-    UpgradeStage::~UpgradeStage() {}
+UpgradeStage::~UpgradeStage() {}
 
 void UpgradeStage::init(const UpgradeType *upgradeType, int upgradeStage, int maxStage, Names m_names,
-        Enhancements m_enhancements, AffectedUnits m_unitsAffected, EnhancementMap m_enhancementMap) {
+              Upgrades m_upgrades, AffectedUnits m_unitsAffected, UpgradeUnitMap m_upgradeMap) {
     this->upgradeType = upgradeType;
     this->upgradeStage = upgradeStage;
     this->maxStage = maxStage;
     this->m_names = m_names;
-    this->m_enhancements = m_enhancements;
+    this->m_upgrades = m_upgrades;
     this->m_unitsAffected = m_unitsAffected;
-    this->m_enhancementMap = m_enhancementMap;
-    }
-
-const Statistics* UpgradeStage::getStatistics(const UnitType *ut) const {
-	EnhancementMap::const_iterator it = m_enhancementMap.find(ut);
-	if (it != m_enhancementMap.end()) {
-		return it->second->getStatistics();
-	}
-	return 0;
-}
-
-Modifier UpgradeStage::getCostModifier(const UnitType *ut, const ResourceType *rt) const {
-	EnhancementMap::const_iterator uit = m_enhancementMap.find(ut);
-	if (uit != m_enhancementMap.end()) {
-		ResModifierMap::const_iterator rit = uit->second->m_costModifiers.find(rt);
-		if (rit != uit->second->m_costModifiers.end()) {
-			return rit->second;
-		}
-	}
-	return Modifier(0, 1);
-}
-
-Modifier UpgradeStage::getStoreModifier(const UnitType *ut, const ResourceType *rt) const {
-	EnhancementMap::const_iterator uit = m_enhancementMap.find(ut);
-	if (uit != m_enhancementMap.end()) {
-		ResModifierMap::const_iterator rit = uit->second->m_storeModifiers.find(rt);
-		if (rit != uit->second->m_storeModifiers.end()) {
-			return rit->second;
-		}
-	}
-	return Modifier(0, 1);
-}
-
-Modifier UpgradeStage::getCreateModifier(const UnitType *ut, const ResourceType *rt) const {
-	EnhancementMap::const_iterator uit = m_enhancementMap.find(ut);
-	if (uit != m_enhancementMap.end()) {
-		ResModifierMap::const_iterator rit = uit->second->m_createModifiers.find(rt);
-		if (rit != uit->second->m_createModifiers.end()) {
-			return rit->second;
-		}
-	}
-	return Modifier(0, 1);
+    this->m_upgradeMap = m_upgradeMap;
 }
 
 void UpgradeStage::doChecksum(Checksum &checksum) const {
 	ProducibleType::doChecksum(checksum);
-	foreach_const (Enhancements, it, m_enhancements) {
-		it->m_enhancement.doChecksum(checksum);
-	}
-	///@todo resource mods
-
-	// iterating over a std::map is not the same as std::set !!
-	vector<int> enhanceIds;
-	foreach_const (EnhancementMap, it, m_enhancementMap) {
-		enhanceIds.push_back(it->first->getId());
-		///@todo add EnhancementType index (it->second->getEnhancement()) ?
-	}
-	// sort first
-	std::sort(enhanceIds.begin(), enhanceIds.end());
-	foreach (vector<int>, it, enhanceIds) {
-		checksum.add(*it);
-	}
 }
 
 // =====================================================
@@ -196,7 +138,6 @@ void Faction::init(const FactionType *factionType, ControlType control, string p
 	this->teamIndex = teamIndex;
 	this->colourIndex = colourIndex;
 	this->thisFaction = thisFaction;
-	this->subfaction = 0;
 	this->lastAttackNotice = 0;
 	this->lastEnemyNotice = 0;
 	this->defeated = false;
@@ -253,15 +194,15 @@ void Faction::init(const FactionType *factionType, ControlType control, string p
         upgradeStages.resize(upgradeCount);
 		for (int i = 0; i < factionType->getUpgradeTypeCount(); ++i) {
 			const UpgradeType *ut = factionType->getUpgradeType(i);
-			upgradeStages[i].init(ut, 0, ut->maxStage, ut->m_names, ut->m_enhancements,
-            ut->m_unitsAffected, ut->m_enhancementMap);
+			upgradeStages[i].init(ut, 0, ut->maxStage, ut->m_names, ut->m_upgrades,
+                                  ut->m_unitsAffected, ut->m_upgradeMap);
 		}
         for (int i = 0, k = factionType->getUpgradeTypeCount(); i < getType()->getFactionTypeNames().size(); ++i) {
             const FactionType *ft = world->getTechTree()->getFactionType(getType()->getFactionTypeNames()[i]);
             for (int j = 0; j < ft->getUpgradeTypeCount(); ++j) {
                 const UpgradeType *ut = ft->getUpgradeType(i);
-                upgradeStages[k].init(ut, 0, ut->maxStage, ut->m_names, ut->m_enhancements,
-                ut->m_unitsAffected, ut->m_enhancementMap);
+                upgradeStages[k].init(ut, 0, ut->maxStage, ut->m_names, ut->m_upgrades,
+                                      ut->m_unitsAffected, ut->m_upgradeMap);
                 ++k;
             }
         }
@@ -327,7 +268,6 @@ void Faction::save(XmlNode *node) const {
 	node->addChild("startLocationIndex", startLocationIndex);
 	node->addChild("colourIndex", colourIndex);
 	node->addChild("thisFaction", thisFaction);
-	node->addChild("subfaction", subfaction);
 //	node->addChild("lastEventLoc", lastEventLoc);
 	upgradeManager.save(node->addChild("upgrades"));
 
@@ -369,7 +309,6 @@ void Faction::load(const XmlNode *node, World *world, const FactionType *ft, Con
 	teamIndex = node->getChildIntValue("teamIndex");
 	startLocationIndex = node->getChildIntValue("startLocationIndex");
 	thisFaction = node->getChildBoolValue("thisFaction");
-	subfaction = node->getChildIntValue("subfaction");
 	time_t lastAttackNotice = 0;
 	time_t lastEnemyNotice = 0;
 //	lastEventLoc = node->getChildVec3fValue("lastEventLoc");
@@ -398,8 +337,8 @@ void Faction::load(const XmlNode *node, World *world, const FactionType *ft, Con
 	for (int i = 0; i < n->getChildCount(); ++i) {
 		XmlNode *upgradeStageNode = n->getChild("upgradeStage", i);
 		const UpgradeType *ut = ft->getUpgradeType(upgradeStageNode->getChildStringValue("type"));
-        upgradeStages[i].init(ut, 0, ut->maxStage, ut->m_names,
-        ut->m_enhancements, ut->m_unitsAffected, ut->m_enhancementMap);
+        upgradeStages[i].init(ut, 0, ut->maxStage, ut->m_names, ut->m_upgrades,
+                              ut->m_unitsAffected, ut->m_upgradeMap);
     }
 
 	n = node->getChild("units");
@@ -408,7 +347,6 @@ void Faction::load(const XmlNode *node, World *world, const FactionType *ft, Con
 	for (int i = 0; i < n->getChildCount(); ++i) {
 		g_world.newUnit(n->getChild("unit", i), this, map, tt);
 	}
-	subfaction = node->getChildIntValue("subfaction"); // reset in case unit construction changed it
 	colourIndex = node->getChildIntValue("colourIndex");
 
 	texture = g_renderer.newTexture2D(ResourceScope::GAME);
@@ -519,15 +457,15 @@ void Faction::finishUpgrade(const UpgradeType *ut) {
 		const UnitType *unitType = factionType->getUnitType(i);
 		for (int j=0; j < tt->getResourceTypeCount(); ++j) {
 			const ResourceType *resType = tt->getResourceType(j);
-			Modifier mod = us->getCostModifier(unitType, resType);
+			Modifier mod = us->upgradeType->getCostModifier(unitType, resType);
 			m_costModifiers[unitType][resType].m_addition += mod.getAddition();
 			m_costModifiers[unitType][resType].m_multiplier += (mod.getMultiplier() - 1);
 
-			mod = us->getStoreModifier(unitType, resType);
+			mod = us->upgradeType->getStoreModifier(unitType, resType);
 			m_storeModifiers[unitType][resType].m_addition += mod.getAddition();
 			m_storeModifiers[unitType][resType].m_multiplier += (mod.getMultiplier() - 1);
 
-			mod = us->getCreateModifier(unitType, resType);
+			mod = us->upgradeType->getCreateModifier(unitType, resType);
 			m_createModifiers[unitType][resType].m_addition += mod.getAddition();
 			m_createModifiers[unitType][resType].m_multiplier += (mod.getMultiplier() - 1);
 		}
@@ -622,8 +560,7 @@ bool Faction::reqsOk(const RequirableType *rt) const {
             }
 	    //}
 	}
-	// available in subfaction ?
-	return rt->isAvailableInSubfaction(subfaction);
+	return true;
 }
 
 /** Checks if all required units and upgrades are present for a CommandType
@@ -655,7 +592,7 @@ bool Faction::reqsOk(const CommandType *ct, const ProducibleType *pt) const {
 		return true;
 	}
 
-	if ((pt && !reqsOk(pt)) || !isAvailable(ct)) {
+	if ((pt && !reqsOk(pt))) {
 		return false;
 	}
 
@@ -679,32 +616,6 @@ bool Faction::reqsOk(const CommandType *ct, const ProducibleType *pt) const {
         }
     }
 	return reqsOk(static_cast<const RequirableType*>(ct));
-}
-
-/** Checks sub-faction availability of a command @return true if available */
-bool Faction::isAvailable(const CommandType *ct) const {
-	if (ct->getProducedCount() == 1) {
-		return isAvailable(ct, ct->getProduced(0));
-	} else {
-		return isAvailable(ct, 0);
-	}
-}
-
-/** Checks sub-faction availability of a command and a producible @return true if available */
-bool Faction::isAvailable(const CommandType *ct, const ProducibleType *pt) const {
-	if (!ct->isAvailableInSubfaction(subfaction)) {
-		return false;
-	}
-	// If this command is producing or building anything, we need to make sure
-	// that producable is also available.
-	if (pt) {
-		if (pt->isAvailableInSubfaction(subfaction)) {
-			return true;
-		} else {
-			return false;
-		}
-	}
-	return true;
 }
 
 void Faction::reportReqs(const RequirableType *rt, CommandCheckResult &out_result, bool checkDups) const {
@@ -770,7 +681,6 @@ void Faction::reportReqsAndCosts(const CommandType *ct, const ProducibleType *pt
 	out_result.m_commandType = ct;
 	out_result.m_producibleType = pt;
 	reportReqs(ct, out_result);
-	out_result.m_availableInSubFaction = isAvailable(ct);
 	if (pt) {
 		if (pt->getClass() == ProducibleClass::UPGRADE) {
 			const UpgradeType *ut = static_cast<const UpgradeType*>(pt);
@@ -791,9 +701,6 @@ void Faction::reportReqsAndCosts(const CommandType *ct, const ProducibleType *pt
 				int stored = getSResource(res.getType())->getAmount();
 				out_result.m_resourceCostResults.push_back(ResourceCostResult(res.getType(), res.getAmount(), stored, false));
 			}
-		}
-		if (out_result.m_availableInSubFaction) { // don't overwrite false
-			out_result.m_availableInSubFaction = isAvailable(pt);
 		}
 	} else {
 		out_result.m_upgradedAlready = false;
@@ -981,7 +888,7 @@ void Faction::applyCostsOnInterval(const ResourceType *rt) {
 				//      demand exceeds supply & stores.
 				if (getSResource(resource.getType())->getAmount() < 0) {
 					resetResourceAmount(resource.getType());
-					if (unit->decHp(unit->getType()->getResourcePools()->getMaxHp().getValue() / 3)) {
+					if (unit->decHp(unit->getType()->getStatistics()->getEnhancement()->getResourcePools()->getHealth()->getMaxStat()->getValue() / 3)) {
 						World::getCurrWorld()->doKill(unit, unit);
 					} else {
 						StaticSound *sound = unit->getType()->getActions()->getFirstStOfClass(SkillClass::DIE)->getSoundsAndAnimations()->getSound();
@@ -1233,22 +1140,6 @@ void Faction::attackNotice(const Unit *u) {
 		}
 	}
 	g_userInterface.getMinimap()->addAttackNotice(u->getCenteredPos());
-}
-
-void Faction::advanceSubfaction(int subfaction) {
-	this->subfaction = subfaction;
-	//FIXME: We should probably play a sound, display a banner-type notice or
-	//something.
-}
-
-void Faction::checkAdvanceSubfaction(const ProducibleType *pt, bool finished) {
-	int advance = pt->getAdvancesToSubfaction();
-	if (advance != -1 && subfaction != advance) {
-		bool immediate = pt->isAdvanceImmediately();
-		if ((immediate && !finished) || (!immediate && finished)) {
-			advanceSubfaction(advance);
-		}
-	}
 }
 
 void Faction::applyTrade(const ResourceType *rt, int tradeAmount) {

@@ -1704,12 +1704,13 @@ void UserInterface::computeCommandPanel() {
 					for (int i = 0, j = 0; i < unit->getActions()->getCommandTypeCount() - ut->leader.squadCommands.size(); ++i) {
 						const CommandType *ct = unit->getActions()->getCommandType(i);
 						int displayPos = ct->getClass() == CmdClass::MORPH ? morphPos++ : j;
-						if (u->getFaction()->isAvailable(ct) && !ct->isInvisible()) {
+						if (!ct->isInvisible() && ct->getClass() != CmdClass::BE_LOADED) {
 							m_display->setDownImage(displayPos, ct->getImage());
 							m_display->setCommandType(displayPos, ct);
 							bool downLight = false;
 							if (u->getFaction()->reqsOk(ct)) {
-							    if (ct->getProducedCount() == 1 && u->reqsOk(ct->getProduced(0)) && unit->checkCosts(ct, ct->getProduced(0))) {
+							    if (ct->getProducedCount() == 1 && u->reqsOk(ct->getProduced(0)) &&
+                                    unit->checkCosts(ct, ct->getProduced(0)) && unit->checkSkillCosts(ct)) {
                                     downLight = true;
                                 } else if (ct->getProducedCount() > 1) {
                                     downLight = true;
@@ -1741,23 +1742,21 @@ void UserInterface::computeCommandPanel() {
 			m_display->setDownLighted(cancelPos, true);
 			for (int i=0, j=0; i < activeCommandType->getProducedCount(); ++i) {
 				const ProducibleType *pt = activeCommandType->getProduced(i);
-				if (unit->getFaction()->isAvailable(pt)) {
-					m_display->setDownImage(j, pt->getImage());
-                    bool downLight = false;
-                    if (unit->getFaction()->reqsOk(activeCommandType, pt)) {
-                        if (activeCommandType->getProducedCount() == 1 &&
-                            unit->reqsOk(activeCommandType->getProduced(0)) && u->checkCosts(activeCommandType, activeCommandType->getProduced(0))) {
-                            downLight = true;
-                        } else if (activeCommandType->getProducedCount() > 1) {
-                            downLight = true;
-                        } else if (activeCommandType->getProducedCount() == 0) {
-                            downLight = true;
-                        }
+                m_display->setDownImage(j, pt->getImage());
+                bool downLight = false;
+                if (unit->getFaction()->reqsOk(activeCommandType, pt)) {
+                    if (activeCommandType->getProducedCount() == 1 &&
+                        unit->reqsOk(activeCommandType->getProduced(0)) && u->checkCosts(activeCommandType, activeCommandType->getProduced(0))) {
+                        downLight = true;
+                    } else if (activeCommandType->getProducedCount() > 1) {
+                        downLight = true;
+                    } else if (activeCommandType->getProducedCount() == 0) {
+                        downLight = true;
                     }
-					m_display->setDownLighted(j, downLight);
-                    m_display->setIndex(j, i);
-                    ++j;
                 }
+                m_display->setDownLighted(j, downLight);
+                m_display->setIndex(j, i);
+                ++j;
             }
             if (activePos >= activeCommandType->getProducedCount()) {
                 activePos = invalidPos;

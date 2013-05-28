@@ -46,6 +46,10 @@ private:
     ResourceTypes resourceTypes;
     FactionTypes factionTypes;
 	EffectTypes effectTypes;
+	DamageTypes damageTypes;
+	DamageTypes resistances;
+
+    ListTraits traitsList;
 
     ResourceTypeMap resourceTypeMap;
     FactionTypeMap factionTypeMap;
@@ -64,14 +68,21 @@ public:
 	string getName() const			{ return name; }
 
 	// get count
-	int getResourceTypeCount() const							{return resourceTypes.size();}
-	int getFactionTypeCount() const								{return factionTypes.size();}
-	int getEffectTypeCount() const								{return effectTypes.size();}
+	int getResourceTypeCount() const						{return resourceTypes.size();}
+	int getFactionTypeCount() const							{return factionTypes.size();}
+	int getEffectTypeCount() const							{return effectTypes.size();}
+	int getDamageTypeCount() const							{return damageTypes.size();}
+	int getResistanceCount() const							{return resistances.size();}
+	int getTraitCount() const								{return traitsList.size();}
 
 	// get by index
-	const ResourceType *getResourceType(int i) const			{return &resourceTypes[i];}
-	const FactionType *getFactionType(int i) const				{return &factionTypes[i];}
-	const EffectType *getEffectType(int i) const				{return effectTypes[i];}
+	const ResourceType *getResourceType(int i) const		{return &resourceTypes[i];}
+	const FactionType *getFactionType(int i) const			{return &factionTypes[i];}
+	const EffectType *getEffectType(int i) const			{return effectTypes[i];}
+	DamageType getDamageType(int i) const			        {return damageTypes[i];}
+	DamageType getResistance(int i) const			        {return resistances[i];}
+	const Trait *getTrait(int i) const	        		    {return &traitsList[i];}
+    Trait *getTraitById(int id);
 
 	// get by name
 	const ResourceType *getResourceType(const string &name) const {

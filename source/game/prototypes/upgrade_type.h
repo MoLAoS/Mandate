@@ -33,20 +33,17 @@ using Glest::Sim::World;
 
 namespace Glest { namespace ProtoTypes {
 
-///@todo: ResourceModifierType ...
-/** resource amount modifier */
 typedef map<const ResourceType*, Modifier> ResModifierMap;
 
-/** A unit type enhancement, an EnhancementType + resource cost modifiers + resource storage modifiers + resource creation modifiers */
 struct UpgradeEffect {
-	Statistics  m_enhancement;
+	Statistics       m_statistics;
 	ResModifierMap   m_costModifiers;
 	ResModifierMap   m_storeModifiers;
 	ResModifierMap   m_createModifiers;
     Actions          actions;
 
     Actions *getActions() {return &actions;}
-	const Statistics* getStatistics() const { return &m_enhancement; }
+	const Statistics* getStatistics() const { return &m_statistics; }
 };
 
 // ===============================
@@ -55,47 +52,72 @@ struct UpgradeEffect {
 
 /** A collection of EnhancementTypes and resource mods that represents a permanent,
   * producable (i.e., researchable) upgrade for one or more unit types. */
+class UpgradeUnitCombo {
+private:
+    const UnitType *m_ut;
+    const UpgradeEffect *m_ue;
+public:
+    void init(const UnitType *ut, UpgradeEffect *ue) {m_ut = ut; m_ue = ue;}
+
+    const UnitType *getUnitType() const {return m_ut;}
+    const UpgradeEffect *getUpgradeEffect() const {return m_ue;}
+
+	bool affectsThis(const UnitType *ut, const UpgradeEffect *ue) const {
+        if (m_ut == ut && m_ue == ue) {
+            return true;
+        }
+        return false;
+	}
+};
+
 class UpgradeType : public ProducibleType {
 private:
-	typedef vector<UpgradeEffect> Enhancements;
-	typedef map<const UnitType*, const UpgradeEffect*> EnhancementMap;
-	typedef vector< vector<string> > AffectedUnits; // just names, used only in getDesc()
-    typedef vector<string> Names; // just names, used only in getNameDesc()
+	typedef vector<UpgradeEffect> Upgrades;
+	typedef vector<UpgradeUnitCombo> UpgradeUnitMap;
+	typedef vector< vector<string> > AffectedUnits;
+    typedef vector<string> Names;
 
 public:
-	EnhancementMap     m_enhancementMap;
-	const FactionType *m_factionType;
+	UpgradeUnitMap     m_upgradeMap;
     Names              m_names;
 
-	Enhancements       m_enhancements;
+	Upgrades           m_upgrades;
 	AffectedUnits      m_unitsAffected;
 
 private:
-	bool loadNewStyle(const XmlNode *node, const string &dir, const TechTree *techTree, const FactionType *factionType);
-	bool loadOldStyle(const XmlNode *node, const string &dir, const TechTree *techTree, const FactionType *factionType);
-	void loadResourceModifier(const XmlNode *node, ResModifierMap &map, const TechTree *techTree);
-
-public:
-	static ProducibleClass typeClass() { return ProducibleClass::UPGRADE; }
+	void loadResourceModifier(const XmlNode *node, ResModifierMap &map);
 
 public:
 	UpgradeType();
 	void preLoad(const string &dir)			{ m_name = basename(dir); }
-	virtual bool load(const string &dir, const TechTree *techTree, const FactionType *factionType);
+	bool load(const string &dir);
     int maxStage;
 
+    bool isAffected(const UnitType *ut) const {
+        for (int i = 0; i < m_upgradeMap.size(); ++i) {
+            if (m_upgradeMap[i].getUnitType() == ut) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    const Statistics *getStatistics(const UnitType *ut) const {
+        for (int i = 0; i < m_upgradeMap.size(); ++i) {
+            if (m_upgradeMap[i].getUnitType() == ut) {
+                return m_upgradeMap[i].getUpgradeEffect()->getStatistics();
+            }
+        }
+        return 0;
+    }
+
 	// get
-	ProducibleClass getClass() const override                       { return typeClass(); }
-	const FactionType* getFactionType() const                       { return m_factionType; }
-	const Statistics *getEnhancement(const UnitType *ut) const;
+	ProducibleClass getClass() const override   { return typeClass(); }
+	static ProducibleClass typeClass()          { return ProducibleClass::UPGRADE; }
 	Modifier getCostModifier(const UnitType *ut, const ResourceType *rt) const;
 	Modifier getStoreModifier(const UnitType *ut, const ResourceType *rt) const;
     Modifier getCreateModifier(const UnitType *ut, const ResourceType *rt) const;
     int getMaxStage() const { return maxStage; }
-
-	bool isAffected(const UnitType *unitType) const {
-		return m_enhancementMap.find(unitType) != m_enhancementMap.end();
-	}
 
 	virtual void doChecksum(Checksum &checksum) const;
 	string getDesc(Faction *f) const;

@@ -1,0 +1,100 @@
+<?xml version="1.0" standalone="no"?>
+<tech-tree>
+	<description value="provision tech tree"/>
+	<pool-types>
+		<pool-type name="mana"/>
+		<pool-type name="energy"/>
+		<pool-type name="stamina"/>
+	</pool-types>
+	<defense-types>
+		<defense-type name="magic_shield"/>
+	</defense-types>
+	<damage-types>
+		<damage-type name="fire"/>
+		<damage-type name="ice"/>
+		<damage-type name="heat"/>
+		<damage-type name="cold"/>
+		<damage-type name="lightning"/>
+		<damage-type name="shadow"/>
+		<damage-type name="poison"/>
+		<damage-type name="light"/>
+		<damage-type name="piercing"/>
+		<damage-type name="smashing"/>
+		<damage-type name="slashing"/>
+		<damage-type name="bleeding"/>
+		<damage-type name="rotting"/>
+		<damage-type name="compression"/>
+		<damage-type name="expansion"/>
+		<damage-type name="mental"/>
+		<damage-type name="acid"/>
+		<damage-type name="chaos"/>
+		<damage-type name="asphyxiation"/>
+		<damage-type name="vacuum"/>
+		<damage-type name="soul"/>
+		<damage-type name="lunar"/>
+		<damage-type name="solar"/>
+	</damage-types>
+	<weapon-types>
+		<weapon-type name="edged"/>
+		<weapon-type name="bashing"/>
+		<weapon-type name="piercing"/>
+		<weapon-type name="stave"/>
+		<weapon-type name="wand"/>
+		<weapon-type name="staff"/>
+		<weapon-type name="bow"/>
+		<weapon-type name="crossbow"/>
+		<weapon-type name="piercing"/>
+		<weapon-type name="sword"/>
+		<weapon-type name="axe"/>
+		<weapon-type name="hammer"/>
+		<weapon-type name="mace"/>
+		<weapon-type name="dagger"/>
+		<weapon-type name="spear"/>
+		<weapon-type name="halbred"/>
+		<weapon-type name="flail"/>
+		<weapon-type name="pike"/>
+		<weapon-type name="javelin"/>
+	</weapon-types>
+	<armor-types>
+		<armor-type name="helm"/>
+		<armor-type name="helmet"/>
+		<armor-type name="bracers"/>
+		<armor-type name="gauntlets"/>
+		<armor-type name="boots"/>
+		<armor-type name="greaves"/>
+		<armor-type name="platemail"/>
+		<armor-type name="chainmail"/>
+		<armor-type name="leather"/>
+		<armor-type name="studded"/>
+		<armor-type name="quilted"/>
+		<armor-type name="hat"/>
+		<armor-type name="robe"/>
+		<armor-type name="gloves"/>
+		<armor-type name="shoes"/>
+	</armor-types>
+	<accessory-types>
+		<accessory-type name="orb"/>
+		<accessory-type name="ring"/>
+		<accessory-type name="amulet"/>
+		<accessory-type name="bracelet"/>
+		<accessory-type name="carving"/>
+		<accessory-type name="talisman"/>
+		<accessory-type name="chain"/>
+		<accessory-type name="net"/>
+		<accessory-type name="rope"/>
+		<accessory-type name="bola"/>
+	</accessory-types>
+    <resource-types>
+        <resource-type name="adamantium_ingots" />
+        <resource-type name="aluminum_bar" />
+        <resource-type name="aurelium_bar" />
+        <resource-type name="copper_ingots" />
+        <resource-type name="gold_ingots" />
+        <resource-type name="iron_bar" />
+        <resource-type name="lead_bar" />
+        <resource-type name="mithril_ingots" />
+        <resource-type name="silver_ingots" />
+        <resource-type name="steel_bar" />
+        <resource-type name="titanium_ingots" />
+    </resource-types>
+</tech-tree>

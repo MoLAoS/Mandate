@@ -9,33 +9,45 @@
 #ifndef _GLEST_GAME_TRAITS_H_
 #define _GLEST_GAME_TRAITS_H_
 
-#include "statistics.h"
+#include "character.h"
 #include "effect_type.h"
 
 namespace Glest{ namespace ProtoTypes {
-
 // =====================================================
 // 	class Traits
 // =====================================================
-class Trait : public Statistics, public RequirableType {
+class Trait : public RequirableType {
 private:
-    typedef vector<string> Equipment;
+    CharacterStats characterStats;
+    CraftingStats craftingStats;
+    EffectTypes effectTypes;
+    Statistics statistics;
+    Equipments equipment;
+    Knowledge knowledge;
+    Actions actions;
     int progress;
-	EffectTypes effectTypes;
-    Equipment equipment;
-    const FactionType* m_factionType;
     string name;
+    int id;
 public:
-	const FactionType* getFactionType() const { return m_factionType; }
+    int getId() {return id;}
+    int getProgress() {return progress;}
     string getTraitName() const {return name;}
-    Equipment getEquipment() const {return equipment;}
+    int getEquipmentCount() {return equipment.size();}
+    Equipment *getEquipment(int i) {return &equipment[i];}
+    Actions *getActions() {return &actions;}
+    Statistics *getStatistics() {return &statistics;}
     int getEffectTypeCount() const {return effectTypes.size();}
     const EffectTypes &getEffectTypes() const {return effectTypes;}
     const EffectType *getEffectType(int i) const {return effectTypes[i];}
 	bool hasEffects() const {return effectTypes.size() > 0;}
+	void save(XmlNode *node) const;
+	void getDesc(string &str, const char *pre);
 	void preLoad(const string &dir);
-	bool load(const string &dir, const TechTree *techTree, const FactionType *factionType);
+	bool load(const string &dir);
 };
+
+typedef vector<Trait> ListTraits;
+typedef vector<Trait*> Traits;
 
 }}//end namespace
 

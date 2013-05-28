@@ -52,9 +52,8 @@ StructureCommandType::~StructureCommandType(){
 	deleteValues(m_startSounds.getSounds().begin(), m_startSounds.getSounds().end());
 }
 
-bool StructureCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct) {
-    bool loadOk = CommandType::load(n, dir, tt, ct);
-    const FactionType *ft = ct->getFactionType();
+bool StructureCommandType::load(const XmlNode *n, const string &dir, const FactionType *ft, const CreatableType *ct) {
+    bool loadOk = CommandType::load(n, dir, ft, ct);
 	try {
 	    const XmlNode *childNode = n->getChild("child-structure", 0, false);
 	    if (childNode) {
@@ -271,7 +270,6 @@ void StructureCommandType::acceptBuild(Unit *unit, Command *command, const UnitT
     builtUnit->create();
     unit->setCurrSkill(m_buildSkillType);
     unit->setTarget(builtUnit, true, true);
-    unit->getFaction()->checkAdvanceSubfaction(builtUnit->getType(), false);
     Vec2i tilePos = Map::toTileCoords(builtUnit->getCenteredPos());
     if (builtUnitType->getField() == Field::LAND
     || (builtUnitType->getField() == Field::AMPHIBIOUS && !map->isTileSubmerged(tilePos))) {
@@ -310,9 +308,8 @@ ConstructCommandType::~ConstructCommandType(){
 	deleteValues(m_startSounds.getSounds().begin(), m_startSounds.getSounds().end());
 }
 
-bool ConstructCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct) {
-	bool loadOk = MoveBaseCommandType::load(n, dir, tt, ct);
-	const FactionType *ft = ct->getFactionType();
+bool ConstructCommandType::load(const XmlNode *n, const string &dir, const FactionType *ft, const CreatableType *ct) {
+	bool loadOk = MoveBaseCommandType::load(n, dir, ft, ct);
 	try {
 		string skillName = n->getChild("construct-skill")->getAttribute("value")->getRestrictedValue();
 		m_constructSkillType = static_cast<const ConstructSkillType*>(creatableType->getActions()->getSkillType(skillName, SkillClass::CONSTRUCT));
@@ -539,9 +536,9 @@ void ConstructCommandType::acceptBuild(Unit *unit, Command *command, const UnitT
 	const UnitType *preBuiltUnitType = unit->getFaction()->getType()->getUnitType(preUnitType);
 	builtUnit = g_world.newUnit(command->getPos(), preBuiltUnitType, unit->getFaction(), map, command->getFacing());
 	builtUnit->create();
-	int newHp = builtUnit->getType()->getResourcePools()->getMaxHp().getValue();
+	int newHp = builtUnit->getType()->getStatistics()->getEnhancement()->getResourcePools()->getHealth()->getMaxStat()->getValue();
 	builtUnit->repair(newHp);
-	newHp = builtUnitType->getResourcePools()->getMaxHp().getValue();
+	newHp = builtUnitType->getStatistics()->getEnhancement()->getResourcePools()->getHealth()->getMaxStat()->getValue();
 	builtUnit->decHp(newHp);
     unit->finishCommand();
     unit->setCurrSkill(SkillClass::STOP);
@@ -551,9 +548,8 @@ void ConstructCommandType::acceptBuild(Unit *unit, Command *command, const UnitT
 // 	class MaintainCommandType
 // =====================================================
 
-bool MaintainCommandType::load(const XmlNode *n, const string &dir, const TechTree *tt, const CreatableType *ct) {
-	bool loadOk = MoveBaseCommandType::load(n, dir, tt, ct);
-    const FactionType *ft = ct->getFactionType();
+bool MaintainCommandType::load(const XmlNode *n, const string &dir, const FactionType *ft, const CreatableType *ct) {
+	bool loadOk = MoveBaseCommandType::load(n, dir, ft, ct);
 	//repair
 	try {
 		string skillName = n->getChild("maintain-skill")->getAttribute("value")->getRestrictedValue();
@@ -597,9 +593,7 @@ void MaintainCommandType::getDesc(string &str, const Unit *unit) const{
 	} else {
 		for(int i = 0; i < maintainableUnits.size(); ++i){
 			const UnitType *ut = (const UnitType*)maintainableUnits[i];
-			if(ut->isAvailableInSubfaction(unit->getFaction()->getSubfaction())) {
-				str+= ut->getName()+"\n";
-			}
+            str+= ut->getName()+"\n";
 		}
 	}
 }
@@ -636,59 +630,6 @@ CmdResult MaintainCommandType::check(const Unit *unit, const Command &command) c
 		return CmdResult::FAIL_UNDEFINED;
 	}
 }
-
-/*void ConstructCommandType::continueBuild(Unit *unit, const Command *command, const UnitType *builtUnitType) const {
-	BUILD_LOG( unit, "building." );
-	Unit *builtUnit = command->getUnit();
-	if (builtUnit && builtUnit->getType() != builtUnit->getType()) {
-		unit->setCurrSkill(SkillClass::STOP);
-	} else if (!builtUnit || builtUnit->isBuilt()) {
-		unit->finishCommand();
-		unit->setCurrSkill(SkillClass::STOP);
-	} else {
-    if (unit->getCurrSkill()->getClass() == SkillClass::CONSTRUCT) {
-        bool check = true;
-        for (int i = 0; i < builtUnitType->getCostCount(); ++i) {
-            const ResourceType *rt = builtUnitType->getCost(i, unit->getFaction()).getType();
-            int cost = builtUnitType->getCost(i, unit->getFaction()).getAmount() / builtUnitType->getProductionTime()
-            * ((unit->getCurrSkill()->getSpeed(unit)) / 100).intp();
-            int stored = builtUnit->getSResource(rt)->getAmount();
-            if (cost > stored) {
-                check = false;
-                break;
-            }
-        }
-        if (check == true) {
-            for (int i = 0; i < builtUnitType->getCostCount(); ++i) {
-                const ResourceType *costType = builtUnitType->getCost(i, unit->getFaction()).getType();
-                int cost = builtUnitType->getCost(i, unit->getFaction()).getAmount() / builtUnitType->getProductionTime()
-                * ((unit->getCurrSkill()->getSpeed(unit)) / 100).intp();
-                builtUnit->incResourceAmount(costType, cost);
-            }
-            if (builtUnit->repair()) {
-                unit->finishCommand();
-                unit->setCurrSkill(SkillClass::STOP);
-                unit->getFaction()->checkAdvanceSubfaction(builtUnit->getType(), true);
-                ScriptManager::onUnitCreated(builtUnit);
-                if (unit->getFactionIndex() == g_world.getThisFactionIndex()) {
-                    RUNTIME_CHECK(!unit->isCarried() && !unit->isGarrisoned());
-                    g_soundRenderer.playFx(getBuiltSound(), unit->getCurrVector(), g_gameState.getGameCamera()->getPos());
-                }
-                Vec2i samePos = builtUnit->getPos();
-                string name = builtUnitType->getName();
-                int faction = builtUnit->getFaction()->getIndex();
-                ScriptManager::onUnitDied(builtUnit);
-                builtUnit->decHp(builtUnit->getHp());
-                builtUnit->replace();
-                if (!builtUnit->isMobile()) {
-                    g_world.getCartographer()->updateMapMetrics(builtUnit->getPos(), builtUnit->getSize());
-                }
-                g_world.createUnit(name, faction, samePos, true);
-            }
-        }
-	}
-	}
-}*/
 
 bool MaintainCommandType::canMaintain(const UnitType *unitType) const{
 	for(int i=0; i < maintainableUnits.size(); ++i) {
@@ -846,13 +787,12 @@ void MaintainCommandType::tick(const Unit *unit, Command &command) const {
 }
 
 Command *MaintainCommandType::doAutoMaintain(Unit *unit) const {
-	if (!unit->isAutoCmdEnabled(AutoCmdFlag::MAINTAIN) || !unit->getFaction()->isAvailable(this)) {
+	if (!unit->isAutoCmdEnabled(AutoCmdFlag::MAINTAIN)) {
 		return 0;
 	}
 
 	Unit *sighted = NULL;
-	if (unit->getEp() >= maintainSkillType->getSkillCosts()->getEpCost()
-	&& maintainableInSight(unit, &sighted, this, maintainSkillType->isSelfAllowed())) {
+	if (unit->checkSkillCosts(this) && maintainableInSight(unit, &sighted, this, maintainSkillType->isSelfAllowed())) {
 		REPAIR_LOG( unit, __FUNCTION__ << "(): Unit:" << *unit << " @ " << unit->getPos()
 			<< ", found someone (" << *sighted << ") to repair @ " << sighted->getPos() );
 		Command *newCommand;
@@ -960,7 +900,7 @@ bool MaintainCommandType::maintainableInRange(const Unit *unit, Unit **rangedPtr
 
 bool MaintainCommandType::maintainableInSight(const Unit *unit, Unit **rangedPtr,
 							const MaintainCommandType *rct, bool allowSelf) {
-	return maintainableInRange(unit, rangedPtr, rct, unit->getUnitStats()->getSight().getValue(), allowSelf);
+	return maintainableInRange(unit, rangedPtr, rct, unit->getStatistics()->getEnhancement()->getUnitStats()->getSight()->getValue(), allowSelf);
 }
 
 }}

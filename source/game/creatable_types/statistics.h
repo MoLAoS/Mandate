@@ -26,7 +26,10 @@ public:
     int getValue() const {return value;}
     void setValue(int i) {value = value + i;}
 
+	void getDesc(string &str, const char *pre) const;
+
     void init(const string name, const int amount);
+    void save(XmlNode *node) const;
 };
 
 // ===============================
@@ -34,29 +37,45 @@ public:
 // ===============================
 typedef vector<DamageType> DamageTypes;
 
-class Statistics : public EnhancementType {
+class Statistics {
 public:
+    EnhancementType enhancement;
     DamageTypes damageTypes;
     DamageTypes resistances;
 public:
+    EnhancementType *getEnhancement() {return &enhancement;}
+    const EnhancementType *getEnhancement() const {return &enhancement;}
     const DamageTypes *getDamageTypes() const {return &damageTypes;}
     const DamageTypes *getResistances() const {return &resistances;}
     int getDamageTypeCount() const {return damageTypes.size();}
     int getResistanceCount() const {return resistances.size();}
     const DamageType *getDamageType(int i) const {return &damageTypes[i];}
     const DamageType *getResistance(int i) const {return &resistances[i];}
-    bool load(const XmlNode *baseNode, const string &dir, const TechTree *tt, const FactionType *ft);
+    bool load(const XmlNode *baseNode, const string &dir);
+    bool isEmpty() const;
     void sum(const Statistics *stats);
+    void save(XmlNode *node) const;
     void addResistancesAndDamage(const Statistics *stats);
+    void cleanse();
+    void modify();
+	void getDesc(string &str, const char *pre) const;
+	void addStatic(const EnhancementType *e, fixed strength = 1);
+	void addMultipliers(const EnhancementType *e, fixed strength = 1);
+	void applyMultipliers(const EnhancementType *e);
+	void clampMultipliers();
+	void sanitise();
+	void loadAllDamages(const TechTree *techTree);
 };
 
 // ===============================
 // 	class Load Bonus
 // ===============================
-class LoadBonus : public Statistics {
+class LoadBonus {
 private:
     string source;
+    Statistics statistics;
 public:
+    const Statistics *getStatistics() const {return &statistics;}
 	string getSource() const {return source;}
 	virtual bool load(const XmlNode *loadBonusNode, const string &dir, const TechTree *tt, const FactionType *ft);
 };

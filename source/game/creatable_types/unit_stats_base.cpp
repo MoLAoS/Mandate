@@ -47,10 +47,34 @@ void Stat::reset() {
 	this->layerMult = 0;
 }
 
+bool Stat::isEmpty() const {
+    bool empty = true;
+	if (this->value != 0) empty = false;
+	if (this->valueMult != 1) empty = false;
+	if (this->layerAdd != 0) empty = false;
+	if (this->layerMult != 0) empty = false;
+	return empty;
+}
+
 void Stat::modify() {
     this->value += layerAdd;
     this->valueMult += layerMult;
     this->value = (value * valueMult).intp();
+}
+
+void Stat::save(XmlNode *node) const {
+    if (value != 0) {
+        node->addAttribute("value", value);
+    }
+    if (valueMult.intp() != 1) {
+        node->addAttribute("value-mult", valueMult.intp());
+    }
+    if (layerAdd != 0) {
+        node->addAttribute("add", layerAdd);
+    }
+    if (layerMult.intp() != 0) {
+        node->addAttribute("mult", layerMult.intp());
+    }
 }
 
 void Stat::doChecksum(Checksum &checksum) const {
@@ -60,7 +84,7 @@ void Stat::doChecksum(Checksum &checksum) const {
 	checksum.add(layerMult);
 }
 
-bool Stat::load(const XmlNode *baseNode, const string &dir) {
+bool Stat::load(const XmlNode *baseNode) {
     bool loadOk = true;
     reset();
     const XmlAttribute* statAttibute = baseNode->getAttribute("value", false);
@@ -97,17 +121,17 @@ void Stat::clampMultipliers() {
 	}
 }
 
-void formatModifier(string &str, const char *pre, string label, int value, fixed multiplier, int layer, fixed layerMult) {
+void Stat::formatModifier(string &str, const char *pre, string label, int base, fixed multiplier, int layer, fixed layerMultiplier) const {
 	Lang &lang = Lang::getInstance();
-	if (value) {
+	if (base) {
 		str += pre + lang.get(label) + ": ";
-		if (value > 0) {
+		if (base > 0) {
 			str += "+";
 		}
-		str += intToStr(value);
+		str += intToStr(base);
 	}
 	if (multiplier != 1) {
-		if(value) {
+		if(base) {
 			str += ", ";
 		} else {
 			str += pre + lang.get(label) + ": ";
@@ -119,21 +143,21 @@ void formatModifier(string &str, const char *pre, string label, int value, fixed
 	}
 	if (layer) {
 		str += pre + lang.get(label) + ": ";
-		if (value > 0) {
+		if (base > 0) {
 			str += "+";
 		}
-		str += intToStr(value);
+		str += intToStr(base);
 	}
-	if (layerMult != 1) {
-		if(value) {
+	if (layerMultiplier != 0) {
+		if(base) {
 			str += ", ";
 		} else {
 			str += pre + lang.get(label) + ": ";
 		}
-		if (multiplier > 1) {
+		if (layerMultiplier > 1) {
 			str += "+";
 		}
-		str += intToStr(((multiplier - 1) * 100).intp()) + "%";
+		str += intToStr(((layerMultiplier - 1) * 100).intp()) + "%";
 	}
 }
 
@@ -142,156 +166,218 @@ void Stat::getDesc(string &str, const char *pre, string name) const {
 }
 
 // ===============================
+// 	class StatGroup
+// ===============================
+void StatGroup::reset() {
+    name = "stat";
+    this->maxStat.reset();
+    this->regenStat.reset();
+    this->boostStat.reset();
+}
+
+void StatGroup::modify() {
+    this->maxStat.modify();
+    this->regenStat.modify();
+    this->boostStat.modify();
+}
+
+bool StatGroup::isEmpty() const {
+    bool empty = true;
+    if (!maxStat.isEmpty()) empty = false;
+    if (!regenStat.isEmpty()) empty = false;
+    if (!boostStat.isEmpty()) empty = false;
+    return empty;
+}
+
+void StatGroup::doChecksum(Checksum &checksum) const {
+	checksum.add(maxStat);
+	checksum.add(regenStat);
+	checksum.add(boostStat);
+}
+
+void StatGroup::clampMultipliers() {
+	maxStat.clampMultipliers();
+	regenStat.clampMultipliers();
+	boostStat.clampMultipliers();
+}
+
+bool StatGroup::load(const XmlNode *baseNode, const string &dir) {
+    bool loadOk = true;
+    reset();
+    string statName = baseNode->getAttribute("name")->getRestrictedValue();
+    name = statName;
+    const XmlNode* maxStatNode = baseNode->getChild("max-stat", 0, false);
+    if (maxStatNode) {
+        loadOk = maxStat.load(maxStatNode) && loadOk;
+    }
+    const XmlNode* regenStatNode = baseNode->getChild("regen-stat", 0, false);
+    if (regenStatNode) {
+        loadOk = regenStat.load(regenStatNode) && loadOk;
+    }
+    const XmlNode* boostStatNode = baseNode->getChild("boost-stat", 0, false);
+    if (boostStatNode) {
+        loadOk = boostStat.load(boostStatNode) && loadOk;
+    }
+    return loadOk;
+}
+
+
+void StatGroup::save(XmlNode *node) const {
+    node->addAttribute("name", name);
+    if (!maxStat.isEmpty()) {
+        maxStat.save(node->addChild("max-stat"));
+    }
+    if (!regenStat.isEmpty()) {
+        regenStat.save(node->addChild("regen-stat"));
+    }
+    if (!boostStat.isEmpty()) {
+        boostStat.save(node->addChild("boost-stat"));
+    }
+}
+
+void StatGroup::addStatic(const StatGroup *sg, fixed strength) {
+    int newMaxStat = (sg->getMaxStat()->getValue() * strength).intp();
+	maxStat.incValue(newMaxStat);
+	int newRegenStat = (sg->getRegenStat()->getValue() * strength).intp();
+	regenStat.incValue(newRegenStat);
+	int newBoostStat = (sg->getBoostStat()->getValue() * strength).intp();
+	boostStat.incValue(newBoostStat);
+}
+
+void StatGroup::addMultipliers(const StatGroup *sg, fixed strength) {
+	maxStat.incValueMult((sg->getMaxStat()->getValueMult() - 1) * strength);
+	regenStat.incValueMult((sg->getRegenStat()->getValueMult() - 1) * strength);
+}
+
+void StatGroup::sanitiseStatGroup() {
+	maxStat.sanitiseStat(0);
+	boostStat.sanitiseStat(0);
+}
+
+void StatGroup::applyMultipliers(const StatGroup *sg) {
+    int newMaxStat = (maxStat.getValue() * sg->getMaxStat()->getValueMult()).intp();
+	maxStat.setValue(newMaxStat);
+	int newRegenStat = (regenStat.getValue() * sg->getRegenStat()->getValueMult()).intp();
+	regenStat.setValue(newRegenStat);
+}
+
+void StatGroup::getDesc(string &str, const char *pre) const {
+    str += pre;
+    str += name;
+    maxStat.getDesc(str, pre, "Max");
+    regenStat.getDesc(str, pre, "Regen");
+    boostStat.getDesc(str, pre, "Boost");
+}
+
+// ===============================
 // 	class ResourcePools
 // ===============================
 void ResourcePools::reset() {
-	maxHp.reset();
-	hpRegeneration.reset();
-	maxSp.reset();
-	spRegeneration.reset();
-	maxEp.reset();
-	epRegeneration.reset();
+    health.reset();
+    health.setName("health");
+    for (int i = 0; i < getResourceCount(); ++i) {
+        resources[i].reset();
+    }
+    for (int i = 0; i < getDefenseCount(); ++i) {
+        defenses[i].reset();
+    }
 	maxCp.reset();
-	hpBoost.reset();
-	spBoost.reset();
-	epBoost.reset();
+}
+
+bool ResourcePools::isEmpty() const {
+    bool empty = true;
+    if (!health.isEmpty()) empty = false;
+    for (int i = 0; i < getResourceCount(); ++i) {
+        if (!resources[i].isEmpty()) empty = false;
+    }
+    for (int i = 0; i < getDefenseCount(); ++i) {
+        if (!defenses[i].isEmpty()) empty = false;
+    }
+	if (!maxCp.isEmpty()) empty = false;
+	return empty;
 }
 
 void ResourcePools::modify() {
-	maxHp.modify();
-	hpRegeneration.modify();
-	maxSp.modify();
-	spRegeneration.modify();
-	maxEp.modify();
-	epRegeneration.modify();
+    health.modify();
+    for (int i = 0; i < getResourceCount(); ++i) {
+        resources[i].modify();
+    }
+    for (int i = 0; i < getDefenseCount(); ++i) {
+        defenses[i].modify();
+    }
 	maxCp.modify();
-	hpBoost.modify();
-	spBoost.modify();
-	epBoost.modify();
 }
 
 void ResourcePools::clampMultipliers() {
-	maxHp.clampMultipliers();
-	hpRegeneration.clampMultipliers();
-	maxSp.clampMultipliers();
-	spRegeneration.clampMultipliers();
-	maxEp.clampMultipliers();
-	epRegeneration.clampMultipliers();
+    health.clampMultipliers();
+    for (int i = 0; i < getResourceCount(); ++i) {
+        resources[i].clampMultipliers();
+    }
+    for (int i = 0; i < getDefenseCount(); ++i) {
+        defenses[i].clampMultipliers();
+    }
 	maxCp.clampMultipliers();
-	hpBoost.clampMultipliers();
-	spBoost.clampMultipliers();
-	epBoost.clampMultipliers();
 }
 
 void ResourcePools::doChecksum(Checksum &checksum) const {
-	checksum.add(maxHp);
-	checksum.add(hpRegeneration);
-	checksum.add(maxSp);
-	checksum.add(spRegeneration);
-	checksum.add(maxEp);
-	checksum.add(epRegeneration);
+    checksum.add(health);
+    for (int i = 0; i < getResourceCount(); ++i) {
+        checksum.add(resources[i]);
+    }
+    for (int i = 0; i < getDefenseCount(); ++i) {
+        checksum.add(defenses[i]);
+    }
 	checksum.add(maxCp);
-	checksum.add(hpBoost);
-	checksum.add(spBoost);
-	checksum.add(epBoost);
 }
 
 bool ResourcePools::load(const XmlNode *baseNode, const string &dir) {
 	bool loadOk = true;
-	try {
-        const XmlNode *maxHpNode = baseNode->getChild("max-hp", 0, false);
-        if (maxHpNode) {
-            if (!maxHp.load(maxHpNode, dir)) {
-                loadOk = false;
-            }
-        }
-        const XmlNode *hpRegenerationNode = baseNode->getChild("hp-regen", 0, false);
-        if (hpRegenerationNode) {
-            if (!hpRegeneration.load(hpRegenerationNode, dir)) {
-                loadOk = false;
-            }
+	const XmlNode *healthNode = baseNode->getChild("health");
+    try {
+        if (!health.load(healthNode, dir)) {
+            loadOk = false;
         }
     }
     catch (runtime_error e) {
-		g_logger.logXmlError(dir, e.what());
-		loadOk = false;
+        g_logger.logXmlError(dir, e.what());
+        loadOk = false;
+    }
+	const XmlNode *resourcesNode = baseNode->getChild("pools", 0, false);
+	if (resourcesNode) {
+        resources.resize(resourcesNode->getChildCount());
+        for (int i = 0; i < resourcesNode->getChildCount(); ++i) {
+            try {
+                const XmlNode *resourceNode = resourcesNode->getChild("pool", i);
+                if (!resources[i].load(resourceNode, dir)) {
+                    loadOk = false;
+                }
+            }
+            catch (runtime_error e) {
+                g_logger.logXmlError(dir, e.what());
+                loadOk = false;
+            }
+        }
 	}
-	try {
-        const XmlNode *maxSpNode = baseNode->getChild("max-sp", 0, false);
-        if (maxSpNode) {
-            if (!maxSp.load(maxSpNode, dir)) {
+	const XmlNode *defensesNode = baseNode->getChild("defenses", 0, false);
+	if (defensesNode) {
+        defenses.resize(defensesNode->getChildCount());
+        for (int i = 0; i < defensesNode->getChildCount(); ++i) {
+            try {
+                const XmlNode *defenseNode = defensesNode->getChild("defense", i);
+                if (!defenses[i].load(defenseNode, dir)) {
+                    loadOk = false;
+                }
+            }
+            catch (runtime_error e) {
+                g_logger.logXmlError(dir, e.what());
                 loadOk = false;
             }
         }
-        const XmlNode *spRegenerationNode = baseNode->getChild("sp-regen", 0, false);
-        if (spRegenerationNode) {
-            if (!spRegeneration.load(spRegenerationNode, dir)) {
-                loadOk = false;
-            }
-        }
-    }
-    catch (runtime_error e) {
-		g_logger.logXmlError(dir, e.what());
-		loadOk = false;
-	}
-	try {
-        const XmlNode *maxEpNode = baseNode->getChild("max-ep", 0, false);
-        if (maxEpNode) {
-            if (!maxEp.load(maxEpNode, dir)) {
-                loadOk = false;
-            }
-        }
-        const XmlNode *epRegenerationNode = baseNode->getChild("ep-regen", 0, false);
-        if (epRegenerationNode) {
-            if (!epRegeneration.load(epRegenerationNode, dir)) {
-                loadOk = false;
-            }
-        }
-    }
-    catch (runtime_error e) {
-		g_logger.logXmlError(dir, e.what());
-		loadOk = false;
 	}
 	try {
         const XmlNode *maxCpNode = baseNode->getChild("max-cp", 0, false);
         if (maxCpNode) {
-            if (!maxCp.load(maxCpNode, dir)) {
-                loadOk = false;
-            }
-        }
-    }
-    catch (runtime_error e) {
-		g_logger.logXmlError(dir, e.what());
-		loadOk = false;
-	}
-	try {
-        const XmlNode *boostHpNode = baseNode->getChild("hp-boost", 0, false);
-        if (boostHpNode) {
-            if (!hpBoost.load(boostHpNode, dir)) {
-                loadOk = false;
-            }
-        }
-    }
-    catch (runtime_error e) {
-		g_logger.logXmlError(dir, e.what());
-		loadOk = false;
-	}
-	try {
-        const XmlNode *boostSpNode = baseNode->getChild("sp-boost", 0, false);
-        if (boostSpNode) {
-            if (!hpBoost.load(boostSpNode, dir)) {
-                loadOk = false;
-            }
-        }
-    }
-    catch (runtime_error e) {
-		g_logger.logXmlError(dir, e.what());
-		loadOk = false;
-	}
-	try {
-        const XmlNode *boostEpNode = baseNode->getChild("ep-boost", 0, false);
-        if (boostEpNode) {
-            if (!hpBoost.load(boostEpNode, dir)) {
+            if (!maxCp.load(maxCpNode)) {
                 loadOk = false;
             }
         }
@@ -304,99 +390,130 @@ bool ResourcePools::load(const XmlNode *baseNode, const string &dir) {
 }
 
 void ResourcePools::save(XmlNode *node) const {
-	/*node->addChild("max-hp", maxHp);
-	node->addChild("hp-regeneration", hpRegeneration);
-	node->addChild("max-sp", maxSp);
-	node->addChild("sp-regeneration", spRegeneration);
-	node->addChild("max-ep", maxEp);
-	node->addChild("ep-regeneration", epRegeneration);
-	node->addChild("max-cp", maxCp);
-	node->addChild("hp-boost", sight);
-	node->addChild("sp-boost", expGiven);
-	node->addChild("ep-boost", morale);*/
+    XmlNode *n;
+    health.save(node->addChild("health"));
+    if (!resources.empty()) {
+        n = node->addChild("pools");
+        for (int i = 0; i < resources.size(); ++i) {
+            resources[i].save(n->addChild("pool"));
+        }
+    }
+    if (!defenses.empty()) {
+        n = node->addChild("defenses");
+        for (int i = 0; i < defenses.size(); ++i) {
+            defenses[i].save(n->addChild("defense"));
+        }
+    }
+    if (!maxCp.isEmpty()) {
+        maxCp.save(node->addChild("max-cp"));
+    }
+}
+
+void ResourcePools::addResources(StatGroups statGroups) {
+    for (int i = 0; i < statGroups.size(); ++i) {
+        resources.push_back(statGroups[i]);
+    }
+}
+
+void ResourcePools::addDefenses(StatGroups statGroups) {
+    for (int i = 0; i < statGroups.size(); ++i) {
+        defenses.push_back(statGroups[i]);
+    }
 }
 
 void ResourcePools::addStatic(const ResourcePools *rp, fixed strength) {
-    int newMaxHp = (rp->getMaxHp().getValue() * strength).intp();
-	maxHp.incValue(newMaxHp);
-	int newHpRegen = (rp->getHpRegeneration().getValue() * strength).intp();
-	hpRegeneration.incValue(newHpRegen);
-	int newMaxSp = (rp->getMaxSp().getValue() * strength).intp();
-	maxSp.incValue(newMaxSp);
-	int newSpRegen = (rp->getSpRegeneration().getValue() * strength).intp();
-	spRegeneration.incValue(newSpRegen);
-	int newMaxEp = (rp->getMaxEp().getValue() * strength).intp();
-	maxEp.incValue(newMaxEp);
-	int newEpRegen = (rp->getEpRegeneration().getValue() * strength).intp();
-	epRegeneration.incValue(newEpRegen);
-	int newMaxCp = (rp->getMaxCp().getValue() * strength).intp();
+    health.addStatic(rp->getHealth(), strength);
+    for (int i = 0; i < rp->getResourceCount(); ++i) {
+        string firstName = rp->getResource(i)->getName();
+        for (int j = 0; j < getResourceCount(); ++j) {
+            string secondName = getResource(j)->getName();
+            if (secondName == firstName) {
+                resources[i].addStatic(rp->getResource(i), strength);
+            }
+        }
+    }
+    for (int i = 0; i < rp->getDefenseCount(); ++i) {
+        string firstName = rp->getDefense(i)->getName();
+        for (int j = 0; j < getDefenseCount(); ++j) {
+            string secondName = getDefense(j)->getName();
+            if (secondName == firstName) {
+                defenses[i].addStatic(rp->getDefense(i), strength);
+            }
+        }
+    }
+	int newMaxCp = (rp->getMaxCp()->getValue() * strength).intp();
 	maxCp.incValue(newMaxCp);
-	int newHpBoost = (rp->getHpBoost().getValue() * strength).intp();
-	hpBoost.incValue(newHpBoost);
-	int newSpBoost  = (rp->getSpBoost().getValue() * strength).intp();
-	spBoost.incValue(newSpBoost);
-	int newEpBoost  = (rp->getEpBoost().getValue() * strength).intp();
-	epBoost.incValue(newEpBoost);
 }
 
 void ResourcePools::addMultipliers(const ResourcePools *rp, fixed strength) {
-	maxHp.incValueMult((rp->getMaxHp().getValueMult() - 1) * strength);
-	hpRegeneration.incValueMult((rp->getHpRegeneration().getValueMult() - 1) * strength);
-	maxSp.incValueMult((rp->getMaxSp().getValueMult() - 1) * strength);
-	spRegeneration.incValueMult((rp->getSpRegeneration().getValueMult() - 1) * strength);
-	maxEp.incValueMult((rp->getMaxEp().getValueMult() - 1) * strength);
-	epRegeneration.incValueMult((rp->getEpRegeneration().getValueMult() - 1) * strength);
-	maxCp.incValueMult((rp->getMaxCp().getValueMult() - 1) * strength);
+    health.addMultipliers(rp->getHealth(), strength);
+    for (int i = 0; i < rp->getResourceCount(); ++i) {
+        string firstName = rp->getResource(i)->getName();
+        for (int j = 0; j < getResourceCount(); ++j) {
+            string secondName = getResource(j)->getName();
+            if (secondName == firstName) {
+                resources[i].addMultipliers(rp->getResource(i), strength);
+            }
+        }
+    }
+    for (int i = 0; i < rp->getDefenseCount(); ++i) {
+        string firstName = rp->getDefense(i)->getName();
+        for (int j = 0; j < getDefenseCount(); ++j) {
+            string secondName = getDefense(j)->getName();
+            if (secondName == firstName) {
+                defenses[i].addMultipliers(rp->getDefense(i), strength);
+            }
+        }
+    }
+	maxCp.incValueMult((rp->getMaxCp()->getValueMult() - 1) * strength);
 }
 
 void ResourcePools::sanitiseResourcePools() {
-	maxHp.sanitiseStat(0);
-	maxSp.sanitiseStat(0);
-	maxEp.sanitiseStat(0);
+	health.sanitiseStatGroup();
+    for (int i = 0; i < getResourceCount(); ++i) {
+        resources[i].sanitiseStatGroup();
+    }
+    for (int i = 0; i < getDefenseCount(); ++i) {
+        defenses[i].sanitiseStatGroup();
+    }
     maxCp.sanitiseStat(-1);
-	hpBoost.sanitiseStat(0);
-	spBoost.sanitiseStat(0);
-	epBoost.sanitiseStat(0);
 }
 
 void ResourcePools::applyMultipliers(const ResourcePools *rp) {
-    int newMaxHp = (maxHp.getValue() * rp->getMaxHp().getValueMult()).intp();
-	maxHp.setValue(newMaxHp);
-	int newHpRegen = (hpRegeneration.getValue() * rp->getHpRegeneration().getValueMult()).intp();
-	hpRegeneration.setValue(newHpRegen);
-    int newMaxSp = (maxSp.getValue() * rp->getMaxSp().getValueMult()).intp();
-	maxSp.setValue(newMaxSp);
-	int newSpRegen = (spRegeneration.getValue() * rp->getSpRegeneration().getValueMult()).intp();
-	spRegeneration.setValue(newSpRegen);
-    int newMaxEp = (maxEp.getValue() * rp->getMaxEp().getValueMult()).intp();
-	maxEp.setValue(newMaxEp);
-	int newEpRegen = (epRegeneration.getValue() * rp->getEpRegeneration().getValueMult()).intp();
-	epRegeneration.setValue(newEpRegen);
-    int newMaxCp = (maxCp.getValue() * rp->getMaxCp().getValueMult()).intp();
+	health.applyMultipliers(rp->getHealth());
+    for (int i = 0; i < rp->getResourceCount(); ++i) {
+        string firstName = rp->getResource(i)->getName();
+        for (int j = 0; j < getResourceCount(); ++j) {
+            string secondName = getResource(j)->getName();
+            if (secondName == firstName) {
+                resources[j].applyMultipliers(rp->getResource(i));
+            }
+        }
+    }
+    for (int i = 0; i < rp->getDefenseCount(); ++i) {
+        string firstName = rp->getDefense(i)->getName();
+        for (int j = 0; j < getDefenseCount(); ++j) {
+            string secondName = getDefense(j)->getName();
+            if (secondName == firstName) {
+                defenses[j].applyMultipliers(rp->getDefense(i));
+            }
+        }
+    }
+    int newMaxCp = (maxCp.getValue() * rp->getMaxCp()->getValueMult()).intp();
 	maxCp.setValue(newMaxCp);
 }
 
-void addBoostsDesc(string &str, const char *pre, int hpBoost, int epBoost, int spBoost) {
-	if (hpBoost) {
-		str += pre + g_lang.get("HpBoost") + ": " + intToStr(hpBoost);
-	}
-	if (epBoost) {
-		str += pre + g_lang.get("EpBoost") + ": " + intToStr(epBoost);
-	}
-    if (spBoost) {
-		str += pre + g_lang.get("SpBoost") + ": " + intToStr(spBoost);
-	}
-}
-
 void ResourcePools::getDesc(string &str, const char *pre) const {
-	maxHp.getDesc(str, pre, "MaxHp");
-	hpRegeneration.getDesc(str, pre, "HpRegen");
-	maxSp.getDesc(str, pre, "MaxSp");
-	spRegeneration.getDesc(str, pre, "SpRegen");
-	maxEp.getDesc(str, pre, "MaxEp");
-	epRegeneration.getDesc(str, pre, "EpRegen");
+    if (!health.isEmpty()) {
+        health.getDesc(str, pre);
+    }
+    for (int i = 0; i < getResourceCount(); ++i) {
+        resources[i].getDesc(str, pre);
+    }
+    for (int i = 0; i < getDefenseCount(); ++i) {
+        defenses[i].getDesc(str, pre);
+    }
 	maxCp.getDesc(str, pre, "MaxCp");
-	addBoostsDesc(str, pre, hpBoost.getValue(), spBoost.getValue(), epBoost.getValue());
 }
 
 // ===============================
@@ -414,6 +531,14 @@ void ProductionSpeeds::modify() {
 	harvestSpeed.modify();
 }
 
+bool ProductionSpeeds::isEmpty() const {
+    bool empty = true;
+	if (!prodSpeed.isEmpty()) empty = false;
+	if (!repairSpeed.isEmpty()) empty = false;
+	if (!harvestSpeed.isEmpty()) empty = false;
+	return empty;
+}
+
 void ProductionSpeeds::doChecksum(Checksum &checksum) const {
 	checksum.add(prodSpeed);
 	checksum.add(repairSpeed);
@@ -425,7 +550,7 @@ bool ProductionSpeeds::load(const XmlNode *baseNode, const string &dir) {
 	try {
         const XmlNode *prodSpeedNode = baseNode->getChild("prod-speed", 0, false);
         if (prodSpeedNode) {
-            prodSpeed.load(prodSpeedNode, dir);
+            prodSpeed.load(prodSpeedNode);
         }
     }
     catch (runtime_error e) {
@@ -435,7 +560,7 @@ bool ProductionSpeeds::load(const XmlNode *baseNode, const string &dir) {
 	try {
         const XmlNode *repairSpeedNode = baseNode->getChild("repair-speed", 0, false);
         if (repairSpeedNode) {
-            repairSpeed.load(repairSpeedNode, dir);
+            repairSpeed.load(repairSpeedNode);
         }
     }
     catch (runtime_error e) {
@@ -445,7 +570,7 @@ bool ProductionSpeeds::load(const XmlNode *baseNode, const string &dir) {
 	try {
         const XmlNode *harvestSpeedNode = baseNode->getChild("harvest-speed", 0, false);
         if (harvestSpeedNode) {
-            harvestSpeed.load(harvestSpeedNode, dir);
+            harvestSpeed.load(harvestSpeedNode);
         }
     }
     catch (runtime_error e) {
@@ -456,24 +581,30 @@ bool ProductionSpeeds::load(const XmlNode *baseNode, const string &dir) {
 }
 
 void ProductionSpeeds::save(XmlNode *node) const {
-	//node->addChild("prod-speed", prodSpeed);
-	//node->addChild("repair-speed", repairSpeed);
-	//node->addChild("harvest-speed", harvestSpeed);
+    if (!prodSpeed.isEmpty()) {
+        prodSpeed.save(node->addChild("prod-speed"));
+    }
+    if (!repairSpeed.isEmpty()) {
+        repairSpeed.save(node->addChild("repair-speed"));
+    }
+    if (!harvestSpeed.isEmpty()) {
+        harvestSpeed.save(node->addChild("harvest-speed"));
+    }
 }
 
 void ProductionSpeeds::addStatic(const ProductionSpeeds *ps, fixed strength) {
-	int newProdSpeed = (ps->getProdSpeed().getValue() * strength).intp();
+	int newProdSpeed = (ps->getProdSpeed()->getValue() * strength).intp();
 	prodSpeed.incValue(newProdSpeed);
-	int newRepairSpeed  = (ps->getRepairSpeed().getValue() * strength).intp();
+	int newRepairSpeed  = (ps->getRepairSpeed()->getValue() * strength).intp();
 	repairSpeed.incValue(newRepairSpeed);
-	int newHarvestSpeed  = (ps->getHarvestSpeed().getValue() * strength).intp();
+	int newHarvestSpeed  = (ps->getHarvestSpeed()->getValue() * strength).intp();
 	harvestSpeed.incValue(newHarvestSpeed);
 }
 
 void ProductionSpeeds::addMultipliers(const ProductionSpeeds *ps, fixed strength) {
-	prodSpeed.incValueMult((ps->getProdSpeed().getValueMult() - 1) * strength);
-	repairSpeed.incValueMult((ps->getRepairSpeed().getValueMult() - 1) * strength);
-	harvestSpeed.incValueMult((ps->getHarvestSpeed().getValueMult() - 1) * strength);
+	prodSpeed.incValueMult((ps->getProdSpeed()->getValueMult() - 1) * strength);
+	repairSpeed.incValueMult((ps->getRepairSpeed()->getValueMult() - 1) * strength);
+	harvestSpeed.incValueMult((ps->getHarvestSpeed()->getValueMult() - 1) * strength);
 }
 
 void ProductionSpeeds::clampMultipliers() {
@@ -489,11 +620,11 @@ void ProductionSpeeds::sanitiseProductionSpeeds() {
 }
 
 void ProductionSpeeds::applyMultipliers(const ProductionSpeeds *ps) {
-    int newProdSpeed = (prodSpeed.getValue() * ps->getProdSpeed().getValueMult()).intp();
+    int newProdSpeed = (prodSpeed.getValue() * ps->getProdSpeed()->getValueMult()).intp();
 	prodSpeed.setValue(newProdSpeed);
-	int newRepairSpeed = (repairSpeed.getValue() * ps->getRepairSpeed().getValueMult()).intp();
+	int newRepairSpeed = (repairSpeed.getValue() * ps->getRepairSpeed()->getValueMult()).intp();
 	repairSpeed.setValue(newRepairSpeed);
-    int newHarvestSpeed = (harvestSpeed.getValue() * ps->getHarvestSpeed().getValueMult()).intp();
+    int newHarvestSpeed = (harvestSpeed.getValue() * ps->getHarvestSpeed()->getValueMult()).intp();
 	harvestSpeed.setValue(newHarvestSpeed);
 }
 
@@ -511,6 +642,15 @@ void AttackStats::reset() {
 	attackSpeed.reset();
 	attackStrength.reset();
 	attackPotency.reset();
+}
+
+bool AttackStats::isEmpty() const {
+    bool empty = true;
+	if (!attackRange.isEmpty()) empty = false;
+	if (!attackSpeed.isEmpty()) empty = false;
+	if (!attackStrength.isEmpty()) empty = false;
+	if (!attackPotency.isEmpty()) empty = false;
+	return empty;
 }
 
 void AttackStats::modify() {
@@ -532,7 +672,7 @@ bool AttackStats::load(const XmlNode *baseNode, const string &dir) {
 	try {
         const XmlNode *attackRangeNode = baseNode->getChild("attack-range", 0, false);
         if (attackRangeNode) {
-            if (!attackRange.load(attackRangeNode, dir)) {
+            if (!attackRange.load(attackRangeNode)) {
                 loadOk = false;
             }
         }
@@ -544,7 +684,7 @@ bool AttackStats::load(const XmlNode *baseNode, const string &dir) {
 	try {
         const XmlNode *attackSpeedNode = baseNode->getChild("attack-speed", 0, false);
         if (attackSpeedNode) {
-            if (!attackSpeed.load(attackSpeedNode, dir)) {
+            if (!attackSpeed.load(attackSpeedNode)) {
                 loadOk = false;
             }
         }
@@ -556,7 +696,7 @@ bool AttackStats::load(const XmlNode *baseNode, const string &dir) {
 	try {
         const XmlNode *strengthNode = baseNode->getChild("attack-strength", 0, false);
         if (strengthNode) {
-            if (!attackStrength.load(strengthNode, dir)) {
+            if (!attackStrength.load(strengthNode)) {
                 loadOk = false;
             }
         }
@@ -568,7 +708,7 @@ bool AttackStats::load(const XmlNode *baseNode, const string &dir) {
 	try {
         const XmlNode *potencyNode = baseNode->getChild("attack-potency", 0, false);
         if (potencyNode) {
-            if (!attackPotency.load(potencyNode, dir)) {
+            if (!attackPotency.load(potencyNode)) {
                 loadOk = false;
             }
         }
@@ -581,28 +721,36 @@ bool AttackStats::load(const XmlNode *baseNode, const string &dir) {
 }
 
 void AttackStats::save(XmlNode *node) const {
-	//node->addChild("attack-range", attackRange);
-	//node->addChild("attack-speed", attackSpeed);
-	//node->addChild("attack-strength", attackStrength);
-	//node->addChild("attack-potency", attackPotency);
+    if (!attackRange.isEmpty()) {
+        attackRange.save(node->addChild("attack-range"));
+    }
+    if (!attackSpeed.isEmpty()) {
+        attackSpeed.save(node->addChild("attack-speed"));
+    }
+    if (!attackStrength.isEmpty()) {
+        attackStrength.save(node->addChild("attack-strength"));
+    }
+    if (!attackPotency.isEmpty()) {
+        attackPotency.save(node->addChild("attack-potency"));
+    }
 }
 
 void AttackStats::addStatic(const AttackStats *as, fixed strength) {
-	int newAttackRange = (as->getAttackRange().getValue() * strength).intp();
+	int newAttackRange = (as->getAttackRange()->getValue() * strength).intp();
 	attackRange.incValue(newAttackRange);
-	int newAttackSpeed = (as->getAttackSpeed().getValue() * strength).intp();
+	int newAttackSpeed = (as->getAttackSpeed()->getValue() * strength).intp();
 	attackSpeed.incValue(newAttackSpeed);
-	int newStrength = (as->getAttackStrength().getValue() * strength).intp();
+	int newStrength = (as->getAttackStrength()->getValue() * strength).intp();
 	attackStrength.incValue(newStrength);
-	int newPotency = (as->getAttackPotency().getValue() * strength).intp();
+	int newPotency = (as->getAttackPotency()->getValue() * strength).intp();
 	attackPotency.incValue(newPotency);
 }
 
 void AttackStats::addMultipliers(const AttackStats *as, fixed strength) {
-	attackRange.incValueMult((as->getAttackRange().getValueMult() - 1) * strength);
-	attackSpeed.incValueMult((as->getAttackSpeed().getValueMult() - 1) * strength);
-	attackStrength.incValueMult((as->getAttackStrength().getValueMult() - 1) * strength);
-	attackPotency.incValueMult((as->getAttackPotency().getValueMult() - 1) * strength);
+	attackRange.incValueMult((as->getAttackRange()->getValueMult() - 1) * strength);
+	attackSpeed.incValueMult((as->getAttackSpeed()->getValueMult() - 1) * strength);
+	attackStrength.incValueMult((as->getAttackStrength()->getValueMult() - 1) * strength);
+	attackPotency.incValueMult((as->getAttackPotency()->getValueMult() - 1) * strength);
 }
 
 void AttackStats::clampMultipliers() {
@@ -620,13 +768,13 @@ void AttackStats::sanitiseAttackStats() {
 }
 
 void AttackStats::applyMultipliers(const AttackStats *as) {
-    int newAttackRange = (attackRange.getValue() * as->getAttackRange().getValueMult()).intp();
+    int newAttackRange = (attackRange.getValue() * as->getAttackRange()->getValueMult()).intp();
 	attackRange.setValue(newAttackRange);
-	int newAttackSpeed = (attackSpeed.getValue() * as->getAttackSpeed().getValueMult()).intp();
+	int newAttackSpeed = (attackSpeed.getValue() * as->getAttackSpeed()->getValueMult()).intp();
 	attackSpeed.setValue(newAttackSpeed);
-    int newStrength = (attackStrength.getValue() * as->getAttackStrength().getValueMult()).intp();
+    int newStrength = (attackStrength.getValue() * as->getAttackStrength()->getValueMult()).intp();
 	attackStrength.setValue(newStrength);
-	int newPotency = (attackPotency.getValue() * as->getAttackPotency().getValueMult()).intp();
+	int newPotency = (attackPotency.getValue() * as->getAttackPotency()->getValueMult()).intp();
 	attackPotency.setValue(newPotency);
 }
 
@@ -646,6 +794,16 @@ void UnitStats::reset() {
 	morale.reset();
 	moveSpeed.reset();
 	effectStrength.reset();
+}
+
+bool UnitStats::isEmpty() const {
+    bool empty = true;
+	if (!sight.isEmpty()) empty = false;
+	if (!expGiven.isEmpty()) empty = false;
+	if (!morale.isEmpty()) empty = false;
+	if (!moveSpeed.isEmpty()) empty = false;
+	if (!effectStrength.isEmpty()) empty = false;
+	return empty;
 }
 
 void UnitStats::modify() {
@@ -669,7 +827,7 @@ bool UnitStats::load(const XmlNode *baseNode, const string &dir) {
 	try {
         const XmlNode *sightNode = baseNode->getChild("sight", 0, false);
         if (sightNode) {
-            if (!sight.load(sightNode, dir)) {
+            if (!sight.load(sightNode)) {
                 loadOk = false;
             }
         }
@@ -681,7 +839,7 @@ bool UnitStats::load(const XmlNode *baseNode, const string &dir) {
 	try {
         const XmlNode *expGivenNode = baseNode->getChild("exp-given", 0, false);
         if (expGivenNode) {
-            if (!expGiven.load(expGivenNode, dir)) {
+            if (!expGiven.load(expGivenNode)) {
                 loadOk = false;
             }
         }
@@ -693,7 +851,7 @@ bool UnitStats::load(const XmlNode *baseNode, const string &dir) {
 	try {
         const XmlNode *moraleNode = baseNode->getChild("morale", 0, false);
         if (moraleNode) {
-            if (!morale.load(moraleNode, dir)) {
+            if (!morale.load(moraleNode)) {
                 loadOk = false;
             }
         }
@@ -705,7 +863,7 @@ bool UnitStats::load(const XmlNode *baseNode, const string &dir) {
 	try {
         const XmlNode *moveSpeedNode = baseNode->getChild("move-speed", 0, false);
         if (moveSpeedNode) {
-            if (!moveSpeed.load(moveSpeedNode, dir)) {
+            if (!moveSpeed.load(moveSpeedNode)) {
                 loadOk = false;
             }
         }
@@ -717,7 +875,7 @@ bool UnitStats::load(const XmlNode *baseNode, const string &dir) {
 	try {
         const XmlNode *effectStrengthNode = baseNode->getChild("effect-strength", 0, false);
         if (effectStrengthNode) {
-            if (!effectStrength.load(effectStrengthNode, dir)) {
+            if (!effectStrength.load(effectStrengthNode)) {
                 loadOk = false;
             }
         }
@@ -730,32 +888,42 @@ bool UnitStats::load(const XmlNode *baseNode, const string &dir) {
 }
 
 void UnitStats::save(XmlNode *node) const {
-	//node->addChild("sight", sight);
-	//node->addChild("exp-given", expGiven);
-	//node->addChild("morale", morale);
-	//node->addChild("move-speed", moveSpeed);
-	//node->addChild("effect-strength", effectStrength);
+    if (!sight.isEmpty()) {
+        sight.save(node->addChild("sight"));
+    }
+    if (!expGiven.isEmpty()) {
+        expGiven.save(node->addChild("exp-given"));
+    }
+    if (!morale.isEmpty()) {
+        morale.save(node->addChild("morale"));
+    }
+    if (!moveSpeed.isEmpty()) {
+        moveSpeed.save(node->addChild("move-speed"));
+    }
+    if (!effectStrength.isEmpty()) {
+        effectStrength.save(node->addChild("effect-strength"));
+    }
 }
 
 void UnitStats::addStatic(const UnitStats *us, fixed strength) {
-	int newSight = (us->getSight().getValue() * strength).intp();
+	int newSight = (us->getSight()->getValue() * strength).intp();
 	sight.incValue(newSight);
-	int newExpGiven = (us->getExpGiven().getValue() * strength).intp();
+	int newExpGiven = (us->getExpGiven()->getValue() * strength).intp();
 	expGiven.incValue(newExpGiven);
-	int newMorale = (us->getMorale().getValue() * strength).intp();
+	int newMorale = (us->getMorale()->getValue() * strength).intp();
 	morale.incValue(newMorale);
-	int newMoveSpeed = (us->getMoveSpeed().getValue() * strength).intp();
+	int newMoveSpeed = (us->getMoveSpeed()->getValue() * strength).intp();
 	moveSpeed.incValue(newMoveSpeed);
-	int newEffectStrength = (us->getEffectStrength().getValue() * strength).intp();
+	int newEffectStrength = (us->getEffectStrength()->getValue() * strength).intp();
 	effectStrength.incValue(newEffectStrength);
 }
 
 void UnitStats::addMultipliers(const UnitStats *us, fixed strength) {
-	sight.incValueMult((us->getSight().getValueMult() - 1) * strength);
-	expGiven.incValueMult((us->getExpGiven().getValueMult() - 1) * strength);
-	morale.incValueMult((us->getMorale().getValueMult() - 1) * strength);
-	moveSpeed.incValueMult((us->getMoveSpeed().getValueMult() - 1) * strength);
-	effectStrength.incValueMult((us->getEffectStrength().getValueMult() - 1) * strength);
+	sight.incValueMult((us->getSight()->getValueMult() - 1) * strength);
+	expGiven.incValueMult((us->getExpGiven()->getValueMult() - 1) * strength);
+	morale.incValueMult((us->getMorale()->getValueMult() - 1) * strength);
+	moveSpeed.incValueMult((us->getMoveSpeed()->getValueMult() - 1) * strength);
+	effectStrength.incValueMult((us->getEffectStrength()->getValueMult() - 1) * strength);
 }
 
 void UnitStats::clampMultipliers() {
@@ -775,15 +943,15 @@ void UnitStats::sanitiseUnitStats() {
 }
 
 void UnitStats::applyMultipliers(const UnitStats *us) {
-    int newSight = (sight.getValue() * us->getSight().getValueMult()).intp();
+    int newSight = (sight.getValue() * us->getSight()->getValueMult()).intp();
 	sight.setValue(newSight);
-	int newExpGiven = (expGiven.getValue() * us->getExpGiven().getValueMult()).intp();
+	int newExpGiven = (expGiven.getValue() * us->getExpGiven()->getValueMult()).intp();
 	expGiven.setValue(newExpGiven);
-    int newMorale = (morale.getValue() * us->getMorale().getValueMult()).intp();
+    int newMorale = (morale.getValue() * us->getMorale()->getValueMult()).intp();
 	morale.setValue(newMorale);
-	int newMoveSpeed = (moveSpeed.getValue() * us->getMoveSpeed().getValueMult()).intp();
+	int newMoveSpeed = (moveSpeed.getValue() * us->getMoveSpeed()->getValueMult()).intp();
 	moveSpeed.setValue(newMoveSpeed);
-    int newEffectStrength = (effectStrength.getValue() * us->getEffectStrength().getValueMult()).intp();
+    int newEffectStrength = (effectStrength.getValue() * us->getEffectStrength()->getValueMult()).intp();
 	effectStrength.setValue(newEffectStrength);
 }
 
@@ -812,7 +980,28 @@ void EnhancementType::modify() {
 	unitStats.modify();
 }
 
+bool EnhancementType::isEmpty() const {
+    bool empty = true;
+    if (!resourcePools.isEmpty()) empty = false;
+    if (!productionSpeeds.isEmpty()) empty = false;
+    if (!attackStats.isEmpty()) empty = false;
+    if (!unitStats.isEmpty()) empty = false;
+    return empty;
+}
+
 void EnhancementType::save(XmlNode *node) const {
+    if (!resourcePools.isEmpty()) {
+        resourcePools.save(node->addChild("resource-pools"));
+    }
+    if (!productionSpeeds.isEmpty()) {
+        productionSpeeds.save(node->addChild("production-speeds"));
+    }
+    if (!attackStats.isEmpty()) {
+        attackStats.save(node->addChild("attack-stats"));
+    }
+    if (!unitStats.isEmpty()) {
+        unitStats.save(node->addChild("unit-stats"));
+    }
 }
 
 void EnhancementType::addStatic(const EnhancementType *e, fixed strength){
@@ -857,7 +1046,7 @@ void EnhancementType::sanitiseEnhancement() {
 	unitStats.sanitiseUnitStats();
 }
 
-bool EnhancementType::load(const XmlNode *baseNode, const string &dir, const TechTree *tt, const FactionType *ft) {
+bool EnhancementType::load(const XmlNode *baseNode, const string &dir) {
 	bool loadOk = true;
 	try {
         const XmlNode *resourcePoolsNode = baseNode->getChild("resource-pools", 0, false);

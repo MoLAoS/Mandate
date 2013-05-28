@@ -1,0 +1,201 @@
+<?xml version="1.0" standalone="no"?>
+<unit>
+  <parameters>
+    <time value="25"/>
+    <multi-selection value="true"/>
+    <cellmap value="true">
+      <row value="11011"/>
+      <row value="00011"/>
+      <row value="11000"/>
+      <row value="11011"/>
+      <row value="01010"/>
+    </cellmap>
+    <fields>
+      <field value="land"/>
+    </fields>
+    <properties>
+      <property value="burnable"/>
+    </properties>
+    <tags>
+      <tag value="building"/>
+      <tag value="shop"/>
+      <tag value="faction"/>
+    </tags>
+    <meeting-point value="false"/>
+  </parameters>
+  <item-limit limit="10000"/>
+  <equipment>
+    <type type="work_station" value="6"/>
+  </equipment>
+  <item-stores>
+    <item type="wooden_sword" stored="25"/>
+    <item type="wooden_cuirass" stored="25"/>
+    <item type="wooden_helm" stored="25"/>
+    <item type="wooden_gauntlets" stored="25"/>
+    <item type="copper_sword" stored="25"/>
+    <item type="copper_helm" stored="25"/>
+    <item type="copper_gauntlets" stored="25"/>
+    <item type="copper_cuirass" stored="25"/>
+    <item type="iron_sword" stored="25"/>
+    <item type="iron_cuirass" stored="25"/>
+    <item type="iron_helm" stored="25"/>
+    <item type="iron_gauntlets" stored="25"/>
+  </item-stores>
+  <resource-stores>
+    <resource status="stockpile" type="wealth" stored="2000"/>
+    <resource status="stockpile" type="logs" stored="200"/>
+    <resource status="stockpile" type="stone" stored="200"/>
+    <resource status="stockpile" type="copper_ingots" stored="200"/>
+    <resource status="stockpile" type="iron_bar" stored="200"/>
+  </resource-stores>
+  <creatable-type>
+    <size value="5"/>
+    <height value="2"/>
+    <statistics>
+      <enhancement>
+	<resource-pools>
+	  <health name="health">
+	    <max-stat value="2000"/>
+	  </health>
+	</resource-pools>
+	<unit-stats>
+	  <sight value="10" value-mult="0"/>
+	</unit-stats>
+      </enhancement>
+    </statistics>
+    <producible>
+      <time value="10"/>
+      <properties/>
+      <light enabled="false"/>
+      <unit-requirements/>
+      <upgrade-requirements/>
+      <resource-requirements>
+        <resource name="wealth" amount="7000" plus="0" multiply="0" />
+        <resource name="population" amount="10" plus="0" multiply="0" />
+      </resource-requirements>
+      <image path="images/blacksmith.bmp"/>
+      <image-cancel path="../castle/images/tech_cancel.bmp"/>
+      </producible>
+    <resource-production>
+      <resources-stored>
+        <resource name="wealth" amount="100000"/>
+        <resource name="logs" amount="100000"/>
+        <resource name="stone" amount="100000"/>
+        <resource name="space" amount="20"/>
+        <resource name="copper_ingots" amount="100000"/>
+        <resource name="iron_bar" amount="100000"/>
+      </resources-stored>
+      <starter-resources>
+        <resource name="wealth" amount="4000"/>
+        <resource name="space" amount="20"/>
+        <resource name="logs" amount="250"/>
+        <resource name="stone" amount="100"/>
+        <resource name="copper_ingots" amount="50"/>
+      </starter-resources>
+    </resource-production>
+    <actions>
+      <skills>
+        <skill>
+          <name value="be_built_skill"/>
+          <ep-cost value="0" />
+          <speed value="300" />
+          <anim-speed value="300" />
+          <animation path="models/blacksmith_construction.g3d" />
+          <sound enabled="false" />
+          <type value="be_built" />
+        </skill>
+        <skill>
+          <type value="stop" />
+          <name value="stop_skill"/>
+          <ep-cost value="0" />
+          <speed value="300" />
+          <anim-speed value="50" />
+          <animation path="models/blacksmith.g3d" />
+          <sound enabled="false" />
+        </skill>
+        <skill>
+          <type value="die" />
+          <name value="die_skill"/>
+          <ep-cost value="0" />
+          <speed value="300" />
+          <anim-speed value="300" />
+          <animation path="../castle/destruction_models/blacksmith_destruction.g3d" />
+          <sound enabled="true" start-time="0">
+            <sound-file path="../defenders_chapterhouse/sounds/tech_building_fall1.wav"/>
+          </sound>
+          <fade value="false"/>
+        </skill>
+        <skill>
+          <type value="produce"/>
+          <name value="produce_skill"/>
+          <ep-cost value="0" />
+          <speed value="300" />
+          <anim-speed value="300" />
+          <animation path="models/blacksmith_upgrading.g3d" />
+          <sound enabled="false" />
+        </skill>
+        <skill> 
+          <type value="load" /> 
+          <name value="load_skill" /> 
+          <ep-cost value="0" /> 
+          <speed value="120" /> 
+          <anim-speed value="120" /> 
+          <animation path="models/blacksmith.g3d" /> 
+          <sound enabled="false"/>
+          <max-range value="3" /> 
+          <particles value="false"/>
+        </skill>
+        <skill>
+          <type value="unload"/>
+          <name value="unload_skill"/>
+          <ep-cost value="0"/>
+          <speed value="120"/>
+          <anim-speed value="120"/>
+          <animation path="models/blacksmith.g3d"/>
+          <sound enabled="false"/>
+          <max-range value="3"/>
+        </skill>
+      </skills>
+      <commands>
+        <command>
+        <type value="create-item" />
+        <name value="create_work_stations" />
+          <image path="images/blacksmith.bmp" />
+        <unit-requirements/>
+        <upgrade-requirements/>
+        <produce-skill value="produce_skill" />
+	<created-items>
+          <created-item name="sword_smithy" />
+          <created-item name="basic_armor_smithy" />
+	</created-items>
+        </command>
+	<command>
+          <type value="load"/>
+          <name value="load"/>
+          <image path="images/blacksmith.bmp"/>
+          <unit-requirements/>
+          <upgrade-requirements/>
+          <load-skill value="load_skill"/>
+          <units-carried>
+          </units-carried>
+          <load-capacity value="12" />
+          <allow-projectiles value="false"/> 
+        </command>
+        <command>
+          <type value="unload"/>
+          <name value="unload"/>
+          <image path="images/blacksmith.bmp"/>
+          <unit-requirements/>
+          <upgrade-requirements/>
+          <unload-skill value="unload_skill"/>
+        </command>
+      </commands>
+    </actions>
+  </creatable-type>
+    <selection-sounds enabled="true">
+      <sound path="../defenders_chapterhouse/sounds/tech_click.wav" />
+    </selection-sounds>
+    <command-sounds enabled="true">
+      <sound path="../defenders_chapterhouse/sounds/tech_click.wav" />
+    </command-sounds>
+</unit>

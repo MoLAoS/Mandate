@@ -11,23 +11,18 @@
 #include "tech_tree.h"
 
 namespace Glest { namespace ProtoTypes {
-
 // =====================================================
-// 	class Traits
+// 	class Specialization
 // =====================================================
-void Trait::preLoad(const string &dir){
-	m_name = basename(dir);
+void Specialization::preLoad(const string &dir){
+	name = basename(dir);
 }
 
-bool Trait::load(const string &dir, const TechTree *techTree, const FactionType *factionType) {
-	g_logger.logProgramEvent("Traits: " + dir, true);
+bool Specialization::load(const string &dir) {
+	g_logger.logProgramEvent("v: " + dir, true);
 	bool loadOk = true;
-
-	m_factionType = factionType;
-	string path = dir + "/" + m_name + ".xml";
-
-	name = m_name;
-
+	reset();
+	string path = dir + ".xml";
 	XmlTree xmlTree;
 	try { xmlTree.load(path); }
 	catch (runtime_error e) {
@@ -35,44 +30,36 @@ bool Trait::load(const string &dir, const TechTree *techTree, const FactionType 
 		g_logger.logError("Fatal Error: could not load " + path);
 		return false;
 	}
-	const XmlNode *modificationNode;
-	try { modificationNode = xmlTree.getRootNode(); }
+	const XmlNode *specializationNode;
+	try { specializationNode = xmlTree.getRootNode(); }
 	catch (runtime_error e) {
 		g_logger.logXmlError(path, e.what());
 		return false;
 	}
-	const XmlNode *parametersNode;
-	try { parametersNode = modificationNode->getChild("parameters"); }
-	catch (runtime_error e) {
-		g_logger.logXmlError(path, e.what());
-		return false;
-	}
-	if (!RequirableType::load(parametersNode, dir, techTree, factionType)) {
-		loadOk = false;
-	}
-	try {
-	    const XmlNode *equipmentNode = parametersNode->getChild("equipment-types", 0, false);
-		if(equipmentNode) {
-			for(int i = 0; i < equipmentNode->getChildCount(); ++i) {
-                try {
-                    const XmlNode *typeNode = equipmentNode->getChild("equipment-type", i);
-                    string ename = typeNode->getAttribute("name")->getRestrictedValue();
-                    equipment.push_back(ename);
-                } catch (runtime_error e) {
-                    g_logger.logXmlError(dir, e.what());
-                    loadOk = false;
+    name = basename(dir);
+    try {
+        const XmlNode *equipmentNode = specializationNode->getChild("equipment", 0, false);
+        if (equipmentNode) {
+            for (int i = 0, k = 0; i < equipmentNode->getChildCount(); ++i) {
+                const XmlNode *typeNode = equipmentNode->getChild("type", i);
+                string type = typeNode->getAttribute("type")->getRestrictedValue();
+                int amount = typeNode->getAttribute("value")->getIntValue();
+                for (int j = 0; j < amount; ++j) {
+                    Equipment newEquipment;
+                    equipment.push_back(newEquipment);
+                    equipment[k].init(1, 0, type, type);
+                    ++k;
                 }
-			}
-		}
-
-	} catch (runtime_error e) {
-		g_logger.logXmlError(dir, e.what());
-		loadOk = false;
-	}
+            }
+        }
+    } catch (runtime_error e) {
+        g_logger.logXmlError(dir, e.what());
+        loadOk = false;
+    }
 	try {
-        const XmlNode *statisticsNode = parametersNode->getChild("statistics", 0, false);
+        const XmlNode *statisticsNode = specializationNode->getChild("statistics", 0, false);
 	    if (statisticsNode) {
-            if (!Statistics::load(statisticsNode, dir, techTree, factionType)) {
+            if (!statistics.load(statisticsNode, dir)) {
                 loadOk = false;
             }
 	    }
@@ -81,17 +68,64 @@ bool Trait::load(const string &dir, const TechTree *techTree, const FactionType 
 		g_logger.logXmlError(dir, e.what());
 		loadOk = false;
 	}
-	const XmlNode *effectsNode = parametersNode->getChild("effects", 0, false);
+	try {
+        const XmlNode *characterStatsNode = specializationNode->getChild("character-stats", 0, false);
+	    if (characterStatsNode) {
+            if (!characterStats.load(characterStatsNode, dir)) {
+                loadOk = false;
+            }
+	    }
+    }
+    catch (runtime_error e) {
+		g_logger.logXmlError(dir, e.what());
+		loadOk = false;
+	}
+	try {
+        const XmlNode *knowledgeNode = specializationNode->getChild("knowledge", 0, false);
+	    if (knowledgeNode) {
+            if (!knowledge.load(knowledgeNode)) {
+                loadOk = false;
+            }
+	    }
+    }
+    catch (runtime_error e) {
+		g_logger.logXmlError(dir, e.what());
+		loadOk = false;
+	}
+	const XmlNode *effectsNode = specializationNode->getChild("effects", 0, false);
 	if (effectsNode) {
 		effectTypes.resize(effectsNode->getChildCount());
 		for(int i=0; i < effectsNode->getChildCount(); ++i) {
 			const XmlNode *effectNode = effectsNode->getChild("effect", i);
 			EffectType *effectType = new EffectType();
-			effectType->load(effectNode, dir, techTree, factionType);
+			effectType->load(effectNode, dir);
 			effectTypes[i] = effectType;
 		}
 	}
     return loadOk;
+}
+
+void Specialization::reset() {
+    characterStats.reset();
+    statistics.enhancement.reset();
+}
+
+void Specialization::save(XmlNode *node) const {
+    node->addAttribute("type", name);
+    if (!knowledge.isEmpty()) {
+        knowledge.save(node->addChild("knowledge"));
+    }
+    if (!statistics.isEmpty()) {
+        statistics.save(node->addChild("statistics"));
+    }
+    if (!characterStats.isEmpty()) {
+        characterStats.save(node->addChild("character-stats"));
+    }
+    XmlNode *n;
+    n = node->addChild("equipment");
+    for (int i = 0; i < equipment.size();++i) {
+        equipment[i].save(n->addChild("type"));
+    }
 }
 
 }}//end namespace

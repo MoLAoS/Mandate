@@ -41,7 +41,7 @@ CloakType::~CloakType() {
 
 void CloakType::load(const string &dir, const XmlNode *cloakNode, const TechTree *tt,
 		 vector<string> &out_decloakSkillNames, vector<SkillClass> &out_decloakSkillClasses) {
-	RequirableType::load(cloakNode, dir, tt, m_unitType->getFactionType());
+	RequirableType::load(cloakNode, dir);
 	string ct = cloakNode->getRestrictedAttribute("type");
 	m_class = CloakClassNames.match(ct.c_str());
 	if (m_class == CloakClass::INVALID) {
@@ -138,7 +138,7 @@ DetectorType::~DetectorType() {
 }
 
 void DetectorType::load(const string &dir, const XmlNode *node, const TechTree *tt) {
-	RequirableType::load(node, dir, tt, m_unitType->getFactionType());
+	RequirableType::load(node, dir);
 	string dt = node->getRestrictedAttribute("type");
 	m_class = DetectorClassNames.match(dt.c_str());
 	if (m_class == DetectorClass::INVALID) {

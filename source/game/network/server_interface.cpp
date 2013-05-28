@@ -246,7 +246,7 @@ void ServerInterface::dataSync(int playerNdx, DataSyncMessage &msg) {
 				} else if (m_prototypeFactory->isUpgradeType(pt)) {
 					const UpgradeType *ut = static_cast<const UpgradeType*>(pt);
 					NETWORK_LOG( "DataSync Fail: UpgradeType " << ut->getId() << ": " << ut->getName()
-						<< " of FactionType: " << ut->getFactionType()->getName() );
+						<< " of FactionType: " );
 				} else if (m_prototypeFactory->isGeneratedType(pt)) {
 					const GeneratedType *gt = static_cast<const GeneratedType*>(pt);
 					NETWORK_LOG( "DataSync Fail: GeneratedType " << gt->getId() << ": " << gt->getName() << " of CommandType: "

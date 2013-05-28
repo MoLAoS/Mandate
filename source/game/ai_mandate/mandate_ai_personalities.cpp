@@ -25,7 +25,7 @@ void Focus::init(Goal newName, int newImportance) {
 // ===============================
 // 	class Personality
 // ===============================
-void Personality::load(const XmlNode *node, const TechTree* techTree, const FactionType* factionType) {
+void Personality::load(const XmlNode *node) {
     GoalList goalList;
     goalList.push_back("empty");
     goalList.push_back("live");
@@ -335,7 +335,7 @@ Unit* GoalSystem::findBuilding(Unit* unit) {
         if (building->getType()->hasTag("building")) {
             if (!building->isBuilt() && !unit->getType()->hasTag("householder")) {
                 buildingsList.push_back(building);
-            } else if (building->getHp() < building->getResourcePools()->getHpRegeneration().getValue()) {
+            } else if (building->getHp() < building->getStatistics()->getEnhancement()->getResourcePools()->getHealth()->getMaxStat()->getValue()) {
                 if (building->getType()->hasTag("house") && unit->getType()->hasTag("householder") && building == unit->owner) {
                     buildingsList.push_back(building);
                 } else if (!building->getType()->hasTag("house") && !unit->getType()->hasTag("householder")) {
@@ -489,11 +489,11 @@ Unit* GoalSystem::findNearbyAlly(Unit* unit, Focus focus) {
         if (unit->isCarried()) {
             uPos = unit->owner->getCenteredPos();
         }
-        int maxDistance = unit->getUnitStats()->getSight().getValue();
+        int maxDistance = unit->getStatistics()->getEnhancement()->getUnitStats()->getSight()->getValue();
         int closest = maxDistance;
         for (int i = 0; i < unit->getFaction()->getUnitCount(); ++i) {
             Unit *target = unit->getFaction()->getUnit(i);
-            if (target->getResourcePools()->getHpRegeneration().getValue() < target->getHp()) {
+            if (target->getStatistics()->getEnhancement()->getResourcePools()->getHealth()->getMaxStat()->getValue() < target->getHp()) {
                 Vec2i tPos = target->getPos();
                 int distance = sqrt(pow(float(abs(uPos.x - tPos.x)), 2) + pow(float(abs(uPos.y - tPos.y)), 2));
                 if (distance < maxDistance) {
@@ -508,7 +508,7 @@ Unit* GoalSystem::findNearbyAlly(Unit* unit, Focus focus) {
 
 const CommandType* GoalSystem::selectHealSpell(Unit *unit, Unit *target) {
     const CastSpellCommandType *healCommandType = NULL;
-    int healthToHeal = target->getResourcePools()->getHpRegeneration().getValue() - target->getHp();
+    int healthToHeal = target->getStatistics()->getEnhancement()->getResourcePools()->getHealth()->getMaxStat()->getValue() - target->getHp();
     for (int i = 0; i < unit->getType()->getActions()->getCommandTypeCount(); ++i) {
         const CommandType *testingCommandType = unit->getType()->getActions()->getCommandType(i);
         if (testingCommandType->getClass() == CmdClass::CAST_SPELL) {
@@ -516,13 +516,16 @@ const CommandType* GoalSystem::selectHealSpell(Unit *unit, Unit *target) {
             const CastSpellSkillType *testSkillType = testCommandType->getCastSpellSkillType();
             if (testSkillType->hasEffects()) {
                 for (int j = 0; j < testSkillType->getEffectTypes().size(); ++j) {
-                    if (testSkillType->getEffectTypes()[i]->getResourcePools()->getHpBoost().getValue() > 0) {
+                    if (testSkillType->getEffectTypes()[i]->getStatistics()->getEnhancement()->getResourcePools()->getHealth()->getBoostStat()->getValue() > 0) {
                         if (healCommandType == NULL) {
                             healCommandType = testCommandType;
-                        } else if (testSkillType->getEffectTypes()[i]->getResourcePools()->getHpBoost().getValue() >
-                                   healCommandType->getCastSpellSkillType()->getEffectTypes()[i]->getResourcePools()->getHpBoost().getValue()) {
+                        } else if (testSkillType->getEffectTypes()[i]->getStatistics()->getEnhancement()->
+                                   getResourcePools()->getHealth()->getBoostStat()->getValue() >
+                                   healCommandType->getCastSpellSkillType()->getEffectTypes()[i]->getStatistics()->getEnhancement()->
+                                   getResourcePools()->getHealth()->getBoostStat()->getValue()) {
                             healCommandType = testCommandType;
-                            if (healCommandType->getCastSpellSkillType()->getEffectTypes()[i]->getResourcePools()->getHpBoost().getValue() >= healthToHeal) {
+                            if (healCommandType->getCastSpellSkillType()->getEffectTypes()[i]->getStatistics()->getEnhancement()->
+                                getResourcePools()->getHealth()->getBoostStat()->getValue() >= healthToHeal) {
                                 return healCommandType;
                             }
                         }
@@ -562,14 +565,13 @@ const CommandType* GoalSystem::selectBuffSpell(Unit *unit, Unit *target) {
 const CommandType* GoalSystem::selectAttackSpell(Unit *unit, Unit *target) {
     const CommandType *attackCommandType = NULL;
     int currentDamage = 0;
-    int currentEp;
     for (int i = 0; i < unit->getType()->getActions()->getCommandTypeCount(); ++i) {
         if (unit->currentCommandCooldowns[i].currentStep == 0) {
             const CommandType *testingCommandType = unit->getType()->getActions()->getCommandType(i);
             if (testingCommandType->getClass() == CmdClass::ATTACK) {
                 const AttackCommandType *testCommandType = static_cast<const AttackCommandType*>(testingCommandType);
                 const AttackSkillType *testSkillType = testCommandType->AttackCommandTypeBase::getAttackSkillTypes()->getFirstAttackSkill();
-                if (testSkillType->getSkillCosts()->getEpCost() <= unit->getEp()) {
+                if (unit->checkSkillCosts(testCommandType)) {
                     fixed fDamage = 0;
                     if (fDamage < 1) {
                         fDamage = 1;
@@ -577,12 +579,12 @@ const CommandType* GoalSystem::selectAttackSpell(Unit *unit, Unit *target) {
                     fixed totalDamage = 0 + fDamage;
                     const UnitType *uType = target->getType();
                     const AttackLevel *aLevel = testSkillType->getLevel(testSkillType->getCurrentLevel());
-                    for (int t = 0; t < aLevel->getDamageTypeCount(); ++t) {
-                        const DamageType *dType = aLevel->getDamageType(t);
+                    for (int t = 0; t < aLevel->getStatistics()->getDamageTypeCount(); ++t) {
+                        const DamageType *dType = aLevel->getStatistics()->getDamageType(t);
                         string damageType = dType->getTypeName();
                         int mDamage = dType->getValue();
-                        for (int i = 0; i < uType->getResistances()->size(); ++i) {
-                            const DamageType *rType = uType->getResistance(i);
+                        for (int i = 0; i < uType->getStatistics()->getResistances()->size(); ++i) {
+                            const DamageType *rType = uType->getStatistics()->getResistance(i);
                             string resistType = rType->getTypeName();
                             if (damageType==resistType) {
                                 int resist = rType->getValue();
@@ -595,15 +597,11 @@ const CommandType* GoalSystem::selectAttackSpell(Unit *unit, Unit *target) {
                         totalDamage += mDamage;
                     }
                     if (currentDamage < totalDamage.intp()) {
-                        currentEp = testSkillType->getSkillCosts()->getEpCost();
                         currentDamage = totalDamage.intp();
                         attackCommandType = testingCommandType;
                     } else if (currentDamage == totalDamage.intp()){
-                        if (testSkillType->getSkillCosts()->getEpCost() < currentEp) {
-                            currentEp = testSkillType->getSkillCosts()->getEpCost();
-                            currentDamage = totalDamage.intp();
-                            attackCommandType = testingCommandType;
-                        }
+                        currentDamage = totalDamage.intp();
+                        attackCommandType = testingCommandType;
                     }
                 }
             }

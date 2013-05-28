@@ -84,8 +84,6 @@ void ScriptManager::cleanUp() {
 	}
 }
 
-int getSubfaction(LuaHandle *luaHandle);
-int getSubfactionRestrictions(LuaHandle *luaHandle);
 int getFrameCount(LuaHandle *luaHandle);
 
 int getCellType(LuaHandle *luaHandle);
@@ -110,8 +108,6 @@ void ScriptManager::initGame() {
 	//register functions
 
 	// debug info / testing
-	LUA_FUNC(getSubfaction);
-	LUA_FUNC(getSubfactionRestrictions);
 	LUA_FUNC(getFrameCount);
 
 	LUA_FUNC(getCellHeight);
@@ -291,47 +287,6 @@ int setTime(LuaHandle *l) {
 	return args.getReturnCount();
 }
 
-int getSubfaction(LuaHandle *luaHandle) {
-	LuaArguments args(luaHandle);
-	int ndx;
-	if (ScriptManager::extractArgs(args, "getSubfaction", "int", &ndx)) {
-		if (ndx >= 0 && ndx < g_world.getFactionCount()) {
-			const Faction *f = g_world.getFaction(ndx);
-			const FactionType *ft = f->getType();
-			string name = ft->getSubfaction(f->getSubfaction());
-			string res = "Faction " + intToStr(ndx) + " [" + ft->getName() + "] = '" + name + "'";
-			ScriptManager::luaConsole->addOutput(res);
-		} else {
-			ScriptManager::luaConsole->addOutput("Faction index out of range:" + intToStr(ndx));
-		}
-	}
-	return args.getReturnCount();
-}
-
-int getSubfactionRestrictions(LuaHandle *luaHandle) {
-	LuaArguments args(luaHandle);
-	string facName, reqName;
-	if (ScriptManager::extractArgs(args, "getSubfactionRestrictions", "str,str", &facName, &reqName)) {
-		try {
-			string res;
-			const FactionType *ft = g_world.getTechTree()->getFactionType(facName);
-			const UpgradeType *ut = ft->getUpgradeType(reqName);
-			if (ut->getSubfactionsReqs() == -1) {
-				res = "all";
-			} else {
-				for (int i=0; i < ft->getSubfactionCount(); ++i) {
-					if (ut->isAvailableInSubfaction(i)) {
-						res += ft->getSubfaction(i) + " ";
-					}
-				}
-			}
-			ScriptManager::luaConsole->addOutput("Available in: " + res);
-		} catch (runtime_error &e) {
-			ScriptManager::luaConsole->addOutput(e.what());
-		}
-	}
-	return args.getReturnCount();
-}
 
 int getFrameCount(LuaHandle *luaHandle) {
 	LuaArguments args(luaHandle);

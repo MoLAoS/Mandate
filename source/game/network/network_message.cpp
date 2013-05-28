@@ -355,7 +355,7 @@ DataSyncMessage::DataSyncMessage(World &world) : m_data(0), rawMsg() {
 				const UpgradeType *ut = static_cast<const UpgradeType*>(pt);
 				NETWORK_LOG(
 					"UpgradeType id: " << ut->getId() << " " << ut->getName() << " of FactionType: "
-					<< ut->getFactionType()->getName() << ", checksum[" << (n - 1) << "]: "
+					<< ", checksum[" << (n - 1) << "]: "
 					<< intToHex(m_data[n - 1])
 				);
 			} else if (g_prototypeFactory.isGeneratedType(pt)) {

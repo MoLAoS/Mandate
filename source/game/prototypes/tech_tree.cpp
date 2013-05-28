@@ -58,6 +58,19 @@ bool TechTree::preload(const string &dir, const set<string> &factionNames){
 		return false;
 	}
 
+    const XmlNode *damagesNode = techTreeNode->getChild("damage-types");
+    damageTypes.resize(damagesNode->getChildCount());
+    resistances.resize(damagesNode->getChildCount());
+	for (int i = 0; i < damagesNode->getChildCount(); ++i) {
+	    const XmlNode *damageNode = damagesNode->getChild("damage-type", i);
+        const XmlAttribute* damageAttibute = damageNode->getAttribute("name");
+        if (damageAttibute) {
+            string damage = damageAttibute->getRestrictedValue();
+            damageTypes[i].init(damage, 0);
+            resistances[i].init(damage, 0);
+        }
+	}
+
     // check for included factions
     vector<string> factionTypeNameList;
     vector<string> factionTypeNames;
@@ -127,6 +140,14 @@ bool TechTree::preload(const string &dir, const set<string> &factionNames){
 		throw runtime_error("Glest Advanced Engine currently only supports 256 resource types.");
 	}
 	return loadOk;
+}
+
+Trait *TechTree::getTraitById(int id) {
+    for (int i = 0; i < traitsList.size(); ++i) {
+        if (traitsList[i].getId() == id) {
+            return &traitsList[i];
+        }
+    }
 }
 
 bool TechTree::load(const string &dir, const set<string> &factionNames){
@@ -223,6 +244,20 @@ bool TechTree::load(const string &dir, const set<string> &factionNames){
 	}
 	string techName = basename(dir);
 	g_lang.loadFactionStrings(techName, names);
+
+	string tpath = dir + "/traits/*.";
+	vector<string> tpaths;
+	try {
+		findAll(tpath, tpaths);
+	} catch (runtime_error e) {
+		g_logger.logError(e.what());
+	}
+	traitsList.resize(tpaths.size());
+	for (int i = 0; i < tpaths.size(); ++i) {
+        string tstr = dir + "/traits/" + tpaths[i] + "/" + tpaths[i];
+        traitsList[i].load(tstr);
+	}
+
 	return loadOk;
 }
 

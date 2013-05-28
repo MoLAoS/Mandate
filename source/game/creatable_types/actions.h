@@ -39,6 +39,7 @@ public:
 	int getSkillTypeCount() const						{return skillTypes.size();}
 	SkillTypes getSkillTypeCountOfClass(SkillClass skillClass) const {return skillTypesByClass[skillClass];}
 	SkillType *getSkillType(int i) const			{return skillTypes[i];}
+	SkillType *getSkillType(int i)      			{return skillTypes[i];}
 	SkillType *getSkillType(const string &skillName, SkillClass skillClass = SkillClass::COUNT) const;
 	SkillType *getFirstStOfClass(SkillClass sc) const {
 		return skillTypesByClass[sc].empty() ? 0 : skillTypesByClass[sc].front();
@@ -48,8 +49,9 @@ public:
     void setDeCloakSkills(const vector<string> &names, const vector<SkillClass> &classes);
     void addSkillType(SkillType *skillType);
     void sortSkillTypes();
-	int getCommandTypeCount() const						{return commandTypes.size();}
-	CommandType *getCommandType(int i) const		{return commandTypes[i];}
+	int getCommandTypeCount() const				{return commandTypes.size();}
+	CommandType *getCommandType(int i) const	{return commandTypes[i];}
+	CommandType *getCommandType(int i)          {return commandTypes[i];}
 	template <typename ConcreteType>
 	int getCommandTypeCount() const {
 		return commandTypesByClass[ConcreteType::typeClass()].size();
@@ -75,7 +77,8 @@ public:
     void addBeLoadedCommand(CommandType *ct);
     void addSquadCommand(CommandType *ct);
 
-	bool load(const XmlNode *actionsNode, const string &dir, const TechTree *techTree, const FactionType *factionType, bool isItem, const CreatableType *cType);
+	bool load(const XmlNode *actionsNode, const string &dir, bool isItem, const FactionType *ft, const CreatableType *cType);
+	void save(XmlNode *node) const;
 };
 
 }}// end namespace

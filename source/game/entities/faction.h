@@ -81,25 +81,21 @@ Vec3f getFactionColour(int ndx);
 // =====================================================
 
 class UpgradeStage : public ProducibleType {
-
-private:
-	typedef vector<UpgradeEffect> Enhancements;
-	typedef map<const UnitType*, const UpgradeEffect*> EnhancementMap;
-	typedef vector< vector<string> > AffectedUnits;
+public:
+    typedef vector<UpgradeEffect> Upgrades;
+    typedef vector<UpgradeUnitCombo> UpgradeUnitMap;
+    typedef vector< vector<string> > AffectedUnits;
     typedef vector<string> Names;
 
-	EnhancementMap     m_enhancementMap;
-	const FactionType *m_factionType;
-
-public:
+	UpgradeUnitMap     m_upgradeMap;
     Names              m_names;
-    Enhancements       m_enhancements;
+	Upgrades           m_upgrades;
 	AffectedUnits      m_unitsAffected;
-
-
+public:
     mutable int upgradeStage;
     mutable int maxStage;
     const UpgradeType *upgradeType;
+	const FactionType *m_factionType;
 
     int getUpgradeStage() const { return upgradeStage; }
     const UpgradeType *getUpgradeType() const { return upgradeType; }
@@ -110,14 +106,6 @@ public:
 	static ProducibleClass typeClass() { return ProducibleClass::UPGRADE; }
     ProducibleClass getClass() const override                       { return typeClass(); }
 	const FactionType* getFactionType() const                       { return m_factionType; }
-	const Statistics* getStatistics(const UnitType *ut) const;
-	Modifier getCostModifier(const UnitType *ut, const ResourceType *rt) const;
-	Modifier getStoreModifier(const UnitType *ut, const ResourceType *rt) const;
-    Modifier getCreateModifier(const UnitType *ut, const ResourceType *rt) const;
-
-	bool isAffected(const UnitType *unitType) const {
-		return m_enhancementMap.find(unitType) != m_enhancementMap.end();
-	}
 
 	virtual void doChecksum(Checksum &checksum) const;
 
@@ -125,7 +113,7 @@ public:
     ~UpgradeStage();
 
     void init(const UpgradeType *upgradeType, int upgradeStage, int maxStage, Names m_names,
-        const Enhancements m_enhancements, AffectedUnits m_unitsAffected, EnhancementMap m_enhancementMap);
+              Upgrades m_upgrades, AffectedUnits m_unitsAffected, UpgradeUnitMap m_upgradeMap);
 };
 
 // =====================================================
@@ -172,6 +160,7 @@ typedef vector<UpgradeStage>    UpgradeStages;
     UpgradeStage *getUpgradeStage(const UpgradeType *ut);
 	UpgradeStage *getUpgradeStage(int i) {assert(i < upgradeStages.size()); return &upgradeStages[i];}
 	int getCurrentStage(const UpgradeType *ut);
+	int getUpgradeTypeCount() {return upgradeStages.size();}
 
 
 private:
@@ -231,7 +220,6 @@ private:
 
 	bool thisFaction;
 	bool defeated;
-	int subfaction;			// the current subfaction index starting at zero
 	time_t lastAttackNotice;
 	time_t lastEnemyNotice;
 	Vec3f lastEventLoc;
@@ -283,7 +271,6 @@ public:
 	int getColourIndex() const							{return colourIndex;}
 	Colour getColour() const							{return factionColours[colourIndex];}
 	Vec3f  getColourV3f() const;
-	int getSubfaction() const							{return subfaction;}
 	Vec3f getLastEventLoc() const						{return lastEventLoc;}
 	Modifier getCostModifier(const ProducibleType *pt, const ResourceType *rt) const;
     Modifier getStoreModifier(const UnitType *ut, const ResourceType *rt) const;
@@ -331,11 +318,6 @@ public:
 	void reportReqsAndCosts(const CommandType *ct, const ProducibleType *pt, CommandCheckResult &out_result) const;
 	void reportReqs(const RequirableType *rt, CommandCheckResult &out_result, bool checkDups = false) const;
 
-	// subfaction checks
-	bool isAvailable(const CommandType *ct) const;
-	bool isAvailable(const CommandType *ct, const ProducibleType *pt) const;
-	bool isAvailable(const RequirableType *rt) const	{return rt->isAvailableInSubfaction(subfaction);}
-
 	// diplomacy
 	bool isAlly(const Faction *faction)	const			{return teamIndex == faction->getTeam();}
 	bool hasBuilding() const;
@@ -368,9 +350,6 @@ public:
 
 	void setLastEventLoc(Vec3f lastEventLoc)	{this->lastEventLoc = lastEventLoc;}
 	void attackNotice(const Unit *u);
-
-	void advanceSubfaction(int subfaction);
-	void checkAdvanceSubfaction(const ProducibleType *pt, bool finished);
 
 	// resources
 	void incResourceAmount(const ResourceType *rt, int amount);
