@@ -66,6 +66,12 @@ bool Trait::load(const string &dir) {
 	//}
 	id = traitNode->getAttribute("id")->getIntValue();
 	progress = traitNode->getAttribute("progress")->getIntValue();
+
+	const XmlNode *creatorCostNode = traitNode->getChild("creator-cost", 0, false);
+	if (creatorCostNode) {
+        creatorCost.load(creatorCostNode);
+	}
+
     try {
         const XmlNode *equipmentNode = traitNode->getChild("equipment", 0, false);
         if (equipmentNode) {
@@ -155,6 +161,7 @@ void Trait::getDesc(string &str, const char *pre) {
         equipment[i].getDesc(str, pre, "");
     }
     knowledge.getDesc(str, pre);
+    actions.getDesc(str, pre);
 }
 
 }}//end namespace

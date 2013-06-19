@@ -605,12 +605,24 @@ void World::tick() {
 		g_userInterface.getMinimap()->updateFowTex(1.f);
 	}
 	cartographer->tick();
-	// manage list of current attackers
+	/*for testing traits
 	for (int i = 0; i < getFactionCount(); ++i) {
 		for (int j = 0; j < getFaction(i)->getUnitCount(); ++j) {
 		    Unit *unit = getFaction(i)->getUnit(j);
+		    if (unit->getType()->getName() == "defender") {
+		        Trait *trait = getTechTree()->getTraitById(3);
+		        bool hasTrait = false;
+		        for (int i = 0; i < unit->getTraitCount(); ++i) {
+                    if (trait == unit->getTrait(i)) {
+                        hasTrait = true;
+                    }
+		        }
+		        if (hasTrait == false) {
+                    unit->addTrait(trait);
+		        }
+		    }
 		}
-	}
+	}*/
 	for (int i = 0; i < getFactionCount(); ++i) {
 		for (int j = 0; j < getFaction(i)->getUnitCount(); ++j) {
 		    Unit *unit = getFaction(i)->getUnit(j);

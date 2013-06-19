@@ -40,8 +40,12 @@ void ResourceAmount::init(const XmlNode *node, const TechTree *tt) {
 void ResourceAmount::save(XmlNode *node) const {
 	node->addChild("type", m_type->getName());
 	node->addChild("amount", m_amount);
-	node->addChild("plus", m_amount_plus);
-	node->addChild("multiply", m_amount_multiply);
+	if (m_amount_plus > 0) {
+        node->addChild("plus", m_amount_plus);
+	}
+	if (m_amount_plus > 0) {
+        node->addChild("multiply", m_amount_multiply-1);
+	}
 }
 
 void ResourceAmount::init(const ResourceType *rt, int amount, int amount_plus, fixed amount_multiply) {

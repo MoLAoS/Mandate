@@ -34,15 +34,18 @@
 
 #include "leak_dumper.h"
 #include "logger.h"
+#include "character_creator.h"
+#include "main_menu.h"
+#include "menu_state_character_creator.h"
 
 namespace Glest { namespace ProtoTypes {
 
 // ===============================
 // 	class AttackCommandTypeBase
 // ===============================
-void AttackCommandTypeBase::initAttackSkill(Unit *unit) {
+void AttackCommandTypeBase::initAttackSkill(const Actions *actions) {
     attackSkillTypes.clear();
-    const SkillType *st = unit->getActions()->getSkillType(attackSkillTypeName, SkillClass::ATTACK);
+    const SkillType *st = actions->getSkillType(attackSkillTypeName, SkillClass::ATTACK);
     const AttackSkillType *ast = static_cast<const AttackSkillType*>(st);
     attackSkillTypes.push_back(ast, AttackSkillPreferences());
 }
@@ -52,10 +55,21 @@ bool AttackCommandTypeBase::load(const XmlNode *n, const string &dir, const Fact
 	string skillName;
 	const XmlNode *attackSkillNode = n->getChild("attack-skill", 0, false);
 	bool loadOk = true;
+	const TechTree *tt = 0;
     if (ft == 0) {
         const XmlAttribute *factionAttribute = n->getAttribute("faction");
         string faction = factionAttribute->getRestrictedValue();
-        ft = g_world.getTechTree()->getFactionType(faction);
+        if (&g_world) {
+            ft = g_world.getTechTree()->getFactionType(faction);
+        } else {
+            if (g_program.getState()->isCCState()) {
+                MainMenu *charMenu = static_cast<MainMenu*>(g_program.getState());
+                MenuStateCharacterCreator *charState = static_cast<MenuStateCharacterCreator*>(charMenu->getState());
+                CharacterCreator *charCreator = charState->getCharacterCreator();
+                tt = charCreator->getTechTree();
+                ft = tt->getFactionType(faction);
+            }
+        }
     }
 	//single attack skill
 	if(attackSkillNode) {
@@ -206,7 +220,11 @@ bool AttackCommandType::load(const XmlNode *n, const string &dir, const FactionT
 }
 
 void AttackCommandType::descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const {
-	string msg = g_lang.get("WalkSpeed") + ": " + intToStr(unit->getSpeed(m_moveSkillType)) + "\n";
+    int moveSpeed = 0;
+    if (unit) {
+        moveSpeed = unit->getSpeed(m_moveSkillType);
+    }
+	string msg = g_lang.get("WalkSpeed") + ": " + intToStr(moveSpeed) + "\n";
 	attackSkillTypes.getDesc(msg, unit);
 	callback->addElement(msg);
 }

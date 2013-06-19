@@ -79,6 +79,7 @@ public:
 
 	bool load(const XmlNode *actionsNode, const string &dir, bool isItem, const FactionType *ft, const CreatableType *cType);
 	void save(XmlNode *node) const;
+	void getDesc(string &str, const char *pre);
 };
 
 }}// end namespace

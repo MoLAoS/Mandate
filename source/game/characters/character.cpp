@@ -59,6 +59,12 @@ void Knowledge::sum(Knowledge knowledge) {
 
 bool Knowledge::load(const XmlNode *baseNode) {
     bool loadOk = true;
+
+	const XmlNode *creatorCostNode = baseNode->getChild("creator-cost", 0, false);
+	if (creatorCostNode) {
+        creatorCost.load(creatorCostNode);
+	}
+
     const XmlNode *languagesNode = baseNode->getChild("languages", 0, false);
     if (languagesNode) {
         languages.resize(languagesNode->getChildCount());
@@ -200,6 +206,12 @@ void CharacterStats::doChecksum(Checksum &checksum) const {
 bool CharacterStats::load(const XmlNode *baseNode, const string &dir) {
 	bool loadOk = true;
 	reset();
+
+	const XmlNode *creatorCostNode = baseNode->getChild("creator-cost", 0, false);
+	if (creatorCostNode) {
+        creatorCost.load(creatorCostNode);
+	}
+
 	try {
         const XmlNode *conceptionNode = baseNode->getChild("conception", 0, false);
         if (conceptionNode) {

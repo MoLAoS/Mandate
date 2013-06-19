@@ -34,7 +34,7 @@ using Shared::Util::MultiFactory;
 #include "prototypes_enums.h"
 #include "simulation_enums.h"
 #include "entities_enums.h"
-#include "particle_type.h"	// forward decs
+#include "particle_type.h"
 
 namespace Glest {
 using namespace Sound;
@@ -87,6 +87,7 @@ public:
 
 	bool load(const XmlNode *sn, const string &dir, const CreatableType *ct);
 	void addAnimation(string load, int s, int h);
+    void save(XmlNode *node) const;
 };
 
 // =====================================================
@@ -94,6 +95,15 @@ public:
 //
 ///	Class detail the costs of a skill
 // =====================================================
+class CmdDescriptor {
+public:
+	virtual void setHeader(const string &header) = 0;
+	virtual void setTipText(const string &mainText) = 0;
+	virtual void addElement(const string &msg) = 0;
+	virtual void addItem(const DisplayableType *dt, const string &msg) = 0;
+	virtual void addReq(const DisplayableType *dt, bool ok, const string &msg) = 0;
+};
+
 class ItemCost {
 private:
     int amount;
@@ -102,6 +112,7 @@ public:
     int getAmount() const {return amount;}
     const ItemType *getType() const {return type;}
     void init(int amount, const ItemType *type);
+    void save(XmlNode *node) const;
 };
 class StatCost {
 private:
@@ -112,6 +123,7 @@ public:
     string getName() const {return name;}
     void setAmount(int i) {amount += i;}
     void init(int amount, string name);
+    void save(XmlNode *node) const;
 };
 
 typedef vector<ItemCost> ItemCosts;
@@ -146,6 +158,8 @@ public:
 
     bool load(const XmlNode *sn, const string &dir, const FactionType *ft);
     void init();
+    void save(XmlNode *node) const;
+    void getDesc(CmdDescriptor *callback) const;
 };
 
 // =====================================================
@@ -173,7 +187,7 @@ public:
     const CreatableType *getCreatableType() const {return m_creatableType;}
     const SoundsAndAnimations *getSoundsAndAnimations() const {return &soundsAndAnimations;}
     SoundsAndAnimations *getSoundsAndAnimations()             {return &soundsAndAnimations;}
-    const SkillCosts *getSkillCosts() const {return &skillCosts;}
+    SkillCosts *getSkillCosts() {return &skillCosts;}
 	SkillType(const char* typeName);
 	virtual ~SkillType();
 	virtual bool load(const XmlNode *sn, const string &dir, const FactionType *ft, const CreatableType *ct);
@@ -188,7 +202,7 @@ public:
 
 	virtual SkillClass getClass() const	= 0;
 	int getBaseSpeed() const            {return speed;}
-	const string &getName() const		{return m_name;}
+	//const string &getName() const		{return m_name;}
 	float getStartTime() const			{return startTime;}
 	bool causesDeCloak() const			{return m_deCloak;}
 
@@ -201,6 +215,7 @@ public:
 	}
 	void setDeCloak(bool v)	{m_deCloak = v;}
 	virtual string toString() const	{return Lang::getInstance().get(typeName);}
+    void save(XmlNode *node) const;
 };
 
 // ===============================

@@ -25,6 +25,9 @@
 #include "earthquake_type.h"
 //#include "network_message.h"
 #include "sim_interface.h"
+#include "character_creator.h"
+#include "main_menu.h"
+#include "menu_state_character_creator.h"
 
 #include "leak_dumper.h"
 
@@ -66,7 +69,9 @@ bool SoundsAndAnimations::load(const XmlNode *sn, const string &dir, const Creat
         if (loadBool) {
             loadValue = "/" + animPathAttrib->getRestrictedValue();
         } else {
-            animations.push_back(modelFactory.getModel(cleanPath(path), ct->getSize(), ct->getHeight()));
+            if (g_program.getState()->isGameState()) {
+                animations.push_back(modelFactory.getModel(cleanPath(path), ct->getSize(), ct->getHeight()));
+            }
         }
 		animationsStyle = AnimationsStyle::SINGLE;
 	} else { // multi-anim or anim-by-surface-type, new style
@@ -130,6 +135,10 @@ bool SoundsAndAnimations::load(const XmlNode *sn, const string &dir, const Creat
 	return loadOk;
 }
 
+void SoundsAndAnimations::save(XmlNode *node) const {
+
+}
+
 const Model* SoundsAndAnimations::getAnimation(SurfaceType from, SurfaceType to) const {
 	AnimationBySurfacePair::const_iterator it = m_animBySurfPairMap.find(make_pair(from, to));
 	if (it != m_animBySurfPairMap.end()) {
@@ -154,9 +163,19 @@ void ItemCost::init(int amount, const ItemType *type) {
     this->amount = amount;
 }
 
+void ItemCost::save(XmlNode *node) const {
+    node->addAttribute("type", type->getName());
+    node->addAttribute("amount", amount);
+}
+
 void StatCost::init(int amount, string name) {
     this->name = name;
     this->amount = amount;
+}
+
+void StatCost::save(XmlNode *node) const {
+    node->addAttribute("name", name);
+    node->addAttribute("amount", amount);
 }
 
 // =====================================================
@@ -216,18 +235,88 @@ bool SkillCosts::load(const XmlNode *sn, const string &dir, const FactionType *f
             const XmlNode *costNode = resourceCostsNode->getChild("cost", i);
             string typeString = costNode->getAttribute("type")->getRestrictedValue();
             int amount = costNode->getAttribute("amount")->getIntValue();
-            const ResourceType *resourceType = g_world.getTechTree()->getResourceType(typeString);
+            const TechTree *tt = 0;
+            if (&g_world) {
+                tt = g_world.getTechTree();
+            } else {
+                if (g_program.getState()->isCCState()) {
+                    MainMenu *charMenu = static_cast<MainMenu*>(g_program.getState());
+                    MenuStateCharacterCreator *charState = static_cast<MenuStateCharacterCreator*>(charMenu->getState());
+                    CharacterCreator *charCreator = charState->getCharacterCreator();
+                    tt = charCreator->getTechTree();
+                }
+            }
+            const ResourceType *resourceType = tt->getResourceType(typeString);
             resourceCosts[i].init(resourceType, amount, 0, 0);
         }
     }
     return loadOk;
 }
 
+void SkillCosts::getDesc(CmdDescriptor *callback) const {
+    if (getHpCost() > 0) {
+        string name = g_lang.getTranslatedTechName("Health");
+        string msg = name + " (" + intToStr(getHpCost()) + ")";
+        callback->addElement(msg);
+    }
+    if (getResourceCount() > 0) {
+        callback->addElement(g_lang.get("Costs") + ":");
+        for (int i = 0; i < getResourceCount(); ++i) {
+            const StatCost *iCost = getResource(i);
+            string name = g_lang.getTranslatedTechName(iCost->getName());
+            string msg = name + " (" + intToStr(iCost->getAmount()) + ")";
+            callback->addElement(msg);
+        }
+    }
+    if (getResourceCostCount() > 0) {
+        callback->addElement(g_lang.get("Costs") + ":");
+        for (int i = 0; i < getResourceCostCount(); ++i) {
+            const ResourceAmount *res = getResourceCost(i);
+            string name = g_lang.getTranslatedTechName(res->getType()->getName());
+            string msg = "Local| " + name + " (" + intToStr(res->getAmount()) + ")";
+            callback->addReq(res->getType(), true, msg);
+        }
+    }
+    if (getItemCostCount() > 0) {
+        callback->addElement(g_lang.get("Costs") + ":");
+        for (int i = 0; i < getItemCostCount(); ++i) {
+            const ItemCost *iCost = getItemCost(i);
+            string name = g_lang.getTranslatedTechName(iCost->getType()->getName());
+            string msg = "Local| " + name + " (" + intToStr(iCost->getAmount()) + ")";
+            callback->addReq(iCost->getType(), true, msg);
+        }
+    }
+}
+
+void SkillCosts::save(XmlNode *node) const {
+    XmlNode *n;
+    n = node->addChild("hp-cost");
+    n->addAttribute("value", hpCost);
+    n = node->addChild("level-req");
+    n->addAttribute("level", levelReq);
+    n = node->addChild("res-pools");
+    for (int i = 0; i < resources.size(); ++i) {
+        resources[i].save(n->addChild("cost"));
+    }
+    n = node->addChild("def-pools");
+    for (int i = 0; i < defenses.size(); ++i) {
+        defenses[i].save(n->addChild("cost"));
+    }
+    n = node->addChild("item-costs");
+    for (int i = 0; i < itemCosts.size(); ++i) {
+        itemCosts[i].save(n->addChild("cost"));
+    }
+    n = node->addChild("resource-costs");
+    for (int i = 0; i < resourceCosts.size(); ++i) {
+        resourceCosts[i].save(n->addChild("cost"));
+    }
+}
+
 // =====================================================
 // 	class SkillType
 // =====================================================
 SkillType::SkillType(const char* typeName)
-		: NameIdPair()
+		: NameIdPair(-1, "default")
 		, m_deCloak(false)
 		, startTime(0.f)
 		, minRange(0)
@@ -246,9 +335,21 @@ bool SkillType::load(const XmlNode *sn, const string &dir, const FactionType *ft
     if (ft == 0) {
         const XmlAttribute *factionAttribute = sn->getAttribute("faction");
         string faction = factionAttribute->getRestrictedValue();
-        ft = g_world.getTechTree()->getFactionType(faction);
+        if (&g_world) {
+            ft = g_world.getTechTree()->getFactionType(faction);
+        } else {
+            if (g_program.getState()->isCCState()) {
+                MainMenu *charMenu = static_cast<MainMenu*>(g_program.getState());
+                MenuStateCharacterCreator *charState = static_cast<MenuStateCharacterCreator*>(charMenu->getState());
+                CharacterCreator *charCreator = charState->getCharacterCreator();
+                const TechTree *tt = charCreator->getTechTree();
+                ft = tt->getFactionType(faction);
+            }
+        }
     }
-	m_name = sn->getChildStringValue("name");
+    const XmlNode *nameNode = sn->getChild("name");
+	m_name = nameNode->getRestrictedValue();
+	//m_name = sn->getChildStringValue("name");
 	speed = sn->getChildIntValue("speed");
 
     const XmlNode *minRangeNode = sn->getChild("min-range", 0, false);
@@ -305,6 +406,9 @@ bool SkillType::load(const XmlNode *sn, const string &dir, const FactionType *ft
 	return loadOk;
 }
 
+void SkillType::save(XmlNode *node) const {
+}
+
 void SkillType::doChecksum(Checksum &checksum) const {
 	checksum.add<SkillClass>(getClass());
 	checksum.add(m_name);
@@ -314,7 +418,11 @@ void SkillType::doChecksum(Checksum &checksum) const {
 
 void SkillType::descSpeed(string &str, const Unit *unit, const char* speedType) const {
 	str += g_lang.get(speedType) + ": " + intToStr(speed);
-	EnhancementType::describeModifier(str, unit->getSpeed(this) - speed);
+	int uSpeed = 0;
+	if (unit) {
+        uSpeed = unit->getSpeed(this);
+	}
+	EnhancementType::describeModifier(str, uSpeed - speed);
 	str += "\n";
 }
 
@@ -368,7 +476,17 @@ bool MoveSkillType::load(const XmlNode *sn, const string &dir, const FactionType
     if (ft == 0) {
         const XmlAttribute *factionAttribute = sn->getAttribute("faction");
         string faction = factionAttribute->getRestrictedValue();
-        ft = g_world.getTechTree()->getFactionType(faction);
+        if (&g_world) {
+            ft = g_world.getTechTree()->getFactionType(faction);
+        } else {
+            if (g_program.getState()->isCCState()) {
+                MainMenu *charMenu = static_cast<MainMenu*>(g_program.getState());
+                MenuStateCharacterCreator *charState = static_cast<MenuStateCharacterCreator*>(charMenu->getState());
+                CharacterCreator *charCreator = charState->getCharacterCreator();
+                const TechTree *tt = charCreator->getTechTree();
+                ft = tt->getFactionType(faction);
+            }
+        }
     }
 	loadOk = SkillType::load(sn, dir, ft, ct);
 
@@ -380,6 +498,9 @@ bool MoveSkillType::load(const XmlNode *sn, const string &dir, const FactionType
 }
 
 fixed MoveSkillType::getSpeed(const Unit *unit) const {
+    if (!unit) {
+        return getBaseSpeed();
+    }
 	return getBaseSpeed() * unit->getStatistics()->getEnhancement()->getUnitStats()->getMoveSpeed()->getValueMult() +
 	unit->getStatistics()->getEnhancement()->getUnitStats()->getMoveSpeed()->getValue();
 }
@@ -409,7 +530,17 @@ bool TargetBasedSkillType::load(const XmlNode *sn, const string &dir, const Fact
     if (ft == 0) {
         const XmlAttribute *factionAttribute = sn->getAttribute("faction");
         string faction = factionAttribute->getRestrictedValue();
-        ft = g_world.getTechTree()->getFactionType(faction);
+        if (&g_world) {
+            ft = g_world.getTechTree()->getFactionType(faction);
+        } else {
+            if (g_program.getState()->isCCState()) {
+                MainMenu *charMenu = static_cast<MainMenu*>(g_program.getState());
+                MenuStateCharacterCreator *charState = static_cast<MenuStateCharacterCreator*>(charMenu->getState());
+                CharacterCreator *charCreator = charState->getCharacterCreator();
+                const TechTree *tt = charCreator->getTechTree();
+                ft = tt->getFactionType(faction);
+            }
+        }
     }
 	SkillType::load(sn, dir, ft, ct);
 
@@ -517,7 +648,11 @@ void TargetBasedSkillType::descRange(string &str, const Unit *unit, const char* 
 		str += 	intToStr(getMinRange()) + "...";
 	}
 	str += intToStr(getMaxRange());
-	EnhancementType::describeModifier(str, unit->getMaxRange(this) - getMaxRange());
+	int uRange = 0;
+	if (unit) {
+        uRange = unit->getMaxRange(this);
+	}
+	EnhancementType::describeModifier(str, uRange - getMaxRange());
 	str+="\n";
 }
 
@@ -582,12 +717,18 @@ void AttackSkillType::getDesc(string &str, const Unit *unit) const {
         str += lang.get("Damage")+": ";
         str += "\n";
         for (int i = 0; i < aLevel->getStatistics()->getDamageTypeCount(); ++i) {
-            if (aLevel->getStatistics()->getDamageType(i)->getValue() + unit->getStatistics()->getDamageType(i)->getValue() > 0) {
+            int uDamage = 0;
+            if (unit) {
+                uDamage = unit->getStatistics()->getDamageType(i)->getValue();
+            }
+            if (aLevel->getStatistics()->getDamageType(i)->getValue() + uDamage > 0) {
                 str += lang.get(aLevel->getStatistics()->getDamageType(i)->getTypeName())+": ";
-                str += intToStr(aLevel->getStatistics()->getDamageType(i)->getValue() + unit->getStatistics()->getDamageType(i)->getValue());
+                str += intToStr(aLevel->getStatistics()->getDamageType(i)->getValue() + uDamage);
             }
         }
         str += "\n";
+    } else {
+        throw runtime_error(intToStr(aLevel->getStatistics()->getDamageTypeCount()));
     }
     TargetBasedSkillType::getDesc(str, unit, "AttackDistance");
     descEffects(str, unit);

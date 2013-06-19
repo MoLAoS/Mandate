@@ -26,6 +26,9 @@
 #include "leak_dumper.h"
 #include "faction.h"
 #include "world.h"
+#include "character_creator.h"
+#include "main_menu.h"
+#include "menu_state_character_creator.h"
 
 using Glest::Util::Logger;
 using namespace Shared::Util;
@@ -114,11 +117,28 @@ string RequirableType::getReqDesc(const Faction *f, const FactionType *ft) const
 bool RequirableType::load(const XmlNode *baseNode, const string &dir, bool add) {
 	bool loadOk = DisplayableType::load(baseNode, dir, add);
 	const FactionType *ft = 0;
-	for (int i = 0; i < g_world.getTechTree()->getFactionTypeCount(); ++i) {
-        ft = g_world.getTechTree()->getFactionType(i);
-        for (int j = 0; j < ft->getUnitTypeCount(); ++j) {
-            if (m_name == ft->getUnitType(i)->getName()) {
-                break;
+	if (&g_world) {
+        for (int i = 0; i < g_world.getTechTree()->getFactionTypeCount(); ++i) {
+            ft = g_world.getTechTree()->getFactionType(i);
+            for (int j = 0; j < ft->getUnitTypeCount(); ++j) {
+                if (m_name == ft->getUnitType(i)->getName()) {
+                    break;
+                }
+            }
+        }
+	} else {
+        if (g_program.getState()->isCCState()) {
+            MainMenu *charMenu = static_cast<MainMenu*>(g_program.getState());
+            MenuStateCharacterCreator *charState = static_cast<MenuStateCharacterCreator*>(charMenu->getState());
+            CharacterCreator *charCreator = charState->getCharacterCreator();
+            const TechTree *tt = charCreator->getTechTree();
+            for (int i = 0; i < tt->getFactionTypeCount(); ++i) {
+                ft = tt->getFactionType(i);
+                for (int j = 0; j < ft->getUnitTypeCount(); ++j) {
+                    if (m_name == ft->getUnitType(i)->getName()) {
+                        break;
+                    }
+                }
             }
         }
 	}
@@ -321,7 +341,11 @@ bool ProducibleType::load(const XmlNode *baseNode, const string &dir) {
 					int amount = resourceNode->getAttribute("amount")->getIntValue();
                     int amount_plus = resourceNode->getAttribute("plus")->getIntValue();
                     fixed amount_multiply = resourceNode->getAttribute("multiply")->getFixedValue();
-                    costs[i].init(g_world.getTechTree()->getResourceType(name), amount, amount_plus, amount_multiply);
+                    if (&g_world) {
+                        costs[i].init(g_world.getTechTree()->getResourceType(name), amount, amount_plus, amount_multiply);
+                    } else {
+
+                    }
 				} catch (runtime_error e) {
 					g_logger.logXmlError(dir, e.what());
 					loadOk = false;
@@ -344,7 +368,9 @@ bool ProducibleType::load(const XmlNode *baseNode, const string &dir) {
 					int amount = resourceNode->getAttribute("amount")->getIntValue();
                     int amount_plus = resourceNode->getAttribute("plus")->getIntValue();
                     fixed amount_multiply = resourceNode->getAttribute("multiply")->getFixedValue();
-                    localCosts[i].init(g_world.getTechTree()->getResourceType(name), amount, amount_plus, amount_multiply);
+                    if (&g_world) {
+                        localCosts[i].init(g_world.getTechTree()->getResourceType(name), amount, amount_plus, amount_multiply);
+                    }
 				} catch (runtime_error e) {
 					g_logger.logXmlError(dir, e.what());
 					loadOk = false;

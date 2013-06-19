@@ -31,7 +31,9 @@ private:
     Actions actions;
     Traits traits;
     string name;
+    Stat creatorCost;
 public:
+	const Stat *getCreatorCost() const {return &creatorCost;}
     CraftingStats *getCraftingStats() {return &craftingStats;}
     CharacterStats *getCharacterStats() {return &characterStats;}
     Actions *getActions() {return &actions;}

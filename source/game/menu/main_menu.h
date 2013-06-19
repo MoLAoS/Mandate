@@ -90,6 +90,7 @@ public:
 	virtual void keyPress(char c);
 
 	void setState(MenuState *state);
+	MenuState *getState() const {return state;}
 	void setCameraTarget(MenuStates state);
 
 	bool isTotalConversion() const	{ return totalConversion; }

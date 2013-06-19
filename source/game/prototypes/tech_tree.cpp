@@ -63,12 +63,12 @@ bool TechTree::preload(const string &dir, const set<string> &factionNames){
     resistances.resize(damagesNode->getChildCount());
 	for (int i = 0; i < damagesNode->getChildCount(); ++i) {
 	    const XmlNode *damageNode = damagesNode->getChild("damage-type", i);
-        const XmlAttribute* damageAttibute = damageNode->getAttribute("name");
-        if (damageAttibute) {
-            string damage = damageAttibute->getRestrictedValue();
-            damageTypes[i].init(damage, 0);
-            resistances[i].init(damage, 0);
-        }
+        //const XmlAttribute* damageAttibute = damageNode->getAttribute("name");
+        //if (damageAttibute) {
+            //string damage = damageAttibute->getRestrictedValue();
+            damageTypes[i].load(damageNode);
+            resistances[i].load(damageNode);
+        //}
 	}
 
     // check for included factions
@@ -180,6 +180,68 @@ bool TechTree::load(const string &dir, const set<string> &factionNames){
 		}
 	}
 
+    string spath = dir + "/specializations/*.";
+	vector<string> paths;
+	try {
+		findAll(spath, paths);
+	} catch (runtime_error e) {
+		g_logger.logError(e.what());
+	}
+	specializations.resize(paths.size());
+	for (int i = 0; i < paths.size(); ++i) {
+        string sstr = dir + "/specializations/" + paths[i] + "/" + paths[i];
+        specializations[i].reset();
+        if(!specializations[i].load(sstr)){
+            loadOk = false;
+        }
+	}
+
+    string apath = dir + "/skills/*.";
+	vector<string> apaths;
+	try {
+		findAll(apath, apaths);
+	} catch (runtime_error e) {
+		g_logger.logError(e.what());
+	}
+	listActions.resize(apaths.size());
+	for (int i = 0; i < apaths.size(); ++i) {
+        string sstr = dir + "/skills/" + apaths[i] + "/" + apaths[i] + ".xml";
+        XmlTree	xmlTree;
+        try {
+            xmlTree.load(sstr);
+        }
+        catch (runtime_error &e) {
+            g_logger.logXmlError ( apaths[i], "File missing or wrongly named." );
+            return false;
+        }
+        const XmlNode *listActionsNode;
+        try { listActionsNode = xmlTree.getRootNode(); }
+        catch (runtime_error &e) {
+            g_logger.logXmlError ( apath, "File appears to lack contents." );
+            return false;
+        }
+        const XmlNode *actionsNode = listActionsNode->getChild("actions", 0, false);
+	    if (actionsNode) {
+	        const CreatableType *ct = 0;
+	        const FactionType *ft = 0;
+            if(!listActions[i].load(actionsNode, dir, true, ft, ct)){
+                loadOk = false;
+            }
+	    }
+	}
+	for (int i = 0; i < listActions.size(); ++i) {
+	    for (int j = 0; j < listActions[i].getSkillTypeCount(); ++j) {
+            SkillType *skillType = listActions[i].getSkillType(j);
+            actions.addSkillType(skillType);
+	    }
+	    for (int j = 0; j < listActions[i].getCommandTypeCount(); ++j) {
+            CommandType *commandType = listActions[i].getCommandType(j);
+            actions.addCommand(commandType);
+	    }
+	}
+	actions.sortSkillTypes();
+	actions.sortCommandTypes();
+
     // check for included factions
     vector<string> factionTypeNameList;
     vector<string> factionTypeNames;
@@ -245,6 +307,7 @@ bool TechTree::load(const string &dir, const set<string> &factionNames){
 	string techName = basename(dir);
 	g_lang.loadFactionStrings(techName, names);
 
+
 	string tpath = dir + "/traits/*.";
 	vector<string> tpaths;
 	try {
@@ -255,7 +318,9 @@ bool TechTree::load(const string &dir, const set<string> &factionNames){
 	traitsList.resize(tpaths.size());
 	for (int i = 0; i < tpaths.size(); ++i) {
         string tstr = dir + "/traits/" + tpaths[i] + "/" + tpaths[i];
-        traitsList[i].load(tstr);
+        if (!traitsList[i].load(tstr)) {
+            loadOk = false;
+        }
 	}
 
 	return loadOk;

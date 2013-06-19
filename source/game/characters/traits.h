@@ -28,7 +28,9 @@ private:
     int progress;
     string name;
     int id;
+    Stat creatorCost;
 public:
+	const Stat *getCreatorCost() const {return &creatorCost;}
     int getId() {return id;}
     int getProgress() {return progress;}
     string getTraitName() const {return name;}

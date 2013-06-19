@@ -39,6 +39,8 @@ private:
 	typedef map<string, ResourceType*> ResourceTypeMap;
 	typedef map<string, FactionType*> FactionTypeMap;
 	typedef map<string, EffectType*> EffectTypeMap;
+	typedef vector<Specialization> ListSpecs;
+	typedef vector<Actions> ListActions;
 
 private:
 	string name;
@@ -50,6 +52,9 @@ private:
 	DamageTypes resistances;
 
     ListTraits traitsList;
+    ListSpecs specializations;
+    ListActions listActions;
+    Actions actions;
 
     ResourceTypeMap resourceTypeMap;
     FactionTypeMap factionTypeMap;
@@ -74,6 +79,7 @@ public:
 	int getDamageTypeCount() const							{return damageTypes.size();}
 	int getResistanceCount() const							{return resistances.size();}
 	int getTraitCount() const								{return traitsList.size();}
+	int getSpecializationCount() const						{return specializations.size();}
 
 	// get by index
 	const ResourceType *getResourceType(int i) const		{return &resourceTypes[i];}
@@ -82,7 +88,12 @@ public:
 	DamageType getDamageType(int i) const			        {return damageTypes[i];}
 	DamageType getResistance(int i) const			        {return resistances[i];}
 	const Trait *getTrait(int i) const	        		    {return &traitsList[i];}
+	const Specialization *getSpecialization(int i) const	{return &specializations[i];}
+	Trait *getTrait(int i)          	        		    {return &traitsList[i];}
+	Specialization *getSpecialization(int i)               	{return &specializations[i];}
     Trait *getTraitById(int id);
+    Actions *getActions()                                   {return &actions;}
+    const Actions *getActions() const                       {return &actions;}
 
 	// get by name
 	const ResourceType *getResourceType(const string &name) const {

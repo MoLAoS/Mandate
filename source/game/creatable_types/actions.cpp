@@ -83,7 +83,29 @@ bool Actions::load(const XmlNode *actionsNode, const string &dir, bool isItem, c
 }
 
 void Actions::save(XmlNode *node) const {
+    XmlNode *n;
+    XmlNode *m;
+    n = node->addChild("skills");
+    for (int i = 0; i < skillTypes.size(); ++i) {
+        //skillTypes[i]->save(n->addChild("skill"));
+        m = n->addChild("skill");
+        m->addAttribute("name", skillTypes[i]->getName());
+    }
+    n = node->addChild("commands");
+    for (int i = 0; i < commandTypes.size(); ++i) {
+        //commandTypes[i]->save(n->addChild("command"));
+        m = n->addChild("command");
+        m->addAttribute("name", commandTypes[i]->getName());
+    }
+}
 
+void Actions::getDesc(string &str, const char *pre) {
+    for (int i = 0; i < skillTypes.size(); ++i) {
+        str += pre;
+        str += skillTypes[i]->getName();
+        str += pre;
+        skillTypes[i]->getDesc(str, 0);
+    }
 }
 
 void Actions::setDeCloakSkills(const vector<string> &names, const vector<SkillClass> &classes) {

@@ -25,6 +25,9 @@
 #include "resource.h"
 #include "renderer.h"
 #include "world.h"
+#include "character_creator.h"
+#include "main_menu.h"
+#include "menu_state_character_creator.h"
 
 #include "leak_dumper.h"
 
@@ -63,7 +66,16 @@ void UpgradeType::loadResourceModifier(const XmlNode *node, ResModifierMap &map)
 			if (const XmlAttribute *multAttrib = resNode->getAttribute("multiplier", false)) {
 				mult = multAttrib->getFixedValue();
 			}
-			const ResourceType *rt = g_world.getTechTree()->getResourceType(resName);
+			const TechTree* tt = 0;
+			if (&g_world) {
+                tt = g_world.getTechTree();
+			} else {
+                MainMenu *charMenu = static_cast<MainMenu*>(g_program.getState());
+                MenuStateCharacterCreator *charState = static_cast<MenuStateCharacterCreator*>(charMenu->getState());
+                CharacterCreator *charCreator = charState->getCharacterCreator();
+                tt = charCreator->getTechTree();
+			}
+			const ResourceType *rt = tt->getResourceType(resName);
 			if (map.find(rt) != map.end()) {
 				throw runtime_error("duplicate resource node '" + resName + "'");
 			}
@@ -89,11 +101,26 @@ bool UpgradeType::load(const string &dir) {
 		return false;
 	}
 	const FactionType *ft = 0;
-	for (int i = 0; i < g_world.getTechTree()->getFactionTypeCount(); ++i) {
-        ft = g_world.getTechTree()->getFactionType(i);
-        for (int j = 0; j < ft->getUpgradeTypeCount(); ++j) {
-            if (m_name == ft->getUpgradeType(i)->getName()) {
-                break;
+	if (&g_world) {
+        for (int i = 0; i < g_world.getTechTree()->getFactionTypeCount(); ++i) {
+            ft = g_world.getTechTree()->getFactionType(i);
+            for (int j = 0; j < ft->getUpgradeTypeCount(); ++j) {
+                if (m_name == ft->getUpgradeType(i)->getName()) {
+                    break;
+                }
+            }
+        }
+	} else {
+        MainMenu *charMenu = static_cast<MainMenu*>(g_program.getState());
+        MenuStateCharacterCreator *charState = static_cast<MenuStateCharacterCreator*>(charMenu->getState());
+        CharacterCreator *charCreator = charState->getCharacterCreator();
+        const TechTree *tt = charCreator->getTechTree();
+        for (int i = 0; i < tt->getFactionTypeCount(); ++i) {
+            ft = tt->getFactionType(i);
+            for (int j = 0; j < ft->getUnitTypeCount(); ++j) {
+                if (m_name == ft->getUnitType(i)->getName()) {
+                    break;
+                }
             }
         }
 	}

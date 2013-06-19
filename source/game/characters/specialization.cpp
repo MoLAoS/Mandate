@@ -37,6 +37,12 @@ bool Specialization::load(const string &dir) {
 		return false;
 	}
     name = basename(dir);
+
+	const XmlNode *creatorCostNode = specializationNode->getChild("creator-cost", 0, false);
+	if (creatorCostNode) {
+        creatorCost.load(creatorCostNode);
+	}
+
     try {
         const XmlNode *equipmentNode = specializationNode->getChild("equipment", 0, false);
         if (equipmentNode) {

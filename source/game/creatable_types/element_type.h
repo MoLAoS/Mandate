@@ -89,7 +89,7 @@ public:
 	static const int invalidId = -1;
 
 public:
-	NameIdPair() : m_id(invalidId) {}
+	NameIdPair() : m_id(invalidId), m_name("default") {}
 	NameIdPair(int id, const char *name) : m_id(id), m_name(name) {}
 	virtual ~NameIdPair() {}
 
@@ -166,9 +166,9 @@ public:
 
 class RequirableType: public DisplayableType {
 public:
-	typedef vector<const UnitReq> UnitReqs;
-	typedef vector<const ItemReq> ItemReqs;
-	typedef vector<const UpgradeReq> UpgradeReqs;
+	typedef vector<UnitReq> UnitReqs;
+	typedef vector<ItemReq> ItemReqs;
+	typedef vector<UpgradeReq> UpgradeReqs;
 
 protected:
 	UnitReqs unitReqs;			//needed units

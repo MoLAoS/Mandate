@@ -76,6 +76,7 @@ public:
 	virtual void keyPress(char c){}
 
 	virtual bool isGameState() const	{ return false; }
+	virtual bool isCCState() const	{ return false; }
 };
 
 // ===============================
@@ -132,9 +133,10 @@ public:
 	bool init();
 	const CmdArgs& getCmdArgs()	const { return cmdArgs; }
 
-	bool isTerminating() const		{ return terminating;	}
-	bool isVisible() const			{ return visible;		}
-	Keymap &getKeymap() 			{ return keymap;		}
+	bool isTerminating() const		{ return terminating;	 }
+	bool isVisible() const			{ return visible;		 }
+	Keymap &getKeymap() 			{ return keymap;		 }
+	ProgramState *getState()        { return m_programState; }
 
 	SimulationInterface* getSimulationInterface() { return simulationInterface; }
 	void setSimInterface(SimulationInterface *si);
@@ -176,9 +178,9 @@ public:
 	void setUpdateFps(int updateFps);
 	void setTechTitle(const string &title) {
 		if (title.empty()) {
-			Window::setText("Glest Advanced Engine");
+			Window::setText("Mandate Engine");
 		} else {
-			Window::setText(title + " - Glest Advanced Engine");
+			Window::setText(title + " - Mandate Engine");
 		}
 	}
 };

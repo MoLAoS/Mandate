@@ -11,8 +11,6 @@
 #include "menu_state_character_creator.h"
 #include "game.h"
 #include "keymap_widget.h"
-#include "user_interface.h"
-#include "resource_bar.h"
 
 #include "leak_dumper.h"
 
@@ -28,17 +26,28 @@ CharacterCreator::CharacterCreator(CellStrip *parent, MenuStateCharacterCreator 
 		: TabWidget(parent)
 		, m_characterCreatorMenu(characterCreatorMenu) {
 	setSizeHint(0, SizeHint(-1, g_widgetConfig.getDefaultItemHeight()));
+
+	characterCost = 0;
+	maxCost = 1000;
+
 	// add each tab
 	sov_name = "sovereign";
     sovereignState = false;
 
-	buildSovereignTab();
-	buildStatsTab();
-	buildDamageTab();
-	buildResourceTab();
-	buildWeaponTab();
-	buildArmorTab();
-	buildAccessoryTab();
+    m_techTree = "provision";
+    string path = "techs/" + m_techTree;
+    string fPath = "techs/" + m_techTree + "/factions/*.";
+	vector<string> fPaths;
+	try {
+		findAll(fPath, fPaths);
+	} catch (runtime_error e) {
+		g_logger.logError(e.what());
+	}
+	set<string> names;
+	for (int i = 0; i < fPaths.size(); ++i) {
+        names.insert(fPaths[i]);
+	}
+    techTree.preload(path, names);
 
 	if (!m_characterCreatorMenu) {
 		disableWidgets();
@@ -54,6 +63,34 @@ CharacterCreator::~CharacterCreator() {
 	g_config.setUiLastCharacterCreatorPage(getActivePage());
 }
 
+void CharacterCreator::buildTabs() {
+    buildSovereignTab();
+    buildSkillsTab();
+    buildStatsTab();
+    buildDamageTab();
+    buildResourceTab();
+    buildWeaponTab();
+    buildArmorTab();
+    buildAccessoryTab();
+}
+
+void CharacterCreator::loadTech() {
+    m_techTree = "provision";
+    string path = "techs/" + m_techTree;
+    string fPath = "techs/" + m_techTree + "/factions/*.";
+	vector<string> fPaths;
+	try {
+		findAll(fPath, fPaths);
+	} catch (runtime_error e) {
+		g_logger.logError(e.what());
+	}
+	set<string> names;
+	for (int i = 0; i < fPaths.size(); ++i) {
+        names.insert(fPaths[i]);
+	}
+    techTree.load(path, names);
+}
+
 void CharacterCreator::buildSovereignTab() {
 	Config &config = g_config;
 	Lang &lang = g_lang;
@@ -64,8 +101,6 @@ void CharacterCreator::buildSovereignTab() {
 
 	OptionPanel *leftPnl = new OptionPanel(container, 0);
 	OptionPanel *rightPnl = new OptionPanel(container, 1);
-	//rightPnl->addHeading(leftPnl, g_lang.get("Sovereign"));
-	// Player Name
 	TextBox *tb = rightPnl->addTextBox(lang.get("Sovereign Name"), "Sovereign");
 	tb->TextChanged.connect(this, &CharacterCreator::onSovereignNameChanged);
 	m_techTreeList = rightPnl->addDropList(lang.get("Tech Tree"));
@@ -77,24 +112,9 @@ void CharacterCreator::buildSovereignTab() {
 	m_focusList->SelectionChanged.connect(this, &CharacterCreator::onDropListSelectionChanged);
 	m_focusList->setDropBoxHeight(200);
 
-	//rightPnl->addHeading(leftPnl, g_lang.get("Free Allocation"));
-    string path = "techs/" + m_techTree + "/specializations/*.";
-	vector<string> paths;
-	try {
-		findAll(path, paths);
-	} catch (runtime_error e) {
-		g_logger.logError(e.what());
-	}
-	specializations.resize(paths.size());
-	for (int i = 0; i < paths.size(); ++i) {
-        string dir = "techs/" + m_techTree + "/specializations/" + paths[i] + "/" + paths[i];
-        specializations[i].reset();
-        if(!specializations[i].load(dir)){
-        }
-	}
 	vector<Specialization*> listSpecs;
-	for (int i = 0; i < specializations.size(); ++i) {
-        listSpecs.push_back(&specializations[i]);
+	for (int i = 0; i < techTree.getSpecializationCount(); ++i) {
+        listSpecs.push_back(techTree.getSpecialization(i));
 	}
 	TabWidget::add(g_lang.get("Character"), container);
 	m_spec = m_focusList->getSelectedItem()->getText();
@@ -104,22 +124,10 @@ void CharacterCreator::buildSovereignTab() {
 	m_traitsList->SelectionChanged.connect(this, &CharacterCreator::onDropListSelectionChanged);
 	m_traitsList->setDropBoxHeight(200);
 
-	path = "techs/" + m_techTree + "/traits/*.";
-	vector<string> tpaths;
-	try {
-		findAll(path, tpaths);
-	} catch (runtime_error e) {
-		g_logger.logError(e.what());
-	}
-	traits.resize(tpaths.size());
-	for (int i = 0; i < tpaths.size(); ++i) {
-        string dir = "techs/" + m_techTree + "/traits/" + tpaths[i] + "/" + tpaths[i];
-        traits[i].load(dir);
-	}
     Traits traitslist;
-    traitslist.resize(traits.size());
-    for (int i = 0; i < traits.size(); ++i) {
-        traitslist[i] = &traits[i];
+    traitslist.resize(techTree.getTraitCount());
+    for (int i = 0; i < techTree.getTraitCount(); ++i) {
+        traitslist[i] = techTree.getTrait(i);
     }
     m_trait = m_traitsList->getSelectedItem()->getText();
     traitsDisplay = leftPnl->addTraitsDisplay(traitslist, listSpecs, this);
@@ -177,6 +185,23 @@ void CharacterCreator::buildSovereignTab() {
 	fortitude->setRanges(0, 20);
 	fortitude->setIncrement(1);
 	fortitude->ValueChanged.connect(this, &CharacterCreator::onSpinnerValueChanged);
+}
+
+void CharacterCreator::buildSkillsTab() {
+	Config &config = g_config;
+	Lang &lang = g_lang;
+
+	CellStrip *container = new CellStrip(this, Orientation::HORIZONTAL, 2);
+	container->setSizeHint(0, SizeHint(35, -1));
+	container->setSizeHint(1, SizeHint(65, -1));
+
+	TabWidget::add(g_lang.get("Skills"), container);
+
+	OptionPanel *leftPnl = new OptionPanel(container, 0);
+	OptionPanel *rightPnl = new OptionPanel(container, 1);
+
+    skillsDisplay = leftPnl->addSkillsDisplay(techTree.getActions(), this);
+    skillsDisplay->computeSkillPanel();
 }
 
 void CharacterCreator::buildResourceTab() {
@@ -371,7 +396,7 @@ void CharacterCreator::buildDamageTab() {
     resistances.resize(damagesNode->getChildCount());
 	for (int i = 0; i < damagesNode->getChildCount(); ++i) {
 	    const XmlNode *damageNode = damagesNode->getChild("damage-type", i);
-        const XmlAttribute* damageAttibute = damageNode->getAttribute("name");
+        const XmlAttribute* damageAttibute = damageNode->getAttribute("type");
         if (damageAttibute) {
             string damage = damageAttibute->getRestrictedValue();
             damageTypes[i].init(damage, 0);
@@ -592,13 +617,26 @@ void CharacterCreator::onButtonClick(Widget *source) {
                 }
             }
 	    } else if (sovereignState == false) {
-            for (int i = 0; i < specializations.size(); ++i) {
-                if (specializations[i].getSpecName() == m_spec) {
-                    specialization = specializations[i];
+            for (int i = 0; i < techTree.getSpecializationCount(); ++i) {
+                if (techTree.getSpecialization(i)->getSpecName() == m_spec) {
+                    specialization = techTree.getSpecialization(i);
                 }
             }
 	    }
 	}
+    calculateCreatorCost();
+}
+
+void CharacterCreator::calculateCreatorCost() {
+    characterCost = 0;
+    characterCost += specialization->getCreatorCost()->getValue();
+    for (int i = 0; i < traits.size(); ++i) {
+        characterCost += traits[i].getCreatorCost()->getValue();
+    }
+    for (int i = 0; i < actions.getCommandTypeCount(); ++i) {
+        characterCost += actions.getCommandType(i)->getCreatorCost()->getValue();
+    }
+    throw runtime_error(intToStr(characterCost));
 }
 
 void CharacterCreator::onSovereignNameChanged(Widget *source) {
@@ -632,13 +670,28 @@ void CharacterCreator::onSliderValueChanged(Widget *source) {
 	}
 }
 
+void CharacterCreator::addActions(const Actions *addedActions, string actionName) {
+    CommandType *command = addedActions->getCommandType(actionName);
+    if (command->getClass() == CmdClass::ATTACK) {
+        AttackCommandType *type = static_cast<AttackCommandType *>(command);
+        AttackSkillType *attack = const_cast<AttackSkillType*>(type->getAttackSkillTypes()->getFirstAttackSkill());
+        MoveSkillType *move = const_cast<MoveSkillType*>(type->getMoveSkillType());
+        //commandNames.push_back(type->getName());
+        //skillNames.push_back(attack->getName());
+        //skillNames.push_back(move->getName());
+        actions.addSkillType(attack);
+        actions.addSkillType(move);
+        actions.addCommand(command);
+    }
+}
+
 void CharacterCreator::save() {
 	XmlNode root("character");
 	XmlNode *sovereignNode = root.addChild("sovereign");
     sovereignNode->addAttribute("name", sov_name);
     XmlNode *n;
     n = sovereignNode->addChild("specialization");
-    n->addAttribute("name", specialization.getSpecName());
+    n->addAttribute("name", specialization->getSpecName());
     n = sovereignNode->addChild("traits");
     for (int i = 0; i < sovTraits.size();++i) {
         XmlNode *traitNode = n->addChild("trait");
@@ -696,6 +749,7 @@ void CharacterCreator::save() {
         resourceNode->addAttribute("type", resourceStats[i].getName());
         resourceNode->addAttribute("value", resourceStats[i].getValue());
 	}
+	actions.save(sovereignNode->addChild("actions"));
 	string fileName = "sovereigns/" + sov_name + ".xml";
 	XmlIo::getInstance().save(fileName, &root);
 }

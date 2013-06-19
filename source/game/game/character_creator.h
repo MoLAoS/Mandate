@@ -18,6 +18,7 @@
 #include "slider.h"
 #include "sigslot.h"
 #include "platform_util.h"
+#include "tech_tree.h"
 #include "hero.h"
 
 namespace Glest { namespace Menu {
@@ -36,8 +37,12 @@ using namespace ProtoTypes;
 // =====================================================
 typedef vector<Specialization> ListSpec;
 typedef vector<Spinner*> Spinners;
+typedef vector<string> ActionNames;
 class CharacterCreator : public TabWidget {
 private:
+    int characterCost;
+    int maxCost;
+    TechTree techTree;
 	Glest::Menu::MenuStateCharacterCreator
                            *m_characterCreatorMenu;
     CharacterStats         characterStats;
@@ -53,10 +58,12 @@ private:
     Equipments             equipment;
     Knowledge              knowledge;
     Sovereign              sovereign;
-    Specialization         specialization;
-    ListSpec               specializations;
+    Specialization         *specialization;
     ListTraits             traits;
     ListTraits             sovTraits;
+    Actions                actions;
+    ActionNames            commandNames;
+    ActionNames            skillNames;
     string                 sov_name;
     string                 m_techTree,
                            m_spec,
@@ -70,6 +77,7 @@ private:
 	MessageDialog          *m_messageDialog;
 	map<string,string>     m_langMap;
 	TraitsDisplay          *traitsDisplay;
+	SkillsDisplay          *skillsDisplay;
 	Button		           *m_selectButton;
 	bool                   sovereignState;
 	Spinner                *conception,
@@ -99,6 +107,8 @@ public:
 	CharacterCreator(CellStrip *parent, Glest::Menu::MenuStateCharacterCreator *characterCreatorMenu);
 	virtual ~CharacterCreator();
 
+    void loadTech();
+    const TechTree *getTechTree() const {return &techTree;}
 	void save();
 	virtual string descType() const override { return "CharacterCreator"; }
 
@@ -107,6 +117,18 @@ public:
 	Sovereign *getSovereign() {return &sovereign;}
 
 	bool getSovereignState() {return sovereignState;}
+
+    int getDamageTypeCount() const {return damageTypes.size();}
+    int getResistanceCount() const {return resistances.size();}
+
+    DamageType getDamageType(int i) {return damageTypes[i];}
+    DamageType getResistance(int i) {return resistances[i];}
+
+    void addActions(const Actions *addedActions, string actionName);
+
+    void buildTabs();
+
+    void calculateCreatorCost();
 
 private:
 	void disableWidgets();
@@ -117,6 +139,7 @@ private:
 
 	// Build tabs
 	void buildSovereignTab();
+	void buildSkillsTab();
 	void buildStatsTab();
 	void buildDamageTab();
 	void buildResourceTab();

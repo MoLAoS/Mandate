@@ -309,6 +309,8 @@ void TraitsDisplay::layout() {
         }
         str += specializations[j]->getSpecName();
         str += "\n";
+        str += intToStr(specializations[j]->getCreatorCost()->getValue());
+        str += "\n";
         specializations[j]->getCharacterStats()->getDesc(str, "\n");
         specializations[j]->getStatistics()->enhancement.getDesc(str, "\n");
         for (int i = 0; i < specializations[j]->getEquipmentCount(); ++i) {
@@ -365,6 +367,265 @@ void TraitsDisplay::render() {
 	if (!TextWidget::getText(0).empty()) {
 		TextWidget::renderTextShadowed(0);
 	}
+}
+
+// =====================================================
+// 	class SkillsDisplay
+// =====================================================
+SkillsDisplay::SkillsDisplay(Container *parent, Actions *newActions, CharacterCreator *characterCreator)
+		: Widget(parent)
+		, MouseWidget(this)
+		, TextWidget(this)
+		, ImageWidget(this)
+		, m_imageSize(32)
+		, m_hoverBtn(SkillSection::INVALID, invalidIndex)
+		, m_pressedBtn(SkillSection::INVALID, invalidIndex)
+		, charCreator(characterCreator)
+		, actions(newActions)
+		, m_fuzzySize(FuzzySize::SMALL)
+		, m_toolTip(0) {
+	CHECK_HEAP();
+	setWidgetStyle(WidgetType::DISPLAY);
+	TextWidget::setAlignment(Alignment::NONE);
+	for (int i = 0; i < skillCellCount; ++i) {
+		ImageWidget::addImageX(0, Vec2i(0), Vec2i(m_imageSize));
+	}
+    for (int i = 0; i < actions->getCommandTypeCount(); ++i) {
+        if (actions->getCommandType(i)->getClass() == CmdClass::ATTACK) {
+            MoveBaseCommandType *mbct = static_cast<MoveBaseCommandType*>(actions->getCommandType(i));
+            mbct->initMoveSkill(actions);
+        }
+        if (actions->getCommandType(i)->getClass() == CmdClass::ATTACK) {
+            AttackCommandType *act = static_cast<AttackCommandType*>(actions->getCommandType(i));
+            act->initAttackSkill(actions);
+            act->attackSkillsInit();
+        }
+    }
+    layout();
+	clear();
+	m_toolTip = new CommandTip(WidgetWindow::getInstance());
+	m_toolTip->setVisible(false);
+    m_toolTip->setPos(m_toolTip->getPos() + Vec2i(220, 85));
+	CHECK_HEAP();
+}
+
+void SkillsDisplay::layout() {
+	int x = 0;
+	int y = 0;
+
+	const Font *font = getSmallFont();
+	int fontIndex = m_textStyle.m_smallFontIndex != -1 ? m_textStyle.m_smallFontIndex : m_textStyle.m_fontIndex;
+
+	if (m_fuzzySize== FuzzySize::SMALL) {
+		font = getSmallFont();
+		fontIndex = m_textStyle.m_smallFontIndex != -1 ? m_textStyle.m_smallFontIndex : m_textStyle.m_fontIndex;
+	} else if (m_fuzzySize == FuzzySize::MEDIUM) {
+		font = getFont();
+		fontIndex = m_textStyle.m_fontIndex;
+	} else if (m_fuzzySize == FuzzySize::LARGE) {
+		font = getBigFont();
+		fontIndex = m_textStyle.m_largeFontIndex != -1 ? m_textStyle.m_largeFontIndex : m_textStyle.m_fontIndex;
+	}
+	m_fontMetrics = font->getMetrics();
+
+	for (int i = 0; i < skillCellCount; ++i) {
+		if (i && i % cellWidthCount == 0) {
+			y += m_imageSize;
+			x = 0;
+		}
+		ImageWidget::setImageX(0, i, Vec2i(x,y), Vec2i(m_imageSize));
+		x += m_imageSize;
+	}
+
+	for (int i=0; i < 0; ++i) {
+		setTextFont(fontIndex, i);
+	}
+}
+
+void SkillsDisplay::computeSkillPanel() {
+    for (int i = 0; i < actions->getCommandTypeCount(); ++i) {
+        CommandType *ct = actions->getCommandType(i);
+        setSkillImage(i, ct->getImage());
+        setCommandType(i, ct);
+    }
+}
+
+void SkillsDisplay::computeSkillInfo(int posDisplay) {
+	WIDGET_LOG( __FUNCTION__ << "( " << posDisplay << " )");
+    const CommandType *ct = commandTypes[posDisplay];
+    if (ct != 0) {
+        m_toolTip->clearItems();
+        string header = ct->getName();
+        m_toolTip->setHeader(header);
+        m_toolTip->setTipText("");
+        const SkillCosts *costs = ct->getSkillCosts();
+        costs->getDesc(m_toolTip);
+        const AttackCommandType *act = 0;
+        if (ct->getClass() == CmdClass::ATTACK) {
+            act = static_cast<const AttackCommandType*>(ct);
+            string str = "";
+            //act->getAttackSkillTypes()->getDesc(str, 0);
+            act->descSkills(0, m_toolTip);
+            m_toolTip->addElement(str);
+        }
+        //ct->descSkills(0, m_toolTip);
+    }
+    m_toolTip->setVisible(true);
+}
+
+void SkillsDisplay::persist() {
+	Vec2i pos = m_parent->getPos();
+	int sz = getFuzzySize() + 1;
+}
+
+void SkillsDisplay::reset() {
+    layout();
+}
+
+void SkillsDisplay::setFuzzySize(FuzzySize fuzzySize) {
+	m_fuzzySize = fuzzySize;
+	layout();
+	setSize();
+}
+
+void SkillsDisplay::setSize() {
+}
+
+void SkillsDisplay::clear() {
+	WIDGET_LOG( __FUNCTION__ << "()" );
+
+	for (int i=0; i < skillCellCount; ++i) {
+		ImageWidget::setImage(0, i);
+	}
+}
+
+void SkillsDisplay::setToolTipText(const string &hdr, const string &tip, SkillSection i_section) {
+	m_toolTip->setHeader(hdr);
+	m_toolTip->setTipText(tip);
+	m_toolTip->clearItems();
+	m_toolTip->setVisible(true);
+}
+
+void SkillsDisplay::render() {
+	if (!isVisible()) {
+		return;
+	}
+	Widget::render();	Widget::render();
+	ImageWidget::startBatch();
+
+	Vec4f light(1.f), dark(0.3f, 0.3f, 0.3f, 1.f);
+	for (int i = 0; i < skillCellCount; ++i) {
+		if (ImageWidget::getImage(i)) {
+			ImageWidget::renderImage(i, light);
+		}
+	}
+	ImageWidget::endBatch();
+}
+
+SkillButton SkillsDisplay::computeIndex(Vec2i i_pos, bool screenPos) {
+	if (screenPos) {
+		i_pos = i_pos - getScreenPos();
+	}
+	Vec2i pos = i_pos;
+	int counts[1] = {skillCellCount};
+
+	for (int i = 0; i < 1; ++i) {
+		pos = i_pos;
+		if (pos.y >= 0 && pos.y < m_imageSize * (counts[i]/6)) {
+			int cellX = pos.x / m_imageSize;
+			int cellY = (pos.y / m_imageSize) % (counts[i]/6);
+			int index = cellY * cellWidthCount + cellX;
+			if (index >= 0 && index < counts[i]) {
+                int totalCells = 0;
+			    for (int l = i - 1; l >= 0; --l) {
+                    totalCells += counts[l];
+			    }
+				if (ImageWidget::getImage(totalCells + index)) {
+					return SkillButton(SkillSection(i), index);
+				}
+				return SkillButton(SkillSection::INVALID, invalidIndex);
+			}
+		}
+	}
+	return SkillButton(SkillSection::INVALID, invalidIndex);
+}
+
+void SkillsDisplay::skillButtonPressed(int posDisplay) {
+	WIDGET_LOG( __FUNCTION__ << "( " << posDisplay << " )");
+    string actionName = commandTypes[posDisplay]->getName();
+    charCreator->addActions(actions, actionName);
+    computeSkillInfo(posDisplay);
+}
+
+bool SkillsDisplay::mouseDown(MouseButton btn, Vec2i pos) {
+	WIDGET_LOG( __FUNCTION__ << "( " << MouseButtonNames[btn] << ", " << pos << " )");
+	Vec2i myPos = getScreenPos();
+	Vec2i mySize = getSize();
+	if (btn == MouseButton::LEFT) {
+		if (Widget::isInsideBorders(pos)) {
+			m_hoverBtn = computeIndex(pos, true);
+			if (m_hoverBtn.m_section == SkillSection::SKILLS) {
+				m_pressedBtn = m_hoverBtn;
+				return true;
+			} else {
+				m_pressedBtn = SkillButton(SkillSection::INVALID, invalidIndex);
+			}
+		}
+	}
+	return false;
+}
+
+bool SkillsDisplay::mouseUp(MouseButton btn, Vec2i pos) {
+	WIDGET_LOG( __FUNCTION__ << "( " << MouseButtonNames[btn] << ", " << pos << " )");
+	Vec2i myPos = getScreenPos();
+	Vec2i mySize = getSize();
+
+	if (btn == MouseButton::LEFT) {
+		if (m_pressedBtn.m_section != SkillSection::INVALID) {
+			if (Widget::isInsideBorders(pos)) {
+				m_hoverBtn = computeIndex(pos, true);
+				if (m_hoverBtn == m_pressedBtn) {
+					if (m_hoverBtn.m_section == SkillSection::SKILLS) {
+						skillButtonPressed(m_hoverBtn.m_index);
+					}
+					m_pressedBtn = SkillButton(SkillSection::INVALID, invalidIndex);
+					return true;
+				}
+			}
+			m_pressedBtn = SkillButton(SkillSection::INVALID, invalidIndex);
+		}
+	}
+	return false;
+}
+
+bool SkillsDisplay::mouseMove(Vec2i pos) {
+	WIDGET_LOG( __FUNCTION__ << "( " << pos << " )");
+	Vec2i myPos = getScreenPos();
+	Vec2i mySize = getSize();
+	if (Widget::isInsideBorders(pos)) {
+		SkillButton currBtn = computeIndex(pos, true);
+		if (currBtn != m_hoverBtn) {
+			if (currBtn.m_section == SkillSection::SKILLS) {
+				computeSkillInfo(currBtn.m_index);
+			} else {
+				setToolTipText("", "", SkillSection::SKILLS);
+			}
+			m_hoverBtn = currBtn;
+			return true;
+		} else {
+		}
+	} else {
+		setToolTipText("", "", SkillSection::SKILLS);
+	}
+	return false;
+}
+
+bool SkillsDisplay::mouseDoubleClick(MouseButton btn, Vec2i pos) {
+    return false;
+}
+
+void SkillsDisplay::mouseOut() {
+
 }
 
 // =====================================================
@@ -520,6 +781,26 @@ TraitsDisplay* OptionPanel::addTraitsDisplay(Traits traits, ListSpecs specs, Cha
 	traitsDisplay->setAnchors(squashAnchors);
 
 	return traitsDisplay;
+}
+
+SkillsDisplay* OptionPanel::addSkillsDisplay(Actions *actions, CharacterCreator *characterCreator) {
+	int h  = int(g_widgetConfig.getDefaultItemHeight() * 1.5f);
+	int squashAmount = (h - g_widgetConfig.getDefaultItemHeight()) / 2;
+	Anchors fillAnchors(Anchor(AnchorType::SPRINGY, 2));
+	Anchors squashAnchors(Anchor(AnchorType::RIGID, 0), Anchor(AnchorType::RIGID, squashAmount));
+
+	CellStrip *ow = new CellStrip(m_list, Orientation::HORIZONTAL, Origin::FROM_LEFT, 2);
+	m_list->addCells(1);
+	ow->setAnchors(fillAnchors);
+	ow->setCell(m_list->getCellCount() - 1);
+	ow->setSizeHint(0, 0);
+	m_list->setSizeHint(m_list->getCellCount() - 1, SizeHint(-1, h*11));
+
+	SkillsDisplay *skillsDisplay = new SkillsDisplay(ow, actions, characterCreator);
+	skillsDisplay->setCell(1);
+	skillsDisplay->setAnchors(squashAnchors);
+
+	return skillsDisplay;
 }
 
 DropList* OptionPanel::addDropList(const string &lbl, bool compact) {

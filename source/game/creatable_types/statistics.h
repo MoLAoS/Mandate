@@ -12,6 +12,7 @@
 #include "unit_stats_base.h"
 
 namespace Glest{ namespace ProtoTypes {
+using namespace Gui;
 // ===============================
 // 	class DamageType
 // ===============================
@@ -20,8 +21,10 @@ class DamageType {
 private:
     string type_name;
     int value;
+    Stat creatorCost;
 
 public:
+    const Stat *getCreatorCost() const {return &creatorCost;}
     string getTypeName() const {return type_name;}
     int getValue() const {return value;}
     void setValue(int i) {value = value + i;}
@@ -29,6 +32,7 @@ public:
 	void getDesc(string &str, const char *pre) const;
 
     void init(const string name, const int amount);
+    bool load(const XmlNode *baseNode);
     void save(XmlNode *node) const;
 };
 

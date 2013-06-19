@@ -68,15 +68,6 @@ using Glest::Gui::Clicks;
 namespace Glest { namespace ProtoTypes {
 using Search::CardinalDir;
 
-class CmdDescriptor {
-public:
-	virtual void setHeader(const string &header) = 0;
-	virtual void setTipText(const string &mainText) = 0;
-	virtual void addElement(const string &msg) = 0;
-	virtual void addItem(const DisplayableType *dt, const string &msg) = 0;
-	virtual void addReq(const DisplayableType *dt, bool ok, const string &msg) = 0;
-};
-
 typedef const ProducibleType* ProdTypePtr;
 
 // =====================================================
@@ -103,9 +94,13 @@ protected:
 
 	string emptyString;
 
+    Stat creatorCost;
 public:
+	const Stat *getCreatorCost() const {return &creatorCost;}
+
 	CommandType(const char* name, Clicks clicks, bool queuable = false);
 
+    SkillCosts *getSkillCosts() {return &skillCosts;}
     const SkillCosts *getSkillCosts() const {return &skillCosts;}
 
 	// describe(), and virtual helpers descSkills() and subDesc()
@@ -213,7 +208,7 @@ public:
 	virtual bool load(const XmlNode *n, const string &dir, const FactionType *ft, const CreatableType *ct);
 	virtual void getDesc(string &str, const Unit *unit) const	{m_moveSkillType->getDesc(str, unit);}
 	const MoveSkillType *getMoveSkillType() const				{return m_moveSkillType;}
-	void initMoveSkill(Unit *unit);
+	void initMoveSkill(const Actions *actions);
 	virtual CmdClass getClass() const { return typeClass(); }
 	static CmdClass typeClass() { return CmdClass::MOVEBASE; }
 
@@ -304,7 +299,7 @@ public:
 	}
 // const AttackSkillType *getAttackSkillType() const	{return attackSkillTypes.begin()->first;}
 // const AttackSkillType *getAttackSkillType(Field field) const;
-    void initAttackSkill(Unit *unit);
+    void initAttackSkill(const Actions *actions);
 	const AttackSkillTypes *getAttackSkillTypes() const	{return &attackSkillTypes;}
 	void attackSkillsInit() {return attackSkillTypes.init();}
 	virtual CmdClass getClass() const { return typeClass(); }

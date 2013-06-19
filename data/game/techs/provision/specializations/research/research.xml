@@ -1,4 +1,5 @@
 <specialization>
+	<creator-cost value="10"/>
 	<statistics>
 		<enhancement>
 			<resource-pools>

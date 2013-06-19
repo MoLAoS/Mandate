@@ -21,6 +21,78 @@ using namespace Hierarchy;
 // ===============================
 // 	class Sovereign
 // ===============================
+bool Sovereign::load(const string &dir) {
+    bool loadOk = true;
+	string path = dir + ".xml";
+
+	sovName = basename(dir);
+
+	XmlTree xmlTree;
+	try { xmlTree.load(path); }
+	catch (runtime_error e) {
+		g_logger.logXmlError(path, e.what());
+		g_logger.logError("Fatal Error: could not load " + path);
+		return false;
+	}
+	const XmlNode *sovereignNode;
+	try { sovereignNode = xmlTree.getRootNode(); }
+	catch (runtime_error e) {
+		g_logger.logXmlError(path, e.what());
+		return false;
+	}
+
+	try {
+        specialization->load(dir);
+	}
+	catch (runtime_error e) {
+		g_logger.logXmlError(path, e.what());
+		return false;
+	}
+
+	try {
+	    const XmlNode *traitsNode = sovereignNode->getChild("traits");
+        //for (int i = )
+	}
+	catch (runtime_error e) {
+		g_logger.logXmlError(path, e.what());
+		return false;
+	}
+
+	try {
+
+	}
+	catch (runtime_error e) {
+		g_logger.logXmlError(path, e.what());
+		return false;
+	}
+
+	try {
+
+	}
+	catch (runtime_error e) {
+		g_logger.logXmlError(path, e.what());
+		return false;
+	}
+
+	try {
+
+	}
+	catch (runtime_error e) {
+		g_logger.logXmlError(path, e.what());
+		return false;
+	}
+
+	try {
+
+	}
+	catch (runtime_error e) {
+		g_logger.logXmlError(path, e.what());
+		return false;
+	}
+
+    return loadOk;
+}
+
 void Sovereign::save(XmlNode *node) const {
     node->addAttribute("name", sovName);
     XmlNode *n;
@@ -54,6 +126,10 @@ void Sovereign::save(XmlNode *node) const {
     //craftingStats.save(node->addChild("craftingStats"));
     //actions.save(node->addChild("actions"));
 }
+
+void Sovereign::addAction(const Actions *addedActions, string actionName) {
+}
+
 // ===============================
 // 	class Hero
 // ===============================

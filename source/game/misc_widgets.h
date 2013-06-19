@@ -10,6 +10,7 @@
 #define _GLEST_WIDGETS__MISC_WIDGETS_H_
 
 #include "list_widgets.h"
+#include "tool_tips.h"
 #include "hero.h"
 
 namespace Glest { namespace Widgets {
@@ -190,8 +191,7 @@ public:
 };
 
 // =====================================================
-// 	class Display
-///	Display for unit commands, and unit selection
+// 	class TraitsDisplay
 // =====================================================
 typedef vector<Specialization*> ListSpecs;
 class TraitsDisplay : public Widget, public MouseWidget, public TextWidget {
@@ -213,6 +213,87 @@ public:
 	void reset();
 	virtual void render() override;
 	virtual string descType() const override { return "TraitsDisplay"; }
+};
+
+// =====================================================
+// 	class SkillsDisplay Helper Stuff
+// =====================================================
+WRAPPED_ENUM(SkillSection, SKILLS)
+
+struct SkillButton {
+	SkillSection	        m_section;
+	int				        m_index;
+
+	SkillButton(SkillSection s, int ndx) : m_section(s), m_index(ndx) {}
+
+	SkillButton& operator=(const SkillButton &that) {
+		this->m_section = that.m_section;
+		this->m_index = that.m_index;
+		return *this;
+	}
+
+	bool operator==(const SkillButton &that) const {
+		return (this->m_section == that.m_section && this->m_index == that.m_index);
+	}
+
+	bool operator!=(const SkillButton &that) const {
+		return (this->m_section != that.m_section || this->m_index != that.m_index);
+	}
+};
+
+// =====================================================
+// 	class SkillsDisplay
+// =====================================================
+class SkillsDisplay : public Widget, public MouseWidget, public TextWidget, public ImageWidget {
+private:
+    static const int invalidIndex = -1;
+	static const int cellWidthCount = 6;
+	static const int cellHeightCount = 20;
+	static const int skillCellCount = cellWidthCount * cellHeightCount;
+	const SkillType *skillTypes[skillCellCount];
+	const CommandType *commandTypes[skillCellCount];
+    int m_imageSize;
+
+	SkillButton	m_hoverBtn,
+                m_pressedBtn;
+
+    CommandTip  *m_toolTip;
+
+    Actions *actions;
+    CharacterCreator *charCreator;
+	FuzzySize m_fuzzySize;
+	const FontMetrics *m_fontMetrics;
+private:
+	void layout();
+public:
+	SkillsDisplay(Container *parent, Actions *newActions, CharacterCreator *characterCreator);
+	virtual string descType() const override            {return "SkillsDisplay";}
+	Actions *getActions()                               {return actions;}
+
+	CommandTip* getCommandTip()                         {return m_toolTip;}
+	FuzzySize getFuzzySize() const                      {return m_fuzzySize;}
+	void setSkillImage(int i, const Texture2D *image)   {setImage(image, i);}
+	void setSkillType(int i, SkillType *st)	            {skillTypes[i] = st;}
+	void setCommandType(int i, CommandType *ct)	        {commandTypes[i] = ct;}
+	SkillButton getHoverButton() const                  {return m_hoverBtn;}
+	SkillButton computeIndex(Vec2i pos, bool screenPos = false);
+	void computeSkillPanel();
+	void computeSkillInfo(int posDisplay);
+	void skillButtonPressed(int posDisplay);
+
+	void setSize();
+	void setFuzzySize(FuzzySize fSize);
+	void clear();
+	void persist();
+	void reset();
+	virtual void render() override;
+	void setToolTipText(const string &hdr, const string &tip, SkillSection i_section);
+
+	virtual bool mouseDown(MouseButton btn, Vec2i pos) override;
+	virtual bool mouseUp(MouseButton btn, Vec2i pos) override;
+	virtual bool mouseMove(Vec2i pos) override;
+	virtual bool mouseDoubleClick(MouseButton btn, Vec2i pos) override;
+	virtual void mouseOut() override;
 };
 
 // =====================================================
@@ -241,6 +322,7 @@ public:
 	CheckBox*               addCheckBox(const string &lbl, bool checked);
 	TextBox*                addTextBox(const string &lbl, const string &txt);
 	TraitsDisplay*          addTraitsDisplay(Traits traits, ListSpecs specs, CharacterCreator *charCreator);
+	SkillsDisplay*          addSkillsDisplay(Actions *actions, CharacterCreator *charCreator);
 	DropList*               addDropList(const string &lbl, bool compact = false);
 	Spinner*                addSpinner(const string &lbl);
 	SpinnerPair             addSpinnerPair(const string &lbl, const string &lbl1, const string &lbl2);

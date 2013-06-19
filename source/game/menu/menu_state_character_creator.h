@@ -44,6 +44,8 @@ public:
 
 	MenuStates getIndex() const { return MenuStates::CHARACTER_CREATOR; }
 	void reload();
+	bool isCCState() const {return true;}
+	CharacterCreator *getCharacterCreator() const {return m_characterCreator;}
 
 private:
 	void onButtonClick(Widget *source);

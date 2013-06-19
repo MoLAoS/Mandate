@@ -37,6 +37,9 @@
 #include "leak_dumper.h"
 #include "logger.h"
 #include "sim_interface.h"
+#include "character_creator.h"
+#include "main_menu.h"
+#include "menu_state_character_creator.h"
 
 using std::min;
 using namespace Glest::Sim;
@@ -65,10 +68,26 @@ bool CommandType::load(const XmlNode *n, const string &dir, const FactionType *f
         add = addAttr->getBoolValue();
 	}
 	m_name = nameNode->getRestrictedValue();
+
+	const XmlNode *creatorCostNode = n->getChild("creator-cost", 0, false);
+	if (creatorCostNode) {
+        creatorCost.load(creatorCostNode);
+	}
+
     if (ft == 0) {
         const XmlAttribute *factionAttribute = n->getAttribute("faction");
         string faction = factionAttribute->getRestrictedValue();
-        ft = g_world.getTechTree()->getFactionType(faction);
+        if (&g_world) {
+            ft = g_world.getTechTree()->getFactionType(faction);
+        } else {
+            if (g_program.getState()->isCCState()) {
+                MainMenu *charMenu = static_cast<MainMenu*>(g_program.getState());
+                MenuStateCharacterCreator *charState = static_cast<MenuStateCharacterCreator*>(charMenu->getState());
+                CharacterCreator *charCreator = charState->getCharacterCreator();
+                const TechTree *tt = charCreator->getTechTree();
+                ft = tt->getFactionType(faction);
+            }
+        }
     }
     if (ct != 0) {
         creatableType = ct;
@@ -490,8 +509,8 @@ void CommandType::describe(const Unit *unit, CmdDescriptor *callback, ProdTypePt
 // =====================================================
 // 	class MoveBaseCommandType
 // =====================================================
-void MoveBaseCommandType::initMoveSkill(Unit *unit) {
-    const SkillType *st = unit->getActions()->getSkillType(moveSkillTypeName, SkillClass::MOVE);
+void MoveBaseCommandType::initMoveSkill(const Actions *actions) {
+    const SkillType *st = actions->getSkillType(moveSkillTypeName, SkillClass::MOVE);
     m_moveSkillType = static_cast<const MoveSkillType*>(st);
 }
 

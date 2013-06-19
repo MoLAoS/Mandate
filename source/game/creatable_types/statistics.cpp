@@ -13,11 +13,34 @@
 #include "unit.h"
 #include "world.h"
 #include "sim_interface.h"
+#include "character_creator.h"
+#include "main_menu.h"
+#include "menu_state_character_creator.h"
 
 namespace Glest { namespace ProtoTypes {
 // =====================================================
 // 	class DamageType
 // =====================================================
+bool DamageType::load(const XmlNode *baseNode) {
+    bool loadOk = true;
+
+    type_name =  baseNode->getAttribute("type")->getRestrictedValue();
+
+    const XmlAttribute *valueAttr = baseNode->getAttribute("value", false);
+    if (valueAttr) {
+        value = valueAttr->getIntValue();
+    } else {
+        value = 0;
+    }
+
+	const XmlNode *creatorCostNode = baseNode->getChild("creator-cost", 0, false);
+	if (creatorCostNode) {
+        creatorCost.load(creatorCostNode);
+	}
+
+    return loadOk;
+}
+
 void DamageType::init(string name, int amount) {
     type_name = name;
     value = amount;
@@ -51,18 +74,34 @@ bool Statistics::load(const XmlNode *baseNode, const string &dir) {
 		g_logger.logXmlError(dir, e.what());
 		loadOk = false;
 	}
-	const TechTree *techTree = g_world.getTechTree();
-	this->loadAllDamages(techTree);
+	const TechTree *techTree = 0;
+	if (g_program.getState()->isGameState()) {
+	    techTree = g_world.getTechTree();
+	} else if (g_program.getState()->isCCState()) {
+	    MainMenu *charMenu = static_cast<MainMenu*>(g_program.getState());
+	    MenuStateCharacterCreator *charState = static_cast<MenuStateCharacterCreator*>(charMenu->getState());
+	    techTree = charState->getCharacterCreator()->getTechTree();
+	} else {
+	    MainMenu *charMenu = static_cast<MainMenu*>(g_program.getState());
+	    MenuStateCharacterCreator *charState = static_cast<MenuStateCharacterCreator*>(charMenu->getState());
+	    techTree = charState->getCharacterCreator()->getTechTree();
+	}
+	if (!techTree) {
+        //throw runtime_error("no tech tree");
+        assert(false);
+	}
+    loadAllDamages(techTree);
 	try {
 	    const XmlNode *resistancesNode = baseNode->getChild("resistances", 0, false);
 	    if (resistancesNode) {
             for (int i = 0; i < resistancesNode->getChildCount(); ++i) {
                 const XmlNode *resistanceNode = resistancesNode->getChild("resistance", i);
                 string resistanceTypeName = resistanceNode->getAttribute("type")->getRestrictedValue();
-                int amount = resistanceNode->getAttribute("value")->getIntValue();
+                //int amount = resistanceNode->getAttribute("value")->getIntValue();
                 for (int j = 0; j < resistances.size(); ++j) {
                     if (resistanceTypeName == resistances[j].getTypeName()) {
-                        resistances[j].setValue(amount);
+                        //resistances[j].setValue(amount);
+                        resistances[j].load(resistanceNode);
                     }
                 }
             }
@@ -77,10 +116,11 @@ bool Statistics::load(const XmlNode *baseNode, const string &dir) {
             for (int i = 0; i < damageTypesNode->getChildCount(); ++i) {
                 const XmlNode *damageTypeNode = damageTypesNode->getChild("damage-type", i);
                 string damageTypeName = damageTypeNode->getAttribute("type")->getRestrictedValue();
-                int amount = damageTypeNode->getAttribute("value")->getIntValue();
+                //int amount = damageTypeNode->getAttribute("value")->getIntValue();
                 for (int j = 0; j < damageTypes.size(); ++j) {
                     if (damageTypeName == damageTypes[j].getTypeName()) {
-                        damageTypes[j].setValue(amount);
+                        //damageTypes[j].setValue(amount);
+                        damageTypes[j].load(damageTypeNode);
                     }
                 }
             }

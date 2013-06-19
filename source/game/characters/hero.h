@@ -54,7 +54,7 @@ public:
 	void addStatistics(const Statistics *statistic) {statistics.sum(statistic);}
 	void addCharacterStats(const CharacterStats *charStats) {characterStats.sum(charStats);}
 	void addKnowledge(Knowledge knowledges) {knowledge.sum(knowledges);}
-
+	void addAction(const Actions *actions, string actionName);
 	//void addCraftingStats()
 	//void addEquipment();
 	//void addEffect();

@@ -32,7 +32,10 @@ private:
     Stat finesse;
     Stat mettle;
     Stat fortitude;
+    Stat creatorCost;
 public:
+    const Stat *getCreatorCost() const {return &creatorCost;}
+
 	CharacterStats() { reset(); }
 	virtual ~CharacterStats() {}
 
@@ -97,13 +100,16 @@ class CharDatum {
 private:
     string name;
     int value;
+    Stat creatorCost;
 public:
+    const Stat *getCreatorCost() const {return &creatorCost;}
     int getValue() {return value;}
     string getName() {return name;}
     void init(int amount, string title);
     void incValue(int i) {value += i;}
     void save(XmlNode *node) const;
     void getDesc(string &str, const char *pre);
+    bool load(const XmlNode *baseNode);
 };
 
 typedef vector<CharDatum> CharData;
@@ -113,7 +119,9 @@ private:
     CharData languages;
     CharData histories;
     CharData customs;
+    Stat creatorCost;
 public:
+    const Stat *getCreatorCost() const {return &creatorCost;}
     int getLanguageCount() {return languages.size();}
     CharDatum *getLanguage(int i) {return &languages[i];}
     int getHistoryCount() {return histories.size();}

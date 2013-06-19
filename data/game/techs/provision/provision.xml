@@ -10,29 +10,29 @@
 		<defense-type name="magic_shield"/>
 	</defense-types>
 	<damage-types>
-		<damage-type name="fire"/>
-		<damage-type name="ice"/>
-		<damage-type name="heat"/>
-		<damage-type name="cold"/>
-		<damage-type name="lightning"/>
-		<damage-type name="shadow"/>
-		<damage-type name="poison"/>
-		<damage-type name="light"/>
-		<damage-type name="piercing"/>
-		<damage-type name="smashing"/>
-		<damage-type name="slashing"/>
-		<damage-type name="bleeding"/>
-		<damage-type name="rotting"/>
-		<damage-type name="compression"/>
-		<damage-type name="expansion"/>
-		<damage-type name="mental"/>
-		<damage-type name="acid"/>
-		<damage-type name="chaos"/>
-		<damage-type name="asphyxiation"/>
-		<damage-type name="vacuum"/>
-		<damage-type name="soul"/>
-		<damage-type name="lunar"/>
-		<damage-type name="solar"/>
+		<damage-type type="fire"/>
+		<damage-type type="ice"/>
+		<damage-type type="heat"/>
+		<damage-type type="cold"/>
+		<damage-type type="lightning"/>
+		<damage-type type="shadow"/>
+		<damage-type type="poison"/>
+		<damage-type type="light"/>
+		<damage-type type="piercing"/>
+		<damage-type type="smashing"/>
+		<damage-type type="slashing"/>
+		<damage-type type="bleeding"/>
+		<damage-type type="rotting"/>
+		<damage-type type="compression"/>
+		<damage-type type="expansion"/>
+		<damage-type type="mental"/>
+		<damage-type type="acid"/>
+		<damage-type type="chaos"/>
+		<damage-type type="asphyxiation"/>
+		<damage-type type="vacuum"/>
+		<damage-type type="soul"/>
+		<damage-type type="lunar"/>
+		<damage-type type="solar"/>
 	</damage-types>
 	<weapon-types>
 		<weapon-type name="edged"/>

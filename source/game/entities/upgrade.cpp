@@ -193,6 +193,9 @@ bool UpgradeManager::isUpgradingOrUpgraded(const UpgradeType *upgradeType, const
 		    if((*it)->getType()==upgradeType && (*it)->getStage() == (*fit).getUpgradeStage()) {
 			    return true;
 		    }
+		    if((*it)->getType()==upgradeType && (*it)->getStage() == (*fit).getMaxStage()-1) {
+			    return true;
+		    }
         }
 	}
 	return false;

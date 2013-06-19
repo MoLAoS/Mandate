@@ -3078,11 +3078,11 @@ void Unit::applyUpgrade(const UpgradeType *upgradeType) {
                     tActions->getCommandType(i)->addImage(imgPath);
                     if (tActions->getCommandType(i)->getClass() == CmdClass::ATTACK) {
                         MoveBaseCommandType *mbct = static_cast<MoveBaseCommandType*>(tActions->getCommandType(i));
-                        mbct->initMoveSkill(this);
+                        mbct->initMoveSkill(this->getActions());
                     }
                     if (tActions->getCommandType(i)->getClass() == CmdClass::ATTACK) {
                         AttackCommandType *act = static_cast<AttackCommandType*>(tActions->getCommandType(i));
-                        act->initAttackSkill(this);
+                        act->initAttackSkill(this->getActions());
                         act->attackSkillsInit();
                     }
                     actions.addCommand(tActions->getCommandType(i));
@@ -3261,11 +3261,11 @@ void Unit::addTrait(Trait *trait) {
         tActions->getCommandType(i)->addImage(imgPath);
         if (tActions->getCommandType(i)->getClass() == CmdClass::ATTACK) {
             MoveBaseCommandType *mbct = static_cast<MoveBaseCommandType*>(tActions->getCommandType(i));
-            mbct->initMoveSkill(this);
+            mbct->initMoveSkill(this->getActions());
         }
         if (tActions->getCommandType(i)->getClass() == CmdClass::ATTACK) {
             AttackCommandType *act = static_cast<AttackCommandType*>(tActions->getCommandType(i));
-            act->initAttackSkill(this);
+            act->initAttackSkill(this->getActions());
             act->attackSkillsInit();
         }
         actions.addCommand(tActions->getCommandType(i));

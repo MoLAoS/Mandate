@@ -232,6 +232,7 @@ void MenuStateRoot::update(){
 	if (m_transition) {
 		program.clear();
 		MenuState *newState = 0;
+		MenuStateCharacterCreator *ccState = 0;
 		switch (m_selectedItem) {
 			case RootMenuItem::NEWGAME: newState = new MenuStateNewGame(program, mainMenu); break;
 			case RootMenuItem::JOINGAME: newState = new MenuStateJoinGame(program, mainMenu); break;
@@ -239,12 +240,17 @@ void MenuStateRoot::update(){
 			case RootMenuItem::OPTIONS: newState = new MenuStateOptions(program, mainMenu); break;
 			case RootMenuItem::LOADGAME: newState = new MenuStateLoadGame(program, mainMenu); break;
 			case RootMenuItem::MAPEDITOR: newState = new MenuStateMapEditor(program, mainMenu); break;
-			case RootMenuItem::CHARACTERCREATOR: newState = new MenuStateCharacterCreator(program, mainMenu); break;
+			case RootMenuItem::CHARACTERCREATOR: newState = new MenuStateCharacterCreator(program, mainMenu);
+			ccState = static_cast<MenuStateCharacterCreator*>(newState); break;
 			case RootMenuItem::ABOUT: newState = new MenuStateAbout(program, mainMenu); break;
 			default: break;
 		}
 		if (newState) {
 			mainMenu->setState(newState);
+			if (ccState->isCCState()) {
+                ccState->getCharacterCreator()->loadTech();
+                ccState->getCharacterCreator()->buildTabs();
+			}
 		} else {
 			program.exit();
 		}
