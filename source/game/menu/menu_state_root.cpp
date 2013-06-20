@@ -240,17 +240,16 @@ void MenuStateRoot::update(){
 			case RootMenuItem::OPTIONS: newState = new MenuStateOptions(program, mainMenu); break;
 			case RootMenuItem::LOADGAME: newState = new MenuStateLoadGame(program, mainMenu); break;
 			case RootMenuItem::MAPEDITOR: newState = new MenuStateMapEditor(program, mainMenu); break;
-			case RootMenuItem::CHARACTERCREATOR: newState = new MenuStateCharacterCreator(program, mainMenu);
-			ccState = static_cast<MenuStateCharacterCreator*>(newState); break;
+			case RootMenuItem::CHARACTERCREATOR: ccState = new MenuStateCharacterCreator(program, mainMenu); break;
 			case RootMenuItem::ABOUT: newState = new MenuStateAbout(program, mainMenu); break;
 			default: break;
 		}
-		if (newState) {
+		if (ccState) {
+            mainMenu->setState(ccState);
+            ccState->getCharacterCreator()->loadTech();
+            ccState->getCharacterCreator()->buildTabs();
+		} else if (newState) {
 			mainMenu->setState(newState);
-			if (ccState->isCCState()) {
-                ccState->getCharacterCreator()->loadTech();
-                ccState->getCharacterCreator()->buildTabs();
-			}
 		} else {
 			program.exit();
 		}

@@ -196,52 +196,6 @@ bool TechTree::load(const string &dir, const set<string> &factionNames){
         }
 	}
 
-    string apath = dir + "/skills/*.";
-	vector<string> apaths;
-	try {
-		findAll(apath, apaths);
-	} catch (runtime_error e) {
-		g_logger.logError(e.what());
-	}
-	listActions.resize(apaths.size());
-	for (int i = 0; i < apaths.size(); ++i) {
-        string sstr = dir + "/skills/" + apaths[i] + "/" + apaths[i] + ".xml";
-        XmlTree	xmlTree;
-        try {
-            xmlTree.load(sstr);
-        }
-        catch (runtime_error &e) {
-            g_logger.logXmlError ( apaths[i], "File missing or wrongly named." );
-            return false;
-        }
-        const XmlNode *listActionsNode;
-        try { listActionsNode = xmlTree.getRootNode(); }
-        catch (runtime_error &e) {
-            g_logger.logXmlError ( apath, "File appears to lack contents." );
-            return false;
-        }
-        const XmlNode *actionsNode = listActionsNode->getChild("actions", 0, false);
-	    if (actionsNode) {
-	        const CreatableType *ct = 0;
-	        const FactionType *ft = 0;
-            if(!listActions[i].load(actionsNode, dir, true, ft, ct)){
-                loadOk = false;
-            }
-	    }
-	}
-	for (int i = 0; i < listActions.size(); ++i) {
-	    for (int j = 0; j < listActions[i].getSkillTypeCount(); ++j) {
-            SkillType *skillType = listActions[i].getSkillType(j);
-            actions.addSkillType(skillType);
-	    }
-	    for (int j = 0; j < listActions[i].getCommandTypeCount(); ++j) {
-            CommandType *commandType = listActions[i].getCommandType(j);
-            actions.addCommand(commandType);
-	    }
-	}
-	actions.sortSkillTypes();
-	actions.sortCommandTypes();
-
     // check for included factions
     vector<string> factionTypeNameList;
     vector<string> factionTypeNames;
@@ -307,6 +261,52 @@ bool TechTree::load(const string &dir, const set<string> &factionNames){
 	string techName = basename(dir);
 	g_lang.loadFactionStrings(techName, names);
 
+
+    string apath = dir + "/skills/*.";
+	vector<string> apaths;
+	try {
+		findAll(apath, apaths);
+	} catch (runtime_error e) {
+		g_logger.logError(e.what());
+	}
+	listActions.resize(apaths.size());
+	for (int i = 0; i < apaths.size(); ++i) {
+        string sstr = dir + "/skills/" + apaths[i] + "/" + apaths[i] + ".xml";
+        XmlTree	xmlTree;
+        try {
+            xmlTree.load(sstr);
+        }
+        catch (runtime_error &e) {
+            g_logger.logXmlError ( apaths[i], "File missing or wrongly named." );
+            return false;
+        }
+        const XmlNode *listActionsNode;
+        try { listActionsNode = xmlTree.getRootNode(); }
+        catch (runtime_error &e) {
+            g_logger.logXmlError ( apath, "File appears to lack contents." );
+            return false;
+        }
+        const XmlNode *actionsNode = listActionsNode->getChild("actions", 0, false);
+	    if (actionsNode) {
+	        const CreatableType *ct = 0;
+	        const FactionType *ft = 0;
+            if(!listActions[i].load(actionsNode, dir, true, ft, ct)){
+                loadOk = false;
+            }
+	    }
+	}
+	for (int i = 0; i < listActions.size(); ++i) {
+	    for (int j = 0; j < listActions[i].getSkillTypeCount(); ++j) {
+            SkillType *skillType = listActions[i].getSkillType(j);
+            actions.addSkillType(skillType);
+	    }
+	    for (int j = 0; j < listActions[i].getCommandTypeCount(); ++j) {
+            CommandType *commandType = listActions[i].getCommandType(j);
+            actions.addCommand(commandType);
+	    }
+	}
+	actions.sortSkillTypes();
+	actions.sortCommandTypes();
 
 	string tpath = dir + "/traits/*.";
 	vector<string> tpaths;

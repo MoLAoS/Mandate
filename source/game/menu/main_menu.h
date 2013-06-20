@@ -126,6 +126,7 @@ public:
 
 	void doFadeIn() { m_fadeIn = true; m_fadeOut = false; }
 	void doFadeOut() { m_fadeIn = false; m_fadeOut = true; }
+	virtual bool isCCState() const	{ return false; }
 };
 
 }}//end namespace

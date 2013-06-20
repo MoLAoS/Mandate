@@ -35,7 +35,7 @@
 				<speed value="220"/>
 				<sounds-animations>
 					<anim-speed value="125"/>
-					<animation path="models/move_two.g3d"/>
+					<animation load="true" path="models/move_two.g3d"/>
 					<sound enabled="false"/>
 				</sounds-animations>
 			</skill>

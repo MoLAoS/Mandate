@@ -636,7 +636,6 @@ void CharacterCreator::calculateCreatorCost() {
     for (int i = 0; i < actions.getCommandTypeCount(); ++i) {
         characterCost += actions.getCommandType(i)->getCreatorCost()->getValue();
     }
-    throw runtime_error(intToStr(characterCost));
 }
 
 void CharacterCreator::onSovereignNameChanged(Widget *source) {
@@ -689,6 +688,7 @@ void CharacterCreator::save() {
 	XmlNode root("character");
 	XmlNode *sovereignNode = root.addChild("sovereign");
     sovereignNode->addAttribute("name", sov_name);
+    sovereignNode->addAttribute("cost", characterCost);
     XmlNode *n;
     n = sovereignNode->addChild("specialization");
     n->addAttribute("name", specialization->getSpecName());
@@ -707,8 +707,8 @@ void CharacterCreator::save() {
     m = n->addChild("damage-types");
 	for (int i = 0; i < damageTypes.size(); ++i) {
         XmlNode *itemNode = m->addChild("damage-type");
-        itemNode->addAttribute("type", damageTypes[i].getTypeName());
         itemNode->addAttribute("value", damageTypes[i].getValue());
+        itemNode->addAttribute("type", damageTypes[i].getTypeName());
 	}
 	m = n->addChild("resistances");
 	for (int i = 0; i < resistances.size(); ++i) {
