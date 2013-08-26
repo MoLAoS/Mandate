@@ -59,8 +59,7 @@ private:
     Knowledge              knowledge;
     Sovereign              sovereign;
     Specialization         *specialization;
-    ListTraits             traits;
-    ListTraits             sovTraits;
+    Traits             sovTraits;
     Actions                actions;
     ActionNames            commandNames;
     ActionNames            skillNames;
@@ -109,6 +108,7 @@ public:
 
     void loadTech();
     const TechTree *getTechTree() const {return &techTree;}
+    TechTree *getTechTree() {return &techTree;}
 	void save();
 	virtual string descType() const override { return "CharacterCreator"; }
 

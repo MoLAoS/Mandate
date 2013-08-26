@@ -21,6 +21,7 @@
 #include "world.h"
 #include "program.h"
 #include "sim_interface.h"
+#include "events.h"
 
 //#include "core.h"
 
@@ -106,6 +107,21 @@ bool FactionType::preLoad(const string &dir, const TechTree *techTree) {
 		UpgradeType *ut = g_prototypeFactory.newUpgradeType();
 		upgradeTypes.push_back(ut);
 		upgradeTypes.back()->preLoad(path);
+	}
+    // a3) preload events
+	string eventsPath = dir + "/events/*.";
+	vector<string> eventFilenames;
+	try {
+		findAll(eventsPath, eventFilenames);
+	} catch (runtime_error e) {
+		g_logger.logError(e.what());
+	}
+	for (int i = 0; i < eventFilenames.size(); ++i) {
+		string path = dir + "/events/" + eventFilenames[i];
+		EventType *it = g_prototypeFactory.newEventType();
+		eventTypes.push_back(it);
+		eventTypes.back()->preLoad(path);
+		//throw runtime_error(path);
 	}
 
 	return loadOk;
@@ -248,6 +264,16 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 		}
 		logger.getProgramLog().itemLoaded();
 	}
+	// 3.6. Load events
+	for (int i = 0; i < eventTypes.size(); ++i) {
+		string str = dir + "/events/" + eventTypes[i]->getName();
+		if (eventTypes[i]->load(str, techTree, this)) {
+			//g_prototypeFactory.setChecksum(eventTypes[i]);
+		} else {
+			loadOk = false;
+		}
+		//logger.getProgramLog().eventLoaded();
+	}
 	// 4. Add BeLoadedCommandType to units that need them
 
 	// 4a. Discover which mobile unit types can be loaded(/housed) in other units
@@ -375,6 +401,8 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 				loadOk = false;
 			}
 		}
+		string sovName = g_simInterface.getGameSettings().getSovereignType();
+		startingUnits.push_back(PairPUnitTypeInt(getUnitType(sovName), 1));
 	} catch (runtime_error e) {
 		g_logger.logXmlError(path, e.what());
 		loadOk = false;

@@ -76,6 +76,7 @@ class NameIdPair {
 	friend class Sim::DynamicTypeFactory<SkillClass, SkillType>;
 	friend class Sim::DynamicTypeFactory<CmdClass, CommandType>;
 	friend class Sim::DynamicTypeFactory<EffectClass, EffectType>;
+	friend class Sim::DynamicTypeFactory<EventClass, EventType>;
 
 protected:
 	int    m_id;   // id
@@ -169,11 +170,13 @@ public:
 	typedef vector<UnitReq> UnitReqs;
 	typedef vector<ItemReq> ItemReqs;
 	typedef vector<UpgradeReq> UpgradeReqs;
+    typedef vector<ResourceAmount> ResourceReqs;
 
 protected:
 	UnitReqs unitReqs;			//needed units
 	ItemReqs itemReqs;			//needed items
 	UpgradeReqs upgradeReqs;	//needed upgrades
+	ResourceReqs resourceReqs;	//needed resources
 
 public:
 	RequirableType() : DisplayableType() {}
@@ -189,6 +192,9 @@ public:
 	const UpgradeReq getUpgradeReq(int i) const		    {return upgradeReqs[i];}
 	const UnitReq getUnitReq(int i) const				{return unitReqs[i];}
 	const ItemReq getItemReq(int i) const				{return itemReqs[i];}
+
+	int getResourceReqCount() const						{return resourceReqs.size();}
+	const ResourceAmount getResourceReq(int i) const	{return resourceReqs[i];}
 
     //other
     string getReqDesc(const Faction *f, const FactionType *ft) const;

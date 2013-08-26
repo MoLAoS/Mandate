@@ -71,6 +71,32 @@ bool TechTree::preload(const string &dir, const set<string> &factionNames){
         //}
 	}
 
+	string tpath = dir + "/traits/*.";
+	vector<string> tpaths;
+	try {
+		findAll(tpath, tpaths);
+	} catch (runtime_error e) {
+		g_logger.logError(e.what());
+	}
+	traitsList.resize(tpaths.size());
+	for (int i = 0; i < tpaths.size(); ++i) {
+        string tstr = dir + "/traits/" + tpaths[i] + "/" + tpaths[i];
+        traitsList[i].preLoad(tstr, i);
+	}
+
+    string spath = dir + "/specializations/*.";
+	vector<string> paths;
+	try {
+		findAll(spath, paths);
+	} catch (runtime_error e) {
+		g_logger.logError(e.what());
+	}
+	specializations.resize(paths.size());
+	for (int i = 0; i < paths.size(); ++i) {
+        string sstr = dir + "/specializations/" + paths[i] + "/" + paths[i];
+        specializations[i].preLoad(sstr);
+	}
+
     // check for included factions
     vector<string> factionTypeNameList;
     vector<string> factionTypeNames;
@@ -148,6 +174,7 @@ Trait *TechTree::getTraitById(int id) {
             return &traitsList[i];
         }
     }
+    throw runtime_error("Trait not found:" + intToStr(id));
 }
 
 bool TechTree::load(const string &dir, const set<string> &factionNames){
@@ -187,7 +214,6 @@ bool TechTree::load(const string &dir, const set<string> &factionNames){
 	} catch (runtime_error e) {
 		g_logger.logError(e.what());
 	}
-	specializations.resize(paths.size());
 	for (int i = 0; i < paths.size(); ++i) {
         string sstr = dir + "/specializations/" + paths[i] + "/" + paths[i];
         specializations[i].reset();
@@ -315,7 +341,6 @@ bool TechTree::load(const string &dir, const set<string> &factionNames){
 	} catch (runtime_error e) {
 		g_logger.logError(e.what());
 	}
-	traitsList.resize(tpaths.size());
 	for (int i = 0; i < tpaths.size(); ++i) {
         string tstr = dir + "/traits/" + tpaths[i] + "/" + tpaths[i];
         if (!traitsList[i].load(tstr)) {

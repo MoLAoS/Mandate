@@ -150,6 +150,11 @@ void Faction::init(const FactionType *factionType, ControlType control, string p
 	this->lastAttackNotice = 0;
 	this->lastEnemyNotice = 0;
 	this->defeated = false;
+
+	for (int i = 0; i < factionType->getEventTypeCount(); ++i) {
+        eventTypes.push_back(const_cast<EventType*>(factionType->getEventType(i)));
+	}
+
 	lastEventLoc.x = -1.0f;  // -1 x indicates uninitialized, no last event
 
 	texture = 0;
@@ -527,6 +532,12 @@ Modifier Faction::getCreatedUnitModifier(const UnitType *ut, const UnitType *sut
 
 /** Checks if all required units and upgrades are present for a RequirableType */
 bool Faction::reqsOk(const RequirableType *rt) const {
+	Faction *f;
+    for (int j = 0; j < g_world.getFactionCount(); ++j) {
+        if (this == g_world.getFaction(j)) {
+            f = g_world.getFaction(j);
+        }
+    }
 	// required units
 	for (int i = 0; i < rt->getUnitReqCount(); ++i) {
 	    if (!rt->getUnitReq(i).getScope()) {
@@ -542,13 +553,12 @@ bool Faction::reqsOk(const RequirableType *rt) const {
             }
         }
 	}
-	// required upgrades
-	Faction *f;
-    for (int j = 0; j < g_world.getFactionCount(); ++j) {
-        if (this == g_world.getFaction(j)) {
-            f = g_world.getFaction(j);
+	for (int i = 0; i < rt->getResourceReqCount(); ++i) {
+        if (getSResource(rt->getResourceReq(i).getType())->getAmount() < rt->getResourceReq(i).getAmount()) {
+            return false;
         }
-    }
+	}
+	// required upgrades
 	for (int i = 0; i < rt->getUpgradeReqCount(); ++i) {
 	    //if (!rt->getUpgradeReq(i).getScope()) {
             if (upgradeManager.isUpgraded(rt->getUpgradeReq(i).getUpgradeType())) {
@@ -993,13 +1003,28 @@ bool Faction::canSee(const Unit *unit) const {
 
 void Faction::incResourceAmount(const ResourceType *rt, int amount) {
 	for (int i = 0; i < sresources.size(); ++i) {
-		StoredResource *r = &sresources[i];
-		if (r->getType() == rt) {
-			r->setAmount(r->getAmount() + amount);
-			if (r->getType()->getClass() != ResourceClass::STATIC
-			&& r->getType()->getClass() != ResourceClass::CONSUMABLE
-			&& r->getAmount() > getStoreAmount(rt)) {
-				r->setAmount(getStoreAmount(rt));
+		StoredResource *resource = &sresources[i];
+		if (resource->getType() == rt) {
+		    if (resource->getType()->isPolar()) {
+                for (int j = 0; j < sresources.size(); ++j) {
+                    StoredResource *polarRes = &sresources[j];
+                    if (resource->getType()->getOpposite() == polarRes->getType()->getName()) {
+                        if (polarRes->getAmount() >= amount) {
+                            polarRes->setAmount(polarRes->getAmount() - amount);
+                        } else {
+                            int newAmount = amount - polarRes->getAmount();
+                            polarRes->setAmount(0);
+                            resource->setAmount(resource->getAmount() + newAmount);
+                        }
+                    }
+                }
+		    } else {
+                resource->setAmount(resource->getAmount() + amount);
+		    }
+			if (resource->getType()->getClass() != ResourceClass::STATIC
+			&& resource->getType()->getClass() != ResourceClass::CONSUMABLE
+			&& resource->getAmount() > getStoreAmount(rt)) {
+				resource->setAmount(getStoreAmount(rt));
 			}
 			return;
 		}

@@ -22,6 +22,7 @@ using namespace Hierarchy;
 // ===============================
 // 	class Sovereign
 // ===============================
+typedef vector<string> AddActions;
 class Sovereign {
 private:
     Specialization *specialization;
@@ -31,16 +32,27 @@ private:
     Statistics statistics;
     Equipments equipment;
     Knowledge knowledge;
-    Actions actions;
+    AddActions addSkills;
+    AddActions addCommands;
     Traits traits;
     string sovName;
 public:
     Specialization *getSpecialization() {return specialization;}
+    const Specialization *getSpecialization() const {return specialization;}
+    Trait *getTrait(int i) {return traits[i];}
+    const Trait *getTrait(int i) const {return traits[i];}
+    int getTraitCount() const {return traits.size();}
+    const Knowledge *getKnowledge() {return &knowledge;}
+    const Knowledge *getKnowledge() const {return &knowledge;}
     CraftingStats *getCraftingStats() {return &craftingStats;}
     CharacterStats *getCharacterStats() {return &characterStats;}
-    Actions *getActions() {return &actions;}
+    int getAddSkillCount() const {return addSkills.size();}
+    int getAddCommandCount() const {return addCommands.size();}
+    string getAddSkill(int i) const {return addSkills[i];}
+    string getAddCommand(int i) const {return addCommands[i];}
     Statistics *getStatistics() {return &statistics;}
-    int getEquipmentCount() {return equipment.size();}
+    const Statistics *getStatistics() const {return &statistics;}
+    int getEquipmentCount() const {return equipment.size();}
     Equipments *getEquipments() {return &equipment;}
     Equipment *getEquipment(int i) {return &equipment[i];}
     string getSovName() const {return sovName;}
@@ -53,7 +65,7 @@ public:
 	void addSpecialization(Specialization *spec) {specialization = spec;}
 	void addStatistics(const Statistics *statistic) {statistics.sum(statistic);}
 	void addCharacterStats(const CharacterStats *charStats) {characterStats.sum(charStats);}
-	void addKnowledge(Knowledge knowledges) {knowledge.sum(knowledges);}
+	void addKnowledge(const Knowledge *knowledges) {knowledge.sum(knowledges);}
 	void addAction(const Actions *actions, string actionName);
 	//void addCraftingStats()
 	//void addEquipment();

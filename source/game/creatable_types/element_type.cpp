@@ -111,6 +111,9 @@ string RequirableType::getReqDesc(const Faction *f, const FactionType *ft) const
 	for (int i = 0; i < getUpgradeReqCount(); ++i) {
 		ss << "  " << upgradeReqs[i].getUpgradeType()->getName() << ": " << upgradeReqs[i].getStage() << endl;
 	}
+	for (int i = 0; i < getResourceReqCount(); ++i) {
+		ss << "  " << resourceReqs[i].getType()->getName() << ": " << resourceReqs[i].getAmount() << endl;
+	}
 	return ss.str();
 }
 
@@ -199,6 +202,25 @@ bool RequirableType::load(const XmlNode *baseNode, const string &dir, bool add) 
 				UpgradeReq upgradeReq;
 				upgradeReq.init(ft->getUpgradeType(name), stage);
 				upgradeReqs.push_back(upgradeReq);
+			}
+		}
+	} catch (runtime_error e) {
+		g_logger.logXmlError(dir, e.what ());
+		loadOk = false;
+	}
+
+	try { // Resource requirements
+		const XmlNode *resourceRequirementsNode = baseNode->getChild("resource-requirements", 0, false);
+		if(resourceRequirementsNode) {
+			for(int i = 0; i < resourceRequirementsNode->getChildCount(); ++i) {
+                const XmlNode *resourceNode = resourceRequirementsNode->getChild("resource", i);
+                string name = resourceNode->getAttribute("name")->getRestrictedValue();
+                int amount = resourceNode->getAttribute("amount")->getIntValue();
+                int amount_plus = resourceNode->getAttribute("plus")->getIntValue();
+                fixed amount_multiply = resourceNode->getAttribute("multiply")->getFixedValue();
+				ResourceAmount resourceReq;
+				resourceReq.init(g_world.getTechTree()->getResourceType(name), amount, amount_plus, amount_multiply);
+				resourceReqs.push_back(resourceReq);
 			}
 		}
 	} catch (runtime_error e) {

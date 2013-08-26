@@ -37,6 +37,7 @@ private:
 	string factionTypeNames[maxPlayers]; //faction names
 	string playerNames[maxPlayers];
 	string scenarioPath;
+	string sovereignType;
 
 	ControlType factionControls[maxPlayers];
 	float resourceMultipliers[maxPlayers];
@@ -75,6 +76,7 @@ public:
 	const string &getTilesetPath() const			{return tilesetPath;}
 	const string &getTechPath() const				{return techPath;}
 	const string &getScenarioPath() const			{return scenarioPath;}
+	const string &getSovereignType() const			{return sovereignType;}
 
 	const string &getFactionTypeName(int i) const	{ASSERT_I(); return factionTypeNames[i];}
 	const string &getPlayerName(int i) const		{ASSERT_I(); return playerNames[i];}
@@ -99,6 +101,7 @@ public:
 	void setTilesetPath(const string& v)			{tilesetPath = v;}
 	void setTechPath(const string& v)				{techPath = v;}
 	void setScenarioPath(const string& v)			{scenarioPath = v;}
+	void setSovereignType(const string& v)			{sovereignType = v;}
 
 	void setFactionTypeName(int i, const string& v)	{ASSERT_I(); factionTypeNames[i] = v;}
 	void setPlayerName(int i, const string &v)		{ASSERT_I(); playerNames[i] = v;}

@@ -19,6 +19,7 @@
 #include "carried_display.h"
 #include "resources_display.h"
 #include "stats_display.h"
+#include "event_display.h"
 #include "faction_display.h"
 #include "map_display.h"
 #include "commander.h"
@@ -117,6 +118,8 @@ public:
 	typedef vector<Vec2i> BuildPositions;
 
 private:
+    vector <Event *> events;
+
 	// External objects
 	GameState &game;
 	const Input &input;
@@ -134,6 +137,7 @@ private:
 	CarriedWindow *m_carriedWindow;
 	ProductionWindow *m_productionWindow;
 	StatsWindow *m_statsWindow;
+	EventWindow *m_eventWindow;
 	ResourcesWindow *m_resourcesWindow;
 	FactionDisplay *m_factionDisplay;
 	MapDisplay *m_mapDisplay;
@@ -190,10 +194,14 @@ public:
 	void init();
 	void initMinimap(bool fow, bool sod, bool resuming);
 
-	void                   setActivePos(int i)        {activePos = i;}
-	bool                  setSelectingPos(bool b)    {selectingPos = b;}
+    void                    addEvent(Event *newEvent)    {events.push_back(newEvent);}
+    void                    removeEvent()                {events.erase(events.begin());}
+	void                    setActivePos(int i)          {activePos = i;}
+	bool                    setSelectingPos(bool b)      {selectingPos = b;}
 
 	//get
+	int                     getEventCount() const        { return events.size();      }
+	Event*                  getEvent(int i) const        { return events[i];          }
 	int                     getActivePos()               { return activePos;          }
 	Minimap*                getMinimap()                 { return m_minimap;          }
 	const Minimap*          getMinimap() const           { return m_minimap;          }
@@ -222,6 +230,8 @@ public:
 	const StatsWindow*      getStatsWindow() const       { return m_statsWindow;      }
 	ResourcesWindow*        getStorageWindow()	         { return m_resourcesWindow;  }
 	const ResourcesWindow*  getStorageWindow() const     { return m_resourcesWindow;  }
+	EventWindow*            getEventWindow()	         { return m_eventWindow;      }
+	const EventWindow*      getEventWindow() const       { return m_eventWindow;      }
 	FactionDisplay*         getFactionDisplay()	         { return m_factionDisplay;   }
 	const FactionDisplay*   getFactionDisplay() const    { return m_factionDisplay;   }
 	MapDisplay*             getMapDisplay()	             { return m_mapDisplay;       }

@@ -77,6 +77,7 @@ namespace Glest {
 		class FactionType;
 		class Level;
 		class ItemType;
+		class EventType;
 		class CommandType;
 		class AttackCommandType;
 		class RepairCommandType;
@@ -133,6 +134,7 @@ namespace Glest {
 		class WaypointPath;
 		class Unit;
 		class Item;
+		class Event;
 		class Upgrade;
 		class UpgradeManager;
 		class Faction;

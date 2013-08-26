@@ -1,0 +1,21 @@
+<event>
+	<name value="golden_wish"/>
+	<image path="images/wealth.png"/>
+	<choices>
+		<choice title="golden_wish" image-path="images/wealth.png">
+			<resources>
+				<resource name="wealth" amount="10000" plus="0" multiply="0"/>
+			</resources>
+		</choice>
+		<choice title="silver_wish" image-path="images/wealth.png">
+			<resources>
+				<resource name="wealth" amount="5000" plus="0" multiply="0"/>
+			</resources>
+		</choice>
+	</choices>
+	<triggers>
+		<resource-requirements>
+			<resource name="wealth" amount="50000" plus="0" multiply="0"/>
+		</resource-requirements>
+	</triggers>
+</event>

@@ -29,6 +29,7 @@
 #include "upgrade_type.h"
 #include "trade_command.h"
 #include "mandate_ai_sim.h"
+#include "events.h"
 
 using std::map;
 using std::vector;
@@ -127,6 +128,7 @@ public:
 class Faction : public NameIdPair {
 public:
     typedef vector<Item*>                              Items;
+    typedef vector<EventType*>                         EventTypes;
 	typedef vector<const ResourceType *>               ResourceTypes;
 	typedef map<const ResourceType*, Modifier>         CostModifiers;
 	typedef map<const ProducibleType*, CostModifiers>  UnitCostModifiers;
@@ -146,11 +148,16 @@ private:
 
 	MandateAISim mandateAISim;
 
+    EventTypes eventTypes;
 public:
     MandateAISim getMandateAiSim() const {return mandateAISim;}
 
+
     SResources    sresources;
     CResources    cresources;
+
+    int getEventTypeCount() const {return eventTypes.size();}
+    EventType *getEventType(int i) {return eventTypes[i];}
 
 typedef vector<TradeCommand>    TradeCommands;
                TradeCommands    tradeCommands;

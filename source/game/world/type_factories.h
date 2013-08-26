@@ -14,6 +14,7 @@
 #include "unit_type.h"
 #include "upgrade_type.h"
 #include "item_type.h"
+#include "events.h"
 #include "command_type.h"
 #include "skill_type.h"
 
@@ -250,6 +251,7 @@ typedef DynamicTypeFactory<SkillClass, SkillType>            SkillTypeFactory;
 typedef DynamicTypeFactory<CmdClass, CommandType>            CommandTypeFactory;
 typedef DynamicTypeFactory<ProducibleClass, ProducibleType>  ProducibleTypeFactory;
 typedef DynamicTypeFactory<EffectClass, EffectType>	         EffectTypeFactory;
+typedef DynamicTypeFactory<EventClass, EventType>	         EventTypeFactory;
 typedef SingleTypeFactory<CloakType>                         CloakTypeFactory;
 typedef SingleTypeFactory<DetectorType>                      DetectorTypeFactory;
 
@@ -259,6 +261,7 @@ protected:
 	SkillTypeFactory       m_skillTypeFactory;
 	CommandTypeFactory     m_commandTypeFactory;
 	EffectTypeFactory      m_effectTypeFactory;
+	EventTypeFactory       m_eventTypeFactory;
 	CloakTypeFactory       m_cloakTypeFactory;
 	DetectorTypeFactory    m_detectorTypeFactory;
 
@@ -298,6 +301,9 @@ public:	// create objects
 	EffectType*		newEffectType()		{ return m_effectTypeFactory.newInstance(EffectClass::EFFECT); }
 	EmanationType*	newEmanationType()	{
 		return static_cast<EmanationType*>(m_effectTypeFactory.newInstance(EffectClass::EMANATION));
+ 	}
+	EventType*	newEventType() {
+		return static_cast<EventType*>(m_eventTypeFactory.newInstance(EventClass::EVENT));
  	}
 
 	// Cloaks and Detectors

@@ -123,6 +123,22 @@ public:
 		}
 	}
 
+	Specialization *getSpecialization(const string &name){
+		for (int i = 0; i < getSpecializationCount(); ++i) {
+		    if (specializations[i].getSpecName() == name) {
+                return &specializations[i];
+            } /*else {
+                string specs = "";
+                for (int i = 0; i < getSpecializationCount(); ++i) {
+                    specs += specializations[i].getSpecName();
+                    specs += "/";
+                }
+                throw runtime_error(specs);
+            }*/
+		}
+		throw runtime_error("Specialization not found:" + name);
+	}
+
 	// other getters
     const ResourceType *getTechResourceType(int i) const;
     const ResourceType *getFirstTechResourceType() const;

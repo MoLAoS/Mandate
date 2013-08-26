@@ -326,6 +326,7 @@ void TraitsDisplay::layout() {
                 break;
             }
         }
+        str += intToStr(traits[j]->getCreatorCost()->getValue());
         traits[j]->getDesc(str, "\n");
     }
 

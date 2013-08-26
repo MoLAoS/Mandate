@@ -26,6 +26,7 @@ using namespace Glest::Plan;
 
 namespace Glest{ namespace ProtoTypes {
 class TechTree;
+class EventType;
 
 // =====================================================
 // 	class FactionType
@@ -43,6 +44,7 @@ private:
 	typedef vector<StoredResource> SResources;
     typedef vector<CreatedResource> CResources;
 	typedef vector<Modification> Modifications;
+    typedef vector<EventType*> EventTypes;
 	typedef vector<ItemType*> ItemTypes;
 	typedef vector<Texture2D*> ItemImages;
 	typedef vector<string> GuiFileNames;
@@ -60,6 +62,7 @@ private:
 	UpgradeTypes upgradeTypes;
 	ItemImages itemImages;
 	Modifications modifications;
+    EventTypes eventTypes;
 	ItemTypes itemTypes;
 	StartingUnits startingUnits;
 	SResources startingResources;
@@ -108,6 +111,11 @@ public:
 	const UnitType *getUnitType(int i) const			{return unitTypes[i];}
 	const ItemType *getItemType(int i) const			{return itemTypes[i];}
 	const UpgradeType *getUpgradeType(int i) const		{return upgradeTypes[i];}
+
+	int getEventTypeCount() const                       {return eventTypes.size();}
+	const EventType *getEventType(int i) const          {return eventTypes[i];}
+	EventType *getEventType(int i)                      {return eventTypes[i];}
+
 	StrSound *getMusic() const							{return music;}
 	int getStartingUnitCount() const					{return startingUnits.size();}
 	const UnitType *getStartingUnit(int i) const		{return startingUnits[i].first;}

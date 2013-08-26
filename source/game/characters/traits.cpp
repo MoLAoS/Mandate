@@ -14,8 +14,10 @@ namespace Glest { namespace ProtoTypes {
 // =====================================================
 // 	class Traits
 // =====================================================
-void Trait::preLoad(const string &dir){
+void Trait::preLoad(const string &dir, int i){
 	m_name = basename(dir);
+	name = m_name;
+	id = i;
 }
 
 void Trait::save(XmlNode *node) const {

@@ -4,7 +4,7 @@
 		<enhancement>
 			<resource-pools>
 				<health name="health">
-					<max-stat value="10"/>
+					<max-stat value="1000"/>
 				</health>
 			</resource-pools>
 		</enhancement>

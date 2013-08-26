@@ -33,6 +33,7 @@
 #include "type_factories.h"
 #include "command.h"
 #include "upgrade.h"
+#include "event.h"
 
 #include "forward_decs.h"
 
@@ -64,6 +65,7 @@ class MasterEntityFactory {
 protected:
 	UnitFactory        m_unitFactory;
 	ItemFactory        m_itemFactory;
+	EventFactory       m_eventFactory;
 	UpgradeFactory     m_upgradeFactory;
 	CommandFactory     m_commandFactory;
 	EffectFactory      m_effectFactory;
@@ -98,6 +100,14 @@ public:
 	}
 
 	Item*	newItem(const XmlNode *node, Faction *faction, Map *map, const TechTree *tt) {
+
+	}
+
+	Event*	newEvent(int ident, EventType* type, Faction *faction) {
+		return m_eventFactory.newEvent(ident, type, faction);
+	}
+
+	Event*	newEvent(const XmlNode *node, Faction *faction, Map *map, const TechTree *tt) {
 
 	}
 
@@ -144,6 +154,7 @@ public:
 
 	Unit*	getUnit(int id) { return m_unitFactory.getInstance(id); }
 	Item*	getItem(int id) { return m_itemFactory.getInstance(id); }
+	Event*	getEvent(int id) { return m_eventFactory.getInstance(id); }
 	MapObject* getMapObj(int id) { return m_mapObjectFactory.getInstance(id); }
 
 	void	deleteUnit(Unit *unit) { m_unitFactory.deleteUnit(unit); }
@@ -153,6 +164,7 @@ public:
 
 	UnitFactory&        getUnitFactory() { return m_unitFactory; }
 	ItemFactory&        getItemFactory() { return m_itemFactory; }
+	EventFactory&       getEventFactory() { return m_eventFactory; }
 	UpgradeFactory&     getUpgradeFactory() { return m_upgradeFactory; }
 	CommandFactory&     getCommandFactory() { return m_commandFactory; }
 	EffectFactory&      getEffectFactory() { return m_effectFactory; }
@@ -349,6 +361,7 @@ private:
 	//misc
 	//void updateEarthquakes(float seconds);
 	void tick();
+	void computeProduction();
 	void computeFow();
 	void doUnfog();
 	void exploreCells(const Vec2i &newPos, int sightRange, int teamIndex);

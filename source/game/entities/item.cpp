@@ -189,7 +189,7 @@ string Item::getLongDesc() {
 			ss << u.getAmount() << " " << unitName << "s " <<lang.get("Timer") << ": " << cUStep << "/" << tR.getTimerValue();
 		}
 	}
-	// can create units
+	// can create items
 	if (type->getItemProductionSystem()->getCreatedItemCount() > 0) {
 		for (int i = 0; i < type->getItemProductionSystem()->getCreatedItemCount(); ++i) {
 			CreatedItem item = type->getItemProductionSystem()->getCreatedItem(i, getFaction());
@@ -233,10 +233,6 @@ void Item::computeTotalUpgrade() {
 //  class ItemFactory
 // =====================================================
 Item* ItemFactory::newItem(int ident, const ItemType* type, Faction *faction) {
-	//Item item;
-	//item.init(ident, type, faction);
-	//items.push_back(item);
-	//return &items[items.size()-1];
 	Item::CreateParams params(ident, type, faction);
 	Item *item = new Item(params);
 	return item;

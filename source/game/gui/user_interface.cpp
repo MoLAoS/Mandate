@@ -325,6 +325,21 @@ void UserInterface::init() {
 		itemWindow->onExpand(0);
 	}
 
+	if (g_config.getUiLastEventDisplayPosX() != -1 && g_config.getUiLastEventDisplayPosY() != -1) {
+		x = g_config.getUiLastEventDisplayPosX();
+		y = g_config.getUiLastEventDisplayPosY();
+	}
+	EventDisplayFrame *eventWindow = new EventDisplayFrame(this, Vec2i(400,50));
+	m_eventWindow = eventWindow->getEventDisplay();
+	m_eventWindow->setSize();
+	m_eventWindow->setVisible(false);
+	if (g_config.getUiLastEventDisplaySize() >= 2) {
+		eventWindow->onExpand(0);
+	}
+	if (g_config.getUiLastEventDisplaySize() == 3) {
+		eventWindow->onExpand(0);
+	}
+
 	if (g_config.getUiLastProductionDisplayPosX() != -1 && g_config.getUiLastProductionDisplayPosY() != -1) {
 		x = g_config.getUiLastProductionDisplayPosX();
 		y = g_config.getUiLastProductionDisplayPosY();
@@ -1780,6 +1795,15 @@ void UserInterface::computeDisplay() {
 	m_carriedWindow->clear();
 	m_resourcesWindow->clear();
 	m_productionWindow->clear();
+	m_eventWindow->clear();
+
+    // === Event Panel ===
+    if (getEventCount() > 0) {
+        m_eventWindow->setVisible(true);
+    }
+    m_eventWindow->computePicturePanel();
+    m_eventWindow->computeTitlePanel();
+    m_eventWindow->computeChoicesPanel();
 
 	// === Selection Panel ===
 	computeSelectionPanel();

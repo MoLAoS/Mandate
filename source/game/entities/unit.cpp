@@ -19,6 +19,7 @@
 #include "upgrade.h"
 #include "map.h"
 #include "command.h"
+#include "hero.h"
 #include "object.h"
 #include "config.h"
 #include "skill_type.h"
@@ -113,6 +114,7 @@ Unit::Unit(CreateParams params)
 		: id(-1)
 		, hp(1)
 		, cp(-1)
+		, character(false)
 		, loadCount(0)
 		, deadCount(0)
 		, lastAnimReset(0)
@@ -132,6 +134,7 @@ Unit::Unit(CreateParams params)
 		, faceTarget(true)
 		, useNearestOccupiedCell(true)
 		, level(0)
+		, specialization(0)
 		, pos(params.pos)
 		, lastPos(params.pos)
 		, nextPos(params.pos)
@@ -173,6 +176,12 @@ Unit::Unit(CreateParams params)
 	}
 
 	ULC_UNIT_LOG( this, " constructed at pos" << pos );
+
+	if (type->isSovereign) {
+        character = true;
+	}
+
+	knowledge.sum(type->getSovereign()->getKnowledge());
 
 	computeTotalUpgrade();
 	hp = type->getStatistics()->getEnhancement()->getResourcePools()->getHealth()->getMaxStat()->getValue() / 20;
@@ -566,13 +575,28 @@ int Unit::getStoreAmount(const ResourceType *rt) const {
 
 void Unit::incResourceAmount(const ResourceType *rt, int amount) {
 	for (int i = 0; i < sresources.size(); ++i) {
-		StoredResource *r = &sresources[i];
-		if (r->getType() == rt) {
-			r->setAmount(r->getAmount() + amount);
-			if (r->getType()->getClass() != ResourceClass::STATIC
-			&& r->getType()->getClass() != ResourceClass::CONSUMABLE
-			&& r->getAmount() > getStoreAmount(rt)) {
-				r->setAmount(getStoreAmount(rt));
+		StoredResource *resource = &sresources[i];
+		if (resource->getType() == rt) {
+		    if (resource->getType()->isPolar()) {
+                for (int j = 0; j < sresources.size(); ++j) {
+                    StoredResource *polarRes = &sresources[j];
+                    if (resource->getType()->getOpposite() == polarRes->getType()->getName()) {
+                        if (polarRes->getAmount() >= amount) {
+                            polarRes->setAmount(polarRes->getAmount() - amount);
+                        } else {
+                            int newAmount = amount - polarRes->getAmount();
+                            polarRes->setAmount(0);
+                            resource->setAmount(resource->getAmount() + newAmount);
+                        }
+                    }
+                }
+		    } else {
+                resource->setAmount(resource->getAmount() + amount);
+		    }
+			if (resource->getType()->getClass() != ResourceClass::STATIC
+			&& resource->getType()->getClass() != ResourceClass::CONSUMABLE
+			&& resource->getAmount() > getStoreAmount(rt)) {
+				resource->setAmount(getStoreAmount(rt));
 			}
 			return;
 		}
@@ -787,6 +811,11 @@ bool Unit::reqsOk(const RequirableType *rt) const {
             if (itemCount <= rt->getItemReq(i).getAmount()) {
                 return false;
             }
+        }
+	}
+	for (int i = 0; i < rt->getResourceReqCount(); ++i) {
+        if (getFaction()->getSResource(rt->getResourceReq(i).getType())->getAmount() < rt->getResourceReq(i).getAmount()) {
+            return false;
         }
 	}
 	// required upgrades
@@ -1574,6 +1603,15 @@ void Unit::born(bool reborn) {
 	}
 	ULC_UNIT_LOG( this, "born." );
 	faction->applyStaticProduction(type);
+	if (type->isSovereign) {
+	    Specialization *spec = g_world.getTechTree()->getSpecialization(type->getSovereign()->getSpecialization()->getSpecName());
+	    addSpecialization(spec);
+	    knowledge.sum(specialization->getKnowledge());
+        for (int i = 0; i < type->getSovereign()->getTraitCount(); ++i) {
+            Trait *trait = g_world.getTechTree()->getTraitById(type->getSovereign()->getTrait(i)->getId());
+            addTrait(trait);
+        }
+    }
 	computeTotalUpgrade();
 	recalculateStats();
 
@@ -1589,7 +1627,11 @@ void Unit::born(bool reborn) {
         }
 
 		setCurrSkill(SkillClass::STOP);
-		hp = type->getStatistics()->getEnhancement()->getResourcePools()->getHealth()->getMaxStat()->getValue();
+		hp = type->getStatistics()->getEnhancement()->getResourcePools()->getHealth()->getMaxStat()->getValue()
+		+ type->getSovereign()->getStatistics()->getEnhancement()->getResourcePools()->getHealth()->getMaxStat()->getValue();
+		if (type->isSovereign) {
+            hp += specialization->getStatistics()->getEnhancement()->getResourcePools()->getHealth()->getMaxStat()->getValue();
+        }
 		cp = type->getStatistics()->getEnhancement()->getResourcePools()->getMaxCp()->getValue();
 		if (cp == 0) {
 		    cp = -1;
@@ -2902,6 +2944,10 @@ string Unit::getLongDesc() const {
 	string shortDesc = getShortDesc();
 	stringstream ss;
 
+    string character = "";
+    knowledge.getDesc(character, "\n");
+    characterStats.getDesc(character, "\n");
+
 	if (goalStructure != NULL) {
 	ss << endl << "Reason: " << getGoalReason();
 	}
@@ -3035,7 +3081,7 @@ string Unit::getLongDesc() const {
 		}
 		ss << endl << res;
 	}*/
-	return (shortDesc + ss.str());
+	return (shortDesc + character + ss.str());
 }
 
 /** Apply effects of an UpgradeType
@@ -3101,6 +3147,14 @@ void Unit::computeTotalUpgrade() {
     totalUpgrade.cleanse();
 	faction->getUpgradeManager()->computeTotalUpgrade(this, &totalUpgrade);
 	totalUpgrade.sum(type->getStatistics());
+	if (type->isSovereign) {
+	    if (specialization != 0) {
+            const Statistics *specStats = specialization->getStatistics();
+            totalUpgrade.sum(specStats);
+	    }
+        const Statistics *sovStats = type->getSovereign()->getStatistics();
+        totalUpgrade.sum(sovStats);
+	}
     if (dayCycle) {
         const Statistics *stats = &type->dayPower;
         if (stats) {
@@ -3275,6 +3329,26 @@ void Unit::addTrait(Trait *trait) {
     }
     actions.sortCommandTypes();
     computeTotalUpgrade();
+}
+
+void Unit::initSkillsAndCommands() {
+    for (int i = 0; i < type->getSovereign()->getAddSkillCount(); ++i) {
+        string skillName = type->getSovereign()->getAddSkill(i);
+        SkillType *skillType = g_world.getTechTree()->getActions()->getSkillType(skillName);
+        string loadAnim = "techs/" + g_world.getTechTree()->getName() + "/factions/" + type->getFactionType()->getName()
+            + "/units/" + type->getName() + skillType->getSoundsAndAnimations()->getLoadValue();
+        skillType->getSoundsAndAnimations()->addAnimation(cleanPath(loadAnim), type->getSize(), type->getHeight());
+        actions.addSkillType(skillType);
+    }
+    for (int i = 0; i < type->getSovereign()->getAddSkillCount(); ++i) {
+        string commandName = type->getSovereign()->getAddCommand(i);
+        CommandType *commandType = g_world.getTechTree()->getActions()->getCommandType(commandName);
+        actions.addCommand(commandType);
+    }
+}
+
+void Unit::addSpecialization(Specialization *spec) {
+    specialization = spec;
 }
 
 void Unit::processTraits() {

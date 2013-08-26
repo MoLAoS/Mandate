@@ -1,4 +1,5 @@
 <trait id="3" progress="1">
+	<creator-cost value="10"/>
 	<character-stats>
 		<might value="10"/>
 	</character-stats>
@@ -48,7 +49,7 @@
 			<command faction="humans" add="true">
 			    <type value="attack"/>
 			    <name value="heavy_attack"/>
-			    <image path="images/swordman_attack.bmp"/>
+			    <image path="images/attack.bmp"/>
 			    <unit-requirements/>
 			    <upgrade-requirements/>
 			    <move-skill value="charge_skill"/>
@@ -57,7 +58,7 @@
 			<command faction="humans" add="true">
 			    <type value="attack"/>
 			    <name value="power_attack"/>
-			    <image path="images/swordman_attack.bmp"/>
+			    <image path="images/attack.bmp"/>
 			    <unit-requirements/>
 			    <upgrade-requirements/>
 			    <move-skill value="charge_skill"/>

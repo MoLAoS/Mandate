@@ -22,7 +22,7 @@
 namespace Glest { namespace Menu {
 using namespace Widgets;
 
-/** Periodically announces the game, when slots are free, to the master 
+/** Periodically announces the game, when slots are free, to the master
   * server or local lan.
   * NOTE: currently only lan */
 class AnnouncerThread : public Thread {
@@ -32,11 +32,11 @@ class AnnouncerThread : public Thread {
 	ServerSocket m_socket;
 
 public:
-	AnnouncerThread() 
+	AnnouncerThread()
 			: m_freeSlots(false)
 			, m_running(true) {
 		start();
-	} 
+	}
 	virtual void execute();
 
 	void doAnnounce(bool v) {
@@ -68,9 +68,11 @@ private:
 						*m_mapInfoLabel;
 	DropList			*m_mapList;
 	StaticText			*m_techTreeLabel,
-						*m_tilesetLabel;
+						*m_tilesetLabel,
+						*m_sovereignLabel;
 	DropList			*m_techTreeList,
-						*m_tilesetList;
+						*m_tilesetList,
+						*m_sovereignList;
 	StaticText			*m_FOWLabel;
 	CheckBox			*m_FOWCheckbox;
 	StaticText			*m_SODLabel;
@@ -81,6 +83,7 @@ private:
 	vector<string>		 m_mapFiles;
 	vector<string>		 m_techTreeFiles;
 	vector<string>		 m_tilesetFiles;
+	vector<string>		 m_sovereignFiles;
 	vector<string>		 m_factionFiles;
 	MapInfo				 m_mapInfo;
 	AnnouncerThread		 m_announcer;
@@ -102,6 +105,7 @@ private:
 	bool getMapList();
 	bool loadGameSettings();
 	void reloadFactions(bool setStagger);
+	void reloadSovereigns();
 	void updateControlers();
 	void updateNetworkSlots();
 
@@ -120,6 +124,7 @@ private:
 	void onChangeMap(Widget*);
 	void onChangeTileset(Widget*);
 	void onChangeTechtree(Widget*);
+	void onChangeSovereign(Widget*);
 
 	void onCheckChanged(Widget*);
 

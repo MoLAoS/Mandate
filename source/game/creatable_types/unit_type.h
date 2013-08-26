@@ -78,6 +78,7 @@ private:
 	bool multiSelect;
 public:
     Sovereign sovereign;
+    bool isSovereign;
     Hero hero;
     Leader leader;
     bool inhuman;
@@ -93,6 +94,8 @@ public:
     BonusPowers bonusPowers;
     int getBonusPowerCount() const {return bonusPowers.size();}
     const BonusPower *getBonusPower(int i) const {return &bonusPowers[i];}
+    Sovereign *getSovereign() {return &sovereign;}
+    const Sovereign *getSovereign() const {return &sovereign;}
 private:
 	bool light;
     Vec3f lightColour;

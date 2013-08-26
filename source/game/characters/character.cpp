@@ -30,30 +30,58 @@ void CharDatum::getDesc(string &str, const char *pre) {
     str += intToStr(value);
 }
 
+void CharDatum::getDesc(string &str, const char *pre) const {
+    str += name;
+    str += " |Proficiency: ";
+    str += intToStr(value);
+}
+
 // ===============================
 // 	class Knowledge
 // ===============================
-void Knowledge::sum(Knowledge knowledge) {
-    for (int i = 0; i < knowledge.getLanguageCount(); ++i) {
+void Knowledge::sum(const Knowledge *knowledge) {
+    bool knownKnowledge = false;
+    for (int i = 0; i < knowledge->getLanguageCount(); ++i) {
         for (int j = 0; j < getLanguageCount(); ++j) {
-            if (languages[j].getName() == knowledge.getLanguage(i)->getName()) {
-                languages[j].incValue(knowledge.getLanguage(i)->getValue());
+            if (languages[j].getName() == knowledge->getLanguage(i)->getName()) {
+                languages[j].incValue(knowledge->getLanguage(i)->getValue());
+                knownKnowledge = true;
             }
         }
+        if (knownKnowledge == false) {
+            CharDatum language;
+            language.init(knowledge->getLanguage(i)->getValue(), knowledge->getLanguage(i)->getName());
+            languages.push_back(language);
+        }
+        knownKnowledge = false;
     }
-    for (int i = 0; i < knowledge.getHistoryCount(); ++i) {
+    for (int i = 0; i < knowledge->getHistoryCount(); ++i) {
         for (int j = 0; j < getHistoryCount(); ++j) {
-            if (histories[j].getName() == knowledge.getHistory(i)->getName()) {
-                histories[j].incValue(knowledge.getHistory(i)->getValue());
+            if (histories[j].getName() == knowledge->getHistory(i)->getName()) {
+                histories[j].incValue(knowledge->getHistory(i)->getValue());
+                knownKnowledge = true;
             }
         }
+        if (knownKnowledge == false) {
+            CharDatum history;
+            history.init(knowledge->getHistory(i)->getValue(), knowledge->getHistory(i)->getName());
+            histories.push_back(history);
+        }
+        knownKnowledge = false;
     }
-    for (int i = 0; i < knowledge.getCustomCount(); ++i) {
+    for (int i = 0; i < knowledge->getCustomCount(); ++i) {
         for (int j = 0; j < getCustomCount(); ++j) {
-            if (customs[j].getName() == knowledge.getCustom(i)->getName()) {
-                customs[j].incValue(knowledge.getCustom(i)->getValue());
+            if (customs[j].getName() == knowledge->getCustom(i)->getName()) {
+                customs[j].incValue(knowledge->getCustom(i)->getValue());
+                knownKnowledge = true;
             }
         }
+        if (knownKnowledge == false) {
+            CharDatum custom;
+            custom.init(knowledge->getCustom(i)->getValue(), knowledge->getCustom(i)->getName());
+            customs.push_back(custom);
+        }
+        knownKnowledge = false;
     }
 }
 
@@ -127,6 +155,26 @@ void Knowledge::save(XmlNode *node) const {
 }
 
 void Knowledge::getDesc(string &str, const char *pre) {
+    str += pre;
+    str += "Knowledge:";
+    for (int i = 0; i < languages.size(); ++i) {
+        str += pre;
+        str += "Language: ";
+        languages[i].getDesc(str, pre);
+    }
+    for (int i = 0; i < histories.size(); ++i) {
+        str += pre;
+        str += "History: ";
+        histories[i].getDesc(str, pre);
+    }
+    for (int i = 0; i < customs.size(); ++i) {
+        str += pre;
+        str += "Custom: ";
+        customs[i].getDesc(str, pre);
+    }
+}
+
+void Knowledge::getDesc(string &str, const char *pre) const {
     str += pre;
     str += "Knowledge:";
     for (int i = 0; i < languages.size(); ++i) {
@@ -423,6 +471,19 @@ void CharacterStats::applyMultipliers(const CharacterStats *cs) {
 }
 
 void CharacterStats::getDesc(string &str, const char *pre) {
+	conception.getDesc(str, "", "Conception");
+	might.getDesc(str, pre, "Might");
+	potency.getDesc(str, pre, "Potency");
+	spirit.getDesc(str, pre, "Spirit");
+	awareness.getDesc(str, pre, "Awareness");
+	acumen.getDesc(str, pre, "Acumen");
+	authority.getDesc(str, pre, "Authority");
+	finesse.getDesc(str, pre, "Finesse");
+	mettle.getDesc(str, pre, "Mettle");
+	fortitude.getDesc(str, pre, "Fortitude");
+}
+
+void CharacterStats::getDesc(string &str, const char *pre) const {
 	conception.getDesc(str, "", "Conception");
 	might.getDesc(str, pre, "Might");
 	potency.getDesc(str, pre, "Potency");

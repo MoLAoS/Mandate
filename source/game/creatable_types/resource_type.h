@@ -40,6 +40,8 @@ private:
 	bool hasModel;
 
 	string foundation;
+	bool polar;
+	string opposite;
 
 	Model *model;
 	/**
@@ -61,6 +63,8 @@ public:
 	const Model *getModel() const	{return model;}
 	bool isDisplay() const			{return display;}
 	string getFoundation() const    {return foundation;}
+	string getOpposite() const      {return opposite;}
+	bool isPolar() const            {return polar;}
 
 	static ResourceClass strToRc(const string &s);
 };

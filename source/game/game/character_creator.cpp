@@ -611,9 +611,9 @@ void CharacterCreator::onResistanceSpinnersValueChanged(Widget *source) {
 void CharacterCreator::onButtonClick(Widget *source) {
 	if (source == m_selectButton) {
 	    if (sovereignState == true) {
-            for (int i = 0; i < traits.size(); ++i) {
-                if (traits[i].getName() == m_trait) {
-                    sovTraits.push_back(traits[i]);
+            for (int i = 0; i < techTree.getTraitCount(); ++i) {
+                if (techTree.getTrait(i)->getName() == m_trait) {
+                    sovTraits.push_back(techTree.getTrait(i));
                 }
             }
 	    } else if (sovereignState == false) {
@@ -630,8 +630,8 @@ void CharacterCreator::onButtonClick(Widget *source) {
 void CharacterCreator::calculateCreatorCost() {
     characterCost = 0;
     characterCost += specialization->getCreatorCost()->getValue();
-    for (int i = 0; i < traits.size(); ++i) {
-        characterCost += traits[i].getCreatorCost()->getValue();
+    for (int i = 0; i < techTree.getTraitCount(); ++i) {
+        characterCost += techTree.getTrait(i)->getCreatorCost()->getValue();
     }
     for (int i = 0; i < actions.getCommandTypeCount(); ++i) {
         characterCost += actions.getCommandType(i)->getCreatorCost()->getValue();
@@ -695,8 +695,8 @@ void CharacterCreator::save() {
     n = sovereignNode->addChild("traits");
     for (int i = 0; i < sovTraits.size();++i) {
         XmlNode *traitNode = n->addChild("trait");
-        traitNode->addAttribute("id", intToStr(sovTraits[i].getId()));
-        traitNode->addAttribute("name", sovTraits[i].getName());
+        traitNode->addAttribute("id", intToStr(sovTraits[i]->getId()));
+        traitNode->addAttribute("name", sovTraits[i]->getName());
     }
     if (!characterStats.isEmpty()) {
         characterStats.save(sovereignNode->addChild("characterStats"));

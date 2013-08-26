@@ -15,6 +15,9 @@
 #include "renderer.h"
 #include "world.h"
 #include "sim_interface.h"
+#include "character_creator.h"
+#include "main_menu.h"
+#include "menu_state_character_creator.h"
 
 namespace Glest { namespace ProtoTypes {
 using namespace Hierarchy;
@@ -23,7 +26,7 @@ using namespace Hierarchy;
 // ===============================
 bool Sovereign::load(const string &dir) {
     bool loadOk = true;
-	string path = dir + ".xml";
+    string path = dir + "/sovereign.xml";
 
 	sovName = basename(dir);
 
@@ -34,15 +37,25 @@ bool Sovereign::load(const string &dir) {
 		g_logger.logError("Fatal Error: could not load " + path);
 		return false;
 	}
-	const XmlNode *sovereignNode;
-	try { sovereignNode = xmlTree.getRootNode(); }
+	const XmlNode *sovereignNode, *characterNode;
+	try { characterNode = xmlTree.getRootNode(); }
 	catch (runtime_error e) {
 		g_logger.logXmlError(path, e.what());
 		return false;
 	}
-
+    sovereignNode = characterNode->getChild("sovereign");
 	try {
-        specialization->load(dir);
+	    const XmlNode *specializationNode = sovereignNode->getChild("specialization");
+	    string specName = specializationNode->getAttribute("name")->getRestrictedValue();
+        if (!&g_world) {
+            MainMenu *charMenu = static_cast<MainMenu*>(g_program.getState());
+            MenuStateCharacterCreator *charState = static_cast<MenuStateCharacterCreator*>(charMenu->getState());
+            CharacterCreator *charCreator = charState->getCharacterCreator();
+            TechTree *tt = charCreator->getTechTree();
+            specialization = tt->getSpecialization(specName);
+        } else {
+            specialization = g_world.getTechTree()->getSpecialization(specName);
+	    }
 	}
 	catch (runtime_error e) {
 		g_logger.logXmlError(path, e.what());
@@ -51,11 +64,35 @@ bool Sovereign::load(const string &dir) {
 
 	try {
 	    const XmlNode *traitsNode = sovereignNode->getChild("traits");
-        //for (int i = )
+	    traits.resize(traitsNode->getChildCount());
+        for (int i = 0; i < traitsNode->getChildCount(); ++i) {
+            int id = traitsNode->getChild("trait", i)->getAttribute("id")->getIntValue();
+            if (!&g_world) {
+                MainMenu *charMenu = static_cast<MainMenu*>(g_program.getState());
+                MenuStateCharacterCreator *charState = static_cast<MenuStateCharacterCreator*>(charMenu->getState());
+                CharacterCreator *charCreator = charState->getCharacterCreator();
+                TechTree *tt = charCreator->getTechTree();
+                traits[i] = tt->getTraitById(id);
+            } else {
+                traits[i] = g_world.getTechTree()->getTraitById(id);
+            }
+        }
 	}
 	catch (runtime_error e) {
 		g_logger.logXmlError(path, e.what());
 		return false;
+	}
+
+	try {
+        const XmlNode *statisticsNode = sovereignNode->getChild("statistics", 0, false);
+        if (statisticsNode) {
+            if (!statistics.load(statisticsNode, dir)) {
+                loadOk = false;
+            }
+        }
+    } catch (runtime_error e) {
+		g_logger.logXmlError(dir, e.what());
+		loadOk = false;
 	}
 
 	try {
@@ -67,15 +104,21 @@ bool Sovereign::load(const string &dir) {
 	}
 
 	try {
-
-	}
-	catch (runtime_error e) {
-		g_logger.logXmlError(path, e.what());
-		return false;
-	}
-
-	try {
-
+	    const XmlNode *actionsNode = sovereignNode->getChild("actions");
+	    const XmlNode *skillsNode = actionsNode->getChild("skills");
+	    addSkills.resize(skillsNode->getChildCount());
+	    for (int i = 0; i < skillsNode->getChildCount(); ++i) {
+	        const XmlNode *skillNode = skillsNode->getChild("skill", i);
+            string skillName = skillNode->getAttribute("name")->getRestrictedValue();
+            addSkills[i] = skillName;
+	    }
+	    const XmlNode *commandsNode = actionsNode->getChild("commands");
+	    addCommands.resize(commandsNode->getChildCount());
+	    for (int i = 0; i < commandsNode->getChildCount(); ++i) {
+	        const XmlNode *commandNode = commandsNode->getChild("command", i);
+            string commandName = commandNode->getAttribute("name")->getRestrictedValue();
+            addCommands[i] = commandName;
+	    }
 	}
 	catch (runtime_error e) {
 		g_logger.logXmlError(path, e.what());

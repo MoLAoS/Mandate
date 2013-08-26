@@ -74,12 +74,20 @@ bool ResourceType::load(const string &dir, int id) {
 	}
 
     foundation = "none";
+    polar = false;
     const XmlNode *foundationNode = typeNode->getChild("foundation", 0, false);
+    const XmlNode *polarNode = typeNode->getChild("polar", 0, false);
 
 	switch (resourceClass) {
 		case ResourceClass::TECHTREE:
 			if (foundationNode) {
                 foundation = foundationNode->getAttribute("type")->getRestrictedValue();
+			}
+			if (polarNode) {
+                polar = polarNode->getAttribute("status")->getBoolValue();
+                if (polar == true) {
+                    opposite = polarNode->getAttribute("opposite")->getRestrictedValue();
+                }
 			}
             hasModel = typeNode->getAttribute("has-model")->getBoolValue();
             if (hasModel) {

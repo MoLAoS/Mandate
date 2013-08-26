@@ -87,6 +87,8 @@ PrototypeFactory::PrototypeFactory() {
 	// Register Effect and Emanation Types
 	m_effectTypeFactory.registerClass<EffectType>();
 	m_effectTypeFactory.registerClass<EmanationType>();
+
+	m_eventTypeFactory.registerClass<EventType>();
 }
 
 }}

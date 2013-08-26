@@ -118,6 +118,9 @@ private:
 	int uiLastResourcesDisplayPosX;
 	int uiLastResourcesDisplayPosY;
 	int uiLastResourcesDisplaySize;
+	int uiLastEventDisplayPosX;
+	int uiLastEventDisplayPosY;
+	int uiLastEventDisplaySize;
 	int uiLastTradeBarPosX;
 	int uiLastTradeBarPosY;
 	int uiLastTradeBarSize;
@@ -248,6 +251,9 @@ public:
 	int getUiLastResourcesDisplayPosX() const	{return uiLastResourcesDisplayPosX;}
 	int getUiLastResourcesDisplayPosY() const	{return uiLastResourcesDisplayPosY;}
 	int getUiLastResourcesDisplaySize() const	{return uiLastResourcesDisplaySize;}
+	int getUiLastEventDisplayPosX() const	    {return uiLastEventDisplayPosX;}
+	int getUiLastEventDisplayPosY() const	    {return uiLastEventDisplayPosY;}
+	int getUiLastEventDisplaySize() const	    {return uiLastEventDisplaySize;}
 	int getUiLastTradeBarPosX() const			{return uiLastTradeBarPosX;}
 	int getUiLastTradeBarPosY() const			{return uiLastTradeBarPosY;}
 	int getUiLastTradeBarSize() const			{return uiLastTradeBarSize;}
@@ -360,6 +366,9 @@ public:
 	void setUiLastResourcesDisplayPosX(int val)	{uiLastResourcesDisplayPosX = val;}
 	void setUiLastResourcesDisplayPosY(int val)	{uiLastResourcesDisplayPosY = val;}
 	void setUiLastResourcesDisplaySize(int val)	{uiLastResourcesDisplaySize = val;}
+	void setUiLastEventDisplayPosX(int val)	    {uiLastEventDisplayPosX = val;}
+	void setUiLastEventDisplayPosY(int val)	    {uiLastEventDisplayPosY = val;}
+	void setUiLastEventDisplaySize(int val)	    {uiLastEventDisplaySize = val;}
 	void setUiLastTradeBarPosX(int val)			{uiLastTradeBarPosX = val;}
 	void setUiLastTradeBarPosY(int val)			{uiLastTradeBarPosY = val;}
 	void setUiLastTradeBarSize(int val)			{uiLastTradeBarSize = val;}

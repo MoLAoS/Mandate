@@ -113,7 +113,8 @@ bool Specialization::load(const string &dir) {
 
 void Specialization::reset() {
     characterStats.reset();
-    statistics.enhancement.reset();
+    //craftingStats.reset();
+    statistics.cleanse();
 }
 
 void Specialization::save(XmlNode *node) const {

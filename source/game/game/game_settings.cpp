@@ -28,6 +28,8 @@ GameSettings::GameSettings(const XmlNode *node) {
 	tilesetPath = node->getChildStringValue("tilesetPath");
 	techPath = node->getChildStringValue("techPath");
 	scenarioPath = node->getChildStringValue("scenarioPath");
+	sovereignType = node->getChildStringValue("sovereignType");
+
 	thisFactionIndex = node->getChildIntValue("thisFactionIndex");
 	factionCount = node->getChildIntValue("factionCount");
 	fogOfWar = node->getChildBoolValue("fogOfWar");
@@ -79,6 +81,7 @@ void GameSettings::clear() {
 	tilesetPath = "";
 	techPath = "";
 	scenarioPath = "";
+	sovereignType = "";
 
 	for (int i=0; i < GameConstants::maxPlayers; ++i) {
 		factionTypeNames[i] = "";
@@ -158,6 +161,8 @@ void GameSettings::save(XmlNode *node) const {
 	node->addChild("tilesetPath", tilesetPath);
 	node->addChild("techPath", techPath);
 	node->addChild("scenarioPath", scenarioPath);
+	node->addChild("sovereignType", sovereignType);
+
 	node->addChild("thisFactionIndex", thisFactionIndex);
 	node->addChild("factionCount", factionCount);
 	node->addChild("fogOfWar", fogOfWar);

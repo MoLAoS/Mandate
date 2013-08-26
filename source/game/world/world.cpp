@@ -33,6 +33,7 @@
 #include "renderer.h"
 #include "sim_interface.h"
 #include "command.h"
+#include "events.h"
 
 #if _GAE_DEBUG_EDITION_
 #	include "debug_renderer.h"
@@ -599,111 +600,7 @@ void World::applyEffects(Unit *source, const EffectTypes &effectTypes, Unit *tar
 	}
 }
 
-/** Called every 40 (or whatever WORLD_FPS resolves as) world frames */
-void World::tick() {
-	if (!fogOfWarSmoothing) {
-		g_userInterface.getMinimap()->updateFowTex(1.f);
-	}
-	cartographer->tick();
-	/*for testing traits
-	for (int i = 0; i < getFactionCount(); ++i) {
-		for (int j = 0; j < getFaction(i)->getUnitCount(); ++j) {
-		    Unit *unit = getFaction(i)->getUnit(j);
-		    if (unit->getType()->getName() == "defender") {
-		        Trait *trait = getTechTree()->getTraitById(3);
-		        bool hasTrait = false;
-		        for (int i = 0; i < unit->getTraitCount(); ++i) {
-                    if (trait == unit->getTrait(i)) {
-                        hasTrait = true;
-                    }
-		        }
-		        if (hasTrait == false) {
-                    unit->addTrait(trait);
-		        }
-		    }
-		}
-	}*/
-	for (int i = 0; i < getFactionCount(); ++i) {
-		for (int j = 0; j < getFaction(i)->getUnitCount(); ++j) {
-		    Unit *unit = getFaction(i)->getUnit(j);
-		    // erase units that haven't attacked in a while
-		    for (int k = 0; k < unit->attackers.size(); ++k) {
-                unit->attackers[k].incTimer();
-                if (unit->attackers[k].getTimer() == 4) {
-                    unit->attackers.erase(unit->attackers.begin() + k);
-                }
-		    }
-            // erase units that have died
-		    for (int k = 0; k < unit->attackers.size(); ++k) {
-                if (!unit->attackers[k].getUnit()->isAlive()) {
-                    unit->attackers.erase(unit->attackers.begin() + k);
-                }
-		    }
-		}
-	}
-    // manage skill cooldowns
-	for (int i = 0; i < getFactionCount(); ++i) {
-		for (int j = 0; j < getFaction(i)->getUnitCount(); ++j) {
-		    Unit *unit = getFaction(i)->getUnit(j);
-		    if (unit->getType()->inhuman) {
-                for (int k = 0; k < unit->currentCommandCooldowns.size(); ++k) {
-                    if (unit->currentCommandCooldowns[k].currentStep != 0) {
-                        unit->currentCommandCooldowns[k].currentStep -= 1;
-                    }
-                }
-		    }
-		}
-	}
-    // manage stat boosts based on the time of day
-	for (int i = 0; i < getFactionCount(); ++i) {
-		for (int j = 0; j < getFaction(i)->getUnitCount(); ++j) {
-		    Unit *unit = getFaction(i)->getUnit(j);
-		    if (timeFlow.isDay() && !unit->dayCycle) {
-		        unit->dayCycle = true;
-		        unit->computeTotalUpgrade();
-		    } else if (timeFlow.isNight() && unit->dayCycle) {
-		        unit->dayCycle = false;
-		        unit->computeTotalUpgrade();
-		    }
-		}
-	}
-
-	//apply regen/degen
-	for (int i = 0; i < getFactionCount(); ++i) {
-		for (int j = 0; j < getFaction(i)->getUnitCount(); ++j) {
-			Unit *unit = getFaction(i)->getUnit(j);
-			Unit *killer = unit->tick();
-
-			assert((unit->getHp() == 0 && unit->isDead()) || (unit->getHp() > 0 && unit->isAlive()));
-			if (killer) {
-				doKill(killer, unit);
-			}
-		}
-	}
-	///@todo foreach(Factions, f, factions) { (*f)->computeResourceBalances(); }
-	//compute resources balance
-	for (int k = 0; k < getFactionCount(); ++k) {
-		Faction *faction = getFaction(k);
-		//for each resource
-		for (int i = 0; i < techTree.getResourceTypeCount(); ++i) {
-			const ResourceType *rt = techTree.getResourceType(i);
-			//if consumable
-			if (rt->getClass() == ResourceClass::CONSUMABLE) {
-				int balance = 0;
-				for (int j = 0; j < faction->getUnitCount(); ++j) {
-					//if unit operative and has this cost
-					const Unit *u =  faction->getUnit(j);
-					if (u->isOperative()) {
-						ResourceAmount r = u->getType()->getCost(rt, faction);
-						if (r.getType()) {
-							balance -= r.getAmount();
-						}
-					}
-				}
-				faction->setResourceBalance(rt, balance);
-			}
-		}
-	}
+void World::computeProduction() {
 	// automatic production
     for (int k = 0; k < getFactionCount(); ++k) {
         Faction *faction = getFaction(k);
@@ -906,6 +803,133 @@ void World::tick() {
                 }
             }
         }
+	}
+}
+
+/** Called every 40 (or whatever WORLD_FPS resolves as) world frames */
+void World::tick() {
+	if (!fogOfWarSmoothing) {
+		g_userInterface.getMinimap()->updateFowTex(1.f);
+	}
+	cartographer->tick();
+	/*for testing traits
+	for (int i = 0; i < getFactionCount(); ++i) {
+		for (int j = 0; j < getFaction(i)->getUnitCount(); ++j) {
+		    Unit *unit = getFaction(i)->getUnit(j);
+		    if (unit->getType()->getName() == "defender") {
+		        Trait *trait = getTechTree()->getTraitById(3);
+		        bool hasTrait = false;
+		        for (int i = 0; i < unit->getTraitCount(); ++i) {
+                    if (trait == unit->getTrait(i)) {
+                        hasTrait = true;
+                    }
+		        }
+		        if (hasTrait == false) {
+                    unit->addTrait(trait);
+		        }
+		    }
+		}
+	}*/
+	for (int i = 0; i < getFactionCount(); ++i) {
+		for (int j = 0; j < getFaction(i)->getUnitCount(); ++j) {
+		    Unit *unit = getFaction(i)->getUnit(j);
+		    // erase units that haven't attacked in a while
+		    for (int k = 0; k < unit->attackers.size(); ++k) {
+                unit->attackers[k].incTimer();
+                if (unit->attackers[k].getTimer() == 4) {
+                    unit->attackers.erase(unit->attackers.begin() + k);
+                }
+		    }
+            // erase units that have died
+		    for (int k = 0; k < unit->attackers.size(); ++k) {
+                if (!unit->attackers[k].getUnit()->isAlive()) {
+                    unit->attackers.erase(unit->attackers.begin() + k);
+                }
+		    }
+		}
+	}
+    // manage skill cooldowns
+	for (int i = 0; i < getFactionCount(); ++i) {
+		for (int j = 0; j < getFaction(i)->getUnitCount(); ++j) {
+		    Unit *unit = getFaction(i)->getUnit(j);
+		    if (unit->getType()->inhuman) {
+                for (int k = 0; k < unit->currentCommandCooldowns.size(); ++k) {
+                    if (unit->currentCommandCooldowns[k].currentStep != 0) {
+                        unit->currentCommandCooldowns[k].currentStep -= 1;
+                    }
+                }
+		    }
+		}
+	}
+    // manage stat boosts based on the time of day
+	for (int i = 0; i < getFactionCount(); ++i) {
+		for (int j = 0; j < getFaction(i)->getUnitCount(); ++j) {
+		    Unit *unit = getFaction(i)->getUnit(j);
+		    if (timeFlow.isDay() && !unit->dayCycle) {
+		        unit->dayCycle = true;
+		        unit->computeTotalUpgrade();
+		    } else if (timeFlow.isNight() && unit->dayCycle) {
+		        unit->dayCycle = false;
+		        unit->computeTotalUpgrade();
+		    }
+		}
+	}
+
+	//apply regen/degen
+	for (int i = 0; i < getFactionCount(); ++i) {
+		for (int j = 0; j < getFaction(i)->getUnitCount(); ++j) {
+			Unit *unit = getFaction(i)->getUnit(j);
+			Unit *killer = unit->tick();
+
+			assert((unit->getHp() == 0 && unit->isDead()) || (unit->getHp() > 0 && unit->isAlive()));
+			if (killer) {
+				doKill(killer, unit);
+			}
+		}
+	}
+	///@todo foreach(Factions, f, factions) { (*f)->computeResourceBalances(); }
+	//compute resources balance
+	for (int k = 0; k < getFactionCount(); ++k) {
+		Faction *faction = getFaction(k);
+		//for each resource
+		for (int i = 0; i < techTree.getResourceTypeCount(); ++i) {
+			const ResourceType *rt = techTree.getResourceType(i);
+			//if consumable
+			if (rt->getClass() == ResourceClass::CONSUMABLE) {
+				int balance = 0;
+				for (int j = 0; j < faction->getUnitCount(); ++j) {
+					//if unit operative and has this cost
+					const Unit *u =  faction->getUnit(j);
+					if (u->isOperative()) {
+						ResourceAmount r = u->getType()->getCost(rt, faction);
+						if (r.getType()) {
+							balance -= r.getAmount();
+						}
+					}
+				}
+				faction->setResourceBalance(rt, balance);
+			}
+		}
+	}
+	computeProduction();
+    if ((frameCount % (WORLD_FPS * 5)) == 0) {
+        for (int k = 0; k < getFactionCount(); ++k) {
+            Faction *faction = getFaction(k);
+            for (int i = 0; i < faction->getEventTypeCount(); ++i) {
+                EventType *eventType = faction->getEventType(i);
+                if (eventType->checkTriggers(faction)) {
+                    if (!faction->getCpuControl()) {
+                        Event *event = newEvent(m_eventFactory.getInstanceCount()-1, eventType, faction);
+                        g_userInterface.addEvent(event);
+                    }
+                }
+            }
+        }
+    }
+	if (g_userInterface.getEventCount() > 0) {
+	    g_userInterface.getEventWindow()->setVisible(true);
+	    g_userInterface.getEventWindow()->getParent()->setVisible(true);
+        g_simInterface.pause();
 	}
 }
 

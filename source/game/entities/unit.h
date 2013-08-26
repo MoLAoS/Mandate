@@ -203,14 +203,25 @@ public:
 private:
     Statistics statistics;
     Traits traits;
+    Specialization *specialization;
     Actions actions;
 
+    CharacterStats characterStats;
+    Knowledge knowledge;
+
+    bool character;
+
 public:
+    bool isCharacter() {return character;}
+    void addKnowledge(const Knowledge *newKnowledge) {knowledge.sum(newKnowledge);}
+    void addCharacterStats(const CharacterStats *newCharacterStats) {characterStats.sum(newCharacterStats);}
+
     Modifications modifications;
     EffectTypes effectTypes;
     bool dayCycle;
 
     const Statistics *getStatistics() const {return &statistics;}
+    void initSkillsAndCommands();
 
 private:
 	// basic stats
@@ -737,6 +748,7 @@ public:
 	int getCarriedCount() const { return m_carriedUnits.size(); }
 	int getGarrisonedCount() const { return m_garrisonedUnits.size(); }
 
+    void addSpecialization(Specialization *spec);
 	void addTrait(Trait *trait);
 	void processTraits();
 

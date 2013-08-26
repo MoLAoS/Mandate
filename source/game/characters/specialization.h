@@ -33,6 +33,7 @@ private:
     string name;
     Stat creatorCost;
 public:
+    Specialization() {reset();}
 	const Stat *getCreatorCost() const {return &creatorCost;}
     CraftingStats *getCraftingStats() {return &craftingStats;}
     CharacterStats *getCharacterStats() {return &characterStats;}

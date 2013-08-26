@@ -88,7 +88,7 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 	const int defCellHeight = defWidgetHeight * 3 / 2;
 
 	// top level strip
-	CellStrip *topStrip = 
+	CellStrip *topStrip =
 		new CellStrip(static_cast<Container*>(&program), Orientation::VERTICAL, Origin::FROM_TOP, 4);
 	Vec2i pad(15, 45);
 	topStrip->setPos(pad);
@@ -106,9 +106,9 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 	Anchors a2(Anchor(AnchorType::SPRINGY, 5), Anchor(AnchorType::RIGID, 0));
 	Anchors a3;
 	a3.setCentre(true);
-	
+
 	// slot widget container
-	CellStrip *strip = 
+	CellStrip *strip =
 		new CellStrip(topStrip, Orientation::VERTICAL, Origin::CENTRE, GameConstants::maxPlayers + 1);
 	strip->setCell(0);
 	strip->setAnchors(a2);
@@ -177,7 +177,7 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 	m_FOWCheckbox->Clicked.connect(this, &MenuStateNewGame::onCheckChanged);
 
 	// Map / Tileset / Tech-Tree
-	strip = new CellStrip(topStrip, Orientation::HORIZONTAL, Origin::CENTRE, 3);
+	strip = new CellStrip(topStrip, Orientation::HORIZONTAL, Origin::CENTRE, 4);
 	strip->setCell(2);
 	strip->setAnchors(a);
 
@@ -203,7 +203,7 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 
 	m_mapList = new DropList(combo);
 	m_mapList->setCell(1);
-	m_mapList->setSize(Vec2i(8 * defWidgetHeight, defWidgetHeight));
+	m_mapList->setSize(Vec2i(7 * defWidgetHeight, defWidgetHeight));
 	m_mapList->setAnchors(a3);
 	m_mapList->addItems(results);
 	m_mapList->setDropBoxHeight(180);
@@ -242,7 +242,7 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 
 	m_tilesetList = new DropList(combo);
 	m_tilesetList->setCell(1);
-	m_tilesetList->setSize(Vec2i(8 * defWidgetHeight, defWidgetHeight));
+	m_tilesetList->setSize(Vec2i(7 * defWidgetHeight, defWidgetHeight));
 	m_tilesetList->setAnchors(a3);
 	m_tilesetList->addItems(results);
 	m_tilesetList->setDropBoxHeight(140);
@@ -271,12 +271,40 @@ MenuStateNewGame::MenuStateNewGame(Program &program, MainMenu *mainMenu, bool op
 
 	m_techTreeList = new DropList(combo);
 	m_techTreeList->setCell(1);
-	m_techTreeList->setSize(Vec2i(8 * defWidgetHeight, defWidgetHeight));
+	m_techTreeList->setSize(Vec2i(7 * defWidgetHeight, defWidgetHeight));
 	m_techTreeList->setAnchors(a3);
 	m_techTreeList->addItems(results);
 	m_techTreeList->setDropBoxHeight(140);
 	m_techTreeList->setSelected(0);
 	m_techTreeList->SelectionChanged.connect(this, &MenuStateNewGame::onChangeTechtree);
+
+	// sovereign listBox
+	combo = new CellStrip(strip, Orientation::VERTICAL, Origin::CENTRE, 3);
+	combo->setCell(3);
+	combo->setPercentageHints(mttHints);
+	combo->setAnchors(a2);
+
+    string techTree = m_techTreeList->getSelectedItem()->getText();
+	findAll("techs/" + techTree + "/sovereigns/sovereign.", results);
+	if (results.size() == 0) {
+		m_sovereignFiles.push_back("none");
+	} else {
+        m_sovereignFiles = results;
+	}
+	m_sovereignLabel = new StaticText(combo);
+	m_sovereignLabel->setCell(0);
+	m_sovereignLabel->setAnchors(a);
+	m_sovereignLabel->setText(lang.get("Sovereign"));
+	m_sovereignLabel->setShadow(Vec4f(0.f, 0.f, 0.f, 1.f));
+
+	m_sovereignList = new DropList(combo);
+	m_sovereignList->setCell(1);
+	m_sovereignList->setSize(Vec2i(7 * defWidgetHeight, defWidgetHeight));
+	m_sovereignList->setAnchors(a3);
+	m_sovereignList->addItems(results);
+	m_sovereignList->setDropBoxHeight(140);
+	m_sovereignList->SelectionChanged.connect(this, &MenuStateNewGame::onChangeSovereign);
+	m_sovereignList->setSelected(0);
 
 	// Buttons strip
 	strip = new CellStrip(topStrip, Orientation::HORIZONTAL, Origin::CENTRE, 2);
@@ -507,6 +535,25 @@ void MenuStateNewGame::onChangeTileset(Widget*) {
 
 void MenuStateNewGame::onChangeTechtree(Widget*) {
 	reloadFactions(true);
+	//reloadSovereigns();
+}
+
+void MenuStateNewGame::onChangeSovereign(Widget*) {
+	GameSettings &gs = g_simInterface.getGameSettings();
+	gs.setSovereignType(m_sovereignList->getSelectedItem()->getText());
+}
+
+void MenuStateNewGame::reloadSovereigns() {
+    string techTree = m_techTreeList->getSelectedItem()->getText();
+	vector<string> results;
+	m_sovereignFiles.clear();
+	findAll("techs/" + techTree + "/sovereigns/sovereign.", results);
+	if (results.size() == 0) {
+		m_sovereignFiles.push_back("none");
+	} else {
+        m_sovereignFiles = results;
+	}
+	m_sovereignList->addItems(results);
 }
 
 void MenuStateNewGame::onButtonClick(Widget *source) {
@@ -579,6 +626,7 @@ void MenuStateNewGame::update() {
 			GameSettings &gs = g_simInterface.getGameSettings();
 			gs.compact();
 			g_config.save();
+			gs.setSovereignType(m_sovereignList->getSelectedItem()->getText());
 			XmlTree *doc = new XmlTree("game-settings");
 			gs.save(doc->getRootNode());
 			doc->save("last_gamesettings.gs");
@@ -703,7 +751,7 @@ bool MenuStateNewGame::loadGameSettings() {
 		//m_playerSlots[i]->setStartLocation(gs.getStartLocationIndex(i));
 	}
 	string mapFile = basename(gs.getMapPath());
-	
+
 	string mapPath = gs.getMapPath();
 	if (!fileExists(mapPath + ".gbm") && !fileExists(mapPath + ".mgm")) {
 		mapFile = "maps/" + m_mapFiles[0];

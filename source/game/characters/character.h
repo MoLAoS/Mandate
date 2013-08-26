@@ -64,6 +64,7 @@ public:
 	void setFortitude(int v)	{fortitude.setValue(v);}
 
     void getDesc(string &str, const char *pre);
+    void getDesc(string &str, const char *pre) const;
 
 	void reset();
 	void modify();
@@ -105,10 +106,13 @@ public:
     const Stat *getCreatorCost() const {return &creatorCost;}
     int getValue() {return value;}
     string getName() {return name;}
+    int getValue() const {return value;}
+    string getName() const {return name;}
     void init(int amount, string title);
     void incValue(int i) {value += i;}
     void save(XmlNode *node) const;
     void getDesc(string &str, const char *pre);
+    void getDesc(string &str, const char *pre) const;
     bool load(const XmlNode *baseNode);
 };
 
@@ -131,8 +135,16 @@ public:
     bool load(const XmlNode *baseNode);
     void save(XmlNode *node) const;
     bool isEmpty() const;
-    void sum(Knowledge knowledge);
+    void sum(const Knowledge *knowledge);
     void getDesc(string &str, const char *pre);
+    void getDesc(string &str, const char *pre) const;
+
+    int getLanguageCount() const {return languages.size();}
+    const CharDatum *getLanguage(int i) const {return &languages[i];}
+    int getHistoryCount() const {return histories.size();}
+    const CharDatum *getHistory(int i) const {return &histories[i];}
+    int getCustomCount() const {return customs.size();}
+    const CharDatum *getCustom(int i) const {return &customs[i];}
 };
 
 }}//end namespace

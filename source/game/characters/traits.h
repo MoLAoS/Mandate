@@ -31,7 +31,7 @@ private:
     Stat creatorCost;
 public:
 	const Stat *getCreatorCost() const {return &creatorCost;}
-    int getId() {return id;}
+    int getId() const {return id;}
     int getProgress() {return progress;}
     string getTraitName() const {return name;}
     int getEquipmentCount() {return equipment.size();}
@@ -44,7 +44,7 @@ public:
 	bool hasEffects() const {return effectTypes.size() > 0;}
 	void save(XmlNode *node) const;
 	void getDesc(string &str, const char *pre);
-	void preLoad(const string &dir);
+	void preLoad(const string &dir, int i);
 	bool load(const string &dir);
 };
 

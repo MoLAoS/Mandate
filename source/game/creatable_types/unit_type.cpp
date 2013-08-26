@@ -129,6 +129,7 @@ UnitType::UnitType()
 		, inhuman(0)
 		, foundation("none")
 		, bonusObjectName("")
+		, isSovereign(false)
 		, m_cellMap(0), m_colourMap(0)
 		, display(true) {
 }
@@ -163,10 +164,11 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 	}
 	try {
 	    const XmlNode *sovereignNode = unitNode->getChild("sovereign", 0, false);
-	    if (sovereignNode) {
-	        //if (!sovereign.load(dir)) {
-            //    loadOk = false;
-	        //}
+	    if (sovereignNode && !g_program.getState()->isCCState()) {
+	        isSovereign = true;
+	        if (!sovereign.load(dir)) {
+                loadOk = false;
+	        }
 	    }
 	}
 	catch (runtime_error e) {
