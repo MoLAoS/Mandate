@@ -55,6 +55,8 @@ public:
     int getResistanceCount() const {return resistances.size();}
     const DamageType *getDamageType(int i) const {return &damageTypes[i];}
     const DamageType *getResistance(int i) const {return &resistances[i];}
+    DamageType *getDamageType(int i) {return &damageTypes[i];}
+    DamageType *getResistance(int i) {return &resistances[i];}
     bool load(const XmlNode *baseNode, const string &dir);
     bool isEmpty() const;
     void sum(const Statistics *stats);

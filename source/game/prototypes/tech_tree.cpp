@@ -63,12 +63,8 @@ bool TechTree::preload(const string &dir, const set<string> &factionNames){
     resistances.resize(damagesNode->getChildCount());
 	for (int i = 0; i < damagesNode->getChildCount(); ++i) {
 	    const XmlNode *damageNode = damagesNode->getChild("damage-type", i);
-        //const XmlAttribute* damageAttibute = damageNode->getAttribute("name");
-        //if (damageAttibute) {
-            //string damage = damageAttibute->getRestrictedValue();
-            damageTypes[i].load(damageNode);
-            resistances[i].load(damageNode);
-        //}
+        damageTypes[i].load(damageNode);
+        resistances[i].load(damageNode);
 	}
 
 	string tpath = dir + "/traits/*.";
@@ -346,6 +342,55 @@ bool TechTree::load(const string &dir, const set<string> &factionNames){
         if (!traitsList[i].load(tstr)) {
             loadOk = false;
         }
+	}
+
+	XmlTree	xmlTechTree;
+	string path;
+	name = basename(dir);
+	try {
+		path = dir + "/" + name + ".xml";
+		xmlTechTree.load(path);
+	}
+	catch (runtime_error &e) {
+		g_logger.logXmlError ( path, "File missing or wrongly named." );
+		return false;
+	}
+	const XmlNode *techTreeNode;
+	try { techTreeNode= xmlTechTree.getRootNode(); }
+	catch (runtime_error &e) {
+		g_logger.logXmlError ( path, "File appears to lack contents." );
+		return false;
+	}
+
+    const XmlNode *weaponsNode = techTreeNode->getChild("weapon-types");
+    weaponStats.resize(weaponsNode->getChildCount());
+	for (int i = 0; i < weaponsNode->getChildCount(); ++i) {
+	    const XmlNode *weaponNode = weaponsNode->getChild("weapon-type", i);
+	    string name = weaponNode->getAttribute("name")->getRestrictedValue();
+        weaponStats[i].init(0, name);
+	}
+
+    const XmlNode *armorsNode = techTreeNode->getChild("armor-types");
+    armorStats.resize(armorsNode->getChildCount());
+	for (int i = 0; i < armorsNode->getChildCount(); ++i) {
+	    const XmlNode *armorNode = armorsNode->getChild("armor-type", i);
+	    string name = armorNode->getAttribute("name")->getRestrictedValue();
+        armorStats[i].init(0, name);
+	}
+
+    const XmlNode *accessoriesNode = techTreeNode->getChild("accessory-types");
+    accessoryStats.resize(accessoriesNode->getChildCount());
+	for (int i = 0; i < accessoriesNode->getChildCount(); ++i) {
+	    const XmlNode *accessoryNode = accessoriesNode->getChild("accessory-type", i);
+	    string name = accessoryNode->getAttribute("name")->getRestrictedValue();
+        accessoryStats[i].init(0, name);
+	}
+
+    const XmlNode *resourcesNode = techTreeNode->getChild("resource-types");
+    resourceStats.resize(resourcesNode->getChildCount());
+	for (int i = 0; i < resourcesNode->getChildCount(); ++i) {
+	    const XmlNode *resourceNode = resourcesNode->getChild("resource-type", i);
+        resourceStats[i].load(resourceNode);
 	}
 
 	return loadOk;

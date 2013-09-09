@@ -26,24 +26,16 @@
     <size value="4"/>
     <height value="2"/>
     <statistics>
-		<enhancement>
-			<resource-pools>
-				<health name="health">
-					<max-stat value="3000"/>
-				</health>
-				<pools>
-					<pool name="mana">
-						<max-stat value="100"/>
-					</pool>
-				</pools>
-			</resource-pools>
-			<unit-stats>
-				<sight value="10" value-mult="0"/>
-			</unit-stats>
-		</enhancement>
-		<resistances>
-			<resistance type="slashing" value="10"/> 
-		</resistances>
+      <enhancement>
+	<resource-pools>
+	  <health name="health">
+	    <max-stat value="3000"/>
+	  </health>
+	</resource-pools>
+	<unit-stats>
+	  <sight value="10" value-mult="0"/>
+	</unit-stats>
+      </enhancement>
     </statistics>
     <producible>
       <time value="10"/>
@@ -123,17 +115,6 @@
 	  </sounds-animations>
         </skill>
         <skill>
-          <type value="upgrade" />
-          <name value="upgrade_skill"/>
-          <ep-cost value="0" />
-          <speed value="300" />
-	  <sounds-animations>
-            <anim-speed value="300" />
-            <animation path="models/broch_stop.g3d" />
-            <sound enabled="false" />
-	  </sounds-animations>
-        </skill>
-        <skill>
           <type value="produce" />
           <name value="produce_skill"/>
           <ep-cost value="0" />
@@ -192,14 +173,6 @@
         <upgrade-requirements/>
         <produce-skill value="produce_skill" />
           <created-item name="defenders_barracks" />
-	  <skill-costs>
-	    <res-pools>
-	      <cost name="mana" amount="10"/>
-	    </res-pools>
-	    <item-costs>
-	      <cost amount="1" type="guardians_barracks"/>
-	    </item-costs>
-	  </skill-costs>
         </command>
         <command>
         <type value="create-item" />
@@ -238,15 +211,6 @@
           <produced-unit name="preceptor"/>
         </command>
         <command>
-          <type value="upgrade"/>
-          <name value="strong" tip="strong_info"/>
-          <image path="../../upgrades/strong/images/piercing.bmp"/>
-          <unit-requirements />
-          <upgrade-requirements />
-          <upgrade-skill value="upgrade_skill"/>
-		  <produced-upgrade name="strong"/>
-        </command>
-        <command>
         <type value="load"/>
         <name value="load"/>
         <image path="images/broch.bmp"/>
@@ -257,6 +221,7 @@
             <unit value="defender"/>
             <unit value="guardian"/>
             <unit value="preceptor"/>
+            <unit value="hauler"/>
         </units-carried>
         <load-capacity value="48" />
           <allow-projectiles value="true"> 

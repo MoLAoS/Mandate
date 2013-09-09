@@ -51,6 +51,11 @@ private:
 	DamageTypes damageTypes;
 	DamageTypes resistances;
 
+	CraftResources resourceStats;
+	CraftStats weaponStats;
+	CraftStats armorStats;
+	CraftStats accessoryStats;
+
     ListTraits traitsList;
     ListSpecs specializations;
     ListActions listActions;
@@ -61,6 +66,20 @@ private:
 	EffectTypeMap effectTypeMap;
 
 public:
+    int getWeaponStatCount() const {return weaponStats.size();}
+    const CraftStat *getWeaponStat(int i) const {return &weaponStats[i];}
+    int getArmorStatCount() const {return armorStats.size();}
+    const CraftStat *getArmorStat(int i) const {return &armorStats[i];}
+    int getAccessoryStatCount() const {return accessoryStats.size();}
+    const CraftStat *getAccessoryStat(int i) const {return &accessoryStats[i];}
+    int getResourceStatCount() const {return resourceStats.size();}
+    const CraftRes *getResourceStat(int i) const {return &resourceStats[i];}
+
+    CraftStat *getWeaponStat(int i) {return &weaponStats[i];}
+    CraftStat *getArmorStat(int i) {return &armorStats[i];}
+    CraftStat *getAccessoryStat(int i) {return &accessoryStats[i];}
+    CraftRes *getResourceStat(int i) {return &resourceStats[i];}
+
 	bool preload(const string &dir, const set<string> &factionNames);
 	bool load(const string &dir, const set<string> &factionNames);
 

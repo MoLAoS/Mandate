@@ -912,14 +912,39 @@ void World::tick() {
 		}
 	}
 	computeProduction();
+	for (int k = 0; k < getFactionCount(); ++k) {
+		Faction *faction = getFaction(k);
+		if (!faction->getCpuControl()) {
+            for (int i = 0; i < faction->getUnitCount(); ++i) {
+                Unit *unit = faction->getUnit(i);
+                if (unit->getType()->hasTag("house")) {
+                    if (unit->getDevelopmentLevel() > 10) {
+                        int citizens = unit->getSResource(getTechTree()->getResourceType("citizens"))->getAmount();
+                        int educatedCitizens = 0;
+                        int maxEducated = 0;
+                        for (int o = 0; o < unit->ownedUnits.size(); ++o) {
+                            if (unit->ownedUnits[o].getType()->getName() == "educated_citizen") {
+                                educatedCitizens = unit->ownedUnits[o].getOwned();
+                                maxEducated = unit->ownedUnits[o].getLimit();
+                            }
+                        }
+                        if (citizens >= 20 && citizens / 10 > educatedCitizens && educatedCitizens <= maxEducated) {
+                            unit->generateCitizen();
+                        }
+                    }
+                }
+            }
+		}
+	}
     if ((frameCount % (WORLD_FPS * 5)) == 0) {
         for (int k = 0; k < getFactionCount(); ++k) {
             Faction *faction = getFaction(k);
             for (int i = 0; i < faction->getEventTypeCount(); ++i) {
                 EventType *eventType = faction->getEventType(i);
-                if (eventType->checkTriggers(faction)) {
+                EventTargetList targetList;
+                if (eventType->checkTriggers(faction, &targetList)) {
                     if (!faction->getCpuControl()) {
-                        Event *event = newEvent(m_eventFactory.getInstanceCount()-1, eventType, faction);
+                        Event *event = newEvent(m_eventFactory.getInstanceCount()-1, eventType, faction, targetList);
                         g_userInterface.addEvent(event);
                     }
                 }

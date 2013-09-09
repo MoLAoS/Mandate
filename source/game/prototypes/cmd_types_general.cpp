@@ -340,6 +340,32 @@ void CommandType::describe(const Unit *unit, CmdDescriptor *callback, ProdTypePt
                 cmdCheckResult.m_resourceMadeResults.push_back(ResourceMadeResult(res.getType(), -res.getAmount()));
             } else {
                 int stored = unit->getSResource(res.getType())->getAmount();
+                if (this->getClass() == CmdClass::PRODUCE || this->getClass() == CmdClass::STRUCTURE
+                    || this->getClass() == CmdClass::CREATE_ITEM) {
+                    const ProduceCommandType *pct = NULL;
+                    const StructureCommandType *sct = NULL;
+                    const CreateItemCommandType *cct = NULL;
+                    if (this->getClass() == CmdClass::PRODUCE) {
+                        pct = static_cast<const ProduceCommandType*>(this);
+                    } else if (this->getClass() == CmdClass::STRUCTURE) {
+                        sct = static_cast<const StructureCommandType*>(this);
+                    } else if (this->getClass() == CmdClass::CREATE_ITEM) {
+                        cct = static_cast<const CreateItemCommandType*>(this);
+                    }
+                    bool prodct = false;
+                    bool structct = false;
+                    bool createct = false;
+                    if (pct != NULL) {
+                        prodct = pct->isChild();
+                    } else if (sct != NULL) {
+                        structct = sct->isChild();
+                    } else if (cct != NULL) {
+                        createct = cct->isChild();
+                    }
+                    if (prodct || structct || createct) {
+                        stored = unit->owner->getSResource(res.getType())->getAmount();
+                    }
+                }
                 cmdCheckResult.m_resourceCostResults.push_back(ResourceCostResult(res.getType(), res.getAmount(), stored, true));
             }
         }

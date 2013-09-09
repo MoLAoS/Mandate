@@ -134,6 +134,7 @@ public:
     CharDatum *getCustom(int i) {return &customs[i];}
     bool load(const XmlNode *baseNode);
     void save(XmlNode *node) const;
+    void reset();
     bool isEmpty() const;
     void sum(const Knowledge *knowledge);
     void getDesc(string &str, const char *pre);
@@ -145,6 +146,34 @@ public:
     const CharDatum *getHistory(int i) const {return &histories[i];}
     int getCustomCount() const {return customs.size();}
     const CharDatum *getCustom(int i) const {return &customs[i];}
+};
+
+class CitizenNeeds {
+private:
+    CharData foods;
+    CharData goods;
+    CharData services;
+public:
+    int getFoodCount() {return foods.size();}
+    CharDatum *getFood(int i) {return &foods[i];}
+    int getGoodCount() {return goods.size();}
+    CharDatum *getGood(int i) {return &goods[i];}
+    int getServiceCount() {return services.size();}
+    CharDatum *getService(int i) {return &services[i];}
+
+    int getFoodCount() const {return foods.size();}
+    const CharDatum *getFood(int i) const {return &foods[i];}
+    int getGoodCount() const {return goods.size();}
+    const CharDatum *getGood(int i) const {return &goods[i];}
+    int getServiceCount() const {return services.size();}
+    const CharDatum *getService(int i) const {return &services[i];}
+
+    bool load(const XmlNode *baseNode);
+    void save(XmlNode *node) const;
+    void reset();
+    bool isEmpty() const;
+    void sum(const CitizenNeeds *citizenNeeds);
+    void getDesc(string &str, const char *pre);
 };
 
 }}//end namespace

@@ -49,15 +49,17 @@ public:
 	int id;
 	Faction *faction;
 	EventType *type;
+    EventTargetList targetList;
 
 public:
 	struct CreateParams {
 		int ident;
 		EventType *type;
 		Faction *faction;
+        EventTargetList targetList;
 
-		CreateParams(int ident, EventType *type, Faction *faction)
-			: ident(ident), type(type), faction(faction) { }
+		CreateParams(int ident, EventType *type, Faction *faction, EventTargetList targetList)
+			: ident(ident), type(type), faction(faction), targetList(targetList) { }
 	};
 
 	struct LoadParams {
@@ -75,8 +77,11 @@ public:
 public:
     EventType *getType() {return type;}
 	Faction *getFaction() {return faction;}
+    int getTargetListCount() const {return targetList.size();}
+    Unit *getTarget(int i) const {return targetList[i];}
+    EventTargetList getTargetList() {return targetList;}
 
-    void init(int ident, EventType* type, Faction *faction);
+    void init(int ident, EventType* type, Faction *faction, EventTargetList targetList);
 };
 
 // =====================================================
@@ -87,7 +92,7 @@ class EventFactory : public EntityFactory<Event> {
 public:
 	EventFactory() {}
 	~EventFactory() {}
-	Event* newEvent(int ident, EventType* type, Faction *faction);
+	Event* newEvent(int ident, EventType* type, Faction *faction, EventTargetList targetList);
 	Event* getEvent(int id) { return EntityFactory<Event>::getInstance(id); }
 };
 

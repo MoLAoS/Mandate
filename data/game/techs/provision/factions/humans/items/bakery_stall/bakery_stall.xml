@@ -1,0 +1,48 @@
+<?xml version="1.0" standalone="no"?>
+<item>
+  <parameters>
+    <type-tag type="stall"/>
+    <tier value="1"/>
+  </parameters>
+  <creatable-type>
+    <size value="0"/>
+    <height value="0"/>
+    <enhancement>
+      <static-modifiers>
+	  <max-hp value="100" additive="0"/>
+      </static-modifiers>
+    </enhancement>
+    <producible>
+      <time value="1"/>
+      <properties/>
+      <light enabled="false"/>
+      <unit-requirements>
+	<unit name="crop_farm" amount="1" scope="faction"/>
+	<unit name="livestock_farm" amount="1" scope="faction"/>
+      </unit-requirements>
+      <upgrade-requirements/>
+      <resource-requirements>
+        <resource name="population" amount="2" plus="0" multiply="0"/>
+      </resource-requirements>
+      <local-requirements>
+        <resource name="wealth" amount="750" plus="0" multiply="0"/>
+        <resource name="logs" amount="10" plus="0" multiply="0"/>
+        <resource name="space" amount="2" plus="0" multiply="0"/>
+      </local-requirements>
+      <image path="images/undead_build.bmp"/>
+      <image-cancel path="images/tech_cancel.bmp"/>
+    </producible>
+    <processing>
+        <processes>
+          <process timer="30" count="2" scope="local">
+            <costs>
+              <cost name="bread" consume="true" amount="2"/>
+            </costs>
+            <products>
+              <product name="wealth" amount="25"/>
+            </products>
+          </process>
+        </processes>
+    </processing>
+  </creatable-type>
+</item>

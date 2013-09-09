@@ -93,6 +93,7 @@ public:
 // =====================================================
 // 	class EventType
 // =====================================================
+typedef vector<Unit*> EventTargetList;
 class Choice {
 private:
     typedef vector<Modification*> Modifications;
@@ -137,17 +138,22 @@ public:
     EventItem getItem(int i) {return items[i];}
 	bool load(const XmlNode *baseNode, const string &dir, const TechTree *techTree, const FactionType *factionType);
 	void getDesc(string &str, const char *pre);
-	void processChoice(Faction *faction);
+	void processChoice(Faction *faction, EventTargetList targetList);
 };
 
 class EventType : public DisplayableType {
 private:
+    typedef vector<const UnitType*> TargetTypes;
     typedef vector<Choice> Choices;
     Choices choices;
     const FactionType* m_factionType;
     string name;
     Triggers triggers;
+    TargetTypes targetTypes;
 public:
+    int getTargetTypeCount() const {return targetTypes.size();}
+    TargetTypes getTargetTypes() const {return targetTypes;}
+    const UnitType *getTargetType(int i) const {return targetTypes[i];}
     int getChoiceCount() const {return choices.size();}
     const Choice *getChoice(int i) const {return &choices[i];}
     Choice *getChoice(int i) {return &choices[i];}
@@ -155,7 +161,7 @@ public:
     string getEventName() const {return name;}
 	void preLoad(const string &dir);
 	bool load(const string &dir, const TechTree *techTree, const FactionType *factionType);
-	bool checkTriggers(Faction *faction) const;
+	bool checkTriggers(Faction *faction, EventTargetList *validTargetList) const;
 	static EventClass typeClass() { return EventClass::EVENT; }
 };
 

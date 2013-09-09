@@ -668,6 +668,33 @@ bool Unit::checkCosts(const CommandType *ct, const ProducibleType *pt) {
 		int cost = ra.getAmount();
         if (cost > 0) {
             int available = getSResource(rt)->getAmount();
+            if (ct->getClass() == CmdClass::PRODUCE || ct->getClass() == CmdClass::STRUCTURE
+                || ct->getClass() == CmdClass::CREATE_ITEM) {
+                const ProduceCommandType *pct = NULL;
+                const StructureCommandType *sct = NULL;
+                const CreateItemCommandType *cct = NULL;
+                if (ct->getClass() == CmdClass::PRODUCE) {
+                    pct = static_cast<const ProduceCommandType*>(ct);
+                } else if (ct->getClass() == CmdClass::STRUCTURE) {
+                    sct = static_cast<const StructureCommandType*>(ct);
+                } else if (ct->getClass() == CmdClass::CREATE_ITEM) {
+                    cct = static_cast<const CreateItemCommandType*>(ct);
+                }
+                bool prodct = false;
+                bool structct = false;
+                bool createct = false;
+                if (pct != NULL) {
+                    prodct = pct->isChild();
+                } else if (sct != NULL) {
+                    structct = sct->isChild();
+                } else if (cct != NULL) {
+                    createct = cct->isChild();
+                }
+                if (prodct || structct || createct) {
+                    available = owner->getSResource(rt)->getAmount();
+                }
+            }
+
             if (cost > available) {
                 ok = false;
             }
@@ -3444,6 +3471,185 @@ void Unit::remove(Effect *e) {
 	if (effects.isDirty()) {
 		recalculateStats();
 	}
+}
+
+void Unit::setOwner(Unit *unit) {
+    owner = unit;
+    unit->addControlledUnit(g_world.getUnit(this->getId()));
+}
+
+
+void Unit::generateItem(Item *item) {
+    int quality = 0;
+    for (int i = 0; i < item->getType()->getCraftTypeCount(); ++i) {
+        string typeName = item->getType()->getCraftType(i);
+        for (int j = 0; j < getWeaponStatCount(); ++j) {
+            string nameType = getWeaponStat(j)->getName();
+            if (typeName == nameType) {
+                quality += getWeaponStat(j)->getValue();
+            }
+        }
+        for (int j = 0; j < getArmorStatCount(); ++j) {
+            string nameType = getArmorStat(j)->getName();
+            if (typeName == nameType) {
+                quality += getArmorStat(j)->getValue();
+            }
+        }
+        for (int j = 0; j < getAccessoryStatCount(); ++j) {
+            string nameType = getAccessoryStat(j)->getName();
+            if (typeName == nameType) {
+                quality += getAccessoryStat(j)->getValue();
+            }
+        }
+        for (int j = 0; j < getResourceStatCount(); ++j) {
+            string nameType = getResourceStat(j)->getType()->getName();
+            if (typeName == nameType) {
+                quality += getResourceStat(j)->getValue();
+            }
+        }
+    }
+    item->qualityBoost(quality);
+}
+
+const CitizenModifier *Unit::getCitizenModifiers() {
+    totalModifier.reset();
+    totalModifier.sum(type->getCitizenModifier());
+    for (int i = 0; i < equippedItems.size(); ++i) {
+        Item *modItem = getEquippedItem(i);
+        const ItemType *itemType = modItem->getType();
+        totalModifier.sum(itemType->getCitizenModifier());
+    }
+    for (int i = 0; i < faction->getUnitCount(); ++i) {
+        Unit *modUnit = faction->getUnit(i);
+        Vec2i tPos = modUnit->getPos();
+        Vec2i uPos = getPos();
+        int distance = sqrt(pow(float(abs(uPos.x - tPos.x)), 2) + pow(float(abs(uPos.y - tPos.y)), 2));
+        if (distance < 20) {
+            const UnitType *unitType = modUnit->getType();
+            totalModifier.sum(unitType->getCitizenModifier());
+            for (int j = 0; j < getEquippedItems().size(); ++j) {
+                Item *modItem = modUnit->getEquippedItem(i);
+                const ItemType *itemType = modItem->getType();
+                totalModifier.sum(itemType->getCitizenModifier());
+            }
+        }
+    }
+    return &totalModifier;
+}
+
+int Unit::getDevelopmentLevel() {
+    int developmentLevel = 0;
+    const CitizenNeeds *needs = faction->getType()->getCitizenNeeds();
+    for (int i = 0; i < needs->getFoodCount(); ++i) {
+        string name = needs->getFood(i)->getName();
+        for (int j = 0; j < sresources.size(); ++j) {
+            if (sresources[j].getType()->getName() == name) {
+                developmentLevel += needs->getFood(i)->getValue();
+            }
+        }
+    }
+    for (int i = 0; i < needs->getGoodCount(); ++i) {
+        string name = needs->getGood(i)->getName();
+        for (int j = 0; j < sresources.size(); ++j) {
+            if (sresources[j].getType()->getName() == name) {
+                developmentLevel += needs->getGood(i)->getValue();
+            }
+        }
+    }
+    return developmentLevel;
+}
+
+void Unit::addCrafts(int finesse) {
+    int seed = int(Chrono::getCurMicros());
+    Random random(seed);
+    TechTree *techTree = g_world.getTechTree();
+    weaponStats.resize(techTree->getWeaponStatCount());
+    for (int i = 0; i< techTree->getWeaponStatCount(); ++i) {
+        string name = techTree->getWeaponStat(i)->getName();
+        int value = 0;
+        value = random.randRange(0, finesse);
+        weaponStats[i].init(value, name);
+    }
+    armorStats.resize(techTree->getArmorStatCount());
+    for (int i = 0; i< techTree->getArmorStatCount(); ++i) {
+        string name = techTree->getArmorStat(i)->getName();
+        int value = 0;
+        value = random.randRange(0, finesse);
+        armorStats[i].init(value, name);
+    }
+    accessoryStats.resize(techTree->getAccessoryStatCount());
+    for (int i = 0; i< techTree->getAccessoryStatCount(); ++i) {
+        string name = techTree->getAccessoryStat(i)->getName();
+        int value = 0;
+        value = random.randRange(0, finesse);
+        accessoryStats[i].init(value, name);
+    }
+    resourceStats.resize(techTree->getResourceStatCount());
+    for (int i = 0; i< techTree->getResourceStatCount(); ++i) {
+        string name = techTree->getResourceStat(i)->getType()->getName();
+        int value = 0;
+        value = random.randRange(0, finesse);
+        resourceStats[i].init(value, g_world.getTechTree()->getResourceType(name));
+    }
+}
+
+void Unit::educateCitizen(const CitizenModifier *educationModifier, int developmentLevel, Unit *createdUnit) {
+    int seed = int(Chrono::getCurMicros());
+    Random random(seed);
+    createdUnit->getStatistics()->sum(educationModifier->getStatistics());
+    createdUnit->getKnowledge()->sum(educationModifier->getKnowledge());
+    createdUnit->getCharacterStats()->sum(educationModifier->getCharacterStats());
+    int conceptionBonus = random.randRange(0, developmentLevel);
+    int conceptionTotal = createdUnit->getCharacterStats()->getConception()->getValue() + conceptionBonus;
+    createdUnit->getCharacterStats()->setConception(conceptionTotal);
+    int mightBonus = random.randRange(0, developmentLevel);
+    int mightTotal = createdUnit->getCharacterStats()->getMight()->getValue() + mightBonus;
+    createdUnit->getCharacterStats()->setMight(mightTotal);
+    int potencyBonus = random.randRange(0, developmentLevel);
+    int potencyTotal = createdUnit->getCharacterStats()->getPotency()->getValue() + potencyBonus;
+    createdUnit->getCharacterStats()->setPotency(potencyTotal);
+    int spiritBonus = random.randRange(0, developmentLevel);
+    int spiritTotal = createdUnit->getCharacterStats()->getSpirit()->getValue() + spiritBonus;
+    createdUnit->getCharacterStats()->setSpirit(spiritTotal);
+    int awarenessBonus = random.randRange(0, developmentLevel);
+    int awarenessTotal = createdUnit->getCharacterStats()->getAwareness()->getValue() + awarenessBonus;
+    createdUnit->getCharacterStats()->setAwareness(awarenessTotal);
+    int acumenBonus = random.randRange(0, developmentLevel);
+    int acumenTotal = createdUnit->getCharacterStats()->getAcumen()->getValue() + acumenBonus;
+    createdUnit->getCharacterStats()->setAcumen(acumenTotal);
+    int authorityBonus = random.randRange(0, developmentLevel);
+    int authorityTotal = createdUnit->getCharacterStats()->getAuthority()->getValue() + authorityBonus;
+    createdUnit->getCharacterStats()->setAuthority(authorityTotal);
+    int finesseBonus = random.randRange(0, developmentLevel);
+    int finesseTotal = createdUnit->getCharacterStats()->getFinesse()->getValue() + finesseBonus;
+    createdUnit->getCharacterStats()->setFinesse(finesseTotal);
+    int mettleBonus = random.randRange(0, developmentLevel);
+    int mettleTotal = createdUnit->getCharacterStats()->getMettle()->getValue() + mettleBonus;
+    createdUnit->getCharacterStats()->setMettle(mettleTotal);
+    int fortitudeBonus = random.randRange(0, developmentLevel);
+    int fortitudeTotal = createdUnit->getCharacterStats()->getFortitude()->getValue() + fortitudeBonus;
+    createdUnit->getCharacterStats()->setFortitude(fortitudeTotal);
+
+    createdUnit->addCrafts(createdUnit->getCharacterStats()->getFinesse()->getValue());
+}
+
+void Unit::generateCitizen() {
+    getCitizenModifiers();
+    int developmentLevel = getDevelopmentLevel();
+    Vec2i locate = getPos();
+    Unit *createdUnit = g_world.newUnit(locate, faction->getType()->getUnitType("educated_citizen"), faction, g_world.getMap(), CardinalDir::NORTH);
+    g_world.placeUnit(this->getCenteredPos(), 10, createdUnit);
+    createdUnit->setOwner(this);
+    for (int z = 0; z < ownedUnits.size(); ++z) {
+        if (ownedUnits[z].getType() == createdUnit->getType()) {
+            ownedUnits[z].incOwned();
+        }
+    }
+    createdUnit->create();
+    createdUnit->born();
+    createdUnit->educateCitizen(&totalModifier, developmentLevel, createdUnit);
+    ScriptManager::onUnitCreated(createdUnit);
+    g_simInterface.getStats()->produce(getFactionIndex());
 }
 
 void Unit::checkEffectParticles() {

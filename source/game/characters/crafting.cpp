@@ -12,7 +12,7 @@
 
 namespace Glest { namespace ProtoTypes {
 // ===============================
-// 	class Quality
+// 	class CraftStats
 // ===============================
 void CraftStat::init(int val, string nam) {
     value = val;
@@ -29,11 +29,19 @@ void CraftItem::save(XmlNode *node) const {
 
 bool CraftRes::load(const XmlNode *node) {
     bool loadOk = true;
-    const XmlNode *resNode = node->getChild("resource");
-    value = resNode->getAttribute("value")->getIntValue();
-    string resName = resNode->getAttribute("type")->getRestrictedValue();
+    value = 0;
+    const XmlAttribute *valueAttr = node->getAttribute("value", false);
+    if (valueAttr) {
+        value = valueAttr->getIntValue();
+    }
+    string resName = node->getAttribute("name")->getRestrictedValue();
     resType = g_world.getTechTree()->getResourceType(resName);
     return loadOk;
+}
+
+void CraftRes::init(int newValue, const ResourceType *newResType) {
+    value = newValue;
+    resType = newResType;
 }
 
 bool CraftItem::load(const XmlNode *node) {
@@ -56,5 +64,4 @@ bool CraftItem::load(const XmlNode *node) {
     itemType = ft->getItemType(itemName);
     return loadOk;
 }
-
 }}//end namespace

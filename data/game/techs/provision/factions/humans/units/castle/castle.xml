@@ -65,7 +65,11 @@
         <resource name="wealth" amount="100000"/>
         <resource name="logs" amount="100000"/>
         <resource name="stone" amount="100000"/>
+        <resource name="space" amount="20"/>
       </resources-stored>
+      <starter-resources>
+        <resource name="space" amount="20"/>
+      </starter-resources>
       <resources-created>
         <resource name="wealth" amount="250" timer="30" scope="faction" />
       </resources-created>
@@ -77,6 +81,7 @@
     </unit-production>
     <units-owned>
       <unit name="tax_collector" limit="2"/>
+      <unit name="quartermaster" limit="2"/>
     </units-owned>
     <actions>
       <skills>
@@ -152,8 +157,30 @@
 	  </sounds-animations>
           <max-range value="3"/>
         </skill>
+	<skill>
+	  <type value="morph" />
+	  <name value="morph_skill" />
+	  <ep-cost value="0" />
+	  <speed value="200" />
+	  <sounds-animations>
+	    <anim-speed value="200" />
+	    <animation path="construction_models/castle_construction.g3d" />
+	    <anim-progress-bound value="true"/>
+	    <sound enabled="false"/>
+	  </sounds-animations>
+	  <particles value="false"/>
+	</skill>
       </skills>
       <commands>
+        <command>
+          <type value="produce"/>
+          <name value="produce_quartermaster" tip="quartermaster_info"/>
+          <image path="../quartermaster/images/worker.bmp"/>
+          <unit-requirements />
+          <upgrade-requirements />
+          <produce-skill value="produce_skill"/>
+          <produced-unit name="quartermaster"/>
+        </command>
         <command>
           <type value="load"/>
           <name value="load"/>
@@ -163,6 +190,7 @@
           <load-skill value="load_skill"/>
           <units-carried>
             <unit value="tax_collector"/>
+            <unit value="quartermaster"/>
           </units-carried>
           <load-capacity value="12" />
           <allow-projectiles value="false"/>
@@ -175,6 +203,19 @@
           <upgrade-requirements/>
           <unload-skill value="unload_skill"/>
         </command>
+	<*command>
+	  <type value="morph"/>
+	  <name value="morph" tip="keep"/>
+	  <image path="../keep/images/castle.bmp"/>
+	  <unit-requirements/>
+	  <upgrade-requirements/>
+	  <morph-skill value="morph_skill"/>
+	  <morph-units>
+	    <morph-unit name="keep" tip="keep"/>
+	  </morph-units>
+	  <cost-modifier value="0"/>
+	  <finished-sound enabled="false"/>
+	<*/command>
       </commands>
     </actions>
   </creatable-type>

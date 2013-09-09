@@ -20,6 +20,7 @@
 #include "actions.h"
 #include "modifications.h"
 #include "producibles.h"
+#include "character.h"
 #include "vec.h"
 
 using std::map;
@@ -31,6 +32,23 @@ using Glest::Sim::World;
 using Glest::Gui::Clicks;
 
 namespace Glest { namespace ProtoTypes {
+class CitizenModifier {
+private:
+    Statistics statistics;
+    Knowledge knowledge;
+    CharacterStats characterStats;
+public:
+    CitizenModifier() { reset(); }
+    const Statistics *getStatistics() const {return &statistics;}
+    const Knowledge *getKnowledge() const {return &knowledge;}
+    const CharacterStats *getCharacterStats() const {return &characterStats;}
+
+    void reset();
+    void sum(const CitizenModifier *citizenModifier);
+
+	bool load(const XmlNode *baseNode, const string &dir);
+};
+
 // =====================================================
 // 	class CreatableType
 // =====================================================
@@ -50,6 +68,7 @@ private:
 	OwnedUnits ownedUnits;
     Modifications modifications;
     ModifyNames modifyNames;
+    CitizenModifier citizenModifier;
 public:
 	EffectTypes effectTypes;
 private:
@@ -57,6 +76,7 @@ private:
     int size;
     int height;
 public:
+    const CitizenModifier *getCitizenModifier() const {return &citizenModifier;}
     const Statistics *getStatistics() const {return &statistics;}
     const ResourceProductionSystem *getResourceProductionSystem() const {return &resourceGeneration;}
     const ItemProductionSystem *getItemProductionSystem() const {return &itemGeneration;}

@@ -1,5 +1,10 @@
 <?xml version="1.0" standalone="no"?>
 <faction>
+	<needs>
+		<foods>
+			<food name="meat" value="11"/>
+		</foods>
+	</needs>
 	<item-images>
 	  <item-image image-path="/units/castle/images/castle.bmp"/>
 	</item-images>
@@ -12,6 +17,8 @@
 		<unit name="house" amount="4"/>
 		<unit name="crop_farm" amount="1"/>
 		<unit name="defender" amount="1"/>
+		<unit name="guardian" amount="1"/>
+		<unit name="preceptor" amount="1"/>
 		<unit name="castle" amount="1"/>
 		<unit name="defenders_motherhouse" amount="1"/>
 	</starting-units>

@@ -64,9 +64,20 @@
         <resource name="stone" amount="100000"/>
         <resource name="logs" amount="100000"/>
         <resource name="space" amount="20"/>
+        <resource name="cow" amount="100000"/>
+        <resource name="goat" amount="100000"/>
         <resource name="sheep" amount="100000"/>
+        <resource name="pig" amount="100000"/>
         <resource name="meat" amount="100000"/>
-        <resource name="cloth" amount="100000"/>
+        <resource name="geese" amount="100000"/>
+        <resource name="chicken" amount="100000"/>
+        <resource name="duck" amount="100000"/>
+        <resource name="eggs" amount="100000"/>
+        <resource name="fowl" amount="100000"/>
+        <resource name="milk" amount="100000"/>
+        <resource name="cheese" amount="100000"/>
+        <resource name="feathers" amount="100000"/>
+        <resource name="wool" amount="100000"/>
         <resource name="manure" amount="100000"/>
       </resources-stored>
       <starter-resources>
@@ -154,6 +165,15 @@
       </skills>
       <commands>
         <command>
+          <type value="produce"/>
+          <name value="produce_quartermaster" tip="quartermaster_info"/>
+          <image path="../quartermaster/images/worker.bmp"/>
+          <unit-requirements />
+          <upgrade-requirements />
+          <produce-skill value="produce_skill"/>
+          <produced-unit name="quartermaster"/>
+        </command>
+        <command>
           <type value="create-item"/>
           <name value="build_pens"/>
           <image path="images/worker_build_basic.bmp"/>
@@ -161,7 +181,10 @@
           <upgrade-requirements />
           <produce-skill value="produce_skill"/>
           <created-items>
+            <created-item name="cattle_pen"/>
             <created-item name="sheep_pen"/>
+            <created-item name="goat_pen"/>
+            <created-item name="pig_pen"/>
           </created-items>
         </command>
         <command>
@@ -172,8 +195,12 @@
           <upgrade-requirements />
           <produce-skill value="produce_skill"/>
           <created-items>
+            <created-item name="milk_shed"/>
             <created-item name="shearing_shed"/>
+            <created-item name="cow_butcher_shed"/>
             <created-item name="sheep_butcher_shed"/>
+            <created-item name="goat_butcher_shed"/>
+            <created-item name="pig_butcher_shed"/>
           </created-items>
         </command>
         <command>
@@ -184,7 +211,10 @@
           <upgrade-requirements />
           <produce-skill value="produce_skill"/>
           <created-items>
+            <created-item name="cow"/>
             <created-item name="sheep"/>
+            <created-item name="goat"/>
+            <created-item name="pig"/>
           </created-items>
         </command>
         <command>
@@ -195,6 +225,7 @@
           <upgrade-requirements/>
           <load-skill value="load_skill"/>
           <units-carried>
+            <unit value="quartermaster"/>
           </units-carried>
           <load-capacity value="12" />
           <allow-projectiles value="false"/>

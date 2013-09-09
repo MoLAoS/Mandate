@@ -25,9 +25,13 @@ namespace Glest { namespace ProtoTypes {
 
 class ItemType : public CreatableType {
 private:
+    typedef vector <string> CraftTypes;
 	string typeTag;
     int qualityTier;
+    CraftTypes craftTypes;
 public:
+    int getCraftTypeCount() const {return craftTypes.size();}
+    string getCraftType(int i) const {return craftTypes[i];}
     string getTypeTag() const {return typeTag;}
     int getQualityTier() const {return qualityTier;}
     static ProducibleClass typeClass() { return ProducibleClass::ITEM; }

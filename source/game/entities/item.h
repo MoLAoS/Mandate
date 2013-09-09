@@ -50,6 +50,8 @@ public:
 	int id;	/**< unique identifier  */
 	Faction *faction;
 
+	int quality;
+
     const Statistics *getStatistics() const {return &statistics;}
     CurrentStep currentSteps; /**< current timer step for resource creation */
     CurrentStep currentUnitSteps; /**< current timer step for unit creation */
@@ -90,6 +92,8 @@ public:
 	Faction *getFaction() const {return faction;}
     string getShortDesc() const;
     string getLongDesc();
+
+    void qualityBoost(int newQuality);
 
     void init(int ident, const ItemType* type, Faction *faction);
 };

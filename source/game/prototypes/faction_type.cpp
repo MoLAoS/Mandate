@@ -236,6 +236,16 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 
 		}
 	}
+	try {
+        const XmlNode *needsNode = factionNode->getChild("needs", 0, false);
+        if (needsNode) {
+            citizenNeeds.load(needsNode);
+        }
+    }
+    catch (runtime_error e) {
+		g_logger.logXmlError(dir, e.what());
+		loadOk = false;
+	}
 	// 3.75. Load modifications
 	for (int i = 0; i < modifications.size(); ++i) {
 		string str = dir + "/modifications/" + modifications[i].getName();

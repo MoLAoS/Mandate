@@ -65,6 +65,8 @@ Item::Item(CreateParams params)
 	for (int i = 0; i < currentProcessSteps.size(); ++i) {
 	currentProcessSteps[i].currentStep = 0;
 	}
+
+	quality = 0;
 }
 
 Item::~Item() {
@@ -96,6 +98,29 @@ void Item::init(int ident, const ItemType *newType, Faction *f) {
 	for (int i = 0; i < currentProcessSteps.size(); ++i) {
 	currentProcessSteps[i].currentStep = 0;
 	}
+}
+
+void Item::qualityBoost(int newQuality) {
+    float addQuality = 1 + newQuality / 100;
+    int healthValue = int(statistics.getEnhancement()->getResourcePools()->getHealth()->getMaxStat()->getValue() * addQuality);
+    statistics.getEnhancement()->getResourcePools()->getHealth()->getMaxStat()->setValue(healthValue);
+    for (int i = 0; i < statistics.getEnhancement()->getResourcePools()->getResourceCount(); ++i) {
+        int resourceValue = int(statistics.getEnhancement()->getResourcePools()->getResource(i)->getMaxStat()->getValue() * addQuality);
+        statistics.getEnhancement()->getResourcePools()->getResource(i)->getMaxStat()->setValue(resourceValue);
+    }
+    for (int i = 0; i < statistics.getEnhancement()->getResourcePools()->getDefenseCount(); ++i) {
+        int defenseValue = int(statistics.getEnhancement()->getResourcePools()->getDefense(i)->getMaxStat()->getValue() * addQuality);
+        statistics.getEnhancement()->getResourcePools()->getDefense(i)->getMaxStat()->setValue(defenseValue);
+    }
+    for (int i = 0; i < statistics.getDamageTypeCount(); ++i) {
+        int damageValue = int(statistics.getDamageType(i)->getValue() * addQuality);
+        statistics.getDamageType(i)->setValue(damageValue);
+    }
+    for (int i = 0; i < statistics.getResistanceCount(); ++i) {
+        int resistanceValue = int(statistics.getResistance(i)->getValue() * addQuality);
+        statistics.getResistance(i)->setValue(resistanceValue);
+    }
+    quality = newQuality;
 }
 
 string Item::getShortDesc() const {

@@ -26,19 +26,26 @@ void CharDatum::save(XmlNode *node) const {
 
 void CharDatum::getDesc(string &str, const char *pre) {
     str += name;
-    str += " |Proficiency: ";
+    str += " |Level: ";
     str += intToStr(value);
 }
 
 void CharDatum::getDesc(string &str, const char *pre) const {
     str += name;
-    str += " |Proficiency: ";
+    str += " |Level: ";
     str += intToStr(value);
 }
 
 // ===============================
 // 	class Knowledge
 // ===============================
+void Knowledge::reset() {
+    creatorCost.reset();
+    customs.clear();
+    histories.clear();
+    languages.clear();
+}
+
 void Knowledge::sum(const Knowledge *knowledge) {
     bool knownKnowledge = false;
     for (int i = 0; i < knowledge->getLanguageCount(); ++i) {
@@ -191,6 +198,144 @@ void Knowledge::getDesc(string &str, const char *pre) const {
         str += pre;
         str += "Custom: ";
         customs[i].getDesc(str, pre);
+    }
+}
+// ===============================
+// 	class CharacterStats
+// ===============================
+void CitizenNeeds::reset() {
+    foods.clear();
+    goods.clear();
+    services.clear();
+}
+
+void CitizenNeeds::sum(const CitizenNeeds *citizenNeeds) {
+    bool needs = false;
+    for (int i = 0; i < citizenNeeds->getFoodCount(); ++i) {
+        for (int j = 0; j < getFoodCount(); ++j) {
+            if (foods[j].getName() == citizenNeeds->getFood(i)->getName()) {
+                foods[j].incValue(citizenNeeds->getFood(i)->getValue());
+                needs = true;
+            }
+        }
+        if (needs == false) {
+            CharDatum food;
+            food.init(citizenNeeds->getFood(i)->getValue(), citizenNeeds->getFood(i)->getName());
+            foods.push_back(food);
+        }
+        needs = false;
+    }
+    for (int i = 0; i < citizenNeeds->getGoodCount(); ++i) {
+        for (int j = 0; j < getGoodCount(); ++j) {
+            if (goods[j].getName() == citizenNeeds->getGood(i)->getName()) {
+                goods[j].incValue(citizenNeeds->getGood(i)->getValue());
+                needs = true;
+            }
+        }
+        if (needs == false) {
+            CharDatum good;
+            good.init(citizenNeeds->getGood(i)->getValue(), citizenNeeds->getGood(i)->getName());
+            goods.push_back(good);
+        }
+        needs = false;
+    }
+    for (int i = 0; i < citizenNeeds->getServiceCount(); ++i) {
+        for (int j = 0; j < getServiceCount(); ++j) {
+            if (services[j].getName() == citizenNeeds->getService(i)->getName()) {
+                services[j].incValue(citizenNeeds->getService(i)->getValue());
+                needs = true;
+            }
+        }
+        if (needs == false) {
+            CharDatum service;
+            service.init(citizenNeeds->getService(i)->getValue(), citizenNeeds->getService(i)->getName());
+            services.push_back(service);
+        }
+        needs = false;
+    }
+}
+
+bool CitizenNeeds::load(const XmlNode *baseNode) {
+    bool loadOk = true;
+
+    const XmlNode *foodsNode = baseNode->getChild("foods", 0, false);
+    if (foodsNode) {
+        foods.resize(foodsNode->getChildCount());
+        for (int i = 0; i < foodsNode->getChildCount(); ++i) {
+            const XmlNode *foodNode = foodsNode->getChild("food");
+            string name = foodNode->getAttribute("name")->getRestrictedValue();
+            int value = foodNode->getAttribute("value")->getIntValue();
+            foods[i].init(value, name);
+        }
+    }
+    const XmlNode *goodsNode = baseNode->getChild("goods", 0, false);
+    if (goodsNode) {
+        goods.resize(goodsNode->getChildCount());
+        for (int i = 0; i < goodsNode->getChildCount(); ++i) {
+            const XmlNode *goodNode = goodsNode->getChild("good");
+            string name = goodNode->getAttribute("name")->getRestrictedValue();
+            int value = goodNode->getAttribute("value")->getIntValue();
+            goods[i].init(value, name);
+        }
+    }
+    const XmlNode *servicesNode = baseNode->getChild("services", 0, false);
+    if (servicesNode) {
+        services.resize(servicesNode->getChildCount());
+        for (int i = 0; i < servicesNode->getChildCount(); ++i) {
+            const XmlNode *serviceNode = servicesNode->getChild("service");
+            string name = serviceNode->getAttribute("name")->getRestrictedValue();
+            int value = serviceNode->getAttribute("value")->getIntValue();
+            services[i].init(value, name);
+        }
+    }
+    return loadOk;
+}
+
+bool CitizenNeeds::isEmpty() const {
+    bool empty = true;
+    if (foods.size() > 0 || goods.size() > 0 || services.size() > 0) empty = false;
+    return empty;
+}
+
+void CitizenNeeds::save(XmlNode *node) const {
+    XmlNode *n;
+    if (foods.size() > 0) {
+        n = node->addChild("foods");
+        for (int i = 0; i < foods.size(); ++i) {
+            foods[i].save(n->addChild("food"));
+        }
+    }
+    if (goods.size() > 0) {
+        n = node->addChild("goods");
+        for (int i = 0; i < goods.size(); ++i) {
+            goods[i].save(n->addChild("good"));
+        }
+    }
+    if (services.size() > 0) {
+        n = node->addChild("services");
+        for (int i = 0; i < services.size(); ++i) {
+            services[i].save(n->addChild("service"));
+        }
+    }
+}
+
+void CitizenNeeds::getDesc(string &str, const char *pre) {
+    str += pre;
+    str += "Needs:";
+    for (int i = 0; i < foods.size(); ++i) {
+        str += pre;
+        str += "Food: ";
+        foods[i].getDesc(str, pre);
+    }
+    for (int i = 0; i < goods.size(); ++i) {
+        str += pre;
+        str += "Good: ";
+        goods[i].getDesc(str, pre);
+    }
+    for (int i = 0; i < services.size(); ++i) {
+        str += pre;
+        str += "Service: ";
+        services[i].getDesc(str, pre);
     }
 }
 

@@ -22,7 +22,7 @@
       <enhancement>
 	<resource-pools>
 	  <health name="health">
-	    <max-stat value="100"/>
+	    <max-stat value="200"/>
 	  </health>
 	</resource-pools>
 	<unit-stats>

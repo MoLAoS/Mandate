@@ -15,7 +15,7 @@
 	</choices>
 	<triggers>
 		<resource-requirements>
-			<resource name="wealth" amount="50000" plus="0" multiply="0"/>
+			<resource name="wealth" amount="1000000" plus="0" multiply="0"/>
 		</resource-requirements>
 	</triggers>
 </event>

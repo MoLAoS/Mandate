@@ -78,7 +78,11 @@ private:
 	string personalityDirectory;
     Personalities personalities;
 
+    CitizenNeeds citizenNeeds;
+
 public:
+    const CitizenNeeds *getCitizenNeeds() const {return &citizenNeeds;}
+
     ResourceTrades getResourceTrades() const {return resourceTrades;}
     Personalities getPersonalities() const {return personalities;}
     Modifications getModifications() const {return modifications;}

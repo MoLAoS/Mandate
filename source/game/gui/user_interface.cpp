@@ -532,6 +532,8 @@ void UserInterface::tick() {
 			computePortraitInfo(btn.m_index);
 		}
 	}
+	m_eventWindow->tick();
+
 	m_itemWindow->tick();
 	m_statsWindow->tick();
 	m_carriedWindow->tick();

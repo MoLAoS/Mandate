@@ -442,7 +442,7 @@ void EventWindow::eventButtonPressed(int posDisplay) {
     }
     Event *event = m_ui->getEvent(0);
     Choice *choice = event->getType()->getChoice(displayPos);
-    choice->processChoice(event->getFaction());
+    choice->processChoice(event->getFaction(), event->getTargetList());
     m_ui->removeEvent();
     clear();
     setVisible(false);

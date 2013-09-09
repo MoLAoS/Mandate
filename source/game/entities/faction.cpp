@@ -541,14 +541,14 @@ bool Faction::reqsOk(const RequirableType *rt) const {
 	// required units
 	for (int i = 0; i < rt->getUnitReqCount(); ++i) {
 	    if (!rt->getUnitReq(i).getScope()) {
-            if (getCountOfUnitType(rt->getUnitReq(i).getUnitType()) <= rt->getUnitReq(i).getAmount()) {
+            if (getCountOfUnitType(rt->getUnitReq(i).getUnitType()) < rt->getUnitReq(i).getAmount()) {
                 return false;
             }
         }
 	}
 	for (int i = 0; i < rt->getItemReqCount(); ++i) {
 	    if (!rt->getItemReq(i).getScope()) {
-            if (getCountOfItemType(rt->getItemReq(i).getItemType()) <= rt->getItemReq(i).getAmount()) {
+            if (getCountOfItemType(rt->getItemReq(i).getItemType()) < rt->getItemReq(i).getAmount()) {
                 return false;
             }
         }
@@ -1061,6 +1061,7 @@ void Faction::remove(Unit *unit) {
 }
 
 void Faction::addItem(Item *item) {
+    ++m_itemCountMap[item->getType()];
     items.push_back(item);
 }
 

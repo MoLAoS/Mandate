@@ -1,6 +1,7 @@
 <?xml version="1.0" standalone="no"?>
 <unit>
   <parameters>
+    <armor-type value="void"/>
     <time value="25"/>
     <multi-selection value="true"/>
     <fields>
@@ -17,6 +18,16 @@
     <meeting-point value="false"/>
     <cellmap value="false"/>
   </parameters>
+  <item-limit limit="60"/>
+  <resource-stores>
+    <resource status="stockpile" type="wealth" stored="1000"/>
+    <resource status="stockpile" type="logs" stored="100"/>
+    <resource status="stockpile" type="stone" stored="50"/>
+    <resource status="stockpile" type="manure" stored="250"/>
+  </resource-stores>
+  <equipment>
+    <type type="field" value="5"/>
+  </equipment>
   <creatable-type>
     <size value="4"/>
     <height value="2"/>
@@ -38,33 +49,47 @@
       <light enabled="false"/>
       <unit-requirements/>
       <upgrade-requirements/>
-      <resource-requirements>
-        <resource name="wealth" amount="2000" plus="0" multiply="0" />
-        <resource name="population" amount="10" plus="0" multiply="0" />
-        <resource name="stone" amount="210" plus="0" multiply="0" />
-        <resource name="logs" amount="250" plus="0" multiply="0" />
-      </resource-requirements>
+        <resource-requirements>
+          <resource name="wealth" amount="2000" plus="0" multiply="0" />
+          <resource name="population" amount="10" plus="0" multiply="0" />
+          <resource name="stone" amount="210" plus="0" multiply="0" />
+          <resource name="logs" amount="250" plus="0" multiply="0" />
+        </resource-requirements>
       <image path="images/farm.bmp"/>
       <image-cancel path="../castle/images/tech_cancel.bmp"/>
-    </producible>
+      </producible>
     <resource-production>
       <resources-stored>
         <resource name="wealth" amount="100000"/>
+        <resource name="stone" amount="100000"/>
+        <resource name="logs" amount="100000"/>
+        <resource name="space" amount="20"/>
+        <resource name="flax" amount="100000"/>
+        <resource name="hemp" amount="100000"/>
         <resource name="cotton" amount="100000"/>
+        <resource name="corn" amount="100000"/>
+        <resource name="wheat" amount="100000"/>
+        <resource name="honey" amount="100000"/>
         <resource name="manure" amount="100000"/>
       </resources-stored>
+      <starter-resources>
+        <resource name="wealth" amount="2500"/>
+        <resource name="stone" amount="100"/>
+        <resource name="logs" amount="200"/>
+        <resource name="space" amount="20"/>
+      </starter-resources>
     </resource-production>
     <processing>
       <processes>
         <process timer="10" count="1" scope="local">
           <costs>
-            <cost name="cotton" consume="false" amount="0"/>
+            <cost name="wheat" consume="false" amount="0"/>
           </costs>
           <bonuses>
-            <cost cost-name="manure" prod-name="cotton" count="5" consume="true" amount="2" plus="20" multiply="1"/>
+            <cost cost-name="manure" prod-name="wheat" count="5" consume="true" amount="2" plus="20" multiply="1"/>
           </bonuses>
           <products>
-            <product name="cotton" amount="100"/>
+            <product name="wheat" amount="100"/>
           </products>
         </process>
       </processes>
@@ -75,6 +100,7 @@
           <type value="be_built" />
           <name value="be_built_skill"/>
           <ep-cost value="0" />
+          <speed value="120"/>
           <speed value="120"/>
 	  <sounds-animations>
             <anim-speed value="50" />
@@ -107,8 +133,100 @@
 	  </sounds-animations>
           <fade value="false"/>
         </skill>
+        <skill>
+          <type value="produce" />
+          <name value="produce_skill"/>
+          <ep-cost value="0" />
+          <speed value="300" />
+	  <sounds-animations>
+            <anim-speed value="300" />
+            <animation path="models/farm.g3d" />
+            <sound enabled="false" />
+	  </sounds-animations>
+        </skill>
+        <skill> 
+          <type value="load" /> 
+          <name value="load_skill" /> 
+          <ep-cost value="0" /> 
+          <speed value="120" />
+	  <sounds-animations> 
+            <anim-speed value="120" /> 
+            <animation path="models/farm.g3d" /> 
+            <sound enabled="false"/>
+	  </sounds-animations>
+          <max-range value="3" /> 
+          <particles value="false"/>
+        </skill>
+        <skill>
+          <type value="unload"/>
+          <name value="unload_skill"/>
+          <ep-cost value="0"/>
+          <speed value="120"/>
+	  <sounds-animations>
+            <anim-speed value="120"/>
+            <animation path="models/farm.g3d"/>
+            <sound enabled="false"/>
+	  </sounds-animations>
+          <max-range value="3"/>
+        </skill>
+        <skill>
+          <type value="produce" />
+          <name value="produce_skill"/>
+          <ep-cost value="0" />
+          <speed value="300" />
+	  <sounds-animations>
+            <anim-speed value="300" />
+            <animation path="models/farm.g3d" />
+            <sound enabled="false" />
+	  </sounds-animations>
+        </skill>
       </skills>
       <commands>
+        <command>
+          <type value="produce"/>
+          <name value="produce_quartermaster" tip="quartermaster_info"/>
+          <image path="../quartermaster/images/worker.bmp"/>
+          <unit-requirements />
+          <upgrade-requirements />
+          <produce-skill value="produce_skill"/>
+          <produced-unit name="quartermaster"/>
+        </command>
+        <command>
+          <type value="create-item"/>
+          <name value="plant_fields"/>
+          <image path="images/tree_of_life.bmp"/>
+          <unit-requirements />
+          <upgrade-requirements />
+          <produce-skill value="produce_skill"/>
+          <created-items>
+            <created-item name="wheat_field"/>
+            <created-item name="corn_field"/>
+            <created-item name="hemp_field"/>
+            <created-item name="flax_field"/>
+            <created-item name="cotton_field"/>
+          </created-items>
+        </command>
+        <command>
+          <type value="load"/>
+          <name value="load"/>
+          <image path="images/farm.bmp"/>
+          <unit-requirements/>
+          <upgrade-requirements/>
+          <load-skill value="load_skill"/>
+          <units-carried>
+            <unit value="quartermaster"/>
+          </units-carried>
+          <load-capacity value="12" />
+          <allow-projectiles value="false"/>
+        </command>
+        <command>
+          <type value="unload"/>
+          <name value="unload"/>
+          <image path="images/farm.bmp"/>
+          <unit-requirements/>
+          <upgrade-requirements/>
+          <unload-skill value="unload_skill"/>
+        </command>
       </commands>
     </actions>
   </creatable-type>

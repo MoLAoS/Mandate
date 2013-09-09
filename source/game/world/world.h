@@ -34,6 +34,7 @@
 #include "command.h"
 #include "upgrade.h"
 #include "event.h"
+#include "events.h"
 
 #include "forward_decs.h"
 
@@ -103,8 +104,8 @@ public:
 
 	}
 
-	Event*	newEvent(int ident, EventType* type, Faction *faction) {
-		return m_eventFactory.newEvent(ident, type, faction);
+	Event*	newEvent(int ident, EventType* type, Faction *faction, EventTargetList targetList) {
+		return m_eventFactory.newEvent(ident, type, faction, targetList);
 	}
 
 	Event*	newEvent(const XmlNode *node, Faction *faction, Map *map, const TechTree *tt) {

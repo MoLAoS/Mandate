@@ -24,6 +24,58 @@ using namespace Shared::Util;
 using namespace Glest::Net;
 
 namespace Glest { namespace ProtoTypes {
+
+void CitizenModifier::reset() {
+    characterStats.reset();
+    knowledge.reset();
+    statistics.cleanse();
+}
+
+void CitizenModifier::sum(const CitizenModifier *citizenModifier) {
+    statistics.sum(citizenModifier->getStatistics());
+    knowledge.sum(citizenModifier->getKnowledge());
+    characterStats.sum(citizenModifier->getCharacterStats());
+}
+
+bool CitizenModifier::load(const XmlNode *baseNode, const string &dir) {
+    bool loadOk = true;
+	try {
+        const XmlNode *statisticsNode = baseNode->getChild("statistics", 0, false);
+        if (statisticsNode) {
+            if (!statistics.load(statisticsNode, dir)) {
+                loadOk = false;
+            }
+        }
+    } catch (runtime_error e) {
+		g_logger.logXmlError(dir, e.what());
+		loadOk = false;
+	}
+	try {
+        const XmlNode *characterStatsNode = baseNode->getChild("character-stats", 0, false);
+	    if (characterStatsNode) {
+            if (!characterStats.load(characterStatsNode, dir)) {
+                loadOk = false;
+            }
+	    }
+    }
+    catch (runtime_error e) {
+		g_logger.logXmlError(dir, e.what());
+		loadOk = false;
+	}
+	try {
+        const XmlNode *knowledgeNode = baseNode->getChild("knowledge", 0, false);
+	    if (knowledgeNode) {
+            if (!knowledge.load(knowledgeNode)) {
+                loadOk = false;
+            }
+	    }
+    }
+    catch (runtime_error e) {
+		g_logger.logXmlError(dir, e.what());
+		loadOk = false;
+	}
+	return loadOk;
+}
 // =====================================================
 // 	class CreatableType
 // =====================================================

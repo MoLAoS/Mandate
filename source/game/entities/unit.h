@@ -209,20 +209,48 @@ private:
     CharacterStats characterStats;
     Knowledge knowledge;
 
+	CraftResources resourceStats;
+	CraftStats weaponStats;
+	CraftStats armorStats;
+	CraftStats accessoryStats;
+
     bool character;
 
 public:
+    int getWeaponStatCount() const {return weaponStats.size();}
+    const CraftStat *getWeaponStat(int  i) const {return &weaponStats[i];}
+    int getArmorStatCount() const {return armorStats.size();}
+    const CraftStat *getArmorStat(int i) const {return &armorStats[i];}
+    int getAccessoryStatCount() const {return accessoryStats.size();}
+    const CraftStat *getAccessoryStat(int i) const {return &accessoryStats[i];}
+    int getResourceStatCount() const {return resourceStats.size();}
+    const CraftRes *getResourceStat(int i) const {return &resourceStats[i];}
+
     bool isCharacter() {return character;}
     void addKnowledge(const Knowledge *newKnowledge) {knowledge.sum(newKnowledge);}
     void addCharacterStats(const CharacterStats *newCharacterStats) {characterStats.sum(newCharacterStats);}
+
+    const CharacterStats *getCharacterStats() const {return &characterStats;}
+    const Knowledge *getKnowledge() const {return &knowledge;}
+    CharacterStats *getCharacterStats() {return &characterStats;}
+    Knowledge *getKnowledge() {return &knowledge;}
 
     Modifications modifications;
     EffectTypes effectTypes;
     bool dayCycle;
 
     const Statistics *getStatistics() const {return &statistics;}
+    Statistics *getStatistics() {return &statistics;}
     void initSkillsAndCommands();
 
+    CitizenModifier totalModifier;
+    void generateCitizen();
+    void educateCitizen(const CitizenModifier *educationModifier, int developmentLevel, Unit *createdUnit);
+    int getDevelopmentLevel();
+    void addCrafts(int finesse);
+    const CitizenModifier *getCitizenModifiers();
+
+    void generateItem(Item *item);
 private:
 	// basic stats
 	int id;					/**< unique identifier  */
@@ -278,7 +306,11 @@ public:
     Settlement settlement;
 
     Unit *owner;
-    void setOwner(Unit *unit) {owner = unit;}
+    vector<Unit*> controlledUnits;
+    int getControlledUnitCount() const {return controlledUnits.size();}
+    Unit *getControlledUnit(int i) {return controlledUnits[i];}
+    void addControlledUnit(Unit *unit) {controlledUnits.push_back(unit);}
+    void setOwner(Unit *unit);
     OwnedUnits ownedUnits;
 
     BuffsApplied buffNames;

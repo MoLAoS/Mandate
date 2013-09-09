@@ -44,7 +44,8 @@ using namespace ProtoTypes;
 Event::Event(CreateParams params)
 		: id(params.ident)
 		, type(params.type)
-		, faction(params.faction) {
+		, faction(params.faction)
+		, targetList(params.targetList) {
 }
 
 Event::~Event() {
@@ -52,7 +53,8 @@ Event::~Event() {
 	}
 }
 
-void Event::init(int ident, EventType *newType, Faction *f) {
+void Event::init(int ident, EventType *newType, Faction *f, EventTargetList newTargetList) {
+    targetList = newTargetList;
     type = newType;
     faction = f;
     id = ident;
@@ -61,8 +63,8 @@ void Event::init(int ident, EventType *newType, Faction *f) {
 // =====================================================
 //  class EventFactory
 // =====================================================
-Event* EventFactory::newEvent(int ident, EventType* type, Faction *faction) {
-	Event::CreateParams params(ident, type, faction);
+Event* EventFactory::newEvent(int ident, EventType* type, Faction *faction, EventTargetList targetList) {
+	Event::CreateParams params(ident, type, faction, targetList);
 	Event *event = new Event(params);
 	return event;
 }

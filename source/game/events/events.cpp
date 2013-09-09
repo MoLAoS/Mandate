@@ -63,14 +63,11 @@ bool Triggers::load(const XmlNode *baseNode, const string &dir, const FactionTyp
 	try {
 		const XmlNode *unitRequirementsNode = baseNode->getChild("unit-requirements", 0, false);
 		if(unitRequirementsNode) {
+		    unitTriggers.resize(unitRequirementsNode->getChildCount());
 			for(int i = 0; i < unitRequirementsNode->getChildCount(); ++i) {
 				const XmlNode *unitNode = unitRequirementsNode->getChild("unit", i);
 				string name = unitNode->getRestrictedAttribute("name");
-				bool scope = false;
-				string local = unitNode->getRestrictedAttribute("scope");
-				if (local == "local") {
-                    scope = true;
-				}
+				bool scope = unitNode->getAttribute("local")->getBoolValue();
 				int value = unitNode->getIntAttribute("amount");
 				unitTriggers[i].init(ft->getUnitType(name), value, scope);
 			}
@@ -83,14 +80,11 @@ bool Triggers::load(const XmlNode *baseNode, const string &dir, const FactionTyp
 	try {
 		const XmlNode *itemRequirementsNode = baseNode->getChild("item-requirements", 0, false);
 		if(itemRequirementsNode) {
+		    itemTriggers.resize(itemRequirementsNode->getChildCount());
 			for(int i = 0; i < itemRequirementsNode->getChildCount(); ++i) {
 				const XmlNode *itemNode = itemRequirementsNode->getChild("item", i);
 				string name = itemNode->getRestrictedAttribute("name");
-				bool scope = false;
-				string local = itemNode->getRestrictedAttribute("scope");
-				if (local == "local") {
-                    scope = true;
-				}
+				bool scope = itemNode->getAttribute("local")->getBoolValue();
 				int value = itemNode->getIntAttribute("amount");
 				itemTriggers[i].init(ft->getItemType(name), value, scope);
 			}
@@ -170,7 +164,25 @@ bool Triggers::load(const XmlNode *baseNode, const string &dir, const FactionTyp
 // =====================================================
 // 	class Choice
 // =====================================================
-void Choice::processChoice(Faction *faction) {
+void Choice::processChoice(Faction *faction, EventTargetList targetList) {
+    for (int i = 0; i < faction->getUnitCount(); ++i) {
+        Unit *possibleTarget = faction->getUnit(i);
+        const UnitType *possibleType = possibleTarget->getType();
+        for (int j = 0; j < targetList.size(); ++j) {
+            if (targetList[j]->getType() == possibleType) {
+                for (int k = 0; k < items.size(); ++k) {
+                    EventItem *eventItem = &items[k];
+                    if (eventItem->getScope() == true) {
+                        for (int l = 0; l < eventItem->getAmount(); ++l) {
+                            Item *newItem = g_world.newItem(faction->getItemCount(), eventItem->getItemType(), faction);
+                            faction->addItem(newItem);
+                            possibleTarget->accessStorageAdd(faction->getItemCount()-1);
+                        }
+                    }
+                }
+            }
+        }
+    }
     if (sovereign) {
         Unit *unit = 0;
         for (int i = 0; i < faction->getUnitCount(); ++i) {
@@ -193,10 +205,12 @@ void Choice::processChoice(Faction *faction) {
         }
         for (int i = 0; i < items.size(); ++i) {
             EventItem *eventItem = &items[i];
-            for (int j = 0; j < eventItem->getAmount(); ++j) {
-                Item *newItem = g_world.newItem(faction->getItemCount(), eventItem->getItemType(), faction);
-                faction->addItem(newItem);
-                unit->accessStorageAdd(faction->getItemCount()-1);
+            if (eventItem->getScope() == false) {
+                for (int j = 0; j < eventItem->getAmount(); ++j) {
+                    Item *newItem = g_world.newItem(faction->getItemCount(), eventItem->getItemType(), faction);
+                    faction->addItem(newItem);
+                    unit->accessStorageAdd(faction->getItemCount()-1);
+                }
             }
         }
         for (int i = 0; i < units.size(); ++i) {
@@ -428,7 +442,18 @@ bool Choice::load(const XmlNode *baseNode, const string &dir, const TechTree *te
 // =====================================================
 // 	class EventType
 // =====================================================
-bool EventType::checkTriggers(Faction *faction) const {
+bool EventType::checkTriggers(Faction *faction, EventTargetList *validTargetList) const {
+    EventTargetList baseTargetList;
+    for (int i = 0; i < getTargetTypeCount(); ++i) {
+        const UnitType *targetType = getTargetType(i);
+        for (int j = 0; j < faction->getUnitCount(); ++j) {
+            Unit *unit = faction->getUnit(j);
+            const UnitType *unitType = unit->getType();
+            if (unitType == targetType) {
+                baseTargetList.push_back(unit);
+            }
+        }
+    }
     for (int i = 0; i < triggers.getUnitTriggerCount(); ++i) {
         if (!triggers.getUnitTrigger(i)->getScope()) {
             if (faction->getCountOfUnitType(triggers.getUnitTrigger(i)->getUnitType()) < triggers.getUnitTrigger(i)->getAmount()) {
@@ -445,11 +470,9 @@ bool EventType::checkTriggers(Faction *faction) const {
     }
     for (int i = 0; i < triggers.getUpgradeTriggerCount(); ++i) {
         if (faction->getUpgradeManager()->isUpgraded(triggers.getUpgradeTrigger(i)->getUpgradeType())) {
-
         } else if (faction->getUpgradeManager()->isPartial(triggers.getUpgradeTrigger(i)->getUpgradeType())) {
             int stage = faction->getCurrentStage(triggers.getUpgradeTrigger(i)->getUpgradeType());
             if (triggers.getUpgradeTrigger(i)->getStage() == stage) {
-
             } else {
                 return false;
             }
@@ -460,6 +483,48 @@ bool EventType::checkTriggers(Faction *faction) const {
     for (int i = 0; i < triggers.getResourceTriggerCount(); ++i) {
         if (faction->getSResource(triggers.getResourceTrigger(i)->getType())->getAmount() < triggers.getResourceTrigger(i)->getAmount()) {
             return false;
+        }
+    }
+    for (int j = 0; j < baseTargetList.size(); ++j) {
+        bool valid = true;
+        Unit *potentialUnit = baseTargetList[j];
+        for (int i = 0; i < triggers.getUnitTriggerCount(); ++i) {
+            if (triggers.getUnitTrigger(i)->getScope()) {
+                int unitCount = 0;
+                UnitIdList garrisonedUnits = potentialUnit->getGarrisonedUnits();
+                if (!garrisonedUnits.empty()) {
+                    foreach (UnitIdList, it, garrisonedUnits) {
+                        Unit *garrisonedUnit = g_world.getUnit(*it);
+                        if (garrisonedUnit->getType() == triggers.getUnitTrigger(i)->getUnitType()) {
+                            ++unitCount;
+                        }
+                    }
+                }
+                if (unitCount < triggers.getUnitTrigger(i)->getAmount()) {
+                    valid = false;
+                }
+            }
+        }
+        for (int i = 0; i < triggers.getItemTriggerCount(); ++i) {
+            int itemCount = 0;
+            if (triggers.getItemTrigger(i)->getScope()) {
+                for (int k = 0; k < potentialUnit->getStoredItems().size(); ++k) {
+                    if (triggers.getItemTrigger(i)->getItemType() == potentialUnit->getStoredItem(k)->getType()) {
+                        ++itemCount;
+                    }
+                }
+                if (itemCount < triggers.getItemTrigger(i)->getAmount()) {
+                    valid = false;
+                }
+            }
+        }
+        for (int i = 0; i < triggers.getResourceTriggerCount(); ++i) {
+            if (potentialUnit->getSResource(triggers.getResourceTrigger(i)->getType())->getAmount() < triggers.getResourceTrigger(i)->getAmount()) {
+                valid = false;
+            }
+        }
+        if (valid = true) {
+            validTargetList->push_back(potentialUnit);
         }
     }
 	return true;
@@ -492,6 +557,16 @@ bool EventType::load(const string &dir, const TechTree *techTree, const FactionT
 		return false;
 	}
 	loadOk = DisplayableType::load(eventNode, dir, false);
+	const XmlNode *targetTypesNode = eventNode->getChild("target-types", 0, false);
+	if (targetTypesNode) {
+	    targetTypes.resize(targetTypesNode->getChildCount());
+	    for (int i = 0; i < targetTypesNode->getChildCount(); ++i) {
+            const XmlNode *targetTypeNode = targetTypesNode->getChild("target-type", i);
+            string targetTypeName = targetTypeNode->getAttribute("type")->getRestrictedValue();
+            const UnitType *targetType = factionType->getUnitType(targetTypeName);
+            targetTypes[i] = targetType;
+	    }
+    }
 	const XmlNode *triggersNode = eventNode->getChild("triggers", 0, false);
 	if (triggersNode) {
         if (!triggers.load(triggersNode, dir, factionType, false)) {

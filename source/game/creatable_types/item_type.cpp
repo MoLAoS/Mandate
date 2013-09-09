@@ -81,6 +81,20 @@ bool ItemType::load(const string &dir, const TechTree *techTree, const FactionTy
 		loadOk = false;
 	}
 	try {
+        const XmlNode *craftTypesNode = parametersNode->getChild("craft-types", 0, false);
+        if (craftTypesNode) {
+            craftTypes.resize(craftTypesNode->getChildCount());
+            for (int i = 0; i < craftTypesNode->getChildCount(); ++i) {
+                const XmlNode *craftTypeNode = craftTypesNode->getChild("craft-type", i);
+                craftTypes[i] = craftTypeNode->getAttribute("type")->getRestrictedValue();
+            }
+        }
+    }
+    catch (runtime_error e) {
+		g_logger.logXmlError(dir, e.what());
+		loadOk = false;
+	}
+	try {
         const XmlNode *tierNode = parametersNode->getChild("tier");
         if (tierNode) {
             qualityTier = tierNode->getAttribute("value")->getIntValue();

@@ -36,74 +36,34 @@
     </starter-items>
     <levels>
       <level name="recruit" exp="1000" count="15">
-        <statistics>
-			<enhancement>
-				<resource-pools>
-					<health name="health">
-						<max-stat value="10"/>
-					</health>
-				</resource-pools>
-			</enhancement>
-			<damage-types>
-				<damage-type type="slashing" value="1"/>
-			</damage-types>
-        </statistics>
+        <static-modifiers>
+          <max-hp value="10" additive="0"/>
+          <attack-strength value="1" additive="0"/>
+        </static-modifiers>
       </level>
       <level name="regular" exp="1200" count="15">
-        <statistics>
-			<enhancement>
-				<resource-pools>
-					<health name="health">
-						<max-stat value="11"/>
-					</health>
-				</resource-pools>
-			</enhancement>
-			<damage-types>
-				<damage-type type="slashing" value="1"/>
-			</damage-types>
-        </statistics>
+        <static-modifiers>
+          <max-hp value="11" additive="0"/>
+          <attack-strength value="1" additive="0"/>
+        </static-modifiers>
       </level>
       <level name="veteran" exp="1400" count="15">
-        <statistics>
-			<enhancement>
-				<resource-pools>
-					<health name="health">
-						<max-stat value="12"/>
-					</health>
-				</resource-pools>
-			</enhancement>
-			<damage-types>
-				<damage-type type="slashing" value="1"/>
-			</damage-types>
-        </statistics>
+        <static-modifiers>
+          <max-hp value="12" additive="0"/>
+          <attack-strength value="1" additive="0"/>
+        </static-modifiers>
       </level>
       <level name="elite" exp="1600" count="15">
-        <statistics>
-			<enhancement>
-				<resource-pools>
-					<health name="health">
-						<max-stat value="13"/>
-					</health>
-				</resource-pools>
-			</enhancement>
-			<damage-types>
-				<damage-type type="slashing" value="1"/>
-			</damage-types>
-        </statistics>
+        <static-modifiers>
+          <max-hp value="13" additive="0"/>
+          <attack-strength value="1" additive="0"/>
+        </static-modifiers>
       </level>
       <level name="legend" exp="1800" count="15">
-        <statistics>
-			<enhancement>
-				<resource-pools>
-					<health name="health">
-						<max-stat value="14"/>
-					</health>
-				</resource-pools>
-			</enhancement>
-			<damage-types>
-				<damage-type type="slashing" value="2"/>
-			</damage-types>
-        </statistics>
+        <static-modifiers>
+          <max-hp value="14" additive="0"/>
+          <attack-strength value="2" additive="0"/>
+        </static-modifiers>
       </level>
     </levels>
   <creatable-type>
@@ -147,7 +107,7 @@
           <speed value="1000"/>
 	  <sounds-animations>
             <anim-speed value="45"/>
-            <animation path="models/stop_one.g3d"/>
+            <animation path="models/swordman_standing.g3d"/>
             <sound enabled="false"/>
 	  </sounds-animations>
         </skill>
@@ -158,7 +118,7 @@
           <speed value="220"/>
 	  <sounds-animations>
             <anim-speed value="90"/>
-            <animation path="models/move_one.g3d"/>
+            <animation path="models/swordman_walking.g3d"/>
             <sound enabled="false"/>
 	  </sounds-animations>
         </skill>
@@ -169,7 +129,7 @@
           <speed value="220"/>
 	  <sounds-animations>
             <anim-speed value="125"/>
-            <animation path="models/move_two.g3d"/>
+            <animation path="models/swordman_charging.g3d"/>
             <sound enabled="false"/>
 	  </sounds-animations>
         </skill>
@@ -181,7 +141,7 @@
           <speed value="100"/>
 	  <sounds-animations>
             <anim-speed value="100"/>
-            <animation path="models/attack_one.g3d"/>
+            <animation path="models/swordman_attacking.g3d"/>
             <sound enabled="true" start-time="0.47">
               <sound-file path="sounds/swordman_attack1.wav"/>
               <sound-file path="sounds/swordman_attack2.wav"/>
@@ -201,15 +161,15 @@
             <field value="land"/>
           </attack-fields>
           <attack-start-time value="0.5"/>
-	  <attack-levels>
-	    <attack-level>
-			<statistics>
-				<damage-types>
-					<damage-type type="slashing" value="25"/>
-				</damage-types>
-			</statistics>
-	    </attack-level>
-	  </attack-levels>
+				<attack-levels>
+					<attack-level>
+						<statistics>
+							<damage-types>
+								<damage-type type="slashing" value="10"/>
+							</damage-types>
+						</statistics>
+					</attack-level>
+				</attack-levels>
           <projectile value="false"/>
           <splash value="false"/>
         </skill>
@@ -218,15 +178,15 @@
           <name value="die_skill"/>
           <ep-cost value="0"/>
           <speed value="60"/>
-		<sounds-animations>
+	  <sounds-animations>
             <anim-speed value="60"/>
-            <animation path="models/death_one.g3d"/>
+            <animation path="models/swordman_dying.g3d"/>
             <sound enabled="true" start-time="0">
               <sound-file path="sounds/swordman_die1.wav"/>
               <sound-file path="sounds/swordman_die2.wav"/>
             </sound>
-		</sounds-animations>
-        <fade value="false"/>
+	  </sounds-animations>
+          <fade value="false"/>
         </skill>
       </skills>
       <commands>

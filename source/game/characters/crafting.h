@@ -21,22 +21,21 @@ private:
     string name;
     int value;
 public:
-    string getName() {return name;}
-    int getValue() {return value;}
+    string getName() const {return name;}
+    int getValue() const {return value;}
     void setValue(int i) {value = i;}
     void init(int val, string nam);
 };
-
-typedef vector<CraftStat> CraftStats;
 
 class CraftRes {
 private:
     const ResourceType *resType;
     int value;
 public:
-    int getValue() {return value;}
-    const ResourceType *getType() {return resType;}
+    int getValue() const {return value;}
+    const ResourceType *getType() const {return resType;}
     bool load(const XmlNode *node);
+    void init(int newValue, const ResourceType *newResType);
 };
 
 class CraftItem {
@@ -44,17 +43,14 @@ private:
     const ItemType *itemType;
     int value;
 public:
-    int getValue() {return value;}
+    int getValue() const {return value;}
     const ItemType *getType() {return itemType;}
     bool load(const XmlNode *node);
 };
 
-/*class Quality {
-private:
-
-public:
-
-};*/
+typedef vector<CraftStat> CraftStats;
+typedef vector<CraftItem> CraftItems;
+typedef vector<CraftRes> CraftResources;
 
 }}//end namespace
 
