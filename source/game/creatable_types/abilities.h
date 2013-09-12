@@ -128,21 +128,24 @@ class Equipment {
 private:
     int max;
     int current;
-    string name;
     string typeTag;
+    Item *item;
+    const ItemType *itemType;
 
 public:
     int getMax() const {return max;}
     void setMax(int i) {max = max + i;}
     int getCurrent() const {return current;}
     void setCurrent(int i) {current = current + i;}
-    string getName() const {return name;}
-    void setName(string newName) {name = newName;}
     string getTypeTag() const {return typeTag;}
+    Item *getItem() const {return item;}
+    const ItemType *getType() const {return itemType;}
+    void setItem(Item *newItem) {item = newItem;}
+    void setItemType(const ItemType *newItemType) {itemType = newItemType;}
     void getDesc(string &str, const char *pre, string name);
     void save(XmlNode *node) const;
 
-    void init(int max, int current, string name, string typeTag);
+    void init(int max, int current, string typeTag, const ItemType *itemType, Item *item = NULL);
 };
 
 // =====================================================

@@ -7,11 +7,15 @@
   <creatable-type>
     <size value="0"/>
     <height value="0"/>
-    <enhancement>
-      <static-modifiers>
-	<max-hp value="500" additive="0"/>
-      </static-modifiers>
-    </enhancement>
+    <statistics>
+      <enhancement>
+	<resource-pools>
+	  <health name="health">
+	    <max-stat value="500"/>
+	  </health>
+	</resource-pools>
+      </enhancement>
+    </statistics>
     <producible>
       <time value="1"/>
       <properties/>
@@ -23,8 +27,8 @@
       </resource-requirements>
       <local-requirements>
         <resource name="wealth" amount="2500" plus="0" multiply="0"/>
-        <resource name="logs" amount="20" plus="0" multiply="0"/>
-        <resource name="stone" amount="10" plus="0" multiply="0"/>
+        <resource name="logs" amount="200" plus="0" multiply="0"/>
+        <resource name="stone" amount="50" plus="0" multiply="0"/>
         <resource name="space" amount="5" plus="0" multiply="0"/>
       </local-requirements>
       <image path="images/guard.bmp"/>

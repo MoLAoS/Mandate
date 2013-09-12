@@ -270,10 +270,10 @@ Unit::Unit(CreateParams params)
     itemLimit = getType()->getItemLimit();
     itemsStored = 0;
 
-    equipment.resize(getType()->getEquipment().size());
-    for (int i = 0; i < getType()->getEquipment().size(); ++i) {
-        string nameTag = getType()->getEquipment()[i].getTypeTag();
-        equipment[i].init(1, 0, nameTag, nameTag);
+    equipment.resize(getType()->getEquipmentSize());
+    for (int i = 0; i < getType()->getEquipmentSize(); ++i) {
+        string nameTag = getType()->getEquipment(i)->getTypeTag();
+        equipment[i].init(1, 0, nameTag, 0);
     }
 
     sresources.resize(getType()->getResourceProductionSystem()->getStoredResourceCount());
@@ -1796,7 +1796,6 @@ void Unit::kill() {
 		fire = 0;
 	}
 
-	//REFACTOR Use signal, send this code to Faction::onUnitDied();
 	if (isBeingBuilt()) { // no longer needs static resources
 		faction->deApplyStaticConsumption(type);
 	} else {
@@ -1964,7 +1963,6 @@ void Unit::capture() {
 		fire->fade();
 		fire = 0;
 	}
-	//REFACTOR Use signal, send this code to Faction::onUnitDied();
 	if (isBeingBuilt()) { // no longer needs static resources
 		faction->deApplyStaticConsumption(type);
 	} else {
@@ -2119,31 +2117,37 @@ const CommandType *Unit::computeCommandType(const Vec2i &pos, const Unit *target
 		} else if (targetUnit->getFactionIndex() == getFactionIndex()) {
 			const UnitType *tType = targetUnit->getType();
 			if (tType->isOfClass(UnitClass::CARRIER)) {
-                if (tType->getActions()->getCommandType<LoadCommandType>(0)->canCarry(type)) {
-				//move to be loaded
-				commandType = type->getActions()->getFirstCtOfClass(CmdClass::BE_LOADED);
-                } else if (tType->getActions()->getCommandType<FactionLoadCommandType>(0)->canCarry(type)) {
-                //move to be loaded
-				commandType = type->getActions()->getFirstCtOfClass(CmdClass::BE_LOADED);
-                } else {
-                //move to be loaded
-				commandType = type->getActions()->getFirstCtOfClass(CmdClass::BE_LOADED);
+                if (tType->getActions()->hasCommandClass(CmdClass::LOAD) &&
+                        tType->getActions()->getCommandType<LoadCommandType>(0)->canCarry(type)) {
+                    //move to be loaded
+                    commandType = type->getActions()->getFirstCtOfClass(CmdClass::BE_LOADED);
+                } else if (tType->getActions()->hasCommandClass(CmdClass::FACTIONLOAD) &&
+                           tType->getActions()->getCommandType<FactionLoadCommandType>(0)->canCarry(type)) {
+                    //move to be loaded
+                    commandType = type->getActions()->getFirstCtOfClass(CmdClass::BE_LOADED);
+                } else if (tType->getActions()->hasCommandClass(CmdClass::GARRISON) &&
+                           tType->getActions()->getCommandType<FactionLoadCommandType>(0)->canCarry(type)) {
+                    //move to be loaded
+                    commandType = type->getActions()->getFirstCtOfClass(CmdClass::BE_LOADED);
                 }
 			} else if (getType()->isOfClass(UnitClass::CARRIER)) {
-			    if (type->getActions()->getCommandType<LoadCommandType>(0)->canCarry(tType)) {
-			    //load
-			    commandType = type->getActions()->getFirstCtOfClass(CmdClass::LOAD);
-			    } else if (type->getActions()->getCommandType<FactionLoadCommandType>(0)->canCarry(tType)) {
-			    //load
-			    commandType = type->getActions()->getFirstCtOfClass(CmdClass::FACTIONLOAD);
-			    } else {
-			    //load
-			    commandType = type->getActions()->getFirstCtOfClass(CmdClass::GARRISON);
+			    if (type->getActions()->hasCommandClass(CmdClass::LOAD) &&
+                           type->getActions()->getCommandType<LoadCommandType>(0)->canCarry(tType)) {
+                    //load
+                    commandType = type->getActions()->getFirstCtOfClass(CmdClass::LOAD);
+			    } else if (type->getActions()->hasCommandClass(CmdClass::FACTIONLOAD) &&
+                           type->getActions()->getCommandType<FactionLoadCommandType>(0)->canCarry(tType)) {
+                    //load
+                    commandType = type->getActions()->getFirstCtOfClass(CmdClass::FACTIONLOAD);
+			    } else if (type->getActions()->hasCommandClass(CmdClass::GARRISON) &&
+                           type->getActions()->getCommandType<GarrisonCommandType>(0)->canCarry(tType)) {
+                    //load
+                    commandType = type->getActions()->getFirstCtOfClass(CmdClass::GARRISON);
 			    }
-        } else {
-				// repair
-			commandType = getRepairCommandType(targetUnit);
-		}
+            } else {
+                // repair
+                commandType = getRepairCommandType(targetUnit);
+            }
 		} else { // repair allies
 			commandType = getRepairCommandType(targetUnit);
 		}
@@ -2372,7 +2376,7 @@ void Unit::accessStorageAdd(int ident) {
     if (storage.size() > 0) {
         bool found = false;
         for (int i = 0; i < storage.size(); ++i) {
-            if (storage[i].getName() == item->getType()->getName()) {
+            if (storage[i].getType() == item->getType()) {
                 storage[i].setCurrent(1);
                 found = true;
                 break;
@@ -2380,12 +2384,12 @@ void Unit::accessStorageAdd(int ident) {
         }
         if (found == false) {
             Equipment newEquipment;
-            newEquipment.init(0, 1, item->getType()->getName(), item->getType()->getTypeTag());
+            newEquipment.init(0, 1, item->getType()->getTypeTag(), item->getType(), 0);
             storage.push_back(newEquipment);
         }
     } else {
         Equipment newEquipment;
-        newEquipment.init(0, 1, item->getType()->getName(), item->getType()->getTypeTag());
+        newEquipment.init(0, 1, item->getType()->getTypeTag(), item->getType(), 0);
         storage.push_back(newEquipment);
     }
 }
@@ -2400,7 +2404,7 @@ void Unit::accessStorageRemove(int ident) {
     }
     itemsStored = getItemsStored() - 1;
     for (int i = 0; i < storage.size(); ++i) {
-        if (storage[i].getName() == item->getType()->getName()) {
+        if (storage[i].getType() == item->getType()) {
             storage[i].setCurrent(-1);
             break;
         }
@@ -2408,17 +2412,7 @@ void Unit::accessStorageRemove(int ident) {
 }
 
 void Unit::accessStorageExchange(Unit *storage) {
-    Storage gear = getType()->getEquipment();
-    StoredItems armory = getStoredItems();
-    for (int i = 0; i < armory.size(); ++i) {
-        for (int l = 0; l < gear.size(); ++l) {
-            if (gear[l].getTypeTag() == getStoredItem(armory[i])->getType()->getTypeTag()) {
-                //if (getQualityTier() == getQualityTier()) {
 
-                //}
-            }
-        }
-    }
 }
 
 void Unit::equipItem(int ident) {
@@ -2429,24 +2423,72 @@ void Unit::equipItem(int ident) {
             unique = false;
         }
     }
-    for (int i = 0; i < getType()->getEquipment().size(); ++i) {
-        if (item->getType()->getTypeTag() == equipment[i].getTypeTag()) {
-            if (equipment[i].getCurrent() == 0) {
+    bool equipped = false;
+    for (int i = 0; i < getEquipmentSize(); ++i) {
+        if (getEquipment(i)->getItem() == 0) {
+            if (getEquipment(i)->getTypeTag() == item->getType()->getTypeTag()) {
                 equipment[i].setCurrent(1);
-                equipment[i].setName(item->getType()->getName());
+                equipment[i].setItem(item);
+                equipped = true;
                 for (int j = 0; j < storedItems.size(); ++j) {
                     if (storedItems[j] == item->id) {
                         equippedItems.push_back(storedItems[j]);
                         storedItems.erase(storedItems.begin()+j);
                         for (int l = 0; l < storage.size(); ++l) {
-                            if (storage[l].getName() == item->getType()->getName()) {
+                            if (storage[l].getType() == item->getType()) {
                                 storage[l].setCurrent(-1);
                                 setItemsStored(-1);
+                                break;
                             }
                         }
+                        break;
                     }
                 }
                 break;
+            }
+        }
+    }
+    if (equipped == false) {
+        int lowestQuality = 1000;
+        int slot = -1;
+        for (int i = 0; i < getEquipmentSize(); ++i) {
+            if (item->getType()->getTypeTag() == equipment[i].getTypeTag()) {
+                if (equipment[i].getItem() != 0 && equipment[i].getItem()->getType()->getQualityTier() < lowestQuality) {
+                    lowestQuality = equipment[i].getItem()->getType()->getQualityTier();
+                    slot = i;
+                }
+            }
+        }
+        if (slot > -1) {
+            for (int i = 0; i < equippedItems.size(); ++i) {
+                if (equipment[slot].getItem()->id == equippedItems[i]) {
+                    unequipItem(i);
+                    break;
+                }
+            }
+        }
+        for (int i = 0; i < getEquipmentSize(); ++i) {
+            if (getEquipment(i)->getItem() == 0) {
+                if (getEquipment(i)->getTypeTag() == item->getType()->getTypeTag()) {
+                    equipment[i].setCurrent(1);
+                    equipment[i].setItem(item);
+                    equipped = true;
+                    for (int j = 0; j < storedItems.size(); ++j) {
+                        if (storedItems[j] == item->id) {
+                            equippedItems.push_back(storedItems[j]);
+                            storedItems.erase(storedItems.begin()+j);
+                            for (int l = 0; l < storage.size(); ++l) {
+                                if (storage[l].getType() == item->getType()) {
+                                    storage[l].setCurrent(-1);
+                                    setItemsStored(-1);
+                                    break;
+                                }
+                            }
+                            break;
+                        }
+                    }
+                    break;
+                }
             }
         }
     }
@@ -2465,25 +2507,27 @@ void Unit::equipItem(int ident) {
 
 void Unit::unequipItem(int ident) {
     Item *item = getEquippedItem(ident);
-    for (int j = 0; j < getType()->getEquipment().size(); ++j) {
-        if (item->getType()->getName() == equipment[j].getName()) {
+    for (int j = 0; j < getEquipmentSize(); ++j) {
+        if (item == equipment[j].getItem()) {
             if (equipment[j].getCurrent() == 1) {
                 equipment[j].setCurrent(-1);
-                equipment[j].setName(item->getType()->getTypeTag());
-                for (int i = 0; i < equippedItems.size(); ++i) {
-                    if (equippedItems[i] == item->id) {
-                        equippedItems.erase(equippedItems.begin()+i);
-                        storedItems.push_back(item->id);
-                        for (int l = 0; l < storage.size(); ++l) {
-                            if (storage[l].getName() == item->getType()->getName()) {
-                                storage[l].setCurrent(1);
-                                setItemsStored(1);
-                            }
-                        }
-                    }
-                }
-                break;
+                equipment[j].setItem(0);
             }
+            break;
+        }
+    }
+    for (int i = 0; i < equippedItems.size(); ++i) {
+        if (equippedItems[i] == item->id) {
+            equippedItems.erase(equippedItems.begin()+i);
+            storedItems.push_back(item->id);
+            for (int l = 0; l < storage.size(); ++l) {
+                if (storage[l].getType() == item->getType()) {
+                    storage[l].setCurrent(1);
+                    setItemsStored(1);
+                    break;
+                }
+            }
+            break;
         }
     }
     computeTotalUpgrade();
@@ -2495,7 +2539,7 @@ void Unit::consumeItem(int ident) {
         if (storedItems[j] == item->id) {
             storedItems.erase(storedItems.begin()+j);
             for (int l = 0; l < storage.size(); ++l) {
-                if (storage[l].getName() == item->getType()->getName()) {
+                if (storage[l].getType() == item->getType()) {
                     storage[l].setCurrent(-1);
                     setItemsStored(-1);
                     break;
@@ -2564,7 +2608,7 @@ void Unit::doKill(Unit *killed) {
 
 	///@todo after stats inc ??
 	if (killed->getCurrSkill()->getClass() != SkillClass::DIE) {
-		killed->kill();
+		//killed->kill();
 	}
 
 	if (!killed->isMobile()) {
@@ -2643,7 +2687,7 @@ bool Unit::update() { ///@todo should this be renamed to hasFinishedCycle()?
 		} else if (currSkill->getClass() == SkillClass::CAST_SPELL) {
 			startSpellSystems(static_cast<const CastSpellSkillType*>(currSkill));
 		} else {
-			assert(false);
+			//assert(false);
 		}
 	}
 
@@ -2975,16 +3019,19 @@ string Unit::getLongDesc() const {
     knowledge.getDesc(character, "\n");
     characterStats.getDesc(character, "\n");
 
+    ss << endl << owner->getType()->getName();
+
 	if (goalStructure != NULL) {
-	ss << endl << "Reason: " << getGoalReason();
+        ss << endl << "Focus: " << currentFocus;
+        ss << endl << "Task: " << goalReason;
 	}
     ss << endl << "Stored Items: " << itemsStored << "/" << itemLimit;
     if (type->getModifications().size() > 0) {
         for (int i = 0; i < type->getModifications().size(); ++i) {
             ss << endl << "Unit: " << type->getModifications()[i].getModificationName();
-            ss << endl << "Produced: " << type->getModifications()[i].getEquipment().size();
-            for (int j = 0; j < type->getModifications()[i].getEquipment().size(); ++j) {
-                ss << endl << "Equipment: " << type->getModifications()[i].getEquipment()[j];
+            ss << endl << "Produced: " << type->getModifications()[i].getEquipmentSize();
+            for (int j = 0; j < type->getModifications()[i].getEquipmentSize(); ++j) {
+                ss << endl << "Equipment: " << type->getModifications()[i].getEquipment(j);
             }
         }
     }

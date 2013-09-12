@@ -492,7 +492,7 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
                 for (int j = 0; j < amount; ++j) {
                     Equipment newEquipment;
                     equipment.push_back(newEquipment);
-                    equipment[k].init(1, 0, type, type);
+                    equipment[k].init(1, 0, type, 0);
                     ++k;
                 }
             }

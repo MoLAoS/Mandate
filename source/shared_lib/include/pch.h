@@ -35,17 +35,16 @@
 #		error USE_SDL is not compatible with WIN32 or WIN64
 #	endif
 // new stuff
+#include <malloc.h>
 #define _CRTDBG_MAP_ALLOC
 #include <stdlib.h>
 #include <crtdbg.h>
-#include <malloc.h>
 //----
 #	if _GAE_USE_XAUDIO2_
 #		include <xaudio2.h>
 #	endif
 #	define NOMINMAX // see http://support.microsoft.com/kb/143208
 #	include <windows.h>
-#	include <crtdbg.h>
 #else
 #	include <unistd.h>
 #	include <signal.h>
@@ -147,6 +146,13 @@
 //#	include <glprocs.h>
 #	include <winsock.h>
 #	include <dsound.h>
+#endif
+
+#ifdef _DEBUG
+    #ifndef DBG_NEW
+        #define DBG_NEW new( _NORMAL_BLOCK , __FILE__ , __LINE__ )
+        #define new DBG_NEW
+    #endif
 #endif
 
 using std::string;

@@ -196,8 +196,10 @@ public:
     void equipItem(int ident);
     void unequipItem(int ident);
     void consumeItem(int ident);
-    Storage getStorage() const {return storage;}
-    Storage getEquipment() const {return equipment;}
+    const Equipment *getStorage(int i) const {return &storage[i];}
+    int getStorageSize() const {return storage.size();}
+    const Equipment *getEquipment(int i) const {return &equipment[i];}
+    int getEquipmentSize() const {return equipment.size();}
 /**< system for items */
 
 private:

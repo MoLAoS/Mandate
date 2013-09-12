@@ -1,0 +1,106 @@
+;
+; Unit names and tips
+;
+aerodrome=Aerodrome
+aerodrome_info=Produces air units. Can only be built by a Technician.
+air_ballista=Air Ballista
+air_ballista_info=Anti-air defensive structure.
+airship=Airship
+airship_info=Heavy air unit. Devastating against ground units. Slow and unable to attack air-to-air.
+archer=Archer
+archer_info=Basic ranged warrior. Low resistance but good attack to ground and air. Weak against melee units.
+barracks=Barracks
+barracks_info=Produces human warriors.
+battle_machine=Battle Machine
+battle_machine_info=Ultimate ground unit, can perform devastating melee attacks. Very resistant. Can also attack air using a crossbow. Slow speed.
+blacksmith=Blacksmith
+blacksmith_info=Upgrades weapons and shields. Required to build the Technodrome.
+castle=Castle
+castle_info=Main structure. Can store resources and produce Workers. Can upgrade Training Field.
+catapult=Catapult
+catapult_info=Slow but equipped with a powerful attack that is especially effective against buildings.
+cow=Cow
+cow_info=Provides more food but it is more expensive.
+defense_tower=Defence Tower
+defense_tower_info=Ground-to-ground and ground-to-air defensive unit.
+farm=Farm
+farm_info=Produces food and farm units.
+guard=Guard
+guard_info=Heavy melee warrior. Slow speed, highly resistant, and good attack to ground units.
+horseman=Horseman
+horseman_info=Fast melee warrior. High resistance and average piercing attack.
+ornithopter=Ornithopter
+ornithopter_info=Air unit, especially useful to counter other air units, but also able to attack to ground.
+pig=Pig
+pig_info=Provides food so warriors don't die of hunger.
+swordman=Swordsman
+swordman_info=Basic melee warrior. Average resistance, speed and attack to ground units. Can be upgraded to Guard.
+technician=Technician
+technician_info=Can build war machines and the Aerodrome. Capable of harvesting gold and healing other units.
+technodrome=Technodrome
+technodrome_info=Produces Technicians.
+worker=Worker
+worker_info=Can harvest any resources and build or repair most structures. Very weak. Can not attack.
+
+;
+; Upgrade names and tips
+;
+advanced_architecture=Advanced Architecture
+advanced_architecture_info=Allows the construction of defensive structures.
+blade_weapons=Blade Weapons
+blade_weapons_info=Increases Swordman and Guard attacks.
+piercing_weapons=Piercing Weapons
+piercing_weapons_info=Increases Archer and Horsemen attacks.
+robotics=Robotics
+robotics_info=Allow the construction of Battle Machines and Airships.
+shield_level_1=Shield Level 1
+shield_level_1_info=Increases Swordman, Guard, and Horseman armor.
+shield_level_2=Shield Level 2
+shield_level_2_info=Further increases Swordman, Guard, and Horseman armor.
+stables=Stables
+stables_info=Allow the production of Horsemen.
+training_field=Training Field
+training_field_info=Increases Barracks production speed and allows warriors to hold position.
+
+;
+; Custom command names
+;
+produce_ornithopter=Produce Ornithopter
+produce_airship=Produce Airship
+attack_on=Attack On
+attack_off=Attack Off
+missile=Missile
+hold_position=Hold Position
+produce_swordman=Produce Swordsman
+produce_archer=Produce Archer
+produce_guard=Produce Guard
+produce_horseman=Produce Horseman
+create_training_field=Create Training Field
+attack_arrow=Arrow Attack
+produce_worker=Produce Worker
+fire_ball=Fire Ball
+produce_pig=Produce Pig
+produce_cow=Produce Cow
+research_stables=Research Stables
+molotov=Molotov
+fire_arrow=Fire Arrow
+promote_to_guard=Promote to Guard
+build_ultimate=Build Ultimate
+heal=Heal
+mine_gold=Mine Gold
+build_catapult=Build Catapult
+build_battle_machine=Build Battle Machine
+build_air_ballista=Build Air Ballista
+produce_technician=Produce Technician
+research_advanced_architecture=Research Advanced Architecture
+research_robotics=Research Robotics
+build_basic=Build Basic
+build_advanced=Build Advanced
+mine=Mine
+harvest_wood=Harvest wood
+
+
+;
+; Levels
+;
+elite=Elite

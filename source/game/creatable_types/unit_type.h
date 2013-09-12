@@ -120,6 +120,8 @@ public:
     StarterItems getStarterItems() const {return starterItems;}
     ItemStores getItemStores() const {return itemStores;}
     Equipments getEquipment() const {return equipment;}
+    const Equipment *getEquipment(int i) const {return &equipment[i];}
+    int getEquipmentSize() const {return equipment.size();}
     bool getIsLeader() const {return isLeader;}
     bool getIsMage() const {return isMage;}
     bool getIsHero() const {return isHero;}
@@ -141,6 +143,8 @@ private:
 	bool m_hasProjectileAttack;
 public:
     ResourceStores getResourceStores() const {return resourceStores;}
+    int getResourceStoreCount() const {return resourceStores.size();}
+    const ResourceStore *getResourceStore(int i) const {return &resourceStores[i];}
 
 	static ProducibleClass typeClass() { return ProducibleClass::UNIT; }
 	UnitType();

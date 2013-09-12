@@ -397,11 +397,10 @@ bool Choice::load(const XmlNode *baseNode, const string &dir, const TechTree *te
 			for(int i = 0; i < equipmentNode->getChildCount(); ++i) {
                 try {
                     const XmlNode *typeNode = equipmentNode->getChild("equipment-type", i);
-                    string name = typeNode->getAttribute("name")->getRestrictedValue();
                     string type = typeNode->getAttribute("type")->getRestrictedValue();
                     int number = typeNode->getAttribute("amount")->getIntValue();
                     Equipment newEquipment;
-                    newEquipment.init(number, 0, name, type);
+                    newEquipment.init(number, 0, type, 0);
                     gear.push_back(newEquipment);
                 } catch (runtime_error e) {
                     g_logger.logXmlError(dir, e.what());

@@ -97,6 +97,9 @@
       <resources-stored>
         <resource name="wealth" amount="100000"/>
       </resources-stored>
+      <starter-resources>
+        <resource name="wealth" amount="500"/>
+      </starter-resources>
     </resource-production>
     <actions>
       <skills>

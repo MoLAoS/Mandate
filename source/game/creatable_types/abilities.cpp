@@ -64,11 +64,12 @@ void UnitsOwned::init(const UnitType *ut, int owned, int limit) {
 // =====================================================
 // 	class Equipment
 // =====================================================
-void Equipment::init(int newMax, int newCurrent, string newName, string newTypeTag) {
+void Equipment::init(int newMax, int newCurrent, string newTypeTag, const ItemType *newItemType, Item *newItem) {
     max = newMax;
     current = newCurrent;
     typeTag = newTypeTag;
-    name = newName;
+    itemType = newItemType;
+    item = newItem;
 }
 
 void Equipment::getDesc(string &str, const char *pre, string name) {

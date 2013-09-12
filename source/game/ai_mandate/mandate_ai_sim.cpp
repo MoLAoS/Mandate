@@ -64,14 +64,12 @@ Focus MandateAISim::getTopGoal(Unit *unit, string personality) {
                         topGoal = goal;
                         return topGoal;
                     }
-                }
-                if (goalName == Goal::BUILD) {
+                } else if (goalName == Goal::BUILD) {
                     if (goalSystem.findBuilding(unit) != NULL) {
                         topGoal = goal;
                         return topGoal;
                     }
-                }
-                if (goalName == Goal::COLLECT) {
+                } else if (goalName == Goal::COLLECT) {
                     if (topGoal.getImportance() != NULL) {
                         if (goalImportance > topGoal.getImportance()) {
                             topGoal = goal;
@@ -79,21 +77,19 @@ Focus MandateAISim::getTopGoal(Unit *unit, string personality) {
                     } else {
                         topGoal = goal;
                     }
-                }
-                if (goalName == Goal::TRANSPORT) {
+                } else if (goalName == Goal::TRANSPORT) {
                     Unit *producer = NULL;
                     producer = goalSystem.findProducer(unit);
                     if (producer != NULL) {
                         topGoal = goal;
                     }
-                }
-                if (goalName == Goal::TRADE) {
+                } else if (goalName == Goal::TRADE) {
                     const ResourceType *rt = NULL;
                     int minWealth = 0;
-                    for (int j = 0; j < unit->owner->getType()->getResourceStores().size(); ++j) {
-                        if (unit->owner->getType()->getResourceStores()[j].getType()->getName() == "wealth") {
-                            minWealth = unit->owner->getType()->getResourceStores()[j].getAmount();
-                            rt = unit->owner->getType()->getResourceStores()[j].getType();
+                    for (int j = 0; j < unit->owner->getType()->getResourceStoreCount(); ++j) {
+                        if (unit->owner->getType()->getResourceStore(j)->getType() == g_world.getTechTree()->getResourceType("wealth")) {
+                            minWealth = unit->owner->getType()->getResourceStore(j)->getAmount();
+                            rt = unit->owner->getType()->getResourceStore(j)->getType();
                         }
                     }
                     int freeWealth = unit->owner->getSResource(rt)->getAmount() - minWealth;
@@ -107,8 +103,7 @@ Focus MandateAISim::getTopGoal(Unit *unit, string personality) {
                             topGoal = goal;
                         }
                     }
-                }
-                if (goalName == Goal::EXPLORE) {
+                } else if (goalName == Goal::EXPLORE) {
                     if (topGoal.getImportance() != NULL) {
                         if (goalImportance > topGoal.getImportance()) {
                             topGoal = goal;
@@ -116,8 +111,7 @@ Focus MandateAISim::getTopGoal(Unit *unit, string personality) {
                     } else {
                         topGoal = goal;
                     }
-                }
-                if (goalName == Goal::SHOP) {
+                } else if (goalName == Goal::SHOP) {
                     if (topGoal.getImportance() != NULL) {
                         if (goalSystem.findShop(unit) != NULL) {
                             int goldOwned = unit->getSResource(g_world.getTechTree()->getResourceType("wealth"))->getAmount();
@@ -129,8 +123,7 @@ Focus MandateAISim::getTopGoal(Unit *unit, string personality) {
                     } else {
                         topGoal = goal;
                     }
-                }
-                if (goalName == Goal::DEMOLISH) {
+                } else if (goalName == Goal::DEMOLISH) {
                     if (topGoal.getImportance() != NULL) {
                         int importanceRaid = 0;
                         Vec2i tPos = Vec2i(0,0);
@@ -151,8 +144,7 @@ Focus MandateAISim::getTopGoal(Unit *unit, string personality) {
                     } else {
                         topGoal = goal;
                     }
-                }
-                if (goalName == Goal::RAID) {
+                } else if (goalName == Goal::RAID) {
                     if (topGoal.getImportance() != NULL) {
                         int importanceRaid = 0;
                         Vec2i tPos = Vec2i(0,0);
@@ -173,8 +165,7 @@ Focus MandateAISim::getTopGoal(Unit *unit, string personality) {
                     } else {
                         topGoal = goal;
                     }
-                }
-                if (goalName == Goal::HUNT) {
+                } else if (goalName == Goal::HUNT) {
                     if (topGoal.getImportance() != NULL) {
                         int importanceHunt = 0;
                         Vec2i tPos = Vec2i(0,0);
@@ -195,8 +186,7 @@ Focus MandateAISim::getTopGoal(Unit *unit, string personality) {
                     } else {
                         topGoal = goal;
                     }
-                }
-                if (goalName == Goal::ATTACK) {
+                } else if (goalName == Goal::ATTACK) {
                     if (unit->attackers.size() > 0) {
                         if (topGoal.getImportance() != NULL) {
                             int importanceAttack = unit->attackers.size() * 5;
@@ -207,8 +197,7 @@ Focus MandateAISim::getTopGoal(Unit *unit, string personality) {
                             topGoal = goal;
                         }
                     }
-                }
-                if (goalName == Goal::DEFEND) {
+                } else if (goalName == Goal::DEFEND) {
                     if (unit->owner->attackers.size() > 0) {
                         if (topGoal.getImportance() != NULL) {
                             Vec2i uPos = unit->getPos();
@@ -227,8 +216,7 @@ Focus MandateAISim::getTopGoal(Unit *unit, string personality) {
                             topGoal = goal;
                         }
                     }
-                }
-                if (goalName == Goal::BUFF) {
+                } else if (goalName == Goal::BUFF) {
                     if (topGoal.getImportance() != NULL) {
                         if (goalImportance > topGoal.getImportance()) {
                             topGoal = goal;
@@ -236,8 +224,7 @@ Focus MandateAISim::getTopGoal(Unit *unit, string personality) {
                     } else {
                         topGoal = goal;
                     }
-                }
-                if (goalName == Goal::HEAL) {
+                } else if (goalName == Goal::HEAL) {
                     if (topGoal.getImportance() != NULL) {
                         if (goalImportance > topGoal.getImportance()) {
                             topGoal = goal;
@@ -245,8 +232,7 @@ Focus MandateAISim::getTopGoal(Unit *unit, string personality) {
                     } else {
                         topGoal = goal;
                     }
-                }
-                if (goalName == Goal::SPELL) {
+                } else if (goalName == Goal::SPELL) {
                     if (topGoal.getImportance() != NULL) {
                         if (goalImportance > topGoal.getImportance()) {
                             topGoal = goal;
@@ -254,8 +240,7 @@ Focus MandateAISim::getTopGoal(Unit *unit, string personality) {
                     } else {
                         topGoal = goal;
                     }
-                }
-                if (goalName == Goal::REST) {
+                } else if (goalName == Goal::REST) {
                     if (topGoal.getImportance() != NULL) {
                         if (goalImportance > topGoal.getImportance()) {
                             topGoal = goal;

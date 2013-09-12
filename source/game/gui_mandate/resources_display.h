@@ -68,7 +68,7 @@ struct ResourcesDisplayButton  {
 class ResourcesWindow : public Widget, public MouseWidget, public ImageWidget, public TextWidget {
 public:
 	static const int cellWidthCount = 6;
-	static const int cellHeightCount = 4;
+	static const int cellHeightCount = 8;
 	static const int resourceCellCount = cellWidthCount * cellHeightCount;
 	static const int invalidIndex = -1;
 private:

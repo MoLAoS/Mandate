@@ -3,16 +3,16 @@
   <!-- *** parameters *** -->
   <parameters>
     <type-tag type="melee_weapon"/>
-    <tier value="1"/>
+    <tier value="2"/>
   </parameters>
   <creatable-type>
     <size value="0"/>
     <height value="0"/>
-    <enhancement>
-      <static-modifiers>
-	<attack-strength value="2" additive="0"/>
-      </static-modifiers>
-    </enhancement>
+    <statistics>
+		<damage-types>
+			<damage-type type="slashing" value="10"/>
+		</damage-types>
+    </statistics>
     <producible>
       <time value="10"/>
       <properties/>

@@ -33,6 +33,8 @@ public:
 	const FactionType* getFactionType() const { return m_factionType; }
     string getModificationName() const {return name;}
     Equipment getEquipment() const {return equipment;}
+    string getEquipment(int i) const {return equipment[i];}
+    int getEquipmentSize() const {return equipment.size();}
     string getService() const {return service;}
     int getCostCount() const {return costs.size();}
     ResourceAmount getCost(int i) const {return costs[i];}

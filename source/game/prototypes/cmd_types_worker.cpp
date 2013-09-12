@@ -1466,15 +1466,15 @@ void TradeCommandType::subDesc(const Unit *unit, CmdDescriptor *callback, ProdTy
 }
 
 void TradeCommandType::goToGuild(Unit *unit, Unit *home, Unit *guild) const {
-    for (int i = 0; i < home->getType()->getResourceStores().size(); ++i) {
-        const ResourceType *requiredType = home->getType()->getResourceStores()[i].getType();
+    for (int i = 0; i < home->getType()->getResourceStoreCount(); ++i) {
+        const ResourceType *requiredType = home->getType()->getResourceStore(i)->getType();
         for (int k = 0; k < guild->getType()->getResourceProductionSystem()->getStoredResourceCount(); ++k) {
             const ResourceType *guildType = guild->getType()->getResourceProductionSystem()->getStoredResource(k, guild->getFaction()).getType();
             if (requiredType == guildType && requiredType->getName() != "wealth") {
                 bool status = false;
-                for (int j = 0; j < guild->getType()->getResourceStores().size(); ++j) {
-                    if (guild->getType()->getResourceStores()[j].getType() == guildType) {
-                        if (guild->getType()->getResourceStores()[j].getStatus() == "stockpile") {
+                for (int j = 0; j < guild->getType()->getResourceStoreCount(); ++j) {
+                    if (guild->getType()->getResourceStore(j)->getType() == guildType) {
+                        if (guild->getType()->getResourceStore(j)->getStatus() == "stockpile") {
                             status = true;
                             break;
                         }
@@ -1482,23 +1482,23 @@ void TradeCommandType::goToGuild(Unit *unit, Unit *home, Unit *guild) const {
                 }
                 if (!status) {
                     int minWealth = 0;
-                    int tradeValue = 0;
+                    int tradeValue = 1;
                     int freeWealth = 0;
                     int available = 0;
-                    int required = home->getType()->getResourceStores()[i].getAmount();
+                    int required = home->getType()->getResourceStore(i)->getAmount();
                     int possessed = home->getSResource(requiredType)->getAmount();
                     int requiredAmount = required - possessed;
                     int resourceAmount = guild->getSResource(requiredType)->getAmount();
                     const ResourceType *rt = NULL;
-                    for (int j = 0; j < home->getType()->getResourceStores().size(); ++j) {
-                        if (home->getType()->getResourceStores()[j].getType()->getName() == "wealth") {
-                            minWealth = home->getType()->getResourceStores()[j].getAmount();
-                            rt = home->getType()->getResourceStores()[j].getType();
+                    for (int j = 0; j < home->getType()->getResourceStoreCount(); ++j) {
+                        if (home->getType()->getResourceStore(j)->getType()->getName() == "wealth") {
+                            minWealth = home->getType()->getResourceStore(j)->getAmount();
+                            rt = home->getType()->getResourceStore(j)->getType();
                         }
                     }
-                    for (int j = 0; j < unit->getFaction()->getType()->getResourceTrades().size(); ++j) {
-                        if (unit->getFaction()->getType()->getResourceTrades()[j].getType() == requiredType) {
-                            tradeValue = unit->getFaction()->getType()->getResourceTrades()[j].getAmount();
+                    for (int j = 0; j < unit->getFaction()->getType()->getResourceTradeCount(); ++j) {
+                        if (unit->getFaction()->getType()->getResourceTrade(j)->getType() == requiredType) {
+                            tradeValue = unit->getFaction()->getType()->getResourceTrade(j)->getAmount();
                         }
                     }
                     if (home->getType()->hasTag("fort")) {
@@ -1508,9 +1508,9 @@ void TradeCommandType::goToGuild(Unit *unit, Unit *home, Unit *guild) const {
                     }
                     if (!guild->getType()->hasTag("shop")) {
                         available = resourceAmount;
-                        for (int q = 0; q < guild->getType()->getResourceStores().size(); ++q) {
-                            if (guild->getType()->getResourceStores()[q].getType() == requiredType) {
-                                int free = resourceAmount - guild->getType()->getResourceStores()[q].getAmount();
+                        for (int q = 0; q < guild->getType()->getResourceStoreCount(); ++q) {
+                            if (guild->getType()->getResourceStore(q)->getType() == requiredType) {
+                                int free = resourceAmount - guild->getType()->getResourceStore(q)->getAmount();
                                 if (free >= 10) {
                                     available = free;
                                 }

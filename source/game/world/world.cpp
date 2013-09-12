@@ -640,9 +640,9 @@ void World::computeProduction() {
                     for (int d = 0; d < process.items.size(); ++d) {
                         for (int e = 0; e < unit->getType()->getItemStores().size(); ++e) {
                             if (process.items[d].getType() == unit->getType()->getItemStores()[e].getType()) {
-                                for (int f = 0; f < unit->getStorage().size(); ++f) {
-                                    if (process.items[d].getType()->getName() == unit->getStorage()[f].getName())  {
-                                        if (unit->getStorage()[f].getCurrent() + process.items[d].getAmount() > unit->getType()->getItemStores()[e].getCap()) {
+                                for (int f = 0; f < unit->getStorageSize(); ++f) {
+                                    if (process.items[d].getType() == unit->getStorage(f)->getType())  {
+                                        if (unit->getStorage(f)->getCurrent() + process.items[d].getAmount() > unit->getType()->getItemStores()[e].getCap()) {
                                             toUpdate = false;
                                             break;
                                         }
@@ -665,9 +665,9 @@ void World::computeProduction() {
                         for (int d = 0; d < process.items.size(); ++d) {
                             for (int e = 0; e < unit->getType()->getItemStores().size(); ++e) {
                                 if (process.items[d].getType() == unit->getType()->getItemStores()[e].getType()) {
-                                    for (int f = 0; f < unit->getStorage().size(); ++f) {
-                                        if (process.items[d].getType()->getName() == unit->getStorage()[f].getName())  {
-                                            if (unit->getStorage()[f].getCurrent() + process.items[d].getAmount() > unit->getType()->getItemStores()[e].getCap()) {
+                                    for (int f = 0; f < unit->getStorageSize(); ++f) {
+                                        if (process.items[d].getType() == unit->getStorage(f)->getType())  {
+                                            if (unit->getStorage(f)->getCurrent() + process.items[d].getAmount() > unit->getType()->getItemStores()[e].getCap()) {
                                                 toUpdate = false;
                                                 break;
                                             }
@@ -691,9 +691,9 @@ void World::computeProduction() {
                         for (int d = 0; d < process.items.size(); ++d) {
                             for (int e = 0; e < unit->getType()->getItemStores().size(); ++e) {
                                 if (process.items[d].getType() == unit->getType()->getItemStores()[e].getType()) {
-                                    for (int f = 0; f < unit->getStorage().size(); ++f) {
-                                        if (process.items[d].getType()->getName() == unit->getStorage()[f].getName())  {
-                                            if (unit->getStorage()[f].getCurrent() + process.items[d].getAmount() > unit->getType()->getItemStores()[e].getCap()) {
+                                    for (int f = 0; f < unit->getStorageSize(); ++f) {
+                                        if (process.items[d].getType() == unit->getStorage(f)->getType())  {
+                                            if (unit->getStorage(f)->getCurrent() + process.items[d].getAmount() > unit->getType()->getItemStores()[e].getCap()) {
                                                 toUpdate = false;
                                                 break;
                                             }
@@ -715,9 +715,9 @@ void World::computeProduction() {
                     bool updating = true;
                     for (int e = 0; e < unit->getType()->getItemStores().size(); ++e) {
                         if (createdItem.getType() == unit->getType()->getItemStores()[e].getType()) {
-                            for (int f = 0; f < unit->getStorage().size(); ++f) {
-                                if (createdItem.getType()->getName() == unit->getStorage()[f].getName())  {
-                                    if (unit->getStorage()[f].getCurrent() + createdItem.getAmount() > unit->getType()->getItemStores()[e].getCap()) {
+                            for (int f = 0; f < unit->getStorageSize(); ++f) {
+                                if (createdItem.getType() == unit->getStorage(f)->getType())  {
+                                    if (unit->getStorage(f)->getCurrent() + createdItem.getAmount() > unit->getType()->getItemStores()[e].getCap()) {
                                         updating = false;
                                     }
                                 }
@@ -737,9 +737,9 @@ void World::computeProduction() {
                         bool updating = true;
                         for (int e = 0; e < unit->getType()->getItemStores().size(); ++e) {
                             if (createdItem.getType() == unit->getType()->getItemStores()[e].getType()) {
-                                for (int f = 0; f < unit->getStorage().size(); ++f) {
-                                    if (createdItem.getType()->getName() == unit->getStorage()[f].getName())  {
-                                        if (unit->getStorage()[f].getCurrent() + createdItem.getAmount() > unit->getType()->getItemStores()[e].getCap()) {
+                                for (int f = 0; f < unit->getStorageSize(); ++f) {
+                                    if (createdItem.getType() == unit->getStorage(f)->getType())  {
+                                        if (unit->getStorage(f)->getCurrent() + createdItem.getAmount() > unit->getType()->getItemStores()[e].getCap()) {
                                             updating = false;
                                         }
                                     }
@@ -760,9 +760,9 @@ void World::computeProduction() {
                         bool updating = true;
                         for (int e = 0; e < unit->getType()->getItemStores().size(); ++e) {
                             if (createdItem.getType() == unit->getType()->getItemStores()[e].getType()) {
-                                for (int f = 0; f < unit->getStorage().size(); ++f) {
-                                    if (createdItem.getType()->getName() == unit->getStorage()[f].getName())  {
-                                        if (unit->getStorage()[f].getCurrent() + createdItem.getAmount() > unit->getType()->getItemStores()[e].getCap()) {
+                                for (int f = 0; f < unit->getStorageSize(); ++f) {
+                                    if (createdItem.getType() == unit->getStorage(f)->getType())  {
+                                        if (unit->getStorage(f)->getCurrent() + createdItem.getAmount() > unit->getType()->getItemStores()[e].getCap()) {
                                             updating = false;
                                         }
                                     }

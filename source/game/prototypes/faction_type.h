@@ -84,6 +84,8 @@ public:
     const CitizenNeeds *getCitizenNeeds() const {return &citizenNeeds;}
 
     ResourceTrades getResourceTrades() const {return resourceTrades;}
+    int getResourceTradeCount() const {return resourceTrades.size();}
+    const ResourceAmount *getResourceTrade(int i) const {return &resourceTrades[i];}
     Personalities getPersonalities() const {return personalities;}
     Modifications getModifications() const {return modifications;}
     FactionTypeNames getFactionTypeNames() const {return factionTypeNames;}

@@ -383,17 +383,10 @@ void ItemWindow::computeEquipmentPanel() {
         const Unit *u = m_ui->getSelection()->getFrontUnit();
         const FactionType *ft = u->getFaction()->getType();
         if (u->isBuilt()) {
-            for (int i = 0; i < u->getType()->getEquipment().size(); ++i) {
+            for (int i = 0; i < u->getEquipmentSize(); ++i) {
                 const Texture2D *image = ft->getItemImage(0);
-                string name = u->getType()->getEquipment()[i].getTypeTag();
-                if (u->getEquipment()[i].getCurrent() == 1) {
-                    name = u->getEquipment()[i].getName();
-                    for (int j = 0; j < u->getEquippedItems().size(); ++j) {
-                        if (u->getEquipment()[i].getName() == u->getEquippedItem(j)->getType()->getName()) {
-                            image = u->getEquippedItem(j)->getType()->getImage();
-                            break;
-                        }
-                    }
+                if (u->getEquipment(i)->getCurrent() == 1) {
+                    image = u->getEquipment(i)->getItem()->getType()->getImage();
                 }
                 setDownImage(i + buttonCellCount, image);
                 setDownLighted(i + buttonCellCount, true);
@@ -404,27 +397,11 @@ void ItemWindow::computeEquipmentPanel() {
 
 void ItemWindow::computeEquipmentInfo(int posDisplay) {
     const Unit *u = m_ui->getSelection()->getFrontUnit();
-    string name = u->getType()->getEquipment()[posDisplay].getTypeTag();
-    string body = "";
-    if (u->getEquipment()[posDisplay].getCurrent() == 1) {
-        name = u->getEquipment()[posDisplay].getName();
-        int kind = 0;
-        for (int i = 0; i < u->getEquipment().size(); ++i) {
-            if (u->getEquipment()[i].getName() == name) {
-                ++kind;
-                if (i == posDisplay) {
-                    break;
-                }
-            }
-        }
-        for (int i = 0; i < u->getEquippedItems().size(); ++i) {
-            if (u->getEquippedItem(i)->getType()->getName() == name) {
-                --kind;
-                if (kind == 0) {
-                    body = u->getEquippedItem(i)->getLongDesc();
-                }
-            }
-        }
+    string name = u->getEquipment(posDisplay)->getTypeTag();
+    string body = intToStr(u->getEquipment(posDisplay)->getCurrent());
+    if (u->getEquipment(posDisplay)->getCurrent() == 1) {
+        name = u->getEquipment(posDisplay)->getItem()->getType()->getName();
+        body = u->getEquipment(posDisplay)->getItem()->getLongDesc();
     }
     setToolTipText2(name, body, ItemDisplaySection::EQUIPMENT);
 }
@@ -435,7 +412,7 @@ void ItemWindow::equipmentButtonPressed(int posDisplay) {
             const Unit *u = m_ui->getSelection()->getFrontUnit();
             Unit *unit = g_world.findUnitById(u->getId());
             for (int i = 0; i < u->getEquippedItems().size(); ++i) {
-                if (u->getEquipment()[posDisplay].getName() == u->getEquippedItem(i)->getType()->getName()) {
+                if (u->getEquipment(posDisplay)->getItem() == u->getEquippedItem(i)) {
                     unit->unequipItem(i);
                     break;
                 }
@@ -451,15 +428,15 @@ void ItemWindow::inventoryButtonPressed(int posDisplay) {
         Unit *unit = g_world.findUnitById(u->getId());
         if (equipping == true) {
             for (int i = 0; i < u->getStoredItems().size(); ++i) {
-                if (u->getStorage()[posDisplay].getName() == u->getStoredItem(i)->getType()->getName()) {
+                if (u->getStorage(posDisplay)->getType() == u->getStoredItem(i)->getType()) {
                     unit->equipItem(i);
                     break;
                 }
             }
             equipping = false;
-        } else if (u->getStorage()[posDisplay].getTypeTag() == "consumable") {
+        } else if (u->getStorage(posDisplay)->getTypeTag() == "consumable") {
             for (int i = 0; i < u->getStoredItems().size(); ++i) {
-                if (u->getStorage()[posDisplay].getName() == u->getStoredItem(i)->getType()->getName()) {
+                if (u->getStorage(posDisplay)->getType() == u->getStoredItem(i)->getType()) {
                     unit->consumeItem(i);
                     break;
                 }
@@ -472,9 +449,9 @@ void ItemWindow::computeInventoryPanel() {
     if (m_ui->getSelection()->isComandable()) {
         const Unit *u = m_ui->getSelection()->getFrontUnit();
         if (u->isBuilt()) {
-            for (int i = 0; i < u->getStorage().size(); ++i) {
+            for (int i = 0; i < u->getStorageSize(); ++i) {
                 if (i < 24) {
-                const ItemType *type = u->getFaction()->getType()->getItemType(u->getStorage()[i].getName());
+                const ItemType *type = u->getStorage(i)->getType();
                 setDownImage(i + buttonCellCount + equipmentCellCount, type->getImage());
                 setDownLighted(i + buttonCellCount + equipmentCellCount, true);
                 }
@@ -486,10 +463,10 @@ void ItemWindow::computeInventoryPanel() {
 void ItemWindow::computeInventoryInfo(int posDisplay) {
     if (m_ui->getSelection()->isComandable()) {
         const Unit *u = m_ui->getSelection()->getFrontUnit();
-        const ItemType *type = u->getFaction()->getType()->getItemType(u->getStorage()[posDisplay].getName());
+        const ItemType *type = u->getStorage(posDisplay)->getType();
         stringstream ss;
-        ss << u->getStorage()[posDisplay].getCurrent();
-        string name = type->getName()+ " (" + u->getStorage()[posDisplay].getTypeTag() + ") " + ": " + ss.str();
+        ss << u->getStorage(posDisplay)->getCurrent();
+        string name = type->getName()+ " (" + u->getStorage(posDisplay)->getTypeTag() + ") " + ": " + ss.str();
         setToolTipText2(name, "", ItemDisplaySection::INVENTORY);
     }
 }

@@ -430,7 +430,12 @@ void ProductionWindow::computeProcessPanel() {
         const Unit *u = m_ui->getSelection()->getFrontUnit();
         if (u->isBuilt()) {
             for (int i = 0; i < u->getType()->getProcessProductionSystem()->getProcessCount(); ++i) {
-                const Texture2D *image = u->getType()->getProcessProductionSystem()->getProcess(i, u->getFaction()).products[0].getType()->getImage();
+                const Texture2D *image = NULL;
+                if (u->getType()->getProcessProductionSystem()->getProcess(i, u->getFaction()).products.size() > 0) {
+                    image = u->getType()->getProcessProductionSystem()->getProcess(i, u->getFaction()).products[0].getType()->getImage();
+                } else if (u->getType()->getProcessProductionSystem()->getProcess(i, u->getFaction()).items.size() > 0) {
+                    image = u->getType()->getProcessProductionSystem()->getProcess(i, u->getFaction()).items[0].getType()->getImage();
+                }
                 setDownImage(i + resourceCellCount + itemCellCount, image);
             }
         }

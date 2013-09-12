@@ -100,15 +100,17 @@ void GoalSystem::ownerLoad(Unit *unit) {
                     unit->giveCommand(g_world.newCommand(ct, CmdFlags(), pos));
                 }
                 Unit *home = unit->owner;
-                for (int i = 0; i < unit->getType()->getResourceProductionSystem()->getStoredResourceCount(); ++i) {
-                    const ResourceType *rt = unit->getType()->getResourceProductionSystem()->getStoredResource(i, unit->getFaction()).getType();
-                    int carried = unit->getSResource(rt)->getAmount();
-                    if (carried > 0) {
-                        unit->incResourceAmount(rt, -carried);
-                        if (!home->getType()->hasTag("fort")) {
-                            home->incResourceAmount(rt, carried);
-                        } else if (home->getType()->hasTag("fort")) {
-                            home->getFaction()->incResourceAmount(rt, carried);
+                if (!unit->getType()->hasTag("ordermember")) {
+                    for (int i = 0; i < unit->getType()->getResourceProductionSystem()->getStoredResourceCount(); ++i) {
+                        const ResourceType *rt = unit->getType()->getResourceProductionSystem()->getStoredResource(i, unit->getFaction()).getType();
+                        int carried = unit->getSResource(rt)->getAmount();
+                        if (carried > 0) {
+                            unit->incResourceAmount(rt, -carried);
+                            if (!home->getType()->hasTag("fort")) {
+                                home->incResourceAmount(rt, carried);
+                            } else if (home->getType()->hasTag("fort")) {
+                                home->getFaction()->incResourceAmount(rt, carried);
+                            }
                         }
                     }
                 }
@@ -136,12 +138,13 @@ void GoalSystem::ownerUnload(Unit *unit) {
 void GoalSystem::shop(Unit *unit) {
     Unit *shop = unit->getGoalStructure();
     if (shop != NULL) {
-        for (int i = 0; i < unit->getEquipment().size(); ++i) {
-            string typeTag = unit->getEquipment()[i].getTypeTag();
+        for (int i = 0; i < unit->getEquipmentSize(); ++i) {
+            string typeTag = unit->getEquipment(i)->getTypeTag();
             for (int j = 0; j < shop->getItemsStored(); ++j) {
                 string tagType = shop->getStoredItem(j)->getType()->getTypeTag();
+                int qualityTier = shop->getStoredItem(j)->getType()->getQualityTier();
                 if (tagType == typeTag) {
-                    if (unit->getEquipment()[i].getCurrent() == 0) {
+                    if (unit->getEquipment(i)->getCurrent() == 0 || qualityTier > unit->getEquipment(i)->getItem()->getType()->getQualityTier()) {
                         bool costs = true;
                         for (int m = 0; m < shop->getStoredItem(j)->getType()->getCostCount(); ++m) {
                             const ResourceType *rt = shop->getStoredItem(j)->getType()->getCost(m, unit->getFaction()).getType();
@@ -158,25 +161,26 @@ void GoalSystem::shop(Unit *unit) {
                                 int cost = shop->getStoredItem(j)->getType()->getCost(m, unit->getFaction()).getAmount();
                                 unit->incResourceAmount(rt, -cost);
                                 shop->incResourceAmount(rt, cost);
-                                int ident = shop->getStoredItem(j)->id;
-                                shop->accessStorageRemove(ident);
-                                unit->accessStorageAdd(ident);
-                                if (tagType == "consumable_buff") {
-                                    unit->consumeItem(unit->getStoredItems().size()-1);
-                                } else if (tagType != "consumable" && tagType != "consumable_buff") {
-                                    unit->equipItem(unit->getStoredItems().size()-1);
-                                }
                             }
+                            int ident = shop->getStoredItem(j)->id;
+                            shop->accessStorageRemove(ident);
+                            unit->accessStorageAdd(ident);
+                            if (tagType == "consumable_buff") {
+                                unit->consumeItem(unit->getStoredItems().size()-1);
+                            } else if (tagType != "consumable" && tagType != "consumable_buff") {
+                                unit->equipItem(unit->getStoredItems().size()-1);
+                            }
+                            break;
                         }
                     }
                 }
             }
         }
-        for (int i = 0; i < unit->getEquipment().size(); ++i) {
-            string typeTag = unit->getEquipment()[i].getTypeTag();
+        for (int i = 0; i < unit->getEquipmentSize(); ++i) {
+            string typeTag = unit->getEquipment(i)->getTypeTag();
             for (int j = 0; j < shop->getType()->getModifications().size(); ++j) {
                 for (int k = 0; k < shop->getType()->getModifications()[j].getEquipment().size(); ++k) {
-                    string tagType = shop->getType()->getModifications()[j].getEquipment()[k];
+                    string tagType = shop->getType()->getModifications()[j].getEquipment(k);
                     if (tagType == typeTag) {
                         bool costs = true;
                         for (int m = 0; m < shop->getType()->getModifications()[j].getCostCount(); ++m) {
@@ -253,9 +257,10 @@ Unit* GoalSystem::findShop(Unit *unit) {
                 for (int j = 0; j < building->getType()->getItemProductionSystem()->getCreatedItemCount(); ++j) {
                     const ItemType *itemType = building->getType()->getItemProductionSystem()->getCreatedItem(j, unit->getFaction()).getType();
                     string typeTag = itemType->getTypeTag();
+                    int tierLevel = itemType->getQualityTier();
                     bool stored = false;
-                    for (int l = 0; l < building->getStorage().size(); ++l) {
-                        if (building->getStorage()[l].getTypeTag() == typeTag && building->getStorage()[l].getCurrent() > 0) {
+                    for (int l = 0; l < building->getStorageSize(); ++l) {
+                        if (building->getStorage(l)->getTypeTag() == typeTag && building->getStorage(l)->getCurrent() > 0) {
                             bool costs = true;
                             for (int m = 0; m < itemType->getCostCount(); ++m) {
                                 const ResourceType *rt = itemType->getCost(m, unit->getFaction()).getType();
@@ -273,9 +278,9 @@ Unit* GoalSystem::findShop(Unit *unit) {
                         }
                     }
                     if (stored == true) {
-                        for (int k = 0; k < unit->getEquipment().size(); ++k) {
-                            if (typeTag == unit->getEquipment()[k].getTypeTag()) {
-                                if (unit->getEquipment()[k].getCurrent() == 0) {
+                        for (int k = 0; k < unit->getEquipmentSize(); ++k) {
+                            if (typeTag == unit->getEquipment(k)->getTypeTag()) {
+                                if (unit->getEquipment(k)->getCurrent() == 0 || tierLevel > 1) {
                                     distance = newDistance;
                                     finalPick = building;
                                     tPos = bPos;
@@ -285,13 +290,56 @@ Unit* GoalSystem::findShop(Unit *unit) {
                     }
                 }
             }
+            if (building->getType()->getProcessProductionSystem()->getProcessCount() > 0) {
+                for (int j = 0; j < building->getType()->getProcessProductionSystem()->getProcessCount(); ++j) {
+                    for (int l = 0; l < building->getType()->getProcessProductionSystem()->getProcess(j, unit->getFaction()).items.size(); ++l) {
+                        const ItemType *itemType = building->getType()->getProcessProductionSystem()->getProcess(j, unit->getFaction()).items[l].getType();
+                        string typeTag = itemType->getTypeTag();
+                        int tierLevel = itemType->getQualityTier();
+                        bool stored = false;
+                        for (int l = 0; l < building->getStorageSize(); ++l) {
+                            if (building->getStorage(l)->getTypeTag() == typeTag && building->getStorage(l)->getCurrent() > 0) {
+                                bool costs = true;
+                                for (int m = 0; m < itemType->getCostCount(); ++m) {
+                                    const ResourceType *rt = itemType->getCost(m, unit->getFaction()).getType();
+                                    int cost = itemType->getCost(m, unit->getFaction()).getAmount();
+                                    int gold = unit->getSResource(rt)->getAmount();
+                                    if (gold < cost) {
+                                        costs = false;
+                                        break;
+                                    }
+                                }
+                                if (costs == true) {
+                                    stored = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if (stored == true) {
+                            for (int k = 0; k < unit->getEquipmentSize(); ++k) {
+                                if (typeTag == unit->getEquipment(k)->getTypeTag()) {
+                                    if (unit->getEquipment(k)->getCurrent() == 0 || tierLevel > 1) {
+                                        distance = newDistance;
+                                        finalPick = building;
+                                        tPos = bPos;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            else {
+                            throw runtime_error("no shop");
+                        }
             if (building->getType()->getModifications().size() > 0) {
                 for (int j = 0; j < building->getType()->getModifications().size(); ++j) {
                     string service = building->getType()->getModifications()[j].getService();
                     if (service == "faction" || service == "guild" && building == unit->owner) {
-                        for (int k = 0; k < building->getType()->getModifications()[j].getEquipment().size(); ++k) {
-                            for (int l = 0; l < unit->getEquipment().size(); ++l) {
-                                if (unit->getEquipment()[l].getTypeTag() == building->getType()->getModifications()[j].getEquipment()[k]) {
+                        for (int k = 0; k < building->getType()->getModifications()[j].getEquipmentSize(); ++k) {
+                            for (int l = 0; l < unit->getEquipmentSize(); ++l) {
+                                if (unit->getEquipment(l)->getTypeTag() == building->getType()->getModifications()[j].getEquipment(k)) {
                                     bool owned = false;
                                     for (int m = 0; m < unit->modifications.size(); ++m) {
                                         if (unit->modifications[m].getModificationName() == building->getType()->getModifications()[j].getModificationName()) {
@@ -358,10 +406,10 @@ Unit* GoalSystem::findProducer(Unit* unit) {
             for (int k = 0; k < building->getType()->getResourceProductionSystem()->getStoredResourceCount(); ++k) {
                 const ResourceType *producedType = building->getType()->getResourceProductionSystem()->getStoredResource(k, building->getFaction()).getType();
                 int amount = building->getSResource(producedType)->getAmount();
-                for (int n = 0; n < building->getType()->getResourceStores().size(); ++n) {
-                    const ResourceType *resType = building->getType()->getResourceStores()[n].getType();
+                for (int n = 0; n < building->getType()->getResourceStoreCount(); ++n) {
+                    const ResourceType *resType = building->getType()->getResourceStore(n)->getType();
                     if (resType == producedType) {
-                        amount = amount - building->getType()->getResourceStores()[n].getAmount();
+                        amount = amount - building->getType()->getResourceStore(n)->getAmount();
                     }
                 }
                 if (amount > 50 && producedType->getName() != "wealth") {
@@ -406,7 +454,7 @@ Unit* GoalSystem::findGuild(Unit* unit) {
         if (unit->owner->getType()->hasTag("shop") && building->getType()->hasTag("guildhall")) {
             buy = true;
         }
-        if (unit->owner->getType()->hasTag("guildhall") && building->getType()->hasTag("guildhall")) {
+        if (unit->owner->getType()->hasTag("guildhall") && building->getType()->hasTag("guildhall") && unit->owner != building) {
             buy = true;
         }
         if (unit->owner->getType()->hasTag("guildhall") && building->getType()->hasTag("producer")) {
@@ -417,9 +465,9 @@ Unit* GoalSystem::findGuild(Unit* unit) {
                 const ResourceType *producedType = building->getType()->getResourceProductionSystem()->
                                                    getStoredResource(j, building->getFaction()).getType();
                 bool status = false;
-                for (int n = 0; n < building->getType()->getResourceStores().size(); ++n) {
-                    if (building->getType()->getResourceStores()[n].getType() == producedType) {
-                        if (building->getType()->getResourceStores()[n].getStatus() == "stockpile") {
+                for (int n = 0; n < building->getType()->getResourceStoreCount(); ++n) {
+                    if (building->getType()->getResourceStore(n)->getType() == producedType) {
+                        if (building->getType()->getResourceStore(n)->getStatus() == "stockpile") {
                             status = true;
                         }
                     }
@@ -433,19 +481,19 @@ Unit* GoalSystem::findGuild(Unit* unit) {
                                 const ResourceType *storedType = unit->owner->getType()->getResourceProductionSystem()->
                                                                  getStoredResource(l, unit->getFaction()).getType();
                                 if (producedType == storedType) {
-                                    for (int m = 0; m < unit->owner->getType()->getResourceStores().size(); ++m) {
-                                        const ResourceType *resType = unit->owner->getType()->getResourceStores()[m].getType();
+                                    for (int m = 0; m < unit->owner->getType()->getResourceStoreCount(); ++m) {
+                                        const ResourceType *resType = unit->owner->getType()->getResourceStore(m)->getType();
                                         if (producedType == resType) {
                                             int homeStored = unit->owner->getSResource(producedType)->getAmount();
-                                            int homeStores = unit->owner->getType()->getResourceStores()[m].getAmount();
+                                            int homeStores = unit->owner->getType()->getResourceStore(m)->getAmount();
                                             if (homeStored < homeStores) {
                                                 int available = 0;
                                                 int amount = building->getSResource(producedType)->getAmount();
                                                 if (!building->getType()->hasTag("shop")) {
                                                     available = amount;
-                                                    for (int n = 0; n < building->getType()->getResourceStores().size(); ++n) {
-                                                        if (building->getType()->getResourceStores()[n].getType() == producedType) {
-                                                            int free = amount - building->getType()->getResourceStores()[n].getAmount();
+                                                    for (int n = 0; n < building->getType()->getResourceStoreCount(); ++n) {
+                                                        if (building->getType()->getResourceStore(n)->getType() == producedType) {
+                                                            int free = amount - building->getType()->getResourceStore(n)->getAmount();
                                                             if (free >= 10) {
                                                                 available = free;
                                                             }

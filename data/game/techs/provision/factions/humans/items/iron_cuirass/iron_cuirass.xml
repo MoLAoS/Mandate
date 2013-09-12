@@ -10,9 +10,11 @@
     <height value="0"/>
     <statistics>
       <enhancement>
-        <static-modifiers>
-	  <max-hp value="20" additive="0"/>
-        </static-modifiers>
+	<resource-pools>
+	  <health name="health">
+	    <max-stat value="20"/>
+	  </health>
+	</resource-pools>
       </enhancement>
       <resistances>
         <resistance type="slashing" value="10"/>

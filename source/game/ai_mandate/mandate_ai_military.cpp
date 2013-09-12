@@ -7,7 +7,6 @@
 // ==============================================================
 
 #include "pch.h"
-#
 #include "mandate_ai_military.h"
 #include "mandate_ai_map.h"
 
