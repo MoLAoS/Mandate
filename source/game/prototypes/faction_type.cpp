@@ -411,8 +411,18 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 				loadOk = false;
 			}
 		}
-		string sovName = g_simInterface.getGameSettings().getSovereignType();
-		startingUnits.push_back(PairPUnitTypeInt(getUnitType(sovName), 1));
+		usesSovereign = false;
+        const XmlNode *usesSovereignNode = factionNode->getChild("uses-sovereign", 0, false);
+		if (usesSovereignNode) {
+            bool needsSovereign = usesSovereignNode->getAttribute("check")->getBoolValue();
+		    if (needsSovereign) {
+                string sovName = g_simInterface.getGameSettings().getSovereignType();
+		        if (sovName == "") {
+                    sovName= "ruler";
+		        }
+                startingUnits.push_back(PairPUnitTypeInt(getUnitType(sovName), 1));
+		    }
+		}
 	} catch (runtime_error e) {
 		g_logger.logXmlError(path, e.what());
 		loadOk = false;

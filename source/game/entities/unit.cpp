@@ -2116,7 +2116,7 @@ const CommandType *Unit::computeCommandType(const Vec2i &pos, const Unit *target
 			commandType = type->getActions()->getAttackCommand(targetUnit->getCurrZone());
 		} else if (targetUnit->getFactionIndex() == getFactionIndex()) {
 			const UnitType *tType = targetUnit->getType();
-			if (tType->isOfClass(UnitClass::CARRIER)) {
+			if (tType->isOfClass(UnitClass::CARRIER) && (!type->inhuman || type->inhuman && owner == targetUnit)) {
                 if (tType->getActions()->hasCommandClass(CmdClass::LOAD) &&
                         tType->getActions()->getCommandType<LoadCommandType>(0)->canCarry(type)) {
                     //move to be loaded
@@ -2130,7 +2130,7 @@ const CommandType *Unit::computeCommandType(const Vec2i &pos, const Unit *target
                     //move to be loaded
                     commandType = type->getActions()->getFirstCtOfClass(CmdClass::BE_LOADED);
                 }
-			} else if (getType()->isOfClass(UnitClass::CARRIER)) {
+			} else if (getType()->isOfClass(UnitClass::CARRIER) && (!type->inhuman || tType->inhuman && targetUnit->owner == this)) {
 			    if (type->getActions()->hasCommandClass(CmdClass::LOAD) &&
                            type->getActions()->getCommandType<LoadCommandType>(0)->canCarry(tType)) {
                     //load
@@ -3756,13 +3756,20 @@ bool Unit::morph(const MorphCommandType *mct, const UnitType *ut, Vec2i offset, 
 		map->clearUnitCells(this, pos);
 		faction->deApplyStaticCosts(type);
 		type = ut;
+		actions.clearActions();
+        for (int i =0; i < type->getActions()->getSkillTypeCount(); ++i) {
+            actions.addSkillType(type->getActions()->getSkillType(i));
+        }
+        for (int i =0; i < type->getActions()->getCommandTypeCount(); ++i) {
+            actions.addCommand(type->getActions()->getCommandType(i));
+        }
+        actions.sortSkillTypes();
+        actions.sortCommandTypes();
 		pos += offset;
 		computeTotalUpgrade();
 		map->putUnitCells(this, pos);
 		faction->giveRefund(ut, mct->getRefund());
 		faction->applyStaticProduction(ut);
-
-		// make sure the new UnitType has a CloakType before attempting to use it
 		if (type->getCloakType()) {
 			if (m_cloaked && oldCloakClass != ut->getCloakClass()) {
 				deCloak();
@@ -3773,29 +3780,20 @@ bool Unit::morph(const MorphCommandType *mct, const UnitType *ut, Vec2i offset, 
 		} else {
 			m_cloaked = false;
 		}
-
 		if (reprocessCommands) {
-			// reprocess commands
 			Commands newCommands;
 			Commands::const_iterator i;
-
-			// add current command, which should be the morph command
 			assert(commands.size() > 0
 				&& (commands.front()->getType()->getClass() == CmdClass::MORPH
 				|| commands.front()->getType()->getClass() == CmdClass::TRANSFORM));
 			newCommands.push_back(commands.front());
 			i = commands.begin();
 			++i;
-
-			// add (any) remaining if possible
 			for (; i != commands.end(); ++i) {
-				// first see if the new unit type has a command by the same name
 				const CommandType *newCmdType = type->getActions()->getCommandType((*i)->getType()->getName());
-				// if not, lets see if we can find any command of the same class
 				if (!newCmdType) {
 					newCmdType = type->getActions()->getFirstCtOfClass((*i)->getType()->getClass());
 				}
-				// if still not found, we drop the comand, otherwise, we add it to the new list
 				if (newCmdType) {
 					(*i)->setType(newCmdType);
 					newCommands.push_back(*i);

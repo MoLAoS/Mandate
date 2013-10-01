@@ -82,6 +82,11 @@ bool Actions::load(const XmlNode *actionsNode, const string &dir, bool isItem, c
     return loadOk;
 }
 
+void Actions::clearActions() {
+    commandTypes.clear();
+    skillTypes.clear();
+}
+
 void Actions::save(XmlNode *node) const {
     XmlNode *n;
     XmlNode *m;

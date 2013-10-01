@@ -1,7 +1,7 @@
 <skills type=no>
 	<actions>
 		<skills>
-			<skill faction="humans">
+			<skill faction="provision">
 				<type value="attack"/>
 				<name value="power_attack"/>
 				<ep-cost value="0"/>
@@ -28,7 +28,7 @@
 				<projectile value="false"/>
 				<splash value="false"/>
 			</skill>
-			<skill faction="humans">
+			<skill faction="provision">
 				<type value="move"/>
 				<name value="charge_skill"/>
 				<ep-cost value="0"/>
@@ -41,7 +41,7 @@
 			</skill>
 		</skills>
 		<commands>
-			<command faction="humans">
+			<command faction="provision">
 			    <type value="attack"/>
 			    <name value="heavy_attack"/>
 			    <image path="images/swordman_attack.bmp"/>
@@ -53,7 +53,7 @@
 			    <move-skill value="charge_skill"/>
 			    <attack-skill value="power_attack"/>
 			</command>
-			<command faction="humans">
+			<command faction="provision">
 			    <type value="attack"/>
 			    <name value="power_attack"/>
 			    <image path="images/swordman_attack.bmp"/>

@@ -1053,10 +1053,7 @@ int World::createUnit(const string &unitName, int factionIndex, const Vec2i &pos
 		return LuaCmdResult::INVALID_FACTION_INDEX;
 	}
 	Faction* faction = &factions[factionIndex];
-	const FactionType* ft;
-	for (int i = 0; i < getTechTree()->getFactionTypeCount(); ++i) {
-        ft = getTechTree()->getFactionType(i);
-	}
+	const FactionType* ft = faction->getType();
 	const UnitType* ut;
 	try{
 		ut = ft->getUnitType(unitName);

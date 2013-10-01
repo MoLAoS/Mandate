@@ -74,6 +74,7 @@ private:
 	UnitTypeSet loadableUnitTypes;
 	Pixmap2D *m_logoTeamColour, *m_logoRgba;
 	bool onHitExp;
+	bool usesSovereign;
 
 	string personalityDirectory;
     Personalities personalities;
@@ -91,6 +92,7 @@ public:
     FactionTypeNames getFactionTypeNames() const {return factionTypeNames;}
 
     bool getOnHitExp() const {return onHitExp;}
+    bool useSovereign() const {return usesSovereign;}
 	//init
 	FactionType();
 

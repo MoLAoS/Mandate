@@ -253,56 +253,18 @@ Unit* GoalSystem::findShop(Unit *unit) {
         Vec2i bPos = building->getCenteredPos();
         int newDistance = sqrt(pow(float(abs(uPos.x - bPos.x)), 2) + pow(float(abs(uPos.y - bPos.y)), 2));
         if (newDistance < distance) {
-            if (building->getType()->getItemProductionSystem()->getCreatedItemCount() > 0) {
-                for (int j = 0; j < building->getType()->getItemProductionSystem()->getCreatedItemCount(); ++j) {
-                    const ItemType *itemType = building->getType()->getItemProductionSystem()->getCreatedItem(j, unit->getFaction()).getType();
-                    string typeTag = itemType->getTypeTag();
-                    int tierLevel = itemType->getQualityTier();
-                    bool stored = false;
-                    for (int l = 0; l < building->getStorageSize(); ++l) {
-                        if (building->getStorage(l)->getTypeTag() == typeTag && building->getStorage(l)->getCurrent() > 0) {
-                            bool costs = true;
-                            for (int m = 0; m < itemType->getCostCount(); ++m) {
-                                const ResourceType *rt = itemType->getCost(m, unit->getFaction()).getType();
-                                int cost = itemType->getCost(m, unit->getFaction()).getAmount();
-                                int gold = unit->getSResource(rt)->getAmount();
-                                if (gold < cost) {
-                                    costs = false;
-                                    break;
-                                }
-                            }
-                            if (costs == true) {
-                                stored = true;
-                                break;
-                            }
-                        }
-                    }
-                    if (stored == true) {
-                        for (int k = 0; k < unit->getEquipmentSize(); ++k) {
-                            if (typeTag == unit->getEquipment(k)->getTypeTag()) {
-                                if (unit->getEquipment(k)->getCurrent() == 0 || tierLevel > 1) {
-                                    distance = newDistance;
-                                    finalPick = building;
-                                    tPos = bPos;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            if (building->getType()->getProcessProductionSystem()->getProcessCount() > 0) {
-                for (int j = 0; j < building->getType()->getProcessProductionSystem()->getProcessCount(); ++j) {
-                    for (int l = 0; l < building->getType()->getProcessProductionSystem()->getProcess(j, unit->getFaction()).items.size(); ++l) {
-                        const ItemType *itemType = building->getType()->getProcessProductionSystem()->getProcess(j, unit->getFaction()).items[l].getType();
-                        string typeTag = itemType->getTypeTag();
-                        int tierLevel = itemType->getQualityTier();
-                        bool stored = false;
-                        for (int l = 0; l < building->getStorageSize(); ++l) {
-                            if (building->getStorage(l)->getTypeTag() == typeTag && building->getStorage(l)->getCurrent() > 0) {
+            if (building->getStoredItems().size() > 0) {
+                for (int i = 0; i < unit->getEquipmentSize(); ++i) {
+                    string typeTag = unit->getEquipment(i)->getTypeTag();
+                    for (int j = 0; j < building->getStoredItems().size(); ++j) {
+                        string tagType = building->getStoredItem(j)->getType()->getTypeTag();
+                        int qualityTier = building->getStoredItem(j)->getType()->getQualityTier();
+                        if (tagType == typeTag) {
+                            if (unit->getEquipment(i)->getCurrent() == 0 || qualityTier > unit->getEquipment(i)->getItem()->getType()->getQualityTier()) {
                                 bool costs = true;
-                                for (int m = 0; m < itemType->getCostCount(); ++m) {
-                                    const ResourceType *rt = itemType->getCost(m, unit->getFaction()).getType();
-                                    int cost = itemType->getCost(m, unit->getFaction()).getAmount();
+                                for (int m = 0; m < building->getStoredItem(j)->getType()->getCostCount(); ++m) {
+                                    const ResourceType *rt = building->getStoredItem(j)->getType()->getCost(m, unit->getFaction()).getType();
+                                    int cost = building->getStoredItem(j)->getType()->getCost(m, unit->getFaction()).getAmount();
                                     int gold = unit->getSResource(rt)->getAmount();
                                     if (gold < cost) {
                                         costs = false;
@@ -310,29 +272,16 @@ Unit* GoalSystem::findShop(Unit *unit) {
                                     }
                                 }
                                 if (costs == true) {
-                                    stored = true;
+                                    distance = newDistance;
+                                    finalPick = building;
+                                    tPos = bPos;
                                     break;
-                                }
-                            }
-                        }
-                        if (stored == true) {
-                            for (int k = 0; k < unit->getEquipmentSize(); ++k) {
-                                if (typeTag == unit->getEquipment(k)->getTypeTag()) {
-                                    if (unit->getEquipment(k)->getCurrent() == 0 || tierLevel > 1) {
-                                        distance = newDistance;
-                                        finalPick = building;
-                                        tPos = bPos;
-                                    }
                                 }
                             }
                         }
                     }
                 }
             }
-
-            else {
-                            throw runtime_error("no shop");
-                        }
             if (building->getType()->getModifications().size() > 0) {
                 for (int j = 0; j < building->getType()->getModifications().size(); ++j) {
                     string service = building->getType()->getModifications()[j].getService();

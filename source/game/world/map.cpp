@@ -69,7 +69,7 @@ bool Tile::isPlacement(string foundation) const {
             return false;
         }
     } else {
-        g_console.addStdMessage("NoObject");
+        //g_console.addStdMessage("NoObject");
         return false;
     }
 }

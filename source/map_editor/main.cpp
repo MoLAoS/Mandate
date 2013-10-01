@@ -370,7 +370,7 @@ void MainWindow::centreMap() {
 	const int	mw = program->getMap()->getW(),
 				mh = program->getMap()->getH();
 
-	int cellSize = std::min(canvasSize.x / mw, canvasSize.y / mh);
+	int cellSize = std::min(canvasSize.x / (mw/2), canvasSize.y / (mh/2));
 
 	int pxWidth = cellSize * mw;
 	int pxHeight = cellSize * mh;

@@ -17,7 +17,7 @@
 	</statistics>
 	<actions>
 		<skills>
-			<skill faction="humans">
+			<skill faction="provision">
 				<type value="attack"/>
 				<name value="power_attack"/>
 				<ep-cost value="0"/>
@@ -46,7 +46,7 @@
 			</skill>
 		</skills>
 		<commands>
-			<command faction="humans" add="true">
+			<command faction="provision" add="true">
 			    <type value="attack"/>
 			    <name value="heavy_attack"/>
 			    <image path="images/attack.bmp"/>
@@ -55,7 +55,7 @@
 			    <move-skill value="charge_skill"/>
 			    <attack-skill value="power_attack"/>
 			</command>
-			<command faction="humans" add="true">
+			<command faction="provision" add="true">
 			    <type value="attack"/>
 			    <name value="power_attack"/>
 			    <image path="images/attack.bmp"/>

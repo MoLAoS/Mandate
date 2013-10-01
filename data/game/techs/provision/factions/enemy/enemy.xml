@@ -6,7 +6,7 @@
 		</foods>
 	</needs>
 	<item-images>
-	  <item-image image-path="/units/castle/images/castle.bmp"/>
+	  <item-image image-path="/units/imp/images/daemon.bmp"/>
 	</item-images>
 	<starting-resources>
 		<resource name="wealth" amount="50000"/>
@@ -14,9 +14,10 @@
 		<resource name="logs" amount="5000"/>
 	</starting-resources>
 	<starting-units>
-		<unit name="castle" amount="1"/>
+		<unit name="vile_idol" amount="2"/>
 	</starting-units>
 	<exp-type type="hit"/>
+	<uses-sovereign check="false"/>
 	<music value="true" path="music/music_tech.ogg"/>
 	<logo value="true">
 		<team-colour path="tech_logo_team.png" />
@@ -30,7 +31,6 @@
 	<resource-trades>
 		<resource type="logs" value="2"/>
 		<resource type="stone" value="2"/>
-		<resource type="meat" value="5"/>
 		<resource type="fowl" value="4"/>
 		<resource type="milk" value="3"/>
 		<resource type="bread" value="5"/>

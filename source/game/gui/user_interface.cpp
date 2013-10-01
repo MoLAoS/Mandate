@@ -1766,7 +1766,10 @@ void UserInterface::computeCommandPanel() {
                         unit->reqsOk(activeCommandType->getProduced(0)) && u->checkCosts(activeCommandType, activeCommandType->getProduced(0))) {
                         downLight = true;
                     } else if (activeCommandType->getProducedCount() > 1) {
-                        downLight = true;
+                        if (unit->reqsOk(activeCommandType->getProduced(i)) &&
+                            u->checkCosts(activeCommandType, activeCommandType->getProduced(i)) && u->checkSkillCosts(activeCommandType)) {
+                            downLight = true;
+                        }
                     } else if (activeCommandType->getProducedCount() == 0) {
                         downLight = true;
                     }

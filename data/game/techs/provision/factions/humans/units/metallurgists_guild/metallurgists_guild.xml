@@ -103,7 +103,6 @@
         <resource name="space" amount="20"/>
         <resource name="logs" amount="250"/>
         <resource name="stone" amount="100"/>
-        <resource name="iron_bar" amount="100"/>
       </starter-resources>
     </resource-production>
 	<units-owned>

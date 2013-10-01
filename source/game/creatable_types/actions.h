@@ -36,6 +36,8 @@ private:
 	CommandTypes commandTypesByClass[CmdClass::COUNT];
 	CommandTypes squadCommands;
 public:
+    void clearActions();
+
 	int getSkillTypeCount() const						{return skillTypes.size();}
 	SkillTypes getSkillTypeCountOfClass(SkillClass skillClass) const {return skillTypesByClass[skillClass];}
 	SkillType *getSkillType(int i) const			{return skillTypes[i];}
