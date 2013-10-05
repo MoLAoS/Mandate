@@ -39,8 +39,6 @@ private:
 	typedef map<string, ResourceType*> ResourceTypeMap;
 	typedef map<string, FactionType*> FactionTypeMap;
 	typedef map<string, EffectType*> EffectTypeMap;
-	typedef vector<Specialization> ListSpecs;
-	typedef vector<Actions> ListActions;
 
 private:
 	string name;
@@ -55,11 +53,6 @@ private:
 	CraftStats weaponStats;
 	CraftStats armorStats;
 	CraftStats accessoryStats;
-
-    ListTraits traitsList;
-    ListSpecs specializations;
-    ListActions listActions;
-    Actions actions;
 
     ResourceTypeMap resourceTypeMap;
     FactionTypeMap factionTypeMap;
@@ -97,8 +90,6 @@ public:
 	int getEffectTypeCount() const							{return effectTypes.size();}
 	int getDamageTypeCount() const							{return damageTypes.size();}
 	int getResistanceCount() const							{return resistances.size();}
-	int getTraitCount() const								{return traitsList.size();}
-	int getSpecializationCount() const						{return specializations.size();}
 
 	// get by index
 	const ResourceType *getResourceType(int i) const		{return &resourceTypes[i];}
@@ -106,32 +97,13 @@ public:
 	const EffectType *getEffectType(int i) const			{return effectTypes[i];}
 	DamageType getDamageType(int i) const			        {return damageTypes[i];}
 	DamageType getResistance(int i) const			        {return resistances[i];}
-	const Trait *getTrait(int i) const	        		    {return &traitsList[i];}
-	const Specialization *getSpecialization(int i) const	{return &specializations[i];}
-	Trait *getTrait(int i)          	        		    {return &traitsList[i];}
-	Specialization *getSpecialization(int i)               	{return &specializations[i];}
-    Trait *getTraitById(int id);
-    Actions *getActions()                                   {return &actions;}
-    const Actions *getActions() const                       {return &actions;}
 
 	// get by name
-	const ResourceType *getResourceType(const string &name) const {
-		ResourceTypeMap::const_iterator i = resourceTypeMap.find(name);
-		if(i != resourceTypeMap.end()) {
-			return i->second;
-		} else {
-		   throw runtime_error("Resource Type not found: " + name);
-		}
-	}
+	const ResourceType *getResourceType(const string &name) const;
+	ResourceType *getResourceType(const string &name);
 
-	const FactionType *getFactionType(const string &name) const {
-		FactionTypeMap::const_iterator i = factionTypeMap.find(name);
-		if(i != factionTypeMap.end()) {
-			return i->second;
-		} else {
-		   throw runtime_error("Faction Type not found: " + name);
-		}
-	}
+	const FactionType *getFactionType(const string &name) const;
+	FactionType *getFactionType(const string &name);
 
 	const EffectType *getEffectType(const string &name) const {
 		EffectTypeMap::const_iterator i = effectTypeMap.find(name);
@@ -141,23 +113,6 @@ public:
 		   throw runtime_error("Effect Type not found: " + name);
 		}
 	}
-
-	Specialization *getSpecialization(const string &name){
-		for (int i = 0; i < getSpecializationCount(); ++i) {
-		    if (specializations[i].getSpecName() == name) {
-                return &specializations[i];
-            } /*else {
-                string specs = "";
-                for (int i = 0; i < getSpecializationCount(); ++i) {
-                    specs += specializations[i].getSpecName();
-                    specs += "/";
-                }
-                throw runtime_error(specs);
-            }*/
-		}
-		throw runtime_error("Specialization not found:" + name);
-	}
-
 	// other getters
     const ResourceType *getTechResourceType(int i) const;
     const ResourceType *getFirstTechResourceType() const;

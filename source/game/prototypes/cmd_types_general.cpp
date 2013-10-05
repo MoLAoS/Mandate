@@ -73,20 +73,24 @@ bool CommandType::load(const XmlNode *n, const string &dir, const FactionType *f
 	if (creatorCostNode) {
         creatorCost.load(creatorCostNode);
 	}
-
+    const TechTree *tt = 0;
     if (ft == 0) {
         const XmlAttribute *factionAttribute = n->getAttribute("faction");
         string faction = factionAttribute->getRestrictedValue();
         if (&g_world) {
             ft = g_world.getTechTree()->getFactionType(faction);
+        } else if (g_program.getState()->isCCState()) {
+            MainMenu *charMenu = static_cast<MainMenu*>(g_program.getState());
+            MenuStateCharacterCreator *charState = static_cast<MenuStateCharacterCreator*>(charMenu->getState());
+            CharacterCreator *charCreator = charState->getCharacterCreator();
+            tt = charCreator->getTechTree();
+            ft = tt->getFactionType(faction);
         } else {
-            if (g_program.getState()->isCCState()) {
-                MainMenu *charMenu = static_cast<MainMenu*>(g_program.getState());
-                MenuStateCharacterCreator *charState = static_cast<MenuStateCharacterCreator*>(charMenu->getState());
-                CharacterCreator *charCreator = charState->getCharacterCreator();
-                const TechTree *tt = charCreator->getTechTree();
-                ft = tt->getFactionType(faction);
-            }
+            MainMenu *charMenu = static_cast<MainMenu*>(g_program.getState());
+            MenuStateCharacterCreator *charState = static_cast<MenuStateCharacterCreator*>(charMenu->getState());
+            CharacterCreator *charCreator = charState->getCharacterCreator();
+            tt = charCreator->getTechTree();
+            ft = tt->getFactionType(faction);
         }
     }
     if (ct != 0) {

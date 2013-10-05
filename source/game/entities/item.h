@@ -44,6 +44,18 @@ using namespace ProtoTypes;
 class Item {
 	friend class EntityFactory<Item>;
 private:
+	typedef vector<Timer> CreatedUnitTimers;
+	CreatedUnitTimers createdUnitTimers;
+
+	typedef vector<CreatedUnit> CreatedUnits;
+	CreatedUnits createdUnits;
+public:
+	int getUnitTimerCount()             {return createdUnitTimers.size();}
+    Timer *getCreatedUnitTimer(int i)   {return &createdUnitTimers[i];}
+
+	int getCreatedUnitCount()           {return createdUnits.size();}
+    CreatedUnit *getCreatedUnit(int i)  {return &createdUnits[i];}
+private:
     Statistics statistics;
 	typedef vector<Modification*> Modifications;
 public:

@@ -35,6 +35,7 @@ CharacterCreator::CharacterCreator(CellStrip *parent, MenuStateCharacterCreator 
     sovereignState = false;
 
     m_techTree = "provision";
+    m_factionType = "provision";
     string path = "techs/" + m_techTree;
     string fPath = "techs/" + m_techTree + "/factions/*.";
 	vector<string> fPaths;
@@ -76,6 +77,7 @@ void CharacterCreator::buildTabs() {
 
 void CharacterCreator::loadTech() {
     m_techTree = "provision";
+    m_factionType = "provision";
     string path = "techs/" + m_techTree;
     string fPath = "techs/" + m_techTree + "/factions/*.";
 	vector<string> fPaths;
@@ -89,6 +91,7 @@ void CharacterCreator::loadTech() {
         names.insert(fPaths[i]);
 	}
     techTree.load(path, names);
+    factionType = techTree.getFactionType("provision");
 }
 
 void CharacterCreator::buildSovereignTab() {
@@ -103,18 +106,25 @@ void CharacterCreator::buildSovereignTab() {
 	OptionPanel *rightPnl = new OptionPanel(container, 1);
 	TextBox *tb = rightPnl->addTextBox(lang.get("Sovereign Name"), "Sovereign");
 	tb->TextChanged.connect(this, &CharacterCreator::onSovereignNameChanged);
+
 	m_techTreeList = rightPnl->addDropList(lang.get("Tech Tree"));
 	setupListBoxTechTree();
 	m_techTreeList->SelectionChanged.connect(this, &CharacterCreator::onDropListSelectionChanged);
 	m_techTreeList->setDropBoxHeight(200);
+
+	m_factionTypeList = rightPnl->addDropList(lang.get("Faction Type"));
+	setupListBoxFactionType();
+	m_factionTypeList->SelectionChanged.connect(this, &CharacterCreator::onDropListSelectionChanged);
+	m_factionTypeList->setDropBoxHeight(200);
+
 	m_focusList = rightPnl->addDropList(lang.get("Specialization"));
 	setupListBoxFocus();
 	m_focusList->SelectionChanged.connect(this, &CharacterCreator::onDropListSelectionChanged);
 	m_focusList->setDropBoxHeight(200);
 
 	vector<Specialization*> listSpecs;
-	for (int i = 0; i < techTree.getSpecializationCount(); ++i) {
-        listSpecs.push_back(techTree.getSpecialization(i));
+	for (int i = 0; i < factionType->getSpecializationCount(); ++i) {
+        listSpecs.push_back(factionType->getSpecialization(i));
 	}
 	TabWidget::add(g_lang.get("Character"), container);
 	m_spec = m_focusList->getSelectedItem()->getText();
@@ -125,9 +135,9 @@ void CharacterCreator::buildSovereignTab() {
 	m_traitsList->setDropBoxHeight(200);
 
     Traits traitslist;
-    traitslist.resize(techTree.getTraitCount());
-    for (int i = 0; i < techTree.getTraitCount(); ++i) {
-        traitslist[i] = techTree.getTrait(i);
+    traitslist.resize(factionType->getTraitCount());
+    for (int i = 0; i < factionType->getTraitCount(); ++i) {
+        traitslist[i] = factionType->getTrait(i);
     }
     m_trait = m_traitsList->getSelectedItem()->getText();
     traitsDisplay = leftPnl->addTraitsDisplay(traitslist, listSpecs, this);
@@ -200,7 +210,7 @@ void CharacterCreator::buildSkillsTab() {
 	OptionPanel *leftPnl = new OptionPanel(container, 0);
 	OptionPanel *rightPnl = new OptionPanel(container, 1);
 
-    skillsDisplay = leftPnl->addSkillsDisplay(techTree.getActions(), this);
+    skillsDisplay = leftPnl->addSkillsDisplay(factionType->getActions(), this);
     skillsDisplay->computeSkillPanel();
 }
 
@@ -611,15 +621,15 @@ void CharacterCreator::onResistanceSpinnersValueChanged(Widget *source) {
 void CharacterCreator::onButtonClick(Widget *source) {
 	if (source == m_selectButton) {
 	    if (sovereignState == true) {
-            for (int i = 0; i < techTree.getTraitCount(); ++i) {
-                if (techTree.getTrait(i)->getName() == m_trait) {
-                    sovTraits.push_back(techTree.getTrait(i));
+            for (int i = 0; i < factionType->getTraitCount(); ++i) {
+                if (factionType->getTrait(i)->getName() == m_trait) {
+                    sovTraits.push_back(factionType->getTrait(i));
                 }
             }
 	    } else if (sovereignState == false) {
-            for (int i = 0; i < techTree.getSpecializationCount(); ++i) {
-                if (techTree.getSpecialization(i)->getSpecName() == m_spec) {
-                    specialization = techTree.getSpecialization(i);
+            for (int i = 0; i < factionType->getSpecializationCount(); ++i) {
+                if (factionType->getSpecialization(i)->getSpecName() == m_spec) {
+                    specialization = factionType->getSpecialization(i);
                 }
             }
 	    }
@@ -630,8 +640,8 @@ void CharacterCreator::onButtonClick(Widget *source) {
 void CharacterCreator::calculateCreatorCost() {
     characterCost = 0;
     characterCost += specialization->getCreatorCost()->getValue();
-    for (int i = 0; i < techTree.getTraitCount(); ++i) {
-        characterCost += techTree.getTrait(i)->getCreatorCost()->getValue();
+    for (int i = 0; i < factionType->getTraitCount(); ++i) {
+        characterCost += factionType->getTrait(i)->getCreatorCost()->getValue();
     }
     for (int i = 0; i < actions.getCommandTypeCount(); ++i) {
         characterCost += actions.getCommandType(i)->getCreatorCost()->getValue();
@@ -658,6 +668,10 @@ void CharacterCreator::onDropListSelectionChanged(Widget *source) {
 	    m_focusList->setSelected(m_spec);
 	    sovereignState = true;
 	    traitsDisplay->reset();
+	} else if (list == m_factionTypeList) {
+
+        //m_characterCreatorMenu->reload();
+        //m_characterCreatorMenu->update();
 	}
 }
 
@@ -675,9 +689,6 @@ void CharacterCreator::addActions(const Actions *addedActions, string actionName
         AttackCommandType *type = static_cast<AttackCommandType *>(command);
         AttackSkillType *attack = const_cast<AttackSkillType*>(type->getAttackSkillTypes()->getFirstAttackSkill());
         MoveSkillType *move = const_cast<MoveSkillType*>(type->getMoveSkillType());
-        //commandNames.push_back(type->getName());
-        //skillNames.push_back(attack->getName());
-        //skillNames.push_back(move->getName());
         actions.addSkillType(attack);
         actions.addSkillType(move);
         actions.addCommand(command);
@@ -767,8 +778,21 @@ void CharacterCreator::setupListBoxTechTree() {
     m_techTree = techTreeFilenames[0];
 }
 
+void CharacterCreator::setupListBoxFactionType() {
+	string factionTypePath = "techs/" + m_techTree + "/factions/*.";
+	vector<string> factionTypeFilenames;
+	try {
+		findAll(factionTypePath, factionTypeFilenames);
+	} catch (runtime_error e) {
+		g_logger.logError(e.what());
+	}
+	m_factionTypeList->addItems(factionTypeFilenames);
+    m_factionTypeList->setSelected(factionTypeFilenames[2]);
+    m_factionType = factionType->getName();
+}
+
 void CharacterCreator::setupListBoxTraits() {
-	string traitsPath = "techs/" + m_techTree + "/traits/*.";
+	string traitsPath = "techs/" + m_techTree + "/factions/" + m_factionType + "/traits/*.";
 	vector<string> traitsFilenames;
 	try {
 		findAll(traitsPath, traitsFilenames);
@@ -780,11 +804,10 @@ void CharacterCreator::setupListBoxTraits() {
 	filenames.insert(filenames.end(), traitsFilenames.begin(), traitsFilenames.end());
 	m_traitsList->addItems(filenames);
     m_traitsList->setSelected(filenames[0]);
-    m_trait = traitsFilenames[0];
 }
 
 void CharacterCreator::setupListBoxFocus() {
-	string focusPath = "techs/" + m_techTree + "/specializations/*.";
+	string focusPath = "techs/" + m_techTree + "/factions/" + m_factionType + "/specializations/*.";
 	vector<string> focusFilenames;
 	try {
 		findAll(focusPath, focusFilenames);

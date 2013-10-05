@@ -9,6 +9,9 @@
 #include "pch.h"
 #include "crafting.h"
 #include "world.h"
+#include "character_creator.h"
+#include "main_menu.h"
+#include "menu_state_character_creator.h"
 
 namespace Glest { namespace ProtoTypes {
 // ===============================
@@ -35,7 +38,16 @@ bool CraftRes::load(const XmlNode *node) {
         value = valueAttr->getIntValue();
     }
     string resName = node->getAttribute("name")->getRestrictedValue();
-    resType = g_world.getTechTree()->getResourceType(resName);
+	TechTree *tt = 0;
+    if (&g_world) {
+        tt = g_world.getTechTree();
+    } else {
+        MainMenu *charMenu = static_cast<MainMenu*>(g_program.getState());
+        MenuStateCharacterCreator *charState = static_cast<MenuStateCharacterCreator*>(charMenu->getState());
+        CharacterCreator *charCreator = charState->getCharacterCreator();
+        tt = charCreator->getTechTree();
+    }
+    resType = tt->getResourceType(resName);
     return loadOk;
 }
 
@@ -50,8 +62,17 @@ bool CraftItem::load(const XmlNode *node) {
     value = itemNode->getAttribute("value")->getIntValue();
     string itemName = itemNode->getAttribute("type")->getRestrictedValue();
 	const FactionType *ft = 0;
-	for (int i = 0; i < g_world.getTechTree()->getFactionTypeCount(); ++i) {
-        ft = g_world.getTechTree()->getFactionType(i);
+	TechTree *tt = 0;
+    if (&g_world) {
+        tt = g_world.getTechTree();
+    } else {
+        MainMenu *charMenu = static_cast<MainMenu*>(g_program.getState());
+        MenuStateCharacterCreator *charState = static_cast<MenuStateCharacterCreator*>(charMenu->getState());
+        CharacterCreator *charCreator = charState->getCharacterCreator();
+        tt = charCreator->getTechTree();
+    }
+	for (int i = 0; i < tt->getFactionTypeCount(); ++i) {
+        ft = tt->getFactionType(i);
         for (int j = 0; j < ft->getItemTypeCount(); ++j) {
             if (itemName == ft->getItemType(i)->getName()) {
                 break;

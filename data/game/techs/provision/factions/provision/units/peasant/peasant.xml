@@ -87,7 +87,7 @@
           <type value="repair"/>
           <name value="repair_skill"/>
           <ep-cost value="0"/>
-          <speed value="500"/>
+          <speed value="50"/>
 	  <sounds-animations>
           <anim-speed value="100"/>
           <animation path="models/worker_building.g3d"/>

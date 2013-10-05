@@ -119,6 +119,7 @@ void MenuStateCharacterCreator::update() {
 }
 
 void MenuStateCharacterCreator::reload() {
+    m_transition = true;
 	m_transitionTarget = Transition::RE_LOAD;
 }
 

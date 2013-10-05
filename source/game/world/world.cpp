@@ -777,17 +777,17 @@ void World::computeProduction() {
                     }
                 }
                 // unit generation
-                for (int i = 0; i < unit->getType()->getUnitProductionSystem()->getCreatedUnitCount(); ++i) {
-                    CreatedUnit createdUnit = unit->getType()->getUnitProductionSystem()->getCreatedUnit(i, faction);
-                    int cTime = unit->getType()->getUnitProductionSystem()->getCreatedUnitTimer(i, faction).getTimerValue();
+                for (int i = 0; i < unit->getCreatedUnitCount(); ++i) {
+                    CreatedUnit *createdUnit = unit->getCreatedUnit(i);
+                    Timer *cTime = unit->getCreatedUnitTimer(i);
                     TimerStep *timeStep = &unit->productionSystemTimers.currentUnitSteps[i];
                     unit->getType()->getUnitProductionSystem()->update(createdUnit, unit, cTime, timeStep);
                 }
                 for (int m = 0; m < unit->getEquippedItems().size(); ++m) {
                     Item *item = unit->getEquippedItem(m);
-                    for (int i = 0; i < item->getType()->getUnitProductionSystem()->getCreatedUnitCount(); ++i) {
-                        CreatedUnit createdUnit = item->getType()->getUnitProductionSystem()->getCreatedUnit(i, faction);
-                        int cTime = item->getType()->getUnitProductionSystem()->getCreatedUnitTimer(i, faction).getTimerValue();
+                    for (int i = 0; i < item->getCreatedUnitCount(); ++i) {
+                        CreatedUnit *createdUnit = item->getCreatedUnit(i);
+                        Timer *cTime = item->getCreatedUnitTimer(i);
                         TimerStep *timeStep = &item->currentUnitSteps[i];
                         item->getType()->getUnitProductionSystem()->update(createdUnit, unit, cTime, timeStep);
                     }
@@ -795,8 +795,8 @@ void World::computeProduction() {
                 for (int m = 0; m < unit->getType()->getBonusPowerCount(); ++m) {
                     const BonusPower *bonusPower = unit->getType()->getBonusPower(m);
                     for (int i = 0; i < bonusPower->getUnitProductionSystem()->getCreatedUnitCount(); ++i) {
-                        CreatedUnit createdUnit = bonusPower->getUnitProductionSystem()->getCreatedUnit(i, faction);
-                        int cTime = bonusPower->getUnitProductionSystem()->getCreatedUnitTimer(i, faction).getTimerValue();
+                        CreatedUnit *createdUnit = &bonusPower->getUnitProductionSystem()->getCreatedUnit(i, faction);
+                        Timer *cTime = &bonusPower->getUnitProductionSystem()->getCreatedUnitTimer(i, faction);
                         TimerStep *timeStep = &unit->bonusPowerTimers[m].currentUnitSteps[i];
                         bonusPower->getUnitProductionSystem()->update(createdUnit, unit, cTime, timeStep);
                     }
@@ -812,24 +812,6 @@ void World::tick() {
 		g_userInterface.getMinimap()->updateFowTex(1.f);
 	}
 	cartographer->tick();
-	/*for testing traits
-	for (int i = 0; i < getFactionCount(); ++i) {
-		for (int j = 0; j < getFaction(i)->getUnitCount(); ++j) {
-		    Unit *unit = getFaction(i)->getUnit(j);
-		    if (unit->getType()->getName() == "defender") {
-		        Trait *trait = getTechTree()->getTraitById(3);
-		        bool hasTrait = false;
-		        for (int i = 0; i < unit->getTraitCount(); ++i) {
-                    if (trait == unit->getTrait(i)) {
-                        hasTrait = true;
-                    }
-		        }
-		        if (hasTrait == false) {
-                    unit->addTrait(trait);
-		        }
-		    }
-		}
-	}*/
 	for (int i = 0; i < getFactionCount(); ++i) {
 		for (int j = 0; j < getFaction(i)->getUnitCount(); ++j) {
 		    Unit *unit = getFaction(i)->getUnit(j);

@@ -24,7 +24,7 @@ using namespace Hierarchy;
 // ===============================
 // 	class Sovereign
 // ===============================
-bool Sovereign::load(const string &dir) {
+bool Sovereign::load(const string &dir, const FactionType *factionType) {
     bool loadOk = true;
     string path = dir + "/sovereign.xml";
 
@@ -51,10 +51,10 @@ bool Sovereign::load(const string &dir) {
             MainMenu *charMenu = static_cast<MainMenu*>(g_program.getState());
             MenuStateCharacterCreator *charState = static_cast<MenuStateCharacterCreator*>(charMenu->getState());
             CharacterCreator *charCreator = charState->getCharacterCreator();
-            TechTree *tt = charCreator->getTechTree();
-            specialization = tt->getSpecialization(specName);
+            FactionType *ft = charCreator->getFactionType();
+            specialization = ft->getSpecialization(specName);
         } else {
-            specialization = g_world.getTechTree()->getSpecialization(specName);
+            specialization = g_world.getTechTree()->getFactionType(factionType->getName())->getSpecialization(specName);
 	    }
 	}
 	catch (runtime_error e) {
@@ -71,10 +71,10 @@ bool Sovereign::load(const string &dir) {
                 MainMenu *charMenu = static_cast<MainMenu*>(g_program.getState());
                 MenuStateCharacterCreator *charState = static_cast<MenuStateCharacterCreator*>(charMenu->getState());
                 CharacterCreator *charCreator = charState->getCharacterCreator();
-                TechTree *tt = charCreator->getTechTree();
-                traits[i] = tt->getTraitById(id);
+                FactionType *ft = charCreator->getFactionType();
+                traits[i] = ft->getTraitById(id);
             } else {
-                traits[i] = g_world.getTechTree()->getTraitById(id);
+                traits[i] = g_world.getTechTree()->getFactionType(factionType->getName())->getTraitById(id);
             }
         }
 	}

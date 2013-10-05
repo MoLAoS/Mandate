@@ -164,9 +164,9 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 	}
 	try {
 	    const XmlNode *sovereignNode = unitNode->getChild("sovereign", 0, false);
-	    if (sovereignNode && !g_program.getState()->isCCState()) {
+	    if (sovereignNode && &g_world) {
 	        isSovereign = true;
-	        if (!sovereign.load(dir)) {
+	        if (!sovereign.load(dir, factionType)) {
                 loadOk = false;
 	        }
 	    }

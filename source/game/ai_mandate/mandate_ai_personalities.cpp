@@ -38,6 +38,7 @@ void Personality::load(const XmlNode *node) {
     goalList.push_back("demolish");
     goalList.push_back("raid");
     goalList.push_back("hunt");
+    goalList.push_back("patrol");
     goalList.push_back("attack");
     goalList.push_back("defend");
     goalList.push_back("buff");
@@ -77,6 +78,7 @@ void GoalSystem::init() {
     goalList.push_back("demolish");
     goalList.push_back("raid");
     goalList.push_back("hunt");
+    goalList.push_back("patrol");
     goalList.push_back("attack");
     goalList.push_back("defend");
     goalList.push_back("buff");
@@ -664,7 +666,7 @@ Unit* GoalSystem::findCity(Unit *unit) {
     return city;
 }
 
-Unit* GoalSystem::findCreature(Unit *unit) {
+Unit* GoalSystem::findCreature(Unit *unit, int range) {
     Vec2i uPos = unit->getPos();
     if (unit->isCarried()) {
         uPos = unit->owner->getCenteredPos();
@@ -676,7 +678,7 @@ Unit* GoalSystem::findCreature(Unit *unit) {
             faction = g_world.getFaction(i);
         }
     }
-    int distance = 50;
+    int distance = range;
     for (int i = 0; i < faction->getUnitCount(); ++i) {
         Unit *possibleCreature = faction->getUnit(i);
         if (!possibleCreature->getType()->hasTag("building") && possibleCreature->isAlive()) {
@@ -868,10 +870,32 @@ void GoalSystem::computeAction(Unit *unit, Focus focus) {
         clearSimAi(unit, goal);
         if (unit->getCurrSkill()->getClass() == SkillClass::STOP) {
             if (unit->getGoalStructure() == NULL) {
-                Unit *creature = findCreature(unit);
+                Unit *creature = findCreature(unit, 50);
                 if (creature != NULL) {
                     unit->setGoalStructure(creature);
                     unit->setGoalReason("hunt");
+                    if (unit->isCarried()) {
+                        ownerUnload(unit);
+                    }
+                }
+            }
+            if (unit->getGoalStructure() != NULL) {
+                if (unit->anyCommand()) {
+                    if (unit->getCurrCommand()->getType()->getClass() != CmdClass::ATTACK) {
+                        const CommandType *act = selectAttackSpell(unit, unit->getGoalStructure());
+                        unit->giveCommand(g_world.newCommand(act, CmdFlags(), unit->getGoalStructure()));
+                    }
+                }
+            }
+        }
+    } else if (goal == Goal::PATROL) {
+        clearSimAi(unit, goal);
+        if (unit->getCurrSkill()->getClass() == SkillClass::STOP) {
+            if (unit->getGoalStructure() == NULL) {
+                Unit *creature = findCreature(unit, 8);
+                if (creature != NULL) {
+                    unit->setGoalStructure(creature);
+                    unit->setGoalReason("patrol");
                     if (unit->isCarried()) {
                         ownerUnload(unit);
                     }

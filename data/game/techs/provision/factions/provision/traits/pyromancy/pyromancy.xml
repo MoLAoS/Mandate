@@ -1,0 +1,23 @@
+<trait id="2" progress="1">
+	<character-stats>
+		<potency value="10"/>
+	</character-stats>
+	<statistics>
+		<enhancement>
+			<resource-pools>
+				<health name="health">
+					<max-stat value="10"/>
+				</health>
+				<resources>
+					<resource name="mana" value="10"/>
+				</resources>
+			</resource-pools>
+		</enhancement>
+		<damage-types>
+			<damage-type type="fire" value="10"/>
+		</damage-types>
+		<resistances>
+			<resistance type="fire" value="5"/>
+		</resitances>
+	</statistics>
+</trait>

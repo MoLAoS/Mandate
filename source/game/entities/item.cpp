@@ -66,6 +66,22 @@ Item::Item(CreateParams params)
 	currentProcessSteps[i].currentStep = 0;
 	}
 
+	createdUnitTimers.resize(type->getUnitProductionSystem()->getUnitTimerCount());
+	for (int i = 0; i < type->getUnitProductionSystem()->getUnitTimerCount(); ++i) {
+	    int max = type->getUnitProductionSystem()->getCreatedUnitTimer(i, faction).getTimerValue();
+	    int initial = type->getUnitProductionSystem()->getCreatedUnitTimer(i, faction).getInitialTime();
+	    bool check = type->getUnitProductionSystem()->getCreatedUnitTimer(i, faction).getActive();
+        createdUnitTimers[i].init(max, 0, initial, check);
+	}
+	createdUnits.resize(type->getUnitProductionSystem()->getCreatedUnitCount());
+	for (int i = 0; i < type->getUnitProductionSystem()->getCreatedUnitCount(); ++i) {
+	    int amount = type->getUnitProductionSystem()->getCreatedUnit(i, faction).getAmount();
+	    int amountPlus = type->getUnitProductionSystem()->getCreatedUnit(i, faction).getAmountPlus();
+	    fixed amountMult = type->getUnitProductionSystem()->getCreatedUnit(i, faction).getAmountMultiply();
+	    const UnitType *unitType = type->getUnitProductionSystem()->getCreatedUnit(i, faction).getType();
+        createdUnits[i].init(unitType, amount, amountPlus, amountMult, -1);
+	}
+
 	quality = 0;
 }
 

@@ -31,9 +31,7 @@
       <light enabled="false"/>
       <unit-requirements/>
       <upgrade-requirements/>
-      <resource-requirements>
-	<resource name="wealth" amount="10" plus="0" multiply="0"/>
-      </resource-requirements>
+      <resource-requirements/>
       <image path="images/daemon.bmp"/>
       <image-cancel path="../imp/images/magic_cancel.bmp"/>
     </producible>
@@ -96,9 +94,11 @@
 	  </sounds-animations>
           <attack-levels>
             <attack-level>
-              <damage-types>
-	        <damage-type type="slashing" value="5"/>
-              </damage-types>
+				<statistics>
+					<damage-types>
+						<damage-type type="slashing" value="10"/>
+					</damage-types>
+				</statistics>
             </attack-level>
           </attack-levels>
           <attack-fields>

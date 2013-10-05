@@ -37,7 +37,6 @@ using Main::Program;
 // ======================================================
 //          Class FactionType
 // ======================================================
-
 FactionType::FactionType()
 		: music(0)
 		, attackNotice(0)
@@ -122,6 +121,32 @@ bool FactionType::preLoad(const string &dir, const TechTree *techTree) {
 		eventTypes.push_back(it);
 		eventTypes.back()->preLoad(path);
 		//throw runtime_error(path);
+	}
+
+	string tpath = dir + "/traits/*.";
+	vector<string> tpaths;
+	try {
+		findAll(tpath, tpaths);
+	} catch (runtime_error e) {
+		g_logger.logError(e.what());
+	}
+	traitsList.resize(tpaths.size());
+	for (int i = 0; i < tpaths.size(); ++i) {
+        string tstr = dir + "/traits/" + tpaths[i] + "/" + tpaths[i];
+        traitsList[i].preLoad(tstr, i);
+	}
+
+    string spath = dir + "/specializations/*.";
+	vector<string> paths;
+	try {
+		findAll(spath, paths);
+	} catch (runtime_error e) {
+		g_logger.logError(e.what());
+	}
+	specializations.resize(paths.size());
+	for (int i = 0; i < paths.size(); ++i) {
+        string sstr = dir + "/specializations/" + paths[i] + "/" + paths[i];
+        specializations[i].preLoad(sstr);
 	}
 
 	return loadOk;
@@ -567,6 +592,83 @@ bool FactionType::load(int ndx, const string &dir, const TechTree *techTree) {
 	return loadOk;
 }
 
+bool FactionType::loadSpecTraitSkills(int ndx, const string &dir, const TechTree *techTree) {
+    bool loadOk = true;
+    string spath = dir + "/specializations/*.";
+	vector<string> paths;
+	try {
+		findAll(spath, paths);
+	} catch (runtime_error e) {
+		g_logger.logError(e.what());
+	}
+	for (int i = 0; i < paths.size(); ++i) {
+        string sstr = dir + "/specializations/" + paths[i] + "/" + paths[i];
+        specializations[i].reset();
+        if(!specializations[i].load(sstr)){
+            loadOk = false;
+        }
+	}
+    string apath = dir + "/skills/*.";
+	vector<string> apaths;
+	try {
+		findAll(apath, apaths);
+	} catch (runtime_error e) {
+		g_logger.logError(e.what());
+	}
+	listActions.resize(apaths.size());
+	for (int i = 0; i < apaths.size(); ++i) {
+        string sstr = dir + "/skills/" + apaths[i] + "/" + apaths[i] + ".xml";
+        XmlTree	xmlTree;
+        try {
+            xmlTree.load(sstr);
+        }
+        catch (runtime_error &e) {
+            g_logger.logXmlError ( apaths[i], "File missing or wrongly named." );
+            return false;
+        }
+        const XmlNode *listActionsNode;
+        try { listActionsNode = xmlTree.getRootNode(); }
+        catch (runtime_error &e) {
+            g_logger.logXmlError ( apath, "File appears to lack contents." );
+            return false;
+        }
+        const XmlNode *actionsNode = listActionsNode->getChild("actions", 0, false);
+	    if (actionsNode) {
+	        const CreatableType *ct = 0;
+	        const FactionType *ft = 0;
+            if(!listActions[i].load(actionsNode, dir, true, ft, ct)){
+                loadOk = false;
+            }
+	    }
+	}
+	for (int i = 0; i < listActions.size(); ++i) {
+	    for (int j = 0; j < listActions[i].getSkillTypeCount(); ++j) {
+            SkillType *skillType = listActions[i].getSkillType(j);
+            actions.addSkillType(skillType);
+	    }
+	    for (int j = 0; j < listActions[i].getCommandTypeCount(); ++j) {
+            CommandType *commandType = listActions[i].getCommandType(j);
+            actions.addCommand(commandType);
+	    }
+	}
+	actions.sortSkillTypes();
+	actions.sortCommandTypes();
+	string tpath = dir + "/traits/*.";
+	vector<string> tpaths;
+	try {
+		findAll(tpath, tpaths);
+	} catch (runtime_error e) {
+		g_logger.logError(e.what());
+	}
+	for (int i = 0; i < tpaths.size(); ++i) {
+        string tstr = dir + "/traits/" + tpaths[i] + "/" + tpaths[i];
+        if (!traitsList[i].load(tstr)) {
+            loadOk = false;
+        }
+	}
+    return loadOk;
+}
+
 bool FactionType::loadGlestimals(const string &dir, const TechTree *techTree) {
 	Logger &logger = Logger::getInstance();
 	logger.logProgramEvent("Glestimal Faction: " + dir, true);
@@ -630,6 +732,16 @@ FactionType::~FactionType() {
 }
 
 // ==================== get ====================
+
+Trait *FactionType::getTraitById(int id) {
+    for (int i = 0; i < traitsList.size(); ++i) {
+        if (traitsList[i].getId() == id) {
+            return &traitsList[i];
+        }
+    }
+    throw runtime_error("Trait not found:" + intToStr(id));
+}
+
 const UnitType *FactionType::getUnitType(const string &m_name) const{
     for (int i = 0; i < unitTypes.size(); ++i) {
 		if (unitTypes[i]->getName() == m_name) {

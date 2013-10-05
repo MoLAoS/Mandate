@@ -506,18 +506,27 @@ void ProductionWindow::computeUnitPanel() {
 void ProductionWindow::computeUnitInfo(int posDisplay) {
     if (m_ui->getSelection()->isComandable()) {
         const Unit *u = m_ui->getSelection()->getFrontUnit();
+        Unit *unit = 0;
+        for (int k = 0; k < g_world.getFactionCount(); ++k) {
+            Faction *faction = g_world.getFaction(k);
+            for (int j = 0; j < faction->getUnitCount(); ++j) {
+                if (faction->getUnit(j)->getId() == u->getId()) {
+                    unit = faction->getUnit(j);
+                }
+            }
+        }
         if (u->isBuilt()) {
             Lang &lang = g_lang;
             stringstream ss;
-            CreatedUnit cu = u->getType()->getUnitProductionSystem()->getCreatedUnit(posDisplay, u->getFaction());
-            string resName = lang.getTechString(cu.getType()->getName());
-            Timer tR = u->getType()->getUnitProductionSystem()->getCreatedUnitTimer(posDisplay, u->getFaction());
-            int cStep = u->productionSystemTimers.currentUnitSteps[posDisplay].currentStep;
-            if (resName == cu.getType()->getName()) {
+            CreatedUnit *cu = unit->getCreatedUnit(posDisplay);
+            string resName = lang.getTechString(cu->getType()->getName());
+            Timer *tR = unit->getCreatedUnitTimer(posDisplay);
+            int cStep = unit->productionSystemTimers.currentUnitSteps[posDisplay].currentStep;
+            if (resName == cu->getType()->getName()) {
                 resName = formatString(resName);
             }
             ss << endl << lang.get("Create") << ": ";
-            ss << cu.getAmount() << " " << resName << " " << lang.get("Timer") << ": " << cStep << "/" << tR.getTimerValue();
+            ss << cu->getAmount() << " " << resName << " " << lang.get("Timer") << ": " << cStep << "/" << tR->getTimerValue();
             setToolTipText2("Make Unit", ss.str(), ProductionDisplaySection::UNITS);
         }
     }

@@ -32,7 +32,7 @@
 	  <item-image image-path="/units/castle/images/castle.bmp"/>
 	</item-images>
 	<starting-resources>
-		<resource name="wealth" amount="7000"/>
+		<resource name="wealth" amount="12000"/>
 		<resource name="stone" amount="2000"/>
 		<resource name="logs" amount="2000"/>
 	</starting-resources>

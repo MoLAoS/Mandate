@@ -37,6 +37,9 @@
 #include "leak_dumper.h"
 #include "logger.h"
 #include "sim_interface.h"
+#include "character_creator.h"
+#include "main_menu.h"
+#include "menu_state_character_creator.h"
 
 using namespace Glest::Sim;
 
@@ -795,7 +798,16 @@ bool HarvestCommandType::load(const XmlNode *n, const string &dir, const Faction
 		const XmlNode *resourcesNode = n->getChild("harvested-resources");
 		for(int i = 0; i < resourcesNode->getChildCount(); ++i){
 			const XmlNode *resourceNode = resourcesNode->getChild("resource", i);
-			m_harvestedResources.push_back(g_world.getTechTree()->getResourceType(resourceNode->getAttribute("name")->getRestrictedValue()));
+			const TechTree *tt = 0;
+			if (&g_world) {
+                tt = g_world.getTechTree();
+			} else {
+                MainMenu *charMenu = static_cast<MainMenu*>(g_program.getState());
+                MenuStateCharacterCreator *charState = static_cast<MenuStateCharacterCreator*>(charMenu->getState());
+                CharacterCreator *charCreator = charState->getCharacterCreator();
+                tt = charCreator->getTechTree();
+			}
+			m_harvestedResources.push_back(tt->getResourceType(resourceNode->getAttribute("name")->getRestrictedValue()));
 		}
 	} catch (runtime_error e) {
 		g_logger.logXmlError(dir, e.what());
@@ -1102,7 +1114,16 @@ bool TransportCommandType::load(const XmlNode *n, const string &dir, const Facti
 		const XmlNode *resourcesNode = n->getChild("transported-resources");
 		for(int i = 0; i < resourcesNode->getChildCount(); ++i){
 			const XmlNode *resourceNode = resourcesNode->getChild("resource", i);
-			m_transportedResources.push_back(g_world.getTechTree()->getResourceType(resourceNode->getAttribute("name")->getRestrictedValue()));
+			const TechTree *tt = 0;
+			if (&g_world) {
+                tt = g_world.getTechTree();
+			} else {
+                MainMenu *charMenu = static_cast<MainMenu*>(g_program.getState());
+                MenuStateCharacterCreator *charState = static_cast<MenuStateCharacterCreator*>(charMenu->getState());
+                CharacterCreator *charCreator = charState->getCharacterCreator();
+                tt = charCreator->getTechTree();
+			}
+			m_transportedResources.push_back(tt->getResourceType(resourceNode->getAttribute("name")->getRestrictedValue()));
 		}
 	} catch (runtime_error e) {
 		g_logger.logXmlError(dir, e.what());

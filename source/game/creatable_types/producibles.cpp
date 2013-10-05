@@ -193,7 +193,7 @@ bool ResourceProductionSystem::load(const XmlNode *resourceProductionNode, const
                 int amount = resourceNode->getAttribute("amount")->getIntValue();
                 int steps = resourceNode->getAttribute("timer")->getIntValue();
                 createdResources[i].init(techTree->getResourceType(name), amount);
-                createdResourceTimers[i].init(steps, 0);
+                createdResourceTimers[i].init(steps, 0, 0, false);
             }
         }
     } catch (runtime_error e) {
@@ -287,7 +287,7 @@ bool ItemProductionSystem::load(const XmlNode *itemProductionNode, const string 
                 int amount = itemNode->getAttribute("amount")->getIntValue();
                 int steps = itemNode->getAttribute("timer")->getIntValue();
                 createdItems[i].init(factionType->getItemType(name), amount, 0, 0, -1);
-                createdItemTimers[i].init(steps, 0);
+                createdItemTimers[i].init(steps, 0, 0, false);
             }
         }
     } catch (runtime_error e) {
@@ -367,7 +367,7 @@ bool ProcessProductionSystem::load(const XmlNode *processProductionNode, const s
                 }
                 processes[i].setCount(count);
                 processes[i].setScope(scope);
-                processTimers[i].init(steps, 0);
+                processTimers[i].init(steps, 0, 0, false);
                 const XmlNode *costsNode = processNode->getChild("costs");
                 processes[i].costs.resize(costsNode->getChildCount());
                 for (int j = 0; j < processes[i].costs.size(); ++j) {
@@ -620,8 +620,25 @@ bool UnitProductionSystem::load(const XmlNode *unitProductionNode, const string 
                 string name = unitNode->getAttribute("name")->getRestrictedValue();
                 int amount = unitNode->getAttribute("amount")->getIntValue();
                 int steps = unitNode->getAttribute("timer")->getIntValue();
-                createdUnits[i].init(factionType->getUnitType(name), amount, 0, 0, -1);
-                createdUnitTimers[i].init(steps, 0);
+                int initial = 0;
+                bool check = true;
+                const XmlAttribute *initialAttr = unitNode->getAttribute("initial", false);
+                if (initialAttr) {
+                    initial = initialAttr->getIntValue();
+                    check = false;
+                }
+                int plus = 0;
+                int mult = 0;
+                const XmlAttribute *addAttr = unitNode->getAttribute("add", false);
+                if (addAttr) {
+                    plus = addAttr->getIntValue();
+                }
+                const XmlAttribute *multAttr = unitNode->getAttribute("mult", false);
+                if (addAttr) {
+                    mult = addAttr->getIntValue();
+                }
+                createdUnits[i].init(factionType->getUnitType(name), amount, plus, mult, -1);
+                createdUnitTimers[i].init(steps, 0, initial, check);
             }
         }
     } catch (runtime_error e) {
@@ -652,49 +669,55 @@ Timer UnitProductionSystem::getCreatedUnitTimer(int i, const Faction *f) const {
 	return timer;
 }
 
-void UnitProductionSystem::update(CreatedUnit cu, Unit *unit, int timer, TimerStep *timerStep) const {
+void UnitProductionSystem::update(CreatedUnit *cu, Unit *unit, Timer *timer, TimerStep *timerStep) const {
     Faction *faction = unit->getFaction();
     int cTimeStep = timerStep->currentStep;
     int newStep = cTimeStep + 1;
     timerStep->currentStep = newStep;
     int cRNewTime = timerStep->currentStep;
-    if (cRNewTime == timer) {
-        Vec2i locate = unit->getPos();
-        int cua = cu.getAmount();
-        int cucap = cu.getCap();
-        if (cucap != -1) {
-            if (cucap < cua) {
-                cua = cucap;
-            }
-        }
-        for (int l = 0; l < unit->ownedUnits.size(); ++l) {
-            const UnitType *kind = unit->ownedUnits[l].getType();
-            if (kind == cu.getType()) {
-                int limit = unit->ownedUnits[l].getLimit();
-                int owned = unit->ownedUnits[l].getOwned();
-                if (owned == limit) {
-                    cua = 0;
-                } else if (cua > limit - owned) {
-                    cua = limit - owned;
-                } else {
-                }
-                break;
-            }
-        }
-        for (int n = 0; n < cua; ++n) {
-            Unit *createdUnit = g_world.newUnit(locate, cu.getType(), faction, g_world.getMap(), CardinalDir::NORTH);
-            g_world.placeUnit(unit->getCenteredPos(), 10, createdUnit);
-            createdUnit->setOwner(unit);
-            for (int z = 0; z < unit->ownedUnits.size(); ++z) {
-                if (unit->ownedUnits[z].getType() == createdUnit->getType()) {
-                    unit->ownedUnits[z].incOwned();
+    if (timer->getActive() == true) {
+        if (cRNewTime == timer->getTimerValue()) {
+            Vec2i locate = unit->getPos();
+            int cua = cu->getAmount();
+            int cucap = cu->getCap();
+            if (cucap != -1) {
+                if (cucap < cua) {
+                    cua = cucap;
                 }
             }
-            createdUnit->create();
-            createdUnit->born();
-            ScriptManager::onUnitCreated(createdUnit);
-            g_simInterface.getStats()->produce(unit->getFactionIndex());
+            for (int l = 0; l < unit->ownedUnits.size(); ++l) {
+                const UnitType *kind = unit->ownedUnits[l].getType();
+                if (kind == cu->getType()) {
+                    int limit = unit->ownedUnits[l].getLimit();
+                    int owned = unit->ownedUnits[l].getOwned();
+                    if (owned == limit) {
+                        cua = 0;
+                    } else if (cua > limit - owned) {
+                        cua = limit - owned;
+                    } else {
+                    }
+                    break;
+                }
+            }
+            for (int n = 0; n < cua; ++n) {
+                Unit *createdUnit = g_world.newUnit(locate, cu->getType(), faction, g_world.getMap(), CardinalDir::NORTH);
+                g_world.placeUnit(unit->getCenteredPos(), 10, createdUnit);
+                createdUnit->setOwner(unit);
+                for (int z = 0; z < unit->ownedUnits.size(); ++z) {
+                    if (unit->ownedUnits[z].getType() == createdUnit->getType()) {
+                        unit->ownedUnits[z].incOwned();
+                    }
+                }
+                createdUnit->create();
+                createdUnit->born();
+                ScriptManager::onUnitCreated(createdUnit);
+                g_simInterface.getStats()->produce(unit->getFactionIndex());
+            }
+            cu->setAmount(cu->getAmount() + cu->getAmountPlus());
+            timerStep->currentStep = 0;
         }
+    } else if (cRNewTime == timer->getInitialTime()) {
+        timer->active = true;
         timerStep->currentStep = 0;
     }
 }

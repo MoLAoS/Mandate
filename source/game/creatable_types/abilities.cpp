@@ -29,16 +29,22 @@ void ItemStore::init(const ItemType *it, int cap) {
 void Timer::init(const XmlNode *node, const TechTree *tt) {
 	timerValue = node->getChildIntValue("timer");
 	currentStep = node->getChildIntValue("step");
+	initialTime = node->getChildIntValue("initial-time");
+	initialTime = node->getChildBoolValue("active");
 }
 
 void Timer::save(XmlNode *node) const {
 	node->addChild("timer", timerValue);
 	node->addChild("step", currentStep);
+	node->addChild("initial-time", initialTime);
+	node->addChild("active", active);
 }
 
-void Timer::init(int timer, int step) {
+void Timer::init(int timer, int step, int initial, bool check) {
     timerValue = timer;
     currentStep = step;
+    initialTime = initial;
+    active = check;
 }
 
 // =====================================================

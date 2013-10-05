@@ -43,6 +43,7 @@ private:
     int characterCost;
     int maxCost;
     TechTree techTree;
+    FactionType *factionType;
 	Glest::Menu::MenuStateCharacterCreator
                            *m_characterCreatorMenu;
     CharacterStats         characterStats;
@@ -59,16 +60,18 @@ private:
     Knowledge              knowledge;
     Sovereign              sovereign;
     Specialization         *specialization;
-    Traits             sovTraits;
+    Traits                 sovTraits;
     Actions                actions;
     ActionNames            commandNames;
     ActionNames            skillNames;
     string                 sov_name;
     string                 m_techTree,
+                           m_factionType,
                            m_spec,
                            m_trait;
 	DropList	           *m_focusList,
                            *m_traitsList,
+                           *m_factionTypeList,
                            *m_techTreeList;
 	CheckBox	           *m_fullscreenCheckBox;
 	Slider2		           *m_volFxSlider;
@@ -109,6 +112,10 @@ public:
     void loadTech();
     const TechTree *getTechTree() const {return &techTree;}
     TechTree *getTechTree() {return &techTree;}
+
+    const FactionType *getFactionType() const {return factionType;}
+    FactionType *getFactionType() {return factionType;}
+
 	void save();
 	virtual string descType() const override { return "CharacterCreator"; }
 
@@ -135,6 +142,7 @@ private:
 	void setupListBoxFocus();
 	void setupListBoxTraits();
 	void setupListBoxTechTree();
+	void setupListBoxFactionType();
 	void onButtonClick(Widget *source);
 
 	// Build tabs

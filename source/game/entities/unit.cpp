@@ -213,6 +213,22 @@ Unit::Unit(CreateParams params)
 
 	levelNumber = 0;
 
+	createdUnitTimers.resize(type->getUnitProductionSystem()->getUnitTimerCount());
+	for (int i = 0; i < type->getUnitProductionSystem()->getUnitTimerCount(); ++i) {
+	    int max = type->getUnitProductionSystem()->getCreatedUnitTimer(i, faction).getTimerValue();
+	    int initial = type->getUnitProductionSystem()->getCreatedUnitTimer(i, faction).getInitialTime();
+	    bool check = type->getUnitProductionSystem()->getCreatedUnitTimer(i, faction).getActive();
+        createdUnitTimers[i].init(max, 0, initial, check);
+	}
+	createdUnits.resize(type->getUnitProductionSystem()->getCreatedUnitCount());
+	for (int i = 0; i < type->getUnitProductionSystem()->getCreatedUnitCount(); ++i) {
+	    int amount = type->getUnitProductionSystem()->getCreatedUnit(i, faction).getAmount();
+	    int amountPlus = type->getUnitProductionSystem()->getCreatedUnit(i, faction).getAmountPlus();
+	    fixed amountMult = type->getUnitProductionSystem()->getCreatedUnit(i, faction).getAmountMultiply();
+	    const UnitType *unitType = type->getUnitProductionSystem()->getCreatedUnit(i, faction).getType();
+        createdUnits[i].init(unitType, amount, amountPlus, amountMult, -1);
+	}
+
 	productionSystemTimers.currentSteps.resize(type->getResourceProductionSystem()->getCreatedResourceCount());
 	for (int i = 0; i < productionSystemTimers.currentSteps.size(); ++i) {
         productionSystemTimers.currentSteps[i].currentStep = 0;
@@ -229,6 +245,7 @@ Unit::Unit(CreateParams params)
 	for (int i = 0; i < productionSystemTimers.currentItemSteps.size(); ++i) {
         productionSystemTimers.currentItemSteps[i].currentStep = 0;
 	}
+
 
 	bonusPowerTimers.resize(type->getBonusPowerCount());
 	for (int j = 0; j < bonusPowerTimers.size(); ++j) {
@@ -1631,11 +1648,12 @@ void Unit::born(bool reborn) {
 	ULC_UNIT_LOG( this, "born." );
 	faction->applyStaticProduction(type);
 	if (type->isSovereign) {
-	    Specialization *spec = g_world.getTechTree()->getSpecialization(type->getSovereign()->getSpecialization()->getSpecName());
+	    Specialization *spec = g_world.getTechTree()->getFactionType(faction->getType()->getName())->
+            getSpecialization(type->getSovereign()->getSpecialization()->getSpecName());
 	    addSpecialization(spec);
 	    knowledge.sum(specialization->getKnowledge());
         for (int i = 0; i < type->getSovereign()->getTraitCount(); ++i) {
-            Trait *trait = g_world.getTechTree()->getTraitById(type->getSovereign()->getTrait(i)->getId());
+            Trait *trait = g_world.getTechTree()->getFactionType(faction->getType()->getName())->getTraitById(type->getSovereign()->getTrait(i)->getId());
             addTrait(trait);
         }
     }
@@ -3279,13 +3297,11 @@ void Unit::computeTotalUpgrade() {
 	int levelInt = 0;
 	for (int i = 0; i < type->getLevelCount(); ++i) {
 		const Level *typeLevel = type->getLevel(i);
+		bool check = true;
         for (int j = 0; j < typeLevel->getCount(); ++j) {
             bool nextLevel = false;
-            if (j == 0 && totalExp >= typeLevel->getExp()) {
-                totalExp -= typeLevel->getExp();
-                nextLevel = true;
-            } else if (totalExp >= ((typeLevel->getExp() + typeLevel->getExpAdd()) * typeLevel->getExpMult()).intp()) {
-                totalExp -= ((typeLevel->getExp() + typeLevel->getExpAdd()) * typeLevel->getExpMult().intp());
+            if (totalExp >= ((typeLevel->getExp() + (typeLevel->getExpAdd()) * j) * (1 + typeLevel->getExpMult() * j)).intp()) {
+                totalExp -= ((typeLevel->getExp() + (typeLevel->getExpAdd()) * j) * (1 + typeLevel->getExpMult() * j)).intp();
                 nextLevel = true;
             }
             if (nextLevel == true) {
@@ -3294,8 +3310,12 @@ void Unit::computeTotalUpgrade() {
                 totalUpgrade.sum(stats);
                 ++levelInt;
             } else {
+                check = false;
                 break;
             }
+        }
+        if (check == false) {
+            break;
         }
 	}
 	levelNumber = levelInt;
@@ -3408,7 +3428,7 @@ void Unit::addTrait(Trait *trait) {
 void Unit::initSkillsAndCommands() {
     for (int i = 0; i < type->getSovereign()->getAddSkillCount(); ++i) {
         string skillName = type->getSovereign()->getAddSkill(i);
-        SkillType *skillType = g_world.getTechTree()->getActions()->getSkillType(skillName);
+        SkillType *skillType = g_world.getTechTree()->getFactionType(faction->getType()->getName())->getActions()->getSkillType(skillName);
         string loadAnim = "techs/" + g_world.getTechTree()->getName() + "/factions/" + type->getFactionType()->getName()
             + "/units/" + type->getName() + skillType->getSoundsAndAnimations()->getLoadValue();
         skillType->getSoundsAndAnimations()->addAnimation(cleanPath(loadAnim), type->getSize(), type->getHeight());
@@ -3416,7 +3436,7 @@ void Unit::initSkillsAndCommands() {
     }
     for (int i = 0; i < type->getSovereign()->getAddSkillCount(); ++i) {
         string commandName = type->getSovereign()->getAddCommand(i);
-        CommandType *commandType = g_world.getTechTree()->getActions()->getCommandType(commandName);
+        CommandType *commandType = g_world.getTechTree()->getFactionType(faction->getType()->getName())->getActions()->getCommandType(commandName);
         actions.addCommand(commandType);
     }
 }

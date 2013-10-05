@@ -169,7 +169,7 @@ Focus MandateAISim::getTopGoal(Unit *unit, string personality) {
                     if (topGoal.getImportance() != NULL) {
                         int importanceHunt = 0;
                         Vec2i tPos = Vec2i(0,0);
-                        Unit *creature = goalSystem.findCreature(unit);
+                        Unit *creature = goalSystem.findCreature(unit, 50);
                         if (creature != NULL) {
                             tPos = creature->getPos();
                         }
@@ -178,6 +178,27 @@ Focus MandateAISim::getTopGoal(Unit *unit, string personality) {
                             int distance = sqrt(pow(float(abs(uPos.x - tPos.x)), 2) + pow(float(abs(uPos.y - tPos.y)), 2));
                             if (distance < 50) {
                                 importanceHunt = 50 - distance;
+                            }
+                            if (goalImportance + importanceHunt > topGoal.getImportance()) {
+                                topGoal = goal;
+                            }
+                        }
+                    } else {
+                        topGoal = goal;
+                    }
+                } else if (goalName == Goal::PATROL) {
+                    if (topGoal.getImportance() != NULL) {
+                        int importanceHunt = 0;
+                        Vec2i tPos = Vec2i(0,0);
+                        Unit *creature = goalSystem.findCreature(unit, 8);
+                        if (creature != NULL) {
+                            tPos = creature->getPos();
+                        }
+                        if (tPos != Vec2i(0,0)) {
+                            Vec2i uPos = unit->getPos();
+                            int distance = sqrt(pow(float(abs(uPos.x - tPos.x)), 2) + pow(float(abs(uPos.y - tPos.y)), 2));
+                            if (distance < 8) {
+                                importanceHunt = 5 - distance;
                             }
                             if (goalImportance + importanceHunt > topGoal.getImportance()) {
                                 topGoal = goal;

@@ -19,18 +19,24 @@ class Timer {
 public:
     int timerValue;
     int currentStep;
+    int initialTime;
+    bool active;
 
-    Timer() : timerValue(0), currentStep(0) {}
-	Timer(const Timer &that) : timerValue(that.timerValue), currentStep(that.currentStep) {}
+    Timer() : timerValue(0), currentStep(0), initialTime(0), active(true) {}
+	Timer(const Timer &that) : timerValue(that.timerValue), currentStep(that.currentStep), initialTime(that.initialTime), active(that.active) {}
 
 	void init(const XmlNode *n, const TechTree *tt);
-	void init(int timerValue, int currentStep);
+	void init(int timerValue, int currentStep, int initial, bool check);
 
     int getTimerValue() {return timerValue;}
     int getCurrentStep() {return currentStep;}
+    int getInitialTime() {return initialTime;}
+    bool getActive() {return active;}
 
-    virtual void setTimerValue(int v) { currentStep = v; }
+    virtual void setTimerValue(int v) { timerValue = v; }
     virtual void setCurrentStep(int v) { currentStep = v; }
+    virtual void setInitialTime(int v) { initialTime = v; }
+    virtual void setActive(bool check) { active = check; }
 
 	void save(XmlNode *node) const;
 };

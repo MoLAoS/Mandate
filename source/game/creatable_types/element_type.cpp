@@ -120,8 +120,10 @@ string RequirableType::getReqDesc(const Faction *f, const FactionType *ft) const
 bool RequirableType::load(const XmlNode *baseNode, const string &dir, bool add) {
 	bool loadOk = DisplayableType::load(baseNode, dir, add);
 	const FactionType *ft = 0;
+	const TechTree *tt = 0;
 	if (&g_world) {
         for (int i = 0; i < g_world.getTechTree()->getFactionTypeCount(); ++i) {
+            tt = g_world.getTechTree();
             ft = g_world.getTechTree()->getFactionType(i);
             for (int j = 0; j < ft->getUnitTypeCount(); ++j) {
                 if (m_name == ft->getUnitType(i)->getName()) {
@@ -129,24 +131,32 @@ bool RequirableType::load(const XmlNode *baseNode, const string &dir, bool add) 
                 }
             }
         }
-	} else {
-        if (g_program.getState()->isCCState()) {
-            MainMenu *charMenu = static_cast<MainMenu*>(g_program.getState());
-            MenuStateCharacterCreator *charState = static_cast<MenuStateCharacterCreator*>(charMenu->getState());
-            CharacterCreator *charCreator = charState->getCharacterCreator();
-            const TechTree *tt = charCreator->getTechTree();
-            for (int i = 0; i < tt->getFactionTypeCount(); ++i) {
-                ft = tt->getFactionType(i);
-                for (int j = 0; j < ft->getUnitTypeCount(); ++j) {
-                    if (m_name == ft->getUnitType(i)->getName()) {
-                        break;
-                    }
+	} else if (g_program.getState()->isCCState()) {
+        MainMenu *charMenu = static_cast<MainMenu*>(g_program.getState());
+        MenuStateCharacterCreator *charState = static_cast<MenuStateCharacterCreator*>(charMenu->getState());
+        CharacterCreator *charCreator = charState->getCharacterCreator();
+        tt = charCreator->getTechTree();
+        for (int i = 0; i < tt->getFactionTypeCount(); ++i) {
+            ft = tt->getFactionType(i);
+            for (int j = 0; j < ft->getUnitTypeCount(); ++j) {
+                if (m_name == ft->getUnitType(i)->getName()) {
+                    break;
                 }
             }
         }
-	}
-    if (ft == 0) {
-        loadOk = false;
+    } else {
+        MainMenu *charMenu = static_cast<MainMenu*>(g_program.getState());
+        MenuStateCharacterCreator *charState = static_cast<MenuStateCharacterCreator*>(charMenu->getState());
+        CharacterCreator *charCreator = charState->getCharacterCreator();
+        tt = charCreator->getTechTree();
+        for (int i = 0; i < tt->getFactionTypeCount(); ++i) {
+            ft = tt->getFactionType(i);
+            for (int j = 0; j < ft->getUnitTypeCount(); ++j) {
+                if (m_name == ft->getUnitType(i)->getName()) {
+                    break;
+                }
+            }
+        }
     }
 	try { // Unit requirements
 		const XmlNode *unitRequirementsNode = baseNode->getChild("unit-requirements", 0, false);
@@ -212,15 +222,14 @@ bool RequirableType::load(const XmlNode *baseNode, const string &dir, bool add) 
 	try { // Resource requirements
 		const XmlNode *resourceRequirementsNode = baseNode->getChild("resource-requirements", 0, false);
 		if(resourceRequirementsNode) {
+		    resourceReqs.resize(resourceRequirementsNode->getChildCount());
 			for(int i = 0; i < resourceRequirementsNode->getChildCount(); ++i) {
                 const XmlNode *resourceNode = resourceRequirementsNode->getChild("resource", i);
                 string name = resourceNode->getAttribute("name")->getRestrictedValue();
                 int amount = resourceNode->getAttribute("amount")->getIntValue();
                 int amount_plus = resourceNode->getAttribute("plus")->getIntValue();
                 fixed amount_multiply = resourceNode->getAttribute("multiply")->getFixedValue();
-				ResourceAmount resourceReq;
-				resourceReq.init(g_world.getTechTree()->getResourceType(name), amount, amount_plus, amount_multiply);
-				resourceReqs.push_back(resourceReq);
+				resourceReqs[i].init(tt->getResourceType(name), amount, amount_plus, amount_multiply);
 			}
 		}
 	} catch (runtime_error e) {
@@ -409,9 +418,9 @@ bool ProducibleType::load(const XmlNode *baseNode, const string &dir) {
 void ProducibleType::doChecksum(Checksum &checksum) const {
 	RequirableType::doChecksum(checksum);
 	foreach_const (Costs, it, costs) {
-		checksum.add(it->getType()->getId());
-		checksum.add(it->getType()->getName());
-		checksum.add(it->getAmount());
+		//checksum.add(it->getType()->getId());
+		//checksum.add(it->getType()->getName());
+		//checksum.add(it->getAmount());
 	}
 	checksum.add(productionTime);
 }

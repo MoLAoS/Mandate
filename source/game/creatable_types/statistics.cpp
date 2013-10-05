@@ -279,7 +279,7 @@ bool Level::load(const XmlNode *levelNode, const string &dir, const TechTree *tt
 	count = 1;
 	exp = 1;
 	expAdd = 0;
-	expMult = 1;
+	expMult = 0;
 	try {
 		m_name = levelNode->getAttribute("name")->getRestrictedValue();
 	} catch (runtime_error e) {

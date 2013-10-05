@@ -46,12 +46,14 @@
 		</resource-production>
 		<unit-production>
 		<units-created>
-			<unit name="imp" amount="4" timer="20" cap="-1"/>
 			<unit name="imp" amount="4" timer="40" cap="-1"/>
+			<unit name="imp" amount="4" timer="80" cap="-1"/>
+			<unit name="ghost_knight" amount="1" timer="80" cap="-1"/>
 		</units-created>
 		</unit-production>
 		<units-owned>
-			<unit name="imp" limit="16"/>
+			<unit name="imp" limit="12"/>
+			<unit name="ghost_knight" limit="4"/>
 		</units-owned>
 		<actions>
 			<skills>

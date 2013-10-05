@@ -17,6 +17,9 @@
 #include "logger.h"
 
 #include "leak_dumper.h"
+#include "character_creator.h"
+#include "main_menu.h"
+#include "menu_state_character_creator.h"
 
 using Glest::Util::Logger;
 
@@ -52,8 +55,16 @@ bool EffectType::load(const XmlNode *en, const string &dir) {
 	}
 
 	// bigtime hack (REFACTOR: Move to EffectTypeFactory)
-	TechTree *techTree = const_cast<TechTree *>(g_world.getTechTree());
-	m_id = techTree->addEffectType(this);
+    TechTree *tt = 0;
+    if (&g_world) {
+        tt = g_world.getTechTree();
+    } else {
+        MainMenu *charMenu = static_cast<MainMenu*>(g_program.getState());
+        MenuStateCharacterCreator *charState = static_cast<MenuStateCharacterCreator*>(charMenu->getState());
+        CharacterCreator *charCreator = charState->getCharacterCreator();
+        tt = charCreator->getTechTree();
+    }
+	m_id = tt->addEffectType(this);
 
 	try { // bias
 		tmp = en->getAttribute("bias")->getRestrictedValue();

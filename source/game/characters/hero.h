@@ -57,7 +57,7 @@ public:
     Equipment *getEquipment(int i) {return &equipment[i];}
     string getSovName() const {return sovName;}
 	void preLoad(const string &dir);
-	bool load(const string &dir);
+	bool load(const string &dir, const FactionType *factionType);
 	void save(XmlNode *node) const;
 
 	void addName(string newName) {sovName = newName;}

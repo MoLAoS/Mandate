@@ -81,7 +81,36 @@ private:
 
     CitizenNeeds citizenNeeds;
 
+	typedef vector<Specialization> ListSpecs;
+	typedef vector<Actions> ListActions;
+
+    ListTraits traitsList;
+    ListSpecs specializations;
+    ListActions listActions;
+    Actions actions;
+
 public:
+	int getTraitCount() const								{return traitsList.size();}
+	int getSpecializationCount() const						{return specializations.size();}
+	const Trait *getTrait(int i) const	        		    {return &traitsList[i];}
+	const Specialization *getSpecialization(int i) const	{return &specializations[i];}
+	Trait *getTrait(int i)          	        		    {return &traitsList[i];}
+	Specialization *getSpecialization(int i)               	{return &specializations[i];}
+    Trait *getTraitById(int id);
+    Actions *getActions()                                   {return &actions;}
+    const Actions *getActions() const                       {return &actions;}
+
+	Specialization *getSpecialization(const string &name){
+		for (int i = 0; i < getSpecializationCount(); ++i) {
+		    if (specializations[i].getSpecName() == name) {
+                return &specializations[i];
+            }
+		}
+		throw runtime_error("Specialization not found:" + name);
+	}
+
+
+
     const CitizenNeeds *getCitizenNeeds() const {return &citizenNeeds;}
 
     ResourceTrades getResourceTrades() const {return resourceTrades;}
@@ -98,6 +127,7 @@ public:
 
 	bool preLoad(const string &dir, const TechTree *techTree);
 	bool load(int ndx, const string &dir, const TechTree *techTree);
+	bool loadSpecTraitSkills(int ndx, const string &dir, const TechTree *techTree);
 
 	bool guiPreLoad(const string &dir, const TechTree *techTree);
 

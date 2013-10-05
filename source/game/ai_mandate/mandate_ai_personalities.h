@@ -75,7 +75,7 @@ public:
     const CommandType *selectAttackSpell(Unit *unit, Unit* target);
     Unit *findCity(Unit *unit);
     Unit *findLair(Unit *unit);
-    Unit *findCreature(Unit *unit);
+    Unit *findCreature(Unit *unit, int range);
     Unit *buildingList(Unit *unit, vector<Unit*> buildingsList);
     UnitDirection newDirection(UnitDirection oldDirection);
     void clearSimAi(Unit *unit, Goal goal);

@@ -238,13 +238,16 @@ bool SkillCosts::load(const XmlNode *sn, const string &dir, const FactionType *f
             const TechTree *tt = 0;
             if (&g_world) {
                 tt = g_world.getTechTree();
+            } else if (g_program.getState()->isCCState()) {
+                MainMenu *charMenu = static_cast<MainMenu*>(g_program.getState());
+                MenuStateCharacterCreator *charState = static_cast<MenuStateCharacterCreator*>(charMenu->getState());
+                CharacterCreator *charCreator = charState->getCharacterCreator();
+                tt = charCreator->getTechTree();
             } else {
-                if (g_program.getState()->isCCState()) {
-                    MainMenu *charMenu = static_cast<MainMenu*>(g_program.getState());
-                    MenuStateCharacterCreator *charState = static_cast<MenuStateCharacterCreator*>(charMenu->getState());
-                    CharacterCreator *charCreator = charState->getCharacterCreator();
-                    tt = charCreator->getTechTree();
-                }
+                MainMenu *charMenu = static_cast<MainMenu*>(g_program.getState());
+                MenuStateCharacterCreator *charState = static_cast<MenuStateCharacterCreator*>(charMenu->getState());
+                CharacterCreator *charCreator = charState->getCharacterCreator();
+                tt = charCreator->getTechTree();
             }
             const ResourceType *resourceType = tt->getResourceType(typeString);
             resourceCosts[i].init(resourceType, amount, 0, 0);
@@ -332,19 +335,24 @@ SkillType::~SkillType(){
 bool SkillType::load(const XmlNode *sn, const string &dir, const FactionType *ft, const CreatableType *ct){
     bool loadOk = true;
 	m_creatableType = ct;
+	const TechTree *tt = 0;
     if (ft == 0) {
         const XmlAttribute *factionAttribute = sn->getAttribute("faction");
         string faction = factionAttribute->getRestrictedValue();
         if (&g_world) {
             ft = g_world.getTechTree()->getFactionType(faction);
+        } else if (g_program.getState()->isCCState()) {
+            MainMenu *charMenu = static_cast<MainMenu*>(g_program.getState());
+            MenuStateCharacterCreator *charState = static_cast<MenuStateCharacterCreator*>(charMenu->getState());
+            CharacterCreator *charCreator = charState->getCharacterCreator();
+            tt = charCreator->getTechTree();
+            ft = tt->getFactionType(faction);
         } else {
-            if (g_program.getState()->isCCState()) {
-                MainMenu *charMenu = static_cast<MainMenu*>(g_program.getState());
-                MenuStateCharacterCreator *charState = static_cast<MenuStateCharacterCreator*>(charMenu->getState());
-                CharacterCreator *charCreator = charState->getCharacterCreator();
-                const TechTree *tt = charCreator->getTechTree();
-                ft = tt->getFactionType(faction);
-            }
+            MainMenu *charMenu = static_cast<MainMenu*>(g_program.getState());
+            MenuStateCharacterCreator *charState = static_cast<MenuStateCharacterCreator*>(charMenu->getState());
+            CharacterCreator *charCreator = charState->getCharacterCreator();
+            tt = charCreator->getTechTree();
+            ft = tt->getFactionType(faction);
         }
     }
     const XmlNode *nameNode = sn->getChild("name");
@@ -473,19 +481,24 @@ CycleInfo SkillType::calculateCycleTime() const {
 
 bool MoveSkillType::load(const XmlNode *sn, const string &dir, const FactionType *ft, const CreatableType *ct){
     bool loadOk = true;
+    const TechTree *tt = 0;
     if (ft == 0) {
         const XmlAttribute *factionAttribute = sn->getAttribute("faction");
         string faction = factionAttribute->getRestrictedValue();
         if (&g_world) {
             ft = g_world.getTechTree()->getFactionType(faction);
+        } else if (g_program.getState()->isCCState()) {
+            MainMenu *charMenu = static_cast<MainMenu*>(g_program.getState());
+            MenuStateCharacterCreator *charState = static_cast<MenuStateCharacterCreator*>(charMenu->getState());
+            CharacterCreator *charCreator = charState->getCharacterCreator();
+            tt = charCreator->getTechTree();
+            ft = tt->getFactionType(faction);
         } else {
-            if (g_program.getState()->isCCState()) {
-                MainMenu *charMenu = static_cast<MainMenu*>(g_program.getState());
-                MenuStateCharacterCreator *charState = static_cast<MenuStateCharacterCreator*>(charMenu->getState());
-                CharacterCreator *charCreator = charState->getCharacterCreator();
-                const TechTree *tt = charCreator->getTechTree();
-                ft = tt->getFactionType(faction);
-            }
+            MainMenu *charMenu = static_cast<MainMenu*>(g_program.getState());
+            MenuStateCharacterCreator *charState = static_cast<MenuStateCharacterCreator*>(charMenu->getState());
+            CharacterCreator *charCreator = charState->getCharacterCreator();
+            tt = charCreator->getTechTree();
+            ft = tt->getFactionType(faction);
         }
     }
 	loadOk = SkillType::load(sn, dir, ft, ct);
@@ -527,19 +540,24 @@ TargetBasedSkillType::~TargetBasedSkillType(){
 
 bool TargetBasedSkillType::load(const XmlNode *sn, const string &dir, const FactionType *ft, const CreatableType *ct){
     bool loadOk = true;
+    const TechTree *tt = 0;
     if (ft == 0) {
         const XmlAttribute *factionAttribute = sn->getAttribute("faction");
         string faction = factionAttribute->getRestrictedValue();
         if (&g_world) {
             ft = g_world.getTechTree()->getFactionType(faction);
+        } else if (g_program.getState()->isCCState()) {
+            MainMenu *charMenu = static_cast<MainMenu*>(g_program.getState());
+            MenuStateCharacterCreator *charState = static_cast<MenuStateCharacterCreator*>(charMenu->getState());
+            CharacterCreator *charCreator = charState->getCharacterCreator();
+            tt = charCreator->getTechTree();
+            ft = tt->getFactionType(faction);
         } else {
-            if (g_program.getState()->isCCState()) {
-                MainMenu *charMenu = static_cast<MainMenu*>(g_program.getState());
-                MenuStateCharacterCreator *charState = static_cast<MenuStateCharacterCreator*>(charMenu->getState());
-                CharacterCreator *charCreator = charState->getCharacterCreator();
-                const TechTree *tt = charCreator->getTechTree();
-                ft = tt->getFactionType(faction);
-            }
+            MainMenu *charMenu = static_cast<MainMenu*>(g_program.getState());
+            MenuStateCharacterCreator *charState = static_cast<MenuStateCharacterCreator*>(charMenu->getState());
+            CharacterCreator *charCreator = charState->getCharacterCreator();
+            tt = charCreator->getTechTree();
+            ft = tt->getFactionType(faction);
         }
     }
 	SkillType::load(sn, dir, ft, ct);

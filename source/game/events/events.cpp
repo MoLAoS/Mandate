@@ -355,10 +355,10 @@ bool Choice::load(const XmlNode *baseNode, const string &dir, const TechTree *te
                     MainMenu *charMenu = static_cast<MainMenu*>(g_program.getState());
                     MenuStateCharacterCreator *charState = static_cast<MenuStateCharacterCreator*>(charMenu->getState());
                     CharacterCreator *charCreator = charState->getCharacterCreator();
-                    TechTree *tt = charCreator->getTechTree();
-                    traits[i] = tt->getTraitById(id);
+                    FactionType *ft = charCreator->getFactionType();
+                    traits[i] = ft->getTraitById(id);
                 } else {
-                    traits[i] = g_world.getTechTree()->getTraitById(id);
+                    traits[i] = g_world.getTechTree()->getFactionType(factionType->getName())->getTraitById(id);
                 }
             }
 	    }

@@ -278,12 +278,12 @@ public:
 	CreatedUnit getCreatedUnit(int i, const Faction *f) const;
 	int getCreateUnit(const UnitType *ut, const Faction *f) const;
 	// units created timers
-	int getUnitTimerCount()                 {return createdUnitTimers.size();}
+	int getUnitTimerCount() const {return createdUnitTimers.size();}
 	Timer getCreatedUnitTimer(int i, const Faction *f) const;
 	// load resource system
 	bool load(const XmlNode *unitProductionNode, const string &dir, const TechTree *techTree, const FactionType *factionType);
 
-    void update(CreatedUnit ci, Unit *unit, int timer, TimerStep *timerStep) const;
+    void update(CreatedUnit *ci, Unit *unit, Timer *timer, TimerStep *timerStep) const;
 };
 
 }}// end namespace
