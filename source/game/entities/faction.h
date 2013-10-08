@@ -327,6 +327,10 @@ public:
 	void reportReqsAndCosts(const CommandType *ct, const ProducibleType *pt, CommandCheckResult &out_result) const;
 	void reportReqs(const RequirableType *rt, CommandCheckResult &out_result, bool checkDups = false) const;
 
+	// for faction build
+	void reportBuildReqsAndCosts(const UnitType *unitType, FactionBuildCheckResult &out_result) const;
+	void reportBuildReqs(const UnitType *unitType, FactionBuildCheckResult &out_result, bool checkDups = false) const;
+
 	// diplomacy
 	bool isAlly(const Faction *faction)	const			{return teamIndex == faction->getTeam();}
 	bool hasBuilding() const;

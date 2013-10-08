@@ -30,6 +30,9 @@
     <resource status="stockpile" type="logs" stored="1000"/>
     <resource status="stockpile" type="stone" stored="500"/>
   </resource-stores>
+  <add-ons>
+    <item type="wooden_sword"/>
+  </add-ons>
   <creatable-type>
     <size value="5"/>
     <height value="2"/>

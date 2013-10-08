@@ -103,6 +103,26 @@ Focus MandateAISim::getTopGoal(Unit *unit, string personality) {
                             topGoal = goal;
                         }
                     }
+                } else if (goalName == Goal::PROCURE) {
+                    const ResourceType *rt = NULL;
+                    int minWealth = 0;
+                    for (int j = 0; j < unit->owner->getType()->getResourceStoreCount(); ++j) {
+                        if (unit->owner->getType()->getResourceStore(j)->getType() == g_world.getTechTree()->getResourceType("wealth")) {
+                            minWealth = unit->owner->getType()->getResourceStore(j)->getAmount();
+                            rt = unit->owner->getType()->getResourceStore(j)->getType();
+                        }
+                    }
+                    int freeWealth = unit->owner->getSResource(rt)->getAmount() - minWealth;
+                    if (unit->owner->getType()->hasTag("fort")) {
+                        freeWealth = unit->owner->getFaction()->getSResource(rt)->getAmount() - minWealth;
+                    }
+                    if (freeWealth > 50 && (unit->owner->getRequisitionCount() > 0 || unit->getRequisitionCount() > 0)) {
+                        Unit *producer = NULL;
+                        producer = goalSystem.findGuildItem(unit);
+                        if (producer != NULL) {
+                            topGoal = goal;
+                        }
+                    }
                 } else if (goalName == Goal::EXPLORE) {
                     if (topGoal.getImportance() != NULL) {
                         if (goalImportance > topGoal.getImportance()) {

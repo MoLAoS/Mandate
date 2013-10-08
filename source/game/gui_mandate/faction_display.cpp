@@ -123,7 +123,7 @@ FactionDisplay::FactionDisplay(Container *parent, UserInterface *ui, Vec2i pos)
 		, m_hoverBtn(FactionDisplaySection::INVALID, invalidIndex)
 		, m_pressedBtn(FactionDisplaySection::INVALID, invalidIndex)
 		, m_fuzzySize(FuzzySize::SMALL)
-		, m_toolTip(0) {
+		, m_buildTip(0) {
 	CHECK_HEAP();
 	setWidgetStyle(WidgetType::DISPLAY);
 	TextWidget::setAlignment(Alignment::NONE);
@@ -140,8 +140,8 @@ FactionDisplay::FactionDisplay(Container *parent, UserInterface *ui, Vec2i pos)
 	layout();
 	m_selectedCommandIndex = invalidIndex;
 	clear();
-	m_toolTip = new CommandTip(WidgetWindow::getInstance());
-	m_toolTip->setVisible(false);
+	m_buildTip = new TradeTip(WidgetWindow::getInstance());
+	m_buildTip->setVisible(false);
 	CHECK_HEAP();
 }
 
@@ -219,8 +219,12 @@ void FactionDisplay::computeFactionCommandPanel() {
 
 void FactionDisplay::computeBuildPanel() {
     for (int i = 0; i < getBuildCount(); ++i) {
-        setDownImage(i, getFactionBuild(i).getUnitType()->getImage());
-        setDownLighted(i, true);
+        setDownImage(i, getFactionBuild(i)->getUnitType()->getImage());
+        bool downLight = false;
+        if (m_faction->reqsOk(getFactionBuild(i)->getUnitType())) {
+            downLight = true;
+        }
+        setDownLighted(i, downLight);
     }
 }
 
@@ -264,66 +268,25 @@ void FactionDisplay::setSize() {
 	static_cast<FactionDisplayFrame*>(m_parent)->resetSize();
 }
 
-void FactionDisplay::setSelectedCommandPos(int i) {
-	if (m_selectedCommandIndex == i) {
-		return;
-	}
-	if (m_selectedCommandIndex != invalidIndex) {
-		// shrink
-		int ndx = m_selectedCommandIndex;
-		Vec2i pos = getImagePos(ndx);
-		Vec2i size = getImageSize(ndx);
-		pos += Vec2i(3);
-		size -= Vec2i(6);
-		ImageWidget::setImageX(0, ndx, pos, size);
-	}
-	m_selectedCommandIndex = i;
-	if (m_selectedCommandIndex != invalidIndex) {
-		assert(!m_ui->getSelection()->isEmpty());
-		// enlarge
-		int ndx = m_selectedCommandIndex;
-		Vec2i pos = getImagePos(ndx);
-		Vec2i size = getImageSize(ndx);
-		pos -= Vec2i(3);
-		size += Vec2i(6);
-		ImageWidget::setImageX(0, ndx, pos, size);
-	}
-}
-
-void FactionDisplay::setPortraitTitle(const string title) {
+void FactionDisplay::setPanelTitle(const string title) {
 	if (TextWidget::getText(0).empty() && title.empty()) {
 		return;
 	}
 	TextWidget::setText(title, 0);
 }
 
-void FactionDisplay::setPortraitText(const string &text) {
-	if (TextWidget::getText(1).empty() && text.empty()) {
-		return;
-	}
-	string str = formatString(text);
-
-	int lines = 1;
-	foreach_const (string, it, str) {
-		if (*it == '\n') ++lines;
-	}
-	int yPos = m_imageSize * 5 / 4;
-	TextWidget::setTextPos(Vec2i(5, yPos), 1);
-	TextWidget::setText(str, 1);
-}
-
 void FactionDisplay::setToolTipText2(const string &hdr, const string &tip, FactionDisplaySection i_section) {
-	m_toolTip->setHeader(hdr);
-	m_toolTip->setTipText(tip);
-	m_toolTip->clearItems();
-	m_toolTip->setVisible(true);
+	m_buildTip->setHeader(hdr);
+	m_buildTip->setTipText(tip);
+	m_buildTip->clearItems();
+	m_buildTip->setVisible(true);
 	Vec2i a_offset;
     a_offset = m_commandOffset;
 	resetTipPos(a_offset);
 }
 
 void FactionDisplay::addToolTipReq(const DisplayableType *dt, bool ok, const string &txt) {
-	m_toolTip->addReq(dt, ok, txt);
+	m_buildTip->addReq(ok, dt, txt);
 	resetTipPos();
 }
 
@@ -333,13 +296,10 @@ void FactionDisplay::clear() {
 
 	for (int i=0; i < commandCellCount; ++i) {
 		downLighted[i]= true;
-		commandTypes[i]= NULL;
-		commandClasses[i]= CmdClass::NULL_COMMAND;
 		ImageWidget::setImage(0, i);
 	}
-
 	setSelectedCommandPos(invalidIndex);
-	setPortraitTitle("");
+	setPanelTitle("");
 }
 
 void FactionDisplay::render() {
@@ -365,8 +325,7 @@ void FactionDisplay::render() {
             ss << "/" << m_faction->getType()->getFactionTypeNames()[i];
         }
     }
-    setPortraitTitle(ss.str());
-	//TextWidget::setText("Faction", 1);
+    setPanelTitle(ss.str());
 
 	Widget::render();
 
@@ -381,18 +340,18 @@ void FactionDisplay::render() {
 	}
 
 	for (int i=0; i < commandCellCount; ++i) {
-		if (ImageWidget::getImage(i) && i != m_selectedCommandIndex) {
-			ImageWidget::renderImage(i, downLighted[i] ? light : dark);
-			int ndx = -1;
-			if (ndx != -1) {
-				ImageWidget::renderImage(ndx);
-			}
-		}
+	    if (ImageWidget::getImage(i) && i != m_selectedCommandIndex) {
+            ImageWidget::renderImage(i, downLighted[i] ? light : dark);
+            int ndx = -1;
+            if (ndx != -1) {
+                ImageWidget::renderImage(ndx);
+            }
+	    }
 	}
-	if (m_selectedCommandIndex != invalidIndex) {
-		assert(ImageWidget::getImage(m_selectedCommandIndex));
-		ImageWidget::renderImage(m_selectedCommandIndex, light);
-	}
+    if (m_selectedCommandIndex != invalidIndex) {
+        assert(ImageWidget::getImage(m_selectedCommandIndex));
+        ImageWidget::renderImage(m_selectedCommandIndex, light);
+    }
 	ImageWidget::endBatch();
 	if (!TextWidget::getText(0).empty()) {
 		TextWidget::renderTextShadowed(0);
@@ -425,9 +384,34 @@ FactionDisplayButton FactionDisplay::computeIndex(Vec2i i_pos, bool screenPos) {
 	return FactionDisplayButton(FactionDisplaySection::INVALID, invalidIndex);
 }
 
-void FactionDisplay::computeBuildTip(FactionBuild fb) {
-    getCommandTip()->clearItems();
-	fb.describe(m_faction, getBuildTip(), fb.getUnitType());
+void FactionDisplay::setSelectedCommandPos(int i) {
+    if (m_selectedCommandIndex == i) {
+        return;
+    }
+    if (m_selectedCommandIndex != invalidIndex) {
+        int ndx = m_selectedCommandIndex;
+        Vec2i pos = getImagePos(ndx);
+        Vec2i size = getImageSize(ndx);
+        pos += Vec2i(3);
+        size -= Vec2i(6);
+        ImageWidget::setImageX(0, ndx, pos, size);
+    }
+    m_selectedCommandIndex = i;
+    if (m_selectedCommandIndex != invalidIndex) {
+        assert(!m_ui->getSelection()->isEmpty());
+        int ndx = m_selectedCommandIndex;
+        Vec2i pos = getImagePos(ndx);
+        Vec2i size = getImageSize(ndx);
+        pos -= Vec2i(3);
+        size += Vec2i(6);
+        ImageWidget::setImageX(0, ndx, pos, size);
+    }
+}
+
+
+void FactionDisplay::computeBuildTip(const FactionBuild *fb) {
+    getBuildTip()->clearItems();
+	fb->describe(m_faction, getBuildTip(), fb->getUnitType());
 	resetTipPos();
 }
 
@@ -437,11 +421,8 @@ void FactionDisplay::computeBuildInfo(int posDisplay) {
 		setToolTipText2("", "");
 		return;
 	}
-    FactionBuild fb = getFactionBuild(posDisplay);
+    const FactionBuild *fb = getFactionBuild(posDisplay);
     computeBuildTip(fb);
-    string header = "Build: " + fb.getUnitType()->getName();
-    setToolTipText2(header, "");
-
 }
 
 void FactionDisplay::onFirstTierSelect(int posBuild) {
@@ -449,11 +430,11 @@ void FactionDisplay::onFirstTierSelect(int posBuild) {
 	if (posBuild == m_ui->cancelPos) {
         m_ui->resetState(false);
 	} else {
-        FactionBuild fb = m_factionBuilds[posBuild];
-		const ProducibleType *pt = fb.getUnitType();
+        const FactionBuild *fb = &m_factionBuilds[posBuild];
+		const ProducibleType *pt = fb->getUnitType();
         if (getFaction()->reqsOk(pt)) {
             m_ui->setActivePos(posBuild);
-            g_program.getMouseCursor().setAppearance(MouseAppearance::CMD_ICON, fb.getUnitType()->getImage());
+            g_program.getMouseCursor().setAppearance(MouseAppearance::CMD_ICON, fb->getUnitType()->getImage());
             currentFactionBuild = fb;
         }
 	}
@@ -470,6 +451,7 @@ void FactionDisplay::buildButtonPressed(int posDisplay) {
     }
     m_ui->setActivePos(posDisplay);
     building = true;
+    m_ui->setSelectingPos(true);
     computeBuildInfo(m_ui->getActivePos());
 }
 
@@ -526,23 +508,23 @@ bool FactionDisplay::mouseDoubleClick(MouseButton btn, Vec2i pos) {
 }
 
 void FactionDisplay::resetTipPos(Vec2i i_offset) {
-	if (m_toolTip->isEmpty()) {
-		m_toolTip->setVisible(false);
+	if (m_buildTip->isEmpty()) {
+		m_buildTip->setVisible(false);
 		return;
 	}
 	Vec2i ttPos = getScreenPos() + i_offset;
 	if (ttPos.x > g_metrics.getScreenW() / 2) {
-		ttPos.x -= (m_toolTip->getWidth() + getBorderLeft() + 3);
+		ttPos.x -= (m_buildTip->getWidth() + getBorderLeft() + 3);
 	} else {
 		ttPos.x += (getWidth() - getBorderRight() + 3);
 	}
-	if (ttPos.y + m_toolTip->getHeight() > g_metrics.getScreenH()) {
-		int offset = g_metrics.getScreenH() - (ttPos.y + m_toolTip->getHeight());
+	if (ttPos.y + m_buildTip->getHeight() > g_metrics.getScreenH()) {
+		int offset = g_metrics.getScreenH() - (ttPos.y + m_buildTip->getHeight());
 		ttPos.y += offset;
 	}
-	//ttPos.y -= (m_toolTip->getHeight() + 5);
-	m_toolTip->setPos(ttPos);
-	m_toolTip->setVisible(true);
+	//ttPos.y -= (m_buildTip->getHeight() + 5);
+	m_buildTip->setPos(ttPos);
+	m_buildTip->setVisible(true);
 }
 
 bool FactionDisplay::mouseMove(Vec2i pos) {

@@ -57,7 +57,6 @@ public:
     virtual Clicks getClicks() const {return clicks;}
     Vec2i setPos(Vec2i newPos) {pos = newPos;}
     void describe(const Faction *faction, TradeDescriptor *callback, const UnitType *ut) const;
-	virtual void subDesc(const Faction *faction, TradeDescriptor *callback, const UnitType *ut) const;
     const string& getTipKey() const	{return m_tipKey;}
     const string getTipKey(const string &name) const {return emptyString;}
     const string getSubHeaderKey() const {return m_tipHeaderKey;}

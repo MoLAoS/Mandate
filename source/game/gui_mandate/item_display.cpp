@@ -153,6 +153,10 @@ ItemWindow::ItemWindow(Container *parent, UserInterface *ui, Vec2i pos)
         ImageWidget::addImageX(0, Vec2i(0), Vec2i(m_imageSize));
 	}
 
+	for (int i = 0; i < requisitionCellCount; ++i) {
+        ImageWidget::addImageX(0, Vec2i(0), Vec2i(m_imageSize));
+	}
+
 	const Texture2D* overlayImages[3] = {
 		g_widgetConfig.getTickTexture(),
 		g_widgetConfig.getCrossTexture(),
@@ -232,6 +236,15 @@ void ItemWindow::layout() {
 
     x = 0;
     y += m_imageSize;
+	m_requisitionsOffset = Vec2i(x, y);
+	for (int i = 0; i < requisitionCellCount; ++i) {
+		if (i && i % cellWidthCount == 0) {
+			y += m_imageSize;
+			x = 0;
+		}
+		ImageWidget::setImageX(0, inventoryCellCount + equipmentCellCount + buttonCellCount + i, Vec2i(x,y), Vec2i(m_imageSize));
+		x += m_imageSize;
+	}
 
 	if (m_logo != invalidIndex) {
 		ImageWidget::setImageX(0, m_logo, Vec2i(0, 0), Vec2i(m_imageSize * 6, m_imageSize * 6));
@@ -294,6 +307,11 @@ void ItemWindow::clear() {
 		downLighted[i + buttonCellCount + equipmentCellCount]= true;
 		ImageWidget::setImage(0, i + buttonCellCount + equipmentCellCount);
 	}
+
+	for (int i=0; i < requisitionCellCount; ++i) {
+		downLighted[i + buttonCellCount + equipmentCellCount + inventoryCellCount]= true;
+		ImageWidget::setImage(0, i + buttonCellCount + equipmentCellCount + inventoryCellCount);
+	}
 }
 
 void ItemWindow::render() {
@@ -336,6 +354,12 @@ void ItemWindow::render() {
 	for (int i=0; i < inventoryCellCount; ++i) {
 		if (ImageWidget::getImage(i + buttonCellCount + equipmentCellCount)) {
 			ImageWidget::renderImage(i + buttonCellCount + equipmentCellCount, downLighted[i] ? light : dark);
+		}
+	}
+
+	for (int i=0; i < requisitionCellCount; ++i) {
+		if (ImageWidget::getImage(i + buttonCellCount + equipmentCellCount + requisitionCellCount)) {
+			ImageWidget::renderImage(i + buttonCellCount + equipmentCellCount + requisitionCellCount, downLighted[i] ? light : dark);
 		}
 	}
 
@@ -471,14 +495,44 @@ void ItemWindow::computeInventoryInfo(int posDisplay) {
     }
 }
 
+void ItemWindow::requisitionButtonPressed(int posDisplay) {
+    if (m_ui->getSelection()->isComandable()) {
+        const Unit *u = m_ui->getSelection()->getFrontUnit();
+        Unit *unit = g_world.findUnitById(u->getId());
+        unit->addRequisition(unit->getAddOn(posDisplay));
+    }
+}
+
+void ItemWindow::computeRequisitionPanel() {
+    if (m_ui->getSelection()->isComandable()) {
+        const Unit *u = m_ui->getSelection()->getFrontUnit();
+        if (u->isBuilt()) {
+            for (int i = 0; i < u->getAddOnCount(); ++i) {
+                const ItemType *type = u->getAddOn(i);
+                setDownImage(i + buttonCellCount + equipmentCellCount + inventoryCellCount, type->getImage());
+                setDownLighted(i + buttonCellCount + equipmentCellCount + inventoryCellCount, true);
+            }
+        }
+    }
+}
+
+void ItemWindow::computeRequisitionInfo(int posDisplay) {
+    if (m_ui->getSelection()->isComandable()) {
+        const Unit *u = m_ui->getSelection()->getFrontUnit();
+        const ItemType *type = u->getAddOn(posDisplay);
+        string name = type->getName();
+        setToolTipText2(name, "", ItemDisplaySection::REQUISITION);
+    }
+}
+
 ItemDisplayButton ItemWindow::computeIndex(Vec2i i_pos, bool screenPos) {
 	if (screenPos) {
 		i_pos = i_pos - getScreenPos();
 	}
 	Vec2i pos = i_pos;
-	Vec2i offsets[3] = { m_buttonOffset, m_equipmentOffset, m_inventoryOffset };
-	int counts[3] = { buttonCellCount, equipmentCellCount, inventoryCellCount };
-	for (int i=0; i < 3; ++i) {
+	Vec2i offsets[4] = { m_buttonOffset, m_equipmentOffset, m_inventoryOffset, m_requisitionsOffset };
+	int counts[4] = { buttonCellCount, equipmentCellCount, inventoryCellCount, requisitionCellCount };
+	for (int i=0; i < 4; ++i) {
 		pos = i_pos - offsets[i];
 		if (pos.y >= 0 && pos.y < m_imageSize * (counts[i]/6)) {
 			int cellX = pos.x / m_imageSize;
@@ -491,7 +545,7 @@ ItemDisplayButton ItemWindow::computeIndex(Vec2i i_pos, bool screenPos) {
 			    }
 				if (ImageWidget::getImage(totalCells + index)) {
 					return ItemDisplayButton(ItemDisplaySection(i), index);
-				} else if (i == 3) {
+				} else if (i == 4) {
                     return ItemDisplayButton(ItemDisplaySection(i), index);
 				}
 				return ItemDisplayButton(ItemDisplaySection::INVALID, invalidIndex);
@@ -513,6 +567,8 @@ void ItemWindow::setToolTipText2(const string &hdr, const string &tip, ItemDispl
 		a_offset = m_equipmentOffset;
 	} else if (i_section == ItemDisplaySection::INVENTORY) {
 		a_offset = m_inventoryOffset;
+	} else if (i_section == ItemDisplaySection::REQUISITION) {
+		a_offset = m_requisitionsOffset;
 	} else {
 
 	}
@@ -545,6 +601,9 @@ bool ItemWindow::mouseDown(MouseButton btn, Vec2i pos) {
 			} else if (m_hoverBtn.m_section == ItemDisplaySection::INVENTORY) {
 				m_pressedBtn = m_hoverBtn;
 				return true;
+			} else if (m_hoverBtn.m_section == ItemDisplaySection::REQUISITION) {
+				m_pressedBtn = m_hoverBtn;
+				return true;
 			} else {
 				m_pressedBtn = ItemDisplayButton(ItemDisplaySection::INVALID, invalidIndex);
 			}
@@ -569,6 +628,8 @@ bool ItemWindow::mouseUp(MouseButton btn, Vec2i pos) {
                         equipmentButtonPressed(m_hoverBtn.m_index);
 					} else if (m_hoverBtn.m_section == ItemDisplaySection::INVENTORY) {
                         inventoryButtonPressed(m_hoverBtn.m_index);
+					} else if (m_hoverBtn.m_section == ItemDisplaySection::REQUISITION) {
+                        requisitionButtonPressed(m_hoverBtn.m_index);
 					}
 					m_pressedBtn = ItemDisplayButton(ItemDisplaySection::INVALID, invalidIndex);
 					return true;
@@ -628,6 +689,8 @@ bool ItemWindow::mouseMove(Vec2i pos) {
                 computeEquipmentInfo(currBtn.m_index);
 			} else if (currBtn.m_section == ItemDisplaySection::INVENTORY) {
                 computeInventoryInfo(currBtn.m_index);
+			} else if (currBtn.m_section == ItemDisplaySection::REQUISITION) {
+                computeRequisitionInfo(currBtn.m_index);
 			} else {
                 setToolTipText2("", "", ItemDisplaySection::INVALID);
             }

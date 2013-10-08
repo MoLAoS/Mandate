@@ -65,10 +65,15 @@ public:
     void ownerLoad(Unit*unit);
     void ownerUnload(Unit *unit);
     void shop(Unit *unit);
+    bool tagCheck(Unit *unit, Unit *building);
+    bool status(Unit *building, const ResourceType *producedType);
+    int available(Unit *building, const ResourceType *producedType);
+    bool previousTarget(Unit *unit, Unit *building);
     Unit *findShop(Unit *unit);
     Unit *findNearbyAlly(Unit *unit, Focus focus);
     Unit *findBuilding(Unit *unit);
     Unit *findGuild(Unit *unit);
+    Unit *findGuildItem(Unit *unit);
     Unit *findProducer(Unit *unit);
     const CommandType *selectHealSpell(Unit *unit, Unit* target);
     const CommandType *selectBuffSpell(Unit *unit, Unit* target);
@@ -79,6 +84,7 @@ public:
     Unit *buildingList(Unit *unit, vector<Unit*> buildingsList);
     UnitDirection newDirection(UnitDirection oldDirection);
     void clearSimAi(Unit *unit, Goal goal);
+    bool change(Unit *unit);
 };
 
 }}

@@ -293,6 +293,11 @@ Unit::Unit(CreateParams params)
         equipment[i].init(1, 0, nameTag, 0);
     }
 
+    addOns.resize(type->getAddOnCount());
+    for (int i = 0; i < type->getAddOnCount(); ++i) {
+        addOns[i] = type->getAddOn(i);
+    }
+
     sresources.resize(getType()->getResourceProductionSystem()->getStoredResourceCount());
     for (int i = 0; i < getType()->getResourceProductionSystem()->getStoredResourceCount(); ++i) {
         const ResourceType *rt = getType()->getResourceProductionSystem()->getStoredResource(i, getFaction()).getType();
@@ -1763,6 +1768,14 @@ void Unit::kill() {
 	    }
 	}
 
+	if (owner != this && getRequisitionCount() > 0) {
+        for (int i = 0; i < getRequisitionCount(); ++i) {
+            const ItemType *reqType = getRequisition(i);
+            owner->addRequisition(reqType);
+        }
+        requisitions.clear();
+	}
+
 	if (!m_unitsToCarry.empty()) {
 		foreach (UnitIdList, it, m_unitsToCarry) {
 			Unit *unit = world.getUnit(*it);
@@ -3041,8 +3054,13 @@ string Unit::getLongDesc() const {
 
 	if (goalStructure != NULL) {
         ss << endl << "Focus: " << currentFocus;
-        ss << endl << "Task: " << goalReason;
 	}
+
+    ss << endl << "Task: " << goalReason;
+    ss << endl << "Structure: " << goalStructure;
+    ss << endl << "Producer:" << productionRoute.getProducerId();
+    ss << endl << "Store: " << productionRoute.getStoreId();
+
     ss << endl << "Stored Items: " << itemsStored << "/" << itemLimit;
     if (type->getModifications().size() > 0) {
         for (int i = 0; i < type->getModifications().size(); ++i) {

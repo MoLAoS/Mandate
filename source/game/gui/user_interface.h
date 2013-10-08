@@ -197,7 +197,7 @@ public:
     void                    addEvent(Event *newEvent)    {events.push_back(newEvent);}
     void                    removeEvent()                {events.erase(events.begin());}
 	void                    setActivePos(int i)          {activePos = i;}
-	bool                    setSelectingPos(bool b)      {selectingPos = b;}
+	void                    setSelectingPos(bool b)      {selectingPos = b;}
 
 	//get
 	int                     getEventCount() const        { return events.size();      }

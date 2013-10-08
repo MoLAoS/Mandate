@@ -344,6 +344,18 @@ struct CommandCheckResult {
 	bool                  m_partiallyUpgraded;
 };
 
+struct FactionBuildCheckResult {
+	const UnitType        *m_unitType;
+	ItemReqResults        m_itemReqResults;
+	UnitReqResults        m_unitReqResults;
+	UpgradeReqResults     m_upgradeReqResults;
+	ResourceCostResults   m_resourceCostResults;
+	ResourceMadeResults   m_resourceMadeResults;
+	bool                  m_upgradedAlready;
+	bool                  m_upgradingAlready;
+	bool                  m_partiallyUpgraded;
+};
+
 }}//end namespace
 
 #endif

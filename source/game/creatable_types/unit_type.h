@@ -73,10 +73,15 @@ private:
 	typedef vector<ParticleSystemType*> ParticleSystemTypes;
 	typedef vector<ResourceStore>       ResourceStores;
 	typedef vector<BonusPower>          BonusPowers;
+    typedef vector<const ItemType*>     Requisitions;
 private:
 	bool multiBuild;
 	bool multiSelect;
 public:
+    Requisitions addOns;
+    int getAddOnCount() const {return addOns.size();}
+    const ItemType *getAddOn(int i) const {return addOns[i];}
+
     Sovereign sovereign;
     bool isSovereign;
     Hero hero;

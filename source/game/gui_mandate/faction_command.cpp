@@ -35,17 +35,55 @@ void FactionBuild::init(const UnitType* ut, Clicks cl) {
     name = ut->getName();
 }
 
-void FactionBuild::subDesc(const Faction *faction, TradeDescriptor *callback, const UnitType *ut) const {
-    //Lang &lang = g_lang;
-    //callback->addElement("Build: ");
-    //callback->addItem(ut, getUnitType()->getName());
-}
-
 void FactionBuild::describe(const Faction *faction, TradeDescriptor *callback, const UnitType *ut) const {
-	//callback->setHeader("");
-	//callback->setTipText("");
-	//callback->addItem(ut, "");
-	subDesc(faction, callback, ut);
+    Lang &lang = g_lang;
+    string header, tip;
+    string factionName = ut->getFactionType()->getName();
+    if (!lang.lookUp(ut->getName(), factionName, header)) {
+        header = formatString(ut->getName());
+    }
+	callback->setHeader(header);
+	callback->setTipText("");
+	FactionBuildCheckResult factionBuildCheckResult;
+	faction->reportBuildReqsAndCosts(ut, factionBuildCheckResult);
+
+	vector<ItemReqResult> &itemReqs = factionBuildCheckResult.m_itemReqResults;
+    vector<UnitReqResult> &unitReqs = factionBuildCheckResult.m_unitReqResults;
+    vector<UpgradeReqResult> &upgradeReqs = factionBuildCheckResult.m_upgradeReqResults;
+    if (!unitReqs.empty() || !upgradeReqs.empty()) {
+        callback->addElement(g_lang.get("Reqs") + ":");
+        if (!unitReqs.empty()) {
+            foreach (vector<UnitReqResult>, it, factionBuildCheckResult.m_unitReqResults) {
+                string name = g_lang.getTranslatedFactionName(factionName, it->getUnitType()->getName());
+                callback->addReq(it->isRequirementMet(), it->getUnitType(), name);
+            }
+        }
+        if (!upgradeReqs.empty()) {
+            foreach (vector<UpgradeReqResult>, it, factionBuildCheckResult.m_upgradeReqResults) {
+                string name = g_lang.getTranslatedFactionName(factionName, it->getUpgradeType()->getName());
+                callback->addReq(it->isRequirementMet(), it->getUpgradeType(), name);
+            }
+        }
+    }
+    if (!factionBuildCheckResult.m_resourceCostResults.empty()) {
+        callback->addElement(g_lang.get("Costs") + ":");
+        foreach (ResourceCostResults, it, factionBuildCheckResult.m_resourceCostResults) {
+            string name = g_lang.getTranslatedTechName(it->getResourceType()->getName());
+            string msg = name + " (" + intToStr(it->getCost()) + ")";
+            if (!it->isCostMet(0)) {
+                msg += " [-" + intToStr(it->getDifference(0)) + "]";
+            }
+            callback->addReq(it->isCostMet(0), it->getResourceType(), msg);
+        }
+    }
+    if (!factionBuildCheckResult.m_resourceMadeResults.empty()) {
+        callback->addElement(g_lang.get("Generated") + ":");
+        foreach (ResourceMadeResults, it, factionBuildCheckResult.m_resourceMadeResults) {
+            string name = g_lang.getTranslatedTechName(it->getResourceType()->getName());
+            string msg = name + " (" + intToStr(it->getAmount()) + ")";
+            callback->addItem(it->getResourceType(), msg);
+        }
+    }
 }
 
 void FactionBuild::build(const Faction *faction, const Vec2i &pos) const {

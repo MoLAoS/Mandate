@@ -173,6 +173,7 @@ public:
 private:
     typedef vector<Equipment> Storage;
     typedef vector<int> StoredItems;
+    typedef vector<const ItemType*> Requisitions;
 
     StoredItems equippedItems;
     StoredItems storedItems;
@@ -180,14 +181,26 @@ private:
     int itemsStored;
     Storage storage;
     Storage equipment;
+    Requisitions requisitions;
+    Requisitions addOns;
 
 public:
+    int getAddOnCount() const {return addOns.size();}
+    const ItemType *getAddOn(int i) const {return addOns[i];}
+
+    int getRequisitionCount() const {return requisitions.size();}
+    const ItemType *getRequisition(int i) const {return requisitions[i];}
+    void addRequisition(const ItemType *requisition) {requisitions.push_back(requisition);}
+    void removeRequisition(int i) {requisitions.erase(requisitions.begin() + i);}
+    void clearRequisitions() {requisitions.clear();}
     int getItemLimit() const {return itemLimit;}
     int getItemsStored() const {return itemsStored;}
     void setItemLimit(int expand) {itemLimit = itemLimit + expand;}
     void setItemsStored(int amount) {itemsStored = itemsStored + amount;}
+	int getStoredItemCount() const {return storedItems.size();}
 	StoredItems getStoredItems() const {return storedItems;}
 	Item *getStoredItem(int i) const {return getFaction()->getItems()[storedItems[i]];}
+	void clearStoredItems() {storedItems.clear();}
     void accessStorageAdd(int ident);
     void accessStorageRemove(int ident);
     void accessStorageExchange(Unit *unit);

@@ -422,22 +422,27 @@ void UserInterface::initMinimap(bool fow, bool sod, bool resuming) {
 // ==================== get ====================
 
 const UnitType *UserInterface::getBuilding() const {
-	RUNTIME_CHECK(activeCommandType);
-	RUNTIME_CHECK(activeCommandType->getClass() == CmdClass::BUILD
+	if (activeCommandType && (activeCommandType->getClass() == CmdClass::BUILD
         || activeCommandType->getClass() == CmdClass::STRUCTURE
-		|| activeCommandType->getClass() == CmdClass::TRANSFORM
-        || activeCommandType->getClass() == CmdClass::CONSTRUCT);
-	return choosenBuildingType;
+        || activeCommandType->getClass() == CmdClass::TRANSFORM
+        || activeCommandType->getClass() == CmdClass::CONSTRUCT)) {
+        return choosenBuildingType;
+    } else if (m_factionDisplay->building == true) {
+        return m_factionDisplay->currentFactionBuild->getUnitType();
+    } else {
+        throw runtime_error("no building designated");
+    }
 }
 
 // ==================== is ====================
 
 bool UserInterface::isPlacingBuilding() const {
-	return isSelectingPos() && activeCommandType
+	return isSelectingPos() && ((activeCommandType
 		&& (activeCommandType->getClass() == CmdClass::BUILD
         || activeCommandType->getClass() == CmdClass::STRUCTURE
 		|| activeCommandType->getClass() == CmdClass::TRANSFORM
-        || activeCommandType->getClass() == CmdClass::CONSTRUCT);
+        || activeCommandType->getClass() == CmdClass::CONSTRUCT))
+        || m_factionDisplay->building == true);
 }
 
 // ==================== reset state ====================
@@ -686,7 +691,7 @@ void UserInterface::mouseDownLeft(int x, int y) {
 			updateSelection(false, units);
 			computeDisplay();
 		} else {
-			m_console->addStdMessage("InvalidPosition");
+			m_console->addStdMessage("InvalidPosition1");
 		}
 		return;
 	}
@@ -698,7 +703,7 @@ void UserInterface::mouseDownLeft(int x, int y) {
 	}
 
     if (m_factionDisplay->building == true) {
-        m_factionDisplay->currentFactionBuild.build(m_factionDisplay->getFaction(), worldPos);
+        m_factionDisplay->currentFactionBuild->build(m_factionDisplay->getFaction(), worldPos);
     //} else if (m_mapDisplay->building == true) {
         //m_mapDisplay->currentMapBuild.build(g_world.getTileset(), worldPos);
     } else if (selectingPos) { // give standard orders
@@ -735,22 +740,22 @@ void UserInterface::mouseUpLeft(int x, int y) {
 		if (g_renderer.computePosition(Vec2i(x, y), worldPos)) {
 			giveTwoClickOrders(worldPos, 0);
 		} else {
-			m_console->addStdMessage("InvalidPosition");
+			m_console->addStdMessage("InvalidPosition2");
 		}
 	}
+	selectingPos = false;
+    m_factionDisplay->building = false;
+	g_program.getMouseCursor().setAppearance(MouseAppearance::DEFAULT);
 }
 
 void UserInterface::mouseUpRight(int x, int y) {
 	WIDGET_LOG( __FUNCTION__ << "( " << x << ", " << y << " )" );
-
 	if (!g_camera.isMoving()) {
 		Vec2i worldPos;
-        m_factionDisplay->building = false;
 		if (selectingPos || selectingMeetingPoint) {
 			resetState();
 			return;
 		}
-
 		if (selection->isComandable()) {
 			UnitVector units;
 			const MapObject *obj = 0;
@@ -760,7 +765,7 @@ void UserInterface::mouseUpRight(int x, int y) {
 					: obj ? obj->getResource()->getPos() : worldPos;
 				giveDefaultOrders(pos, targetUnit);
 			} else {
-				m_console->addStdMessage("InvalidPosition");
+				m_console->addStdMessage("InvalidPosition3");
 			}
 		}
 	}
@@ -1663,7 +1668,7 @@ void UserInterface::computeTaxPanel() {
 }
 
 void UserInterface::computeCommandPanel() {
-	if (selectingPos || selectingMeetingPoint) {
+	if ((selectingPos || selectingMeetingPoint) && m_factionDisplay->building == false) {
 		assert(!selection->isEmpty());
 		m_display->setSelectedCommandPos(activePos);
         const Unit *test = selection->getFrontUnit();
@@ -1827,6 +1832,7 @@ void UserInterface::computeDisplay() {
 	m_itemWindow->computeEquipmentPanel();
 	m_itemWindow->computeButtonsPanel();
 	m_itemWindow->computeInventoryPanel();
+	m_itemWindow->computeRequisitionPanel();
 
     // === Production Panels ===
     m_productionWindow->computeResourcesPanel();

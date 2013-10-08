@@ -145,6 +145,7 @@ public:
     void setCurrent(int i) {current = current + i;}
     string getTypeTag() const {return typeTag;}
     Item *getItem() const {return item;}
+    const ItemType *getItemType() const {return itemType;}
     const ItemType *getType() const {return itemType;}
     void setItem(Item *newItem) {item = newItem;}
     void setItemType(const ItemType *newItemType) {itemType = newItemType;}

@@ -1621,4 +1621,171 @@ void TradeCommandType::update(Unit *unit) const {
 	}
 }
 
+// =====================================================
+// 	class ProcureCommandType
+// =====================================================
+
+bool ProcureCommandType::load(const XmlNode *n, const string &dir, const FactionType *ft, const CreatableType *ct) {
+	bool loadOk = MoveBaseCommandType::load(n, dir, ft, ct);
+	string skillName;
+	try {
+		string storage = n->getChild("storage")->getAttribute("value")->getRestrictedValue();
+		if (storage == "local") {
+            m_location = true;
+		} else if (storage == "faction") {
+            m_location = false;
+		}
+	} catch (runtime_error e) {
+		g_logger.logXmlError(dir, e.what());
+		loadOk = false;
+	}
+	try {
+		skillName = n->getChild("transport-skill")->getAttribute("value")->getRestrictedValue();
+		m_transportSkillType = static_cast<const TransportSkillType*>(creatableType->getActions()->getSkillType(skillName, SkillClass::TRANSPORT));
+	} catch (runtime_error e) {
+		g_logger.logXmlError(dir, e.what());
+		loadOk = false;
+	}
+	//stop loaded
+	try {
+		skillName = n->getChild("stop-loaded-skill")->getAttribute("value")->getRestrictedValue();
+		m_stopLoadedSkillType = static_cast<const StopSkillType*>(creatableType->getActions()->getSkillType(skillName, SkillClass::STOP));
+	} catch (runtime_error e) {
+		g_logger.logXmlError(dir, e.what());
+		loadOk = false;
+	}
+
+	//move loaded
+	try {
+		skillName = n->getChild("move-loaded-skill")->getAttribute("value")->getRestrictedValue();
+		m_moveLoadedSkillType = static_cast<const MoveSkillType*>(creatableType->getActions()->getSkillType(skillName, SkillClass::MOVE));
+	} catch (runtime_error e) {
+		g_logger.logXmlError(dir, e.what());
+		loadOk = false;
+	}
+	return loadOk;
+}
+
+void ProcureCommandType::doChecksum(Checksum &checksum) const {
+	MoveBaseCommandType::doChecksum(checksum);
+	checksum.add(m_moveLoadedSkillType->getName());
+	checksum.add(m_transportSkillType->getName());
+	checksum.add(m_stopLoadedSkillType->getName());
+}
+
+void ProcureCommandType::getDesc(string &str, const Unit *unit) const{
+	Lang &lang= Lang::getInstance();
+	str += lang.get("LoadedSpeed") + ": " + intToStr(m_moveLoadedSkillType->getBaseSpeed()) + "\n";
+}
+
+void ProcureCommandType::descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const {
+	string msg;
+	getDesc(msg, unit);
+	callback->addElement(msg);
+}
+
+void ProcureCommandType::subDesc(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const {
+	Lang &lang = g_lang;
+	callback->addElement(g_lang.get("Procure"));
+}
+
+void ProcureCommandType::goToGuild(Unit *unit, Unit *home, Unit *guild) const {
+    for (int i = 0; i < unit->getRequisitionCount(); ++i) {
+        const ItemType *requisitionedType = unit->getRequisition(i);
+        for (int j = 0; j < guild->getStoredItemCount(); ++j) {
+            const ItemType *producedType = guild->getStoredItem(j)->getType();
+            if (producedType == requisitionedType) {
+                bool costs = true;
+                for (int m = 0; m < guild->getStoredItem(j)->getType()->getCostCount(); ++m) {
+                    const ResourceType *rt = guild->getStoredItem(j)->getType()->getCost(m, unit->getFaction()).getType();
+                    int cost = guild->getStoredItem(j)->getType()->getCost(m, unit->getFaction()).getAmount();
+                    int gold = unit->getSResource(rt)->getAmount();
+                    if (unit->owner->getType()->hasTag("fort")) {
+                        gold = unit->owner->getFaction()->getSResource(rt)->getAmount();
+                    }
+                    if (gold < cost) {
+                        costs = false;
+                        break;
+                    }
+                }
+                if (costs == true) {
+                    for (int m = 0; m < guild->getStoredItem(j)->getType()->getCostCount(); ++m) {
+                        const ResourceType *rt = guild->getStoredItem(j)->getType()->getCost(m, unit->getFaction()).getType();
+                        int cost = guild->getStoredItem(j)->getType()->getCost(m, unit->getFaction()).getAmount();
+                        guild->incResourceAmount(rt, cost);
+                        if (unit->owner->getType()->hasTag("fort")) {
+                            unit->owner->getFaction()->incResourceAmount(rt, -cost);
+                        } else {
+                            unit->owner->incResourceAmount(rt, -cost);
+                        }
+                    }
+                    int ident = guild->getStoredItem(j)->id;
+                    guild->accessStorageRemove(ident);
+                    unit->accessStorageAdd(ident);
+                    break;
+                }
+            }
+        }
+    }
+}
+
+void ProcureCommandType::goToOwner(Unit *unit, Unit *home, Unit *guild) const {
+    vector<const ItemType*> remainingReqs;
+    for (int i = 0; i < unit->getRequisitionCount(); ++i) {
+        const ItemType *reqType = unit->getRequisition(i);
+        bool remaining = true;
+        for (int j = 0; j < unit->getStorageSize(); ++j) {
+            const ItemType *checkType = unit->getStorage(j)->getItemType();
+            if (checkType == reqType && unit->getStorage(j)->getCurrent() > 0) {
+                remaining = false;
+            }
+        }
+        if (remaining == true) {
+            remainingReqs.push_back(reqType);
+        }
+    }
+    unit->clearRequisitions();
+    for (int i = 0; i < remainingReqs.size(); ++i) {
+        unit->owner->addRequisition(remainingReqs[i]);
+    }
+    for (int i = 0; i < unit->getStoredItemCount(); ++i) {
+        unit->owner->accessStorageAdd(unit->getStoredItem(i)->id);
+    }
+    unit->clearStoredItems();
+}
+
+void ProcureCommandType::update(Unit *unit) const {
+	_PROFILE_COMMAND_UPDATE();
+	Command *command = unit->getCurrCommand();
+	assert(command->getType() == this);
+	Map *map = g_world.getMap();
+	if (unit->productionRoute.getStoreId() != -1 && unit->productionRoute.getProducerId() != -1) {
+	    Unit *store = g_world.getUnit(unit->productionRoute.getStoreId());
+	    Unit *producer = g_world.getUnit(unit->productionRoute.getProducerId());
+        if (unit->productionRoute.getDestination() == store->getPos()) {
+            if (unit->travel(unit->productionRoute.getDestination(), m_moveLoadedSkillType) == TravelState::ARRIVED) {
+                goToOwner(unit, store, producer);
+                unit->productionRoute.setDestination(producer->getPos());
+                if (unit->getCurrentFocus() == "procure") {
+                    unit->productionRoute.setProducerId(-1);
+                    unit->setGoalReason("compute");
+                    unit->finishCommand();
+                }
+            }
+        }
+        Vec2i uPos = unit->getPos();
+        Vec2i bPos = producer->getCenteredPos();
+        int newDistance = sqrt(pow(float(abs(uPos.x - bPos.x)), 2) + pow(float(abs(uPos.y - bPos.y)), 2));
+        if (unit->productionRoute.getDestination() == producer->getPos()) {
+            if (unit->travel(unit->productionRoute.getDestination(), m_moveLoadedSkillType) == TravelState::ARRIVED
+                || newDistance < 3) {
+                goToGuild(unit, store, producer);
+                unit->productionRoute.setDestination(store->getPos());
+            }
+        }
+	} else {
+	    unit->finishCommand();
+	}
+}
+
 }}

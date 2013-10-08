@@ -83,9 +83,6 @@ private:
 
 	UserInterface *m_ui;
 	bool downLighted[commandCellCount];
-	int index[commandCellCount];
-	const CommandType *commandTypes[commandCellCount];
-	CmdClass commandClasses[commandCellCount];
 	int m_selectedCommandIndex;
 	int m_logo;
 
@@ -104,7 +101,6 @@ private:
 	FactionDisplayButton	m_hoverBtn,
 					        m_pressedBtn;
 
-	CommandTip  *m_toolTip;
     TradeTip  *m_buildTip;
 	const FontMetrics *m_fontMetrics;
 
@@ -116,45 +112,36 @@ public:
 	FactionDisplay(Container *parent, UserInterface *ui, Vec2i pos);
 
     bool building;
-    FactionBuild currentFactionBuild;
+    const FactionBuild *currentFactionBuild;
 
 	//get
 	const Faction *getFaction() const               {return m_faction;}
 	int getBuildingCount() const                    {return m_unitTypes.size();}
 	const UnitType *getBuilding(int i) const        {return m_unitTypes[i];}
 	int getBuildCount() const                       {return m_factionBuilds.size();}
-	FactionBuild getFactionBuild(int i) const       {return m_factionBuilds[i];}
-	TradeTip *getBuildTip() const                    {return m_buildTip;}
+	const FactionBuild *getFactionBuild(int i) const {return &m_factionBuilds[i];}
+	TradeTip *getBuildTip() const                   {return m_buildTip;}
 	FuzzySize getFuzzySize() const                  {return m_fuzzySize;}
-	string getPortraitTitle() const					{return TextWidget::getText(0);}
-	string getPortraitText() const					{return TextWidget::getText(1);}
-	int getIndex(int i)								{return index[i];}
+	string getPanelTitle() const					{return TextWidget::getText(0);}
 	bool getDownLighted(int index) const			{return downLighted[index];}
-	const CommandType *getCommandType(int i)        {return commandTypes[i];}
-	CmdClass getCommandClass(int i)                 {return commandClasses[i];}
-	int getSelectedCommandIndex() const             {return m_selectedCommandIndex;}
-	CommandTip* getCommandTip()                     {return m_toolTip;}
+	int getSelectedCommandIndex() const {return m_selectedCommandIndex;}
 
 	//set
 	void setSize();
 	void setFuzzySize(FuzzySize fSize);
-	void setPortraitTitle(const string title);
-	void setPortraitText(const string &text);
+	void setPanelTitle(const string title);
 	void setToolTipText2(const string &hdr, const string &tip, FactionDisplaySection i_section = FactionDisplaySection::COMMANDS);
 	void addToolTipReq(const DisplayableType *dt, bool ok, const string &txt);
 
 	void setUpImage(int i, const Texture2D *image) 		 {setImage(image, i);}
 	void setDownImage(int i, const Texture2D *image)	 {setImage(image, i);}
-	void setCommandType(int i, const CommandType *ct)	 {commandTypes[i]= ct;}
-	void setCommandClass(int i, const CmdClass cc)	     {commandClasses[i]= cc;}
 	void setDownLighted(int i, bool lighted)			 {downLighted[i]= lighted;}
-	void setIndex(int i, int value)						 {index[i] = value;}
 	void setSelectedCommandPos(int i);
 
 	//misc
 	void init(const Faction *faction, std::set<const UnitType*> &types);
 
-	void computeBuildTip(FactionBuild fb);
+	void computeBuildTip(const FactionBuild *fb);
 	void computeBuildInfo(int posDisplay);
 	void onFirstTierSelect(int posBuild);
     void buildButtonPressed(int posDisplay);

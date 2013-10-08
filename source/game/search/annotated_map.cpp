@@ -69,6 +69,19 @@ AnnotatedMap::AnnotatedMap(World *world, ExplorationMap *eMap)
 AnnotatedMap::~AnnotatedMap() {
 }
 
+uint16 CellMetrics::get(const Field field) const{ /**< get metrics for field */
+    switch (field) {
+        case Field::LAND:		return field0;
+        case Field::AIR:		return field1;
+        case Field::ANY_WATER:	return field2;
+        case Field::DEEP_WATER:	return field3;
+        case Field::AMPHIBIOUS:	return field4;
+        case Field::WALL:       return field5;
+        case Field::STAIR:      return field6;
+        default: assert(false); return 0;
+    }
+}
+
 /** Initialise clearance data for a master map. */
 void AnnotatedMap::initMapMetrics() {
 	//_PROFILE_FUNCTION();

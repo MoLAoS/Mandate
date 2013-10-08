@@ -49,6 +49,7 @@ PrototypeFactory::PrototypeFactory() {
 	m_commandTypeFactory.registerClass<ConstructCommandType>();
 	m_commandTypeFactory.registerClass<HarvestCommandType>();
 	m_commandTypeFactory.registerClass<TradeCommandType>();
+	m_commandTypeFactory.registerClass<ProcureCommandType>();
 	m_commandTypeFactory.registerClass<TransportCommandType>();
 	m_commandTypeFactory.registerClass<SetStoreCommandType>();
 	m_commandTypeFactory.registerClass<SetProducerCommandType>();

@@ -317,9 +317,24 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
             itemStores.resize(itemStoresNode->getChildCount());
             for (int i = 0; i < itemStoresNode->getChildCount(); ++i) {
                 const XmlNode *itemStoreNode = itemStoresNode->getChild("item", i);
-                string resType = itemStoreNode->getAttribute("type")->getRestrictedValue();
+                string itemType = itemStoreNode->getAttribute("type")->getRestrictedValue();
                 int required = itemStoreNode->getAttribute("stored")->getIntValue();
-                itemStores[i].init(factionType->getItemType(resType), required);
+                itemStores[i].init(factionType->getItemType(itemType), required);
+            }
+        }
+    }
+    catch (runtime_error e) {
+		g_logger.logXmlError(dir, e.what());
+		loadOk = false;
+	}
+	try {
+        const XmlNode *addOnsNode = unitNode->getChild("add-ons", 0, false);
+        if (addOnsNode) {
+            addOns.resize(addOnsNode->getChildCount());
+            for (int i = 0; i < addOnsNode->getChildCount(); ++i) {
+                const XmlNode *addOnNode = addOnsNode->getChild("item", i);
+                string itemType = addOnNode->getAttribute("type")->getRestrictedValue();
+                addOns[i] = factionType->getItemType(itemType);
             }
         }
     }

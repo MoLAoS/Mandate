@@ -723,6 +723,82 @@ void Faction::reportReqsAndCosts(const CommandType *ct, const ProducibleType *pt
 	}
 }
 
+void Faction::reportBuildReqs(const UnitType *unitType, FactionBuildCheckResult &out_result, bool checkDups) const {
+	// required units
+	for (int i = 0; i < unitType->getUnitReqCount(); ++i) {
+		const UnitType *ut = unitType->getUnitReq(i).getUnitType();
+		if (checkDups) {
+			bool duplicate = false;
+			foreach (UnitReqResults, it, out_result.m_unitReqResults) {
+				if (it->getUnitType() == ut) {
+					duplicate = true;
+					break;
+				}
+			}
+			if (duplicate) {
+				continue;
+			}
+		}
+		bool local = unitType->getUnitReq(i).getScope();
+		bool ok = getCountOfUnitType(ut);
+		out_result.m_unitReqResults.push_back(UnitReqResult(ut, ok, local));
+	}
+	// required items
+	for (int i = 0; i < unitType->getItemReqCount(); ++i) {
+		const ItemType *itype = unitType->getItemReq(i).getItemType();
+		if (checkDups) {
+			bool duplicate = false;
+			foreach (ItemReqResults, it, out_result.m_itemReqResults) {
+				if (it->getItemType() == itype) {
+					duplicate = true;
+					break;
+				}
+			}
+			if (duplicate) {
+				continue;
+			}
+		}
+		bool local = unitType->getItemReq(i).getScope();
+		bool ok = getCountOfItemType(itype);
+		out_result.m_itemReqResults.push_back(ItemReqResult(itype, ok, local));
+	}
+	// required upgrades
+	for (int i = 0; i < unitType->getUpgradeReqCount(); ++i) {
+		const UpgradeType *ut = unitType->getUpgradeReq(i).getUpgradeType();
+		if (checkDups) {
+			bool duplicate = false;
+			foreach (UpgradeReqResults, it, out_result.m_upgradeReqResults) {
+				if (it->getUpgradeType() == ut) {
+					duplicate = true;
+					break;
+				}
+			}
+			if (duplicate) {
+				continue;
+			}
+		}
+		bool ok = upgradeManager.isUpgraded(ut);
+		out_result.m_upgradeReqResults.push_back(UpgradeReqResult(ut, ok));
+	}
+}
+
+void Faction::reportBuildReqsAndCosts(const UnitType *unitType, FactionBuildCheckResult &out_result) const {
+	out_result.m_unitType = unitType;
+    out_result.m_upgradedAlready = false;
+    out_result.m_upgradingAlready = false;
+    out_result.m_partiallyUpgraded = false;
+    reportBuildReqs(unitType, out_result, true);
+    for (int i=0; i < unitType->getCostCount(); ++i) {
+        ResourceAmount res = unitType->getCost(i, this);
+        if (res.getAmount() < 0) {
+            out_result.m_resourceMadeResults.push_back(ResourceMadeResult(res.getType(), -res.getAmount()));
+        } else {
+            int stored = getSResource(res.getType())->getAmount();
+            out_result.m_resourceCostResults.push_back(ResourceCostResult(res.getType(), res.getAmount(), stored, false));
+        }
+    }
+}
+
 // ================== cost application ==================
 
 /// apply costs except static production (start building/production)

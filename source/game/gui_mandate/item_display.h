@@ -36,7 +36,7 @@ using Entities::Faction;
 
 class UserInterface;
 
-WRAPPED_ENUM( ItemDisplaySection, BUTTONS, EQUIPMENT, INVENTORY )
+WRAPPED_ENUM( ItemDisplaySection, BUTTONS, EQUIPMENT, INVENTORY, REQUISITION )
 
 struct ItemDisplayButton {
 	ItemDisplaySection m_section;
@@ -71,11 +71,12 @@ public:
 	static const int cellHeightCount = 1;
 	static const int buttonCellCount = cellWidthCount * cellHeightCount;
 	static const int equipmentCellCount = cellWidthCount * cellHeightCount * 3;
-	static const int inventoryCellCount = cellWidthCount * cellHeightCount *3;
+	static const int inventoryCellCount = cellWidthCount * cellHeightCount * 3;
+	static const int requisitionCellCount = cellWidthCount * cellHeightCount * 3;
 	static const int invalidIndex = -1;
 private:
 	UserInterface *m_ui;
-	bool downLighted[buttonCellCount + equipmentCellCount + inventoryCellCount];
+	bool downLighted[buttonCellCount + equipmentCellCount + inventoryCellCount + requisitionCellCount];
 	int index[1];
 	int m_logo;
 	int m_imageSize;
@@ -88,7 +89,7 @@ private:
 	Vec2i m_buttonOffset,
 	m_equipmentOffset,
 	m_inventoryOffset,
-	m_resourcesOffset;
+	m_requisitionsOffset;
 
 	ItemDisplayButton m_hoverBtn,
                       m_pressedBtn;
@@ -126,10 +127,13 @@ public:
 	void equipButtonPressed(int posDisplay);
 	void equipmentButtonPressed(int posDisplay);
 	void inventoryButtonPressed(int posDisplay);
+	void requisitionButtonPressed(int posDisplay);
 	void computeEquipmentPanel();
 	void computeEquipmentInfo(int posDisplay);
 	void computeInventoryPanel();
 	void computeInventoryInfo(int posDisplay);
+	void computeRequisitionPanel();
+	void computeRequisitionInfo(int posDisplay);
 
 	void clear();
 	void resetTipPos(Vec2i i_offset);

@@ -526,7 +526,11 @@ void ProductionWindow::computeUnitInfo(int posDisplay) {
                 resName = formatString(resName);
             }
             ss << endl << lang.get("Create") << ": ";
-            ss << cu->getAmount() << " " << resName << " " << lang.get("Timer") << ": " << cStep << "/" << tR->getTimerValue();
+            if (tR->getActive()) {
+                ss << cu->getAmount() << " " << resName << " " << lang.get("Timer") << ": " << cStep << "/" << tR->getTimerValue();
+            } else {
+                ss << cu->getAmount() << " " << resName << " " << lang.get("Activation") << ": " << cStep << "/" << tR->getInitialTime();
+            }
             setToolTipText2("Make Unit", ss.str(), ProductionDisplaySection::UNITS);
         }
     }

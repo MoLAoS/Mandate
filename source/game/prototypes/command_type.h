@@ -736,6 +736,37 @@ public:
 	static CmdClass typeClass() { return CmdClass::TRADE; }
 };
 
+// ===============================
+//  class ProcureCommandType
+// ===============================
+
+class ProcureCommandType: public MoveBaseCommandType {
+private:
+	const MoveSkillType*		m_moveLoadedSkillType;
+	const TransportSkillType*	m_transportSkillType;
+	const StopSkillType*		m_stopLoadedSkillType;
+	bool                        m_location;
+public:
+	ProcureCommandType() : MoveBaseCommandType("Procure", Clicks::ONE)
+		, m_moveLoadedSkillType(0), m_transportSkillType(0), m_stopLoadedSkillType(0) {}
+	virtual bool load(const XmlNode *n, const string &dir, const FactionType *ft, const CreatableType *ct);
+	virtual void doChecksum(Checksum &checksum) const;
+	virtual void getDesc(string &str, const Unit *unit) const;
+	virtual void subDesc(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const override;
+	virtual void descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt = 0) const override;
+	virtual void update(Unit *unit) const;
+	void goToGuild(Unit* unit, Unit* home, Unit *guild) const;
+	void goToOwner(Unit* unit, Unit* home, Unit *guild) const;
+
+	//get
+	const MoveSkillType *getMoveLoadedSkillType() const		        {return m_moveLoadedSkillType;}
+	const TransportSkillType *getTransportSkillType() const	        {return m_transportSkillType;}
+	const StopSkillType *getStopLoadedSkillType() const		        {return m_stopLoadedSkillType;}
+
+	virtual CmdClass getClass() const { return typeClass(); }
+	static CmdClass typeClass() { return CmdClass::PROCURE; }
+};
+
 // ==================================
 //  class CreateSettlementCommandType
 // ==================================

@@ -49,20 +49,7 @@ class ExplorationMap;
 struct CellMetrics {
 	CellMetrics() { memset(this, 0, sizeof(*this)); }
 
-	uint16 get(const Field field) const { /**< get metrics for field */
-		switch (field) {
-			case Field::LAND:		return field0;
-			case Field::AIR:		return field1;
-			case Field::ANY_WATER:	return field2;
-			case Field::DEEP_WATER:	return field3;
-			case Field::AMPHIBIOUS:	return field4;
-			case Field::WALL:       return field5;
-			case Field::STAIR:      return field6;
-			default: assert(false); return 0;
-				//throw runtime_error("Unknown Field passed to CellMetrics::get()");
-				// don't want exception overhead in here...
-		}
-	}
+	uint16 get(const Field field) const;
 
 	void set(const Field field, uint16 val) { /**< set metrics for field */
 		switch (field) {
