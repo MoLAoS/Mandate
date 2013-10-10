@@ -210,6 +210,7 @@ public:
     void unequipItem(int ident);
     void consumeItem(int ident);
     const Equipment *getStorage(int i) const {return &storage[i];}
+    Equipment *getStorage(int i) {return &storage[i];}
     int getStorageSize() const {return storage.size();}
     const Equipment *getEquipment(int i) const {return &equipment[i];}
     int getEquipmentSize() const {return equipment.size();}

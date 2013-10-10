@@ -140,11 +140,15 @@ void GoalSystem::ownerLoad(Unit *unit) {
                     for (int i = 0; i < unit->getStoredItemCount(); ++i) {
                         unit->owner->accessStorageAdd(unit->getStoredItem(i)->id);
                     }
-                    for (int i = 0; i < unit->getStorageCount(); ++i) {
+                    for (int i = 0; i < unit->getStorageSize(); ++i) {
                         int total = unit->getStorage(i)->getCurrent();
                         unit->getStorage(i)->setCurrent(-total);
                     }
                     unit->clearStoredItems();
+                    int count = unit->owner->getStoredItemCount();
+                    for (int i = 0; i < count; ++i) {
+                        unit->owner->equipItem(unit->owner->getStoredItemCount() - 1);
+                    }
                 }
                 if (olct->getLoadSkillType()->getMaxRange() >= distance && unit->garrisonTest == false) {
                     unit->garrisonTest = true;
