@@ -793,12 +793,11 @@ void World::computeProduction() {
                     }
                 }
                 for (int m = 0; m < unit->getType()->getBonusPowerCount(); ++m) {
-                    const BonusPower *bonusPower = unit->getType()->getBonusPower(m);
-                    for (int i = 0; i < bonusPower->getUnitProductionSystem()->getCreatedUnitCount(); ++i) {
-                        CreatedUnit *createdUnit = &bonusPower->getUnitProductionSystem()->getCreatedUnit(i, faction);
-                        Timer *cTime = &bonusPower->getUnitProductionSystem()->getCreatedUnitTimer(i, faction);
+                    for (int i = 0; i < unit->getType()->getBonusPower(m)->getUnitProductionSystem()->getCreatedUnitCount(); ++i) {
+                        CreatedUnit *createdUnit = &unit->getType()->getBonusPower(m)->getUnitProductionSystem()->getCreatedUnit(i, faction);
+                        Timer *cTime = &unit->getType()->getBonusPower(m)->getUnitProductionSystem()->getCreatedUnitTimer(i, faction);
                         TimerStep *timeStep = &unit->bonusPowerTimers[m].currentUnitSteps[i];
-                        bonusPower->getUnitProductionSystem()->update(createdUnit, unit, cTime, timeStep);
+                        unit->getType()->getBonusPower(m)->getUnitProductionSystem()->update(createdUnit, unit, cTime, timeStep);
                     }
                 }
             }
