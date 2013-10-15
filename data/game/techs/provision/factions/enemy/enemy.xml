@@ -1,9 +1,6 @@
 <?xml version="1.0" standalone="no"?>
 <faction>
 	<needs>
-		<foods>
-			<food name="meat" value="11"/>
-		</foods>
 	</needs>
 	<item-images>
 	  <item-image image-path="/units/imp/images/daemon.bmp"/>

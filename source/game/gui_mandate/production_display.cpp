@@ -496,7 +496,7 @@ void ProductionWindow::computeUnitPanel() {
         const Unit *u = m_ui->getSelection()->getFrontUnit();
         if (u->isBuilt()) {
             for (int i = 0; i < u->getType()->getUnitProductionSystem()->getCreatedUnitCount(); ++i) {
-                const Texture2D *image = u->getType()->getUnitProductionSystem()->getCreatedUnit(i, u->getFaction()).getType()->getImage();
+                const Texture2D *image = u->getType()->getUnitProductionSystem()->getCreatedUnit(i, u->getFaction())->getType()->getImage();
                 setDownImage(i + resourceCellCount + itemCellCount + processCellCount, image);
             }
         }

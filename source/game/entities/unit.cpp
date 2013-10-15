@@ -215,17 +215,17 @@ Unit::Unit(CreateParams params)
 
 	createdUnitTimers.resize(type->getUnitProductionSystem()->getUnitTimerCount());
 	for (int i = 0; i < type->getUnitProductionSystem()->getUnitTimerCount(); ++i) {
-	    int max = type->getUnitProductionSystem()->getCreatedUnitTimer(i, faction).getTimerValue();
-	    int initial = type->getUnitProductionSystem()->getCreatedUnitTimer(i, faction).getInitialTime();
-	    bool check = type->getUnitProductionSystem()->getCreatedUnitTimer(i, faction).getActive();
+	    int max = type->getUnitProductionSystem()->getCreatedUnitTimer(i, faction)->getTimerValue();
+	    int initial = type->getUnitProductionSystem()->getCreatedUnitTimer(i, faction)->getInitialTime();
+	    bool check = type->getUnitProductionSystem()->getCreatedUnitTimer(i, faction)->getActive();
         createdUnitTimers[i].init(max, 0, initial, check);
 	}
 	createdUnits.resize(type->getUnitProductionSystem()->getCreatedUnitCount());
 	for (int i = 0; i < type->getUnitProductionSystem()->getCreatedUnitCount(); ++i) {
-	    int amount = type->getUnitProductionSystem()->getCreatedUnit(i, faction).getAmount();
-	    int amountPlus = type->getUnitProductionSystem()->getCreatedUnit(i, faction).getAmountPlus();
-	    fixed amountMult = type->getUnitProductionSystem()->getCreatedUnit(i, faction).getAmountMultiply();
-	    const UnitType *unitType = type->getUnitProductionSystem()->getCreatedUnit(i, faction).getType();
+	    int amount = type->getUnitProductionSystem()->getCreatedUnit(i, faction)->getAmount();
+	    int amountPlus = type->getUnitProductionSystem()->getCreatedUnit(i, faction)->getAmountPlus();
+	    fixed amountMult = type->getUnitProductionSystem()->getCreatedUnit(i, faction)->getAmountMultiply();
+	    const UnitType *unitType = type->getUnitProductionSystem()->getCreatedUnit(i, faction)->getType();
         createdUnits[i].init(unitType, amount, amountPlus, amountMult, -1);
 	}
 
@@ -3563,6 +3563,51 @@ void Unit::setOwner(Unit *unit) {
     unit->addControlledUnit(g_world.getUnit(this->getId()));
 }
 
+void Unit::computeTax() {
+    int tax = 25;
+    const ResourceType *wealth = g_world.getTechTree()->getResourceType("wealth");
+    const ResourceType *pop = g_world.getTechTree()->getResourceType("population");
+    int taxMult = 0;
+    for (int i = 0; i < getType()->getCostCount(); ++i) {
+        if (getType()->getCost(i, faction).getType() == pop) {
+            taxMult = getType()->getCost(i, faction).getAmount();
+            break;
+        }
+    }
+    if (type->hasTag("house")) {
+        const CitizenNeeds *needs = faction->getType()->getCitizenNeeds();
+        for (int i = 0; i < needs->getFoodCount(); ++i) {
+            string name = needs->getFood(i)->getName();
+            for (int j = 0; j < sresources.size(); ++j) {
+                if (sresources[j].getType()->getName() == name) {
+                    int foodEaten = sresources[j].getAmount();
+                    int served = needs->getFood(i)->getServed();
+                    if (foodEaten * served > 0 && foodEaten * served < taxMult) {
+                        tax += needs->getFood(i)->getTaxBonus() * foodEaten * served;
+                        incResourceAmount(sresources[j].getType(), foodEaten);
+                    } else if (foodEaten * served > taxMult) {
+                        tax += needs->getFood(i)->getTaxBonus() * taxMult;
+                        int inc = taxMult / served;
+                        incResourceAmount(sresources[j].getType(), inc);
+                    }
+                }
+            }
+        }
+        for (int i = 0; i < needs->getGoodCount(); ++i) {
+            string name = needs->getGood(i)->getName();
+            for (int j = 0; j < sresources.size(); ++j) {
+                if (sresources[j].getType()->getName() == name) {
+                    tax += needs->getGood(i)->getTaxBonus();
+                }
+            }
+        }
+        for (int i = 0; i < needs->getServiceCount(); ++i) {
+            //string name = needs->getService(i)->getName();
+                //tax += needs->getService(i)->getTaxBonus();
+        }
+    }
+    incResourceAmount(wealth, tax);
+}
 
 void Unit::generateItem(Item *item) {
     int quality = 0;

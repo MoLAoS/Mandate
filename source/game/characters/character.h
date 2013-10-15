@@ -101,14 +101,21 @@ class CharDatum {
 private:
     string name;
     int value;
+    int taxBonus;
+    int served;
     Stat creatorCost;
 public:
     const Stat *getCreatorCost() const {return &creatorCost;}
     int getValue() {return value;}
+    int getTaxBonus() {return taxBonus;}
+    int getServed() {return served;}
     string getName() {return name;}
     int getValue() const {return value;}
+    int getTaxBonus() const{return taxBonus;}
+    int getServed() const{return served;}
     string getName() const {return name;}
     void init(int amount, string title);
+    void initNeeds(int tax, int serve);
     void incValue(int i) {value += i;}
     void save(XmlNode *node) const;
     void getDesc(string &str, const char *pre);

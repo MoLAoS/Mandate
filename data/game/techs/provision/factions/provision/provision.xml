@@ -2,30 +2,30 @@
 <faction>
 	<needs>
 		<foods>
-			<food name="water" value="1"/>
-			<food name="ham" value="1"/>
-			<food name="mutton" value="1"/>
-			<food name="beef" value="1"/>
-			<food name="venison" value="1"/>
-			<food name="fowl" value="1"/>
-			<food name="bread" value="1"/>
-			<food name="cheese" value="1"/>
-			<food name="milk" value="1"/>
-			<food name="corn" value="1"/>
-			<food name="eggs" value="1"/>
-			<food name="grape" value="1"/>
-			<food name="wine" value="2"/>
-			<food name="spirits" value="2"/>
-			<food name="honey" value="2"/>
+			<food name="water" value="1" tax-bonus="5" served="5"/>
+			<food name="ham" value="1" tax-bonus="5" served="5"/>
+			<food name="mutton" value="1" tax-bonus="5" served="3"/>
+			<food name="beef" value="1" tax-bonus="5" served="3"/>
+			<food name="venison" value="1" tax-bonus="5" served="3"/>
+			<food name="fowl" value="1" tax-bonus="5" served="3"/>
+			<food name="bread" value="1" tax-bonus="5" served="5"/>
+			<food name="cheese" value="1" tax-bonus="5" served="4"/>
+			<food name="milk" value="1" tax-bonus="5" served="5"/>
+			<food name="corn" value="1" tax-bonus="5" served="1"/>
+			<food name="eggs" value="1" tax-bonus="5" served="1"/>
+			<food name="grape" value="1" tax-bonus="5" served="1"/>
+			<food name="wine" value="2" tax-bonus="5" served="3"/>
+			<food name="spirits" value="2" tax-bonus="5" served="3"/>
+			<food name="honey" value="2" tax-bonus="5" served="2"/>
 		</foods>
 		<goods>
-			<good name="cloth" value="1"/>
-			<good name="feathers" value="1"/>
-			<good name="wool_thread" value="1"/>
-			<good name="hemp_thread" value="1"/>
-			<good name="flax_thread" value="1"/>
-			<good name="rope" value="1"/>
-			<good name="parchment" value="2"/>
+			<good name="cloth" value="1" tax-bonus="5" served="1"/>
+			<good name="feathers" value="1" tax-bonus="5" served="1"/>
+			<good name="wool_thread" value="1" tax-bonus="5" served="1"/>
+			<good name="hemp_thread" value="1" tax-bonus="5" served="1"/>
+			<good name="flax_thread" value="1" tax-bonus="5" served="1"/>
+			<good name="rope" value="1" tax-bonus="5" served="1"/>
+			<good name="parchment" value="2" tax-bonus="5" served="1"/>
 		</goods>
 	</needs>
 	<item-images>

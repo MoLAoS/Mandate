@@ -269,17 +269,17 @@ class UnitProductionSystem {
 private:
 	typedef vector<CreatedUnit> CreatedUnits;
 	typedef vector<Timer>       CreatedUnitTimers;
-	CreatedUnits createdUnits;
+	mutable CreatedUnits createdUnits;
 	mutable CreatedUnitTimers createdUnitTimers;
 public:
     // units created
     CreatedUnits getCreatedUnits() const {return createdUnits;}
 	int getCreatedUnitCount() const					{return createdUnits.size();}
-	CreatedUnit getCreatedUnit(int i, const Faction *f) const;
+	CreatedUnit *getCreatedUnit(int i, const Faction *f) const;
 	int getCreateUnit(const UnitType *ut, const Faction *f) const;
 	// units created timers
 	int getUnitTimerCount() const {return createdUnitTimers.size();}
-	Timer getCreatedUnitTimer(int i, const Faction *f) const;
+	Timer *getCreatedUnitTimer(int i, const Faction *f) const;
 	// load resource system
 	bool load(const XmlNode *unitProductionNode, const string &dir, const TechTree *techTree, const FactionType *factionType);
 

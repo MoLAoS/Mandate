@@ -659,14 +659,12 @@ int UnitProductionSystem::getCreateUnit(const UnitType *ut, const Faction *f) co
 	return 0;
 }
 
-CreatedUnit UnitProductionSystem::getCreatedUnit(int i, const Faction *f) const {
-	CreatedUnit unit(createdUnits[i]);
-	return unit;
+CreatedUnit *UnitProductionSystem::getCreatedUnit(int i, const Faction *f) const {
+	return &createdUnits[i];
 }
 
-Timer UnitProductionSystem::getCreatedUnitTimer(int i, const Faction *f) const {
-	Timer timer(createdUnitTimers[i]);
-	return timer;
+Timer *UnitProductionSystem::getCreatedUnitTimer(int i, const Faction *f) const {
+	return &createdUnitTimers[i];
 }
 
 void UnitProductionSystem::update(CreatedUnit *cu, Unit *unit, Timer *timer, TimerStep *timerStep) const {

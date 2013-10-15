@@ -68,17 +68,17 @@ Item::Item(CreateParams params)
 
 	createdUnitTimers.resize(type->getUnitProductionSystem()->getUnitTimerCount());
 	for (int i = 0; i < type->getUnitProductionSystem()->getUnitTimerCount(); ++i) {
-	    int max = type->getUnitProductionSystem()->getCreatedUnitTimer(i, faction).getTimerValue();
-	    int initial = type->getUnitProductionSystem()->getCreatedUnitTimer(i, faction).getInitialTime();
-	    bool check = type->getUnitProductionSystem()->getCreatedUnitTimer(i, faction).getActive();
+	    int max = type->getUnitProductionSystem()->getCreatedUnitTimer(i, faction)->getTimerValue();
+	    int initial = type->getUnitProductionSystem()->getCreatedUnitTimer(i, faction)->getInitialTime();
+	    bool check = type->getUnitProductionSystem()->getCreatedUnitTimer(i, faction)->getActive();
         createdUnitTimers[i].init(max, 0, initial, check);
 	}
 	createdUnits.resize(type->getUnitProductionSystem()->getCreatedUnitCount());
 	for (int i = 0; i < type->getUnitProductionSystem()->getCreatedUnitCount(); ++i) {
-	    int amount = type->getUnitProductionSystem()->getCreatedUnit(i, faction).getAmount();
-	    int amountPlus = type->getUnitProductionSystem()->getCreatedUnit(i, faction).getAmountPlus();
-	    fixed amountMult = type->getUnitProductionSystem()->getCreatedUnit(i, faction).getAmountMultiply();
-	    const UnitType *unitType = type->getUnitProductionSystem()->getCreatedUnit(i, faction).getType();
+	    int amount = type->getUnitProductionSystem()->getCreatedUnit(i, faction)->getAmount();
+	    int amountPlus = type->getUnitProductionSystem()->getCreatedUnit(i, faction)->getAmountPlus();
+	    fixed amountMult = type->getUnitProductionSystem()->getCreatedUnit(i, faction)->getAmountMultiply();
+	    const UnitType *unitType = type->getUnitProductionSystem()->getCreatedUnit(i, faction)->getType();
         createdUnits[i].init(unitType, amount, amountPlus, amountMult, -1);
 	}
 
@@ -219,15 +219,15 @@ string Item::getLongDesc() {
 	// can create units
 	if (type->getUnitProductionSystem()->getCreatedUnitCount() > 0) {
 		for (int i = 0; i < type->getUnitProductionSystem()->getCreatedUnitCount(); ++i) {
-			CreatedUnit u = type->getUnitProductionSystem()->getCreatedUnit(i, getFaction());
-			string unitName = lang.getTechString(u.getType()->getName());
-			Timer tR = type->getUnitProductionSystem()->getCreatedUnitTimer(i, getFaction());
+			CreatedUnit *createdUnit = type->getUnitProductionSystem()->getCreatedUnit(i, getFaction());
+			string unitName = lang.getTechString(createdUnit->getType()->getName());
+			Timer *timer = type->getUnitProductionSystem()->getCreatedUnitTimer(i, getFaction());
 			int cUStep = currentUnitSteps[i].currentStep;
-			if (unitName == u.getType()->getName()) {
+			if (unitName == createdUnit->getType()->getName()) {
 				unitName = formatString(unitName);
 			}
 			ss << endl << lang.get("Create") << ": ";
-			ss << u.getAmount() << " " << unitName << "s " <<lang.get("Timer") << ": " << cUStep << "/" << tR.getTimerValue();
+			ss << createdUnit->getAmount() << " " << unitName << "s " <<lang.get("Timer") << ": " << cUStep << "/" << timer->getTimerValue();
 		}
 	}
 	// can create items

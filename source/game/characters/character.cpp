@@ -17,23 +17,44 @@ namespace Glest { namespace ProtoTypes {
 void CharDatum::init(int amount, string title) {
     name = title;
     value = amount;
+    taxBonus = 0;
+    served = 0;
+}
+
+void CharDatum::initNeeds(int tax, int serve) {
+    taxBonus = tax;
+    served = serve;
 }
 
 void CharDatum::save(XmlNode *node) const {
     node->addAttribute("name", name);
     node->addAttribute("value", value);
+    node->addAttribute("tax-bonus", taxBonus);
+    node->addAttribute("served", served);
 }
 
 void CharDatum::getDesc(string &str, const char *pre) {
     str += name;
     str += " |Level: ";
     str += intToStr(value);
+    if (taxBonus > 0) {
+        str += " |Tax Bonus: ";
+        str += intToStr(taxBonus);
+        str += " |Served: ";
+        str += intToStr(served);
+    }
 }
 
 void CharDatum::getDesc(string &str, const char *pre) const {
     str += name;
     str += " |Level: ";
     str += intToStr(value);
+    if (taxBonus > 0) {
+        str += " |Tax Bonus: ";
+        str += intToStr(taxBonus);
+        str += " |Served: ";
+        str += intToStr(served);
+    }
 }
 
 // ===============================
@@ -265,7 +286,10 @@ bool CitizenNeeds::load(const XmlNode *baseNode) {
             const XmlNode *foodNode = foodsNode->getChild("food");
             string name = foodNode->getAttribute("name")->getRestrictedValue();
             int value = foodNode->getAttribute("value")->getIntValue();
+            int bonus = foodNode->getAttribute("tax-bonus")->getIntValue();
+            int serve = foodNode->getAttribute("served")->getIntValue();
             foods[i].init(value, name);
+            foods[i].initNeeds(bonus, serve);
         }
     }
     const XmlNode *goodsNode = baseNode->getChild("goods", 0, false);
@@ -275,7 +299,10 @@ bool CitizenNeeds::load(const XmlNode *baseNode) {
             const XmlNode *goodNode = goodsNode->getChild("good");
             string name = goodNode->getAttribute("name")->getRestrictedValue();
             int value = goodNode->getAttribute("value")->getIntValue();
+            int bonus = goodNode->getAttribute("tax-bonus")->getIntValue();
+            int serve = goodNode->getAttribute("served")->getIntValue();
             goods[i].init(value, name);
+            goods[i].initNeeds(bonus, serve);
         }
     }
     const XmlNode *servicesNode = baseNode->getChild("services", 0, false);
@@ -285,7 +312,10 @@ bool CitizenNeeds::load(const XmlNode *baseNode) {
             const XmlNode *serviceNode = servicesNode->getChild("service");
             string name = serviceNode->getAttribute("name")->getRestrictedValue();
             int value = serviceNode->getAttribute("value")->getIntValue();
+            int bonus = serviceNode->getAttribute("tax-bonus")->getIntValue();
+            int serve = serviceNode->getAttribute("served")->getIntValue();
             services[i].init(value, name);
+            services[i].initNeeds(bonus, serve);
         }
     }
     return loadOk;

@@ -216,6 +216,8 @@ public:
     int getEquipmentSize() const {return equipment.size();}
 /**< system for items */
 
+    void computeTax();
+
 private:
 	typedef vector<Timer> CreatedUnitTimers;
 	CreatedUnitTimers createdUnitTimers;

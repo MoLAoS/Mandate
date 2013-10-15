@@ -792,13 +792,16 @@ void World::computeProduction() {
                         item->getType()->getUnitProductionSystem()->update(createdUnit, unit, cTime, timeStep);
                     }
                 }
-                for (int m = 0; m < unit->getType()->getBonusPowerCount(); ++m) {
+                /*for (int m = 0; m < unit->getType()->getBonusPowerCount(); ++m) {
                     for (int i = 0; i < unit->getType()->getBonusPower(m)->getUnitProductionSystem()->getCreatedUnitCount(); ++i) {
-                        CreatedUnit *createdUnit = &unit->getType()->getBonusPower(m)->getUnitProductionSystem()->getCreatedUnit(i, faction);
-                        Timer *cTime = &unit->getType()->getBonusPower(m)->getUnitProductionSystem()->getCreatedUnitTimer(i, faction);
+                        CreatedUnit *createdUnit = unit->getType()->getBonusPower(m)->getUnitProductionSystem()->getCreatedUnit(i, faction);
+                        Timer *cTime = unit->getType()->getBonusPower(m)->getUnitProductionSystem()->getCreatedUnitTimer(i, faction);
                         TimerStep *timeStep = &unit->bonusPowerTimers[m].currentUnitSteps[i];
                         unit->getType()->getBonusPower(m)->getUnitProductionSystem()->update(createdUnit, unit, cTime, timeStep);
                     }
+                }*/
+                if ((frameCount % (WORLD_FPS * 30)) == 0) {
+                    unit->computeTax();
                 }
             }
         }
