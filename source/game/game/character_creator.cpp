@@ -787,7 +787,7 @@ void CharacterCreator::setupListBoxFactionType() {
 		g_logger.logError(e.what());
 	}
 	m_factionTypeList->addItems(factionTypeFilenames);
-    m_factionTypeList->setSelected(factionTypeFilenames[2]);
+    m_factionTypeList->setSelected(factionTypeFilenames[1]);
     m_factionType = factionType->getName();
 }
 
