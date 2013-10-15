@@ -3580,15 +3580,17 @@ void Unit::computeTax() {
             string name = needs->getFood(i)->getName();
             for (int j = 0; j < sresources.size(); ++j) {
                 if (sresources[j].getType()->getName() == name) {
-                    int foodEaten = sresources[j].getAmount();
-                    int served = needs->getFood(i)->getServed();
-                    if (foodEaten * served > 0 && foodEaten * served < taxMult) {
-                        tax += needs->getFood(i)->getTaxBonus() * foodEaten * served;
-                        incResourceAmount(sresources[j].getType(), foodEaten);
-                    } else if (foodEaten * served > taxMult) {
-                        tax += needs->getFood(i)->getTaxBonus() * taxMult;
-                        int inc = taxMult / served;
-                        incResourceAmount(sresources[j].getType(), inc);
+                    int foodOwned = sresources[j].getAmount();
+                    if (foodOwned > 0) {
+                        int served = needs->getFood(i)->getServed();
+                        if (foodOwned * served > 0 && foodOwned * served < taxMult) {
+                            tax += needs->getFood(i)->getTaxBonus() * foodOwned * served;
+                            incResourceAmount(sresources[j].getType(), foodOwned);
+                        } else if (foodOwned * served > taxMult) {
+                            tax += needs->getFood(i)->getTaxBonus() * taxMult;
+                            int inc = taxMult / served;
+                            incResourceAmount(sresources[j].getType(), inc);
+                        }
                     }
                 }
             }
@@ -3597,7 +3599,7 @@ void Unit::computeTax() {
             string name = needs->getGood(i)->getName();
             for (int j = 0; j < sresources.size(); ++j) {
                 if (sresources[j].getType()->getName() == name) {
-                    tax += needs->getGood(i)->getTaxBonus();
+                    //tax += needs->getGood(i)->getTaxBonus();
                 }
             }
         }
