@@ -1759,6 +1759,13 @@ void Unit::kill() {
         }
 	}
 
+    for (int i = 0; i < faction->getUnitCount(); ++i) {
+        Unit *unit = faction->getUnit(i);
+        if (unit->owner->getId() == id) {
+            unit->owner = unit;
+        }
+    }
+
 	if (owner->getId() != this->getId()) {
 	    for (int i = 0; i < owner->ownedUnits.size(); ++i) {
             if (owner->ownedUnits[i].getType() == getType()) {
