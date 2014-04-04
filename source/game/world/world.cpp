@@ -912,7 +912,7 @@ void World::tick() {
                                 maxEducated = unit->ownedUnits[o].getLimit();
                             }
                         }
-                        if (citizens >= 20 && citizens / 10 > educatedCitizens && educatedCitizens <= maxEducated) {
+                        if (citizens >= 10 && citizens / 10 > educatedCitizens && educatedCitizens <= maxEducated) {
                             unit->generateCitizen();
                         }
                     }

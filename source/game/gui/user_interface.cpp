@@ -135,6 +135,9 @@ UserInterface::UserInterface(GameState &game)
 	activeCommandType = 0;
 	activeCommandClass = CmdClass::STOP;
 	selectingPos = false;
+	m_recruiting = false;
+	m_typeSelect = false;
+	m_assignmentType = 0;
 	selectedObject = 0;
 	selectingMeetingPoint = false;
 	activePos = invalidPos;
@@ -701,9 +704,21 @@ void UserInterface::mouseDownLeft(int x, int y) {
 		targetUnit = units.front();
 		worldPos = targetUnit->getPos();
 	}
-
     if (m_factionDisplay->building == true) {
         m_factionDisplay->currentFactionBuild->build(m_factionDisplay->getFaction(), worldPos);
+    } else if (m_recruiting) {
+		const Unit *u = selection->getFrontUnit();
+		Unit *unit = g_world.getUnit(u->getId());
+		if (targetUnit) {
+		    if (targetUnit->getType()->getName() == "educated_citizen") {
+                unit->assignCitizen((Unit *)targetUnit, m_assignmentType);
+            } else if (targetUnit->getType()->getName() == "laborer") {
+                unit->assignLaborer((Unit *)targetUnit);
+            }
+		}
+        m_recruiting = false;
+        m_typeSelect = false;
+        m_assignmentType = 0;
     //} else if (m_mapDisplay->building == true) {
         //m_mapDisplay->currentMapBuild.build(g_world.getTileset(), worldPos);
     } else if (selectingPos) { // give standard orders
@@ -1235,7 +1250,6 @@ void UserInterface::onFirstTierSelect(int posDisplay) {
 void UserInterface::onSecondTierSelect(int posDisplay) {
 	WIDGET_LOG( __FUNCTION__ << "( " << posDisplay << " )");
 	int factionIndex = world->getThisFactionIndex();
-
 	if (posDisplay == cancelPos) {
 		resetState(false);
 	} else {
@@ -1243,7 +1257,17 @@ void UserInterface::onSecondTierSelect(int posDisplay) {
 		int ndx = m_display->getIndex(posDisplay);
 		RUNTIME_CHECK(ndx >= 0 && ndx < activeCommandType->getProducedCount());
 		const ProducibleType *pt = activeCommandType->getProduced(ndx);
-
+		if (pt == 0) {
+            //throw runtime_error("no producible type");
+		} else {
+            //throw runtime_error(pt->getName());
+		}
+		if (activeCommandType->getClass() == CmdClass::RESEARCH) {
+		    Unit *unit = g_world.getUnit(selection->getFrontUnit()->getId());
+		    const Trait *newTrait = static_cast<const Trait*>(pt);
+		    Trait *newNewTrait = g_world.getTechTree()->getFactionType(unit->getFaction()->getType()->getName())->getTraitById(newTrait->getTraitId());
+            unit->currentResearch = newNewTrait;
+		}
 		if (activeCommandType->getClass() == CmdClass::BUILD
         || activeCommandType->getClass() == CmdClass::STRUCTURE
         || activeCommandType->getClass() == CmdClass::CONSTRUCT
@@ -1328,6 +1352,9 @@ void UserInterface::computePortraitInfo(int posDisplay) {
                     case 5:
                         m_display->setToolTipText2("Transiting", "", DisplaySection::SELECTION);
                         break;
+                    case 11:
+                        m_display->setToolTipText2("Destroy", "", DisplaySection::SELECTION);
+                        break;
                 }
             }
 		} else if (selection->isComandable()) {
@@ -1352,6 +1379,7 @@ void UserInterface::panelButtonPressed(int posDisplay) {
 	WIDGET_LOG( __FUNCTION__ << "( " << posDisplay << " )");
 	if (!selectingPos && !selectingMeetingPoint) {
 		if (selection->isComandable()) {
+            Unit *unit = g_world.findUnitById(selection->getFrontUnit()->getId());
 		    m_statsWindow->setVisible(false);
 		    m_itemWindow->setVisible(false);
 		    m_productionWindow->setVisible(false);
@@ -1373,8 +1401,10 @@ void UserInterface::panelButtonPressed(int posDisplay) {
                 case 5:
                     m_carriedWindow->setVisible(true);
                     break;
+                case 11:
+                    unit->decHp(unit->getHp());
+                    break;
             }
-            Unit *unit = g_world.findUnitById(selection->getFrontUnit()->getId());
             selection->clear();
             selection->select(unit);
 			computeDisplay();
@@ -1391,9 +1421,20 @@ void UserInterface::taxButtonPressed(int posDisplay) {
 	WIDGET_LOG( __FUNCTION__ << "( " << posDisplay << " )");
 	if (!selectingPos && !selectingMeetingPoint) {
 		if (selection->isComandable()) {
-            int id = selection->getFrontUnit()->getId();
-            Unit *unit = g_world.findUnitById(id);
-            unit->taxRate += taxes[posDisplay];
+		    if (m_typeSelect == true) {
+                m_assignmentType = selection->getFrontUnit()->getType()->getAssignment(posDisplay);
+		    } else {
+                if (posDisplay == 5) {
+                    if (m_recruiting == false) {
+                        m_typeSelect = true;
+                        m_recruiting = true;
+                    }
+                } else {
+                    int id = selection->getFrontUnit()->getId();
+                    Unit *unit = g_world.findUnitById(id);
+                    unit->taxRate += taxes[posDisplay];
+                }
+		    }
 			computeDisplay();
 		} else {
 			resetState();
@@ -1411,11 +1452,23 @@ void UserInterface::computeTaxInfo(int posDisplay) {
 		m_display->setToolTipText2("", "", DisplaySection::TAX);
 		return;
 	}
-    if (selection->isUniform()) {
-        stringstream ss;
-        ss << "Tax Rate Change: " << taxes[posDisplay] << "%";
-        string info = ss.str();
-        m_display->setToolTipText2("Tax Rate", info, DisplaySection::TAX);
+    if (selection->isUniform() && selection->isComandable()) {
+        const Unit *u = selection->getFrontUnit();
+        if (m_typeSelect ==  true) {
+            if (posDisplay < u->getType()->getAssignmentsCount()) {
+                const UnitType *uType = u->getType()->getAssignment(posDisplay);
+                m_display->setToolTipText2(uType->getName(), "", DisplaySection::TAX);
+            }
+        } else {
+            if (posDisplay == 5 && u->getType()->hasTag("orderhouse")) {
+                m_display->setToolTipText2("Recruit Citizen", "", DisplaySection::TAX);
+            } else {
+                stringstream ss;
+                ss << "Tax Rate Change: " << taxes[posDisplay] << "%";
+                string info = ss.str();
+                m_display->setToolTipText2("Tax Rate", info, DisplaySection::TAX);
+            }
+        }
     }
 }
 
@@ -1473,8 +1526,13 @@ void UserInterface::computeCommandInfo(int posDisplay) {
 		}
 		RUNTIME_CHECK(activeCommandType != 0);
 		RUNTIME_CHECK(posDisplay >= 0 && posDisplay < activeCommandType->getProducedCount());
-		const ProducibleType *pt = activeCommandType->getProduced(m_display->getIndex(posDisplay));
-		computeCommandTip(activeCommandType, pt);
+		if (activeCommandClass != CmdClass::RESEARCH) {
+            const ProducibleType *pt = activeCommandType->getProduced(m_display->getIndex(posDisplay));
+            computeCommandTip(activeCommandType, pt);
+		} else {
+            const ProducibleType *pt = activeCommandType->getProduced(m_display->getIndex(posDisplay));
+            computeCommandTip(activeCommandType, pt);
+		}
 	}
 }
 
@@ -1553,6 +1611,10 @@ void UserInterface::computeSelectionPanel() {
 
 		for (int i = 1; i < 6; ++i) {
             m_display->setUpImage(i, selection->getFrontUnit()->getType()->getImage());
+		}
+
+		if (unit->getType()->hasTag("building")) {
+            m_display->setUpImage(11, selection->getFrontUnit()->getType()->getImage());
 		}
 
 		string name = unit->getFullName(); ///@todo tricksy Lang use... will need a %s
@@ -1659,9 +1721,21 @@ void UserInterface::computeTaxPanel() {
     if (selection->isComandable()) {
         const Unit *u = selection->getFrontUnit();
         const UnitType *ut = u->getType();
-        if (ut->hasTag("orderhouse") || ut->hasTag("ordermember") || ut->hasTag("shop") || ut->hasTag("producer")) {
+        if (m_typeSelect == true) {
+            for (int i = 0; i < ut->getAssignmentsCount(); ++i) {
+                if (i < 6) {
+                    const UnitType *uType = ut->getAssignment(i);
+                    m_display->setTaxImage(i, uType->getImage());
+                } else {
+                    throw runtime_error("too many assignment types");
+                }
+            }
+        } else if (ut->hasTag("orderhouse") || ut->hasTag("ordermember") || ut->hasTag("shop") || ut->hasTag("producer")) {
             for (int i = 0; i < 4; ++i) {
                 m_display->setTaxImage(i, ut->getFactionType()->getItemImage(0));
+            }
+            if (u->getType()->hasTag("orderhouse") || u->getType()->hasTag("guild")) {
+                m_display->setTaxImage(5, ut->getFactionType()->getItemImage(0));
             }
         }
     }
@@ -1763,26 +1837,43 @@ void UserInterface::computeCommandPanel() {
 			m_display->setDownImage(cancelPos, selection->getFrontUnit()->getType()->getCancelImage());
 			m_display->setDownLighted(cancelPos, true);
 			for (int i=0, j=0; i < activeCommandType->getProducedCount(); ++i) {
-				const ProducibleType *pt = activeCommandType->getProduced(i);
-                m_display->setDownImage(j, pt->getImage());
-                bool downLight = false;
-                if (unit->getFaction()->reqsOk(activeCommandType, pt)) {
-                    if (activeCommandType->getProducedCount() == 1 &&
-                        unit->reqsOk(activeCommandType->getProduced(0)) && u->checkCosts(activeCommandType, activeCommandType->getProduced(0))) {
-                        downLight = true;
-                    } else if (activeCommandType->getProducedCount() > 1) {
-                        if (unit->reqsOk(activeCommandType->getProduced(i)) &&
-                            u->checkCosts(activeCommandType, activeCommandType->getProduced(i)) && u->checkSkillCosts(activeCommandType)) {
+			    if (activeCommandClass != CmdClass::RESEARCH) {
+                    const ProducibleType *pt = activeCommandType->getProduced(i);
+                    m_display->setDownImage(j, pt->getImage());
+                    bool downLight = false;
+                    if (unit->getFaction()->reqsOk(activeCommandType, pt)) {
+                        if (activeCommandType->getProducedCount() == 1 &&
+                            unit->reqsOk(activeCommandType->getProduced(0)) && u->checkCosts(activeCommandType, activeCommandType->getProduced(0))) {
+                            downLight = true;
+                        } else if (activeCommandType->getProducedCount() > 1) {
+                            if (unit->reqsOk(activeCommandType->getProduced(i)) &&
+                                u->checkCosts(activeCommandType, activeCommandType->getProduced(i)) && u->checkSkillCosts(activeCommandType)) {
+                                downLight = true;
+                            }
+                        } else if (activeCommandType->getProducedCount() == 0) {
                             downLight = true;
                         }
-                    } else if (activeCommandType->getProducedCount() == 0) {
+                    }
+                    m_display->setDownLighted(j, downLight);
+                    m_display->setIndex(j, i);
+                    ++j;
+                } else {
+                    const ResearchCommandType *rct = static_cast<const ResearchCommandType *>(activeCommandType);
+                    Trait *newClass = rct->getResearchType(i);
+                    m_display->setDownImage(j, newClass->getImage());
+                    bool downLight = false;
+                    if (rct->getResearchTypeCount() == 1) {
+                        downLight = true;
+                    } else if (rct->getResearchTypeCount() > 1) {
+                        downLight = true;
+                    } else if (rct->getProducedCount() == 0) {
                         downLight = true;
                     }
+                    m_display->setDownLighted(j, downLight);
+                    m_display->setIndex(j, i);
+                    ++j;
                 }
-                m_display->setDownLighted(j, downLight);
-                m_display->setIndex(j, i);
-                ++j;
-            }
+			}
             if (activePos >= activeCommandType->getProducedCount()) {
                 activePos = invalidPos;
             }

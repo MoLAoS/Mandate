@@ -11,7 +11,10 @@
 	<goal name="attack" importance="40"/>
 	<goal name="defend" importance="35"/>
       </personality>
-      <personality name="peasant">
+      <personality name="educated_citizen">
+	<goal name="rest" importance="100"/>
+      </personality>
+      <personality name="laborer">
 	<goal name="rest" importance="10"/>
 	<goal name="build" importance="100"/>
       </personality>
@@ -56,6 +59,15 @@
       <personality name="defender">
 	<goal name="rest" importance="5"/>
 	<goal name="live" importance="20"/>
+	<goal name="raid" importance="60"/>
+	<goal name="hunt" importance="50"/>
+	<goal name="shop" importance="25"/>
+	<goal name="attack" importance="40"/>
+	<goal name="defend" importance="35"/>
+      </personality>
+      <personality name="wizard">
+	<goal name="rest" importance="5"/>
+	<goal name="live" importance="40"/>
 	<goal name="raid" importance="60"/>
 	<goal name="hunt" importance="50"/>
 	<goal name="shop" importance="25"/>

@@ -71,6 +71,9 @@
 			<resource name="wealth" amount="100000"/>
 			<resource name="beef" amount="100000"/>
 			<resource name="fowl" amount="100000"/>
+			<resource name="mutton" amount="100000"/>
+			<resource name="venison" amount="100000"/>
+			<resource name="ham" amount="100000"/>
 			<resource name="eggs" amount="100000"/>
 			<resource name="milk" amount="100000"/>
 			<resource name="cheese" amount="100000"/>
@@ -84,82 +87,17 @@
 			<resource name="wool" amount="100000"/>
 			<resource name="corn" amount="100000"/>
 			<resource name="citizens" amount="10"/>
+			<resource name="population" amount="100000"/>
 		</resources-stored>
 		<resources-created>
 			<resource name="wealth" amount="50" timer="30" scope="local"/>
 		</resources-created>
 		<starter-resources>
-			<resource name="citizens" amount="5"/>
+			<resource name="citizens" amount="10"/>
+			<resource name="population" amount="20"/>
+			<resource name="water" amount="25"/>
 		</starter-resources>
     </resource-production>
-    <processing>
-        <processes>
-          <process timer="30" count="3" scope="local">
-            <costs>
-              <cost name="beef" consume="true" amount="1"/>
-            </costs>
-            <products>
-              <product name="wealth" amount="5"/>
-            </products>
-          </process>
-          <process timer="30" count="3" scope="local">
-            <costs>
-              <cost name="fowl" consume="true" amount="1"/>
-            </costs>
-            <products>
-              <product name="wealth" amount="4"/>
-            </products>
-          </process>
-          <process timer="30" count="3" scope="local">
-            <costs>
-              <cost name="eggs" consume="true" amount="1"/>
-            </costs>
-            <products>
-              <product name="wealth" amount="4"/>
-            </products>
-          </process>
-          <process timer="30" count="3" scope="local">
-            <costs>
-              <cost name="linen" consume="true" amount="1"/>
-            </costs>
-            <products>
-              <product name="wealth" amount="4"/>
-            </products>
-          </process>
-          <process timer="30" count="3" scope="local">
-            <costs>
-              <cost name="cloth" consume="true" amount="1"/>
-            </costs>
-            <products>
-              <product name="wealth" amount="4"/>
-            </products>
-          </process>
-          <process timer="30" count="3" scope="local">
-            <costs>
-              <cost name="wool" consume="true" amount="1"/>
-            </costs>
-            <products>
-              <product name="wealth" amount="3"/>
-            </products>
-          </process>
-          <process timer="30" count="3" scope="local">
-            <costs>
-              <cost name="wine" consume="true" amount="1"/>
-            </costs>
-            <products>
-              <product name="wealth" amount="5"/>
-            </products>
-          </process>
-          <process timer="30" count="3" scope="local">
-            <costs>
-              <cost name="grapes" consume="true" amount="1"/>
-            </costs>
-            <products>
-              <product name="wealth" amount="3"/>
-            </products>
-          </process>
-        </processes>
-    </processing>
     <unit-production>
       <units-created>
         <unit name="householder" amount="1" timer="30" scope="local"/>
@@ -168,7 +106,7 @@
     <units-owned>
       <unit name="educated_citizen" limit="10"/>
       <unit name="householder" limit="1"/>
-      <unit name="peasant" limit="1"/>
+      <unit name="laborer" limit="1"/>
     </units-owned>
     <actions>
       <skills>
@@ -248,12 +186,12 @@
       <commands>
         <command>
           <type value="produce"/>
-          <name value="produce_peasant" tip="peasant_info"/>
+          <name value="produce_laborer" tip="laborer_info"/>
           <image path="images/worker.bmp"/>
           <unit-requirements />
           <upgrade-requirements />
           <produce-skill value="produce_skill"/>
-          <produced-unit name="peasant"/>
+          <produced-unit name="laborer"/>
         </command>
         <command>
         <type value="load"/>
@@ -263,8 +201,9 @@
         <upgrade-requirements/>
         <load-skill value="load_skill"/>
         <units-carried>
-            <unit value="peasant"/>
+            <unit value="laborer"/>
             <unit value="householder"/>
+            <unit value="educated_citizen"/>
         </units-carried>
         <load-capacity value="5" />
             <allow-projectiles value="false"/>

@@ -1,0 +1,65 @@
+<?xml version="1.0" standalone="yes" ?> 
+
+<scenario>
+	
+<difficulty value="3"/>
+	
+<players>
+		
+<player control="human" faction="provision" team="1"/>
+		
+<player control="cpu" faction="enemy" team="2"/>
+	
+</players>
+	
+<map value="kingdom_sim_medium"/>
+	
+<tileset value="forest"/>
+	
+<tech-tree value="provision"/>
+
+<fog-of-war value="false"/>	
+<default-resources value="true"/>
+	
+<default-units value="false"/>
+	
+<default-victory-conditions value="false"/>
+	
+<scripts>
+		
+<startup>
+
+			
+--player units
+
+createUnit('castle', 0, startLocation(0))
+
+createUnit('ruler', 0, startLocation(0))
+
+createUnit('house', 0, startLocation(0))
+
+--createUnit('house', 0, startLocation(0))
+
+--createUnit('house', 0, startLocation(0))
+
+--createUnit('house', 0, startLocation(0))
+
+--createUnit('defenders_motherhouse', 0, startLocation(0))
+
+
+--enemy units
+
+createUnit('vile_idol', 1, {75, 75})
+createUnit('vile_idol', 1, {100, 75})
+createUnit('vile_idol', 1, {50, 50})
+createUnit('tower_of_fiends', 1, {50, 75})
+createUnit('miasma_font', 1, {125, 80})
+createUnit('miasma_font', 1, {125, 80})
+
+--objectives
+		
+</startup>
+	
+</scripts>		
+
+</scenario>

@@ -66,15 +66,18 @@ bool Sovereign::load(const string &dir, const FactionType *factionType) {
 	    const XmlNode *traitsNode = sovereignNode->getChild("traits");
 	    traits.resize(traitsNode->getChildCount());
         for (int i = 0; i < traitsNode->getChildCount(); ++i) {
-            int id = traitsNode->getChild("trait", i)->getAttribute("id")->getIntValue();
+            int traitId = traitsNode->getChild("trait", i)->getAttribute("id")->getIntValue();
+                if (traitId == -1) {
+                    throw runtime_error("id = -1");
+                }
             if (!&g_world) {
                 MainMenu *charMenu = static_cast<MainMenu*>(g_program.getState());
                 MenuStateCharacterCreator *charState = static_cast<MenuStateCharacterCreator*>(charMenu->getState());
                 CharacterCreator *charCreator = charState->getCharacterCreator();
                 FactionType *ft = charCreator->getFactionType();
-                traits[i] = ft->getTraitById(id);
+                traits[i] = ft->getTraitById(traitId);
             } else {
-                traits[i] = g_world.getTechTree()->getFactionType(factionType->getName())->getTraitById(id);
+                traits[i] = g_world.getTechTree()->getFactionType(factionType->getName())->getTraitById(traitId);
             }
         }
 	}

@@ -127,6 +127,8 @@ CmdResult Commander::tryGiveCommand(const Selection *selection, CmdFlags flags,
 							effectiveCt = targetUnit->getFirstAvailableCt(CmdClass::BE_LOADED);
 							pushCommand(g_world.newCommand(effectiveCt, CmdFlags(), *i, targetUnit));
 						}
+					} else {
+                        result = CmdResult::FAIL_UNDEFINED;
 					}
 				} else if (effectiveCt->getClass() == CmdClass::FACTIONLOAD) {
 					if (*i != targetUnit) {
@@ -137,6 +139,8 @@ CmdResult Commander::tryGiveCommand(const Selection *selection, CmdFlags flags,
 							effectiveCt = targetUnit->getFirstAvailableCt(CmdClass::BE_LOADED);
 							pushCommand(g_world.newCommand(effectiveCt, CmdFlags(), *i, targetUnit));
 						}
+					} else {
+                        result = CmdResult::FAIL_UNDEFINED;
 					}
 				} else if (effectiveCt->getClass() == CmdClass::GARRISON) {
 					if (*i != targetUnit) {
@@ -147,6 +151,8 @@ CmdResult Commander::tryGiveCommand(const Selection *selection, CmdFlags flags,
 							effectiveCt = targetUnit->getFirstAvailableCt(CmdClass::BE_LOADED);
 							pushCommand(g_world.newCommand(effectiveCt, CmdFlags(), *i, targetUnit));
 						}
+					} else {
+                        result = CmdResult::FAIL_UNDEFINED;
 					}
 				} else if (effectiveCt->getClass() == CmdClass::BE_LOADED) {
 					// a carrier unit was right clicked

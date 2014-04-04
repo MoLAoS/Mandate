@@ -83,7 +83,7 @@ public:
     const UnitProductionSystem *getUnitProductionSystem() const {return &unitGeneration;}
     const ProcessProductionSystem *getProcessProductionSystem() const {return &processingSystem;}
     const Actions *getActions() const {return &actions;}
-    Actions *getsActions() {return &actions;}
+    Actions *getActions() {return &actions;}
 	const Emanations &getEmanations() const {return emanations;}
 	OwnedUnits getOwnedUnits() const {return ownedUnits;}
 	Modifications getModifications() const {return modifications;}

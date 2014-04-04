@@ -9,9 +9,6 @@
       <field value="land"/>
     </fields>
     <properties/>
-    <tags>
-      <tag value="householder"/>
-    </tags>
     <meeting-point value="false"/>
   </parameters>
     <control type="inhuman">
@@ -54,26 +51,28 @@
     <skill>
       <type value="stop"/>
       <name value="stop_skill"/>
-      <ep-cost value="0"/>
       <speed value="1000"/>
-      <anim-speed value="50"/>
-      <animation path="models/guard_standing.g3d"/>
-      <sound enabled="false"/>
+		<sounds-animations>
+			<anim-speed value="50"/>
+			<animation path="models/guard_standing.g3d"/>
+			<sound enabled="false"/>
+		</sounds-animations>
     </skill>
     <skill>
       <type value="move"/>
       <name value="move_skill"/>
-      <ep-cost value="0"/>
       <speed value="170"/>
-      <anim-speed value="120"/>
-      <animation path="models/guard_walking.g3d"/>
-      <sound enabled="false"/>
+		<sounds-animations>
+		  <anim-speed value="120"/>
+		  <animation path="models/guard_walking.g3d"/>
+		  <sound enabled="false"/>
+		</sounds-animations>
     </skill>
     <skill>
       <type value="attack"/>
       <name value="attack_skill"/>
-      <ep-cost value="0"/>
       <speed value="120"/>
+		<sounds-animations>
       <anim-speed value="120"/>
       <animation path="models/guard_attacking.g3d"/>
       <sound enabled="true" start-time="0">
@@ -92,6 +91,7 @@
         <sound-file path="sounds/guard_attack13.wav"/>
         <sound-file path="sounds/guard_attack14.wav"/>
       </sound>
+		</sounds-animations>
       <attack-range value="1"/>
       <attack-type value="slashing"/>
       <attack-fields>
@@ -111,8 +111,8 @@
     <skill>
       <type value="die"/>
       <name value="die_skill"/>
-      <ep-cost value="0"/>
       <speed value="60"/>
+		<sounds-animations>
       <anim-speed value="60"/>
       <animation path="models/guard_dying.g3d"/>
       <sound enabled="true" start-time="0">
@@ -121,16 +121,18 @@
         <sound-file path="sounds/guard_die3.wav"/>
         <sound-file path="sounds/guard_die4.wav"/>
       </sound>
+		</sounds-animations>
       <fade value="false"/>
     </skill>
     <skill>
       <type value="move"/>
       <name value="charge_skill"/>
-      <ep-cost value="0"/>
       <speed value="170"/>
+		<sounds-animations>
       <anim-speed value="120"/>
       <animation path="models/guard_charging.g3d"/>
       <sound enabled="false"/>
+		</sounds-animations>
     </skill>
       </skills>
       <commands>

@@ -14,6 +14,9 @@
     </tags>
     <meeting-point value="false"/>
   </parameters>
+  <control type="inhuman">
+    <personality type="educated_citizen"/>
+  </control>
   <creatable-type>
     <size value="1"/>
     <height value="2"/>

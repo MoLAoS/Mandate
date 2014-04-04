@@ -74,6 +74,8 @@ private:
 	typedef vector<ResourceStore>       ResourceStores;
 	typedef vector<BonusPower>          BonusPowers;
     typedef vector<const ItemType*>     Requisitions;
+    typedef vector<const UnitType*>     Assignments;
+    typedef vector<Trait*>              HeroClasses;
 private:
 	bool multiBuild;
 	bool multiSelect;
@@ -81,6 +83,15 @@ public:
     Requisitions addOns;
     int getAddOnCount() const {return addOns.size();}
     const ItemType *getAddOn(int i) const {return addOns[i];}
+
+    HeroClasses heroClasses;
+    Assignments assignments;
+
+	int getHeroClassesCount()  const {return heroClasses.size();}
+    Trait *getHeroClass(int i) const {return heroClasses[i];}
+
+	int getAssignmentsCount()  const {return assignments.size();}
+    const UnitType *getAssignment(int i) const {return assignments[i];}
 
     Sovereign sovereign;
     bool isSovereign;

@@ -295,6 +295,39 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 		loadOk = false;
 	}
 	try {
+        const XmlNode *assignmentsNode = unitNode->getChild("assignments", 0, false);
+        if (assignmentsNode) {
+            for (int i = 0; i < assignmentsNode->getChildCount(); ++i) {
+                const XmlNode *assignmentNode = assignmentsNode->getChild("assignment", i);
+                string assignmentName = assignmentNode->getAttribute("type")->getRestrictedValue();
+                const UnitType *assignmentType = g_world.getTechTree()->getFactionType(factionType->getName())->getUnitType(assignmentName);
+                assignments.push_back(assignmentType);
+            }
+        }
+    }
+    catch (runtime_error e) {
+		g_logger.logXmlError(dir, e.what());
+		loadOk = false;
+	}
+	try {
+        const XmlNode *classesNode = unitNode->getChild("classes", 0, false);
+        if (classesNode) {
+            for (int i = 0; i < classesNode->getChildCount(); ++i) {
+                const XmlNode *classNode = classesNode->getChild("class", i);
+                int traitId = classNode->getAttribute("id")->getIntValue();
+                if (traitId == -1) {
+                    throw runtime_error("id = -1");
+                }
+                Trait *trait = g_world.getTechTree()->getFactionType(factionType->getName())->getTraitById(traitId);
+                heroClasses.push_back(trait);
+            }
+        }
+    }
+    catch (runtime_error e) {
+		g_logger.logXmlError(dir, e.what());
+		loadOk = false;
+	}
+	try {
         const XmlNode *resourceStoresNode = unitNode->getChild("resource-stores", 0, false);
         if (resourceStoresNode) {
             resourceStores.resize(resourceStoresNode->getChildCount());
@@ -469,11 +502,11 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
 		return false;
 	}
 	for (int i = 0; i < leader.squadCommands.size(); ++i) {
-        getsActions()->addSquadCommand(leader.squadCommands[i]);
+        getActions()->addSquadCommand(leader.squadCommands[i]);
 	}
 	if (meetingPoint) {
 		CommandType *smpct = g_prototypeFactory.newCommandType(CmdClass::SET_MEETING_POINT, this);
-		getsActions()->addCommand(smpct);
+		getActions()->addCommand(smpct);
 		g_prototypeFactory.setChecksum(smpct);
 	}
 	try {
@@ -613,7 +646,7 @@ bool UnitType::load(const string &dir, const TechTree *techTree, const FactionTy
     } else {
         startSkill = getActions()->getFirstStOfClass(SkillClass::STOP);
     }
-    SkillTypes attackSkills = getsActions()->getSkillTypeCountOfClass(SkillClass::ATTACK);
+    SkillTypes attackSkills = getActions()->getSkillTypeCountOfClass(SkillClass::ATTACK);
     foreach (SkillTypes, it, attackSkills) {
         if (static_cast<AttackSkillType*>(*it)->getProjectile()) {
             m_hasProjectileAttack = true;
@@ -629,7 +662,7 @@ void UnitType::addBeLoadedCommand() {
 	CommandType *blct = g_prototypeFactory.newCommandType(CmdClass::BE_LOADED, this);
 	MoveSkillType *mst = static_cast<MoveSkillType*>(getActions()->getFirstStOfClass(SkillClass::MOVE));
 	static_cast<BeLoadedCommandType*>(blct)->setMoveSkill(mst);
-	getsActions()->addBeLoadedCommand(blct);
+	getActions()->addBeLoadedCommand(blct);
 	g_prototypeFactory.setChecksum(blct);
 }
 

@@ -46,7 +46,7 @@
 		</resource-production>
 		<unit-production>
 		<units-created>
-			<unit name="imp" amount="4" timer="40" cap="-1"/>
+			<unit name="imp" amount="4" timer="240" initial="12000" cap="-1"/>
 		</units-created>
 		</unit-production>
 		<units-owned>

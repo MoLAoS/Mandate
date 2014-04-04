@@ -23,6 +23,7 @@
 #include "sound_container.h"
 #include "upgrade_type.h"
 #include "game_constants.h"
+#include "traits.h"
 
 #include "prototypes_enums.h"
 #include "entities_enums.h"
@@ -907,6 +908,48 @@ public:
 
 	virtual CmdClass getClass() const { return typeClass(); }
 	static CmdClass typeClass() { return CmdClass::PRODUCE; }
+};
+
+// ===============================
+//  class ResearchCommandType
+// ===============================
+
+class ResearchCommandType: public CommandType {
+private:
+	const ResearchSkillType* m_researchSkillType;
+	vector<Trait *>          m_researchTypes;
+	map<string, string>		 m_tipKeys;
+	SoundContainer			 m_finishedSounds;
+
+public:
+	ResearchCommandType() : CommandType("Research", Clicks::ONE, true), m_researchSkillType(0) {}
+	virtual bool load(const XmlNode *n, const string &dir, const FactionType *ft, const CreatableType *ct);
+	virtual void doChecksum(Checksum &checksum) const;
+	virtual void getDesc(string &str, const Unit *unit) const;
+	virtual void subDesc(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt) const override;
+	virtual void descSkills(const Unit *unit, CmdDescriptor *callback, ProdTypePtr pt = 0) const override;
+	virtual void update(Unit *unit) const;
+	virtual string getReqDesc(const Faction *f, const FactionType *ft) const;
+
+	Trait *getResearchType(int i) const	{return m_researchTypes[i];}
+	int getResearchTypeCount() const	{return m_researchTypes.size();}
+
+	// get
+	virtual int getProducedCount() const	{return m_researchTypes.size();}
+	virtual const ProducibleType* getProduced(int i) const;
+
+	string getTipKey(const string &name) const  {
+		map<string,string>::const_iterator it = m_tipKeys.find(name);
+		return it->second;
+	}
+
+	StaticSound *getFinishedSound() const	{return m_finishedSounds.getRandSound();}
+
+	const ResearchSkillType *getResearchSkillType() const	{return m_researchSkillType;}
+	virtual Clicks getClicks() const	{ return m_researchTypes.size() == 1 ? Clicks::ONE : Clicks::TWO; }
+
+	virtual CmdClass getClass() const { return typeClass(); }
+	static CmdClass typeClass() { return CmdClass::RESEARCH; }
 };
 
 // ===============================

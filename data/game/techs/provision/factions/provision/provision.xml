@@ -2,21 +2,21 @@
 <faction>
 	<needs>
 		<foods>
-			<food name="water" value="1" tax-bonus="5" served="5"/>
-			<food name="ham" value="1" tax-bonus="5" served="5"/>
-			<food name="mutton" value="1" tax-bonus="5" served="3"/>
-			<food name="beef" value="1" tax-bonus="5" served="3"/>
-			<food name="venison" value="1" tax-bonus="5" served="3"/>
-			<food name="fowl" value="1" tax-bonus="5" served="3"/>
-			<food name="bread" value="1" tax-bonus="5" served="5"/>
-			<food name="cheese" value="1" tax-bonus="5" served="4"/>
-			<food name="milk" value="1" tax-bonus="5" served="5"/>
-			<food name="corn" value="1" tax-bonus="5" served="1"/>
-			<food name="eggs" value="1" tax-bonus="5" served="1"/>
-			<food name="grape" value="1" tax-bonus="5" served="1"/>
-			<food name="wine" value="2" tax-bonus="5" served="3"/>
-			<food name="spirits" value="2" tax-bonus="5" served="3"/>
-			<food name="honey" value="2" tax-bonus="5" served="2"/>
+			<food name="water" value="1" tax-bonus="1" served="5"/>
+			<food name="ham" value="1" tax-bonus="1" served="5"/>
+			<food name="mutton" value="1" tax-bonus="1" served="3"/>
+			<food name="beef" value="1" tax-bonus="1" served="3"/>
+			<food name="venison" value="1" tax-bonus="" served="3"/>
+			<food name="fowl" value="1" tax-bonus="1" served="3"/>
+			<food name="bread" value="1" tax-bonus="1" served="5"/>
+			<food name="cheese" value="1" tax-bonus="1" served="4"/>
+			<food name="milk" value="1" tax-bonus="1" served="5"/>
+			<food name="corn" value="1" tax-bonus="1" served="1"/>
+			<food name="eggs" value="1" tax-bonus="1" served="1"/>
+			<food name="grape" value="1" tax-bonus="1" served="1"/>
+			<food name="wine" value="2" tax-bonus="1" served="3"/>
+			<food name="spirits" value="2" tax-bonus="1" served="3"/>
+			<food name="honey" value="2" tax-bonus="1" served="2"/>
 		</foods>
 		<goods>
 			<good name="cloth" value="1" tax-bonus="5" served="1"/>
@@ -33,7 +33,7 @@
 	</item-images>
 	<starting-resources>
 		<resource name="wealth" amount="12000"/>
-		<resource name="stone" amount="2000"/>
+		<resource name="stone" amount="1000"/>
 		<resource name="logs" amount="2000"/>
 	</starting-resources>
 	<starting-units>

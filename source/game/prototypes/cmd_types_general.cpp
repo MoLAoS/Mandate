@@ -307,7 +307,7 @@ void CommandType::describe(const Unit *unit, CmdDescriptor *callback, ProdTypePt
 		commandName = formatString(getName());
 	}
 	if (pt == 0) { // no producible, header is command name, tip is command tip
-		header = commandName;
+            header = commandName;
 		if (!lang.lookUp(getTipKey(), factionName, tip)) {
 			tip = "";
 		}
@@ -344,6 +344,9 @@ void CommandType::describe(const Unit *unit, CmdDescriptor *callback, ProdTypePt
                 cmdCheckResult.m_resourceMadeResults.push_back(ResourceMadeResult(res.getType(), -res.getAmount()));
             } else {
                 int stored = unit->getSResource(res.getType())->getAmount();
+                if (unit->getType()->hasTag("fort")) {
+                    stored = unit->getFaction()->getSResource(res.getType())->getAmount();
+                }
                 if (this->getClass() == CmdClass::PRODUCE || this->getClass() == CmdClass::STRUCTURE
                     || this->getClass() == CmdClass::CREATE_ITEM) {
                     const ProduceCommandType *pct = NULL;
@@ -1847,6 +1850,9 @@ void UnloadCommandType::update(Unit *unit) const {
 				// pick a free space to put the unit
 				g_map.putUnitCells(targetUnit, targetUnit->getPos());
 				targetUnit->setCarried(0);
+				if (targetUnit->getType()->getName() != "educated_citizen") {
+                    targetUnit->garrisonTest = false;
+				}
 				unit->getUnitsToUnload().pop_front();
 				unit->getCarriedUnits().erase(std::find(unit->getCarriedUnits().begin(), unit->getCarriedUnits().end(), targetUnit->getId()));
 				unit->StateChanged(unit);
@@ -2113,6 +2119,7 @@ void FactionUnloadCommandType::update(Unit *unit) const {
 				// pick a free space to put the unit
 				g_map.putUnitCells(targetUnit, targetUnit->getPos());
 				targetUnit->setCarried(0);
+				targetUnit->garrisonTest = false;
 				unit->getFaction()->getUnitsToDetransit().pop_front();
                 unit->getFaction()->getTransitingUnits().erase(std::find(unit->getFaction()->getTransitingUnits().begin(),
                 unit->getFaction()->getTransitingUnits().end(), targetUnit->getId()));
@@ -2382,6 +2389,7 @@ void DegarrisonCommandType::update(Unit *unit) const {
 				// pick a free space to put the unit
 				g_map.putUnitCells(targetUnit, targetUnit->getPos());
 				targetUnit->setGarrisoned(0);
+				targetUnit->garrisonTest = false;
 				unit->getUnitsToDegarrison().pop_front();
                 unit->getGarrisonedUnits().erase(std::find(unit->getGarrisonedUnits().begin(), unit->getGarrisonedUnits().end(), targetUnit->getId()));
 				unit->StateChanged(unit);

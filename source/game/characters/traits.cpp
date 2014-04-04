@@ -16,12 +16,12 @@ namespace Glest { namespace ProtoTypes {
 // =====================================================
 void Trait::preLoad(const string &dir, int i){
 	m_name = basename(dir);
-	name = m_name;
-	id = i;
+	traitName = m_name;
+	traitId = i;
 }
 
 void Trait::save(XmlNode *node) const {
-    node->addAttribute("name", name);
+    node->addAttribute("name", traitName);
     node->addAttribute("progress", progress);
     if (!knowledge.isEmpty()) {
         knowledge.save(node->addChild("knowledge"));
@@ -48,7 +48,7 @@ bool Trait::load(const string &dir) {
 	string path = dir + ".xml";
 
 	m_name = basename(dir);
-	name = m_name;
+	traitName = m_name;
 
 	XmlTree xmlTree;
 	try { xmlTree.load(path); }
@@ -63,10 +63,10 @@ bool Trait::load(const string &dir) {
 		g_logger.logXmlError(path, e.what());
 		return false;
 	}
-	//if (!RequirableType::load(traitNode, dir)) {
-		//loadOk = false;
-	//}
-	id = traitNode->getAttribute("id")->getIntValue();
+	if (!ProducibleType::load(traitNode, dir)) {
+		loadOk = false;
+	}
+	traitId = traitNode->getAttribute("id")->getIntValue();
 	progress = traitNode->getAttribute("progress")->getIntValue();
 
 	const XmlNode *creatorCostNode = traitNode->getChild("creator-cost", 0, false);

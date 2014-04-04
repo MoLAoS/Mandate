@@ -173,11 +173,14 @@ private:
 
 	// states
 	bool m_selectingSecond; // two tier command selection
+	bool m_typeSelect;
+	bool m_recruiting;
 	CardinalDir m_selectedFacing; // facing for building
 	bool selectingPos;
 	bool selectingMeetingPoint;
 	bool needSelectionUpdate;
 	int currentGroup;
+	const UnitType *m_assignmentType;
 
 	bool	m_selectionDirty;	// selection state changed this frame, update it
 	bool    m_teamCoulorMode;

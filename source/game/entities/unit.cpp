@@ -135,6 +135,7 @@ Unit::Unit(CreateParams params)
 		, useNearestOccupiedCell(true)
 		, level(0)
 		, specialization(0)
+		, currentResearch(0)
 		, pos(params.pos)
 		, lastPos(params.pos)
 		, nextPos(params.pos)
@@ -212,6 +213,8 @@ Unit::Unit(CreateParams params)
 	taxRate = 50;
 
 	levelNumber = 0;
+
+
 
 	createdUnitTimers.resize(type->getUnitProductionSystem()->getUnitTimerCount());
 	for (int i = 0; i < type->getUnitProductionSystem()->getUnitTimerCount(); ++i) {
@@ -653,7 +656,11 @@ bool Unit::applyCosts(const CommandType *ct, const ProducibleType* p) {
                     taxedGold = taxedGold - (cost - untaxedGold);
                 }
 			}
-			incResourceAmount(rt, -(cost));
+            if (getType()->hasTag("fort")) {
+                getFaction()->incResourceAmount(rt, -(cost));
+            } else {
+                incResourceAmount(rt, -(cost));
+            }
 		}
 	}
     for (int i = 0; i < ct->getSkillCosts()->getResourceCostCount(); ++i) {
@@ -676,7 +683,11 @@ void Unit::applyStaticCosts(const ProducibleType *p) {
 		if (rt->getClass() == ResourceClass::STATIC) {
 			int cost = ra.getAmount();
 			if (cost > 0) {
-				incResourceAmount(rt, -cost);
+                if (getType()->hasTag("fort")) {
+                    getFaction()->incResourceAmount(rt, -cost);
+                } else {
+                    incResourceAmount(rt, -cost);
+                }
 			}
 		}
 	}
@@ -690,6 +701,9 @@ bool Unit::checkCosts(const CommandType *ct, const ProducibleType *pt) {
 		int cost = ra.getAmount();
         if (cost > 0) {
             int available = getSResource(rt)->getAmount();
+            if (getType()->hasTag("fort")) {
+                available = getFaction()->getSResource(rt)->getAmount();
+            }
             if (ct->getClass() == CmdClass::PRODUCE || ct->getClass() == CmdClass::STRUCTURE
                 || ct->getClass() == CmdClass::CREATE_ITEM) {
                 const ProduceCommandType *pct = NULL;
@@ -1652,13 +1666,17 @@ void Unit::born(bool reborn) {
 	}
 	ULC_UNIT_LOG( this, "born." );
 	faction->applyStaticProduction(type);
+    for (int i = 0; i < type->getHeroClassesCount(); ++i) {
+        Trait *trait = g_world.getTechTree()->getFactionType(faction->getType()->getName())->getTraitById(type->getHeroClass(i)->getTraitId());
+        heroClasses.push_back(trait);
+    }
 	if (type->isSovereign) {
 	    Specialization *spec = g_world.getTechTree()->getFactionType(faction->getType()->getName())->
             getSpecialization(type->getSovereign()->getSpecialization()->getSpecName());
 	    addSpecialization(spec);
 	    knowledge.sum(specialization->getKnowledge());
         for (int i = 0; i < type->getSovereign()->getTraitCount(); ++i) {
-            Trait *trait = g_world.getTechTree()->getFactionType(faction->getType()->getName())->getTraitById(type->getSovereign()->getTrait(i)->getId());
+            Trait *trait = g_world.getTechTree()->getFactionType(faction->getType()->getName())->getTraitById(type->getSovereign()->getTrait(i)->getTraitId());
             addTrait(trait);
         }
     }
@@ -1794,12 +1812,31 @@ void Unit::kill() {
 	}
 
 	if (!m_carriedUnits.empty()) {
-		foreach (UnitIdList, it, m_carriedUnits) {
-			Unit *unit = world.getUnit(*it);
-			int hp = unit->getHp();
-			unit->decHp(hp);
-		}
-		m_carriedUnits.clear();
+	    if (!getType()->hasTag("orderhouse") && !getType()->hasTag("fort")) {
+            foreach (UnitIdList, it, m_carriedUnits) {
+                Unit *unit = world.getUnit(*it);
+                int hp = unit->getHp();
+                unit->decHp(hp);
+            }
+	    } else if (getType()->hasTag("orderhouse") || getType()->hasTag("fort")) {
+	        vector<Unit *> unitsCarried;
+            foreach (UnitIdList, it, m_carriedUnits) {
+                unitsCarried.push_back(world.getUnit(*it));
+            }
+            for (int i = 0; i < unitsCarried.size(); ++i) {
+                Unit *carriedUnit = unitsCarried[i];
+                const CommandType *oct = getType()->getActions()->getFirstCtOfClass(CmdClass::UNLOAD);
+                const UnloadCommandType *ouct = static_cast<const UnloadCommandType*>(oct);
+                int maxRange = ouct->getUnloadSkillType()->getMaxRange();
+                if (g_world.placeUnit(getCenteredPos(), maxRange, carriedUnit)) {
+                    g_map.putUnitCells(carriedUnit, carriedUnit->getPos());
+                    carriedUnit->setCarried(0);
+                    getCarriedUnits().erase(std::find(getCarriedUnits().begin(),
+                                                            getCarriedUnits().end(), carriedUnit->getId()));
+                    carriedUnit->garrisonTest = false;
+                }
+            }
+	    }
 	}
 	if (isCarried()) {
 		Unit *carrier = g_world.getUnit(getCarrier());
@@ -2960,8 +2997,9 @@ bool Unit::decCp(int i) {
   */
 bool Unit::decHp(int i) {
 	assert(i >= 0);
-	assert(hp > 0 || i == 0);
-	hp -= i;
+	if (hp > 0) {
+        hp -= i;
+	}
 	if (hp_below_trigger && hp < hp_below_trigger) {
 		hp_below_trigger = 0;
 		ScriptManager::onHPBelowTrigger(this);
@@ -3575,13 +3613,13 @@ void Unit::computeTax() {
     const ResourceType *wealth = g_world.getTechTree()->getResourceType("wealth");
     const ResourceType *pop = g_world.getTechTree()->getResourceType("population");
     int taxMult = 0;
-    for (int i = 0; i < getType()->getCostCount(); ++i) {
-        if (getType()->getCost(i, faction).getType() == pop) {
-            taxMult = getType()->getCost(i, faction).getAmount();
-            break;
-        }
-    }
     if (type->hasTag("house")) {
+        for (int i = 0; i < sresources.size(); ++i) {
+            if (sresources[i].getType() == pop) {
+                taxMult = sresources[i].getAmount();
+                break;
+            }
+        }
         const CitizenNeeds *needs = faction->getType()->getCitizenNeeds();
         for (int i = 0; i < needs->getFoodCount(); ++i) {
             string name = needs->getFood(i)->getName();
@@ -3590,13 +3628,14 @@ void Unit::computeTax() {
                     int foodOwned = sresources[j].getAmount();
                     if (foodOwned > 0) {
                         int served = needs->getFood(i)->getServed();
-                        if (foodOwned * served > 0 && foodOwned * served < taxMult) {
-                            tax += needs->getFood(i)->getTaxBonus() * foodOwned * served;
-                            incResourceAmount(sresources[j].getType(), foodOwned);
-                        } else if (foodOwned * served > taxMult) {
+                        int enough = foodOwned * served;
+                        if (enough > 0 && enough < taxMult) {
+                            tax += needs->getFood(i)->getTaxBonus() * enough;
+                            incResourceAmount(sresources[j].getType(), -foodOwned);
+                        } else if (enough > taxMult) {
                             tax += needs->getFood(i)->getTaxBonus() * taxMult;
                             int inc = taxMult / served;
-                            incResourceAmount(sresources[j].getType(), inc);
+                            incResourceAmount(sresources[j].getType(), -inc);
                         }
                     }
                 }
@@ -3789,6 +3828,87 @@ void Unit::generateCitizen() {
     createdUnit->educateCitizen(&totalModifier, developmentLevel, createdUnit);
     ScriptManager::onUnitCreated(createdUnit);
     g_simInterface.getStats()->produce(getFactionIndex());
+}
+
+void Unit::assignLaborer(Unit* assignedUnit) {
+    if (owner->getId() != this->getId()) {
+        for (int i = 0; i < owner->ownedUnits.size(); ++i) {
+            if (owner->ownedUnits[i].getType() == getType()) {
+                owner->ownedUnits[i].decOwned();
+                break;
+            }
+        }
+    }
+    assignedUnit->setOwner(this);
+    for (int z = 1; z < ownedUnits.size(); ++z) {
+        if (ownedUnits[z].getType() == assignedUnit->getType()) {
+            ownedUnits[z].incOwned();
+        }
+    }
+}
+
+void Unit::assignCitizen(Unit* assignedUnit, const UnitType *newType) {
+    if (owner->getId() != this->getId()) {
+        for (int i = 0; i < owner->ownedUnits.size(); ++i) {
+            if (owner->ownedUnits[i].getType() == getType()) {
+                owner->ownedUnits[i].decOwned();
+                break;
+            }
+        }
+    }
+    assignedUnit->setOwner(this);
+    assignedUnit->changeType(newType);
+    assignedUnit->garrisonTest = false;
+    if (heroClasses.size() > 0) {
+        for (int i = 0; i < getHeroClassesCount(); ++i) {
+            assignedUnit->addTrait(getHeroClass(i));
+        }
+    }
+    for (int z = 1; z < ownedUnits.size(); ++z) {
+        if (ownedUnits[z].getType() == assignedUnit->getType()) {
+            ownedUnits[z].incOwned();
+        }
+    }
+}
+
+bool Unit::changeType(const UnitType *unitType) {
+    Vec2i offset = Vec2i(1,1);
+	Field newField = unitType->getField();
+	CloakClass oldCloakClass = type->getCloakClass();
+    if (map->areFreeCellsOrHasUnit(pos + offset, unitType->getSize(), newField, this)) {
+		const UnitType *oldType = type;
+		map->clearUnitCells(this, pos);
+		faction->deApplyStaticCosts(type);
+		type = unitType;
+		actions.clearActions();
+        for (int i =0; i < type->getActions()->getSkillTypeCount(); ++i) {
+            actions.addSkillType(type->getActions()->getSkillType(i));
+        }
+        for (int i =0; i < type->getActions()->getCommandTypeCount(); ++i) {
+            actions.addCommand(type->getActions()->getCommandType(i));
+        }
+        actions.sortSkillTypes();
+        actions.sortCommandTypes();
+		pos += offset;
+		computeTotalUpgrade();
+		map->putUnitCells(this, pos);
+		faction->applyStaticProduction(unitType);
+		if (type->getCloakType()) {
+			if (m_cloaked && oldCloakClass != unitType->getCloakClass()) {
+				deCloak();
+			}
+			if (unitType->getCloakClass() == CloakClass::PERMANENT && faction->reqsOk(type->getCloakType())) {
+				cloak();
+			}
+		} else {
+			m_cloaked = false;
+		}
+		StateChanged(this);
+		faction->onUnitMorphed(type, oldType);
+		return true;
+	} else {
+		return false;
+	}
 }
 
 void Unit::checkEffectParticles() {

@@ -1540,7 +1540,7 @@ void TradeCommandType::goToGuild(Unit *unit, Unit *home, Unit *guild) const {
                     } else {
                         available = resourceAmount;
                     }
-                    if (requiredAmount > 10 && available > 10) {
+                    if (requiredAmount > 5 && available > 5) {
                         if (requiredAmount < available) {
                             available = requiredAmount;
                         }

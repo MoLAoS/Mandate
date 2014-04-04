@@ -173,9 +173,7 @@ void GoalSystem::ownerUnload(Unit *unit) {
 
 bool GoalSystem::change(Unit *unit) {
     bool check = true;
-    if (unit->getCurrSkill()->getClass() != SkillClass::STOP
-        //|| unit->getRequisitionCount() > 0
-    ) {
+    if (unit->getCurrSkill()->getClass() != SkillClass::STOP) {
         check = false;
     }
     return check;
@@ -259,10 +257,7 @@ Unit *GoalSystem::buildingList(Unit *unit, vector<Unit*> buildingsList) {
     Unit *targetBuilding = NULL;
     if (buildingsList.size() > 0) {
         int distance = 50;
-        Vec2i uPos = unit->getCenteredPos();
-        if (unit->isCarried()) {
-            uPos = unit->owner->getCenteredPos();
-        }
+        Vec2i uPos = unit->owner->getCenteredPos();
         Vec2i tPos = Vec2i(0,0);
         for (int i = 0; i < buildingsList.size(); ++i) {
             Unit *building = buildingsList[i];
@@ -377,7 +372,11 @@ Unit* GoalSystem::findBuilding(Unit* unit) {
         Unit *building = f->getUnit(i);
         if (building->getType()->hasTag("building")) {
             if (!building->isBuilt() && !unit->getType()->hasTag("householder")) {
-                buildingsList.push_back(building);
+                if (!unit->owner->getType()->hasTag("house") && building->owner == unit->owner) {
+                    buildingsList.push_back(building);
+                } else if (unit->owner->getType()->hasTag("house")) {
+                    buildingsList.push_back(building);
+                }
             } else if (building->getHp() < building->getStatistics()->getEnhancement()->getResourcePools()->getHealth()->getMaxStat()->getValue()) {
                 if (building->getType()->hasTag("house") && unit->getType()->hasTag("householder") && building == unit->owner) {
                     buildingsList.push_back(building);
@@ -523,7 +522,7 @@ Unit* GoalSystem::findGuild(Unit* unit) {
                                         if (producedType == resType) {
                                             int homeStored = unit->owner->getSResource(producedType)->getAmount();
                                             int homeStores = unit->owner->getType()->getResourceStore(m)->getAmount();
-                                            if (homeStored < homeStores) {
+                                            if (homeStores - homeStored > 5) {
                                                 int free = available(building, producedType);
                                                 if (free >= 10) {
                                                     if (!previousTarget(unit, building)) {

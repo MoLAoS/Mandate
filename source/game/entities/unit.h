@@ -244,9 +244,18 @@ private:
 	CraftStats armorStats;
 	CraftStats accessoryStats;
 
+    typedef vector<Trait*> HeroClasses;
+    HeroClasses heroClasses;
+
     bool character;
 
+    bool changeType(const UnitType *unitType);
+
 public:
+	int getHeroClassesCount()       {return heroClasses.size();}
+    Trait *getHeroClass(int i)  {return heroClasses[i];}
+    void addHeroClass(Trait* heroClass) {heroClasses.push_back(heroClass);}
+
     int getWeaponStatCount() const {return weaponStats.size();}
     const CraftStat *getWeaponStat(int  i) const {return &weaponStats[i];}
     int getArmorStatCount() const {return armorStats.size();}
@@ -279,6 +288,8 @@ public:
     int getDevelopmentLevel();
     void addCrafts(int finesse);
     const CitizenModifier *getCitizenModifiers();
+    void assignCitizen(Unit *assignedUnit, const UnitType *newType);
+    void assignLaborer(Unit *assignedUnit);
 
     void generateItem(Item *item);
 private:
@@ -304,6 +315,8 @@ private:
 	Unit *goalStructure;
 	string goalReason;
 public:
+    Trait *currentResearch;
+
     Field getField() const		  {return field;}
 	void setField(Field newField) { field = newField; }
 	Zone getZone() const		  {return zone;}

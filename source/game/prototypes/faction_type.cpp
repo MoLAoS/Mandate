@@ -733,13 +733,16 @@ FactionType::~FactionType() {
 
 // ==================== get ====================
 
-Trait *FactionType::getTraitById(int id) {
+Trait *FactionType::getTraitById(int findId) {
+    //if (findId == -1) {
+        //assert(false);
+    //}
     for (int i = 0; i < traitsList.size(); ++i) {
-        if (traitsList[i].getId() == id) {
+        if (traitsList[i].getTraitId() == findId) {
             return &traitsList[i];
         }
     }
-    throw runtime_error("Trait not found:" + intToStr(id));
+    throw runtime_error("Trait not found:" + intToStr(findId));
 }
 
 const UnitType *FactionType::getUnitType(const string &m_name) const{

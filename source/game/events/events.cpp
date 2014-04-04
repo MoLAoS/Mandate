@@ -351,6 +351,9 @@ bool Choice::load(const XmlNode *baseNode, const string &dir, const TechTree *te
             traits.resize(traitsNode->getChildCount());
             for (int i = 0; i < traitsNode->getChildCount(); ++i) {
                 int id = traitsNode->getChild("trait", i)->getAttribute("id")->getIntValue();
+                if (id == -1) {
+                    throw runtime_error("id = -1");
+                }
                 if (!&g_world) {
                     MainMenu *charMenu = static_cast<MainMenu*>(g_program.getState());
                     MenuStateCharacterCreator *charState = static_cast<MenuStateCharacterCreator*>(charMenu->getState());

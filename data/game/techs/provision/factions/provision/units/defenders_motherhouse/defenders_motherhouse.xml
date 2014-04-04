@@ -22,6 +22,14 @@
     <type type="quarters" value="3"/>
   </equipment>
   <item-limit limit="60"/>
+  <classes>
+	<class id="4"/>
+  </classes>
+  <assignments>
+	<assignment type="defender"/>
+	<assignment type="guardian"/>
+	<assignment type="preceptor"/>
+  </assignments>
   <creatable-type>
     <size value="4"/>
     <height value="2"/>
@@ -46,6 +54,8 @@
       <resource-requirements>
         <resource name="wealth" amount="7000" plus="0" multiply="0"/>
         <resource name="population" amount="10" plus="0" multiply="0"/>
+        <resource name="logs" amount="400" plus="0" multiply="0"/>
+        <resource name="stone" amount="300" plus="0" multiply="0"/>
       </resource-requirements>
       <image path="images/broch.bmp"/>
       <image-cancel path="../castle/images/tech_cancel.bmp"/>
@@ -222,6 +232,7 @@
             <unit value="guardian"/>
             <unit value="preceptor"/>
             <unit value="hauler"/>
+            <unit value="laborer"/>
         </units-carried>
         <load-capacity value="48" />
           <allow-projectiles value="true"> 

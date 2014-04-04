@@ -486,6 +486,25 @@ public:
 };
 
 // ===============================
+// 	class ResearchSkillType
+// ===============================
+
+class ResearchSkillType: public SkillType{
+private:
+
+public:
+	ResearchSkillType();
+	virtual bool load(const XmlNode *sn, const string &dir, const FactionType *ft, const CreatableType *ct) override;
+	virtual void doChecksum(Checksum &checksum) const override;
+	virtual void getDesc(string &str, const Unit *unit) const override {
+	}
+	virtual fixed getSpeed(const Unit *unit) const override;
+
+	virtual SkillClass getClass() const override { return typeClass(); }
+	static SkillClass typeClass() { return SkillClass::RESEARCH; }
+};
+
+// ===============================
 // 	class ProduceSkillType
 // ===============================
 

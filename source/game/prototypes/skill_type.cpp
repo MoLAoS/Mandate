@@ -152,6 +152,9 @@ const Model* SoundsAndAnimations::getAnimation(SurfaceType st) const {
 	if (it != m_animBySurfaceMap.end()) {
 		return it->second;
 	}
+	if (animations.size() == 0) {
+        throw runtime_error("no animations");
+	}
 	return getAnimation();
 }
 
@@ -957,6 +960,27 @@ void MaintainSkillType::getDesc(string &str, const Unit *unit) const {
 fixed MaintainSkillType::getSpeed(const Unit *unit) const {
 	return getBaseSpeed() * unit->getStatistics()->getEnhancement()->getProductionSpeeds()->getRepairSpeed()->getValueMult() +
 	unit->getStatistics()->getEnhancement()->getProductionSpeeds()->getRepairSpeed()->getValue();
+}
+
+// =====================================================
+// 	class ResearchSkillType
+// =====================================================
+
+ResearchSkillType::ResearchSkillType() : SkillType("Research") {
+}
+
+bool ResearchSkillType::load(const XmlNode *sn, const string &dir, const FactionType *ft, const CreatableType *ct){
+    bool loadOk = true;
+	loadOk = SkillType::load(sn, dir, ft, ct);
+	return loadOk;
+}
+
+void ResearchSkillType::doChecksum(Checksum &checksum) const {
+	SkillType::doChecksum(checksum);
+}
+
+fixed ResearchSkillType::getSpeed(const Unit *unit) const {
+	return getBaseSpeed();
 }
 
 // =====================================================

@@ -283,7 +283,7 @@ bool CitizenNeeds::load(const XmlNode *baseNode) {
     if (foodsNode) {
         foods.resize(foodsNode->getChildCount());
         for (int i = 0; i < foodsNode->getChildCount(); ++i) {
-            const XmlNode *foodNode = foodsNode->getChild("food");
+            const XmlNode *foodNode = foodsNode->getChild("food", i);
             string name = foodNode->getAttribute("name")->getRestrictedValue();
             int value = foodNode->getAttribute("value")->getIntValue();
             int bonus = foodNode->getAttribute("tax-bonus")->getIntValue();
@@ -296,7 +296,7 @@ bool CitizenNeeds::load(const XmlNode *baseNode) {
     if (goodsNode) {
         goods.resize(goodsNode->getChildCount());
         for (int i = 0; i < goodsNode->getChildCount(); ++i) {
-            const XmlNode *goodNode = goodsNode->getChild("good");
+            const XmlNode *goodNode = goodsNode->getChild("good", i);
             string name = goodNode->getAttribute("name")->getRestrictedValue();
             int value = goodNode->getAttribute("value")->getIntValue();
             int bonus = goodNode->getAttribute("tax-bonus")->getIntValue();
@@ -309,7 +309,7 @@ bool CitizenNeeds::load(const XmlNode *baseNode) {
     if (servicesNode) {
         services.resize(servicesNode->getChildCount());
         for (int i = 0; i < servicesNode->getChildCount(); ++i) {
-            const XmlNode *serviceNode = servicesNode->getChild("service");
+            const XmlNode *serviceNode = servicesNode->getChild("service", i);
             string name = serviceNode->getAttribute("name")->getRestrictedValue();
             int value = serviceNode->getAttribute("value")->getIntValue();
             int bonus = serviceNode->getAttribute("tax-bonus")->getIntValue();

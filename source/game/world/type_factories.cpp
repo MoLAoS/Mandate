@@ -30,6 +30,7 @@ PrototypeFactory::PrototypeFactory() {
 	m_skillTypeFactory.registerClass<RepairSkillType>();
 	m_skillTypeFactory.registerClass<MaintainSkillType>();
 	m_skillTypeFactory.registerClass<ProduceSkillType>();
+	m_skillTypeFactory.registerClass<ResearchSkillType>();
 	m_skillTypeFactory.registerClass<UpgradeSkillType>();
 	m_skillTypeFactory.registerClass<MorphSkillType>();
 	m_skillTypeFactory.registerClass<DieSkillType>();
@@ -62,6 +63,7 @@ PrototypeFactory::PrototypeFactory() {
 	m_commandTypeFactory.registerClass<MaintainCommandType>();
 	m_commandTypeFactory.registerClass<ProduceCommandType>();
 	m_commandTypeFactory.registerClass<CreateItemCommandType>();
+	m_commandTypeFactory.registerClass<ResearchCommandType>();
 	m_commandTypeFactory.registerClass<GenerateCommandType>();
 	m_commandTypeFactory.registerClass<UpgradeCommandType>();
 	m_commandTypeFactory.registerClass<MorphCommandType>();

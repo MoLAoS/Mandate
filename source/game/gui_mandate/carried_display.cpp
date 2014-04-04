@@ -365,8 +365,24 @@ void CarriedWindow::computeCarriedInfo(int posDisplay) {
     if (m_ui->getSelection()->isComandable()) {
         const Unit *u = m_ui->getSelection()->getFrontUnit();
         if (u->isBuilt()) {
-            Lang &lang = g_lang;
-            stringstream ss;
+            bool transported = false;
+            int i = 0;
+            if (u->isOfClass(UnitClass::CARRIER)) {
+                UnitIdList carriedUnits = u->getCarriedUnits();
+                if (!carriedUnits.empty()) {
+                    transported = true;
+                    foreach (UnitIdList, it, carriedUnits) {
+                        if (i < carriedCellCount && i == posDisplay) {
+                            Unit *unit = g_world.getUnit(*it);
+                            string name = unit->getType()->getName();
+                            string body = unit->getType()->getName();
+                            body = unit->getLongDesc();
+                            setToolTipText2(name, body, CarriedDisplaySection::CARRIED);
+                        }
+                        ++i;
+                    }
+                }
+            }
         }
     }
 }
@@ -401,8 +417,27 @@ void CarriedWindow::computeGarrisonedInfo(int posDisplay) {
     if (m_ui->getSelection()->isComandable()) {
         const Unit *u = m_ui->getSelection()->getFrontUnit();
         if (u->isBuilt()) {
-            Lang &lang = g_lang;
-            stringstream ss;
+            bool transported = false;
+            int i = 0;
+            for (int ndx = 0; ndx < m_ui->getSelection()->getCount(); ++ndx) {
+                if (m_ui->getSelection()->getUnit(ndx)->getType()->isOfClass(UnitClass::CARRIER)) {
+                    const Unit *selUnit = m_ui->getSelection()->getUnit(ndx);
+                    UnitIdList garrisonedUnits = selUnit->getGarrisonedUnits();
+                    if (!garrisonedUnits.empty()) {
+                        transported = true;
+                        foreach (UnitIdList, it, garrisonedUnits) {
+                            if (i < garrisonedCellCount) {
+                                Unit *unit = g_world.getUnit(*it);
+                                string name = unit->getType()->getName();
+                                string body = unit->getType()->getName();
+                                body = unit->getLongDesc();
+                                setToolTipText2(name, body, CarriedDisplaySection::GARRISONED);
+                                ++i;
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }
@@ -437,8 +472,27 @@ void CarriedWindow::computeContainedInfo(int posDisplay) {
     if (m_ui->getSelection()->isComandable()) {
         const Unit *u = m_ui->getSelection()->getFrontUnit();
         if (u->isBuilt()) {
-            Lang &lang = g_lang;
-            stringstream ss;
+            /*bool transported = false;
+            int i = 0;
+            for (int ndx = 0; ndx < m_ui->getSelection()->getCount(); ++ndx) {
+                if (m_ui->getSelection()->getUnit(ndx)->getType()->isOfClass(UnitClass::CARRIER)) {
+                    const Unit *selUnit = m_ui->getSelection()->getUnit(ndx);
+                    UnitIdList containedUnits = selUnit->getContainedUnits();
+                    if (!containedUnits.empty()) {
+                        transported = true;
+                        foreach (UnitIdList, it, containedUnits) {
+                            if (i < containedCellCount) {
+                                Unit *unit = g_world.getUnit(*it);
+                                string name = unit->getType()->getName();
+                                string body = unit->getType()->getName();
+                                body = unit->getLongDesc();
+                                setToolTipText2(name, body, CarriedDisplaySection::CONTAINED);
+                                ++i;
+                            }
+                        }
+                    }
+                }
+            }*/
         }
     }
 }

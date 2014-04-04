@@ -1,4 +1,7 @@
 <trait id="1" progress="1">
+	<image path="../images/castle.bmp"/>
+    <time value="1"/>
+    <image-cancel path="../images/tech_cancel.bmp"/>
 	<character-stats>
 		<conception value="5"/>
 	</character-stats>

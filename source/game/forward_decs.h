@@ -62,6 +62,7 @@ namespace Glest {
 		class SetStructureSkillType;
 		class RepairSkillType;
 		class ProduceSkillType;
+		class researchSkillType;
 		class UpgradeSkillType;
 		class BeBuiltSkillType;
 		class MorphSkillType;
