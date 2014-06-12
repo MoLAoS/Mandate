@@ -922,7 +922,7 @@ private:
 	SoundContainer			 m_finishedSounds;
 
 public:
-	ResearchCommandType() : CommandType("Research", Clicks::ONE, true), m_researchSkillType(0) {}
+	ResearchCommandType() : CommandType("Research", Clicks::TWO, true), m_researchSkillType(0) {}
 	virtual bool load(const XmlNode *n, const string &dir, const FactionType *ft, const CreatableType *ct);
 	virtual void doChecksum(Checksum &checksum) const;
 	virtual void getDesc(string &str, const Unit *unit) const;
@@ -946,7 +946,7 @@ public:
 	StaticSound *getFinishedSound() const	{return m_finishedSounds.getRandSound();}
 
 	const ResearchSkillType *getResearchSkillType() const	{return m_researchSkillType;}
-	virtual Clicks getClicks() const	{ return m_researchTypes.size() == 1 ? Clicks::ONE : Clicks::TWO; }
+	virtual Clicks getClicks() const	{ return Clicks::TWO; }
 
 	virtual CmdClass getClass() const { return typeClass(); }
 	static CmdClass typeClass() { return CmdClass::RESEARCH; }

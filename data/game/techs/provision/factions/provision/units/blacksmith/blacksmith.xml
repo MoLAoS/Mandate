@@ -215,13 +215,14 @@
         <unit-requirements/>
         <upgrade-requirements/>
         <produce-skill value="produce_skill" />
-	<created-items>
-          <created-item name="sword_smithy" />
-          <created-item name="great_sword_smithy" />
-          <created-item name="basic_armor_smithy" />
-          <created-item name="great_armor_smithy" />
-	</created-items>
-        </command>        <command>
+			<created-items>
+				  <created-item name="sword_smithy" />
+				  <created-item name="great_sword_smithy" />
+				  <created-item name="basic_armor_smithy" />
+				  <created-item name="great_armor_smithy" />
+			</created-items>
+        </command>        
+		<command>
           <type value="load"/>
           <name value="load"/>
           <image path="images/blacksmith.bmp"/>

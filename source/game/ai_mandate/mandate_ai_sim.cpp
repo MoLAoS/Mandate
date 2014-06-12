@@ -227,6 +227,16 @@ Focus MandateAISim::getTopGoal(Unit *unit, string personality) {
                     } else {
                         topGoal = goal;
                     }
+                } else if (goalName == Goal::FOCUSFIRE) {
+                    if (unit->owner) {
+                        if (topGoal.getImportance() != NULL) {
+                            if (unit->owner->getGoalStructure() && unit->owner->getCurrCommand()->getType()->getClass() != CmdClass::ATTACK) {
+                                topGoal = goal;
+                            }
+                        } else {
+                            topGoal = goal;
+                        }
+                    }
                 } else if (goalName == Goal::ATTACK) {
                     if (unit->attackers.size() > 0) {
                         if (topGoal.getImportance() != NULL) {
@@ -250,6 +260,24 @@ Focus MandateAISim::getTopGoal(Unit *unit, string personality) {
                             int importanceDefend = unit->owner->attackers.size() * 10;
                             if (distance < 100 + importanceDefend) {
                                 if (goalImportance + importanceDefend > topGoal.getImportance()) {
+                                    topGoal = goal;
+                                }
+                            }
+                        } else {
+                            topGoal = goal;
+                        }
+                    }
+                } else if (goalName == Goal::FOLLOW) {
+                    if (unit->owner) {
+                        if (topGoal.getImportance() != NULL) {
+                            Vec2i uPos = unit->getPos();
+                            if (unit->isCarried()) {
+                                uPos = unit->owner->getPos();
+                            }
+                            Vec2i tPos = unit->owner->getPos();
+                            int distance = sqrt(pow(float(abs(uPos.x - tPos.x)), 2) + pow(float(abs(uPos.y - tPos.y)), 2));
+                            if (distance > 5) {
+                                if (goalImportance + distance > topGoal.getImportance()) {
                                     topGoal = goal;
                                 }
                             }
@@ -300,6 +328,15 @@ void MandateAISim::computeAction(Unit *unit, string personality, string reason) 
     if (reason == "compute") {
         Focus newFocus = getTopGoal(unit, personality);
         goalSystem.computeAction(unit, newFocus);
+    } else if (reason == "follow") {
+        if (unit->getGoalStructure() != NULL) {
+            if (unit->anyCommand()) {
+                if (unit->getCurrCommand()->getType()->getClass() != CmdClass::MOVE) {
+                    const CommandType *mct = unit->getType()->getActions()->getFirstCtOfClass(CmdClass::MOVE);
+                    unit->giveCommand(g_world.newCommand(mct, CmdFlags(), unit->getGoalStructure()->getPos()));
+                }
+            }
+        }
     } else if (reason == "kill") {
         if (unit->getGoalStructure() != NULL) {
             if (unit->anyCommand()) {

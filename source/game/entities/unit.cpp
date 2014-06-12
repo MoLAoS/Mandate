@@ -3081,6 +3081,11 @@ string Unit::getShortDesc() const {
             ss << endl << "Focus: " << currentFocus;
             ss << endl << "Task: " << goalReason;
         }
+        if (type->hasTag("orderhouse")) {
+            for (int i = 0; i < heroClasses.size(); ++i) {
+                ss << endl << heroClasses[i]->getName();
+            }
+        }
 	}
 	return ss.str();
 }

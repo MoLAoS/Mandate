@@ -1178,12 +1178,28 @@ void UserInterface::onFirstTierSelect(int posDisplay) {
                 bool requirements = false;
                 const CommandType *ct = m_display->getCommandType(posDisplay);
                 if (unit->getFaction()->reqsOk(ct)) {
-                    if (ct->getProducedCount() == 1 && unit->reqsOk(ct->getProduced(0)) && u->checkCosts(ct, ct->getProduced(0))) {
+                    if (ct->getClass() != CmdClass::RESEARCH) {
+                        if (ct->getProducedCount() == 1 && unit->reqsOk(ct->getProduced(0)) && u->checkCosts(ct, ct->getProduced(0))) {
+                            requirements = true;
+                        } else if (ct->getProducedCount() > 1) {
+                            requirements = true;
+                        } else if (ct->getProducedCount() == 0) {
+                            requirements = true;
+                        }
+                    } else {
                         requirements = true;
-                    } else if (ct->getProducedCount() > 1) {
-                        requirements = true;
-                    } else if (ct->getProducedCount() == 0) {
-                        requirements = true;
+                        const ResearchCommandType *rct = static_cast<const ResearchCommandType*>(ct);
+                        if (rct->getProducedCount() == 1 && unit->reqsOk(rct->getProduced(0)) && u->checkCosts(rct, rct->getProduced(0))) {
+                            for (int k = 0; k < u->getHeroClassesCount(); ++k) {
+                                if (rct->getResearchType(0) == u->getHeroClass(k)) {
+                                    requirements = false;
+                                }
+                            }
+                        } else if (rct->getProducedCount() > 1) {
+                            requirements = true;
+                        } else if (rct->getProducedCount() == 0) {
+                            requirements = false;
+                        }
                     }
                 }
                 if (requirements) {
@@ -1266,7 +1282,15 @@ void UserInterface::onSecondTierSelect(int posDisplay) {
 		    Unit *unit = g_world.getUnit(selection->getFrontUnit()->getId());
 		    const Trait *newTrait = static_cast<const Trait*>(pt);
 		    Trait *newNewTrait = g_world.getTechTree()->getFactionType(unit->getFaction()->getType()->getName())->getTraitById(newTrait->getTraitId());
-            unit->currentResearch = newNewTrait;
+		    bool unresearched = true;
+		    for (int i = 0; i < unit->getHeroClassesCount(); ++i) {
+                if (unit->getHeroClass(i) == newNewTrait) {
+                    unresearched = false;
+                }
+		    }
+		    if (unresearched) {
+                unit->currentResearch = newNewTrait;
+		    }
 		}
 		if (activeCommandType->getClass() == CmdClass::BUILD
         || activeCommandType->getClass() == CmdClass::STRUCTURE
@@ -1864,10 +1888,22 @@ void UserInterface::computeCommandPanel() {
                     bool downLight = false;
                     if (rct->getResearchTypeCount() == 1) {
                         downLight = true;
+                        for (int k = 0; k < u->getHeroClassesCount(); ++k) {
+                            if (rct->getResearchType(i) == u->getHeroClass(k)) {
+                                downLight = false;
+                                break;
+                            }
+                        }
                     } else if (rct->getResearchTypeCount() > 1) {
                         downLight = true;
+                        for (int k = 0; k < u->getHeroClassesCount(); ++k) {
+                            if (rct->getResearchType(i) == u->getHeroClass(k)) {
+                                downLight = false;
+                                break;
+                            }
+                        }
                     } else if (rct->getProducedCount() == 0) {
-                        downLight = true;
+                        throw runtime_error("no research available");
                     }
                     m_display->setDownLighted(j, downLight);
                     m_display->setIndex(j, i);

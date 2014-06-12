@@ -40,8 +40,10 @@ void Personality::load(const XmlNode *node) {
     goalList.push_back("raid");
     goalList.push_back("hunt");
     goalList.push_back("patrol");
+    goalList.push_back("focusfire");
     goalList.push_back("attack");
     goalList.push_back("defend");
+    goalList.push_back("follow");
     goalList.push_back("buff");
     goalList.push_back("heal");
     goalList.push_back("spell");
@@ -81,8 +83,10 @@ void GoalSystem::init() {
     goalList.push_back("raid");
     goalList.push_back("hunt");
     goalList.push_back("patrol");
+    goalList.push_back("focusfire");
     goalList.push_back("attack");
     goalList.push_back("defend");
+    goalList.push_back("follow");
     goalList.push_back("buff");
     goalList.push_back("heal");
     goalList.push_back("spell");
@@ -924,6 +928,35 @@ void GoalSystem::computeAction(Unit *unit, Focus focus) {
                 }
             }
         }
+    } else if (goal == Goal::FOCUSFIRE) {
+        clearSimAi(unit, goal);
+        if (unit->owner->getId() != unit->getId()) {
+            if (unit->getCurrSkill()->getClass() == SkillClass::STOP) {
+                if (unit->getGoalStructure() == NULL) {
+                    Vec2i uPos = unit->getPos();
+                    if (unit->isCarried()) {
+                        uPos = unit->owner->getCenteredPos();
+                    }
+                    Vec2i tPos = unit->owner->getPos();
+                    int distance = sqrt(pow(float(abs(uPos.x - tPos.x)), 2) + pow(float(abs(uPos.y - tPos.y)), 2));
+                    if (unit->owner->getGoalStructure() && unit->owner->getCurrCommand()->getType()->getClass() != CmdClass::ATTACK) {
+                        if (unit->isCarried()) {
+                            ownerUnload(unit);
+                        }
+                        unit->setGoalStructure(unit->owner->getGoalStructure());
+                        unit->setGoalReason("kill");
+                    }
+                }
+                if (unit->getGoalStructure() != NULL) {
+                    if (unit->anyCommand()) {
+                        if (unit->getCurrCommand()->getType()->getClass() != CmdClass::ATTACK) {
+                            const CommandType *act = selectAttackSpell(unit, unit->getGoalStructure());
+                            unit->giveCommand(g_world.newCommand(act, CmdFlags(), unit->getGoalStructure()));
+                        }
+                    }
+                }
+            }
+        }
     } else if (goal == Goal::DEFEND) {
         clearSimAi(unit, goal);
         if (unit->owner->getId() != unit->getId()) {
@@ -950,6 +983,29 @@ void GoalSystem::computeAction(Unit *unit, Focus focus) {
                         if (unit->getCurrCommand()->getType()->getClass() != CmdClass::ATTACK) {
                             const CommandType *act = selectAttackSpell(unit, unit->getGoalStructure());
                             unit->giveCommand(g_world.newCommand(act, CmdFlags(), unit->getGoalStructure()));
+                        }
+                    }
+                }
+            }
+        }
+    } else if (goal == Goal::FOLLOW) {
+        clearSimAi(unit, goal);
+        if (unit->owner->getId() != unit->getId()) {
+            if (unit->getCurrSkill()->getClass() == SkillClass::STOP) {
+                if (unit->getGoalStructure() == NULL) {
+                    Vec2i uPos = unit->getPos();
+                    if (unit->isCarried()) {
+                        uPos = unit->owner->getCenteredPos();
+                    }
+                    Vec2i tPos = unit->owner->getPos();
+                    int distance = sqrt(pow(float(abs(uPos.x - tPos.x)), 2) + pow(float(abs(uPos.y - tPos.y)), 2));
+                    if (distance > 0) {
+                        if (unit->isCarried()) {
+                            ownerUnload(unit);
+                        }
+                        if (distance > 5) {
+                            unit->setGoalStructure(unit->owner);
+                            unit->setGoalReason("follow");
                         }
                     }
                 }

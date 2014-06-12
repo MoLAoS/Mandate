@@ -23,7 +23,6 @@
   </equipment>
   <item-limit limit="60"/>
   <classes>
-	<class id="4"/>
   </classes>
   <assignments>
 	<assignment type="defender"/>

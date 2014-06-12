@@ -24,8 +24,10 @@
   </equipment>
   <item-limit limit="60"/>
   <classes>
-	<class id="4"/>
   </classes>
+  <assignments>
+	<assignment type="wizard"/>
+  </assignments>
   <creatable-type>
     <size value="4"/>
     <height value="2"/>
@@ -64,10 +66,6 @@
         <resource name="space" amount="20"/>
       </starter-resources>
     </resource-production>
-    <modifications>
-      <modification name="energy_enchantment"/>
-      <modification name="thunder_enchantment"/>
-    </modifications>
     <units-owned>
       <unit name="wizard" limit="4"/>
     </units-owned>
@@ -170,6 +168,7 @@
           <research-skill value="research_skill"/>
           <researches>
 			<research id="2"/>
+			<research id="4"/>
           </researches>
         </command>
         <command>

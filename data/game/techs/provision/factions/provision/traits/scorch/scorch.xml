@@ -1,0 +1,26 @@
+<trait id="5" progress="1">
+	<image path="../images/castle.bmp"/>
+    <time value="1"/>
+    <image-cancel path="../images/tech_cancel.bmp"/>
+	<character-stats>
+		<potency value="5"/>
+	</character-stats>
+	<statistics>
+		<enhancement>
+			<resource-pools>
+				<health name="health">
+					<max-stat value="5"/>
+				</health>
+				<resources>
+					<resource name="mana" value="10"/>
+				</resources>
+			</resource-pools>
+		</enhancement>
+		<damage-types>
+			<damage-type type="fire" value="5"/>
+		</damage-types>
+		<resistances>
+			<resistance type="fire" value="2"/>
+		</resitances>
+	</statistics>
+</trait>

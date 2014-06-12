@@ -57,9 +57,9 @@ bool ResearchCommandType::load(const XmlNode *n, const string &dir, const Factio
 	if (n->getOptionalChild("research")) {
 		try {
 			int researchId = n->getChild("research")->getAttribute("id")->getIntValue();
-                if (researchId == -1) {
-                    throw runtime_error("id = -1");
-                }
+            if (researchId == -1) {
+                throw runtime_error("id = -1");
+            }
 			m_researchTypes.push_back(factionType->getTraitById(researchId));
 		} catch (runtime_error e) {
 			g_logger.logXmlError(dir, e.what ());
@@ -70,15 +70,15 @@ bool ResearchCommandType::load(const XmlNode *n, const string &dir, const Factio
 		try {
 			const XmlNode *un = n->getChild("researches");
 			for (int i=0; i < un->getChildCount(); ++i) {
-				const XmlNode *createNode = un->getChild("research", i);
-				int intId = createNode->getAttribute("id")->getIntValue();
+				const XmlNode *researchNode = un->getChild("research", i);
+				int intId = researchNode->getAttribute("id")->getIntValue();
                 if (intId == -1) {
                     throw runtime_error("id = -1");
                 }
 				m_researchTypes.push_back(factionType->getTraitById(intId));
 				string name = factionType->getTraitById(intId)->getName();
 				try {
-					m_tipKeys[name] = createNode->getRestrictedAttribute("tip");
+					m_tipKeys[name] = researchNode->getRestrictedAttribute("tip");
 				} catch (runtime_error &e) {
 					m_tipKeys[name] = "";
 				}
@@ -164,12 +164,20 @@ void ResearchCommandType::update(Unit *unit) const {
 		//if (command->getProdType() == 0) {
             //throw runtime_error("no prod type");
 		//}
-		if (unit->getProgress2() > unit->currentResearch->getProductionTime()) {
-            unit->addHeroClass(unit->currentResearch);
-            unit->currentResearch = 0;
+		if (unit->currentResearch != 0) {
+            if (unit->getProgress2() > unit->currentResearch->getProductionTime()) {
+                unit->addHeroClass(unit->currentResearch);
+                for (int i = 0; i < unit->getFaction()->getUnitCount(); ++i) {
+                    Unit *traitUnit = g_world.findUnitById(unit->getFaction()->getUnit(i)->getId());
+                    traitUnit->addTrait(unit->currentResearch);
+                }
+                unit->currentResearch = 0;
+                unit->finishCommand();
+                unit->setCurrSkill(SkillClass::STOP);
+            }
+        } else {
             unit->finishCommand();
-            unit->setCurrSkill(SkillClass::STOP);
-		}
+        }
     }
 }
 

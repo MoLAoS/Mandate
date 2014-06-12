@@ -29,7 +29,6 @@
 		
 <startup>
 
-			
 --player units
 
 createUnit('castle', 0, startLocation(0))
@@ -45,6 +44,8 @@ createUnit('house', 0, startLocation(0))
 --createUnit('house', 0, startLocation(0))
 
 --createUnit('defenders_motherhouse', 0, startLocation(0))
+
+createUnit('wizards_motherhouse', 0, startLocation(0))
 
 
 --enemy units

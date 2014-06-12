@@ -17,7 +17,26 @@ namespace Glest { namespace ProtoTypes {
 void Trait::preLoad(const string &dir, int i){
 	m_name = basename(dir);
 	traitName = m_name;
-	traitId = i;
+	string path = dir + ".xml";
+
+	XmlTree xmlTree;
+	try { xmlTree.load(path); }
+	catch (runtime_error e) {
+		g_logger.logXmlError(path, e.what());
+		g_logger.logError("Fatal Error: could not load " + path);
+		//return false;
+	}
+	const XmlNode *traitNode;
+	try { traitNode = xmlTree.getRootNode(); }
+	catch (runtime_error e) {
+		g_logger.logXmlError(path, e.what());
+		//return false;
+	}
+	int newId = traitNode->getAttribute("id")->getIntValue();
+	traitId = newId;
+	if (traitId != newId) {
+        throw runtime_error("id mismatch");
+	}
 }
 
 void Trait::save(XmlNode *node) const {
@@ -63,11 +82,15 @@ bool Trait::load(const string &dir) {
 		g_logger.logXmlError(path, e.what());
 		return false;
 	}
+	int newProgress = traitNode->getAttribute("progress")->getIntValue();
+	progress = newProgress;
+	if (progress != newProgress) {
+        throw runtime_error("progress mismatch");
+	}
+
 	if (!ProducibleType::load(traitNode, dir)) {
 		loadOk = false;
 	}
-	traitId = traitNode->getAttribute("id")->getIntValue();
-	progress = traitNode->getAttribute("progress")->getIntValue();
 
 	const XmlNode *creatorCostNode = traitNode->getChild("creator-cost", 0, false);
 	if (creatorCostNode) {
